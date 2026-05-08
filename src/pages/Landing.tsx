@@ -263,7 +263,7 @@ export default function Landing() {
   async function fetchPublicTracks() {
     const { data: savedTracks } = await supabase
       .from("loops")
-      .select("id, name, genre, mood, bpm, created_at, is_saved")
+      .select("id, name, genre, mood, bpm, audio_url, created_at, is_saved")
       .eq("is_saved", true)
       .order("created_at", { ascending: false })
       .limit(6);
@@ -273,6 +273,7 @@ export default function Landing() {
       genre: string | null;
       mood: string | null;
       bpm: number | null;
+      audio_url: string | null;
       created_at: string | null;
       is_saved: boolean | null;
     }>;
@@ -281,7 +282,7 @@ export default function Landing() {
 
     const { data: recentTracks } = await supabase
       .from("loops")
-      .select("id, name, genre, mood, bpm, created_at, is_saved")
+      .select("id, name, genre, mood, bpm, audio_url, created_at, is_saved")
       .order("created_at", { ascending: false })
       .limit(6);
     return (recentTracks ?? []) as Array<{
@@ -290,6 +291,7 @@ export default function Landing() {
       genre: string | null;
       mood: string | null;
       bpm: number | null;
+      audio_url: string | null;
       created_at: string | null;
       is_saved: boolean | null;
     }>;
@@ -320,7 +322,7 @@ export default function Landing() {
               genre: genre || null,
               mood: mood || null,
               bpm,
-              audioUrl: null,
+              audioUrl: r.audio_url ?? null,
               createdAt: r.created_at ?? null,
               kind,
               badge,
@@ -387,21 +389,21 @@ export default function Landing() {
         name: "Free",
         price: "$0",
         meta: "3 generations / month",
-        bullets: ["✓ 3 tracks/month", "✓ WAV download", "✓ Song Mode + Type Beat Mode", "✗ No watermark removal"],
+        bullets: ["✓ 3 tracks/month", "✓ MP3 download", "✓ Song Mode + Type Beat Mode", "✗ WAV export"],
         featured: false,
       },
       {
         name: "Pro",
         price: "$10/mo",
         meta: "75 generations / month",
-        bullets: ["✓ 75 tracks/month", "✓ No watermark", "✓ Priority generation", "✓ Commercial use"],
+        bullets: ["✓ 75 tracks/month", "✓ WAV export", "✓ Priority generation", "✓ Commercial use"],
         featured: true,
       },
       {
         name: "Studio",
         price: "$30/mo",
         meta: "250 generations / month",
-        bullets: ["✓ 250 tracks/month", "✓ Everything in Pro", "✓ Bulk export", "✓ Label license"],
+        bullets: ["✓ 250 tracks/month", "✓ Everything in Pro", "✓ WAV export", "✓ Label license"],
         featured: false,
       },
     ],
