@@ -24,6 +24,7 @@ type DbLoop = {
   audio_url: string | null;
   stems_url: unknown;
   is_saved: boolean;
+  is_public?: boolean | null;
   created_at: string;
 };
 
@@ -137,6 +138,7 @@ function toLoop(row: DbLoop): Loop {
     details,
     stemsUrl: stemsObj,
     isSaved: row.is_saved,
+    isPublic: Boolean(row.is_public),
     createdAt: row.created_at,
   };
 }
@@ -156,10 +158,12 @@ type LoopsState = {
   upsertLoop: (loop: Loop) => void;
   removeLoop: (id: string) => void;
   toggleSaved: (id: string) => void;
+  togglePublic: (id: string) => void;
   clear: () => void;
   loadMyLoops: () => Promise<void>;
   createLoop: (input: Omit<Loop, "id" | "createdAt" | "userId">) => Promise<Loop>;
   toggleSavedRemote: (id: string) => Promise<boolean>;
+  togglePublicRemote: (id: string) => Promise<boolean>;
   deleteLoopRemote: (id: string) => Promise<void>;
 };
 
@@ -185,6 +189,10 @@ export const useLoopsStore = create<LoopsState>((set) => ({
   toggleSaved: (id) =>
     set((s) => ({
       loops: s.loops.map((l) => (l.id === id ? { ...l, isSaved: !l.isSaved } : l)),
+    })),
+  togglePublic: (id) =>
+    set((s) => ({
+      loops: s.loops.map((l) => (l.id === id ? { ...l, isPublic: !l.isPublic } : l)),
     })),
   clear: () =>
     set((s) => {
@@ -310,6 +318,7 @@ export const useLoopsStore = create<LoopsState>((set) => ({
       audio_url: audioUrlForDb,
       stems_url: stemsUrlForDb,
       is_saved: input.isSaved,
+      is_public: input.isPublic,
     };
 
     const attemptPayload = payload as unknown as Record<string, unknown>;
@@ -375,6 +384,21 @@ export const useLoopsStore = create<LoopsState>((set) => ({
       .eq("user_id", user.id);
     if (error) throw error;
     set((s) => ({ loops: s.loops.map((l) => (l.id === id ? { ...l, isSaved: next } : l)) }));
+    return next;
+  },
+  togglePublicRemote: async (id) => {
+    const user = useAuthStore.getState().user;
+    if (!user) throw new Error("Not authenticated");
+    const current = useLoopsStore.getState().loops.find((l) => l.id === id);
+    const next = !(current?.isPublic ?? false);
+
+    const { error } = await supabase
+      .from("loops")
+      .update({ is_public: next })
+      .eq("id", id)
+      .eq("user_id", user.id);
+    if (error) throw error;
+    set((s) => ({ loops: s.loops.map((l) => (l.id === id ? { ...l, isPublic: next } : l)) }));
     return next;
   },
   deleteLoopRemote: async (id) => {

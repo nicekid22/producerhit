@@ -8,7 +8,7 @@ import { useLoopsStore } from "@/stores/loopsStore";
 import { usePlayerStore } from "@/stores/playerStore";
 import type { Loop } from "@/types/loop";
 import { generateBeat } from "@/lib/audioApi";
-import { Bookmark, Download, Info, Loader2, Pause, Play, RefreshCcw } from "lucide-react";
+import { Bookmark, Download, Globe, Info, Loader2, Pause, Play, RefreshCcw } from "lucide-react";
 
 function formatTime(sec: number) {
   const s = Math.max(0, Math.floor(sec));
@@ -55,6 +55,7 @@ export function LoopCardItem({
   const setPlaying = usePlayerStore((s) => s.setPlaying);
 
   const toggleSavedRemote = useLoopsStore((s) => s.toggleSavedRemote);
+  const togglePublicRemote = useLoopsStore((s) => s.togglePublicRemote);
   const createLoop = useLoopsStore((s) => s.createLoop);
   const cachedDurationSec = useLoopsStore((s) => s.durationsSecById[loop.id] ?? 0);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -186,6 +187,31 @@ export function LoopCardItem({
         >
           <Bookmark className="h-4 w-4" />
           Save
+        </Button>
+        <Button
+          variant={loop.isPublic ? "primary" : "secondary"}
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            void (async () => {
+              try {
+                if (!loop.audioUrl) {
+                  toast.error("Audio expired — generate a variation");
+                  return;
+                }
+                const next = await togglePublicRemote(loop.id);
+                toast.success(next ? "Public" : "Private");
+              } catch (err) {
+                const message = err instanceof Error ? err.message : "Erreur inconnue";
+                toast.error(message);
+              }
+            })();
+          }}
+          disabled={!loop.audioUrl}
+          title={loop.isPublic ? "Make private" : "Make public"}
+        >
+          <Globe className="h-4 w-4" />
+          Public
         </Button>
         <Button
           variant="secondary"
@@ -351,6 +377,7 @@ export function LoopCardItem({
                       : null,
                   stemsUrl: null,
                   isSaved: false,
+                  isPublic: false,
                 };
 
                 try {
@@ -381,6 +408,7 @@ export function LoopCardItem({
                       details: draft.details ?? null,
                       stemsUrl: null,
                       isSaved: false,
+                      isPublic: false,
                       createdAt: new Date().toISOString(),
                     };
                     setCurrent(temp, true);

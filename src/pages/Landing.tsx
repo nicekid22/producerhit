@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useAuthStore } from "@/stores/authStore";
 import { supabase } from "@/lib/supabaseClient";
+import { useLocaleStore } from "@/stores/localeStore";
 import { Play } from "lucide-react";
 
 type CreateMode = "song" | "beat";
@@ -65,6 +66,8 @@ function RevealSection({
 export default function Landing() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
+  const locale = useLocaleStore((s) => s.locale);
+  const setLocale = useLocaleStore((s) => s.setLocale);
 
   const [navScrolled, setNavScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -87,29 +90,49 @@ export default function Landing() {
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
   const placeholders = useMemo(() => {
-    const song = [
-      "A melancholic R&B song about late nights in the city...",
-      "A dark trap anthem with gritty vocals and a huge hook...",
-      "An Afrobeats summer song with bright guitars and a catchy chorus...",
-      "A pop ballad with emotional vocals and a cinematic build...",
-    ];
-    const beat = [
-      "Metro Boomin type beat with dark bounce and clean 808s...",
-      "Drill type beat with sliding bass and tight hats...",
-      "Trapsoul loop with warm chords and moody drums...",
-      "UK garage type beat at 130 BPM with swing and bright chords...",
-    ];
+    const song =
+      locale === "fr"
+        ? [
+            "Une chanson R&B mélancolique sur les nuits en ville…",
+            "Un anthem dark trap avec une grosse hook et des vocals gritty…",
+            "Un hit Afrobeats d’été avec guitares lumineuses et refrain catchy…",
+            "Une ballade pop émotionnelle avec une montée cinématique…",
+          ]
+        : [
+            "A melancholic R&B song about late nights in the city...",
+            "A dark trap anthem with gritty vocals and a huge hook...",
+            "An Afrobeats summer song with bright guitars and a catchy chorus...",
+            "A pop ballad with emotional vocals and a cinematic build...",
+          ];
+    const beat =
+      locale === "fr"
+        ? [
+            "Type beat Metro Boomin avec dark bounce et 808 clean…",
+            "Type beat Drill avec bass qui slide et hats serrés…",
+            "Loop Trapsoul avec chords chauds et drums moody…",
+            "Type beat UK garage à 130 BPM avec swing et chords brillants…",
+          ]
+        : [
+            "Metro Boomin type beat with dark bounce and clean 808s...",
+            "Drill type beat with sliding bass and tight hats...",
+            "Trapsoul loop with warm chords and moody drums...",
+            "UK garage type beat at 130 BPM with swing and bright chords...",
+          ];
     return mode === "beat" ? beat : song;
-  }, [mode]);
+  }, [locale, mode]);
 
-  const heroBadge = "✦ Full songs · Type beats · Release-ready";
+  const heroBadge = locale === "fr" ? "✦ Chansons complètes · Type beats · Ready release" : "✦ Full songs · Type beats · Release-ready";
 
   const smartChips = useMemo(() => {
     if (mode === "song") {
-      return ["+ female vocals", "+ catchy hook", "+ radio-ready", "+ big chorus", "+ emotional", "+ modern mix"];
+      return locale === "fr"
+        ? ["+ vocals féminines", "+ hook catchy", "+ radio-ready", "+ gros refrain", "+ émotionnel", "+ mix moderne"]
+        : ["+ female vocals", "+ catchy hook", "+ radio-ready", "+ big chorus", "+ emotional", "+ modern mix"];
     }
-    return ["+ heavy 808s", "+ dark melody", "+ trap", "+ drill", "+ emotional", "+ hard hitting"];
-  }, [mode]);
+    return locale === "fr"
+      ? ["+ 808 lourdes", "+ mélodie dark", "+ trap", "+ drill", "+ émotionnel", "+ hard hitting"]
+      : ["+ heavy 808s", "+ dark melody", "+ trap", "+ drill", "+ emotional", "+ hard hitting"];
+  }, [locale, mode]);
 
   useEffect(() => {
     const onScroll = () => setNavScrolled(window.scrollY > 8);
@@ -264,7 +287,7 @@ export default function Landing() {
     const { data: savedTracks } = await supabase
       .from("loops")
       .select("id, name, genre, mood, bpm, audio_url, created_at, is_saved")
-      .eq("is_saved", true)
+      .eq("is_public", true)
       .order("created_at", { ascending: false })
       .limit(6);
     const saved = (savedTracks ?? []) as Array<{
@@ -283,6 +306,7 @@ export default function Landing() {
     const { data: recentTracks } = await supabase
       .from("loops")
       .select("id, name, genre, mood, bpm, audio_url, created_at, is_saved")
+      .eq("is_public", true)
       .order("created_at", { ascending: false })
       .limit(6);
     return (recentTracks ?? []) as Array<{
@@ -383,8 +407,33 @@ export default function Landing() {
     };
   }, [durations, trending]);
 
-  const pricing = useMemo(
-    () => [
+  const pricing = useMemo(() => {
+    if (locale === "fr") {
+      return [
+        {
+          name: "Free",
+          price: "0€",
+          meta: "3 générations / mois",
+          bullets: ["✓ 3 tracks/mois", "✓ Download MP3", "✓ Song Mode + Type Beat Mode", "✗ Export WAV"],
+          featured: false,
+        },
+        {
+          name: "Pro",
+          price: "10€/mo",
+          meta: "75 générations / mois",
+          bullets: ["✓ 75 tracks/mois", "✓ Export WAV", "✓ Priorité génération", "✓ Usage commercial"],
+          featured: true,
+        },
+        {
+          name: "Studio",
+          price: "30€/mo",
+          meta: "250 générations / mois",
+          bullets: ["✓ 250 tracks/mois", "✓ Tout Pro inclus", "✓ Export WAV", "✓ Licence label"],
+          featured: false,
+        },
+      ];
+    }
+    return [
       {
         name: "Free",
         price: "$0",
@@ -406,20 +455,30 @@ export default function Landing() {
         bullets: ["✓ 250 tracks/month", "✓ Everything in Pro", "✓ WAV export", "✓ Label license"],
         featured: false,
       },
-    ],
-    [],
-  );
+    ];
+  }, [locale]);
 
-  const faqs = useMemo(
-    () => [
+  const faqs = useMemo(() => {
+    if (locale === "fr") {
+      return [
+        {
+          q: "Usage commercial & propriété ?",
+          a: "Tu peux télécharger tes générations. Pour une release commerciale, respecte toujours les conditions des modèles/providers et les règles des plateformes.",
+        },
+        { q: "Tu génères des chansons complètes avec voix ?", a: "Oui — Song Mode vise des tracks complètes avec vocals, structure, hooks et couplets." },
+        { q: "C’est quoi Type Beat Mode ?", a: "Des contrôles orientés producteurs (BPM, mood, tags) pour verrouiller un bounce propre et itérer vite." },
+        { q: "C’est rapide ?", a: "La plupart des tracks sortent en ~20 secondes selon la charge et le modèle." },
+        { q: "Je peux télécharger en WAV ?", a: "Oui — l’export WAV est disponible sur Pro/Studio." },
+      ];
+    }
+    return [
       { q: "Commercial use & ownership?", a: "You can download your generations. For commercial releases, always follow the model/provider terms and platform rules." },
       { q: "Do you generate full songs with vocals?", a: "Yes — Song Mode targets complete tracks with vocals, structure, hooks, and verses." },
       { q: "What’s Type Beat Mode?", a: "Producer-first controls (BPM, mood, tags) to quickly lock a clean bounce and iterate." },
       { q: "How fast is it?", a: "Most tracks generate in ~20 seconds depending on load and model." },
-      { q: "Can I download WAV?", a: "Yes — downloads are part of the core product and your library stores generations for replay." },
-    ],
-    [],
-  );
+      { q: "Can I download WAV?", a: "Yes — WAV export is available on Pro/Studio." },
+    ];
+  }, [locale]);
 
   const [faqOpen, setFaqOpen] = useState<number | null>(0);
 
@@ -443,14 +502,14 @@ export default function Landing() {
 
           <nav className="hidden items-center gap-3 sm:flex">
             <Link to="/pricing" className="text-sm font-semibold text-[#6b7280] hover:text-white">
-              Pricing
+              {locale === "fr" ? "Tarifs" : "Pricing"}
             </Link>
             {user ? (
               <Link
                 to="/dashboard"
                 className="inline-flex h-10 items-center justify-center rounded-full bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] px-6 text-sm font-semibold text-white shadow-[0_0_40px_rgba(124,58,237,0.25)] transition-all hover:brightness-110"
               >
-                Dashboard
+                {locale === "fr" ? "Dashboard" : "Dashboard"}
               </Link>
             ) : (
               <>
@@ -458,16 +517,38 @@ export default function Landing() {
                   to="/auth"
                   className="inline-flex h-10 items-center justify-center rounded-full border border-[#2d2d3d] bg-transparent px-5 text-sm font-semibold text-white transition-all hover:border-[#7c3aed]/60"
                 >
-                  Login
+                  {locale === "fr" ? "Connexion" : "Login"}
                 </Link>
                 <Link
                   to="/auth"
                   className="inline-flex h-10 items-center justify-center rounded-full bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] px-6 text-sm font-semibold text-white shadow-[0_0_40px_rgba(124,58,237,0.25)] transition-all hover:brightness-110"
                 >
-                  Start Free
+                  {locale === "fr" ? "Essayer gratuit" : "Start Free"}
                 </Link>
               </>
             )}
+            <div className="inline-flex items-center gap-1 rounded-full border border-[#2d2d3d] bg-[#0a0a0f] p-1">
+              <button
+                type="button"
+                onClick={() => setLocale("en")}
+                className={[
+                  "h-8 rounded-full px-3 text-xs font-semibold transition-colors",
+                  locale === "en" ? "bg-[#7c3aed] text-white" : "text-[#6b7280] hover:text-white",
+                ].join(" ")}
+              >
+                EN
+              </button>
+              <button
+                type="button"
+                onClick={() => setLocale("fr")}
+                className={[
+                  "h-8 rounded-full px-3 text-xs font-semibold transition-colors",
+                  locale === "fr" ? "bg-[#7c3aed] text-white" : "text-[#6b7280] hover:text-white",
+                ].join(" ")}
+              >
+                FR
+              </button>
+            </div>
           </nav>
 
           <button
@@ -484,22 +565,44 @@ export default function Landing() {
           <div className="border-t border-[#2d2d3d] bg-[rgba(10,10,15,0.92)] backdrop-blur-[12px] sm:hidden">
             <div className="mx-auto grid max-w-6xl gap-2 px-4 py-4">
               <Link to="/pricing" className="rounded-2xl border border-[#2d2d3d] bg-transparent px-4 py-3 text-sm font-semibold text-white" onClick={() => setMobileOpen(false)}>
-                Pricing
+                {locale === "fr" ? "Tarifs" : "Pricing"}
               </Link>
               {user ? (
                 <Link to="/dashboard" className="rounded-2xl bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] px-4 py-3 text-sm font-semibold text-white" onClick={() => setMobileOpen(false)}>
-                  Dashboard
+                  {locale === "fr" ? "Dashboard" : "Dashboard"}
                 </Link>
               ) : (
                 <>
                   <Link to="/auth" className="rounded-2xl border border-[#2d2d3d] bg-transparent px-4 py-3 text-sm font-semibold text-white" onClick={() => setMobileOpen(false)}>
-                    Login
+                    {locale === "fr" ? "Connexion" : "Login"}
                   </Link>
                   <Link to="/auth" className="rounded-2xl bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] px-4 py-3 text-sm font-semibold text-white" onClick={() => setMobileOpen(false)}>
-                    Start Free
+                    {locale === "fr" ? "Essayer gratuit" : "Start Free"}
                   </Link>
                 </>
               )}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLocale("en");
+                    setMobileOpen(false);
+                  }}
+                  className={`flex-1 rounded-2xl border border-[#2d2d3d] px-4 py-3 text-sm font-semibold ${locale === "en" ? "bg-[#7c3aed] text-white" : "bg-transparent text-white"}`}
+                >
+                  English
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLocale("fr");
+                    setMobileOpen(false);
+                  }}
+                  className={`flex-1 rounded-2xl border border-[#2d2d3d] px-4 py-3 text-sm font-semibold ${locale === "fr" ? "bg-[#7c3aed] text-white" : "bg-transparent text-white"}`}
+                >
+                  Français
+                </button>
+              </div>
             </div>
           </div>
         ) : null}
@@ -512,11 +615,22 @@ export default function Landing() {
               {heroBadge}
             </div>
             <div className="mt-8 text-balance text-[clamp(2.75rem,9vw,6rem)] font-extrabold leading-[0.95] tracking-tight text-white">
-              <div>Make music.</div>
-              <div className="text-[#7c3aed]">Like you mean it.</div>
+              {locale === "fr" ? (
+                <>
+                  <div>Crée de la musique.</div>
+                  <div className="text-[#7c3aed]">Comme il faut.</div>
+                </>
+              ) : (
+                <>
+                  <div>Make music.</div>
+                  <div className="text-[#7c3aed]">Like you mean it.</div>
+                </>
+              )}
             </div>
             <div className="mx-auto mt-6 max-w-xl text-balance text-[clamp(1rem,2vw,1.125rem)] text-[#6b7280]">
-              Generate full songs with vocals or producer-grade type beats. Describe your idea, get a track in seconds.
+              {locale === "fr"
+                ? "Génère des chansons complètes avec voix ou des type beats niveau pro. Décris ton idée, reçois un track en quelques secondes."
+                : "Generate full songs with vocals or producer-grade type beats. Describe your idea, get a track in seconds."}
             </div>
 
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -524,14 +638,14 @@ export default function Landing() {
                 to={user ? "/dashboard" : "/auth"}
                 className="inline-flex h-[54px] w-full items-center justify-center rounded-full bg-[#7c3aed] px-8 text-base font-semibold text-white transition-all hover:bg-[#6d28d9] sm:w-auto"
               >
-                {user ? "Go to Dashboard →" : "Start creating free"}
+                {user ? (locale === "fr" ? "Aller au Dashboard →" : "Go to Dashboard →") : locale === "fr" ? "Commencer gratuitement" : "Start creating free"}
               </Link>
               <button
                 type="button"
                 onClick={() => scrollTo("trending")}
                 className="inline-flex h-[54px] w-full items-center justify-center rounded-full border border-[#2d2d3d] bg-transparent px-8 text-base font-semibold text-white transition-all hover:border-[#7c3aed]/60 sm:w-auto"
               >
-                Hear examples ↓
+                {locale === "fr" ? "Écouter des exemples ↓" : "Hear examples ↓"}
               </button>
             </div>
 
@@ -541,7 +655,7 @@ export default function Landing() {
                   <div key={c} className={`h-7 w-7 rounded-full border border-[#0a0a0f] ${c}`} />
                 ))}
               </div>
-              <div>Join 10,000+ artists and producers</div>
+              <div>{locale === "fr" ? "Rejoins 10 000+ artistes et producteurs" : "Join 10,000+ artists and producers"}</div>
             </div>
           </div>
 
@@ -560,7 +674,7 @@ export default function Landing() {
                       mode === "song" ? "bg-[#7c3aed] text-white shadow-[0_0_30px_rgba(124,58,237,0.25)]" : "text-[#6b7280] hover:text-white",
                     ].join(" ")}
                   >
-                    Song Mode
+                    {locale === "fr" ? "Song Mode" : "Song Mode"}
                   </button>
                   <button
                     type="button"
@@ -570,13 +684,17 @@ export default function Landing() {
                       mode === "beat" ? "bg-[#7c3aed] text-white shadow-[0_0_30px_rgba(124,58,237,0.25)]" : "text-[#6b7280] hover:text-white",
                     ].join(" ")}
                   >
-                    Type Beat Mode
+                    {locale === "fr" ? "Type Beat Mode" : "Type Beat Mode"}
                   </button>
                 </div>
 
                 <div className="hidden items-center gap-2 text-xs font-semibold text-[#6b7280] sm:flex">
-                  <span className="rounded-full border border-[#2d2d3d] bg-[#0a0a0f] px-3 py-1">Press Enter to generate</span>
-                  <span className="rounded-full border border-[#2d2d3d] bg-[#0a0a0f] px-3 py-1">Try 1 free generation</span>
+                  <span className="rounded-full border border-[#2d2d3d] bg-[#0a0a0f] px-3 py-1">
+                    {locale === "fr" ? "Entrée pour générer" : "Press Enter to generate"}
+                  </span>
+                  <span className="rounded-full border border-[#2d2d3d] bg-[#0a0a0f] px-3 py-1">
+                    {locale === "fr" ? "1 génération gratuite" : "Try 1 free generation"}
+                  </span>
                 </div>
               </div>
 
@@ -623,11 +741,11 @@ export default function Landing() {
                   {mode === "beat" ? (
                     <div className="mt-4 grid gap-3 md:grid-cols-2">
                       <div className="rounded-2xl border border-[#2d2d3d] bg-[#111118] p-4">
-                        <div className="text-xs font-semibold text-[#6b7280]">Artist style (optional)</div>
+                        <div className="text-xs font-semibold text-[#6b7280]">{locale === "fr" ? "Style artiste (optionnel)" : "Artist style (optional)"}</div>
                         <input
                           value={beatArtist}
                           onChange={(e) => setBeatArtist(e.target.value)}
-                          placeholder="e.g. Drake, Travis Scott..."
+                          placeholder={locale === "fr" ? "ex: Drake, Travis Scott…" : "e.g. Drake, Travis Scott..."}
                           className="mt-2 h-10 w-full rounded-xl border border-[#2d2d3d] bg-[#0a0a0f] px-3 text-sm font-semibold text-white outline-none placeholder:text-[#6b7280] focus:border-[#7c3aed]/60"
                         />
                       </div>
@@ -646,7 +764,7 @@ export default function Landing() {
                         />
                       </div>
                       <div className="rounded-2xl border border-[#2d2d3d] bg-[#111118] p-4 md:col-span-2">
-                        <div className="text-xs font-semibold text-[#6b7280]">Mood</div>
+                        <div className="text-xs font-semibold text-[#6b7280]">{locale === "fr" ? "Mood" : "Mood"}</div>
                         <div className="mt-2 flex flex-wrap gap-2">
                           {["Trap", "Drill", "Afro", "RnB", "Jersey", "UK Garage"].map((g) => (
                             <button
@@ -690,19 +808,21 @@ export default function Landing() {
                     >
                       <span className="inline-flex items-center gap-2">
                         {generating ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : null}
-                        {generating ? "Generating…" : "Generate"}
+                        {generating ? (locale === "fr" ? "Génération…" : "Generating…") : locale === "fr" ? "Générer" : "Generate"}
                       </span>
                     </button>
-                    <div className="text-sm font-semibold text-[#6b7280]">No skills needed. Just describe your idea.</div>
+                    <div className="text-sm font-semibold text-[#6b7280]">
+                      {locale === "fr" ? "Aucune compétence requise. Décris juste ton idée." : "No skills needed. Just describe your idea."}
+                    </div>
                   </div>
                 </div>
 
                 <div className="rounded-2xl border border-[#2d2d3d] bg-[#111118] p-4 lg:col-span-2">
                   <div className="flex items-center justify-between gap-4">
-                    <div className="text-sm font-semibold text-white">Output preview</div>
+                    <div className="text-sm font-semibold text-white">{locale === "fr" ? "Aperçu" : "Output preview"}</div>
                     <div className="inline-flex items-center gap-2 text-xs font-semibold text-[#6b7280]">
                       <span className="h-2 w-2 animate-pulse rounded-full bg-[#7c3aed]" />
-                      Industry-ready
+                      {locale === "fr" ? "Prêt industrie" : "Industry-ready"}
                     </div>
                   </div>
                   <div className={`mt-4 h-40 rounded-2xl border border-[#2d2d3d] bg-gradient-to-tr ${coverGradient}`} />
@@ -714,7 +834,7 @@ export default function Landing() {
                     ))}
                   </div>
                   <div className="mt-4 text-sm font-semibold text-[#6b7280]">
-                    Clean mix. Strong bounce. Ready for your DAW or upload.
+                    {locale === "fr" ? "Mix clean. Bounce solide. Prêt pour ton DAW ou l’upload." : "Clean mix. Strong bounce. Ready for your DAW or upload."}
                   </div>
                 </div>
               </div>
@@ -725,16 +845,24 @@ export default function Landing() {
         <RevealSection className="mx-auto max-w-6xl px-4 py-24">
           <div className="text-center">
             <div className="text-balance text-[clamp(1.75rem,4vw,2.5rem)] font-bold tracking-tight text-white">
-              Everything you need to create.
+              {locale === "fr" ? "Tout pour créer." : "Everything you need to create."}
             </div>
           </div>
           <div className="mt-10 grid gap-4 md:grid-cols-2">
-            {[
-              { icon: "🎤", t: "Song Mode", d: "Full songs with vocals. Structure, hooks, verses. Ready to release." },
-              { icon: "🎹", t: "Type Beat Mode", d: "Producer-grade beats with controls for vibe, bounce, and fast iteration." },
-              { icon: "⚡", t: "Generate in seconds", d: "Around ~20 seconds per track. Keep what hits, regenerate the rest." },
-              { icon: "📁", t: "Build your catalog", d: "Save, download, organize. WAV exports ready for your DAW or Spotify." },
-            ].map((x) => (
+            {(locale === "fr"
+              ? [
+                  { icon: "🎤", t: "Song Mode", d: "Chansons complètes avec voix. Structure, hooks, couplets. Prêt release." },
+                  { icon: "🎹", t: "Type Beat Mode", d: "Type beats niveau pro avec contrôle du vibe et itération rapide." },
+                  { icon: "⚡", t: "Génère en secondes", d: "Autour de ~20 secondes par track. Garde ce qui hit, regen le reste." },
+                  { icon: "📁", t: "Construis ton catalogue", d: "Sauvegarde, télécharge, organise. Exports prêts pour ton DAW." },
+                ]
+              : [
+                  { icon: "🎤", t: "Song Mode", d: "Full songs with vocals. Structure, hooks, verses. Ready to release." },
+                  { icon: "🎹", t: "Type Beat Mode", d: "Producer-grade beats with controls for vibe, bounce, and fast iteration." },
+                  { icon: "⚡", t: "Generate in seconds", d: "Around ~20 seconds per track. Keep what hits, regenerate the rest." },
+                  { icon: "📁", t: "Build your catalog", d: "Save, download, organize. Exports ready for your DAW." },
+                ]
+            ).map((x) => (
               <div
                 key={x.t}
                 className="group relative overflow-hidden rounded-2xl border border-[#2d2d3d] bg-[#111118] p-6 transition-all hover:border-[#7c3aed]/50 hover:shadow-[0_0_70px_rgba(124,58,237,0.12)] before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-[#7c3aed] before:opacity-0 before:transition-opacity before:content-[''] hover:before:opacity-100"
@@ -750,16 +878,23 @@ export default function Landing() {
         <RevealSection className="mx-auto max-w-6xl px-4 py-24">
           <div className="rounded-2xl border border-[#2d2d3d] bg-[#111118] p-8">
             <div className="text-balance text-[clamp(1.75rem,3.2vw,2.25rem)] font-bold tracking-tight text-white">
-              Three steps. That’s it.
+              {locale === "fr" ? "3 étapes. C’est tout." : "Three steps. That’s it."}
             </div>
             <div className="relative mt-8">
               <div className="absolute left-10 right-10 top-5 hidden border-t border-dashed border-[#2d2d3d] md:block" />
               <div className="grid gap-6 md:grid-cols-3">
-                {[
-                  { n: "1", t: "Describe your sound", d: "Type a prompt or pick tags." },
-                  { n: "2", t: "AI generates in ~20 seconds", d: "Fast enough to stay in flow." },
-                  { n: "3", t: "Download and ship it", d: "Save to your library and keep moving.", note: "MP3 · WAV · Ready to upload" },
-                ].map((x) => (
+                {(locale === "fr"
+                  ? [
+                      { n: "1", t: "Décris ton son", d: "Écris un prompt ou choisis des tags." },
+                      { n: "2", t: "L’IA génère en ~20 secondes", d: "Assez rapide pour rester dans le flow." },
+                      { n: "3", t: "Télécharge et release", d: "Sauvegarde dans ta bibliothèque et avance.", note: "MP3 · WAV · Prêt DAW" },
+                    ]
+                  : [
+                      { n: "1", t: "Describe your sound", d: "Type a prompt or pick tags." },
+                      { n: "2", t: "AI generates in ~20 seconds", d: "Fast enough to stay in flow." },
+                      { n: "3", t: "Download and ship it", d: "Save to your library and keep moving.", note: "MP3 · WAV · Ready to upload" },
+                    ]
+                ).map((x) => (
                   <div key={x.n} className="relative rounded-2xl border border-[#2d2d3d] bg-[#0a0a0f] p-6">
                     <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#7c3aed] text-sm font-bold text-white shadow-[0_0_30px_rgba(124,58,237,0.25)]">
                       {x.n}
@@ -775,7 +910,9 @@ export default function Landing() {
         </RevealSection>
 
         <RevealSection id="trending" className="mx-auto max-w-6xl px-4 py-24">
-          <div className="text-balance text-[clamp(1.75rem,3.2vw,2.25rem)] font-bold tracking-tight text-white">What people are making</div>
+          <div className="text-balance text-[clamp(1.75rem,3.2vw,2.25rem)] font-bold tracking-tight text-white">
+            {locale === "fr" ? "Ce que les gens créent" : "What people are making"}
+          </div>
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             {trendingLoading
               ? [0, 1, 2].map((i) => (
@@ -818,7 +955,7 @@ export default function Landing() {
                       {t.createdAt && isNew(t.createdAt) ? (
                         <div className="absolute right-3 top-3 inline-flex items-center gap-2 rounded-full border border-[#2d2d3d] bg-[rgba(10,10,15,0.7)] px-3 py-1 text-[11px] font-semibold text-white">
                           <span className="h-2 w-2 rounded-full bg-[#22c55e]" />
-                          New
+                          {locale === "fr" ? "Nouveau" : "New"}
                         </div>
                       ) : null}
                     </div>
@@ -864,9 +1001,9 @@ export default function Landing() {
                         <button
                           type="button"
                           disabled
-                          title="Sign in to play"
+                          title={locale === "fr" ? "Aucun aperçu" : "No preview"}
                           className="inline-flex h-11 w-11 cursor-not-allowed items-center justify-center rounded-full border border-[#2d2d3d] bg-[#0a0a0f] text-sm font-bold text-white/50"
-                          aria-label="Sign in to play"
+                          aria-label={locale === "fr" ? "Aucun aperçu" : "No preview"}
                         >
                           –
                         </button>
@@ -879,7 +1016,9 @@ export default function Landing() {
 
         <RevealSection className="mx-auto max-w-6xl px-4 py-24">
           <div className="text-center">
-            <div className="text-balance text-[clamp(1.75rem,4vw,2.5rem)] font-bold tracking-tight text-white">Pricing</div>
+            <div className="text-balance text-[clamp(1.75rem,4vw,2.5rem)] font-bold tracking-tight text-white">
+              {locale === "fr" ? "Tarifs" : "Pricing"}
+            </div>
           </div>
           <div className="mt-10 grid gap-4 md:grid-cols-3">
             {pricing.map((p) => (
@@ -894,7 +1033,7 @@ export default function Landing() {
                   <div className="text-sm font-semibold text-white">{p.name}</div>
                   {p.featured ? (
                     <div className="rounded-full border border-[#7c3aed44] bg-[#7c3aed11] px-2 py-1 text-[11px] font-semibold text-[#a78bfa]">
-                      Most popular
+                      {locale === "fr" ? "Le plus populaire" : "Most popular"}
                     </div>
                   ) : null}
                 </div>
@@ -916,7 +1055,7 @@ export default function Landing() {
                       p.featured ? "bg-[#7c3aed] text-white hover:bg-[#6d28d9]" : "border border-[#2d2d3d] bg-transparent text-white hover:border-[#7c3aed]/60",
                     ].join(" ")}
                   >
-                    Start Free
+                    {locale === "fr" ? "Essayer gratuit" : "Start Free"}
                   </Link>
                 </div>
               </div>
@@ -930,16 +1069,18 @@ export default function Landing() {
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(124,58,237,0.09)_0%,transparent_70%)]" />
             </div>
             <div className="relative">
-              <div className="text-balance text-[clamp(2rem,4.2vw,3rem)] font-extrabold tracking-tight text-white">Your sound. Your rules.</div>
+              <div className="text-balance text-[clamp(2rem,4.2vw,3rem)] font-extrabold tracking-tight text-white">
+                {locale === "fr" ? "Ton son. Tes règles." : "Your sound. Your rules."}
+              </div>
               <div className="mt-3 text-balance text-[clamp(1rem,2vw,1.125rem)] font-semibold text-[#6b7280]">
-                Free to start. No credit card. No limits on ideas.
+                {locale === "fr" ? "Gratuit pour commencer. Pas de carte. Zéro limite d’idées." : "Free to start. No credit card. No limits on ideas."}
               </div>
               <div className="mt-8">
                 <Link
                   to="/auth"
                   className="inline-flex h-[54px] items-center justify-center rounded-full bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] px-8 text-base font-semibold text-white shadow-[0_0_90px_rgba(124,58,237,0.20)] transition-all hover:brightness-110"
                 >
-                  Make your first track free →
+                  {locale === "fr" ? "Fais ton premier track gratuit →" : "Make your first track free →"}
                 </Link>
               </div>
             </div>
@@ -981,10 +1122,19 @@ export default function Landing() {
             </div>
             <div className="flex items-center gap-4">
               <Link to="/pricing" className="hover:text-white">
-                Pricing
+                {locale === "fr" ? "Tarifs" : "Pricing"}
+              </Link>
+              <Link to="/legal#privacy" className="hover:text-white">
+                {locale === "fr" ? "Privacy" : "Privacy"}
+              </Link>
+              <Link to="/legal#terms" className="hover:text-white">
+                {locale === "fr" ? "Terms" : "Terms"}
+              </Link>
+              <Link to="/legal#contact" className="hover:text-white">
+                {locale === "fr" ? "Support" : "Support"}
               </Link>
               <Link to={user ? "/dashboard" : "/auth"} className="hover:text-white">
-                {user ? "Dashboard" : "Login"}
+                {user ? "Dashboard" : locale === "fr" ? "Connexion" : "Login"}
               </Link>
               <span>Powered by ACE-Step</span>
             </div>

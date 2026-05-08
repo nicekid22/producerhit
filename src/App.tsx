@@ -11,6 +11,7 @@ import Dashboard from "@/pages/Dashboard";
 import Library from "@/pages/Library";
 import Pricing from "@/pages/Pricing";
 import Settings from "@/pages/Settings";
+import Legal from "@/pages/Legal";
 import { AudioPlayer } from "@/components/AudioPlayer";
 
 export default function App() {
@@ -26,6 +27,7 @@ export default function App() {
                 <Route path="/home" element={<Navigate to="/" replace />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/pricing" element={<Pricing />} />
+                <Route path="/legal" element={<Legal />} />
 
                 <Route path="/dashboard" element={<Dashboard />} />
 

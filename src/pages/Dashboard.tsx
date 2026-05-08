@@ -525,6 +525,7 @@ export default function Dashboard() {
           : null,
         stemsUrl: null,
         isSaved: false,
+        isPublic: false,
       };
 
       try {
@@ -554,6 +555,7 @@ export default function Dashboard() {
             details: draft.details ?? null,
             stemsUrl: draft.stemsUrl,
             isSaved: false,
+            isPublic: false,
             createdAt: new Date().toISOString(),
           };
           setCurrent(temp, true);

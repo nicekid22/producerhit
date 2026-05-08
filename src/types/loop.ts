@@ -30,6 +30,7 @@ export type Loop = {
   details?: LoopDetails | null;
   stemsUrl?: Record<string, unknown> | null;
   isSaved: boolean;
+  isPublic: boolean;
   createdAt: string;
 };
 

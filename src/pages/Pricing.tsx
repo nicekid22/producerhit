@@ -5,34 +5,37 @@ import { Check, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuthStore } from "@/stores/authStore";
+import { useLocaleStore } from "@/stores/localeStore";
 
 export default function Pricing() {
   const user = useAuthStore((s) => s.user);
+  const locale = useLocaleStore((s) => s.locale);
+  const isFr = locale === "fr";
   const [searchParams, setSearchParams] = useSearchParams();
   const faqs = useMemo(
     () => [
       {
-        q: "Is Stripe active?",
-        a: "Oui. Tu peux upgrader via Stripe (checkout + portail de gestion).",
+        q: isFr ? "Stripe est actif ?" : "Is Stripe active?",
+        a: isFr ? "Oui. Tu peux upgrader via Stripe (checkout + portail de gestion)." : "Yes. You can upgrade via Stripe (checkout + customer portal).",
       },
       {
-        q: "Do you generate real audio?",
-        a: "Oui. Tu génères de l’audio (songs et beats) directement depuis l’app.",
+        q: isFr ? "Tu génères du vrai audio ?" : "Do you generate real audio?",
+        a: isFr ? "Oui. Tu génères de l’audio (songs et beats) directement depuis l’app." : "Yes. You generate audio (songs and beats) directly from the app.",
       },
       {
-        q: "Can I export stems?",
-        a: "Pas encore. L’export stems est prévu plus tard.",
+        q: isFr ? "Je peux exporter les stems ?" : "Can I export stems?",
+        a: isFr ? "Pas encore. L’export stems est prévu plus tard." : "Not yet. Stem export is planned later.",
       },
       {
-        q: "Is the library unlimited?",
-        a: "Tu peux sauvegarder tes générations dans ta bibliothèque et les rejouer quand tu veux.",
+        q: isFr ? "La bibliothèque est illimitée ?" : "Is the library unlimited?",
+        a: isFr ? "Tu peux sauvegarder tes générations dans ta bibliothèque et les rejouer quand tu veux." : "You can save generations in your library and replay them anytime.",
       },
       {
-        q: "Is there an API?",
-        a: "Plus tard. L’objectif est de proposer une API pour les utilisateurs avancés.",
+        q: isFr ? "Il y aura une API ?" : "Is there an API?",
+        a: isFr ? "Plus tard. L’objectif est de proposer une API pour les utilisateurs avancés." : "Later. The goal is to offer an API for advanced users.",
       },
     ],
-    [],
+    [isFr],
   );
   const [open, setOpen] = useState<number | null>(0);
   const [loading, setLoading] = useState<"pro" | "studio" | null>(null);
@@ -128,8 +131,8 @@ export default function Pricing() {
 
       <main className="mx-auto max-w-6xl px-4 py-14">
         <div className="rounded-[12px] border border-[#e5e7eb] bg-white p-8">
-          <h1 className="text-3xl font-bold tracking-tight">Pricing</h1>
-          <p className="mt-2 text-sm text-[#6b7280]">Start free. Upgrade anytime.</p>
+          <h1 className="text-3xl font-bold tracking-tight">{isFr ? "Tarifs" : "Pricing"}</h1>
+          <p className="mt-2 text-sm text-[#6b7280]">{isFr ? "Commence gratuit. Upgrade quand tu veux." : "Start free. Upgrade anytime."}</p>
         </div>
 
         <div className="mt-8 grid gap-4 md:grid-cols-3">
@@ -138,20 +141,20 @@ export default function Pricing() {
             <div className="mt-3 text-3xl font-semibold">$0</div>
             <ul className="mt-5 space-y-2 text-sm text-[#6b7280]">
               <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-[#6d28d9]" /> 3 generations / month
+                <Check className="h-4 w-4 text-[#6d28d9]" /> {isFr ? "3 générations / mois" : "3 generations / month"}
               </li>
               <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-[#6d28d9]" /> Song + beat modes
+                <Check className="h-4 w-4 text-[#6d28d9]" /> {isFr ? "Song + Beat modes" : "Song + beat modes"}
               </li>
               <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-[#6d28d9]" /> Library + player
+                <Check className="h-4 w-4 text-[#6d28d9]" /> {isFr ? "Bibliothèque + player" : "Library + player"}
               </li>
             </ul>
             <Link
               to="/auth"
               className="mt-6 inline-flex w-full justify-center rounded-[12px] border border-[#e5e7eb] bg-white px-4 py-2 text-sm font-semibold hover:bg-[#f8f7ff]"
             >
-              Get Started
+              {isFr ? "Commencer" : "Get Started"}
             </Link>
           </div>
 
@@ -163,19 +166,19 @@ export default function Pricing() {
             <div className="mt-3 text-3xl font-semibold">$10</div>
             <ul className="mt-5 space-y-2 text-sm text-[#6b7280]">
               <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-[#6d28d9]" /> 75 generations / month
+                <Check className="h-4 w-4 text-[#6d28d9]" /> {isFr ? "75 générations / mois" : "75 generations / month"}
               </li>
               <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-[#6d28d9]" /> AI writes or manual lyrics
+                <Check className="h-4 w-4 text-[#6d28d9]" /> {isFr ? "Lyrics IA ou manuel" : "AI writes or manual lyrics"}
               </li>
               <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-[#6d28d9]" /> Vocal styles
+                <Check className="h-4 w-4 text-[#6d28d9]" /> {isFr ? "Styles vocaux" : "Vocal styles"}
               </li>
               <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-[#6d28d9]" /> Variations
+                <Check className="h-4 w-4 text-[#6d28d9]" /> {isFr ? "Variations" : "Variations"}
               </li>
               <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-[#6d28d9]" /> Built for iteration
+                <Check className="h-4 w-4 text-[#6d28d9]" /> {isFr ? "Conçu pour itérer" : "Built for iteration"}
               </li>
             </ul>
             <button
@@ -185,7 +188,7 @@ export default function Pricing() {
               className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-[12px] bg-[#6d28d9] px-4 py-2 text-sm font-semibold text-white hover:bg-[#5b21b6] disabled:opacity-70"
             >
               {loading === "pro" ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              Upgrade to Pro
+              {isFr ? "Passer Pro" : "Upgrade to Pro"}
             </button>
           </div>
 
@@ -194,19 +197,19 @@ export default function Pricing() {
             <div className="mt-3 text-3xl font-semibold">$30</div>
             <ul className="mt-5 space-y-2 text-sm text-[#6b7280]">
               <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-[#6d28d9]" /> 250 generations / month
+                <Check className="h-4 w-4 text-[#6d28d9]" /> {isFr ? "250 générations / mois" : "250 generations / month"}
               </li>
               <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-[#6d28d9]" /> Everything in Pro
+                <Check className="h-4 w-4 text-[#6d28d9]" /> {isFr ? "Tout Pro inclus" : "Everything in Pro"}
               </li>
               <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-[#6d28d9]" /> Built for power users
+                <Check className="h-4 w-4 text-[#6d28d9]" /> {isFr ? "Conçu pour power users" : "Built for power users"}
               </li>
               <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-[#6d28d9]" /> More room for iteration
+                <Check className="h-4 w-4 text-[#6d28d9]" /> {isFr ? "Plus de marge pour itérer" : "More room for iteration"}
               </li>
               <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-[#6d28d9]" /> Higher monthly limits
+                <Check className="h-4 w-4 text-[#6d28d9]" /> {isFr ? "Limites mensuelles plus hautes" : "Higher monthly limits"}
               </li>
             </ul>
             <button
@@ -216,13 +219,13 @@ export default function Pricing() {
               className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-[12px] border border-[#e5e7eb] bg-white px-4 py-2 text-sm font-semibold hover:bg-[#f8f7ff] disabled:opacity-70"
             >
               {loading === "studio" ? <Loader2 className="h-4 w-4 animate-spin text-[#6d28d9]" /> : null}
-              Upgrade to Studio
+              {isFr ? "Passer Studio" : "Upgrade to Studio"}
             </button>
           </div>
         </div>
 
         <section className="mt-14">
-          <h2 className="text-xl font-semibold">FAQ</h2>
+          <h2 className="text-xl font-semibold">{isFr ? "FAQ" : "FAQ"}</h2>
           <div className="mt-5 grid gap-3">
             {faqs.map((f, i) => {
               const isOpen = open === i;
