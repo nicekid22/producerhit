@@ -25,6 +25,7 @@ function formatTime(sec: number) {
 }
 
 const genreOptions: DropdownOption[] = [
+  { group: "Trap / Hip-Hop", value: "Contemporary Rap", label: "Contemporary Rap" },
   { group: "Trap / Hip-Hop", value: "Dark Trap", label: "Dark Trap" },
   { group: "Trap / Hip-Hop", value: "Melodic Trap", label: "Melodic Trap" },
   { group: "Trap / Hip-Hop", value: "Old School Hip-Hop", label: "Old School (Boom Bap)" },
@@ -38,10 +39,12 @@ const genreOptions: DropdownOption[] = [
   { group: "Afro / Latin / Island", value: "Reggaeton", label: "Reggaeton" },
   { group: "Afro / Latin / Island", value: "Baile Funk", label: "Baile Funk" },
   { group: "Afro / Latin / Island", value: "Dancehall", label: "Dancehall" },
+  { group: "Electronic / Pop", value: "House", label: "House" },
   { group: "Electronic / Pop", value: "Pop", label: "Pop" },
   { group: "Electronic / Pop", value: "UK Garage", label: "UK Garage" },
   { group: "Electronic / Pop", value: "Jersey Club", label: "Jersey Club" },
   { group: "Electronic / Pop", value: "Hyperpop", label: "Hyperpop" },
+  { group: "Other", value: "Country", label: "Country" },
   { group: "Other", value: "Lo-fi R&B", label: "Lo-fi R&B" },
 ];
 
@@ -97,6 +100,7 @@ const vocalStyleOptions = [
 ] as const;
 
 const genreInspirationChips: Record<string, readonly string[]> = {
+  "Contemporary Rap": ["Hard Drums", "808/Sub", "Minimal Melody", "Bouncy Hats", "Ear Candy", "Modern"],
   "90s R&B": ["Live Keys", "Rhodes", "Soulful Chords", "Swinging Drums", "Warm Tape", "Smooth Groove"],
   Trapsoul: ["Smooth 808", "Half-time", "Dark Pads", "Tight Hats", "Woozy Melody", "Emotional"],
   "Neo Soul": ["Jazzy Chords", "Organic Feel", "Laid-back", "Live Bass", "Soulful", "Warm"],
@@ -104,6 +108,7 @@ const genreInspirationChips: Record<string, readonly string[]> = {
   "UK Drill": ["Dark Melody", "Sliding 808", "Off-beat Hats", "Aggressive", "Minor Key", "Street"],
   Afrobeats: ["Percussion Heavy", "Bright Guitar", "Danceable", "West African", "Rhythmic", "Uplifting"],
   Amapiano: ["Log Drum", "Deep Bass", "Piano Keys", "Shuffle", "South African", "Smooth", "Shakers"],
+  House: ["4-on-the-floor", "Groovy Bass", "Chord Stabs", "Hi-hats", "Uplifting", "Club"],
   Pop: ["Catchy", "Bright", "Commercial", "Modern", "Upbeat", "Radio-ready"],
   "UK Garage": ["2-Step", "Syncopated", "Bouncy Bass", "Swing", "Vocal Chops", "London Vibe"],
   "Jersey Club": ["Fast Kicks", "Club Bounce", "Chopped Vocals", "Bed Squeak", "High Energy"],
@@ -111,6 +116,7 @@ const genreInspirationChips: Record<string, readonly string[]> = {
   "Baile Funk": ["Brazilian", "Heavy Percussion", "Street", "Rio", "Energetic", "Dance"],
   Afrotrap: ["Hybrid Drums", "Aggressive Afro", "Heavy 808", "Rhythmic", "High Energy"],
   Dancehall: ["Island Vibe", "Club Energy", "Heavy Bass", "Rhythmic", "Tropical", "Summer"],
+  Country: ["Acoustic Guitar", "Live Drums", "Warm Bass", "Lead Guitar", "Anthemic", "Emotional"],
 };
 
 const defaultInspirationChips = ["Dark", "Melodic", "Emotional", "Hard", "Smooth", "Atmospheric"] as const;

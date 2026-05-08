@@ -157,48 +157,55 @@ export function buildRichPrompt(params: GenerateParams, isSong: boolean = false)
 
   const beatGenreMap: Record<string, string> = {
     Trapsoul:
-      "Trapsoul instrumental beat: soft melodic piano loop, warm R&B chords, smooth 808 bass slides, atmospheric reverb pads, crisp hats with gentle rolls, dark romantic trap-soul production. No vocals.",
+      "A smooth, emotional trap soul instrumental built around a soft melodic piano loop with warm reverb. The 808 bass slides gently beneath atmospheric synth pads, while crisp hi-hats and a laid-back trap drum pattern create a dark romantic groove. The production is polished and cinematic, evoking late-night introspection.",
     "Dark Trap":
-      "Dark trap instrumental: heavy distorted 808 sub-bass, sinister minor-key synth/piano stabs, aggressive layered snare/clap, fast trap hi-hat patterns, dark cinematic pads and risers. No vocals.",
+      "A menacing dark trap instrumental driven by a heavy distorted 808 sub bass that shakes the low end. A sinister minor key synth stab cuts through over aggressive layered snares and fast trap hi-hat patterns. The atmosphere is cold and cinematic, with dark pads building tension throughout. No vocals, pure instrumental.",
     "Melodic Trap":
-      "Melodic trap instrumental beat: emotional chord progression, bright euphoric lead synth or piano melody, stacked atmospheric pads, punchy trap drums, rolling hi-hats, clean 808 movement. No vocals.",
-    "Old School Hip-Hop":
-      "A classic old-school hip-hop / boom bap instrumental built around a chopped sample loop. Use dusty but punchy drums with swing, subtle scratches, and a warm bassline that follows the sample movement.",
+      "A euphoric melodic trap instrumental centered around a bright, emotional synth lead melody layered over stacked atmospheric pads. The production features punchy trap drums with rolling hi-hats and a clean chord progression that builds energy. The sound is modern and uplifting, designed for melodic rap production",
     Drill:
-      "Chicago drill instrumental beat: dark minor-key piano melody, deep sliding 808 bass, crisp snare, fast triplet hi-hats, cold aggressive energy, gritty modern sound design. No vocals.",
+      "An authentic Chicago USA drill instrumental featuring fast triplet hi-hat patterns over a deep sliding 808 bass. A dark minor key piano melody runs throughout, supported by crisp snare hits and a cold, aggressive drum pattern. The energy is intense and street-level, with a menacing low-end presence.",
     "UK Drill":
-      "UK drill instrumental beat: dark chromatic sliding piano motif, heavy cold 808 bass, crisp snare hits, fast hi-hats, tight London street drill groove. No vocals.",
+      "A cold UK drill instrumental built around a dark chromatic piano melody that slides through minor intervals. The heavy 808 bass hits hard on each drop while crisp snare hits and fast hi-hats maintain the aggressive London street energy. The production is minimal and threatening throughout.",
     "NY Drill":
-      "New York drill instrumental beat: aggressive dark piano stab loop, heavy 808 bass drops, punchy snare, high energy Brooklyn drill sound with tight transitions. No vocals.",
+      "A hard New York drill instrumental driven by an aggressive dark piano stab loop. Heavy 808 bass drops punctuate the beat while a punchy snare and sharp hi-hats maintain the high energy Brooklyn drill sound. The atmosphere is cold and unrelenting from start to finish. No vocals.",
     "90s R&B":
-      "Classic 90s R&B instrumental beat: warm Rhodes electric piano chords, smooth bass guitar groove, New Jack Swing drum pattern, soulful nostalgic production. No vocals.",
+      "A classic 90s R&B instrumental built around warm Rhodes electric piano chords with a smooth bass guitar groove underneath. The drum pattern draws from New Jack Swing with a swinging rhythm section, creating a soulful and nostalgic production feel. The arrangement breathes and flows naturally throughout. No vocals.",
     "Neo Soul":
-      "Neo soul instrumental beat: live Rhodes electric piano, warm upright bass groove, brushed jazz drums, jazzy chord voicings, organic soulful texture. No vocals.",
+      "An organic neo soul instrumental featuring a live Rhodes electric piano with warm, jazz-influenced chord voicings. A warm upright bass provides the groove beneath brushed jazz drums playing with a laid-back feel. The texture is natural and earthy, evoking classic D'Angelo and Erykah Badu era production. No vocals.",
     "Contemporary R&B":
-      "Modern R&B instrumental beat: polished synth pad chords, warm melodic piano, clean 808 bass, crisp hi-hats, cinematic modern production. No vocals.",
+      "A polished modern R&B instrumental built around warm synth pad chords and a clean 808 bass. Crisp hi-hats and a melodic piano line run throughout the arrangement, supported by subtle atmospheric layers. The production is refined and radio-ready with a cinematic quality. No vocals.",
     "Lo-fi R&B":
-      "Lo-fi R&B instrumental beat: warm vinyl crackle, dusty sampled drum loop, mellow jazz piano chords, soft bass, cozy relaxed bedroom sound. No vocals.",
+      "A cozy lo-fi R&B instrumental with warm vinyl crackle texture running throughout. A dusty sampled drum loop provides the relaxed groove beneath mellow jazz piano chords and a soft bass. The bedroom production aesthetic creates a nostalgic and intimate atmosphere perfect for late night listening. No vocals.",
     Afrobeats:
-      "Afrobeats instrumental beat: percussion-driven rhythm, talking drum patterns, shakers and congas, uplifting guitar or synth melody, warm bass guitar, West African groove. No vocals.",
+      "A vibrant afrobeats instrumental driven by a percussion-heavy rhythm section featuring talking drum patterns, shakers, and congas. An uplifting melodic guitar line carries the main theme over a warm bass guitar groove. The energy is infectious and danceable throughout, drawing from West African musical traditions. No vocals.",
     Amapiano:
-      "Amapiano instrumental beat: deep resonant log drum bassline, jazzy piano chord stabs, rhythmic shaker patterns, deep house groove, South African sound. No vocals.",
+      "A deep South African amapiano instrumental anchored by a resonant log drum bassline that defines the low end. Jazzy piano chord stabs accent the groove while rhythmic shaker patterns and a deep house drum pattern create the characteristic amapiano bounce. The atmosphere is soulful and hypnotic. No vocals.",
     Reggaeton:
-      "Reggaeton instrumental beat: dembow kick and snare pattern, heavy sub bass, catchy synth melody, Latin urban rhythm section, perreo club energy. No vocals.",
+      "A modern reggaeton instrumental built on the classic dembow kick and snare pattern with a heavy sub bass underneath. A melodic synth line carries the main theme over the Latin urban rhythm section, creating high energy perfect for perreo. The production is polished and club-ready throughout.",
     "Latin Trap":
-      "Latin trap instrumental beat: heavy 808 bass, melodic synth lead, trap drum pattern with Latin percussion accents, urban Latin street sound. No vocals.",
+      "A Latin trap instrumental combining heavy 808 bass drops with a melodic synth lead over a trap drum pattern accented with Latin percussion. The sound merges street trap aggression with urban Latin flavor, creating a bilingual crossover energy throughout the arrangement.",
     "Jersey Club":
-      "Jersey club instrumental beat: fast ~140 BPM bouncy groove, rolling kick repeats, syncopated snare/clap, pitched vocal chop stabs, high-energy club bounce. No vocals.",
-    Pop: "A modern pop instrumental: bright synths, clean drums, catchy melodic hook, and polished radio-ready mix. Keep it energetic and uplifting.",
+      "A high energy Jersey club instrumental running at fast 140 BPM with a bouncy four-on-the-floor kick pattern. Syncopated snare hits and a pitched vocal chop sample accent the groove while the rhythm maintains constant club bounce energy. The production is tight and relentless from start to finish.",
+    Pop:
+      "A polished modern pop instrumental built around a catchy synth lead melody over a punchy drum machine beat. A bright chord progression drives the arrangement forward with a commercial radio-ready sound. The production is clean and energetic, designed for maximum mainstream appeal. No vocals.",
     "UK Garage":
-      "UK garage instrumental beat: 2-step swingy drum pattern, deep bouncy bassline, pitched chord stabs, syncopated groove, London underground sound. No vocals.",
-    "Hyperpop":
-      "Hyperpop instrumental beat: glitchy distorted synth bass, pitched percussion, chaotic hi-hat patterns, hyper-compressed production, futuristic digital sound. No vocals.",
+      "A classic UK garage instrumental featuring a 2-step swingy drum pattern with a deep bouncy bassline underneath. Pitched chord stabs accent the syncopated groove while the overall arrangement captures the authentic London underground sound. The energy swings naturally throughout with a soulful feel.",
+    Hyperpop:
+      "A chaotic hyperpop instrumental driven by glitchy distorted synth bass and pitched percussion hits. Rapid hi-hat patterns and hyper-compressed production elements create a futuristic digital soundscape with maximum energy. The arrangement is dense and unpredictable, drawing from PC Music aesthetics.",
     "Baile Funk":
-      "Baile funk instrumental beat: heavy Miami bass kick, fast percussive breaks, short synth riff, favela Rio street energy, aggressive rhythm section. No vocals.",
+      "A heavy Brazilian baile funk instrumental built around a Miami bass-influenced kick drum pattern. Fast percussive breaks and an aggressive synth riff drive the energy while the rhythm section captures the raw street power of Rio de Janeiro favela sound. The production is uncompromising and physical.",
     Afrotrap:
-      "Afrotrap instrumental beat: afrobeats talking drum and shaker groove, heavy trap 808 bass, melodic West African synth lead, fusion bounce and energy. No vocals.",
+      "A fusion afrotrap instrumental combining afrobeats talking drum and shaker grooves with heavy trap 808 bass drops. A melodic West African-influenced synth lead carries the main theme while trap drums and African percussion create a high energy cross-cultural sound throughout.",
     Dancehall:
-      "Dancehall instrumental riddim: bouncy Caribbean rhythm pattern, heavy sub bass, melodic synth stabs, island groove, Jamaican sound system energy with clean modern drums. No vocals.",
+      "A rhythmic Jamaican dancehall instrumental built around a bouncy Caribbean riddim pattern with a heavy sub bass foundation. A melodic synth stab accents the groove while the island rhythm section creates authentic sound system energy throughout the arrangement.",
+    "Old School Hip-Hop":
+      "A classic boom bap instrumental built around chopped soul or jazz samples with warm vinyl texture. Dusty but punchy drums swing with an MPC-style groove, supported by a thick bassline and subtle scratches. Keep it raw and musical with tasteful sample flips. No vocals.",
+    "Contemporary Rap":
+      "A modern contemporary rap instrumental with hard punchy drums, clean sub/808 low end, and a minimal melodic motif that leaves space for an artist. Use crisp hi-hats, tight snare hits, and subtle ear-candy transitions for a radio-ready 2026 sound. No vocals.",
+    Country:
+      "A modern country instrumental built around bright acoustic guitar strumming and melodic lead guitar lines, with a warm bass and live-sounding drums. Add tasteful pedal steel or fiddle textures for emotion, keeping the groove steady and anthemic. No vocals.",
+    House:
+      "A modern house instrumental built on a steady four-on-the-floor kick with a groovy bassline and bright chord stabs. Add crisp hi-hats, subtle percussion, and uplifting synth layers for a club-ready feel with clean modern production. No vocals.",
   };
 
   const genre = (isSong ? songGenreMap[params.genre] : beatGenreMap[params.genre] ?? genreMap[params.genre]) ?? params.genre;
@@ -236,20 +243,8 @@ export function buildRichPrompt(params: GenerateParams, isSong: boolean = false)
         : "bouncy rhythm";
 
   if (!isSong) {
-    const isOldSchool = params.genre === "Old School Hip-Hop";
-    const isTrapFamily =
-      /trap/i.test(params.genre) || /drill/i.test(params.genre) || params.genre === "Afrotrap" || params.genre === "Trapsoul";
-
     const extra = params.prompt?.trim();
-    const description = beatGenreMap[params.genre]
-      ? beatGenreMap[params.genre]
-      : isOldSchool
-        ? "A classic old-school hip-hop / boom bap instrumental built around a chopped sample loop. Use dusty but punchy drums with swing, subtle scratches, and a warm bassline that follows the sample movement."
-        : isTrapFamily
-          ? "A modern trap instrumental with a sparse minor-key motif, heavy 808 movement, and crisp modern drums. Keep it hypnotic with small drum variations and clean space for an artist."
-          : fingerprint
-            ? `A modern ${params.genre} instrumental. Include these defining elements: ${fingerprint}.`
-            : `A modern ${params.genre} instrumental.`;
+    const description = beatGenreMap[params.genre] ?? `A modern ${params.genre} instrumental.`;
 
     const moodEnergyText =
       params.mood || params.energyLevel ? `Vibe: ${[params.mood || "", params.energyLevel || ""].filter(Boolean).join(" / ")}.` : "";
@@ -265,13 +260,8 @@ export function buildRichPrompt(params: GenerateParams, isSong: boolean = false)
     const reverbText = params.reverb ? `Space: ${params.reverb}.` : "";
     const extraText = extra ? `Extra direction: ${extra}.` : "";
 
-    const constraints = isOldSchool
-      ? "No intelligible lyrics or spoken words. Scratches and chopped vocal one-shots are OK."
-      : "No full rapped verses or lead singing. Keep it instrumental; vocal chops are OK.";
-
     return clean(
       [
-        `Modern 2026 ${params.genre} instrumental type beat.`,
         description,
         moodEnergyText,
         bpmText,
@@ -281,7 +271,6 @@ export function buildRichPrompt(params: GenerateParams, isSong: boolean = false)
         influenceText,
         reverbText,
         extraText,
-        constraints,
       ]
         .filter(Boolean)
         .join(" "),
@@ -310,8 +299,9 @@ export function buildRichPrompt(params: GenerateParams, isSong: boolean = false)
 export function buildSonautoTags(params: GenerateParams) {
   const byGenre: Record<string, string[]> = {
     Trapsoul: ["r&b/soul", "trap", "melodic", "2020s"],
-    "Dark Trap hip hop": ["trap", "dark", "2020s"],
+    "Dark Trap": ["trap", "dark", "2020s"],
     "Melodic Trap": ["trap", "melodic", "energetic", "2020s"],
+    "Contemporary Rap": ["hip-hop/rap", "rhythmic", "2020s"],
     "Old School Hip-Hop": ["hip-hop/rap", "rhythmic", "1990s"],
     Drill: ["hip-hop/rap", "aggressive", "dark", "2020s"],
     "UK Drill": ["hip-hop/rap", "dark", "2020s"],
@@ -323,6 +313,7 @@ export function buildSonautoTags(params: GenerateParams) {
     Afrobeats: ["african", "dance", "2020s"],
     "Afro-drill": ["african", "hip-hop/rap", "dark", "2020s"],
     Amapiano: ["african", "house", "2020s"],
+    House: ["house", "dance", "2020s"],
     Reggaeton: ["latin", "dance", "2020s"],
     "Latin Trap": ["latin", "trap", "2020s"],
     "Jersey Club": ["dance", "energetic", "2020s"],
