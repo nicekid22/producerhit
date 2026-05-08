@@ -398,7 +398,7 @@ export default function Dashboard() {
     ? !songIsCustom || (songTempoMode === "auto" && songKeyMode === "auto")
     : !advancedOpen || (beatTempoMode === "auto" && beatKeyMode === "auto");
 
-  const detectedLang = isSong ? (songIsCustom && songVocalLanguageMode === "manual" ? manualVocalLanguage : (lyricsMode === "manual" ? detectLanguage(lyrics) : "en")) : "en";
+  const detectedLang = isSong ? (songVocalLanguageMode === "manual" ? manualVocalLanguage : (lyricsMode === "manual" ? detectLanguage(lyrics) : "en")) : "en";
   const songLyrics = isSong ? (lyricsMode === "manual" ? lyrics : "") : "";
   const songDurationMax = 240;
   const manualSongDurationRaw = songIsCustom && songDurationMode === "manual" ? songDurationSec : undefined;
@@ -1139,6 +1139,21 @@ export default function Dashboard() {
                       disabled={generating}
                     />
 
+                    <Dropdown
+                      label="Vocal Language"
+                      value={songVocalLanguageMode === "auto" ? "auto" : manualVocalLanguage}
+                      onChange={(v) => {
+                        if (v === "auto") {
+                          setSongVocalLanguageMode("auto");
+                        } else {
+                          setSongVocalLanguageMode("manual");
+                          setManualVocalLanguage(v);
+                        }
+                      }}
+                      options={[{ value: "auto", label: "🌐 Auto" }, ...vocalLanguageOptions]}
+                      disabled={generating}
+                    />
+
                     <div>
                       <div className="text-xs text-pk-muted">Vocal Style</div>
                       <div className="mt-2 flex flex-wrap gap-2">
@@ -1542,43 +1557,6 @@ export default function Dashboard() {
                           </div>
                         ) : (
                           <div className="text-[10px] text-pk-muted italic">The AI picks the signature.</div>
-                        )}
-                      </div>
-
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="text-xs text-pk-muted">Vocal Language</div>
-                          <div className="flex bg-pk-bg rounded-full p-0.5 border border-pk-border">
-                            <button
-                              type="button"
-                              onClick={() => setSongVocalLanguageMode("auto")}
-                              className={`rounded-full px-2 py-0.5 text-[10px] transition-colors ${
-                                songVocalLanguageMode === "auto" ? "bg-pk-accent text-white" : "text-pk-muted"
-                              }`}
-                            >
-                              Auto
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setSongVocalLanguageMode("manual")}
-                              className={`rounded-full px-2 py-0.5 text-[10px] transition-colors ${
-                                songVocalLanguageMode === "manual" ? "bg-pk-accent text-white" : "text-pk-muted"
-                              }`}
-                            >
-                              Man
-                            </button>
-                          </div>
-                        </div>
-                        {songVocalLanguageMode === "manual" ? (
-                          <Dropdown
-                            label=""
-                            value={manualVocalLanguage}
-                            onChange={(v) => setManualVocalLanguage(v)}
-                            options={vocalLanguageOptions}
-                            disabled={generating}
-                          />
-                        ) : (
-                          <div className="text-[10px] text-pk-muted italic">The AI detects from lyrics.</div>
                         )}
                       </div>
 
