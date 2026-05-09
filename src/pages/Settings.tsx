@@ -8,11 +8,14 @@ import { PLAN_LIMITS, getRemainingBeats } from "@/lib/planLimits";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
+import { useLocaleStore } from "@/stores/localeStore";
 
 export default function Settings() {
   const user = useAuthStore((s) => s.user);
   const signOut = useAuthStore((s) => s.signOut);
   const resetPassword = useAuthStore((s) => s.resetPassword);
+  const locale = useLocaleStore((s) => s.locale);
+  const isFr = locale === "fr";
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -62,15 +65,17 @@ export default function Settings() {
       left={
         <div className="h-full bg-pk-panel">
           <div className="border-b border-pk-border p-4">
-            <div className="text-sm font-semibold">Settings</div>
-            <div className="mt-2 text-sm text-pk-muted">Profile, plan, and account controls.</div>
+            <div className="text-sm font-semibold">{isFr ? "Paramètres" : "Settings"}</div>
+            <div className="mt-2 text-sm text-pk-muted">
+              {isFr ? "Profil, plan et contrôle du compte." : "Profile, plan, and account controls."}
+            </div>
           </div>
           <div className="p-4">
-            <div className="text-sm font-semibold">Current plan</div>
+            <div className="text-sm font-semibold">{isFr ? "Plan actuel" : "Current plan"}</div>
             <div className="mt-2 flex items-center gap-2 text-sm text-pk-muted">
               <Badge variant="muted">{plan}</Badge>
               <span>
-                {usedThisMonth} / {limit} used
+                {isFr ? `${usedThisMonth} / ${limit} utilisés` : `${usedThisMonth} / ${limit} used`}
               </span>
             </div>
             <div className="mt-3 h-2 w-full rounded-full bg-black/30">
@@ -78,10 +83,12 @@ export default function Settings() {
             </div>
             <div className="mt-3 flex items-center justify-between text-xs text-pk-muted">
               <span>
-                {remaining} beat{remaining !== 1 ? "s" : ""} remaining this month
+                {isFr
+                  ? `${remaining} génération${remaining !== 1 ? "s" : ""} restante${remaining !== 1 ? "s" : ""} ce mois-ci`
+                  : `${remaining} beat${remaining !== 1 ? "s" : ""} remaining this month`}
               </span>
               <Link to="/pricing" className="text-[#7c3aed] hover:underline">
-                Upgrade Plan
+                {isFr ? "Upgrade" : "Upgrade Plan"}
               </Link>
             </div>
           </div>
@@ -91,16 +98,16 @@ export default function Settings() {
       <div className="h-full px-4 pb-36 pt-6 md:pb-24">
         <div className="grid gap-4">
           <div className="rounded-pk border border-pk-border bg-pk-panel p-6">
-            <div className="text-lg font-semibold">Profile</div>
+            <div className="text-lg font-semibold">{isFr ? "Profil" : "Profile"}</div>
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               <div>
-                <div className="text-xs text-pk-muted">Username</div>
+                <div className="text-xs text-pk-muted">{isFr ? "Nom" : "Username"}</div>
                 <input
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   disabled={loading || saving}
                   className="mt-2 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2 text-sm outline-none focus:border-pk-accent"
-                  placeholder="Your name"
+                  placeholder={isFr ? "Ton nom" : "Your name"}
                 />
               </div>
               <div>
@@ -122,7 +129,7 @@ export default function Settings() {
                   try {
                     const { error } = await supabase.from("profiles").update({ username }).eq("id", user.id);
                     if (error) throw error;
-                    toast.success("Saved");
+                    toast.success(isFr ? "Sauvegardé" : "Saved");
                   } catch (err) {
                     const message = err instanceof Error ? err.message : "Save failed";
                     toast.error(message);
@@ -131,19 +138,19 @@ export default function Settings() {
                   }
                 }}
               >
-                Save
+                {isFr ? "Sauvegarder" : "Save"}
               </Button>
             </div>
           </div>
 
           <div className="rounded-pk border border-pk-border bg-pk-panel p-6">
-            <div className="text-lg font-semibold">Plan</div>
+            <div className="text-lg font-semibold">{isFr ? "Plan" : "Plan"}</div>
             <div className="mt-2 text-sm text-pk-muted">
-              <span className="mr-2">Current:</span>
+              <span className="mr-2">{isFr ? "Actuel :" : "Current:"}</span>
               <Badge variant="muted">{plan}</Badge>
             </div>
             <div className="mt-4 text-sm text-pk-muted">
-              Beats used this month:{" "}
+              {isFr ? "Générations utilisées ce mois-ci : " : "Beats used this month: "}
               <span className="text-pk-text">
                 {usedThisMonth} / {limit}
               </span>
@@ -154,7 +161,7 @@ export default function Settings() {
             <div className="mt-4">
               <div className="flex flex-wrap gap-2">
                 <Link to="/pricing">
-                  <Button variant="secondary">Upgrade Plan</Button>
+                  <Button variant="secondary">{isFr ? "Upgrade" : "Upgrade Plan"}</Button>
                 </Link>
                 {plan !== "free" ? (
                   <Button
@@ -178,7 +185,7 @@ export default function Settings() {
                       }
                     }}
                   >
-                    {portalLoading ? "Loading…" : "Manage subscription"}
+                    {portalLoading ? (isFr ? "Chargement…" : "Loading…") : isFr ? "Gérer l’abonnement" : "Manage subscription"}
                   </Button>
                 ) : null}
               </div>
@@ -186,7 +193,7 @@ export default function Settings() {
           </div>
 
           <div className="rounded-pk border border-pk-border bg-pk-panel p-6">
-            <div className="text-lg font-semibold">Account</div>
+            <div className="text-lg font-semibold">{isFr ? "Compte" : "Account"}</div>
             <div className="mt-4 flex flex-wrap gap-2">
               <Button
                 variant="secondary"
@@ -196,17 +203,17 @@ export default function Settings() {
                   if (!email) return;
                   try {
                     await resetPassword(email);
-                    toast.success("Password reset email sent");
+                      toast.success(isFr ? "Email de reset envoyé" : "Password reset email sent");
                   } catch (err) {
                     const message = err instanceof Error ? err.message : "Request failed";
                     toast.error(message);
                   }
                 }}
               >
-                Change Password
+                  {isFr ? "Changer le mot de passe" : "Change Password"}
               </Button>
               <Button variant="danger" onClick={() => setConfirmDelete(true)}>
-                Delete Account
+                {isFr ? "Supprimer le compte" : "Delete Account"}
               </Button>
             </div>
             <div className="mt-3 text-xs text-pk-muted">

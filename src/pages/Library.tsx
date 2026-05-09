@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { useLoopsStore } from "@/stores/loopsStore";
 import { LoopCardItem } from "@/components/LoopCardItem";
+import { useLocaleStore } from "@/stores/localeStore";
 import { Clock, Copy, Gauge, Info, KeyRound, Sigma, X } from "lucide-react";
 
 type Filter = "all" | "genre" | "key" | "bpm";
@@ -18,6 +19,7 @@ function formatTime(sec: number) {
 }
 
 export default function Library() {
+  const locale = useLocaleStore((s) => s.locale);
   const loops = useLoopsStore((s) => s.loops);
   const durationsSecById = useLoopsStore((s) => s.durationsSecById);
   const deleteLoopRemote = useLoopsStore((s) => s.deleteLoopRemote);
@@ -56,12 +58,16 @@ export default function Library() {
       left={
         <div className="h-full bg-pk-panel">
           <div className="p-4">
-            <div className="text-sm font-semibold">Bibliothèque</div>
+            <div className="text-sm font-semibold">{locale === "fr" ? "Bibliothèque" : "Library"}</div>
             <div className="mt-2 text-sm text-pk-muted">
-              {totalCount} beat{totalCount > 1 ? "s" : ""} · {savedCount} sauvegardé{savedCount > 1 ? "s" : ""}
+              {locale === "fr"
+                ? `${totalCount} beat${totalCount > 1 ? "s" : ""} · ${savedCount} sauvegardé${savedCount > 1 ? "s" : ""}`
+                : `${totalCount} beat${totalCount > 1 ? "s" : ""} · ${savedCount} saved`}
             </div>
             <div className="mt-4 rounded-pk border border-pk-border bg-pk-bg p-4 text-sm text-pk-muted">
-              Astuce: utilise les filtres en haut pour retrouver vite une vibe (genre, tonalité, BPM).
+              {locale === "fr"
+                ? "Astuce: utilise les filtres en haut pour retrouver vite une vibe (genre, tonalité, BPM)."
+                : "Tip: use the filters to quickly find a vibe (genre, key, BPM)."}
             </div>
           </div>
         </div>
@@ -70,23 +76,25 @@ export default function Library() {
       <div className="h-full px-4 pb-36 pt-6 md:pb-24">
         <div className="flex flex-col gap-4">
           <div>
-            <div className="text-lg font-semibold">Bibliothèque</div>
-            <div className="mt-1 text-sm text-pk-muted">Historique de tes beats (générés + sauvegardés)</div>
+            <div className="text-lg font-semibold">{locale === "fr" ? "Bibliothèque" : "Library"}</div>
+            <div className="mt-1 text-sm text-pk-muted">
+              {locale === "fr" ? "Historique de tes beats (générés + sauvegardés)" : "History of your beats (generated + saved)"}
+            </div>
           </div>
 
           <div className="flex flex-col gap-3 rounded-pk border border-pk-border bg-pk-panel p-4 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-wrap gap-2">
               <Button variant={filter === "all" ? "primary" : "secondary"} size="sm" onClick={() => setFilter("all")}>
-                All
+                {locale === "fr" ? "Tout" : "All"}
               </Button>
               <Button variant={filter === "genre" ? "primary" : "secondary"} size="sm" onClick={() => setFilter("genre")}>
-                By Genre
+                {locale === "fr" ? "Par genre" : "By Genre"}
               </Button>
               <Button variant={filter === "key" ? "primary" : "secondary"} size="sm" onClick={() => setFilter("key")}>
-                By Key
+                {locale === "fr" ? "Par tonalité" : "By Key"}
               </Button>
               <Button variant={filter === "bpm" ? "primary" : "secondary"} size="sm" onClick={() => setFilter("bpm")}>
-                By BPM range
+                {locale === "fr" ? "Par BPM" : "By BPM range"}
               </Button>
             </div>
 
@@ -95,7 +103,7 @@ export default function Library() {
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 className="w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2 text-sm outline-none placeholder:text-pk-muted focus:border-pk-accent"
-                placeholder="Search beats…"
+                placeholder={locale === "fr" ? "Rechercher…" : "Search beats…"}
               />
             </div>
           </div>
@@ -103,7 +111,7 @@ export default function Library() {
           {filter === "bpm" ? (
             <div className="grid gap-3 rounded-pk border border-pk-border bg-pk-panel p-4 md:grid-cols-2">
               <div>
-                <div className="text-xs text-pk-muted">Min BPM</div>
+                <div className="text-xs text-pk-muted">{locale === "fr" ? "BPM min" : "Min BPM"}</div>
                 <input
                   type="number"
                   min={60}
@@ -114,7 +122,7 @@ export default function Library() {
                 />
               </div>
               <div>
-                <div className="text-xs text-pk-muted">Max BPM</div>
+                <div className="text-xs text-pk-muted">{locale === "fr" ? "BPM max" : "Max BPM"}</div>
                 <input
                   type="number"
                   min={60}
@@ -130,7 +138,10 @@ export default function Library() {
 
         <div className="mt-5">
           {filtered.length === 0 ? (
-            <EmptyState title="No saved beats yet" description="No saved beats yet. Generate your first beat." />
+            <EmptyState
+              title={locale === "fr" ? "Aucun beat pour l’instant" : "No beats yet"}
+              description={locale === "fr" ? "Génère ton premier beat pour démarrer." : "Generate your first beat to get started."}
+            />
           ) : (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {filtered.map((l) => (

@@ -41,10 +41,12 @@ export function LoopCardItem({
   loop,
   onDelete,
   onOpenDetails,
+  onGenerationUsed,
 }: {
   loop: Loop;
   onDelete?: () => void;
   onOpenDetails?: (loop: Loop) => void;
+  onGenerationUsed?: () => void;
 }) {
   const current = usePlayerStore((s) => s.current);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
@@ -384,6 +386,7 @@ export function LoopCardItem({
                   const created = await createLoop(draft);
                   setCurrent(created, true);
                   toast.success("Variation generated!");
+                  onGenerationUsed?.();
                 } catch (err) {
                   const message = err instanceof Error ? err.message : "Saving failed";
                   if (audioUrl) {
@@ -413,6 +416,7 @@ export function LoopCardItem({
                     };
                     setCurrent(temp, true);
                     toast.error(`Variation generated, but saving failed: ${message}`);
+                    onGenerationUsed?.();
                   } else {
                     throw err;
                   }

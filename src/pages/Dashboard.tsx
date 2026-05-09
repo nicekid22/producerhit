@@ -14,6 +14,7 @@ import { LoopCardItem } from "@/components/LoopCardItem";
 import { AudioWaveform, Clock, Copy, Gauge, Info, KeyRound, Loader2, Search, Sigma, X } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuthStore } from "@/stores/authStore";
+import { useLocaleStore } from "@/stores/localeStore";
 import { getRemainingBeats } from "@/lib/planLimits";
 import { generateBeat } from "@/lib/audioApi";
 
@@ -215,6 +216,7 @@ export default function Dashboard() {
   const createLoop = useLoopsStore((s) => s.createLoop);
   const setCurrent = usePlayerStore((s) => s.setCurrent);
   const user = useAuthStore((s) => s.user);
+  const locale = useLocaleStore((s) => s.locale);
   const [generating, setGenerating] = useState(false);
   const [plan, setPlan] = useState("free");
   const [usedThisMonth, setUsedThisMonth] = useState(0);
@@ -293,20 +295,20 @@ export default function Dashboard() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("upgraded") === "true") {
-      toast.success("🎉 Payment received. Activating your plan…");
+      toast.success(locale === "fr" ? "🎉 Paiement reçu. Activation de ton plan…" : "🎉 Payment received. Activating your plan…");
       window.history.replaceState({}, "", "/dashboard");
       void (async () => {
         for (let i = 0; i < 8; i++) {
           const nextPlan = await refreshProfile();
           if (nextPlan && nextPlan !== "free") {
-            toast.success(`Plan activated: ${nextPlan}`);
+            toast.success(locale === "fr" ? `Plan activé : ${nextPlan}` : `Plan activated: ${nextPlan}`);
             return;
           }
           await new Promise((r) => setTimeout(r, 1200));
         }
       })();
     }
-  }, [refreshProfile]);
+  }, [locale, refreshProfile]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -340,6 +342,10 @@ export default function Dashboard() {
   }, [form.genre]);
 
   const remaining = getRemainingBeats(plan, usedThisMonth);
+  const consumeCredit = useCallback(() => {
+    setUsedThisMonth((v) => v + 1);
+    if (user) void refreshProfile();
+  }, [refreshProfile, user]);
   const inferGenreFromPrompt = useCallback((p: string) => {
     const s = p.toLowerCase();
     if (s.includes("afrobeats") || s.includes("afro")) return "Afrobeats";
@@ -531,7 +537,8 @@ export default function Dashboard() {
       try {
         const loop = await createLoop(draft);
         setCurrent(loop, true);
-        toast.success("Beat generated!");
+        toast.success(locale === "fr" ? "Beat généré !" : "Beat generated!");
+        consumeCredit();
       } catch (err) {
         const message = err instanceof Error ? err.message : "Saving failed";
         if (audioUrl) {
@@ -559,7 +566,12 @@ export default function Dashboard() {
             createdAt: new Date().toISOString(),
           };
           setCurrent(temp, true);
-          toast.error(`Beat generated, but saving to your library failed: ${message}`);
+          toast.error(
+            locale === "fr"
+              ? `Beat généré, mais l’enregistrement a échoué : ${message}`
+              : `Beat generated, but saving to your library failed: ${message}`,
+          );
+          consumeCredit();
         } else {
           throw err;
         }
@@ -567,7 +579,7 @@ export default function Dashboard() {
     } catch (err) {
       const anyErr = err as unknown as { limitReached?: boolean };
       if (anyErr?.limitReached) {
-        toast.error("Monthly limit reached — upgrade your plan");
+        toast.error(locale === "fr" ? "Limite mensuelle atteinte — upgrade ton plan" : "Monthly limit reached — upgrade your plan");
         navigate("/pricing");
         return;
       }
@@ -588,7 +600,7 @@ export default function Dashboard() {
       if (isTemporaryNetwork) {
         toast.error("Réseau chargé — réessaie dans quelques secondes. Upgrade pour avoir la priorité.");
       } else {
-        const message = rawMessage || "Generation failed — please try again";
+        const message = rawMessage || (locale === "fr" ? "Échec de génération — réessaie" : "Generation failed — please try again");
         toast.error(message);
       }
     } finally {
@@ -620,6 +632,8 @@ export default function Dashboard() {
     form.swing,
     generating,
     isSong,
+    locale,
+    consumeCredit,
     lyricsMode,
     loops,
     manualSongDuration,
@@ -642,7 +656,7 @@ export default function Dashboard() {
     if (profileLoading) return;
 
     if (remaining === 0) {
-      toast.error("No credits remaining — upgrade your plan");
+      toast.error(locale === "fr" ? "Plus de crédits — upgrade ton plan" : "No credits remaining — upgrade your plan");
       navigate("/pricing");
       setPendingLandingPrompt(null);
       return;
@@ -1610,21 +1624,45 @@ export default function Dashboard() {
             >
               <span className={generating ? "inline-flex items-center gap-2 animate-pulse" : "inline-flex items-center gap-2"}>
                 {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <AudioWaveform className="h-4 w-4" />}
-                {generating ? "Generating..." : mode === "song" ? "Generate Song" : "Generate Beat"}
+                {generating
+                  ? locale === "fr"
+                    ? "Génération…"
+                    : "Generating..."
+                  : mode === "song"
+                    ? locale === "fr"
+                      ? "Générer une chanson"
+                      : "Generate Song"
+                    : locale === "fr"
+                      ? "Générer un beat"
+                      : "Generate Beat"}
               </span>
             </Button>
 
             <div className="mt-3 flex items-center justify-between text-xs">
               <span className="text-gray-500">
-                {remaining} generation{remaining !== 1 ? "s" : ""} remaining this month
+                {locale === "fr"
+                  ? `${remaining} génération${remaining !== 1 ? "s" : ""} restante${remaining !== 1 ? "s" : ""} ce mois-ci`
+                  : `${remaining} generation${remaining !== 1 ? "s" : ""} remaining this month`}
               </span>
-              <span className="text-gray-600">{plan} plan</span>
+              <span className="text-gray-600">{locale === "fr" ? `Plan ${plan}` : `${plan} plan`}</span>
             </div>
             {remaining === 0 ? (
               <div className="mt-2 flex flex-col gap-2 text-xs text-gray-500">
-                {plan === "free" ? "You've used all 3 free generations this month" : "No credits remaining — upgrade your plan"}
+                {plan === "free"
+                  ? locale === "fr"
+                    ? "Tu as utilisé tes 3 générations gratuites ce mois-ci"
+                    : "You've used all 3 free generations this month"
+                  : locale === "fr"
+                    ? "Plus de crédits — upgrade ton plan"
+                    : "No credits remaining — upgrade your plan"}
                 <Link to="/pricing" className="text-[#7c3aed] hover:underline">
-                  {plan === "free" ? "Upgrade to Pro — $10/mo" : "View pricing"}
+                  {plan === "free"
+                    ? locale === "fr"
+                      ? "Passer Pro — 10€/mo"
+                      : "Upgrade to Pro — $10/mo"
+                    : locale === "fr"
+                      ? "Voir les tarifs"
+                      : "View pricing"}
                 </Link>
               </div>
             ) : null}
@@ -1635,9 +1673,11 @@ export default function Dashboard() {
       <div className="mx-auto w-full max-w-[1120px] px-4 pb-32 pt-6 md:px-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="text-lg font-semibold">My Workspace</div>
+            <div className="text-lg font-semibold">{locale === "fr" ? "Mon espace" : "My Workspace"}</div>
             <div className="mt-1 text-sm text-pk-muted">
-              Showing {Math.min(10, totalMatches)} of {totalMatches}
+              {locale === "fr"
+                ? `Affichage ${Math.min(10, totalMatches)} sur ${totalMatches}`
+                : `Showing ${Math.min(10, totalMatches)} of ${totalMatches}`}
             </div>
           </div>
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
@@ -1691,8 +1731,16 @@ export default function Dashboard() {
                 ))}
               </div>
               <div className="flex-1">
-                <div className="text-sm font-semibold text-pk-text">{mode === "song" ? "Generating your song..." : "Generating your beat..."}</div>
-                <div className="mt-1 text-xs text-pk-muted">Usually 15–25 seconds</div>
+                <div className="text-sm font-semibold text-pk-text">
+                  {mode === "song"
+                    ? locale === "fr"
+                      ? "Génération de ta chanson…"
+                      : "Generating your song..."
+                    : locale === "fr"
+                      ? "Génération de ton beat…"
+                      : "Generating your beat..."}
+                </div>
+                <div className="mt-1 text-xs text-pk-muted">{locale === "fr" ? "En général 15–25 secondes" : "Usually 15–25 seconds"}</div>
               </div>
               <div className="h-1 w-32 overflow-hidden rounded-full bg-pk-border">
                 <div className="h-full w-2/5 rounded-full bg-pk-accent" style={{ animation: "indeterminate 1.5s ease-in-out infinite" }} />
@@ -1701,14 +1749,18 @@ export default function Dashboard() {
           )}
           {displayedLoops.length === 0 ? (
             <EmptyState
-              title="Your creations will appear here"
-              description={`Configure your sound and hit ${mode === "song" ? "Generate Song" : "Generate Beat"}.`}
+              title={locale === "fr" ? "Tes créations apparaîtront ici" : "Your creations will appear here"}
+              description={
+                locale === "fr"
+                  ? `Configure ton son et clique sur ${mode === "song" ? "Générer une chanson" : "Générer un beat"}.`
+                  : `Configure your sound and hit ${mode === "song" ? "Generate Song" : "Generate Beat"}.`
+              }
               accent
             />
           ) : (
             displayedLoops.map((l) => (
               <div key={l.id}>
-                <LoopCardItem loop={l} onOpenDetails={() => setDetailsId(l.id)} />
+                <LoopCardItem loop={l} onOpenDetails={() => setDetailsId(l.id)} onGenerationUsed={consumeCredit} />
               </div>
             ))
           )}
