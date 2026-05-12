@@ -21,6 +21,30 @@ function asNumber(v: unknown) {
   return typeof v === "number" && Number.isFinite(v) ? v : null;
 }
 
+function clampNumber(v: number, min: number, max: number) {
+  return Math.min(Math.max(v, min), max);
+}
+
+function computeRequestedDurationSec(input: {
+  instrumental: boolean;
+  durationRaw: number | null;
+  bpm: number | null;
+  bars: number | null;
+}) {
+  const bpm = input.bpm && input.bpm > 0 ? input.bpm : 0;
+  const bars = input.bars && input.bars > 0 ? input.bars : 0;
+  if (!input.instrumental) {
+    const base = input.durationRaw ?? 90;
+    return clampNumber(base, 10, 120);
+  }
+  if (input.durationRaw != null) return clampNumber(input.durationRaw, 10, 60);
+  if (bpm > 0 && bars > 0) {
+    const barBased = Math.round((bars * 4 * 60) / bpm);
+    return clampNumber(barBased, 10, 45);
+  }
+  return 40;
+}
+
 function toAbsoluteUrl(baseUrl: string, maybePath: string) {
   const t = maybePath.trim();
   if (!t) return "";
@@ -74,6 +98,8 @@ serve(async (req) => {
       bpm?: unknown;
       keyScale?: unknown;
       duration?: unknown;
+      loopLengthBars?: unknown;
+      seed?: unknown;
       lyrics?: unknown;
       instrumental?: unknown;
       vocalLanguage?: unknown;
@@ -168,11 +194,13 @@ serve(async (req) => {
     const bpm = asNumber(body?.bpm);
     const keyScale = asString(body?.keyScale);
     const duration = asNumber(body?.duration);
+    const loopLengthBars = asNumber(body?.loopLengthBars);
     const timeSignature = asString(body?.timeSignature);
     const useFormat = Boolean(body?.useFormat);
     const thinking = typeof body?.thinking === "boolean" ? Boolean(body.thinking) : null;
     const sampleMode = action === "format" ? false : (typeof body?.sampleMode === "boolean" ? Boolean(body.sampleMode) : false);
     const instrumental = body?.instrumental !== false;
+    const seed = asNumber(body?.seed);
     const audioFormatRaw = (asString(body?.audioFormat) || asString(body?.audio_format)).trim().toLowerCase();
     const requestedAudioFormat =
       audioFormatRaw === "wav" || audioFormatRaw === "wav32" || audioFormatRaw === "flac" || audioFormatRaw === "mp3" || audioFormatRaw === "aac" || audioFormatRaw === "opus"
@@ -192,6 +220,7 @@ serve(async (req) => {
       useFormat,
       thinking,
       audioFormat,
+      seed,
     });
 
     if (!caption && !(sampleMode && sampleQuery)) throw new Error("Missing caption (or sampleQuery for sample_mode)");
@@ -215,24 +244,31 @@ serve(async (req) => {
     }
 
     const effectiveLyrics = instrumental ? "" : (lyrics ? lyrics.trim() : "");
-    const requestedDuration = duration && duration > 0 ? Math.min(Math.max(duration, 10), 600) : null;
+    const requestedDuration = computeRequestedDurationSec({
+      instrumental,
+      durationRaw: duration && duration > 0 ? duration : null,
+      bpm,
+      bars: loopLengthBars,
+    });
 
     const controller = new AbortController();
     const requestTimeoutMs = 150_000;
     const timer = setTimeout(() => controller.abort(), requestTimeoutMs);
 
     let audioUrl = "";
+    let meta: Record<string, unknown> | null = null;
 
     try {
       const startedAt = Date.now();
       const keyValue = keyScale.trim().length > 0 ? keyScale.trim() : "";
       const paramObj: Record<string, unknown> = {
-        duration: requestedDuration ?? 120,
+        duration: requestedDuration,
       };
       if (bpm && bpm > 0) paramObj.bpm = bpm;
       if (timeSignature.trim().length > 0) paramObj.time_signature = timeSignature.trim();
       if (keyValue) paramObj.key = keyValue;
       if (audioFormat) paramObj.audio_format = audioFormat;
+      if (seed && seed > 0) paramObj.seed = seed;
 
       const createUrl = `${baseUrl}/release_task`;
       const releaseForm = new FormData();
@@ -329,9 +365,43 @@ serve(async (req) => {
           if (!resultStr) throw new Error("ACE task succeeded but result is empty");
           const results = JSON.parse(resultStr) as unknown;
           const first = Array.isArray(results) ? results[0] : null;
+          const firstObj = first && typeof first === "object" && first !== null ? (first as Record<string, unknown>) : null;
           const file = first && typeof (first as { file?: unknown }).file === "string" ? ((first as { file: string }).file as string) : "";
           audioUrl = toAbsoluteUrl(baseUrl, file);
           if (!audioUrl) throw new Error("ACE task returned no audio file");
+          const metasObj =
+            firstObj && typeof firstObj.metas === "object" && firstObj.metas !== null ? (firstObj.metas as Record<string, unknown>) : null;
+          const usedSeed =
+            metasObj && typeof metasObj.seed === "number"
+              ? (metasObj.seed as number)
+              : metasObj && typeof metasObj.random_seed === "number"
+                ? (metasObj.random_seed as number)
+                : null;
+          const durationFromMetas = metasObj && typeof metasObj.duration === "number" ? (metasObj.duration as number) : null;
+          const bpmFromMetas = metasObj && typeof metasObj.bpm === "number" ? (metasObj.bpm as number) : null;
+          const keyScaleFromMetas =
+            metasObj && typeof metasObj.keyscale === "string"
+              ? (metasObj.keyscale as string)
+              : metasObj && typeof metasObj.key_scale === "string"
+                ? (metasObj.key_scale as string)
+                : null;
+          const timeSignatureFromMetas =
+            metasObj && typeof metasObj.timesignature === "string"
+              ? (metasObj.timesignature as string)
+              : metasObj && typeof metasObj.time_signature === "string"
+                ? (metasObj.time_signature as string)
+                : null;
+          meta = {
+            taskId,
+            prompt: caption,
+            lyrics: effectiveLyrics,
+            bpm: bpmFromMetas ?? bpm ?? null,
+            duration: durationFromMetas ?? requestedDuration ?? null,
+            keyScale: keyScaleFromMetas ?? (keyValue || null),
+            timeSignature: timeSignatureFromMetas ?? (timeSignature.trim().length > 0 ? timeSignature.trim() : null),
+            audioFormat,
+            seed: usedSeed,
+          };
           console.log("ACE task succeeded", { requestId, taskId, elapsedMs: Date.now() - startedAt });
           break;
         }
@@ -350,7 +420,7 @@ serve(async (req) => {
       if (bumpErr) console.error("bump_loops_usage error:", bumpErr.message);
     }
 
-    return new Response(JSON.stringify({ audioUrl }), {
+    return new Response(JSON.stringify({ audioUrl, meta }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {

@@ -10,6 +10,7 @@ export type AceMeta = {
   keyScale?: string;
   timeSignature?: string;
   audioFormat?: string;
+  seed?: number | null;
 };
 
 export type AceFormatResult = {
@@ -146,6 +147,7 @@ async function generateLoopAceDirect(
     sampleQuery?: string;
     isSong?: boolean;
     audioFormat?: string;
+    seed?: number;
   },
 ): Promise<{ audioUrl: string; meta?: AceMeta | null }> {
   const aceApiKey = import.meta.env.VITE_ACE_STEP_API_KEY as string | undefined;
@@ -334,15 +336,31 @@ async function generateLoopAceDirect(
     return { audioUrl, meta };
   };
 
-  const requestedDuration: number | null =
-    typeof options?.duration === "number" && options.duration > 0 ? options.duration : isSong ? 120 : null;
+  const clampNumber = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
+  const bars = typeof params.loopLengthBars === "number" && Number.isFinite(params.loopLengthBars) && params.loopLengthBars > 0 ? params.loopLengthBars : 8;
+  const bpmForDuration = typeof params.bpm === "number" && Number.isFinite(params.bpm) && params.bpm > 0 ? params.bpm : 0;
 
-  const paramObj: Record<string, unknown> = {};
-  if (requestedDuration != null) paramObj.duration = requestedDuration;
+  const requestedDuration: number = (() => {
+    if (!instrumental) {
+      const raw = typeof options?.duration === "number" && Number.isFinite(options.duration) && options.duration > 0 ? options.duration : 90;
+      return clampNumber(raw, 10, 120);
+    }
+    if (typeof options?.duration === "number" && Number.isFinite(options.duration) && options.duration > 0) {
+      return clampNumber(options.duration, 10, 60);
+    }
+    if (bpmForDuration > 0) {
+      const barBased = Math.round((bars * 4 * 60) / bpmForDuration);
+      return clampNumber(barBased, 10, 45);
+    }
+    return 40;
+  })();
+
+  const paramObj: Record<string, unknown> = { duration: clampNumber(requestedDuration, 10, instrumental ? 60 : 120) };
   if (!options?.autoMeta && params.bpm > 0) paramObj.bpm = params.bpm;
   if (!options?.autoMeta && params.key && params.scale) paramObj.key = `${params.key} ${params.scale}`;
   if (options?.timeSignature) paramObj.time_signature = options.timeSignature;
   if (audioFormat) paramObj.audio_format = audioFormat;
+  if (typeof options?.seed === "number" && Number.isFinite(options.seed)) paramObj.seed = options.seed;
 
   const createForm = new FormData();
   createForm.append("env", "production");
@@ -417,23 +435,16 @@ async function generateLoopAceDirect(
       const first = Array.isArray(results) ? results[0] : null;
       const firstObj = first && typeof first === "object" && first !== null ? (first as Record<string, unknown>) : null;
       const file = first && typeof (first as { file?: unknown }).file === "string" ? ((first as { file: string }).file as string) : "";
-      console.log(
-        "[ACE FULL RESPONSE]",
-        JSON.stringify({
-          firstKeys: firstObj ? Object.keys(firstObj) : [],
-          file: firstObj ? (firstObj.file as unknown) : null,
-          url: firstObj ? (firstObj.url as unknown) : null,
-          audio_url: firstObj ? (firstObj.audio_url as unknown) : null,
-          download_url: firstObj ? (firstObj.download_url as unknown) : null,
-          s3_url: firstObj ? (firstObj.s3_url as unknown) : null,
-          path: firstObj ? (firstObj.path as unknown) : null,
-          resultPreview: resultStr?.slice(0, 300),
-        }),
-      );
       audioUrl = buildAceAudioUrl(baseUrl, file);
       const metasObj = firstObj && typeof firstObj.metas === "object" && firstObj.metas !== null ? (firstObj.metas as Record<string, unknown>) : null;
       const bpm = metasObj && typeof metasObj.bpm === "number" ? (metasObj.bpm as number) : null;
       const duration = metasObj && typeof metasObj.duration === "number" ? (metasObj.duration as number) : null;
+      const seed =
+        metasObj && typeof metasObj.seed === "number"
+          ? (metasObj.seed as number)
+          : metasObj && typeof metasObj.random_seed === "number"
+            ? (metasObj.random_seed as number)
+            : null;
       const keyScale =
         metasObj && typeof metasObj.keyscale === "string"
           ? (metasObj.keyscale as string)
@@ -456,6 +467,7 @@ async function generateLoopAceDirect(
         keyScale: keyScale || undefined,
         timeSignature: timeSignature || undefined,
         audioFormat,
+        seed: typeof seed === "number" && isFinite(seed) ? seed : null,
       };
       break;
     }
@@ -561,6 +573,7 @@ export async function generateLoopAce(
     sampleQuery?: string;
     isSong?: boolean;
     audioFormat?: string;
+    seed?: number;
   },
 ): Promise<{ audioUrl: string; meta?: AceMeta | null }> {
   const directKey = import.meta.env.VITE_ACE_STEP_API_KEY as string | undefined;
@@ -569,8 +582,6 @@ export async function generateLoopAce(
   const isSong = options?.isSong ?? !options?.instrumental;
   const promptParams = options?.autoMeta ? { ...params, bpm: 0, key: "", scale: "" } : params;
   const baseCaption = buildRichPrompt(promptParams, isSong);
-  const duration =
-    typeof options?.duration === "number" && isFinite(options.duration) && options.duration > 0 ? options.duration : undefined;
   const instrumental = options?.instrumental ?? true;
   const lyrics = options?.lyrics ?? "";
   const vocalLanguage = options?.vocalLanguage ?? "en";
@@ -591,6 +602,17 @@ export async function generateLoopAce(
   const effectiveSampleMode = Boolean(options?.sampleMode || isAiLyrics);
   const caption = baseCaption;
 
+  const clampNumber = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
+  const bars = typeof params.loopLengthBars === "number" && Number.isFinite(params.loopLengthBars) && params.loopLengthBars > 0 ? params.loopLengthBars : 8;
+  const bpmForDuration = typeof params.bpm === "number" && Number.isFinite(params.bpm) && params.bpm > 0 ? params.bpm : 0;
+  const durationRaw = typeof options?.duration === "number" && Number.isFinite(options.duration) && options.duration > 0 ? options.duration : null;
+  const desiredDurationSec = (() => {
+    if (!instrumental) return clampNumber(durationRaw ?? 90, 10, 120);
+    if (durationRaw != null) return clampNumber(durationRaw, 10, 60);
+    if (bpmForDuration > 0) return clampNumber(Math.round((bars * 4 * 60) / bpmForDuration), 10, 45);
+    return 40;
+  })();
+
   const body: Record<string, unknown> = {
     caption,
     lyrics,
@@ -600,14 +622,16 @@ export async function generateLoopAce(
     thinking: options?.thinking ?? true,
     sampleMode: effectiveSampleMode,
     audioFormat,
+    loopLengthBars: bars,
+    duration: clampNumber(desiredDurationSec, 10, instrumental ? 60 : 120),
   };
+  if (typeof options?.seed === "number" && Number.isFinite(options.seed)) body.seed = options.seed;
   if (sampleQuery) body.sampleQuery = sampleQuery;
   if (!options?.autoMeta && params.bpm > 0) body.bpm = params.bpm;
   if (!options?.autoMeta && params.key && params.scale) body.keyScale = `${params.key} ${params.scale}`;
-  if (!options?.autoMeta && duration) body.duration = duration;
   if (options?.timeSignature) body.timeSignature = options.timeSignature;
 
-  const { data, errorText } = await invokeSupabaseFunction<{ audioUrl?: string; error?: string; limitReached?: boolean }>(
+  const { data, errorText } = await invokeSupabaseFunction<{ audioUrl?: string; meta?: AceMeta | null; error?: string; limitReached?: boolean }>(
     {
       name: "generate-loop-ace",
       body,
@@ -647,6 +671,7 @@ export async function generateBeat(
     sampleQuery?: string;
     isSong?: boolean;
     audioFormat?: string;
+    seed?: number;
   },
 ): Promise<{ audioUrl: string; engine: string; meta?: AceMeta | null }> {
   const directKey = import.meta.env.VITE_ACE_STEP_API_KEY as string | undefined;

@@ -25,6 +25,7 @@ type DbLoop = {
   stems_url: unknown;
   is_saved: boolean;
   is_public?: boolean | null;
+  seed?: number | string | null;
   created_at: string;
 };
 
@@ -118,6 +119,16 @@ function toLoop(row: DbLoop): Loop {
         }
       : null;
 
+  const seed =
+    typeof row.seed === "number"
+      ? (Number.isFinite(row.seed) ? row.seed : null)
+      : typeof row.seed === "string"
+        ? (() => {
+            const n = Number(row.seed);
+            return Number.isFinite(n) ? n : null;
+          })()
+        : null;
+
   return {
     id: row.id,
     userId: row.user_id,
@@ -135,6 +146,7 @@ function toLoop(row: DbLoop): Loop {
     reverb: row.reverb,
     prompt: row.prompt,
     audioUrl,
+    seed,
     details,
     stemsUrl: stemsObj,
     isSaved: row.is_saved,
@@ -319,6 +331,7 @@ export const useLoopsStore = create<LoopsState>((set) => ({
       stems_url: stemsUrlForDb,
       is_saved: input.isSaved,
       is_public: input.isPublic,
+      seed: typeof input.seed === "number" && Number.isFinite(input.seed) ? input.seed : null,
     };
 
     const attemptPayload = payload as unknown as Record<string, unknown>;
@@ -332,6 +345,10 @@ export const useLoopsStore = create<LoopsState>((set) => ({
       }
       if (isMissingColumnError(result.error, "engine") && "engine" in attemptPayload) {
         delete attemptPayload.engine;
+        changed = true;
+      }
+      if (isMissingColumnError(result.error, "seed") && "seed" in attemptPayload) {
+        delete attemptPayload.seed;
         changed = true;
       }
       if (!changed) break;

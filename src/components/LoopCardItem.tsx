@@ -288,6 +288,8 @@ export function LoopCardItem({
                   /\bsong\b/i.test(loop.name);
                 const barsCount = barsFromLoopLength(loop.loopLength);
                 const now = Date.now();
+                const baseSeed = typeof loop.seed === "number" && Number.isFinite(loop.seed) ? loop.seed : 0;
+                const nextSeed = baseSeed + Math.floor(Math.random() * 100) + 1;
                 const variationPrompt = isSongLike
                   ? [
                       loop.prompt?.trim() || "",
@@ -336,6 +338,7 @@ export function LoopCardItem({
                         duration: typeof loop.details?.duration === "number" ? loop.details.duration : undefined,
                         timeSignature: loop.details?.timeSignature || undefined,
                         audioFormat: loop.details?.audioFormat || "mp3",
+                        seed: nextSeed,
                       }
                     : {
                         instrumental: true,
@@ -345,6 +348,7 @@ export function LoopCardItem({
                         autoMeta,
                         useFormat: true,
                         audioFormat: loop.details?.audioFormat || "mp3",
+                        seed: nextSeed,
                       },
                 );
 
@@ -364,6 +368,7 @@ export function LoopCardItem({
                   reverb: loop.reverb,
                   prompt: variationPrompt,
                   audioUrl: audioUrl ?? null,
+                  seed: typeof result.meta?.seed === "number" && Number.isFinite(result.meta.seed) ? result.meta.seed : nextSeed,
                   details: result.meta
                     ? {
                         caption: result.meta.prompt ?? variationPrompt,
@@ -408,6 +413,7 @@ export function LoopCardItem({
                       reverb: draft.reverb,
                       prompt: draft.prompt,
                       audioUrl,
+                      seed: draft.seed ?? null,
                       details: draft.details ?? null,
                       stemsUrl: null,
                       isSaved: false,

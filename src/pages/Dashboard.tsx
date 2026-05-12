@@ -218,6 +218,7 @@ export default function Dashboard() {
   const user = useAuthStore((s) => s.user);
   const locale = useLocaleStore((s) => s.locale);
   const [generating, setGenerating] = useState(false);
+  const [versions, setVersions] = useState<1 | 2>(1);
   const [plan, setPlan] = useState("free");
   const [usedThisMonth, setUsedThisMonth] = useState(0);
   const [profileLoading, setProfileLoading] = useState(true);
@@ -342,6 +343,7 @@ export default function Dashboard() {
   }, [form.genre]);
 
   const remaining = getRemainingBeats(plan, usedThisMonth);
+  const remainingAfterGenerate = Math.max(0, remaining - versions);
   const consumeCredit = useCallback(() => {
     setUsedThisMonth((v) => v + 1);
     if (user) void refreshProfile();
@@ -422,10 +424,9 @@ export default function Dashboard() {
     : [form.prompt?.trim() ?? "", chipExtra].filter((s) => s.length > 0).join(", ");
 
   const handleGenerate = useCallback(async () => {
-    if (remaining === 0) return;
+    if (remaining < versions) return;
     if (generating) return;
     setGenerating(true);
-    let audioUrl: string | null = null;
     let didGenerate = false;
     try {
       const prompt = isSong ? uiPrompt : [form.prompt?.trim() ?? "", chipExtra].filter((s) => s.length > 0).join(", ");
@@ -442,21 +443,21 @@ export default function Dashboard() {
               .join(", ")
           : "";
 
-      const result = await generateBeat(
-        {
-          genre: form.genre,
-          influence: form.influence,
-          key: effectiveKey,
-          scale: effectiveScale,
-          bpm: effectiveBpm,
-          loopLengthBars: bars,
-          swing: form.swing,
-          mood: isSong ? "" : form.mood,
-          energyLevel: isSong ? "" : form.energyLevel,
-          reverb: form.reverb,
-          prompt: uiPrompt,
-        },
-        effectiveEngine,
+      const inputParams = {
+        genre: form.genre,
+        influence: form.influence,
+        key: effectiveKey,
+        scale: effectiveScale,
+        bpm: effectiveBpm,
+        loopLengthBars: bars,
+        swing: form.swing,
+        mood: isSong ? "" : form.mood,
+        energyLevel: isSong ? "" : form.energyLevel,
+        reverb: form.reverb,
+        prompt: uiPrompt,
+      };
+
+      const buildOptions = (seed?: number) =>
         isSong
           ? {
               instrumental: false,
@@ -471,6 +472,7 @@ export default function Dashboard() {
               sampleQuery,
               isSong: true,
               audioFormat: effectiveAudioFormat,
+              seed,
             }
           : {
               instrumental: beatInstrumental,
@@ -480,72 +482,78 @@ export default function Dashboard() {
               autoMeta: autoMetaEnabled,
               useFormat: true,
               audioFormat: effectiveAudioFormat,
-            },
-      );
-      audioUrl = result.audioUrl;
-      didGenerate = Boolean(audioUrl);
+              seed,
+            };
 
-      const generatedKeyScale = parseKeyScale(result.meta?.keyScale ?? "");
-      const realBpm = result.meta?.bpm && result.meta.bpm > 0 ? result.meta.bpm : 0;
-      const realKey = generatedKeyScale.key || "";
-      const realScale = generatedKeyScale.scale || "";
-
-      const usedBpm = autoMetaEnabled ? realBpm : effectiveBpm || form.bpm;
-      const usedKey = autoMetaEnabled ? realKey : effectiveKey || form.key;
-      const usedScale = autoMetaEnabled ? realScale : effectiveScale || form.scale;
-
+      const genreCountBase = loops.filter((l) => l.genre === form.genre).length + 1;
       const storedPrompt = prompt;
 
-      const loopName =
-        mode === "song"
-          ? `${form.genre} Song #${loops.filter((l) => l.genre === form.genre).length + 1}${usedBpm > 0 ? ` · ${usedBpm} BPM` : ""}`
-          : `${form.genre} Beat #${loops.filter((l) => l.genre === form.genre).length + 1} — ${usedKey || "Auto"} ${
-              usedScale === "Minor" ? "min" : usedScale === "Major" ? "maj" : usedScale
-            }${usedBpm > 0 ? ` · ${usedBpm} BPM` : ""}`;
+      const buildDraft = (result: Awaited<ReturnType<typeof generateBeat>>, audioUrl: string, idx: number) => {
+        const generatedKeyScale = parseKeyScale(result.meta?.keyScale ?? "");
+        const realBpm = result.meta?.bpm && result.meta.bpm > 0 ? result.meta.bpm : 0;
+        const realKey = generatedKeyScale.key || "";
+        const realScale = generatedKeyScale.scale || "";
 
-      const draft: Omit<Loop, "id" | "createdAt" | "userId"> = {
-        engine: result.engine,
-        name: loopName,
-        genre: form.genre,
-        influence: form.influence,
-        key: usedKey,
-        scale: usedScale,
-        bpm: usedBpm,
-        loopLength: form.loopLength,
-        swing: form.swing,
-        mood: isSong ? "" : form.mood,
-        energyLevel: isSong ? "" : form.energyLevel,
-        reverb: form.reverb,
-        prompt: storedPrompt,
-        audioUrl: audioUrl ?? null,
-        details: result.meta
-          ? {
-              caption: result.meta.prompt ?? storedPrompt,
-              lyrics: result.meta.lyrics ?? "",
-              bpm: result.meta.bpm ?? null,
-              duration: result.meta.duration ?? null,
-              keyScale: result.meta.keyScale ?? "",
-              timeSignature: result.meta.timeSignature ?? "",
-              audioFormat: result.meta.audioFormat ?? effectiveAudioFormat,
-            }
-          : null,
-        stemsUrl: null,
-        isSaved: false,
-        isPublic: false,
+        const usedBpm = autoMetaEnabled ? realBpm : effectiveBpm || form.bpm;
+        const usedKey = autoMetaEnabled ? realKey : effectiveKey || form.key;
+        const usedScale = autoMetaEnabled ? realScale : effectiveScale || form.scale;
+
+        const suffix = versions === 2 ? ` (v${idx})` : "";
+        const loopName =
+          mode === "song"
+            ? `${form.genre} Song #${genreCountBase}${suffix}${usedBpm > 0 ? ` · ${usedBpm} BPM` : ""}`
+            : `${form.genre} Beat #${genreCountBase}${suffix} — ${usedKey || "Auto"} ${
+                usedScale === "Minor" ? "min" : usedScale === "Major" ? "maj" : usedScale
+              }${usedBpm > 0 ? ` · ${usedBpm} BPM` : ""}`;
+
+        const draft: Omit<Loop, "id" | "createdAt" | "userId"> = {
+          engine: result.engine,
+          name: loopName,
+          genre: form.genre,
+          influence: form.influence,
+          key: usedKey,
+          scale: usedScale,
+          bpm: usedBpm,
+          loopLength: form.loopLength,
+          swing: form.swing,
+          mood: isSong ? "" : form.mood,
+          energyLevel: isSong ? "" : form.energyLevel,
+          reverb: form.reverb,
+          prompt: storedPrompt,
+          audioUrl: audioUrl ?? null,
+          seed: typeof result.meta?.seed === "number" && Number.isFinite(result.meta.seed) ? result.meta.seed : null,
+          details: result.meta
+            ? {
+                caption: result.meta.prompt ?? storedPrompt,
+                lyrics: result.meta.lyrics ?? "",
+                bpm: result.meta.bpm ?? null,
+                duration: result.meta.duration ?? null,
+                keyScale: result.meta.keyScale ?? "",
+                timeSignature: result.meta.timeSignature ?? "",
+                audioFormat: result.meta.audioFormat ?? effectiveAudioFormat,
+              }
+            : null,
+          stemsUrl: null,
+          isSaved: false,
+          isPublic: false,
+        };
+        return { draft, usedBpm, usedKey, usedScale };
       };
 
-      try {
-        const loop = await createLoop(draft);
-        setCurrent(loop, true);
-        toast.success(locale === "fr" ? "Beat généré !" : "Beat generated!");
-        consumeCredit();
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Saving failed";
-        if (audioUrl) {
+      const persistDraft = async (
+        draft: Omit<Loop, "id" | "createdAt" | "userId">,
+        audioUrl: string,
+        engineLabel: string,
+      ): Promise<Loop> => {
+        try {
+          const loop = await createLoop(draft);
+          return loop;
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "Saving failed";
           const id = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `local-${Date.now()}`;
           const temp: Loop = {
             id,
-            engine: result.engine,
+            engine: engineLabel,
             name: draft.name,
             genre: draft.genre,
             influence: draft.influence,
@@ -559,23 +567,76 @@ export default function Dashboard() {
             reverb: draft.reverb,
             prompt: draft.prompt,
             audioUrl,
+            seed: draft.seed ?? null,
             details: draft.details ?? null,
             stemsUrl: draft.stemsUrl,
             isSaved: false,
             isPublic: false,
             createdAt: new Date().toISOString(),
           };
-          setCurrent(temp, true);
           toast.error(
             locale === "fr"
-              ? `Beat généré, mais l’enregistrement a échoué : ${message}`
-              : `Beat generated, but saving to your library failed: ${message}`,
+              ? `Généré, mais l’enregistrement a échoué : ${message}`
+              : `Generated, but saving to your library failed: ${message}`,
           );
-          consumeCredit();
-        } else {
-          throw err;
+          return temp;
         }
+      };
+
+      const randInt = (maxExclusive: number) => {
+        if (maxExclusive <= 1) return 0;
+        try {
+          const a = new Uint32Array(1);
+          crypto.getRandomValues(a);
+          return a[0] % maxExclusive;
+        } catch {
+          return Math.floor(Math.random() * maxExclusive);
+        }
+      };
+
+      const results = await (async () => {
+        if (versions !== 2) {
+          const value = await generateBeat(inputParams, effectiveEngine, buildOptions(undefined));
+          return [{ ok: true as const, value }];
+        }
+        const seed1 = randInt(999999);
+        const seed2 = seed1 + 12345;
+        const [r1, r2] = await Promise.all([
+          generateBeat(inputParams, effectiveEngine, buildOptions(seed1))
+            .then((value) => ({ ok: true as const, value }))
+            .catch((error) => ({ ok: false as const, error })),
+          generateBeat(inputParams, effectiveEngine, buildOptions(seed2))
+            .then((value) => ({ ok: true as const, value }))
+            .catch((error) => ({ ok: false as const, error })),
+        ]);
+        return [r1, r2];
+      })();
+
+      const created: Loop[] = [];
+      for (let i = 0; i < results.length; i++) {
+        const r = results[i];
+        if (!r.ok) continue;
+        const audioUrl = r.value.audioUrl;
+        if (!audioUrl) continue;
+        didGenerate = true;
+        const { draft } = buildDraft(r.value, audioUrl, i + 1);
+        const loop = await persistDraft(draft, audioUrl, r.value.engine);
+        created.push(loop);
+        consumeCredit();
       }
+
+      if (!created.length) throw new Error(locale === "fr" ? "Échec de génération — réessaie" : "Generation failed — please try again");
+
+      setCurrent(created[0], true);
+      toast.success(
+        versions === 2
+          ? locale === "fr"
+            ? "2 versions générées — choisis la meilleure !"
+            : "2 versions generated — pick the best one!"
+          : locale === "fr"
+            ? "Beat généré !"
+            : "Beat generated!",
+      );
     } catch (err) {
       const anyErr = err as unknown as { limitReached?: boolean };
       if (anyErr?.limitReached) {
@@ -641,6 +702,7 @@ export default function Dashboard() {
     mode,
     navigate,
     remaining,
+    versions,
     setCurrent,
     songDescription,
     songLyrics,
@@ -1595,12 +1657,37 @@ export default function Dashboard() {
           </div>
 
           <div className="border-t border-pk-border p-4 flex-shrink-0">
+            <div className="mb-3 flex items-center justify-between text-xs">
+              <span className="text-gray-500">{locale === "fr" ? "Versions" : "Versions"}</span>
+              <div className="flex items-center gap-1 rounded-full bg-white/5 p-1">
+                <button
+                  type="button"
+                  onClick={() => setVersions(1)}
+                  disabled={generating}
+                  className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${
+                    versions === 1 ? "bg-[#7c3aed] text-white" : "text-pk-muted hover:text-pk-text"
+                  }`}
+                >
+                  1
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setVersions(2)}
+                  disabled={generating || remaining < 2}
+                  className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${
+                    versions === 2 ? "bg-[#7c3aed] text-white" : "text-pk-muted hover:text-pk-text"
+                  } ${remaining < 2 ? "opacity-50" : ""}`}
+                >
+                  2
+                </button>
+              </div>
+            </div>
             <Button
               variant="primary"
               className="w-full"
-              disabled={!form.genre || generating || profileLoading || remaining === 0}
+              disabled={!form.genre || generating || profileLoading || remaining < versions}
               onClick={async () => {
-                if (remaining === 0) return;
+                if (remaining < versions) return;
                 if (generating) return;
                 if (!user) {
                   window.localStorage.setItem(
@@ -1626,8 +1713,12 @@ export default function Dashboard() {
                 {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <AudioWaveform className="h-4 w-4" />}
                 {generating
                   ? locale === "fr"
-                    ? "Génération…"
-                    : "Generating..."
+                    ? versions === 2
+                      ? "Génération x2…"
+                      : "Génération…"
+                    : versions === 2
+                      ? "Generating x2..."
+                      : "Generating..."
                   : mode === "song"
                     ? locale === "fr"
                       ? "Générer une chanson"
@@ -1641,12 +1732,12 @@ export default function Dashboard() {
             <div className="mt-3 flex items-center justify-between text-xs">
               <span className="text-gray-500">
                 {locale === "fr"
-                  ? `${remaining} génération${remaining !== 1 ? "s" : ""} restante${remaining !== 1 ? "s" : ""} ce mois-ci`
-                  : `${remaining} generation${remaining !== 1 ? "s" : ""} remaining this month`}
+                  ? `${remainingAfterGenerate} génération${remainingAfterGenerate !== 1 ? "s" : ""} restante${remainingAfterGenerate !== 1 ? "s" : ""} ce mois-ci`
+                  : `${remainingAfterGenerate} generation${remainingAfterGenerate !== 1 ? "s" : ""} remaining this month`}
               </span>
               <span className="text-gray-600">{locale === "fr" ? `Plan ${plan}` : `${plan} plan`}</span>
             </div>
-            {remaining === 0 ? (
+            {remainingAfterGenerate === 0 ? (
               <div className="mt-2 flex flex-col gap-2 text-xs text-gray-500">
                 {plan === "free"
                   ? locale === "fr"
@@ -1734,11 +1825,19 @@ export default function Dashboard() {
                 <div className="text-sm font-semibold text-pk-text">
                   {mode === "song"
                     ? locale === "fr"
-                      ? "Génération de ta chanson…"
-                      : "Generating your song..."
+                      ? versions === 2
+                        ? "Génération de 2 versions de ta chanson…"
+                        : "Génération de ta chanson…"
+                      : versions === 2
+                        ? "Generating 2 versions of your song..."
+                        : "Generating your song..."
                     : locale === "fr"
-                      ? "Génération de ton beat…"
-                      : "Generating your beat..."}
+                      ? versions === 2
+                        ? "Génération de 2 versions de ton beat…"
+                        : "Génération de ton beat…"
+                      : versions === 2
+                        ? "Generating 2 versions of your beat..."
+                        : "Generating your beat..."}
                 </div>
                 <div className="mt-1 text-xs text-pk-muted">{locale === "fr" ? "En général 15–25 secondes" : "Usually 15–25 seconds"}</div>
               </div>

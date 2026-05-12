@@ -1,0 +1,1 @@
+ALTER TABLE loops ADD COLUMN IF NOT EXISTS seed bigint;

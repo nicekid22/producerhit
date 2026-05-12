@@ -27,6 +27,7 @@ export type Loop = {
   reverb: string;
   prompt: string;
   audioUrl: string | null;
+  seed?: number | null;
   details?: LoopDetails | null;
   stemsUrl?: Record<string, unknown> | null;
   isSaved: boolean;
