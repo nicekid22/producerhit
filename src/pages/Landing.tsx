@@ -614,7 +614,7 @@ export default function Landing() {
             <div className="inline-flex items-center justify-center rounded-full border border-[#7c3aed44] bg-[#7c3aed11] px-4 py-1.5 text-sm font-semibold text-[#a78bfa]">
               {heroBadge}
             </div>
-            <div className="mt-8 text-balance text-[clamp(2.75rem,9vw,6rem)] font-extrabold leading-[0.95] tracking-tight text-white">
+            <h1 className="mt-8 text-balance text-[clamp(2.75rem,9vw,6rem)] font-extrabold leading-[0.95] tracking-tight text-white">
               {locale === "fr" ? (
                 <>
                   <div>Crée de la musique.</div>
@@ -626,7 +626,7 @@ export default function Landing() {
                   <div className="text-[#7c3aed]">Like you mean it.</div>
                 </>
               )}
-            </div>
+            </h1>
             <div className="mx-auto mt-6 max-w-xl text-balance text-[clamp(1rem,2vw,1.125rem)] text-[#6b7280]">
               {locale === "fr"
                 ? "Génère des chansons complètes avec voix ou des type beats niveau pro. Décris ton idée, reçois un track en quelques secondes."
@@ -910,9 +910,9 @@ export default function Landing() {
         </RevealSection>
 
         <RevealSection id="trending" className="mx-auto max-w-6xl px-4 py-24">
-          <div className="text-balance text-[clamp(1.75rem,3.2vw,2.25rem)] font-bold tracking-tight text-white">
+          <h2 className="text-balance text-[clamp(1.75rem,3.2vw,2.25rem)] font-bold tracking-tight text-white">
             {locale === "fr" ? "Ce que les gens créent" : "What people are making"}
-          </div>
+          </h2>
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             {trendingLoading
               ? [0, 1, 2].map((i) => (
@@ -1089,7 +1089,7 @@ export default function Landing() {
 
         <RevealSection className="mx-auto max-w-6xl px-4 py-24">
           <div className="rounded-2xl border border-[#2d2d3d] bg-[#111118] p-8">
-            <div className="text-balance text-[clamp(1.75rem,3.2vw,2.25rem)] font-bold tracking-tight text-white">FAQ</div>
+            <h2 className="text-balance text-[clamp(1.75rem,3.2vw,2.25rem)] font-bold tracking-tight text-white">FAQ</h2>
             <div className="mt-6 grid gap-2">
               {faqs.map((f, i) => {
                 const open = faqOpen === i;
@@ -1124,6 +1124,12 @@ export default function Landing() {
               <Link to="/pricing" className="hover:text-white">
                 {locale === "fr" ? "Tarifs" : "Pricing"}
               </Link>
+              <Link to="/ai-beat-generator" className="hover:text-white">
+                AI Beat Generator
+              </Link>
+              <Link to="/ai-music-generator" className="hover:text-white">
+                AI Music Generator
+              </Link>
               <Link to="/legal#privacy" className="hover:text-white">
                 {locale === "fr" ? "Privacy" : "Privacy"}
               </Link>
@@ -1132,6 +1138,9 @@ export default function Landing() {
               </Link>
               <Link to="/legal#contact" className="hover:text-white">
                 {locale === "fr" ? "Support" : "Support"}
+              </Link>
+              <Link to="/type-beat-generator-ai" className="hover:text-white">
+                Type Beat AI
               </Link>
               <Link to={user ? "/dashboard" : "/auth"} className="hover:text-white">
                 {user ? "Dashboard" : locale === "fr" ? "Connexion" : "Login"}
