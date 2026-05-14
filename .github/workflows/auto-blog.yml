@@ -1,0 +1,46 @@
+name: Auto publish blog
+
+on:
+  schedule:
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: "Blog topic"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Generate post
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
+          BLOG_TOPIC: ${{ inputs.topic }}
+        run: node scripts/auto-blog.mjs
+
+      - name: Commit and push
+        run: |
+          git config user.name "producerhit-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/content/blog.ts public/sitemap.xml public/rss.xml
+          git commit -m "Blog: auto publish"
+          git push
+

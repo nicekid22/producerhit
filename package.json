@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "check": "tsc -b --noEmit",
-    "test": "vitest"
+    "test": "vitest",
+    "blog:auto": "node scripts/auto-blog.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",

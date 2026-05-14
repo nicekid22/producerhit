@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>ProducerHit Blog</title>
+    <link>https://www.producerhit.com/blog</link>
+    <description>Guides and tactics to get better beats and music from AI.</description>
+    <language>en</language>
+    <item>
+      <title>AI Beat Generator: How to get better results (without wasting credits)</title>
+      <link>https://www.producerhit.com/blog/ai-beat-generator-better-results</link>
+      <guid>https://www.producerhit.com/blog/ai-beat-generator-better-results</guid>
+      <pubDate>Wed, 14 May 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[A practical workflow for getting higher-quality beats from an AI beat generator: short generations, two versions, seed variations, and prompt structure.]]></description>
+    </item>
+    <item>
+      <title>Type Beat Generator AI: prompt examples for trap, drill, R&B, afrobeats</title>
+      <link>https://www.producerhit.com/blog/type-beat-generator-ai-prompt-examples</link>
+      <guid>https://www.producerhit.com/blog/type-beat-generator-ai-prompt-examples</guid>
+      <pubDate>Wed, 14 May 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[Copy/paste prompt examples for a type beat generator AI, plus the key ingredients that keep outputs clean and consistent.]]></description>
+    </item>
+    <item>
+      <title>Generate beats online free: the producer workflow</title>
+      <link>https://www.producerhit.com/blog/generate-beats-online-free-guide</link>
+      <guid>https://www.producerhit.com/blog/generate-beats-online-free-guide</guid>
+      <pubDate>Wed, 14 May 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[How to generate beats online for free and actually end up with a usable instrumental: short clips, pick the best take, then export and iterate.]]></description>
+    </item>
+    <item>
+      <title>AI music generator vs AI agent: why results can feel random</title>
+      <link>https://www.producerhit.com/blog/ai-music-generator-vs-agent</link>
+      <guid>https://www.producerhit.com/blog/ai-music-generator-vs-agent</guid>
+      <pubDate>Wed, 14 May 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[Why open generation can produce bad outputs, and the producer-friendly tactics that increase hit rate: short lengths, multiple candidates, and controlled variation.]]></description>
+    </item>
+  </channel>
+</rss>

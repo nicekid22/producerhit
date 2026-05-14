@@ -28,6 +28,9 @@ export function Navbar({ variant }: { variant: "marketing" | "auth" }) {
             <Link to="/pricing" className="hover:text-[#1a1a2e]">
               {locale === "fr" ? "Tarifs" : "Pricing"}
             </Link>
+            <Link to="/blog" className="hover:text-[#1a1a2e]">
+              {locale === "fr" ? "Blog" : "Blog"}
+            </Link>
             <Link to="/auth" className="hover:text-[#1a1a2e]">
               {locale === "fr" ? "Connexion" : "Login"}
             </Link>

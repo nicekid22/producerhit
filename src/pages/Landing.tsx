@@ -1135,6 +1135,9 @@ export default function Landing() {
               <Link to="/ai-music-generator" className="hover:text-white">
                 AI Music Generator
               </Link>
+              <Link to="/blog" className="hover:text-white">
+                {locale === "fr" ? "Blog" : "Blog"}
+              </Link>
               <Link to="/legal#privacy" className="hover:text-white">
                 {locale === "fr" ? "Privacy" : "Privacy"}
               </Link>

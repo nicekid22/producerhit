@@ -8,6 +8,8 @@ import { ThemeBootstrap } from "@/components/ThemeBootstrap";
 import { AppToaster } from "@/components/AppToaster";
 import Landing from "@/pages/Landing";
 import Home from "@/pages/Home";
+import Blog from "@/pages/Blog";
+import BlogPost from "@/pages/BlogPost";
 import Auth from "@/pages/Auth";
 import Dashboard from "@/pages/Dashboard";
 import Library from "@/pages/Library";
@@ -16,6 +18,7 @@ import Settings from "@/pages/Settings";
 import Legal from "@/pages/Legal";
 import { AudioPlayer } from "@/components/AudioPlayer";
 import { useLocaleStore } from "@/stores/localeStore";
+import { BLOG_POSTS, getBlogPostBySlug } from "@/content/blog";
 
 function setMeta(nameOrProp: string, value: string, kind: "name" | "property") {
   const selector = kind === "name" ? `meta[name="${nameOrProp}"]` : `meta[property="${nameOrProp}"]`;
@@ -73,6 +76,8 @@ function SeoBootstrap() {
 
     const slugKey = (() => {
       if (pathname === "/") return "home";
+      if (pathname === "/blog") return "blog";
+      if (pathname.startsWith("/blog/")) return "blog-post";
       if (pathname === "/pricing") return "pricing";
       if (pathname === "/legal") return "legal";
       if (pathname === "/auth") return "auth";
@@ -90,6 +95,8 @@ function SeoBootstrap() {
 
     const title = (() => {
       if (slugKey === "home") return t("ProducerHit — AI Beat Generator & AI Music Generator", "ProducerHit — Générateur de beats IA & musique IA");
+      if (slugKey === "blog") return t("Blog — ProducerHit", "Blog — ProducerHit");
+      if (slugKey === "blog-post") return t("Blog — ProducerHit", "Blog — ProducerHit");
       if (slugKey === "pricing") return t("Pricing — ProducerHit", "Tarifs — ProducerHit");
       if (slugKey === "auth") return t("Sign Up Free — ProducerHit", "Inscription gratuite — ProducerHit");
       if (slugKey === "dashboard") return t("My Studio — ProducerHit", "Mon studio — ProducerHit");
@@ -129,27 +136,38 @@ function SeoBootstrap() {
           "Generate beats online free with ProducerHit. Start with short clips, pick the best version, then iterate with variations. Export MP3 (free) and WAV (Pro).",
           "Génère des beats en ligne gratuitement avec ProducerHit. Commence par des clips courts, choisis la meilleure version, puis itère avec des variations. Export MP3 (gratuit) et WAV (Pro).",
         );
+      if (slugKey === "blog")
+        return t(
+          "ProducerHit blog: guides, prompts, and workflows for AI beat generators and AI music generators.",
+          "Blog ProducerHit : guides, prompts et workflows pour générer des beats et de la musique avec l’IA.",
+        );
       if (slugKey === "pricing") return t("Simple pricing for AI beats and AI songs. Upgrade for more credits and WAV exports.", "Tarifs simples pour beats IA et songs IA. Upgrade pour plus de crédits et l’export WAV.");
       return t("ProducerHit is an AI beat generator to create type beats online.", "ProducerHit est un générateur de beats IA pour créer des type beats en ligne.");
     })();
 
-    document.title = title;
-    setMeta("description", description, "name");
+    const blogSlug = slugKey === "blog-post" ? pathname.replace("/blog/", "").split("/")[0] : null;
+    const blogPost = blogSlug ? getBlogPostBySlug(blogSlug) : null;
+    const effectiveTitle = blogPost ? `${blogPost.title} | ProducerHit` : title;
+    const effectiveDescription = blogPost ? blogPost.description : description;
+    const effectiveCanonicalUrl = blogPost ? `${origin}/blog/${blogPost.slug}` : canonicalUrl;
+
+    document.title = effectiveTitle;
+    setMeta("description", effectiveDescription, "name");
     setMeta("robots", robots, "name");
     setMeta("googlebot", robots, "name");
 
     setMeta("og:type", "website", "property");
     setMeta("og:site_name", "ProducerHit", "property");
-    setMeta("og:title", title, "property");
-    setMeta("og:description", description, "property");
-    setMeta("og:url", canonicalUrl, "property");
+    setMeta("og:title", effectiveTitle, "property");
+    setMeta("og:description", effectiveDescription, "property");
+    setMeta("og:url", effectiveCanonicalUrl, "property");
     setMeta("og:image", ogImageUrl, "property");
     setMeta("twitter:card", "summary_large_image", "name");
-    setMeta("twitter:title", title, "name");
-    setMeta("twitter:description", description, "name");
+    setMeta("twitter:title", effectiveTitle, "name");
+    setMeta("twitter:description", effectiveDescription, "name");
     setMeta("twitter:image", ogImageUrl, "name");
 
-    setLink("canonical", canonicalUrl);
+    setLink("canonical", effectiveCanonicalUrl);
     setLink("alternate", `${origin}${pathname}?lang=en`, { hreflang: "en" });
     setLink("alternate", `${origin}${pathname}?lang=fr`, { hreflang: "fr" });
 
@@ -226,6 +244,44 @@ function SeoBootstrap() {
       return;
     }
 
+    if (slugKey === "blog") {
+      setJsonLd([
+        ...baseJsonLd,
+        {
+          "@context": "https://schema.org",
+          "@type": "Blog",
+          name: "ProducerHit Blog",
+          url: `${origin}/blog`,
+          blogPost: BLOG_POSTS.slice(0, 20).map((p) => ({
+            "@type": "BlogPosting",
+            headline: p.title,
+            description: p.description,
+            datePublished: p.publishedAt,
+            dateModified: p.updatedAt,
+            url: `${origin}/blog/${p.slug}`,
+          })),
+        },
+      ]);
+      return;
+    }
+
+    if (slugKey === "blog-post" && blogPost) {
+      setJsonLd([
+        ...baseJsonLd,
+        {
+          "@context": "https://schema.org",
+          "@type": "BlogPosting",
+          headline: blogPost.title,
+          description: blogPost.description,
+          datePublished: blogPost.publishedAt,
+          dateModified: blogPost.updatedAt,
+          url: `${origin}/blog/${blogPost.slug}`,
+          isPartOf: { "@type": "Blog", name: "ProducerHit Blog", url: `${origin}/blog` },
+        },
+      ]);
+      return;
+    }
+
     if (slugKey === "home" || slugKey === "pricing") {
       setJsonLd([
         ...baseJsonLd,
@@ -271,6 +327,8 @@ export default function App() {
               <Routes>
                 <Route path="/" element={<Landing />} />
                 <Route path="/home" element={<Navigate to="/" replace />} />
+                <Route path="/blog" element={<Blog />} />
+                <Route path="/blog/:slug" element={<BlogPost />} />
                 <Route path="/ai-beat-generator" element={<Home />} />
                 <Route path="/ai-music-generator" element={<Home />} />
                 <Route path="/type-beat-generator-ai" element={<Home />} />
