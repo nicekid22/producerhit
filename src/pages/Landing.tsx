@@ -610,7 +610,7 @@ export default function Landing() {
 
       <main className="relative z-10">
         <RevealSection className="mx-auto flex min-h-screen max-w-6xl flex-col justify-center px-4 py-24">
-          <div className="mx-auto w-full max-w-3xl text-center">
+          <section className="mx-auto w-full max-w-3xl text-center" aria-label="Hero">
             <div className="inline-flex items-center justify-center rounded-full border border-[#7c3aed44] bg-[#7c3aed11] px-4 py-1.5 text-sm font-semibold text-[#a78bfa]">
               {heroBadge}
             </div>
@@ -652,12 +652,12 @@ export default function Landing() {
             <div className="mt-6 flex items-center justify-center gap-3 text-sm text-[#6b7280]">
               <div className="flex -space-x-2">
                 {["bg-[#7c3aed]", "bg-[#0ea5e9]", "bg-[#db2777]", "bg-[#22c55e]", "bg-[#f97316]"].map((c) => (
-                  <div key={c} className={`h-7 w-7 rounded-full border border-[#0a0a0f] ${c}`} />
+                  <div key={c} className={`h-7 w-7 rounded-full border border-[#0a0a0f] ${c}`} aria-hidden />
                 ))}
               </div>
               <div>{locale === "fr" ? "Rejoins 10 000+ artistes et producteurs" : "Join 10,000+ artists and producers"}</div>
             </div>
-          </div>
+          </section>
 
           <div id="create" className="relative mx-auto mt-12 w-full max-w-4xl">
             <div className="pointer-events-none absolute inset-0 -z-10">
@@ -804,6 +804,7 @@ export default function Landing() {
                       type="button"
                       onClick={() => void onGenerate()}
                       disabled={generating}
+                      aria-label={locale === "fr" ? "Générer ton premier beat gratuitement" : "Generate your first beat free"}
                       className="inline-flex h-[54px] w-full items-center justify-center rounded-full bg-[#7c3aed] px-8 text-base font-semibold text-white transition-all hover:bg-[#6d28d9] disabled:opacity-70 sm:w-auto"
                     >
                       <span className="inline-flex items-center gap-2">
@@ -844,9 +845,9 @@ export default function Landing() {
 
         <RevealSection className="mx-auto max-w-6xl px-4 py-24">
           <div className="text-center">
-            <div className="text-balance text-[clamp(1.75rem,4vw,2.5rem)] font-bold tracking-tight text-white">
+            <h2 className="text-balance text-[clamp(1.75rem,4vw,2.5rem)] font-bold tracking-tight text-white">
               {locale === "fr" ? "Tout pour créer." : "Everything you need to create."}
-            </div>
+            </h2>
           </div>
           <div className="mt-10 grid gap-4 md:grid-cols-2">
             {(locale === "fr"
@@ -868,7 +869,7 @@ export default function Landing() {
                 className="group relative overflow-hidden rounded-2xl border border-[#2d2d3d] bg-[#111118] p-6 transition-all hover:border-[#7c3aed]/50 hover:shadow-[0_0_70px_rgba(124,58,237,0.12)] before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-[#7c3aed] before:opacity-0 before:transition-opacity before:content-[''] hover:before:opacity-100"
               >
                 <div className="text-2xl">{x.icon}</div>
-                <div className="mt-4 text-lg font-semibold text-white">{x.t}</div>
+                <h3 className="mt-4 text-lg font-semibold text-white">{x.t}</h3>
                 <div className="mt-2 text-sm text-[#6b7280]">{x.d}</div>
               </div>
             ))}
@@ -877,9 +878,9 @@ export default function Landing() {
 
         <RevealSection className="mx-auto max-w-6xl px-4 py-24">
           <div className="rounded-2xl border border-[#2d2d3d] bg-[#111118] p-8">
-            <div className="text-balance text-[clamp(1.75rem,3.2vw,2.25rem)] font-bold tracking-tight text-white">
+            <h2 className="text-balance text-[clamp(1.75rem,3.2vw,2.25rem)] font-bold tracking-tight text-white">
               {locale === "fr" ? "3 étapes. C’est tout." : "Three steps. That’s it."}
-            </div>
+            </h2>
             <div className="relative mt-8">
               <div className="absolute left-10 right-10 top-5 hidden border-t border-dashed border-[#2d2d3d] md:block" />
               <div className="grid gap-6 md:grid-cols-3">
@@ -899,7 +900,7 @@ export default function Landing() {
                     <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#7c3aed] text-sm font-bold text-white shadow-[0_0_30px_rgba(124,58,237,0.25)]">
                       {x.n}
                     </div>
-                    <div className="mt-4 text-lg font-semibold text-white">{x.t}</div>
+                    <h3 className="mt-4 text-lg font-semibold text-white">{x.t}</h3>
                     <div className="mt-2 text-sm text-[#6b7280]">{x.d}</div>
                     {x.note ? <div className="mt-2 text-xs font-semibold text-white/70">{x.note}</div> : null}
                   </div>
@@ -1094,17 +1095,21 @@ export default function Landing() {
               {faqs.map((f, i) => {
                 const open = faqOpen === i;
                 return (
-                  <div key={f.q} className="rounded-2xl border border-[#2d2d3d] bg-[#0a0a0f]">
-                    <button
-                      type="button"
-                      onClick={() => setFaqOpen((v) => (v === i ? null : i))}
-                      className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
-                    >
-                      <div className="text-sm font-semibold text-white">{f.q}</div>
-                      <div className="text-sm font-semibold text-[#6b7280]">{open ? "–" : "+"}</div>
-                    </button>
-                    {open ? <div className="px-5 pb-5 text-sm text-[#6b7280]">{f.a}</div> : null}
-                  </div>
+                  <details
+                    key={f.q}
+                    open={open}
+                    onToggle={(e) => {
+                      const isOpen = (e.currentTarget as HTMLDetailsElement).open;
+                      setFaqOpen(isOpen ? i : null);
+                    }}
+                    className="rounded-2xl border border-[#2d2d3d] bg-[#0a0a0f]"
+                  >
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-left">
+                      <span className="text-sm font-semibold text-white">{f.q}</span>
+                      <span className="text-sm font-semibold text-[#6b7280]">{open ? "–" : "+"}</span>
+                    </summary>
+                    <div className="px-5 pb-5 text-sm text-[#6b7280]">{f.a}</div>
+                  </details>
                 );
               })}
             </div>

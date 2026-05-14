@@ -1,4 +1,9 @@
 User-agent: *
 Allow: /
 
+Disallow: /dashboard
+Disallow: /library
+Disallow: /settings
+Disallow: /auth
+
 Sitemap: https://www.producerhit.com/sitemap.xml

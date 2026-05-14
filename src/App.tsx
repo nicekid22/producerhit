@@ -65,6 +65,7 @@ function SeoBootstrap() {
   useEffect(() => {
     const origin = "https://www.producerhit.com";
     const canonicalUrl = `${origin}${pathname}`;
+    const ogImageUrl = `${origin}/og-image.svg`;
 
     const isAppRoute =
       pathname.startsWith("/dashboard") || pathname.startsWith("/library") || pathname.startsWith("/settings") || pathname.startsWith("/auth");
@@ -74,6 +75,10 @@ function SeoBootstrap() {
       if (pathname === "/") return "home";
       if (pathname === "/pricing") return "pricing";
       if (pathname === "/legal") return "legal";
+      if (pathname === "/auth") return "auth";
+      if (pathname === "/dashboard") return "dashboard";
+      if (pathname === "/library") return "library";
+      if (pathname === "/settings") return "settings";
       if (pathname === "/ai-beat-generator") return "ai-beat-generator";
       if (pathname === "/ai-music-generator") return "ai-music-generator";
       if (pathname === "/type-beat-generator-ai") return "type-beat-generator-ai";
@@ -86,6 +91,10 @@ function SeoBootstrap() {
     const title = (() => {
       if (slugKey === "home") return t("ProducerHit — AI Beat Generator & AI Music Generator", "ProducerHit — Générateur de beats IA & musique IA");
       if (slugKey === "pricing") return t("Pricing — ProducerHit", "Tarifs — ProducerHit");
+      if (slugKey === "auth") return t("Sign Up Free — ProducerHit", "Inscription gratuite — ProducerHit");
+      if (slugKey === "dashboard") return t("My Studio — ProducerHit", "Mon studio — ProducerHit");
+      if (slugKey === "library") return t("My Library — ProducerHit", "Ma bibliothèque — ProducerHit");
+      if (slugKey === "settings") return t("Settings — ProducerHit", "Paramètres — ProducerHit");
       if (slugKey === "ai-beat-generator") return t("AI Beat Generator — Create Type Beats Online | ProducerHit", "Générateur de beats IA — Type beats en ligne | ProducerHit");
       if (slugKey === "ai-music-generator") return t("AI Music Generator — Generate Songs & Beats | ProducerHit", "Générateur de musique IA — Songs & beats | ProducerHit");
       if (slugKey === "type-beat-generator-ai") return t("Type Beat Generator AI — Producer-Ready Beats | ProducerHit", "Type beat generator IA — Beats pro | ProducerHit");
@@ -134,9 +143,11 @@ function SeoBootstrap() {
     setMeta("og:title", title, "property");
     setMeta("og:description", description, "property");
     setMeta("og:url", canonicalUrl, "property");
+    setMeta("og:image", ogImageUrl, "property");
     setMeta("twitter:card", "summary_large_image", "name");
     setMeta("twitter:title", title, "name");
     setMeta("twitter:description", description, "name");
+    setMeta("twitter:image", ogImageUrl, "name");
 
     setLink("canonical", canonicalUrl);
     setLink("alternate", `${origin}${pathname}?lang=en`, { hreflang: "en" });
@@ -161,17 +172,28 @@ function SeoBootstrap() {
       },
       {
         "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
+        "@type": "WebApplication",
         name: "ProducerHit",
-        applicationCategory: "MultimediaApplication",
-        operatingSystem: "Web",
+        applicationCategory: "MusicApplication",
+        operatingSystem: "Web Browser",
         url: canonicalUrl,
-        offers: {
-          "@type": "Offer",
-          price: "0",
-          priceCurrency: "EUR",
-          availability: "https://schema.org/InStock",
-        },
+        description,
+        offers: [
+          { "@type": "Offer", name: "Free Plan", price: "0", priceCurrency: "EUR", description: "3 AI generated tracks per month" },
+          { "@type": "Offer", name: "Pro Plan", price: "10", priceCurrency: "EUR", description: "75 AI generated tracks per month" },
+          { "@type": "Offer", name: "Studio Plan", price: "30", priceCurrency: "EUR", description: "250 AI generated tracks per month" },
+        ],
+        creator: { "@type": "Organization", name: "ProducerHit", url: origin },
+        featureList: [
+          "AI Beat Generation",
+          "AI Song Generation with Vocals",
+          "Type Beat Mode",
+          "Song Mode",
+          "MP3 and WAV Download",
+          "Multiple Genres",
+          "BPM and Key Control",
+          "Seed Variations",
+        ],
       },
     ];
 
@@ -199,6 +221,32 @@ function SeoBootstrap() {
         faq([
           { q: "Can I generate beats online for free?", a: "Yes. ProducerHit includes a free tier so you can generate beats online and download MP3." },
           { q: "Do I get two versions at once?", a: "You can switch Versions to 2 to generate two candidates and choose the best one." },
+        ]),
+      ]);
+      return;
+    }
+
+    if (slugKey === "home" || slugKey === "pricing") {
+      setJsonLd([
+        ...baseJsonLd,
+        faq([
+          {
+            q: "Can I use the generated music commercially?",
+            a: "You can download and use the audio you generate. For commercial releases, always make sure you are comfortable with the underlying model provider terms and your platform rules.",
+          },
+          {
+            q: "Does ProducerHit generate full songs with vocals?",
+            a: "Yes. Song Mode generates complete songs with vocals, verse-chorus structure and professional mix quality. Type Beat Mode generates instrumental beats for producers.",
+          },
+          {
+            q: "What genres does ProducerHit support?",
+            a: "ProducerHit supports multiple genres including Trap, Drill, 90s R&B, Neo Soul, Afrobeats, Amapiano, Reggaeton, Jersey Club, Pop, UK Garage, Hyperpop, Baile Funk, Afrotrap and Dancehall.",
+          },
+          {
+            q: "How fast does ProducerHit generate music?",
+            a: "Most beats and songs generate in about 20 to 45 seconds depending on the length and complexity.",
+          },
+          { q: "Can I download beats as WAV files?", a: "Yes. ProducerHit supports MP3 downloads and WAV exports on paid plans." },
         ]),
       ]);
       return;
