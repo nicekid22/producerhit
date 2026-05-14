@@ -134,6 +134,38 @@ export default function Landing() {
       : ["+ heavy 808s", "+ dark melody", "+ trap", "+ drill", "+ emotional", "+ hard hitting"];
   }, [locale, mode]);
 
+  const ideaPrompts = useMemo(() => {
+    if (locale === "fr") {
+      return [
+        { emoji: "☕", text: "Hyperpop sur mon addiction au café" },
+        { emoji: "🍟", text: "Une love song dédiée à ma friteuse à air" },
+        { emoji: "🪴", text: "Ballade acoustique triste sur mes plantes qui meurent" },
+        { emoji: "🦵", text: "Hymne gym bro triomphal pour le leg day" },
+        { emoji: "😮‍💨", text: "Chanson de rupture mais les deux sont soulagés" },
+        { emoji: "🛋️", text: "Lo‑fi beats pour faire semblant de bosser à la maison" },
+        { emoji: "📡", text: "Country song sur le Wi‑Fi qui lâche en plein meeting" },
+        { emoji: "😾", text: "Death metal lullaby pour mon chat qui me réveille à 3h" },
+      ];
+    }
+    return [
+      { emoji: "☕", text: "Hyperpop anthem about my crippling coffee addiction" },
+      { emoji: "🍟", text: "A love song dedicated to my air fryer" },
+      { emoji: "🪴", text: "Sad acoustic ballad about my dying houseplants" },
+      { emoji: "🦵", text: "Triumphant gym bro anthem for leg day" },
+      { emoji: "😮‍💨", text: "A breakup song but both people are relieved" },
+      { emoji: "🛋️", text: "Lo‑fi beats for pretending to work from home" },
+      { emoji: "📡", text: "Country song about my Wi‑Fi going out mid‑meeting" },
+      { emoji: "😾", text: "Death metal lullaby for my cat who woke me up at 3am" },
+    ];
+  }, [locale]);
+
+  const applyIdea = (text: string) => {
+    setMode("song");
+    setPrompt(text);
+    scrollTo("create");
+    window.setTimeout(() => inputRef.current?.focus(), 120);
+  };
+
   useEffect(() => {
     const onScroll = () => setNavScrolled(window.scrollY > 8);
     onScroll();
@@ -631,6 +663,23 @@ export default function Landing() {
               {locale === "fr"
                 ? "Génère des chansons complètes avec voix ou des type beats niveau pro. Décris ton idée, reçois un track en quelques secondes."
                 : "Generate full songs with vocals or producer-grade type beats. Describe your idea, get a track in seconds."}
+            </div>
+
+            <div className="mx-auto mt-8 grid max-w-2xl gap-2 text-left sm:grid-cols-2">
+              {ideaPrompts.map((x) => (
+                <button
+                  key={x.text}
+                  type="button"
+                  onClick={() => applyIdea(x.text)}
+                  className="group inline-flex items-center gap-3 rounded-2xl border border-[#2d2d3d] bg-[#0a0a0f] px-4 py-3 text-sm font-semibold text-white/80 transition-all hover:border-[#7c3aed]/60 hover:text-white"
+                  aria-label={locale === "fr" ? "Utiliser cette idée de prompt" : "Use this prompt idea"}
+                >
+                  <span className="text-base" aria-hidden>
+                    {x.emoji}
+                  </span>
+                  <span className="min-w-0 truncate">{x.text}</span>
+                </button>
+              ))}
             </div>
 
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -1134,6 +1183,9 @@ export default function Landing() {
               </Link>
               <Link to="/ai-music-generator" className="hover:text-white">
                 AI Music Generator
+              </Link>
+              <Link to="/explore" className="hover:text-white">
+                {locale === "fr" ? "Explorer" : "Explore"}
               </Link>
               <Link to="/blog" className="hover:text-white">
                 {locale === "fr" ? "Blog" : "Blog"}

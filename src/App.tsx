@@ -10,6 +10,8 @@ import Landing from "@/pages/Landing";
 import Home from "@/pages/Home";
 import Blog from "@/pages/Blog";
 import BlogPost from "@/pages/BlogPost";
+import Explore from "@/pages/Explore";
+import PublicLoop from "@/pages/PublicLoop";
 import Auth from "@/pages/Auth";
 import Dashboard from "@/pages/Dashboard";
 import Library from "@/pages/Library";
@@ -78,6 +80,8 @@ function SeoBootstrap() {
       if (pathname === "/") return "home";
       if (pathname === "/blog") return "blog";
       if (pathname.startsWith("/blog/")) return "blog-post";
+      if (pathname === "/explore") return "explore";
+      if (pathname.startsWith("/loop/")) return "loop";
       if (pathname === "/pricing") return "pricing";
       if (pathname === "/legal") return "legal";
       if (pathname === "/auth") return "auth";
@@ -97,6 +101,8 @@ function SeoBootstrap() {
       if (slugKey === "home") return t("ProducerHit — AI Beat Generator & AI Music Generator", "ProducerHit — Générateur de beats IA & musique IA");
       if (slugKey === "blog") return t("Blog — ProducerHit", "Blog — ProducerHit");
       if (slugKey === "blog-post") return t("Blog — ProducerHit", "Blog — ProducerHit");
+      if (slugKey === "explore") return t("Explore — ProducerHit", "Explorer — ProducerHit");
+      if (slugKey === "loop") return t("Track — ProducerHit", "Track — ProducerHit");
       if (slugKey === "pricing") return t("Pricing — ProducerHit", "Tarifs — ProducerHit");
       if (slugKey === "auth") return t("Sign Up Free — ProducerHit", "Inscription gratuite — ProducerHit");
       if (slugKey === "dashboard") return t("My Studio — ProducerHit", "Mon studio — ProducerHit");
@@ -140,6 +146,16 @@ function SeoBootstrap() {
         return t(
           "ProducerHit blog: guides, prompts, and workflows for AI beat generators and AI music generators.",
           "Blog ProducerHit : guides, prompts et workflows pour générer des beats et de la musique avec l’IA.",
+        );
+      if (slugKey === "explore")
+        return t(
+          "Explore public AI beats and songs on ProducerHit. Find prompt inspiration and remix ideas.",
+          "Explore des beats et songs IA publics sur ProducerHit. Trouve de l’inspiration et remix des idées.",
+        );
+      if (slugKey === "loop")
+        return t(
+          "Listen to a public track made with ProducerHit, then remix a similar version using seed-based variation.",
+          "Écoute un track public créé avec ProducerHit, puis remix une version similaire grâce aux variations via seed.",
         );
       if (slugKey === "pricing") return t("Simple pricing for AI beats and AI songs. Upgrade for more credits and WAV exports.", "Tarifs simples pour beats IA et songs IA. Upgrade pour plus de crédits et l’export WAV.");
       return t("ProducerHit is an AI beat generator to create type beats online.", "ProducerHit est un générateur de beats IA pour créer des type beats en ligne.");
@@ -265,6 +281,19 @@ function SeoBootstrap() {
       return;
     }
 
+    if (slugKey === "explore") {
+      setJsonLd([
+        ...baseJsonLd,
+        {
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: "ProducerHit Explore",
+          url: `${origin}/explore`,
+        },
+      ]);
+      return;
+    }
+
     if (slugKey === "blog-post" && blogPost) {
       setJsonLd([
         ...baseJsonLd,
@@ -327,6 +356,8 @@ export default function App() {
               <Routes>
                 <Route path="/" element={<Landing />} />
                 <Route path="/home" element={<Navigate to="/" replace />} />
+                <Route path="/explore" element={<Explore />} />
+                <Route path="/loop/:id" element={<PublicLoop />} />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/blog/:slug" element={<BlogPost />} />
                 <Route path="/ai-beat-generator" element={<Home />} />

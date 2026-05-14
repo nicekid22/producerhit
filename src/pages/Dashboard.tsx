@@ -254,6 +254,7 @@ export default function Dashboard() {
   const [activeChips, setActiveChips] = useState<string[]>([]);
   const [autoGeneratePending, setAutoGeneratePending] = useState(false);
   const [pendingLandingPrompt, setPendingLandingPrompt] = useState<string | null>(null);
+  const [externalSeed, setExternalSeed] = useState<number | null>(null);
   const autoLandingGenerateRef = useRef(false);
 
   const refreshProfile = useMemo(() => {
@@ -314,9 +315,11 @@ export default function Dashboard() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const urlPrompt = params.get("prompt");
+    const urlSeedRaw = params.get("seed");
+    const urlSeed = urlSeedRaw && /^\d+$/.test(urlSeedRaw) ? Number(urlSeedRaw) : null;
     const localPrompt = window.localStorage.getItem("producerhit_pending_prompt");
     const pendingPrompt = urlPrompt || localPrompt;
-    if (!pendingPrompt) return;
+    if (!pendingPrompt && urlSeed === null) return;
 
     let decoded = pendingPrompt;
     try {
@@ -325,7 +328,8 @@ export default function Dashboard() {
       decoded = pendingPrompt;
     }
 
-    setPendingLandingPrompt(decoded);
+    if (pendingPrompt) setPendingLandingPrompt(decoded);
+    if (urlSeed !== null && Number.isFinite(urlSeed)) setExternalSeed(urlSeed);
     window.localStorage.removeItem("producerhit_pending_prompt");
     if (urlPrompt) window.history.replaceState({}, "", "/dashboard");
   }, []);
@@ -596,10 +600,10 @@ export default function Dashboard() {
 
       const results = await (async () => {
         if (versions !== 2) {
-          const value = await generateBeat(inputParams, effectiveEngine, buildOptions(undefined));
+          const value = await generateBeat(inputParams, effectiveEngine, buildOptions(externalSeed ?? undefined));
           return [{ ok: true as const, value }];
         }
-        const seed1 = randInt(999999);
+        const seed1 = externalSeed ?? randInt(999999);
         const seed2 = seed1 + 12345;
         const [r1, r2] = await Promise.all([
           generateBeat(inputParams, effectiveEngine, buildOptions(seed1))
@@ -628,6 +632,7 @@ export default function Dashboard() {
       if (!created.length) throw new Error(locale === "fr" ? "Échec de génération — réessaie" : "Generation failed — please try again");
 
       setCurrent(created[0], true);
+      setExternalSeed(null);
       toast.success(
         versions === 2
           ? locale === "fr"
@@ -680,6 +685,7 @@ export default function Dashboard() {
     effectiveEngine,
     effectiveKey,
     effectiveScale,
+    externalSeed,
     form.bpm,
     form.energyLevel,
     form.genre,
