@@ -158,11 +158,6 @@ function SeoBootstrap() {
         "@type": "WebSite",
         name: "ProducerHit",
         url: origin,
-        potentialAction: {
-          "@type": "SearchAction",
-          target: `${origin}/?q={search_term_string}`,
-          "query-input": "required name=search_term_string",
-        },
       },
       {
         "@context": "https://schema.org",
@@ -174,7 +169,7 @@ function SeoBootstrap() {
         offers: {
           "@type": "Offer",
           price: "0",
-          priceCurrency: "USD",
+          priceCurrency: "EUR",
           availability: "https://schema.org/InStock",
         },
       },
