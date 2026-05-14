@@ -1138,8 +1138,14 @@ export default function Landing() {
               <Link to="/legal#privacy" className="hover:text-white">
                 {locale === "fr" ? "Privacy" : "Privacy"}
               </Link>
+              <Link to="/legal#cookies" className="hover:text-white">
+                {locale === "fr" ? "Cookies" : "Cookies"}
+              </Link>
               <Link to="/legal#terms" className="hover:text-white">
                 {locale === "fr" ? "Terms" : "Terms"}
+              </Link>
+              <Link to="/legal#refunds" className="hover:text-white">
+                {locale === "fr" ? "Refunds" : "Refunds"}
               </Link>
               <Link to="/legal#contact" className="hover:text-white">
                 {locale === "fr" ? "Support" : "Support"}

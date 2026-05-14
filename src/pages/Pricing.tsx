@@ -245,6 +245,30 @@ export default function Pricing() {
             })}
           </div>
         </section>
+
+        <footer className="mt-14 border-t border-[#e5e7eb] pt-8 text-sm text-[#6b7280]">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <Link to="/legal#privacy" className="hover:text-[#1a1a2e]">
+              {isFr ? "Confidentialité" : "Privacy"}
+            </Link>
+            <Link to="/legal#cookies" className="hover:text-[#1a1a2e]">
+              {isFr ? "Cookies" : "Cookies"}
+            </Link>
+            <Link to="/legal#terms" className="hover:text-[#1a1a2e]">
+              {isFr ? "Conditions" : "Terms"}
+            </Link>
+            <Link to="/legal#refunds" className="hover:text-[#1a1a2e]">
+              {isFr ? "Paiements & remboursements" : "Payments & Refunds"}
+            </Link>
+            <Link to="/legal#contact" className="hover:text-[#1a1a2e]">
+              {isFr ? "Support" : "Support"}
+            </Link>
+            <a className="hover:text-[#1a1a2e]" href="mailto:info.producermarket@gmail.com">
+              info.producermarket@gmail.com
+            </a>
+          </div>
+          <div className="mt-4">© 2026 ProducerHit</div>
+        </footer>
       </main>
     </div>
   );
