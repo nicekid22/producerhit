@@ -20,6 +20,16 @@ function coverGradient(loop: Loop) {
   return `linear-gradient(135deg, hsla(${h1}, 85%, 55%, ${a}) 0%, hsla(${h2}, 85%, 50%, ${a}) 45%, hsla(${h3}, 85%, 45%, ${a}) 100%)`;
 }
 
+function coverBackground(loop: Loop) {
+  const gradient = coverGradient(loop);
+  const basePrompt = (loop.details?.caption || loop.prompt || `${loop.genre} ${loop.mood}`).trim();
+  const trimmed = basePrompt.length > 220 ? basePrompt.slice(0, 220) : basePrompt;
+  const seed = typeof loop.seed === "number" && Number.isFinite(loop.seed) ? loop.seed : hashString(loop.id);
+  const prompt = `${trimmed}, album cover, abstract, minimal, vibrant, no text`;
+  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=128&height=128&seed=${seed}&nologo=true`;
+  return `url("${url}"), ${gradient}`;
+}
+
 export function LoopCard({
   loop,
   isActive,
@@ -51,8 +61,8 @@ export function LoopCard({
     <div className={cn("rounded-pk border border-pk-border bg-pk-panel p-4", isActive ? "shadow-glow" : "")}>
       <div className="flex gap-3">
         <div
-          className="h-12 w-12 shrink-0 overflow-hidden rounded-pk border border-pk-border"
-          style={{ backgroundImage: coverGradient(loop) }}
+          className="h-12 w-12 shrink-0 overflow-hidden rounded-pk border border-pk-border bg-center bg-cover"
+          style={{ backgroundImage: coverBackground(loop) }}
           aria-hidden
         />
         <div className="min-w-0">

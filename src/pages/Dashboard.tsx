@@ -218,7 +218,10 @@ export default function Dashboard() {
   const user = useAuthStore((s) => s.user);
   const locale = useLocaleStore((s) => s.locale);
   const [generating, setGenerating] = useState(false);
-  const [versions, setVersions] = useState<1 | 2>(1);
+  const [versions, setVersions] = useState<1 | 2>(() => {
+    const saved = typeof window !== "undefined" ? window.localStorage.getItem("producerhit_versions") : null;
+    return saved === "1" ? 1 : 2;
+  });
   const [plan, setPlan] = useState("free");
   const [usedThisMonth, setUsedThisMonth] = useState(0);
   const [profileLoading, setProfileLoading] = useState(true);
@@ -348,6 +351,14 @@ export default function Dashboard() {
 
   const remaining = getRemainingBeats(plan, usedThisMonth);
   const remainingAfterGenerate = Math.max(0, remaining - versions);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("producerhit_versions", String(versions));
+  }, [versions]);
+
+  useEffect(() => {
+    if (versions === 2 && remaining < 2) setVersions(1);
+  }, [remaining, versions]);
   const consumeCredit = useCallback(() => {
     setUsedThisMonth((v) => v + 1);
     if (user) void refreshProfile();
@@ -1719,12 +1730,8 @@ export default function Dashboard() {
                 {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <AudioWaveform className="h-4 w-4" />}
                 {generating
                   ? locale === "fr"
-                    ? versions === 2
-                      ? "Génération x2…"
-                      : "Génération…"
-                    : versions === 2
-                      ? "Generating x2..."
-                      : "Generating..."
+                    ? "Génération…"
+                    : "Generating..."
                   : mode === "song"
                     ? locale === "fr"
                       ? "Générer une chanson"
