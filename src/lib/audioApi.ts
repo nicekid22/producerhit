@@ -25,26 +25,47 @@ export type AceFormatResult = {
   timeSignature?: string;
 };
 
+const ACE_AUDIO_ORIGIN = "https://api.acemusic.ai";
+const ACE_TASK_API_BASE = "https://acem-api.acemusic.ai/api/acem";
+
+function normalizeStoredAceAudioUrl(url: string) {
+  try {
+    const u = new URL(url);
+    const idx = u.pathname.indexOf("/v1/audio");
+    if (idx >= 0) return `${ACE_AUDIO_ORIGIN}${u.pathname.slice(idx)}${u.search}`;
+  } catch {
+    // ignore
+  }
+  return url;
+}
+
 function buildAceAudioUrl(baseUrl: string, filePath: string) {
   const t = filePath.trim();
   if (!t) return "";
-  if (t.startsWith("http://") || t.startsWith("https://")) return t;
-  if (t.startsWith("/v1/audio?path=")) return `${baseUrl}${t}`;
-  if (t.startsWith("v1/audio?path=")) return `${baseUrl}/${t}`;
-  if (t.startsWith("/")) return `${baseUrl}/v1/audio?path=${t}`;
+  if (t.startsWith("http://") || t.startsWith("https://")) return normalizeStoredAceAudioUrl(t);
+  if (t.includes("/v1/audio") || t.startsWith("v1/audio")) {
+    if (t.startsWith("/v1/audio?path=")) return `${ACE_AUDIO_ORIGIN}${t}`;
+    if (t.startsWith("v1/audio?path=")) return `${ACE_AUDIO_ORIGIN}/${t}`;
+    if (t.startsWith("/")) return `${ACE_AUDIO_ORIGIN}${t.startsWith("/v1/audio") ? t : `/v1/audio?path=${encodeURIComponent(t.replace(/^\//, ""))}`}`;
+    return `${ACE_AUDIO_ORIGIN}/v1/audio?path=${encodeURIComponent(t)}`;
+  }
+  if (t.startsWith("/v1/audio?path=")) return `${ACE_AUDIO_ORIGIN}${t}`;
+  if (t.startsWith("v1/audio?path=")) return `${ACE_AUDIO_ORIGIN}/${t}`;
+  if (t.startsWith("/")) return `${baseUrl}${t}`;
   return `${baseUrl}/v1/audio?path=${t}`;
 }
 
 function normalizeAceBaseUrl(baseUrlRaw: string) {
   const trimmed = baseUrlRaw.trim();
   const noTrailingSlash = trimmed.replace(/\/$/, "");
+  if (!noTrailingSlash) return ACE_TASK_API_BASE;
   try {
     const u = new URL(noTrailingSlash);
     const host = u.hostname.toLowerCase();
-    const path = u.pathname.toLowerCase();
-    if (host === "acemusic.ai") return "https://api.acemusic.ai";
-    if (host === "acem-api.acemusic.ai") return "https://api.acemusic.ai";
-    if (path.includes("/api/acem")) return "https://api.acemusic.ai";
+    if (host === "acem-api.acemusic.ai") {
+      return noTrailingSlash.includes("/api/acem") ? noTrailingSlash : ACE_TASK_API_BASE;
+    }
+    if (host === "acemusic.ai" || host === "api.acemusic.ai") return ACE_TASK_API_BASE;
   } catch {
     // ignore
   }
@@ -154,7 +175,7 @@ async function generateLoopAceDirect(
   },
 ): Promise<{ audioUrl: string; meta?: AceMeta | null }> {
   const aceApiKey = import.meta.env.VITE_ACE_STEP_API_KEY as string | undefined;
-  const baseUrlRaw = (import.meta.env.VITE_ACE_STEP_BASE_URL as string | undefined) ?? "https://api.acemusic.ai";
+  const baseUrlRaw = (import.meta.env.VITE_ACE_STEP_BASE_URL as string | undefined) ?? ACE_TASK_API_BASE;
   const baseUrl = normalizeAceBaseUrl(baseUrlRaw);
   if (!aceApiKey) throw new Error("Missing VITE_ACE_STEP_API_KEY");
 

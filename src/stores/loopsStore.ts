@@ -261,9 +261,23 @@ async function probeDurationSec(src: string): Promise<number | null> {
   });
 }
 
+function normalizeStoredAceAudioUrl(url: string): string {
+  try {
+    const u = new URL(url);
+    const idx = u.pathname.indexOf("/v1/audio");
+    if (idx >= 0) return `https://api.acemusic.ai${u.pathname.slice(idx)}${u.search}`;
+  } catch {
+    // ignore
+  }
+  return url;
+}
+
 function toLoop(row: DbLoop): Loop {
   const rawAudio = typeof row.audio_url === "string" ? row.audio_url.trim() : "";
-  const audioUrl = rawAudio && (rawAudio.startsWith("https://") || rawAudio.startsWith("http://")) ? rawAudio : null;
+  const audioUrl =
+    rawAudio && (rawAudio.startsWith("https://") || rawAudio.startsWith("http://"))
+      ? normalizeStoredAceAudioUrl(rawAudio)
+      : null;
   const stemsObj = row.stems_url && typeof row.stems_url === "object" ? (row.stems_url as Record<string, unknown>) : null;
   const aceObj = stemsObj && stemsObj.ace && typeof stemsObj.ace === "object" ? (stemsObj.ace as Record<string, unknown>) : null;
   const details =

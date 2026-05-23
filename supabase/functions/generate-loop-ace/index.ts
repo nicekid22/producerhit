@@ -39,10 +39,35 @@ function computeRequestedDurationSec(input: {
   return 90;
 }
 
+const ACE_AUDIO_ORIGIN = "https://api.acemusic.ai";
+const ACE_TASK_API_BASE = "https://acem-api.acemusic.ai/api/acem";
+
+function normalizeStoredAceAudioUrl(url: string) {
+  try {
+    const u = new URL(url);
+    const idx = u.pathname.indexOf("/v1/audio");
+    if (idx >= 0) return `${ACE_AUDIO_ORIGIN}${u.pathname.slice(idx)}${u.search}`;
+  } catch {
+    // ignore
+  }
+  return url;
+}
+
+function buildAceAudioUrl(maybePath: string) {
+  const t = maybePath.trim();
+  if (!t) return "";
+  if (t.startsWith("http://") || t.startsWith("https://")) return normalizeStoredAceAudioUrl(t);
+  if (t.startsWith("/v1/audio?path=")) return `${ACE_AUDIO_ORIGIN}${t}`;
+  if (t.startsWith("v1/audio?path=")) return `${ACE_AUDIO_ORIGIN}/${t}`;
+  if (t.startsWith("/")) return `${ACE_AUDIO_ORIGIN}/v1/audio?path=${encodeURIComponent(t.replace(/^\//, ""))}`;
+  return `${ACE_AUDIO_ORIGIN}/v1/audio?path=${encodeURIComponent(t)}`;
+}
+
 function toAbsoluteUrl(baseUrl: string, maybePath: string) {
   const t = maybePath.trim();
   if (!t) return "";
-  if (t.startsWith("http://") || t.startsWith("https://")) return t;
+  if (t.includes("/v1/audio") || t.startsWith("v1/audio")) return buildAceAudioUrl(t);
+  if (t.startsWith("http://") || t.startsWith("https://")) return normalizeStoredAceAudioUrl(t);
   if (t.startsWith("/")) return `${baseUrl}${t}`;
   return `${baseUrl}/${t}`;
 }
@@ -111,13 +136,14 @@ function redactAiToken(body: Record<string, unknown>) {
 
 function normalizeAceBaseUrl(baseUrlRaw: string) {
   const trimmed = baseUrlRaw.trim().replace(/\/$/, "");
+  if (!trimmed) return ACE_TASK_API_BASE;
   try {
     const u = new URL(trimmed);
     const host = u.hostname.toLowerCase();
-    const path = u.pathname.toLowerCase();
-    if (host === "acemusic.ai") return "https://api.acemusic.ai";
-    if (host === "acem-api.acemusic.ai") return "https://api.acemusic.ai";
-    if (path.includes("/api/acem")) return "https://api.acemusic.ai";
+    if (host === "acem-api.acemusic.ai") {
+      return trimmed.includes("/api/acem") ? trimmed.replace(/\/$/, "") : ACE_TASK_API_BASE;
+    }
+    if (host === "acemusic.ai" || host === "api.acemusic.ai") return ACE_TASK_API_BASE;
   } catch {
     // ignore
   }
@@ -156,19 +182,13 @@ function loadAceBaseUrls(): string[] {
     const bi = normalizeAceBaseUrl(biRaw);
     if (bi) out.push(bi);
   }
-  return out.length ? out : ["https://api.acemusic.ai"];
+  return out.length ? out : [ACE_TASK_API_BASE];
 }
 
 function hashToIndex(input: string, mod: number) {
   let h = 0;
   for (let i = 0; i < input.length; i++) h = (h * 31 + input.charCodeAt(i)) >>> 0;
   return mod > 0 ? h % mod : 0;
-}
-
-function isRetryableAceHttpStatus(status: number) {
-  if (status === 429) return true;
-  if (status >= 500 && status <= 599) return true;
-  return false;
 }
 
 function getAceTargets(seedKey: string): Array<{ apiKey: string; baseUrl: string }> {
@@ -184,6 +204,90 @@ function getAceTargets(seedKey: string): Array<{ apiKey: string; baseUrl: string
   }
   const start = hashToIndex(seedKey, targets.length);
   return [...targets.slice(start), ...targets.slice(0, start)];
+}
+
+async function attemptChatCompletions(args: {
+  apiKey: string;
+  prompt: string;
+  lyrics: string;
+  instrumental: boolean;
+  bpm: number | null;
+  keyScale: string;
+  timeSignature: string;
+  duration: number;
+  audioFormat: string;
+  signal: AbortSignal;
+}): Promise<{ audioUrl: string; meta: Record<string, unknown> }> {
+  const parts = [args.prompt.trim()];
+  if (args.instrumental) {
+    parts.push("Instrumental beat. No lead singing and no rapped verses. Avoid intelligible lyrics or spoken words.");
+  } else if (args.lyrics.trim()) {
+    parts.push(`Lyrics:\n${args.lyrics.trim()}`);
+  }
+  if (args.bpm && args.bpm > 0) parts.push(`BPM: ${args.bpm}.`);
+  if (args.keyScale.trim()) parts.push(`Key: ${args.keyScale.trim()}.`);
+  if (args.timeSignature.trim()) parts.push(`Time signature: ${args.timeSignature.trim()}.`);
+
+  const res = await fetch(`${ACE_AUDIO_ORIGIN}/v1/chat/completions`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${args.apiKey}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      model: "acemusic/acestep-v1.5-turbo",
+      messages: [{ role: "user", content: parts.filter(Boolean).join("\n\n") }],
+      lyrics: args.instrumental ? "[instrumental]" : args.lyrics.trim() || "[instrumental]",
+      task_type: "text2music",
+      audio_config: {
+        instrumental: args.instrumental,
+        duration: args.duration,
+        bpm: args.bpm && args.bpm > 0 ? args.bpm : null,
+        key_scale: args.keyScale.trim() || null,
+        time_signature: args.timeSignature.trim() || null,
+        format: args.audioFormat,
+        audio_format: args.audioFormat,
+      },
+      stream: false,
+    }),
+    signal: args.signal,
+  });
+  const text = await readTextSafe(res);
+  if (!res.ok) throw new Error(`ACE API chat/completions failed (${res.status}): ${text}`);
+
+  const json = JSON.parse(text) as unknown;
+  const choices = (json as { choices?: unknown } | null)?.choices;
+  const firstChoice = Array.isArray(choices) ? choices[0] : null;
+  const messageObj =
+    firstChoice && typeof firstChoice === "object" && firstChoice !== null
+      ? (firstChoice as { message?: unknown }).message
+      : null;
+  const audioArr =
+    messageObj && typeof messageObj === "object" && messageObj !== null && Array.isArray((messageObj as { audio?: unknown }).audio)
+      ? ((messageObj as { audio: unknown[] }).audio as unknown[])
+      : [];
+  const firstAudio = audioArr[0] && typeof audioArr[0] === "object" && audioArr[0] !== null ? (audioArr[0] as Record<string, unknown>) : null;
+  const audioUrlRaw =
+    firstAudio && typeof firstAudio.audio_url === "object" && firstAudio.audio_url !== null
+      ? ((firstAudio.audio_url as { url?: unknown }).url as unknown)
+      : null;
+  const audioUrlStr = typeof audioUrlRaw === "string" ? audioUrlRaw : "";
+  const audioUrl = audioUrlStr.startsWith("data:") ? audioUrlStr : buildAceAudioUrl(audioUrlStr);
+  if (!audioUrl) throw new Error("ACE API returned no audio");
+
+  return {
+    audioUrl,
+    meta: {
+      prompt: args.prompt,
+      lyrics: args.instrumental ? "" : args.lyrics,
+      bpm: args.bpm,
+      duration: args.duration,
+      keyScale: args.keyScale || null,
+      timeSignature: args.timeSignature || null,
+      audioFormat: args.audioFormat,
+    },
+  };
 }
 
 serve(async (req) => {
@@ -486,7 +590,7 @@ serve(async (req) => {
       }
     }
 
-    const effectiveLyrics = instrumental ? "" : (lyricsRaw ? lyricsRaw.trim() : "");
+    const effectiveLyrics = instrumental ? (lyricsRaw.trim() || "[Instrumental]") : lyricsRaw.trim();
     const effectivePrompt = (sampleMode ? (sampleQuery.trim() || caption) : caption).trim();
     if (!effectivePrompt) throw new Error("Missing caption");
     const requestedDuration = computeRequestedDurationSec({
@@ -666,6 +770,31 @@ serve(async (req) => {
           const status = typeof (e as { status?: unknown } | null)?.status === "number" ? ((e as { status: number }).status as number) : 0;
           if (status && !isRetryableAceHttpStatus(status) && status !== 404) break;
           if (audioUrl) break;
+        }
+      }
+      if (!audioUrl) {
+        const apiKey = aceTargets[0]?.apiKey;
+        if (apiKey) {
+          try {
+            console.log("ACE release_task failed — trying chat/completions fallback", { requestId });
+            const chatOut = await attemptChatCompletions({
+              apiKey,
+              prompt: effectivePrompt,
+              lyrics: effectiveLyrics || (instrumental ? "[Instrumental]" : ""),
+              instrumental,
+              bpm,
+              keyScale,
+              timeSignature,
+              duration: requestedDuration,
+              audioFormat,
+              signal: controller.signal,
+            });
+            audioUrl = chatOut.audioUrl;
+            meta = chatOut.meta;
+            lastErr = null;
+          } catch (chatErr) {
+            lastErr = chatErr;
+          }
         }
       }
       if (!audioUrl) {
