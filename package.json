@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "check": "tsc -b --noEmit",
-    "test": "vitest",
+    "test": "vitest --run --passWithNoTests",
     "blog:auto": "node scripts/auto-blog.mjs"
   },
   "dependencies": {

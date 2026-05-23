@@ -4,16 +4,18 @@ import { useLoopsStore } from "@/stores/loopsStore";
 
 export function LoopsBootstrap({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((s) => s.user);
+  const status = useAuthStore((s) => s.status);
   const loadMyLoops = useLoopsStore((s) => s.loadMyLoops);
   const clear = useLoopsStore((s) => s.clear);
 
   useEffect(() => {
+    if (status !== "ready") return;
     if (!user) {
       clear();
       return;
     }
     void loadMyLoops();
-  }, [clear, loadMyLoops, user]);
+  }, [clear, loadMyLoops, status, user]);
 
   return <>{children}</>;
 }

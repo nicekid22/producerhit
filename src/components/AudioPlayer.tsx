@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { Download, Pause, Play, Volume2 } from "lucide-react";
+import { Download, Pause, Play, SkipBack, SkipForward, Volume2 } from "lucide-react";
 import { usePlayerStore } from "@/stores/playerStore";
 import { Button } from "@/components/ui/Button";
+import { coverGradient, coverImageUrl } from "@/lib/utils";
 
 function formatTime(sec: number): string {
   if (!sec || !isFinite(sec) || sec < 0) return "0:00";
@@ -14,6 +15,7 @@ function formatTime(sec: number): string {
 export function AudioPlayer() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const errorToastShownRef = useRef(false);
+  const audioGraphFailedRef = useRef(false);
   const vizCanvasRef = useRef<HTMLCanvasElement>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const mediaSourceRef = useRef<MediaElementAudioSourceNode | null>(null);
@@ -29,6 +31,10 @@ export function AudioPlayer() {
   const setCurrentTimeStore = usePlayerStore((s) => s.setCurrentTime);
   const setDurationStore = usePlayerStore((s) => s.setDuration);
   const clearSeek = usePlayerStore((s) => s.clearSeek);
+  const queue = usePlayerStore((s) => s.queue);
+  const queueIndex = usePlayerStore((s) => s.queueIndex);
+  const prev = usePlayerStore((s) => s.prev);
+  const next = usePlayerStore((s) => s.next);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTimeSec, setCurrentTimeSec] = useState(0);
@@ -39,24 +45,37 @@ export function AudioPlayer() {
   const [isLoading, setIsLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
 
+  const queueLen = queue.length;
+  const canPrev = queueLen > 0 && queueIndex > 0;
+  const canNext = queueLen > 0 && queueIndex < queueLen - 1;
+
   const ensureAudioGraph = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
     if (audioCtxRef.current && analyserRef.current && mediaSourceRef.current) return;
+    if (audioGraphFailedRef.current) return;
 
-    const w = window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
-    const Ctor = w.AudioContext ?? w.webkitAudioContext ?? AudioContext;
-    const ctx = new Ctor();
-    const source = ctx.createMediaElementSource(audio);
-    const analyser = ctx.createAnalyser();
-    analyser.fftSize = 256;
-    analyser.smoothingTimeConstant = 0.85;
-    source.connect(analyser);
-    analyser.connect(ctx.destination);
-    audioCtxRef.current = ctx;
-    mediaSourceRef.current = source;
-    analyserRef.current = analyser;
-    freqDataRef.current = new Uint8Array(analyser.frequencyBinCount);
+    try {
+      const w = window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
+      const Ctor = w.AudioContext ?? w.webkitAudioContext ?? AudioContext;
+      const ctx = new Ctor();
+      const source = ctx.createMediaElementSource(audio);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.85;
+      source.connect(analyser);
+      analyser.connect(ctx.destination);
+      audioCtxRef.current = ctx;
+      mediaSourceRef.current = source;
+      analyserRef.current = analyser;
+      freqDataRef.current = new Uint8Array(analyser.frequencyBinCount);
+    } catch {
+      audioGraphFailedRef.current = true;
+      audioCtxRef.current = null;
+      mediaSourceRef.current = null;
+      analyserRef.current = null;
+      freqDataRef.current = null;
+    }
   }, []);
 
   const stopRaf = useCallback(() => {
@@ -92,8 +111,8 @@ export function AudioPlayer() {
     for (let i = 0; i < barCount; i++) {
       const bin = freq ? Math.min(freq.length - 1, Math.floor((i / barCount) * freq.length)) : 0;
       const v = freq ? (freq[bin] ?? 0) / 255 : 0;
-      const next = playing ? v : bars[i] ?? 0;
-      bars[i] = playing ? (bars[i] ?? 0) * 0.35 + next * 0.65 : next;
+      const nextVal = playing ? v : bars[i] ?? 0;
+      bars[i] = playing ? (bars[i] ?? 0) * 0.35 + nextVal * 0.65 : nextVal;
     }
 
     const barW = Math.max(1, Math.floor(w / (barCount * 1.6)));
@@ -107,9 +126,9 @@ export function AudioPlayer() {
       const x = startX + i * (barW + gap);
       const y = Math.floor(h - barH);
       const t = barCount === 1 ? 0 : i / (barCount - 1);
-      const r = Math.round(124 + (167 - 124) * t);
-      const g = Math.round(58 + (139 - 58) * t);
-      const b = Math.round(237 + (250 - 237) * t);
+      const r = Math.round(203 + (103 - 203) * t);
+      const g = Math.round(213 + (195 - 213) * t);
+      const b = Math.round(225 + (255 - 225) * t);
       ctx2d.fillStyle = `rgb(${r}, ${g}, ${b})`;
       ctx2d.fillRect(x, y, barW, barH);
     }
@@ -159,7 +178,7 @@ export function AudioPlayer() {
     if (!audio) return;
 
     if (storeIsPlaying === true) {
-      if (audio.paused) {
+      if (audio.paused && audio.src && audio.readyState >= 2) {
         ensureAudioGraph();
         const ctx = audioCtxRef.current;
         if (ctx && ctx.state === "suspended") void ctx.resume().catch(() => undefined);
@@ -174,7 +193,7 @@ export function AudioPlayer() {
     if (storeIsPlaying === false) {
       if (!audio.paused) audio.pause();
     }
-  }, [ensureAudioGraph, setPlaying, storeIsPlaying]);
+  }, [currentBeat?.audioUrl, ensureAudioGraph, setPlaying, storeIsPlaying]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -310,8 +329,8 @@ export function AudioPlayer() {
     if (!audio || !currentBeat?.audioUrl) return;
     setHasError(false);
     errorToastShownRef.current = false;
+    audioGraphFailedRef.current = false;
     if (audio.src !== currentBeat.audioUrl) {
-      audio.crossOrigin = "anonymous";
       audio.src = currentBeat.audioUrl;
       audio.load();
       audio.muted = false;
@@ -326,9 +345,9 @@ export function AudioPlayer() {
 
       if (storeIsPlaying) {
         const playNow = () => {
-            ensureAudioGraph();
-            const ctx = audioCtxRef.current;
-            if (ctx && ctx.state === "suspended") void ctx.resume().catch(() => undefined);
+          ensureAudioGraph();
+          const ctx = audioCtxRef.current;
+          if (ctx && ctx.state === "suspended") void ctx.resume().catch(() => undefined);
           void audio.play().catch(() => {
             setIsPlaying(false);
             setPlaying(false);
@@ -360,7 +379,6 @@ export function AudioPlayer() {
     ensureAudioGraph,
     volume,
   ]);
-
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -471,55 +489,98 @@ export function AudioPlayer() {
     };
   }, [stopRaf]);
 
-  if (!currentBeat) return <audio ref={audioRef} id="pk-audio" preload="metadata" crossOrigin="anonymous" />;
+  const coverBg = currentBeat ? coverGradient(currentBeat) : "";
+  const coverUrl = currentBeat ? coverImageUrl(currentBeat) : "";
 
   return (
-    <div className="fixed bottom-14 left-0 right-0 z-30 border-t border-pk-border bg-pk-panel/95 backdrop-blur md:bottom-0" aria-busy={isLoading}>
+    <>
+      {currentBeat ? (
+    <div
+      className="pk-prism-player pk-prism-player--dock fixed bottom-[var(--pk-bottom-nav)] left-0 right-0 z-50 pb-[env(safe-area-inset-bottom)] md:bottom-0 md:pb-0"
+      aria-busy={isLoading}
+    >
       <div className="mx-auto flex max-w-[1440px] items-center gap-4 px-4 py-3">
-        <div className="min-w-0">
-          <div className="truncate text-sm font-semibold">{currentBeat.name}</div>
-          <div className="mt-0.5 flex flex-wrap gap-2 text-xs text-pk-muted">
-            <span className="rounded-full bg-white/5 px-2 py-0.5">{currentBeat.genre}</span>
-            <span className="rounded-full bg-white/5 px-2 py-0.5">
-              {currentBeat.key} {currentBeat.scale}
-            </span>
-            <span className="rounded-full bg-white/5 px-2 py-0.5">{currentBeat.bpm} BPM</span>
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="pk-prism-cover relative hidden h-11 w-11 shrink-0 overflow-hidden rounded-xl sm:block" style={{ background: coverBg }}>
+            <img src={coverUrl} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" decoding="async" referrerPolicy="no-referrer" />
+          </div>
+          <div className="min-w-0">
+            <div className="truncate text-sm font-semibold text-white">{currentBeat.name}</div>
+            <div className="mt-0.5 flex flex-wrap gap-2 text-xs text-white/50">
+              <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5">{currentBeat.genre}</span>
+              <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5">
+                {currentBeat.key} {currentBeat.scale}
+              </span>
+              <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5">{currentBeat.bpm} BPM</span>
+            </div>
           </div>
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col items-center">
-          <div className="flex items-center gap-3">
-            <Button variant="secondary" size="sm" onClick={togglePlay} aria-label={isPlaying ? "Pause" : "Play"}>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              onClick={prev}
+              disabled={!canPrev}
+              className="pk-prism-player-btn inline-flex h-9 w-9 items-center justify-center rounded-xl disabled:opacity-40"
+              aria-label="Previous"
+            >
+              <SkipBack className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => void togglePlay()}
+              className="pk-prism-player-btn pk-prism-player-btn--primary inline-flex h-10 w-10 items-center justify-center rounded-xl"
+              aria-label={isPlaying ? "Pause" : "Play"}
+            >
               {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-            </Button>
+            </button>
+            <button
+              type="button"
+              onClick={next}
+              disabled={!canNext}
+              className="pk-prism-player-btn inline-flex h-9 w-9 items-center justify-center rounded-xl disabled:opacity-40"
+              aria-label="Next"
+            >
+              <SkipForward className="h-4 w-4" />
+            </button>
             {hasError ? (
-              <Button variant="secondary" size="sm" onClick={retryPlayback} aria-label="Retry">
+              <Button variant="secondary" size="sm" onClick={() => void retryPlayback()} aria-label="Retry">
                 Retry
               </Button>
             ) : null}
-            <div className="text-xs text-pk-muted">
+            <div className="hidden text-xs text-white/50 sm:block">
               {formatTime(currentTimeSec)} / {durationSec > 0 ? formatTime(durationSec) : "--:--"}
+              {queueLen > 0 ? ` · ${queueIndex + 1}/${queueLen}` : ""}
             </div>
           </div>
-          <canvas ref={vizCanvasRef} className="mt-2 h-8 w-full" aria-hidden />
+          <canvas ref={vizCanvasRef} className="mt-2 h-7 w-full max-w-xl opacity-90" aria-hidden />
           <div
-            className={`relative mt-2 flex h-3 w-full items-center group ${durationSec > 0 ? "cursor-pointer" : "cursor-default"}`}
+            className={`relative mt-2 flex h-3 w-full max-w-xl items-center group ${durationSec > 0 ? "cursor-pointer" : "cursor-default"}`}
             onClick={durationSec > 0 ? handleSeek : undefined}
           >
-            <div className="h-1 w-full overflow-hidden rounded-full bg-pk-border">
+            <div className="relative h-[3px] w-full overflow-hidden rounded-full bg-white/10">
               {durationSec > 0 ? (
-                <div className="h-full rounded-full bg-pk-accent transition-none" style={{ width: `${progress * 100}%` }} />
+                <div
+                  className="h-full bg-[linear-gradient(90deg,var(--prism-chrome),var(--prism-cyan),var(--prism-violet))] transition-none"
+                  style={{ width: `${progress * 100}%` }}
+                />
               ) : isLoading ? (
-                <div className="h-full w-2/5 rounded-full bg-pk-accent/60" style={{ animation: "indeterminate 2s ease-in-out infinite" }} />
+                <div className="absolute inset-0">
+                  <div
+                    className="absolute left-0 top-0 h-full w-[42%] bg-gradient-to-r from-transparent via-[rgba(157,124,255,0.55)] to-transparent"
+                    style={{ animation: "pkShimmer 1.1s ease-in-out infinite" }}
+                  />
+                </div>
               ) : (
-                <div className="h-full w-full rounded-full bg-transparent" />
+                <div className="h-full w-full bg-transparent" />
               )}
             </div>
           </div>
         </div>
 
         <div className="hidden items-center gap-3 sm:flex">
-          <div className="flex items-center gap-2 text-pk-muted">
+          <div className="flex items-center gap-2 text-white/50">
             <Volume2 className="h-4 w-4" />
             <input
               type="range"
@@ -528,12 +589,12 @@ export function AudioPlayer() {
               step={0.01}
               value={volume}
               onChange={handleVolumeChange}
-              className="h-1 w-28 cursor-pointer accent-[#7c3aed]"
+              className="h-1 w-24 cursor-pointer accent-[var(--prism-cyan)] lg:w-28"
             />
           </div>
-          <Button
-            variant="secondary"
-            size="sm"
+          <button
+            type="button"
+            className="pk-prism-player-btn inline-flex h-9 w-9 items-center justify-center rounded-xl"
             aria-label="Download"
             onClick={() => {
               void (async () => {
@@ -574,11 +635,12 @@ export function AudioPlayer() {
             }}
           >
             <Download className="h-4 w-4" />
-          </Button>
+          </button>
         </div>
       </div>
-      <audio ref={audioRef} id="pk-audio" preload="metadata" crossOrigin="anonymous" />
     </div>
+      ) : null}
+      <audio ref={audioRef} id="pk-audio" preload="metadata" className="hidden" aria-hidden />
+    </>
   );
 }
-

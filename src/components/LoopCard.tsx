@@ -1,34 +1,9 @@
 import { Bookmark, Download, RefreshCcw, Play, Pause, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, coverGradient, coverImageUrl } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import type { Loop } from "@/types/loop";
 import { WaveformVisualizer } from "@/components/WaveformVisualizer";
-
-function hashString(input: string) {
-  let h = 0;
-  for (let i = 0; i < input.length; i++) h = (h * 31 + input.charCodeAt(i)) >>> 0;
-  return h;
-}
-
-function coverGradient(loop: Loop) {
-  const seed = hashString(`${loop.id}:${loop.genre}:${loop.mood}:${loop.bpm}`);
-  const h1 = seed % 360;
-  const h2 = (h1 + 35 + ((seed >>> 8) % 40)) % 360;
-  const h3 = (h2 + 35 + ((seed >>> 16) % 40)) % 360;
-  const a = 0.92;
-  return `linear-gradient(135deg, hsla(${h1}, 85%, 55%, ${a}) 0%, hsla(${h2}, 85%, 50%, ${a}) 45%, hsla(${h3}, 85%, 45%, ${a}) 100%)`;
-}
-
-function coverBackground(loop: Loop) {
-  const gradient = coverGradient(loop);
-  const basePrompt = (loop.details?.caption || loop.prompt || `${loop.genre} ${loop.mood}`).trim();
-  const trimmed = basePrompt.length > 220 ? basePrompt.slice(0, 220) : basePrompt;
-  const seed = typeof loop.seed === "number" && Number.isFinite(loop.seed) ? loop.seed : hashString(loop.id);
-  const prompt = `${trimmed}, album cover, abstract, minimal, vibrant, no text`;
-  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=128&height=128&seed=${seed}&nologo=true`;
-  return `url("${url}"), ${gradient}`;
-}
 
 export function LoopCard({
   loop,
@@ -61,10 +36,43 @@ export function LoopCard({
     <div className={cn("rounded-pk border border-pk-border bg-pk-panel p-4", isActive ? "shadow-glow" : "")}>
       <div className="flex gap-3">
         <div
-          className="h-12 w-12 shrink-0 overflow-hidden rounded-pk border border-pk-border bg-center bg-cover"
-          style={{ backgroundImage: coverBackground(loop) }}
+          className="relative h-12 w-12 shrink-0 overflow-hidden rounded-pk border border-pk-border bg-center bg-cover"
+          style={{ backgroundImage: coverGradient(loop) }}
           aria-hidden
-        />
+        >
+          <img
+            key={coverImageUrl(loop)}
+            src={coverImageUrl(loop)}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+            loading="lazy"
+            decoding="async"
+            referrerPolicy="no-referrer"
+            style={{ display: "block", opacity: 0 }}
+            onLoad={(e) => {
+              e.currentTarget.style.display = "block";
+              e.currentTarget.style.opacity = "1";
+              e.currentTarget.dataset.retry = "0";
+            }}
+            onError={(e) => {
+              const img = e.currentTarget;
+              img.style.opacity = "0";
+              const retry = Number(img.dataset.retry ?? "0");
+              if (retry < 4) {
+                img.dataset.retry = String(retry + 1);
+                const url = coverImageUrl(loop);
+                window.setTimeout(() => {
+                  img.style.display = "block";
+                  img.style.opacity = "0";
+                  img.src = "";
+                  img.src = url;
+                }, 800 * (retry + 1));
+                return;
+              }
+              img.style.display = "none";
+            }}
+          />
+        </div>
         <div className="min-w-0">
           <div className="truncate text-sm font-semibold">{loop.name}</div>
           <div className="mt-2 flex flex-wrap gap-2">

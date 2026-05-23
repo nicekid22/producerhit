@@ -1,0 +1,232 @@
+import { supabase } from "@/lib/supabaseClient";
+
+export type PublicLoopRow = {
+  id: string;
+  name: string | null;
+  genre: string | null;
+  influence?: string | null;
+  mood: string | null;
+  bpm: number | null;
+  prompt: string | null;
+  audio_url: string | null;
+  stems_url: unknown;
+  created_at: string | null;
+  seed?: number | null;
+};
+
+const PUBLIC_LOOP_SELECT =
+  "id, name, genre, influence, mood, bpm, prompt, audio_url, stems_url, created_at, seed";
+
+export function parseStemsUrl(stemsUrl: unknown): Record<string, unknown> | null {
+  if (!stemsUrl) return null;
+  if (typeof stemsUrl === "object") return stemsUrl as Record<string, unknown>;
+  if (typeof stemsUrl === "string") {
+    const raw = stemsUrl.trim();
+    if (!raw) return null;
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+export function extractAceTaskId(stemsUrl: unknown): string {
+  const obj = parseStemsUrl(stemsUrl);
+  if (!obj) return "";
+
+  const rootTaskId = obj.taskId ?? obj.task_id ?? obj.ace_task_id;
+  if (typeof rootTaskId === "string" && rootTaskId.trim()) return rootTaskId.trim();
+
+  const ace = obj.ace;
+  if (!ace || typeof ace !== "object") return "";
+  const taskId = (ace as Record<string, unknown>).taskId ?? (ace as Record<string, unknown>).task_id;
+  return typeof taskId === "string" ? taskId.trim() : "";
+}
+
+export function isHttpAudioUrl(url: unknown): url is string {
+  const s = typeof url === "string" ? url.trim() : "";
+  return !!s && (s.startsWith("https://") || s.startsWith("http://"));
+}
+
+export function isPlayablePublicLoop(audioUrl: unknown, stemsUrl?: unknown): boolean {
+  if (isHttpAudioUrl(audioUrl)) return true;
+  return extractAceTaskId(stemsUrl).length > 0;
+}
+
+export async function resolveAceAudioUrl(taskId: string): Promise<string> {
+  const tid = taskId.trim();
+  if (!tid) throw new Error("Missing taskId");
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const { data, error } = await supabase.functions.invoke("generate-loop-ace", {
+    body: { action: "resolve_audio", taskId: tid },
+    headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+  });
+  if (error) throw error;
+  const url =
+    typeof (data as { audioUrl?: unknown } | null)?.audioUrl === "string"
+      ? ((data as { audioUrl: string }).audioUrl || "").trim()
+      : "";
+  if (!url) throw new Error("Audio manquant");
+  return url;
+}
+
+export function normalizePublicLoopRow(row: PublicLoopRow): PublicLoopRow {
+  const url = typeof row.audio_url === "string" ? row.audio_url.trim() : "";
+  return {
+    ...row,
+    audio_url: url || null,
+    stems_url: parseStemsUrl(row.stems_url) ?? row.stems_url,
+  };
+}
+
+export async function fetchPublicLoops(options?: { limit?: number; timeoutMs?: number }): Promise<PublicLoopRow[]> {
+  const limit = options?.limit ?? 36;
+  const timeoutMs = options?.timeoutMs ?? 8000;
+
+  const query = supabase
+    .from("loops")
+    .select(PUBLIC_LOOP_SELECT)
+    .eq("is_public", true)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  const result = (await Promise.race([
+    query,
+    new Promise<never>((_, reject) => window.setTimeout(() => reject(new Error("timeout")), timeoutMs)),
+  ])) as Awaited<typeof query>;
+
+  if (result.error) throw result.error;
+
+  return ((result.data ?? []) as PublicLoopRow[]).map(normalizePublicLoopRow);
+}
+
+export async function ensurePublicLoopAudioUrl(row: PublicLoopRow): Promise<string> {
+  const existing = typeof row.audio_url === "string" ? row.audio_url.trim() : "";
+  if (existing) return existing;
+  const taskId = extractAceTaskId(row.stems_url);
+  if (!taskId) return "";
+  return resolveAceAudioUrl(taskId).catch(() => "");
+}
+
+export async function persistPublicLoopAudioUrl(loopId: string, userId: string, taskId: string): Promise<string | null> {
+  const url = await resolveAceAudioUrl(taskId).catch(() => "");
+  if (!url) return null;
+  const { error } = await supabase.from("loops").update({ audio_url: url }).eq("id", loopId).eq("user_id", userId);
+  if (error) return null;
+  return url;
+}
+
+function guessAudioExtension(sourceUrl: string, mimeType: string): string {
+  const mime = mimeType.toLowerCase();
+  if (mime.includes("wav")) return "wav";
+  if (mime.includes("ogg")) return "ogg";
+  if (mime.includes("webm")) return "webm";
+  if (mime.includes("aac") || mime.includes("mp4")) return "m4a";
+  if (sourceUrl.startsWith("data:audio/wav")) return "wav";
+  if (sourceUrl.startsWith("data:audio/ogg")) return "ogg";
+  return "mp3";
+}
+
+export async function uploadPublicLoopAudio(userId: string, loopId: string, sourceUrl: string): Promise<string | null> {
+  const trimmed = sourceUrl.trim();
+  if (!trimmed || (!trimmed.startsWith("data:") && !trimmed.startsWith("blob:"))) return null;
+  try {
+    const res = await fetch(trimmed);
+    const blob = await res.blob();
+    if (!blob.size) return null;
+    const ext = guessAudioExtension(trimmed, blob.type || "audio/mpeg");
+    const path = `${userId}/${loopId}.${ext}`;
+    const { error } = await supabase.storage.from("loop-audio").upload(path, blob, {
+      upsert: true,
+      contentType: blob.type || "audio/mpeg",
+    });
+    if (error) return null;
+    const { data } = supabase.storage.from("loop-audio").getPublicUrl(path);
+    return data.publicUrl?.trim() || null;
+  } catch {
+    return null;
+  }
+}
+
+export function buildStemsUrlForDb(
+  inputStemsUrl: unknown,
+  details: {
+    caption?: string;
+    lyrics?: string;
+    bpm?: number | null;
+    duration?: number | null;
+    keyScale?: string;
+    timeSignature?: string;
+    audioFormat?: string | null;
+  } | null,
+): Record<string, unknown> | null {
+  const taskIdFromInput = extractAceTaskId(inputStemsUrl);
+  const base = inputStemsUrl && typeof inputStemsUrl === "object" ? (inputStemsUrl as Record<string, unknown>) : {};
+  const existingAce =
+    base.ace && typeof base.ace === "object" && base.ace !== null ? (base.ace as Record<string, unknown>) : {};
+
+  if (!details && !taskIdFromInput && !Object.keys(existingAce).length) {
+    return Object.keys(base).length ? base : null;
+  }
+
+  const ace: Record<string, unknown> = { ...existingAce, ...(details ?? {}) };
+  const taskId =
+    (typeof existingAce.taskId === "string" && existingAce.taskId.trim()) ||
+    (typeof existingAce.task_id === "string" && existingAce.task_id.trim()) ||
+    taskIdFromInput;
+  if (taskId) {
+    ace.taskId = taskId;
+    delete ace.task_id;
+  }
+
+  return { ...base, ace };
+}
+
+export async function finalizePublicLoopRecord(args: {
+  loopId: string;
+  userId: string;
+  isPublic: boolean;
+  audioUrlInput: string;
+  audioUrlForDb: string | null;
+  stemsUrlForDb: unknown;
+}): Promise<{ audioUrl: string | null; stemsUrl: Record<string, unknown> | null }> {
+  if (!args.isPublic) {
+    return {
+      audioUrl: args.audioUrlForDb,
+      stemsUrl:
+        args.stemsUrlForDb && typeof args.stemsUrlForDb === "object" ? (args.stemsUrlForDb as Record<string, unknown>) : null,
+    };
+  }
+
+  const stemsRecord =
+    args.stemsUrlForDb && typeof args.stemsUrlForDb === "object" ? (args.stemsUrlForDb as Record<string, unknown>) : null;
+  const taskId = extractAceTaskId(stemsRecord);
+
+  let audioUrl =
+    args.audioUrlForDb ||
+    (isHttpAudioUrl(args.audioUrlInput) ? args.audioUrlInput.trim() : null) ||
+    (taskId ? await resolveAceAudioUrl(taskId).catch(() => "") : "") ||
+    null;
+
+  if (!audioUrl) {
+    audioUrl = await uploadPublicLoopAudio(args.userId, args.loopId, args.audioUrlInput);
+  }
+
+  const updatePayload: { is_public: boolean; audio_url?: string; stems_url?: Record<string, unknown> } = {
+    is_public: true,
+  };
+  if (audioUrl) updatePayload.audio_url = audioUrl;
+  if (stemsRecord) updatePayload.stems_url = stemsRecord;
+
+  const { error } = await supabase.from("loops").update(updatePayload).eq("id", args.loopId).eq("user_id", args.userId);
+  if (error) {
+    return { audioUrl: args.audioUrlForDb, stemsUrl: stemsRecord };
+  }
+
+  return { audioUrl, stemsUrl: stemsRecord };
+}

@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useMemo } from "react";
+import { Navbar } from "@/components/Navbar";
 import { useLocaleStore } from "@/stores/localeStore";
 
 type SeoPageKey = "ai-beat-generator" | "ai-music-generator" | "type-beat-generator-ai" | "generate-beats-online-free" | "generic";
@@ -136,20 +137,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
+      <Navbar variant="marketing" />
       <div className="mx-auto max-w-5xl px-4 py-16">
-        <div className="flex items-center justify-between gap-4">
-          <Link to="/" className="text-sm font-semibold text-white/80 hover:text-white">
-            ProducerHit
-          </Link>
-          <div className="flex items-center gap-3 text-sm">
-            <Link to="/pricing" className="text-white/70 hover:text-white">
-              {locale === "fr" ? "Tarifs" : "Pricing"}
-            </Link>
-            <Link to="/dashboard" className="rounded-full bg-[#7c3aed] px-4 py-2 font-semibold text-white hover:bg-[#6d28d9]">
-              {locale === "fr" ? "Générer" : "Generate"}
-            </Link>
-          </div>
-        </div>
 
         <h1 className="mt-12 text-balance text-4xl font-extrabold tracking-tight sm:text-5xl">{page.h1}</h1>
         <p className="mt-5 max-w-3xl text-balance text-lg text-white/70">{page.lead}</p>

@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Grid3X3, Settings, LogIn, LogOut, AudioWaveform } from "lucide-react";
+import { Grid3X3, Settings, LogIn, LogOut, AudioWaveform, Users } from "lucide-react";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/authStore";
@@ -18,6 +18,7 @@ export function Sidebar() {
   const items: Item[] = [
     { to: "/dashboard", label: locale === "fr" ? "Générateur" : "Generator", icon: <AudioWaveform className="h-5 w-5" /> },
     { to: "/library", label: locale === "fr" ? "Bibliothèque" : "Library", icon: <Grid3X3 className="h-5 w-5" /> },
+    { to: "/community", label: locale === "fr" ? "Communauté" : "Community", icon: <Users className="h-5 w-5" /> },
     { to: "/settings", label: locale === "fr" ? "Paramètres" : "Settings", icon: <Settings className="h-5 w-5" /> },
   ];
 
@@ -32,30 +33,78 @@ export function Sidebar() {
   }
 
   return (
-    <div className="flex h-full items-center justify-between bg-pk-panel px-3 py-2 md:flex-col md:justify-between md:border-r md:border-pk-border md:px-0 md:py-3">
+    <div className="flex h-full items-center justify-between bg-transparent px-3 py-2 md:flex-col md:justify-between md:border-r md:border-pk-border md:px-0 md:py-3">
       <div className="flex items-center gap-2 md:flex-col">
         <div className="flex items-center gap-1 md:mt-3 md:flex-col">
           {items.map((it) => {
-            const active = location.pathname === it.to;
+            const active = location.pathname === it.to || (it.to !== "/" && location.pathname.startsWith(it.to + "/"));
             return (
               <Link
                 key={it.to}
                 to={it.to}
                 className={cn(
-                  "flex h-10 w-10 items-center justify-center rounded-pk transition-colors",
+                  "relative flex h-10 w-10 items-center justify-center rounded-xl transition-colors",
                   active ? "bg-pk-accent/15 text-pk-accent" : "text-pk-muted hover:bg-white/5 hover:text-pk-text",
                 )}
                 aria-label={it.label}
                 title={it.label}
               >
+                {active ? <span className="absolute -left-1.5 h-5 w-1 rounded-full bg-pk-accent" aria-hidden /> : null}
                 {it.icon}
               </Link>
             );
           })}
         </div>
+
+        <div className="hidden md:flex md:flex-col md:gap-2 md:pt-3">
+          <button
+            type="button"
+            onClick={() => setLocale("en")}
+            className={cn(
+              "flex h-10 w-10 items-center justify-center rounded-pk text-xs font-semibold transition-colors",
+              locale === "en" ? "bg-pk-accent/15 text-pk-accent" : "text-pk-muted hover:bg-white/5 hover:text-pk-text",
+            )}
+            aria-label="English"
+            title="English"
+          >
+            EN
+          </button>
+          <button
+            type="button"
+            onClick={() => setLocale("fr")}
+            className={cn(
+              "flex h-10 w-10 items-center justify-center rounded-pk text-xs font-semibold transition-colors",
+              locale === "fr" ? "bg-pk-accent/15 text-pk-accent" : "text-pk-muted hover:bg-white/5 hover:text-pk-text",
+            )}
+            aria-label="Français"
+            title="Français"
+          >
+            FR
+          </button>
+          {user ? (
+            <button
+              type="button"
+              onClick={onLogout}
+              className="flex h-10 w-10 items-center justify-center rounded-pk text-pk-muted transition-colors hover:bg-white/5 hover:text-pk-text"
+              aria-label={locale === "fr" ? "Déconnexion" : "Logout"}
+              title={locale === "fr" ? "Déconnexion" : "Logout"}
+            >
+              <LogOut className="h-5 w-5" />
+            </button>
+          ) : (
+            <Link
+              to="/auth?next=/dashboard"
+              className="flex h-10 w-10 items-center justify-center rounded-pk text-pk-muted transition-colors hover:bg-white/5 hover:text-pk-text"
+              aria-label={locale === "fr" ? "Connexion" : "Login"}
+              title={locale === "fr" ? "Connexion" : "Login"}
+            >
+              <LogIn className="h-5 w-5" />
+            </Link>
+          )}
+        </div>
       </div>
 
-      <div className="flex items-center gap-3 md:flex-col md:gap-2 md:pb-2">
+      <div className="flex items-center gap-3 md:hidden">
         <div className="hidden md:flex md:flex-col md:gap-2">
           <button
             type="button"

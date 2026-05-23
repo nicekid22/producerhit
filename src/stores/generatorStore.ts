@@ -2,7 +2,7 @@ import { create } from "zustand";
 import type { GeneratorForm, LoopLength } from "@/types/loop";
 
 const defaultForm: GeneratorForm = {
-  genre: "",
+  genre: "Auto",
   influence: "No Influence",
   key: "C",
   scale: "Minor",

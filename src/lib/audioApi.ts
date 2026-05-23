@@ -1,8 +1,9 @@
 import { supabase } from "@/lib/supabaseClient";
-import { buildRichPrompt, buildSonautoTags, type GenerateParams } from "@/lib/promptBuilder";
+import { buildAceCaption, buildRichPrompt, buildSonautoTags, type GenerateParams } from "@/lib/promptBuilder";
 
 export type AceMeta = {
   taskId?: string;
+  task_id?: string;
   prompt?: string;
   lyrics?: string;
   bpm?: number | null;
@@ -11,6 +12,7 @@ export type AceMeta = {
   timeSignature?: string;
   audioFormat?: string;
   seed?: number | null;
+  stemsZipUrl?: string;
 };
 
 export type AceFormatResult = {
@@ -148,6 +150,7 @@ async function generateLoopAceDirect(
     isSong?: boolean;
     audioFormat?: string;
     seed?: number;
+    generationKey?: string;
   },
 ): Promise<{ audioUrl: string; meta?: AceMeta | null }> {
   const aceApiKey = import.meta.env.VITE_ACE_STEP_API_KEY as string | undefined;
@@ -168,11 +171,12 @@ async function generateLoopAceDirect(
 
   const isSong = options?.isSong ?? !options?.instrumental;
   const promptParams = options?.autoMeta ? { ...params, bpm: 0, key: "", scale: "" } : params;
-  const baseCaption = buildRichPrompt(promptParams, isSong);
-
   const instrumental = options?.instrumental ?? true;
+  const vocalLanguage = options?.vocalLanguage ?? "en";
+  const baseCaption = buildAceCaption(promptParams, { isSong, instrumental, autoMeta: Boolean(options?.autoMeta), vocalLanguage });
+
   const lyrics = options?.lyrics ?? "";
-  const effectiveLyrics = instrumental ? "" : lyrics.trim();
+  const effectiveLyrics = instrumental ? "[Instrumental]" : lyrics.trim();
   const audioFormatRaw = (options?.audioFormat || "").trim().toLowerCase();
   const audioFormat =
     audioFormatRaw === "wav" || audioFormatRaw === "wav32" || audioFormatRaw === "flac" || audioFormatRaw === "mp3" || audioFormatRaw === "aac" || audioFormatRaw === "opus"
@@ -309,17 +313,7 @@ async function generateLoopAceDirect(
         ? ((firstAudio as { audio_url: { url?: unknown } }).audio_url.url as unknown)
         : null;
     const audioUrlStr = typeof audioUrlRaw === "string" ? audioUrlRaw : "";
-    const audioUrl = audioUrlStr.startsWith("data:")
-      ? URL.createObjectURL(
-          (() => {
-            const comma = audioUrlStr.indexOf(",");
-            const header = comma >= 0 ? audioUrlStr.slice(0, comma) : "data:audio/mpeg;base64";
-            const mime = header.startsWith("data:") ? header.slice(5).split(";")[0] || "audio/mpeg" : "audio/mpeg";
-            const b64 = comma >= 0 ? audioUrlStr.slice(comma + 1) : "";
-            return new Blob([Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))], { type: mime });
-          })(),
-        )
-      : buildAceAudioUrl(baseUrl, audioUrlStr);
+    const audioUrl = audioUrlStr.startsWith("data:") ? audioUrlStr : buildAceAudioUrl(baseUrl, audioUrlStr);
     if (!audioUrl) throw new Error("ACE API returned no audio");
     const parsed = content ? parseChatContent(content) : {};
     const fallbackBpm = !options?.autoMeta && params.bpm > 0 ? params.bpm : null;
@@ -337,8 +331,6 @@ async function generateLoopAceDirect(
   };
 
   const clampNumber = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
-  const bars = typeof params.loopLengthBars === "number" && Number.isFinite(params.loopLengthBars) && params.loopLengthBars > 0 ? params.loopLengthBars : 8;
-  const bpmForDuration = typeof params.bpm === "number" && Number.isFinite(params.bpm) && params.bpm > 0 ? params.bpm : 0;
 
   const requestedDuration: number = (() => {
     if (!instrumental) {
@@ -346,16 +338,12 @@ async function generateLoopAceDirect(
       return clampNumber(raw, 10, 120);
     }
     if (typeof options?.duration === "number" && Number.isFinite(options.duration) && options.duration > 0) {
-      return clampNumber(options.duration, 10, 60);
+      return clampNumber(options.duration, 10, 120);
     }
-    if (bpmForDuration > 0) {
-      const barBased = Math.round((bars * 4 * 60) / bpmForDuration);
-      return clampNumber(barBased, 10, 45);
-    }
-    return 40;
+    return 90;
   })();
 
-  const paramObj: Record<string, unknown> = { duration: clampNumber(requestedDuration, 10, instrumental ? 60 : 120) };
+  const paramObj: Record<string, unknown> = { duration: clampNumber(requestedDuration, 10, 120) };
   if (!options?.autoMeta && params.bpm > 0) paramObj.bpm = params.bpm;
   if (!options?.autoMeta && params.key && params.scale) paramObj.key = `${params.key} ${params.scale}`;
   if (options?.timeSignature) paramObj.time_signature = options.timeSignature;
@@ -386,7 +374,10 @@ async function generateLoopAceDirect(
         } = await supabase.auth.getSession();
         if (session?.access_token) {
           await supabase.functions.invoke("generate-loop-ace", {
-            body: { action: "bump_usage" },
+            body: {
+              action: "bump_usage",
+              ...(typeof options?.generationKey === "string" && options.generationKey.trim().length > 0 ? { generationKey: options.generationKey.trim() } : {}),
+            },
             headers: {
               Authorization: "Bearer " + session.access_token,
             },
@@ -482,7 +473,10 @@ async function generateLoopAceDirect(
     } = await supabase.auth.getSession();
     if (session?.access_token) {
       await supabase.functions.invoke("generate-loop-ace", {
-        body: { action: "bump_usage" },
+        body: {
+          action: "bump_usage",
+          ...(typeof options?.generationKey === "string" && options.generationKey.trim().length > 0 ? { generationKey: options.generationKey.trim() } : {}),
+        },
         headers: {
           Authorization: "Bearer " + session.access_token,
         },
@@ -495,11 +489,10 @@ async function generateLoopAceDirect(
   return { audioUrl, meta };
 }
 
-export async function generateLoop(params: GenerateParams, isSong?: boolean): Promise<string> {
+export async function generateLoop(params: GenerateParams, isSong?: boolean, generationKey?: string): Promise<string> {
   const prompt = buildRichPrompt(params, isSong);
   const tags = buildSonautoTags(params);
-  const durationSeconds = Math.round((params.loopLengthBars * 4 * 60) / params.bpm);
-  const duration = Math.min(Math.max(durationSeconds, 5), 45);
+  const duration = 90;
   const instrumental = true;
 
   const {
@@ -512,9 +505,8 @@ export async function generateLoop(params: GenerateParams, isSong?: boolean): Pr
     duration,
     bpm: params.bpm,
     instrumental,
+    ...(typeof generationKey === "string" && generationKey.trim().length > 0 ? { generationKey: generationKey.trim() } : {}),
   };
-
-  console.log("Invoking generate-loop with:", body);
 
   const { data, errorText } = await invokeSupabaseFunction<{ audioUrl?: string; error?: string; limitReached?: boolean }>(
     {
@@ -574,6 +566,7 @@ export async function generateLoopAce(
     isSong?: boolean;
     audioFormat?: string;
     seed?: number;
+    generationKey?: string;
   },
 ): Promise<{ audioUrl: string; meta?: AceMeta | null }> {
   const directKey = import.meta.env.VITE_ACE_STEP_API_KEY as string | undefined;
@@ -581,10 +574,10 @@ export async function generateLoopAce(
 
   const isSong = options?.isSong ?? !options?.instrumental;
   const promptParams = options?.autoMeta ? { ...params, bpm: 0, key: "", scale: "" } : params;
-  const baseCaption = buildRichPrompt(promptParams, isSong);
   const instrumental = options?.instrumental ?? true;
-  const lyrics = options?.lyrics ?? "";
+  const lyricsRaw = options?.lyrics ?? "";
   const vocalLanguage = options?.vocalLanguage ?? "en";
+  const baseCaption = buildAceCaption(promptParams, { isSong, instrumental, autoMeta: Boolean(options?.autoMeta), vocalLanguage });
   const sampleQuery = options?.sampleQuery?.trim() || "";
   const audioFormatRaw = (options?.audioFormat || "").trim().toLowerCase();
   const audioFormat =
@@ -598,19 +591,19 @@ export async function generateLoopAce(
 
   // sample_mode should only be used when we want ACE to auto-generate lyrics/metas.
   // use_format should stay independent (it formats/enhances provided caption/lyrics).
-  const isAiLyrics = !instrumental && lyrics === "";
+  const isAiLyrics = !instrumental && lyricsRaw === "";
   const effectiveSampleMode = Boolean(options?.sampleMode || isAiLyrics);
-  const caption = baseCaption;
+  const caption = effectiveSampleMode ? "" : baseCaption;
+  const lyrics = instrumental ? "[Instrumental]" : lyricsRaw;
+  const effectiveSampleQuery = effectiveSampleMode ? (sampleQuery || baseCaption) : sampleQuery;
 
   const clampNumber = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
   const bars = typeof params.loopLengthBars === "number" && Number.isFinite(params.loopLengthBars) && params.loopLengthBars > 0 ? params.loopLengthBars : 8;
-  const bpmForDuration = typeof params.bpm === "number" && Number.isFinite(params.bpm) && params.bpm > 0 ? params.bpm : 0;
   const durationRaw = typeof options?.duration === "number" && Number.isFinite(options.duration) && options.duration > 0 ? options.duration : null;
   const desiredDurationSec = (() => {
     if (!instrumental) return clampNumber(durationRaw ?? 90, 10, 120);
-    if (durationRaw != null) return clampNumber(durationRaw, 10, 60);
-    if (bpmForDuration > 0) return clampNumber(Math.round((bars * 4 * 60) / bpmForDuration), 10, 45);
-    return 40;
+    if (durationRaw != null) return clampNumber(durationRaw, 10, 120);
+    return 90;
   })();
 
   const body: Record<string, unknown> = {
@@ -618,15 +611,16 @@ export async function generateLoopAce(
     lyrics,
     instrumental,
     vocalLanguage,
-    useFormat: options?.useFormat ?? false,
+    useFormat: effectiveSampleMode ? false : (options?.useFormat ?? false),
     thinking: options?.thinking ?? true,
     sampleMode: effectiveSampleMode,
     audioFormat,
     loopLengthBars: bars,
-    duration: clampNumber(desiredDurationSec, 10, instrumental ? 60 : 120),
+    duration: clampNumber(desiredDurationSec, 10, instrumental ? 120 : 120),
   };
   if (typeof options?.seed === "number" && Number.isFinite(options.seed)) body.seed = options.seed;
-  if (sampleQuery) body.sampleQuery = sampleQuery;
+  if (typeof options?.generationKey === "string" && options.generationKey.trim().length > 0) body.generationKey = options.generationKey.trim();
+  if (effectiveSampleQuery) body.sampleQuery = effectiveSampleQuery;
   if (!options?.autoMeta && params.bpm > 0) body.bpm = params.bpm;
   if (!options?.autoMeta && params.key && params.scale) body.keyScale = `${params.key} ${params.scale}`;
   if (options?.timeSignature) body.timeSignature = options.timeSignature;
@@ -649,9 +643,21 @@ export async function generateLoopAce(
 
   const audioUrl = (data as { audioUrl?: string } | null)?.audioUrl;
   if (!audioUrl) throw new Error("No audio URL returned");
+  const rawMeta = ((data as { meta?: unknown } | null)?.meta ?? null) as unknown;
+  const metaObj = rawMeta && typeof rawMeta === "object" ? (rawMeta as Record<string, unknown>) : null;
+  const taskIdFromMeta =
+    (typeof metaObj?.taskId === "string" ? metaObj.taskId : "") ||
+    (typeof metaObj?.task_id === "string" ? metaObj.task_id : "");
+  const normalizedMeta =
+    metaObj
+      ? ({
+          ...(metaObj as unknown as AceMeta),
+          taskId: taskIdFromMeta ? taskIdFromMeta.trim() : undefined,
+        } as AceMeta)
+      : null;
   return {
     audioUrl,
-    meta: ((data as { meta?: AceMeta | null } | null)?.meta ?? null) as AceMeta | null,
+    meta: normalizedMeta,
   };
 }
 
@@ -672,20 +678,15 @@ export async function generateBeat(
     isSong?: boolean;
     audioFormat?: string;
     seed?: number;
+    generationKey?: string;
   },
 ): Promise<{ audioUrl: string; engine: string; meta?: AceMeta | null }> {
-  const directKey = import.meta.env.VITE_ACE_STEP_API_KEY as string | undefined;
-  if (engine === "ace-step" && directKey) {
-    const result = await generateLoopAceDirect(params, options);
-    return { audioUrl: result.audioUrl, engine: "ace-step", meta: result.meta ?? null };
-  }
-
   try {
     if (engine === "ace-step") {
       const result = await generateLoopAce(params, options);
       return { audioUrl: result.audioUrl, engine: "ace-step", meta: result.meta ?? null };
     }
-    const url = await generateLoop(params, options?.isSong);
+    const url = await generateLoop(params, options?.isSong, options?.generationKey);
     return { audioUrl: url, engine: "sonauto" };
   } catch (primaryError) {
     if (engine === "ace-step" && options?.instrumental === false) {
@@ -694,7 +695,7 @@ export async function generateBeat(
     }
     try {
       if (engine === "ace-step") {
-        const url = await generateLoop(params, options?.isSong);
+        const url = await generateLoop(params, options?.isSong, options?.generationKey);
         return { audioUrl: url, engine: "sonauto-fallback" };
       }
       const result = await generateLoopAce(params, options);

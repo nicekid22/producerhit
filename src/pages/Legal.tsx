@@ -40,7 +40,7 @@ export default function Legal() {
           </ul>
           <p className="mt-3">
             Tu peux demander la suppression de ton compte et de tes données en écrivant à{" "}
-            <a className="font-semibold text-[#6d28d9] hover:underline" href={`mailto:${email}`}>
+            <a className="font-semibold text-pk-accent hover:underline" href={`mailto:${email}`}>
               {email}
             </a>
             .
@@ -60,7 +60,7 @@ export default function Legal() {
           </ul>
           <p className="mt-3">
             You can request account/data deletion by emailing{" "}
-            <a className="font-semibold text-[#6d28d9] hover:underline" href={`mailto:${email}`}>
+            <a className="font-semibold text-pk-accent hover:underline" href={`mailto:${email}`}>
               {email}
             </a>
             .
@@ -142,7 +142,7 @@ export default function Legal() {
           </ul>
           <p className="mt-3">
             Pour toute demande liée à un paiement, contacte{" "}
-            <a className="font-semibold text-[#6d28d9] hover:underline" href={`mailto:${email}`}>
+            <a className="font-semibold text-pk-accent hover:underline" href={`mailto:${email}`}>
               {email}
             </a>
             .
@@ -159,7 +159,7 @@ export default function Legal() {
           </ul>
           <p className="mt-3">
             For billing questions, contact{" "}
-            <a className="font-semibold text-[#6d28d9] hover:underline" href={`mailto:${email}`}>
+            <a className="font-semibold text-pk-accent hover:underline" href={`mailto:${email}`}>
               {email}
             </a>
             .
@@ -198,7 +198,7 @@ export default function Legal() {
           <p>
             Si tu penses qu’un contenu public sur ProducerHit viole tes droits, envoie un email avec les informations pertinentes (lien, preuve de droits,
             explication) à{" "}
-            <a className="font-semibold text-[#6d28d9] hover:underline" href={`mailto:${email}`}>
+            <a className="font-semibold text-pk-accent hover:underline" href={`mailto:${email}`}>
               {email}
             </a>
             .
@@ -208,7 +208,7 @@ export default function Legal() {
         <>
           <p>
             If you believe public content on ProducerHit infringes your rights, email details (link, proof of rights, explanation) to{" "}
-            <a className="font-semibold text-[#6d28d9] hover:underline" href={`mailto:${email}`}>
+            <a className="font-semibold text-pk-accent hover:underline" href={`mailto:${email}`}>
               {email}
             </a>
             .
@@ -222,14 +222,14 @@ export default function Legal() {
       body: isFr ? (
         <p>
           Support:{" "}
-          <a className="font-semibold text-[#6d28d9] hover:underline" href={`mailto:${email}`}>
+          <a className="font-semibold text-pk-accent hover:underline" href={`mailto:${email}`}>
             {email}
           </a>
         </p>
       ) : (
         <p>
           Support:{" "}
-          <a className="font-semibold text-[#6d28d9] hover:underline" href={`mailto:${email}`}>
+          <a className="font-semibold text-pk-accent hover:underline" href={`mailto:${email}`}>
             {email}
           </a>
         </p>
@@ -238,19 +238,19 @@ export default function Legal() {
   ] as const;
 
   return (
-    <div className="min-h-screen bg-[#f8f7ff] text-[#1a1a2e]">
+    <div className="min-h-screen bg-pk-bg text-pk-text">
       <Navbar variant="marketing" />
       <main className="mx-auto max-w-3xl px-4 py-12">
         <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-        <div className="mt-2 text-sm text-[#6b7280]">
+        <div className="mt-2 text-sm text-pk-muted">
           {labels.updatedAt}: {updatedAt}
         </div>
 
-        <section className="mt-6 rounded-[12px] border border-[#e5e7eb] bg-white p-6">
+        <section className="mt-6 rounded-2xl border border-pk-border bg-pk-panel/70 p-6 shadow-[0_24px_70px_rgba(0,0,0,0.55)] backdrop-blur-xl">
           <div className="text-sm font-semibold">{labels.toc}</div>
           <div className="mt-3 flex flex-wrap gap-3 text-sm">
             {sections.map((s) => (
-              <a key={s.id} className="font-semibold text-[#6d28d9] hover:underline" href={`#${s.id}`}>
+              <a key={s.id} className="font-semibold text-pk-accent hover:underline" href={`#${s.id}`}>
                 {s.title}
               </a>
             ))}
@@ -258,9 +258,9 @@ export default function Legal() {
         </section>
 
         {sections.map((s) => (
-          <section key={s.id} id={s.id} className="mt-4 rounded-[12px] border border-[#e5e7eb] bg-white p-6">
+          <section key={s.id} id={s.id} className="mt-4 rounded-2xl border border-pk-border bg-pk-panel/60 p-6 backdrop-blur-xl">
             <div className="text-lg font-semibold">{s.title}</div>
-            <div className="prose prose-sm mt-3 max-w-none text-[#6b7280]">{s.body}</div>
+            <div className="prose prose-invert prose-sm mt-3 max-w-none text-pk-muted">{s.body}</div>
           </section>
         ))}
       </main>

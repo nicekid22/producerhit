@@ -8,15 +8,45 @@
   </url>
   <url>
     <loc>https://www.producerhit.com/blog</loc>
-    <lastmod>2026-05-14</lastmod>
+    <lastmod>2026-05-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.producerhit.com/explore</loc>
-    <lastmod>2026-05-14</lastmod>
+    <loc>https://www.producerhit.com/community</loc>
+    <lastmod>2026-05-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.producerhit.com/blog/drum-and-bass-beat-generator-prompt-template</loc>
+    <lastmod>2026-05-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.producerhit.com/blog/speed-garage-prompts-skippy-drums</loc>
+    <lastmod>2026-05-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.producerhit.com/blog/hyperpop-hiphop-rnb-prompts</loc>
+    <lastmod>2026-05-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.producerhit.com/blog/soul-funk-ai-beats-chords</loc>
+    <lastmod>2026-05-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.producerhit.com/blog/seed-variations-remix-workflow</loc>
+    <lastmod>2026-05-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.producerhit.com/blog/ai-beat-generator-better-results</loc>

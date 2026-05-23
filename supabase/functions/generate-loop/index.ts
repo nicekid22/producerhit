@@ -11,7 +11,7 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-const LIMITS = { free: 3, pro: 75, studio: 250 } as const;
+const LIMITS = { free: 10, pro: 75, studio: 250 } as const;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -20,9 +20,24 @@ serve(async (req) => {
 
   try {
     const requestId = crypto.randomUUID();
+    let useIdempotentUsage = false;
     let authedSupabase: ReturnType<typeof createClient> | null = null;
     let authedUserId: string | null = null;
     let authedPlan: "free" | "pro" | "studio" = "free";
+
+    const body = (await req.json().catch(() => ({}))) as {
+      prompt?: unknown;
+      tags?: unknown;
+      instrumental?: unknown;
+      generationKey?: unknown;
+      generation_key?: unknown;
+    };
+    const generationKey =
+      typeof body?.generationKey === "string"
+        ? body.generationKey.trim()
+        : typeof body?.generation_key === "string"
+          ? body.generation_key.trim()
+          : "";
 
     const authHeader = req.headers.get("Authorization") ?? req.headers.get("authorization");
     if (authHeader?.startsWith("Bearer ")) {
@@ -43,32 +58,72 @@ serve(async (req) => {
           console.error("Auth error:", authError.message);
         } else if (user) {
           authedUserId = user.id;
-          const { error: resetErr } = await supabase.rpc("reset_loops_usage_if_needed");
-          if (resetErr) console.error("reset_loops_usage_if_needed error:", resetErr.message);
-          const { data: profile, error: profileError } = await supabase
-            .from("profiles")
-            .select("plan, loops_used_this_month")
-            .eq("id", user.id)
-            .single();
+          if (generationKey) {
+            const { error: resetErr } = await supabase.rpc("reset_loops_usage_if_needed");
+            if (resetErr) console.error("reset_loops_usage_if_needed error:", resetErr.message);
 
-          if (profileError) {
-            console.error("Profile error:", profileError.message);
+            const { data: profile, error: profileError } = await supabase
+              .from("profiles")
+              .select("plan, loops_used_this_month")
+              .eq("id", user.id)
+              .single();
+
+            if (profileError) {
+              console.error("Profile error:", profileError.message);
+            } else {
+              const plan = (typeof profile?.plan === "string" ? profile.plan : "free") as string;
+              authedPlan = plan === "studio" ? "studio" : plan === "pro" ? "pro" : "free";
+              const used = typeof profile?.loops_used_this_month === "number" ? profile.loops_used_this_month : 0;
+              const limit = LIMITS[plan as keyof typeof LIMITS] ?? LIMITS.free;
+
+              const { data: existing, error: existingErr } = await supabase
+                .from("generation_usage_keys")
+                .select("key")
+                .eq("key", generationKey)
+                .maybeSingle();
+              if (existingErr) console.error("generation_usage_keys lookup error:", existingErr.message);
+              const alreadyCounted = Boolean(existing && (existing as { key?: unknown } | null)?.key);
+
+              if (!alreadyCounted && used >= limit) {
+                return new Response(
+                  JSON.stringify({
+                    error: `Monthly limit reached (${limit} beats for ${plan} plan). Upgrade to generate more.`,
+                    limitReached: true,
+                    plan,
+                    limit,
+                  }),
+                  { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+                );
+              }
+            }
           } else {
-            const plan = (typeof profile?.plan === "string" ? profile.plan : "free") as string;
-            authedPlan = plan === "studio" ? "studio" : plan === "pro" ? "pro" : "free";
-            const used = typeof profile?.loops_used_this_month === "number" ? profile.loops_used_this_month : 0;
-            const limit = LIMITS[plan as keyof typeof LIMITS] ?? LIMITS.free;
+            const { error: resetErr } = await supabase.rpc("reset_loops_usage_if_needed");
+            if (resetErr) console.error("reset_loops_usage_if_needed error:", resetErr.message);
+            const { data: profile, error: profileError } = await supabase
+              .from("profiles")
+              .select("plan, loops_used_this_month")
+              .eq("id", user.id)
+              .single();
 
-            if (used >= limit) {
-              return new Response(
-                JSON.stringify({
-                  error: `Monthly limit reached (${limit} beats for ${plan} plan). Upgrade to generate more.`,
-                  limitReached: true,
-                  plan,
-                  limit,
-                }),
-                { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-              );
+            if (profileError) {
+              console.error("Profile error:", profileError.message);
+            } else {
+              const plan = (typeof profile?.plan === "string" ? profile.plan : "free") as string;
+              authedPlan = plan === "studio" ? "studio" : plan === "pro" ? "pro" : "free";
+              const used = typeof profile?.loops_used_this_month === "number" ? profile.loops_used_this_month : 0;
+              const limit = LIMITS[plan as keyof typeof LIMITS] ?? LIMITS.free;
+
+              if (used >= limit) {
+                return new Response(
+                  JSON.stringify({
+                    error: `Monthly limit reached (${limit} beats for ${plan} plan). Upgrade to generate more.`,
+                    limitReached: true,
+                    plan,
+                    limit,
+                  }),
+                  { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+                );
+              }
             }
           }
         }
@@ -81,12 +136,6 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const body = (await req.json().catch(() => ({}))) as {
-      prompt?: unknown;
-      tags?: unknown;
-      instrumental?: unknown;
-    };
 
     const prompt = String(body?.prompt ?? "").trim();
     const tags = Array.isArray(body?.tags) ? (body.tags as unknown[]).filter((t) => typeof t === "string") : [];
@@ -113,6 +162,38 @@ serve(async (req) => {
           status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": String(retryAfter || 5) },
         });
+      }
+    }
+
+    if (generationKey) {
+      const { data: reserveData, error: reserveError } = await authedSupabase.rpc("check_and_bump_loops_usage_idempotent", {
+        p_key: generationKey,
+      });
+      if (reserveError) {
+        console.error("check_and_bump_loops_usage_idempotent error:", reserveError.message);
+      } else {
+        type UsageReserveRow = { ok?: unknown; plan?: unknown; used?: unknown; limit?: unknown };
+        const row: UsageReserveRow | null = Array.isArray(reserveData)
+          ? ((reserveData[0] as UsageReserveRow | undefined) ?? null)
+          : ((reserveData as UsageReserveRow | null) ?? null);
+        const ok = Boolean(row?.ok);
+        const plan = (typeof row?.plan === "string" ? row.plan : "free") as string;
+        const used = typeof row?.used === "number" ? row.used : 0;
+        const limit = typeof row?.limit === "number" ? row.limit : LIMITS.free;
+        authedPlan = plan === "studio" ? "studio" : plan === "pro" ? "pro" : "free";
+        if (!ok) {
+          return new Response(
+            JSON.stringify({
+              error: `Monthly limit reached (${limit} beats for ${plan} plan). Upgrade to generate more.`,
+              limitReached: true,
+              plan,
+              limit,
+              used,
+            }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+        useIdempotentUsage = true;
       }
     }
 
@@ -176,7 +257,7 @@ serve(async (req) => {
 
       if (status === "GENERATING_STREAMING_READY") {
         const audioUrl = `https://api-stream.sonauto.ai/stream/${taskId}`;
-        if (authedSupabase && authedUserId) {
+        if (authedSupabase && authedUserId && !useIdempotentUsage) {
           const { error: bumpErr } = await authedSupabase.rpc("bump_loops_usage");
           if (bumpErr) console.error("bump_loops_usage error:", bumpErr.message);
         }
@@ -193,7 +274,7 @@ serve(async (req) => {
         const songPaths = doneJson?.song_paths;
         const audioUrl = Array.isArray(songPaths) && typeof songPaths[0] === "string" ? songPaths[0] : null;
         if (!audioUrl) throw new Error("No audio URL returned");
-        if (authedSupabase && authedUserId) {
+        if (authedSupabase && authedUserId && !useIdempotentUsage) {
           const { error: bumpErr } = await authedSupabase.rpc("bump_loops_usage");
           if (bumpErr) console.error("bump_loops_usage error:", bumpErr.message);
         }

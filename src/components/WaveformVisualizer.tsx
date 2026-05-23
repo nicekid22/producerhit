@@ -136,7 +136,15 @@ function drawWaveform({
   }
 }
 
-export function WaveformVisualizer({ isPlaying, barCount = 40 }: { isPlaying: boolean; barCount?: number }) {
+export function WaveformVisualizer({
+  isPlaying,
+  barCount = 40,
+  variant = "default",
+}: {
+  isPlaying: boolean;
+  barCount?: number;
+  variant?: "default" | "prism";
+}) {
   const getBarHeight = (i: number) => {
     const heights = [
       3, 5, 8, 12, 7, 15, 10, 4, 18, 9, 6, 14, 11, 3, 16, 8, 5, 13, 7, 19, 4, 11, 9, 6, 15, 12, 3, 17, 8,
@@ -144,6 +152,9 @@ export function WaveformVisualizer({ isPlaying, barCount = 40 }: { isPlaying: bo
     ];
     return heights[i % heights.length];
   };
+
+  const playedColor = variant === "prism" ? "rgba(103, 195, 255, 0.92)" : "#7c3aed";
+  const idleColor = variant === "prism" ? "rgba(255, 255, 255, 0.14)" : "#2d2d3d";
 
   return (
     <div className="h-10 w-full">
@@ -157,18 +168,23 @@ export function WaveformVisualizer({ isPlaying, barCount = 40 }: { isPlaying: bo
       <div className="flex h-10 w-full items-end gap-[2px]">
         {Array.from({ length: barCount }).map((_, i) => {
           const h = Math.min(40, getBarHeight(i) * 2);
+          const prismGradient =
+            variant === "prism"
+              ? `linear-gradient(to top, rgba(157, 124, 255, 0.55), rgba(103, 195, 255, 0.95))`
+              : undefined;
           return (
             <div
               key={i}
               className="flex-1 origin-bottom rounded-full"
               style={{
                 height: `${h}px`,
-                backgroundColor: isPlaying ? "#7c3aed" : "#2d2d3d",
+                background: isPlaying && prismGradient ? prismGradient : undefined,
+                backgroundColor: isPlaying && !prismGradient ? playedColor : !isPlaying ? idleColor : undefined,
                 animationName: isPlaying ? "ph-waveform" : undefined,
-                animationDuration: isPlaying ? "0.9s" : undefined,
+                animationDuration: isPlaying ? "1.1s" : undefined,
                 animationTimingFunction: isPlaying ? "ease-in-out" : undefined,
                 animationIterationCount: isPlaying ? "infinite" : undefined,
-                animationDelay: isPlaying ? `${(i * 0.05) % 0.4}s` : undefined,
+                animationDelay: isPlaying ? `${(i * 0.05) % 0.45}s` : undefined,
               }}
             />
           );

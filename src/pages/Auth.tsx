@@ -122,28 +122,28 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f7ff] text-[#1a1a2e]">
+    <div className="min-h-screen bg-pk-bg text-pk-text">
       <Navbar variant="auth" />
       <div className="mx-auto flex min-h-[calc(100vh-56px)] max-w-md flex-col justify-center px-6 py-10">
-        <div className="rounded-[16px] border border-[#e5e7eb] bg-white p-8 shadow-sm">
+        <div className="rounded-2xl border border-pk-border bg-pk-panel/70 p-8 shadow-[0_24px_70px_rgba(0,0,0,0.55)] backdrop-blur-xl">
           <div className="text-center">
             <div className="text-2xl font-semibold tracking-tight">
-              <span className="lowercase">producer</span>
-              <span className="lowercase text-[#6d28d9]">hit</span>
+              <span className="lowercase text-pk-text/90">producer</span>
+              <span className="lowercase bg-gradient-to-r from-[#a78bfa] via-[#7c3aed] to-[#22d3ee] bg-clip-text text-transparent">hit</span>
             </div>
-            <p className="mt-2 text-sm text-[#6b7280]">
+            <p className="mt-2 text-sm text-pk-muted">
               {mode === "login" ? "Sign in to access the generator." : "Create your account in seconds."}
             </p>
           </div>
 
-          <div className="mt-6 flex gap-1 rounded-full border border-[#e5e7eb] bg-[#f3f2f9] p-1 text-xs">
+          <div className="mt-6 flex gap-1 rounded-full border border-pk-border bg-white/5 p-1 text-xs">
               <button
                 type="button"
                 onClick={() => setMode("login")}
                 className={
                   mode === "login"
-                    ? "flex-1 rounded-full bg-[#6d28d9] px-3 py-2 font-semibold text-white"
-                    : "flex-1 rounded-full px-3 py-2 font-semibold text-[#6b7280] hover:text-[#1a1a2e]"
+                    ? "flex-1 rounded-full bg-[#7c3aed] px-3 py-2 font-semibold text-white"
+                    : "flex-1 rounded-full px-3 py-2 font-semibold text-pk-muted hover:text-pk-text"
                 }
               >
                 Login
@@ -153,8 +153,8 @@ export default function Auth() {
                 onClick={() => setMode("signup")}
                 className={
                   mode === "signup"
-                    ? "flex-1 rounded-full bg-[#6d28d9] px-3 py-2 font-semibold text-white"
-                    : "flex-1 rounded-full px-3 py-2 font-semibold text-[#6b7280] hover:text-[#1a1a2e]"
+                    ? "flex-1 rounded-full bg-[#7c3aed] px-3 py-2 font-semibold text-white"
+                    : "flex-1 rounded-full px-3 py-2 font-semibold text-pk-muted hover:text-pk-text"
                 }
               >
                 Signup
@@ -163,24 +163,24 @@ export default function Auth() {
 
           <form className="mt-6 space-y-4" onSubmit={onSubmit}>
             <div>
-              <label className="text-xs font-medium text-[#6b7280]">Email</label>
+              <label className="text-xs font-medium text-pk-muted">Email</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 w-full rounded-[12px] border border-[#e5e7eb] bg-[#f3f2f9] px-3 py-2 text-sm text-[#1a1a2e] outline-none ring-0 placeholder:text-[#6b7280] focus:border-[#6d28d9]"
+                className="mt-1 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2 text-sm text-pk-text outline-none ring-0 placeholder:text-pk-muted focus:border-pk-accent"
                 placeholder="you@studio.com"
                 required
               />
             </div>
 
             <div>
-              <label className="text-xs font-medium text-[#6b7280]">Password</label>
+              <label className="text-xs font-medium text-pk-muted">Password</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 w-full rounded-[12px] border border-[#e5e7eb] bg-[#f3f2f9] px-3 py-2 text-sm text-[#1a1a2e] outline-none ring-0 placeholder:text-[#6b7280] focus:border-[#6d28d9]"
+                className="mt-1 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2 text-sm text-pk-text outline-none ring-0 placeholder:text-pk-muted focus:border-pk-accent"
                 placeholder="••••••••"
                 required
                 minLength={6}
@@ -188,13 +188,13 @@ export default function Auth() {
             </div>
 
             {inlineError ? (
-              <div className="rounded-[12px] border border-[#ef4444]/40 bg-[#ef4444]/10 p-3 text-sm text-[#1a1a2e]">{inlineError}</div>
+              <div className="rounded-pk border border-pk-danger/40 bg-pk-danger/10 p-3 text-sm text-pk-text">{inlineError}</div>
             ) : null}
 
             <button
               type="submit"
               disabled={busy}
-              className="inline-flex w-full items-center justify-center rounded-[12px] bg-[#6d28d9] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#5b21b6] disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-[#7c3aed] to-[#22d3ee] px-4 py-3 text-sm font-semibold text-white shadow-[0_0_70px_rgba(124,58,237,0.18)] transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {busy ? "Loading…" : mode === "login" ? "Login" : "Create account"}
             </button>
@@ -203,7 +203,7 @@ export default function Auth() {
               type="button"
               onClick={onGoogle}
               disabled={busy}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-[12px] border border-[#e5e7eb] bg-white px-4 py-3 text-sm font-semibold text-[#1a1a2e] transition-colors hover:bg-[#f8f7ff] disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-pk-border bg-white/5 px-4 py-3 text-sm font-semibold text-pk-text transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {googleIcon}
               Continue with Google
@@ -213,7 +213,7 @@ export default function Auth() {
               type="button"
               onClick={onForgot}
               disabled={busy}
-              className="w-full text-center text-xs font-medium text-[#6b7280] hover:text-[#1a1a2e]"
+              className="w-full text-center text-xs font-medium text-pk-muted hover:text-pk-text"
             >
               Forgot password
             </button>

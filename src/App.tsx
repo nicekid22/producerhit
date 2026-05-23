@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthBootstrap } from "@/components/AuthBootstrap";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -9,18 +9,28 @@ import { AppToaster } from "@/components/AppToaster";
 import Landing from "@/pages/Landing";
 import Home from "@/pages/Home";
 import Blog from "@/pages/Blog";
-import BlogPost from "@/pages/BlogPost";
-import Explore from "@/pages/Explore";
-import PublicLoop from "@/pages/PublicLoop";
-import Auth from "@/pages/Auth";
-import Dashboard from "@/pages/Dashboard";
-import Library from "@/pages/Library";
-import Pricing from "@/pages/Pricing";
-import Settings from "@/pages/Settings";
-import Legal from "@/pages/Legal";
 import { AudioPlayer } from "@/components/AudioPlayer";
 import { useLocaleStore } from "@/stores/localeStore";
 import { BLOG_POSTS, getBlogPostBySlug } from "@/content/blog";
+import { PLAN_LIMITS } from "@/lib/planLimits";
+
+const ExplorePage = lazy(() => import("@/pages/Explore"));
+const PublicLoopPage = lazy(() => import("@/pages/PublicLoop"));
+const BlogPostPage = lazy(() => import("@/pages/BlogPost"));
+const AuthPage = lazy(() => import("@/pages/Auth"));
+const PricingPage = lazy(() => import("@/pages/Pricing"));
+const LegalPage = lazy(() => import("@/pages/Legal"));
+const DashboardPage = lazy(() => import("@/pages/Dashboard"));
+const LibraryPage = lazy(() => import("@/pages/Library"));
+const SettingsPage = lazy(() => import("@/pages/Settings"));
+
+function PageLoader() {
+  return (
+    <div className="grid min-h-[60vh] place-items-center px-6">
+      <div className="text-sm font-semibold text-pk-muted">Loading…</div>
+    </div>
+  );
+}
 
 function setMeta(nameOrProp: string, value: string, kind: "name" | "property") {
   const selector = kind === "name" ? `meta[name="${nameOrProp}"]` : `meta[property="${nameOrProp}"]`;
@@ -80,7 +90,7 @@ function SeoBootstrap() {
       if (pathname === "/") return "home";
       if (pathname === "/blog") return "blog";
       if (pathname.startsWith("/blog/")) return "blog-post";
-      if (pathname === "/explore") return "explore";
+      if (pathname === "/explore" || pathname === "/community") return "explore";
       if (pathname.startsWith("/loop/")) return "loop";
       if (pathname === "/pricing") return "pricing";
       if (pathname === "/legal") return "legal";
@@ -165,19 +175,31 @@ function SeoBootstrap() {
     const blogPost = blogSlug ? getBlogPostBySlug(blogSlug) : null;
     const effectiveTitle = blogPost ? `${blogPost.title} | ProducerHit` : title;
     const effectiveDescription = blogPost ? blogPost.description : description;
-    const effectiveCanonicalUrl = blogPost ? `${origin}/blog/${blogPost.slug}` : canonicalUrl;
+    const effectiveCanonicalUrl = (() => {
+      if (blogPost) return `${origin}/blog/${blogPost.slug}`;
+      if (slugKey === "explore") return `${origin}/community`;
+      return canonicalUrl;
+    })();
 
     document.title = effectiveTitle;
     setMeta("description", effectiveDescription, "name");
     setMeta("robots", robots, "name");
     setMeta("googlebot", robots, "name");
+    setMeta("keywords", blogPost ? blogPost.keywords.join(", ") : "", "name");
 
-    setMeta("og:type", "website", "property");
+    setMeta("og:type", blogPost ? "article" : "website", "property");
     setMeta("og:site_name", "ProducerHit", "property");
     setMeta("og:title", effectiveTitle, "property");
     setMeta("og:description", effectiveDescription, "property");
     setMeta("og:url", effectiveCanonicalUrl, "property");
     setMeta("og:image", ogImageUrl, "property");
+    if (blogPost) {
+      setMeta("article:published_time", `${blogPost.publishedAt}T00:00:00.000Z`, "property");
+      setMeta("article:modified_time", `${blogPost.updatedAt}T00:00:00.000Z`, "property");
+    } else {
+      setMeta("article:published_time", "", "property");
+      setMeta("article:modified_time", "", "property");
+    }
     setMeta("twitter:card", "summary_large_image", "name");
     setMeta("twitter:title", effectiveTitle, "name");
     setMeta("twitter:description", effectiveDescription, "name");
@@ -213,9 +235,9 @@ function SeoBootstrap() {
         url: canonicalUrl,
         description,
         offers: [
-          { "@type": "Offer", name: "Free Plan", price: "0", priceCurrency: "EUR", description: "3 AI generated tracks per month" },
-          { "@type": "Offer", name: "Pro Plan", price: "10", priceCurrency: "EUR", description: "75 AI generated tracks per month" },
-          { "@type": "Offer", name: "Studio Plan", price: "30", priceCurrency: "EUR", description: "250 AI generated tracks per month" },
+          { "@type": "Offer", name: "Free Plan", price: "0", priceCurrency: "EUR", description: `${PLAN_LIMITS.free} AI generated tracks per month` },
+          { "@type": "Offer", name: "Pro Plan", price: "10", priceCurrency: "EUR", description: `${PLAN_LIMITS.pro} AI generated tracks per month` },
+          { "@type": "Offer", name: "Studio Plan", price: "30", priceCurrency: "EUR", description: `${PLAN_LIMITS.studio} AI generated tracks per month` },
         ],
         creator: { "@type": "Organization", name: "ProducerHit", url: origin },
         featureList: [
@@ -306,6 +328,17 @@ function SeoBootstrap() {
           dateModified: blogPost.updatedAt,
           url: `${origin}/blog/${blogPost.slug}`,
           isPartOf: { "@type": "Blog", name: "ProducerHit Blog", url: `${origin}/blog` },
+          author: { "@type": "Organization", name: "ProducerHit", url: origin },
+          publisher: { "@type": "Organization", name: "ProducerHit", url: origin },
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: `${origin}/` },
+            { "@type": "ListItem", position: 2, name: "Blog", item: `${origin}/blog` },
+            { "@type": "ListItem", position: 3, name: blogPost.title, item: `${origin}/blog/${blogPost.slug}` },
+          ],
         },
       ]);
       return;
@@ -353,30 +386,33 @@ export default function App() {
             <AppToaster />
             <SeoBootstrap />
             <RouteFade>
-              <Routes>
-                <Route path="/" element={<Landing />} />
-                <Route path="/home" element={<Navigate to="/" replace />} />
-                <Route path="/explore" element={<Explore />} />
-                <Route path="/loop/:id" element={<PublicLoop />} />
-                <Route path="/blog" element={<Blog />} />
-                <Route path="/blog/:slug" element={<BlogPost />} />
-                <Route path="/ai-beat-generator" element={<Home />} />
-                <Route path="/ai-music-generator" element={<Home />} />
-                <Route path="/type-beat-generator-ai" element={<Home />} />
-                <Route path="/generate-beats-online-free" element={<Home />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/pricing" element={<Pricing />} />
-                <Route path="/legal" element={<Legal />} />
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  <Route path="/" element={<Landing />} />
+                  <Route path="/home" element={<Navigate to="/" replace />} />
+                  <Route path="/explore" element={<ExplorePage />} />
+                  <Route path="/community" element={<ExplorePage />} />
+                  <Route path="/loop/:id" element={<PublicLoopPage />} />
+                  <Route path="/blog" element={<Blog />} />
+                  <Route path="/blog/:slug" element={<BlogPostPage />} />
+                  <Route path="/ai-beat-generator" element={<Home />} />
+                  <Route path="/ai-music-generator" element={<Home />} />
+                  <Route path="/type-beat-generator-ai" element={<Home />} />
+                  <Route path="/generate-beats-online-free" element={<Home />} />
+                  <Route path="/auth" element={<AuthPage />} />
+                  <Route path="/pricing" element={<PricingPage />} />
+                  <Route path="/legal" element={<LegalPage />} />
 
-                <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/dashboard" element={<DashboardPage />} />
 
-                <Route element={<ProtectedRoute />}>
-                  <Route path="/library" element={<Library />} />
-                  <Route path="/settings" element={<Settings />} />
-                </Route>
+                  <Route element={<ProtectedRoute />}>
+                    <Route path="/library" element={<LibraryPage />} />
+                    <Route path="/settings" element={<SettingsPage />} />
+                  </Route>
 
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </Suspense>
             </RouteFade>
             <AudioPlayer />
           </LoopsBootstrap>

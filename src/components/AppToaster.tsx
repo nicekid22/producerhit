@@ -4,6 +4,9 @@ import { useLocation } from "react-router-dom";
 function isMarketingPath(pathname: string) {
   if (pathname === "/") return true;
   if (pathname.startsWith("/home")) return true;
+  if (pathname.startsWith("/loop/")) return true;
+  if (pathname.startsWith("/blog")) return true;
+  if (pathname.startsWith("/legal")) return true;
   if (pathname.startsWith("/pricing")) return true;
   if (pathname.startsWith("/auth")) return true;
   return false;
