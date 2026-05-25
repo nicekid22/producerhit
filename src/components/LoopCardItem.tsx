@@ -73,15 +73,7 @@ export function LoopCardItem({
 
   const active = current?.id === loop.id;
   const activePlaying = active && isPlaying;
-  const hasTaskId = (() => {
-    const raw = loop.stemsUrl as unknown;
-    if (!raw || typeof raw !== "object") return false;
-    const ace = (raw as Record<string, unknown>).ace;
-    if (!ace || typeof ace !== "object") return false;
-    const tid = (ace as Record<string, unknown>).taskId ?? (ace as Record<string, unknown>).task_id;
-    return typeof tid === "string" && tid.trim().length > 0;
-  })();
-  const canPlay = Boolean(loop.audioUrl) || hasTaskId;
+  const canPlay = Boolean(loop.audioUrl);
   const totalLabel = cachedDurationSec > 0 ? formatTime(cachedDurationSec) : "—";
   const durationLabel = active ? formatTime(currentTimeSec) : totalLabel;
   const stemsDownloadUrl = (() => {
