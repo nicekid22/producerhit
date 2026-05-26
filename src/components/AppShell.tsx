@@ -2,20 +2,31 @@ import type { CSSProperties } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { BrandLogo } from "@/components/landing/BrandLogo";
 import { usePlayerStore } from "@/stores/playerStore";
+import { cn } from "@/lib/utils";
 
 export function AppShell({
   left,
   children,
   variant = "split",
   theme = "default",
+  mobileTabs,
+  mobilePanel,
+  mobileLayoutV2 = false,
 }: {
   left?: React.ReactNode;
   children: React.ReactNode;
   variant?: "split" | "single";
   theme?: "default" | "prism";
+  /** Onglets Créer/Résultats — mobile Dashboard v2 */
+  mobileTabs?: React.ReactNode;
+  mobilePanel?: "create" | "results";
+  mobileLayoutV2?: boolean;
 }) {
   const hasPlayer = usePlayerStore((s) => !!s.current);
   const isPrism = theme === "prism";
+  const dockPb = hasPlayer ? "pk-shell-dock-pb--player" : "pk-shell-dock-pb";
+  const hideLeftOnMobile = mobileLayoutV2 && mobilePanel === "results";
+  const hideChildrenOnMobile = mobileLayoutV2 && mobilePanel === "create";
 
   return (
     <div
@@ -23,7 +34,12 @@ export function AppShell({
         "relative text-pk-text md:h-screen md:overflow-hidden",
         isPrism ? "pk-prism-stage pk-prism-dashboard bg-[#050508]" : "bg-pk-bg",
       ].join(" ")}
-      style={{ "--pk-bottom-nav": "56px" } as CSSProperties}
+      style={
+        {
+          "--pk-bottom-nav": "56px",
+          "--pk-player-height": "72px",
+        } as CSSProperties
+      }
     >
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {isPrism ? (
@@ -57,43 +73,64 @@ export function AppShell({
 
           {variant === "split" ? (
             <div className="flex flex-1 flex-col gap-3 md:min-h-0 md:flex-row md:overflow-hidden">
+              {mobileLayoutV2 && mobileTabs ? (
+                <div
+                  className={cn(
+                    "md:hidden rounded-2xl border px-4 py-3 backdrop-blur",
+                    isPrism ? "pk-prism-glass border-white/10 bg-white/[0.03]" : "border-pk-border/70 bg-pk-panel/70",
+                  )}
+                >
+                  {isPrism ? <BrandLogo /> : <div className="text-sm font-semibold">ProducerHit</div>}
+                  <div className="mt-3">{mobileTabs}</div>
+                </div>
+              ) : null}
+
               <div
-                className={[
+                className={cn(
                   "w-full overflow-hidden rounded-2xl backdrop-blur md:w-[420px] md:min-h-0",
                   isPrism ? "pk-prism-glass border border-white/10" : "border border-pk-border/70 bg-pk-panel/70",
-                  hasPlayer ? "pb-[calc(9rem+env(safe-area-inset-bottom))] md:pb-24" : "",
-                ].join(" ")}
+                  dockPb,
+                  hideLeftOnMobile && "hidden md:flex md:flex-col",
+                  mobileLayoutV2 && "md:overflow-hidden",
+                )}
               >
-                <div className="md:hidden">
-                  <div
-                    className={[
-                      "border-b px-4 py-3 backdrop-blur",
-                      isPrism ? "border-white/10 bg-white/[0.03]" : "border-pk-border/70 bg-pk-panel/40 text-sm font-semibold",
-                    ].join(" ")}
-                  >
-                    {isPrism ? <BrandLogo /> : "ProducerHit"}
+                {!mobileLayoutV2 ? (
+                  <div className="md:hidden">
+                    <div
+                      className={[
+                        "border-b px-4 py-3 backdrop-blur",
+                        isPrism ? "border-white/10 bg-white/[0.03]" : "border-pk-border/70 bg-pk-panel/40 text-sm font-semibold",
+                      ].join(" ")}
+                    >
+                      {isPrism ? <BrandLogo /> : "ProducerHit"}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="hidden border-b border-white/10 px-4 pb-3 pt-4 md:block">
+                    {isPrism ? <BrandLogo /> : <div className="text-sm font-semibold">ProducerHit</div>}
+                  </div>
+                )}
                 {left}
               </div>
 
               <div
-                className={[
+                className={cn(
                   "min-w-0 flex-1 overflow-y-auto rounded-2xl backdrop-blur md:min-h-0",
                   isPrism ? "pk-prism-glass border border-white/10 bg-white/[0.02]" : "border border-pk-border/70 bg-pk-panel/30",
-                  hasPlayer ? "pb-[calc(9rem+env(safe-area-inset-bottom))] md:pb-24" : "",
-                ].join(" ")}
+                  dockPb,
+                  hideChildrenOnMobile && "hidden md:block",
+                )}
               >
                 {children}
               </div>
             </div>
           ) : (
             <div
-              className={[
+              className={cn(
                 "min-w-0 flex-1 overflow-y-auto rounded-2xl backdrop-blur md:min-h-0",
                 isPrism ? "pk-prism-glass border border-white/10 bg-white/[0.02]" : "border border-pk-border/70 bg-pk-panel/30",
-                hasPlayer ? "pb-[calc(9rem+env(safe-area-inset-bottom))] md:pb-24" : "",
-              ].join(" ")}
+                dockPb,
+              )}
             >
               {children}
             </div>

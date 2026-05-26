@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { cn, coverGradient, coverImageUrl } from "@/lib/utils";
+import { resolvePlayableAudioUrl } from "@/lib/playableAudio";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { AudioWaveform } from "@/components/WaveformVisualizer";
@@ -9,7 +10,7 @@ import { usePlayerStore } from "@/stores/playerStore";
 import { useLocaleStore } from "@/stores/localeStore";
 import type { Loop } from "@/types/loop";
 import { generateBeat } from "@/lib/audioApi";
-import { Bookmark, Check, Copy, Download, Globe, Info, Layers, Loader2, Pause, Pencil, Play, RefreshCcw, Share2, Video, X } from "lucide-react";
+import { Bookmark, Check, Copy, Download, Globe, Info, Layers, Loader2, MoreHorizontal, Pause, Pencil, Play, RefreshCcw, Share2, Video, X } from "lucide-react";
 
 function formatTime(sec: number) {
   const s = Math.max(0, Math.floor(sec));
@@ -29,12 +30,14 @@ export function LoopCardItem({
   onOpenDetails,
   onGenerationUsed,
   onStartWorkspaceJob,
+  compact = false,
 }: {
   loop: Loop;
   onDelete?: () => void;
   onOpenDetails?: (loop: Loop, anchorTop: number) => void;
   onGenerationUsed?: () => void;
   onStartWorkspaceJob?: (title: string, sub: string) => (() => void) | void;
+  compact?: boolean;
 }) {
   const locale = useLocaleStore((s) => s.locale);
   const plan = (() => {
@@ -69,7 +72,9 @@ export function LoopCardItem({
   const [draftTitle, setDraftTitle] = useState(loop.name);
   const [savingTitle, setSavingTitle] = useState(false);
   const [isVarying, setIsVarying] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   const active = current?.id === loop.id;
   const activePlaying = active && isPlaying;
@@ -760,6 +765,7 @@ export function LoopCardItem({
       <div className={cn("mt-3", canPlay ? "" : "opacity-60")}>
         <AudioWaveform
           audioUrl={loop.audioUrl ?? null}
+          loopId={loop.id}
           isPlaying={activePlaying}
           progress={active ? progress : 0}
           height={28}
@@ -779,6 +785,187 @@ export function LoopCardItem({
         <div>{durationLabel}</div>
       </div>
 
+      {compact ? (
+        <div className="mt-4 flex items-stretch gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            className="min-h-11 flex-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              void (async () => {
+                if (active) {
+                  setPlaying(!isPlaying);
+                  return;
+                }
+                const directUrl = typeof loop.audioUrl === "string" ? loop.audioUrl.trim() : "";
+                if (directUrl) {
+                  const playable = await resolvePlayableAudioUrl(directUrl, loop.id).catch(() => "");
+                  if (!playable) {
+                    toast.error(locale === "fr" ? "Audio indisponible — réessaie dans un instant" : "Audio unavailable — try again in a moment");
+                    return;
+                  }
+                  setCurrent({ ...loop, audioUrl: playable }, true);
+                  return;
+                }
+                let url = "";
+                try {
+                  url = await ensureAudioReady(loop.id);
+                } catch {
+                  url = "";
+                }
+                if (!url) {
+                  toast.error(locale === "fr" ? "Audio indisponible — réessaie dans un instant" : "Audio unavailable — try again in a moment");
+                  return;
+                }
+                const fresh = useLoopsStore.getState().loops.find((l) => l.id === loop.id) ?? loop;
+                setCurrent({ ...fresh, audioUrl: url }, true);
+              })();
+            }}
+          >
+            {activePlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+            {activePlaying ? "Pause" : "Play"}
+          </Button>
+          <Button
+            variant={loop.isSaved ? "primary" : "secondary"}
+            size="sm"
+            className="min-h-11 min-w-11 px-0"
+            onClick={(e) => {
+              e.stopPropagation();
+              void toggleSavedRemote(loop.id).then((next) => toast.success(next ? "Sauvegardé" : "Retiré de la bibliothèque")).catch((err) => toast.error(err instanceof Error ? err.message : "Erreur"));
+            }}
+            title="Save"
+          >
+            <Bookmark className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={loop.isPublic ? "primary" : "secondary"}
+            size="sm"
+            className="min-h-11 min-w-11 px-0"
+            onClick={(e) => {
+              e.stopPropagation();
+              void togglePublicRemote(loop.id).then((next) => toast.success(next ? "Public" : "Private")).catch((err) => toast.error(err instanceof Error ? err.message : "Erreur"));
+            }}
+            title={loop.isPublic ? "Private" : "Public"}
+          >
+            <Globe className="h-4 w-4" />
+          </Button>
+          <div className="relative" ref={menuRef}>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="min-h-11 min-w-11 px-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                setMenuOpen((v) => !v);
+              }}
+              aria-label={locale === "fr" ? "Plus d’actions" : "More actions"}
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+            {menuOpen ? (
+              <div className="absolute bottom-full right-0 z-30 mb-2 w-44 overflow-hidden rounded-xl border border-pk-border bg-pk-panel py-1 shadow-xl">
+                {onOpenDetails ? (
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs font-semibold text-pk-text hover:bg-white/5"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMenuOpen(false);
+                      onOpenDetails(loop, computeAnchorTop());
+                    }}
+                  >
+                    <Info className="h-3.5 w-3.5" />
+                    Infos
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs font-semibold text-pk-text hover:bg-white/5 disabled:opacity-40"
+                  disabled={!loop.audioUrl || isDownloading}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenuOpen(false);
+                    void (async () => {
+                      if (!loop.audioUrl || isDownloading) return;
+                      setIsDownloading(true);
+                      try {
+                        const response = await fetch(loop.audioUrl);
+                        const blob = await response.blob();
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `${loop.name.replace(/[^a-zA-Z0-9\s-]/g, "").replace(/\s+/g, "-").toLowerCase()}-producerhit.mp3`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        toast.success("Beat downloaded!");
+                      } catch {
+                        toast.error("Download failed — try again");
+                      } finally {
+                        setIsDownloading(false);
+                      }
+                    })();
+                  }}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Download
+                </button>
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs font-semibold text-pk-text hover:bg-white/5"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenuOpen(false);
+                    setShareOpen(true);
+                  }}
+                >
+                  <Share2 className="h-3.5 w-3.5" />
+                  Share
+                </button>
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs font-semibold text-pk-text hover:bg-white/5 disabled:opacity-40"
+                  disabled={isVarying}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenuOpen(false);
+                    runVariant("variation");
+                  }}
+                >
+                  <RefreshCcw className="h-3.5 w-3.5" />
+                  Variation
+                </button>
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs font-semibold text-pk-text hover:bg-white/5 disabled:opacity-40"
+                  disabled={isVarying}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenuOpen(false);
+                    runVariant("remix");
+                  }}
+                >
+                  <RefreshCcw className="h-3.5 w-3.5" />
+                  Remix
+                </button>
+                {onDelete ? (
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs font-semibold text-rose-300 hover:bg-rose-500/10"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMenuOpen(false);
+                      onDelete();
+                    }}
+                  >
+                    Delete
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : (
       <div className="mt-4 flex flex-wrap gap-2">
         <Button
           variant="secondary"
@@ -793,7 +980,12 @@ export function LoopCardItem({
 
               const directUrl = typeof loop.audioUrl === "string" ? loop.audioUrl.trim() : "";
               if (directUrl) {
-                setCurrent({ ...loop, audioUrl: directUrl }, true);
+                const playable = await resolvePlayableAudioUrl(directUrl, loop.id).catch(() => "");
+                if (!playable) {
+                  toast.error(locale === "fr" ? "Audio indisponible — réessaie dans un instant" : "Audio unavailable — try again in a moment");
+                  return;
+                }
+                setCurrent({ ...loop, audioUrl: playable }, true);
                 return;
               }
 
@@ -1012,6 +1204,7 @@ export function LoopCardItem({
           </Button>
         ) : null}
       </div>
+      )}
 
       {shareOpen ? (
         <div className="fixed inset-0 z-50">

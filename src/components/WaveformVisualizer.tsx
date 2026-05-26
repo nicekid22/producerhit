@@ -1,7 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { fetchCachedLoopAudioBlob } from "@/stores/loopsStore";
+
+const PEAK_POINTS = 256;
+const DECODE_TIMEOUT_MS = 10_000;
 
 const peaksCache = new Map<string, Float32Array>();
-const inflight = new Map<string, Promise<Float32Array>>();
+const inflightPeaks = new Map<string, Promise<Float32Array>>();
+const bufferInflight = new Map<string, Promise<ArrayBuffer>>();
 const decodeWaiters: Array<() => void> = [];
 let activeDecodes = 0;
 
@@ -51,19 +56,31 @@ function computePeaks(buffer: AudioBuffer, points: number): Float32Array {
   return out;
 }
 
-async function decodePeaks(audioUrl: string, signal: AbortSignal): Promise<Float32Array> {
+async function fetchAudioArrayBuffer(url: string, signal: AbortSignal): Promise<ArrayBuffer> {
+  const existing = bufferInflight.get(url);
+  if (existing) return existing;
+  const task = fetch(url, { signal })
+    .then((response) => {
+      if (!response.ok) throw new Error("Waveform fetch failed");
+      return response.arrayBuffer();
+    })
+    .finally(() => {
+      bufferInflight.delete(url);
+    });
+  bufferInflight.set(url, task);
+  return task;
+}
+
+async function decodePeaksFromBuffer(arrayBuffer: ArrayBuffer, signal: AbortSignal): Promise<Float32Array> {
+  if (signal.aborted) throw new Error("Aborted");
   await acquireDecodeSlot();
   try {
-    const response = await fetch(audioUrl, { signal });
-    if (!response.ok) throw new Error("Waveform fetch failed");
-    const arrayBuffer = await response.arrayBuffer();
-    if (signal.aborted) throw new Error("Aborted");
     const Ctor = getAudioContextCtor();
     const ctx = new Ctor();
     try {
       const audioBuffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
       if (signal.aborted) throw new Error("Aborted");
-      return computePeaks(audioBuffer, 1024);
+      return computePeaks(audioBuffer, PEAK_POINTS);
     } finally {
       if (typeof ctx.close === "function") {
         await ctx.close().catch(() => undefined);
@@ -74,23 +91,75 @@ async function decodePeaks(audioUrl: string, signal: AbortSignal): Promise<Float
   }
 }
 
-async function getOrDecodePeaks(audioUrl: string, signal: AbortSignal): Promise<Float32Array> {
-  const cached = peaksCache.get(audioUrl);
+async function resolvePeaks(args: {
+  audioUrl: string;
+  loopId?: string;
+  signal: AbortSignal;
+}): Promise<Float32Array> {
+  const { audioUrl, loopId, signal } = args;
+
+  if (loopId) {
+    const blob = await fetchCachedLoopAudioBlob(loopId).catch(() => null);
+    if (blob && !signal.aborted) {
+      try {
+        return await decodePeaksFromBuffer(await blob.arrayBuffer(), signal);
+      } catch {
+        // fall through to network fetch
+      }
+    }
+  }
+
+  const arrayBuffer = await fetchAudioArrayBuffer(audioUrl, signal);
+  return decodePeaksFromBuffer(arrayBuffer, signal);
+}
+
+function withDecodeTimeout<T>(promise: Promise<T>, ms: number, signal: AbortSignal): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = window.setTimeout(() => reject(new Error("Waveform decode timeout")), ms);
+    const onAbort = () => {
+      window.clearTimeout(timer);
+      reject(new Error("Aborted"));
+    };
+    signal.addEventListener("abort", onAbort, { once: true });
+    promise
+      .then((value) => {
+        window.clearTimeout(timer);
+        signal.removeEventListener("abort", onAbort);
+        resolve(value);
+      })
+      .catch((err) => {
+        window.clearTimeout(timer);
+        signal.removeEventListener("abort", onAbort);
+        reject(err);
+      });
+  });
+}
+
+async function getOrDecodePeaks(args: {
+  audioUrl: string;
+  loopId?: string;
+  signal: AbortSignal;
+}): Promise<Float32Array> {
+  const cacheKey = args.audioUrl;
+  const cached = peaksCache.get(cacheKey);
   if (cached) return cached;
-  const running = inflight.get(audioUrl);
+
+  const running = inflightPeaks.get(cacheKey);
   if (running) return running;
-  const p = decodePeaks(audioUrl, signal)
+
+  const task = withDecodeTimeout(resolvePeaks(args), DECODE_TIMEOUT_MS, args.signal)
     .then((peaks) => {
-      peaksCache.set(audioUrl, peaks);
-      inflight.delete(audioUrl);
+      peaksCache.set(cacheKey, peaks);
+      inflightPeaks.delete(cacheKey);
       return peaks;
     })
     .catch((err) => {
-      inflight.delete(audioUrl);
+      inflightPeaks.delete(cacheKey);
       throw err;
     });
-  inflight.set(audioUrl, p);
-  return p;
+
+  inflightPeaks.set(cacheKey, task);
+  return task;
 }
 
 function drawWaveform({
@@ -134,6 +203,69 @@ function drawWaveform({
     ctx.fillStyle = i < playedBars ? playedColor : unplayedColor;
     ctx.fillRect(x, y, barW, barH);
   }
+}
+
+const LOADER_BAR_RATIOS = [0.32, 0.58, 0.78, 0.44, 0.92, 0.62, 0.38, 0.86, 0.52, 0.72, 0.48, 0.68];
+
+export function WaveformLoader({
+  height = 28,
+  active = true,
+  onRetry,
+}: {
+  height?: number;
+  active?: boolean;
+  onRetry?: () => void;
+}) {
+  const gradientId = useId().replace(/:/g, "");
+  return (
+    <div
+      className={`pk-waveform-loader ${active ? "pk-waveform-loader--active" : "pk-waveform-loader--idle"}`}
+      style={{ height }}
+      aria-hidden={active}
+      aria-label={active ? undefined : "Waveform unavailable"}
+      role={!active && onRetry ? "button" : undefined}
+      tabIndex={!active && onRetry ? 0 : undefined}
+      onClick={!active && onRetry ? onRetry : undefined}
+      onKeyDown={
+        !active && onRetry
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onRetry();
+              }
+            }
+          : undefined
+      }
+    >
+      <svg className="pk-waveform-loader__scope" viewBox="0 0 200 32" preserveAspectRatio="none" aria-hidden>
+        <defs>
+          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="rgba(124, 58, 237, 0.15)" />
+            <stop offset="35%" stopColor="rgba(157, 124, 255, 0.85)" />
+            <stop offset="65%" stopColor="rgba(103, 195, 255, 0.95)" />
+            <stop offset="100%" stopColor="rgba(124, 58, 237, 0.2)" />
+          </linearGradient>
+        </defs>
+        <path
+          className="pk-waveform-loader__wave"
+          d="M0,16 C12,6 24,26 36,16 S60,6 72,16 S96,26 108,16 S132,6 144,16 S168,26 180,16 S196,10 200,16"
+          fill="none"
+          stroke={`url(#${gradientId})`}
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+      </svg>
+      <div className="pk-waveform-loader__bars">
+        {LOADER_BAR_RATIOS.map((ratio, i) => (
+          <div
+            key={i}
+            className="pk-waveform-loader__bar"
+            style={{ height: `${Math.round(ratio * 100)}%`, animationDelay: `${(i * 0.07) % 0.5}s` }}
+          />
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export function WaveformVisualizer({
@@ -194,8 +326,11 @@ export function WaveformVisualizer({
   );
 }
 
+type PeaksLoadState = "idle" | "loading" | "ready" | "failed";
+
 export function AudioWaveform({
   audioUrl,
+  loopId,
   isPlaying,
   progress,
   onSeek,
@@ -204,6 +339,7 @@ export function AudioWaveform({
   unplayedColor = "#2d2d3d",
 }: {
   audioUrl: string | null;
+  loopId?: string;
   isPlaying: boolean;
   progress: number;
   onSeek?: (pct: number) => void;
@@ -215,11 +351,35 @@ export function AudioWaveform({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [visible, setVisible] = useState(false);
   const [peaks, setPeaks] = useState<Float32Array | null>(() => (audioUrl ? peaksCache.get(audioUrl) ?? null : null));
-  const [loading, setLoading] = useState(false);
+  const [loadState, setLoadState] = useState<PeaksLoadState>(() =>
+    audioUrl && peaksCache.has(audioUrl) ? "ready" : "idle",
+  );
+  const [decodeAttempt, setDecodeAttempt] = useState(0);
   const clampedProgress = Math.max(0, Math.min(1, Number.isFinite(progress) ? progress : 0));
 
+  const retryDecode = useCallback(() => {
+    if (!audioUrl) return;
+    peaksCache.delete(audioUrl);
+    inflightPeaks.delete(audioUrl);
+    setPeaks(null);
+    setLoadState("idle");
+    setDecodeAttempt((n) => n + 1);
+  }, [audioUrl]);
+
   useEffect(() => {
-    setPeaks(audioUrl ? peaksCache.get(audioUrl) ?? null : null);
+    if (!audioUrl) {
+      setPeaks(null);
+      setLoadState("idle");
+      return;
+    }
+    const cached = peaksCache.get(audioUrl);
+    if (cached) {
+      setPeaks(cached);
+      setLoadState("ready");
+      return;
+    }
+    setPeaks(null);
+    setLoadState("idle");
   }, [audioUrl]);
 
   useEffect(() => {
@@ -236,17 +396,40 @@ export function AudioWaveform({
   }, []);
 
   useEffect(() => {
+    if (!loopId || peaks) return;
+    const onCached = (event: Event) => {
+      const detail = (event as CustomEvent<{ id?: string }>).detail;
+      if (detail?.id === loopId) retryDecode();
+    };
+    window.addEventListener("producerhit-audio-cached", onCached);
+    return () => window.removeEventListener("producerhit-audio-cached", onCached);
+  }, [loopId, peaks, retryDecode]);
+
+  useEffect(() => {
     const url = audioUrl;
     if (!visible || !url) return;
     if (peaksCache.get(url)) return;
+
     const controller = new AbortController();
-    setLoading(true);
-    void getOrDecodePeaks(url, controller.signal)
-      .then((p) => setPeaks(p))
-      .catch(() => undefined)
-      .finally(() => setLoading(false));
-    return () => controller.abort();
-  }, [audioUrl, visible]);
+    let cancelled = false;
+    setLoadState("loading");
+
+    void getOrDecodePeaks({ audioUrl: url, loopId, signal: controller.signal })
+      .then((p) => {
+        if (cancelled) return;
+        setPeaks(p);
+        setLoadState("ready");
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setLoadState("failed");
+      });
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [audioUrl, visible, loopId, decodeAttempt]);
 
   const draw = useMemo(() => {
     return () => {
@@ -270,29 +453,34 @@ export function AudioWaveform({
     draw();
   }, [draw]);
 
+  const seekEnabled = Boolean(onSeek && peaks);
+
   return (
     <div
       ref={containerRef}
       className="w-full"
       onClick={(e) => {
-        if (!onSeek) return;
+        if (!seekEnabled) return;
         const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
         const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-        onSeek(pct);
+        onSeek!(pct);
       }}
-      role={onSeek ? "button" : undefined}
-      tabIndex={onSeek ? 0 : undefined}
+      role={seekEnabled ? "button" : undefined}
+      tabIndex={seekEnabled ? 0 : undefined}
       onKeyDown={(e) => {
-        if (!onSeek) return;
-        if (e.key === "Enter" || e.key === " ") onSeek(clampedProgress);
+        if (!seekEnabled) return;
+        if (e.key === "Enter" || e.key === " ") onSeek!(clampedProgress);
       }}
     >
       {peaks ? (
-        <canvas ref={canvasRef} style={{ height }} className={onSeek ? "w-full cursor-pointer" : "w-full"} aria-hidden />
+        <canvas ref={canvasRef} style={{ height }} className={seekEnabled ? "w-full cursor-pointer" : "w-full"} aria-hidden />
+      ) : loadState === "failed" ? (
+        <WaveformLoader height={height} active={false} onRetry={retryDecode} />
       ) : (
-        <div className="opacity-70" style={{ height }}>
-          <WaveformVisualizer isPlaying={loading} barCount={40} />
-        </div>
+        <WaveformLoader
+          height={height}
+          active={loadState === "loading" || (loadState === "idle" && visible && Boolean(audioUrl))}
+        />
       )}
     </div>
   );

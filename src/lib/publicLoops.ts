@@ -1,3 +1,4 @@
+import { clearPlayableAudioBlobCache, resolvePlayableAudioUrl } from "@/lib/playableAudio";
 import { supabase } from "@/lib/supabaseClient";
 
 export type PublicLoopRow = {
@@ -111,6 +112,17 @@ export async function ensurePublicLoopAudioUrl(row: PublicLoopRow): Promise<stri
   const taskId = extractAceTaskId(row.stems_url);
   if (!taskId) return "";
   return resolveAceAudioUrl(taskId).catch(() => "");
+}
+
+/** Résout l’URL HTTP puis la convertit en blob: pour lecture fiable (Web Audio / CORS). */
+export async function resolvePlayableCommunityAudio(row: PublicLoopRow): Promise<string> {
+  const httpUrl = await ensurePublicLoopAudioUrl(row);
+  if (!httpUrl) return "";
+  return resolvePlayableAudioUrl(httpUrl, `community:${row.id}`);
+}
+
+export function clearCommunityAudioBlobCache(loopId?: string) {
+  clearPlayableAudioBlobCache(loopId ? `community:${loopId}` : undefined);
 }
 
 export async function persistPublicLoopAudioUrl(loopId: string, userId: string, taskId: string): Promise<string | null> {

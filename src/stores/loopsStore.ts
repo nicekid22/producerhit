@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { resolvePlayableAudioUrl } from "@/lib/playableAudio";
 import { supabase } from "@/lib/supabaseClient";
 import {
   extractAceTaskId as extractAceTaskIdFromStemsUrl,
@@ -214,6 +215,11 @@ async function cacheLoopAudioFromSrc(id: string, src: string | null | undefined)
         durationsSecById: { ...s.durationsSecById, [id]: durationSec },
       }));
     }
+    try {
+      window.dispatchEvent(new CustomEvent("producerhit-audio-cached", { detail: { id } }));
+    } catch {
+      void 0;
+    }
   } catch {
     // ignore cache failures
   }
@@ -427,6 +433,12 @@ type LoopsState = {
   deleteLoopRemote: (id: string) => Promise<void>;
 };
 
+async function asPlayableLoopUrl(loopId: string, url: string): Promise<string> {
+  const trimmed = typeof url === "string" ? url.trim() : "";
+  if (!trimmed) return "";
+  return resolvePlayableAudioUrl(trimmed, loopId).catch(() => trimmed);
+}
+
 export const useLoopsStore = create<LoopsState>((set) => ({
   loops: [],
   loading: false,
@@ -484,7 +496,7 @@ export const useLoopsStore = create<LoopsState>((set) => ({
     }
 
     const currentUrl = typeof fromState?.audioUrl === "string" ? fromState.audioUrl.trim() : "";
-    if (isHttpUrl(currentUrl)) return currentUrl;
+    if (isHttpUrl(currentUrl)) return asPlayableLoopUrl(id, currentUrl);
 
     const user = useAuthStore.getState().user;
     const taskIdFromState = extractAceTaskIdFromStemsUrl(fromState?.stemsUrl);
@@ -495,7 +507,7 @@ export const useLoopsStore = create<LoopsState>((set) => ({
       useLoopsStore.setState((s) => ({
         loops: s.loops.map((l) => (l.id === id ? { ...l, audioUrl: resolved } : l)),
       }));
-      return resolved;
+      return asPlayableLoopUrl(id, resolved);
     }
 
     const { data, error } = await supabase
@@ -511,7 +523,7 @@ export const useLoopsStore = create<LoopsState>((set) => ({
         loops: s.loops.map((l) => (l.id === id ? { ...l, audioUrl: dbUrl } : l)),
       }));
       void cacheLoopAudioFromSrc(id, dbUrl);
-      return dbUrl;
+      return asPlayableLoopUrl(id, dbUrl);
     }
 
     const taskId = taskIdFromState || extractAceTaskIdFromStemsUrl((data as { stems_url?: unknown } | null)?.stems_url);
@@ -527,7 +539,7 @@ export const useLoopsStore = create<LoopsState>((set) => ({
       loops: s.loops.map((l) => (l.id === id ? { ...l, audioUrl: resolved } : l)),
     }));
     void cacheLoopAudioFromSrc(id, resolved);
-    return resolved;
+    return asPlayableLoopUrl(id, resolved);
   },
   primeAudioCache: (id, src) => {
     void cacheLoopAudioFromSrc(id, src);
@@ -1080,4 +1092,11 @@ export const useLoopsStore = create<LoopsState>((set) => ({
     useLoopsStore.getState().removeLoop(id);
   },
 }));
+
+export async function fetchCachedLoopAudioBlob(loopId: string): Promise<Blob | null> {
+  if (!loopId || loopId.startsWith("preview-") || loopId.startsWith("local-")) return null;
+  const rec = await audioCacheGet(loopId).catch(() => null);
+  if (!rec?.blob || rec.blob.size <= 0) return null;
+  return rec.blob;
+}
 

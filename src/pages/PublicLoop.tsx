@@ -3,7 +3,7 @@ import { Link, Navigate, useParams } from "react-router-dom";
 import { Pause, Play, Share2, Star } from "lucide-react";
 import toast from "react-hot-toast";
 import { Navbar } from "@/components/Navbar";
-import { extractAceTaskId, isPlayablePublicLoop, resolveAceAudioUrl } from "@/lib/publicLoops";
+import { isPlayablePublicLoop, resolvePlayableCommunityAudio, type PublicLoopRow } from "@/lib/publicLoops";
 import { supabase } from "@/lib/supabaseClient";
 import { useLocaleStore } from "@/stores/localeStore";
 import { useAuthStore } from "@/stores/authStore";
@@ -143,33 +143,28 @@ export default function PublicLoop() {
       return;
     }
     void (async () => {
-      let url = typeof row.audio_url === "string" ? row.audio_url.trim() : "";
+      setResolvingAudio(true);
+      const playableRow: PublicLoopRow = {
+        id: row.id,
+        name: row.name,
+        genre: row.genre,
+        influence: row.influence,
+        mood: row.mood,
+        bpm: row.bpm,
+        prompt: row.prompt,
+        audio_url: row.audio_url,
+        stems_url: row.stems_url ?? null,
+        created_at: row.created_at,
+        seed: row.seed,
+      };
+      const url = await resolvePlayableCommunityAudio(playableRow).catch(() => "");
+      setResolvingAudio(false);
       if (!url) {
-        const taskId = extractAceTaskId(row.stems_url);
-        if (!taskId) {
-          toast.error(isFr ? "Audio indisponible" : "Audio unavailable");
-          return;
-        }
-        setResolvingAudio(true);
-        url = await resolveAceAudioUrl(taskId).catch(() => "");
-        setResolvingAudio(false);
-        if (!url) {
-          toast.error(isFr ? "Audio indisponible" : "Audio unavailable");
-          return;
-        }
-        setRow((prev) => (prev ? { ...prev, audio_url: url } : prev));
+        toast.error(isFr ? "Audio indisponible" : "Audio unavailable");
+        return;
       }
 
       setCurrent(toLoop({ ...row, audio_url: url }), true);
-      const audioEl = document.getElementById("pk-audio") as HTMLAudioElement | null;
-      if (audioEl) {
-        audioEl.src = url;
-        audioEl.load();
-        void audioEl
-          .play()
-          .then(() => setPlaying(true))
-          .catch(() => setPlaying(false));
-      }
     })();
   };
 

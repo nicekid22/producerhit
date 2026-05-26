@@ -1,8 +1,10 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { AppShell } from "@/components/AppShell";
 import { AppShellAsideHeader } from "@/components/AppShellAsideHeader";
+import { LoopDetailsPanel } from "@/components/dashboard/LoopDetailsPanel";
+import { LoopDetailsSheet, LoopDetailsSheetHeader } from "@/components/dashboard/LoopDetailsSheet";
 import { PrismFilterPill } from "@/components/prism/PrismFilterPill";
 import { PrismPageHero } from "@/components/prism/PrismPageHero";
 import { PrismStat } from "@/components/prism/PrismStat";
@@ -12,8 +14,8 @@ import { Modal } from "@/components/ui/Modal";
 import { useLoopsStore } from "@/stores/loopsStore";
 import { LoopCardItem } from "@/components/LoopCardItem";
 import { useLocaleStore } from "@/stores/localeStore";
-import { Bookmark, Clock, Copy, Disc3, Gauge, Info, KeyRound, Layers, Search, Sigma, Sparkles, X } from "lucide-react";
-import { coverGradient, coverImageUrl } from "@/lib/utils";
+import { useMobileUiV2 } from "@/hooks/useMobileUiV2";
+import { Bookmark, Disc3, Layers, Search, Sparkles } from "lucide-react";
 
 type Filter = "all" | "genre" | "key" | "bpm";
 
@@ -72,12 +74,36 @@ export default function Library() {
       .slice(0, 6);
   }, [loops]);
   const detailsLoop = useMemo(() => (detailsId ? loops.find((l) => l.id === detailsId) ?? null : null), [detailsId, loops]);
+  const mobileUiV2 = useMobileUiV2();
+  const renameLoopRemote = useLoopsStore((s) => s.renameLoopRemote);
+  const [detailsTitle, setDetailsTitle] = useState("");
+  const [savingDetailsTitle, setSavingDetailsTitle] = useState(false);
+  useEffect(() => {
+    setDetailsTitle(detailsLoop?.name ?? "");
+  }, [detailsLoop?.id, detailsLoop?.name]);
+  const saveDetailsTitle = useCallback(() => {
+    if (!detailsLoop) return;
+    const next = detailsTitle.trim();
+    if (!next || next === detailsLoop.name) return;
+    void (async () => {
+      setSavingDetailsTitle(true);
+      try {
+        await renameLoopRemote(detailsLoop.id, next);
+        toast.success(locale === "fr" ? "Titre mis à jour" : "Title updated");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : locale === "fr" ? "Erreur" : "Error");
+      } finally {
+        setSavingDetailsTitle(false);
+      }
+    })();
+  }, [detailsLoop, detailsTitle, locale, renameLoopRemote]);
   const isFr = locale === "fr";
 
   return (
     <AppShell
       theme="prism"
-      left={
+      variant={mobileUiV2 ? "single" : "split"}
+      left={mobileUiV2 ? undefined : 
         <AppShellAsideHeader
           icon={Disc3}
           eyebrow={isFr ? "VAULT CRÉATIF" : "CREATIVE VAULT"}
@@ -118,7 +144,7 @@ export default function Library() {
         </AppShellAsideHeader>
       }
     >
-      <div className="h-full space-y-5 px-4 pb-36 pt-6 md:pb-24">
+      <div className="h-full space-y-5 px-4 pt-6">
         <PrismPageHero
           eyebrow={isFr ? "ARCHIVE PREMIUM" : "PREMIUM ARCHIVE"}
           title={<span className="pk-prism-holo-text">{isFr ? "Ta bibliothèque sonore" : "Your sound library"}</span>}
@@ -184,7 +210,7 @@ export default function Library() {
 
           <div className="pk-prism-section-card">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 pk-chip-scroll md:overflow-visible">
                 <PrismFilterPill active={filter === "all"} onClick={() => setFilter("all")}>
                   {isFr ? "Tout" : "All"}
                 </PrismFilterPill>
@@ -248,146 +274,17 @@ export default function Library() {
             detailsLoop ? (
               <div className="md:grid md:grid-cols-[minmax(0,1fr)_420px] md:gap-4">
                 <div>
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     {filtered.map((l) => (
                       <div key={l.id}>
                         <LoopCardItem
                           loop={l}
+                          compact={mobileUiV2}
                           onDelete={() => setConfirmId(l.id)}
                           onOpenDetails={(loop) => setDetailsId((prev) => (prev === loop.id ? null : loop.id))}
                         />
                       </div>
                     ))}
-                  </div>
-
-                  <div className="mt-4 md:hidden">
-                    <div className="relative overflow-hidden rounded-2xl pk-prism-card-soft p-5 backdrop-blur">
-                      <div className="pk-prism-panel-glow" />
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="truncate text-sm font-semibold">{detailsLoop.name}</div>
-                          <div className="mt-1 text-xs text-pk-muted">{detailsLoop.genre}</div>
-                        </div>
-                        <Button variant="secondary" size="sm" onClick={() => setDetailsId(null)} aria-label="Close">
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-
-                      <div className="mt-4 overflow-hidden rounded-pk border border-pk-border bg-white/5">
-                        <div className="relative aspect-square w-full bg-center bg-cover" style={{ backgroundImage: coverGradient(detailsLoop) }} aria-hidden>
-                          <img
-                            key={coverImageUrl(detailsLoop)}
-                            src={coverImageUrl(detailsLoop)}
-                            alt=""
-                            className="absolute inset-0 h-full w-full object-contain"
-                            loading="lazy"
-                            decoding="async"
-                            referrerPolicy="no-referrer"
-                            style={{ display: "block", opacity: 0 }}
-                            onLoad={(e) => {
-                              e.currentTarget.style.display = "block";
-                              e.currentTarget.style.opacity = "1";
-                              e.currentTarget.dataset.retry = "0";
-                            }}
-                            onError={(e) => {
-                              const img = e.currentTarget;
-                              img.style.opacity = "0";
-                              const retry = Number(img.dataset.retry ?? "0");
-                              if (retry < 4) {
-                                img.dataset.retry = String(retry + 1);
-                                const url = coverImageUrl(detailsLoop);
-                                window.setTimeout(() => {
-                                  img.style.display = "block";
-                                  img.style.opacity = "0";
-                                  img.src = "";
-                                  img.src = url;
-                                }, 900 * (retry + 1));
-                                return;
-                              }
-                              img.style.display = "none";
-                            }}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-                        <div className="rounded-pk border border-pk-border bg-white/5 p-2">
-                          <div className="flex items-center gap-1 text-pk-muted">
-                            <Gauge className="h-3.5 w-3.5" />
-                            BPM
-                          </div>
-                          <div className="mt-1 font-semibold text-pk-text">
-                            {typeof detailsLoop.details?.bpm === "number" && detailsLoop.details.bpm > 0 ? detailsLoop.details.bpm : "—"}
-                          </div>
-                        </div>
-                        <div className="rounded-pk border border-pk-border bg-white/5 p-2">
-                          <div className="flex items-center gap-1 text-pk-muted">
-                            <Clock className="h-3.5 w-3.5" />
-                            Duration
-                          </div>
-                          <div className="mt-1 font-semibold text-pk-text">
-                            {(() => {
-                              const dur = (detailsLoop.details?.duration ?? durationsSecById[detailsLoop.id]) as number | null | undefined;
-                              return typeof dur === "number" && isFinite(dur) && dur > 0 ? formatTime(dur) : "—";
-                            })()}
-                          </div>
-                        </div>
-                        <div className="rounded-pk border border-pk-border bg-white/5 p-2">
-                          <div className="flex items-center gap-1 text-pk-muted">
-                            <KeyRound className="h-3.5 w-3.5" />
-                            Key
-                          </div>
-                          <div className="mt-1 font-semibold text-pk-text">{detailsLoop.details?.keyScale || "—"}</div>
-                        </div>
-                        <div className="rounded-pk border border-pk-border bg-white/5 p-2">
-                          <div className="flex items-center gap-1 text-pk-muted">
-                            <Sigma className="h-3.5 w-3.5" />
-                            Time Sig
-                          </div>
-                          <div className="mt-1 font-semibold text-pk-text">{detailsLoop.details?.timeSignature || "—"}</div>
-                        </div>
-                      </div>
-
-                      <div className="mt-4">
-                        <div className="flex items-center gap-2 text-xs font-semibold text-pk-text">
-                          <Info className="h-4 w-4 text-pk-muted" />
-                          Details
-                        </div>
-                        <div className="mt-2 rounded-pk border border-pk-border bg-white/5 p-3 text-xs text-pk-text">
-                          {detailsLoop.details?.caption || detailsLoop.prompt || "—"}
-                        </div>
-                      </div>
-
-                      <div className="mt-4">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="text-xs font-semibold text-pk-text">Lyrics</div>
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            disabled={!detailsLoop.details?.lyrics?.trim()}
-                            onClick={() => {
-                              const text = detailsLoop.details?.lyrics?.trim() ?? "";
-                              if (!text) return;
-                              void (async () => {
-                                try {
-                                  await navigator.clipboard.writeText(text);
-                                  toast.success("Lyrics copied");
-                                } catch {
-                                  toast.error("Copy failed");
-                                }
-                              })();
-                            }}
-                            aria-label="Copy lyrics"
-                            title="Copy lyrics"
-                          >
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        <pre className="mt-2 whitespace-pre-wrap rounded-pk border border-pk-border bg-white/5 p-3 text-xs text-pk-text">
-                          {detailsLoop.details?.lyrics?.trim() ? detailsLoop.details.lyrics.trim() : "—"}
-                        </pre>
-                      </div>
-                    </div>
                   </div>
                 </div>
 
@@ -395,139 +292,35 @@ export default function Library() {
                   <div className="sticky top-6 max-h-[calc(100vh-32px)] overflow-y-auto">
                     <div className="relative overflow-hidden rounded-2xl pk-prism-card-soft p-5 backdrop-blur">
                       <div className="pk-prism-panel-glow" />
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="truncate text-sm font-semibold">{detailsLoop.name}</div>
-                          <div className="mt-1 text-xs text-pk-muted">{detailsLoop.genre}</div>
-                        </div>
-                        <Button variant="secondary" size="sm" onClick={() => setDetailsId(null)} aria-label="Close">
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-
-                      <div className="mt-4 overflow-hidden rounded-pk border border-pk-border bg-white/5">
-                        <div className="relative aspect-square w-full bg-center bg-cover" style={{ backgroundImage: coverGradient(detailsLoop) }} aria-hidden>
-                          <img
-                            key={coverImageUrl(detailsLoop)}
-                            src={coverImageUrl(detailsLoop)}
-                            alt=""
-                            className="absolute inset-0 h-full w-full object-contain"
-                            loading="lazy"
-                            decoding="async"
-                            referrerPolicy="no-referrer"
-                            style={{ display: "block", opacity: 0 }}
-                            onLoad={(e) => {
-                              e.currentTarget.style.display = "block";
-                              e.currentTarget.style.opacity = "1";
-                              e.currentTarget.dataset.retry = "0";
-                            }}
-                            onError={(e) => {
-                              const img = e.currentTarget;
-                              img.style.opacity = "0";
-                              const retry = Number(img.dataset.retry ?? "0");
-                              if (retry < 4) {
-                                img.dataset.retry = String(retry + 1);
-                                const url = coverImageUrl(detailsLoop);
-                                window.setTimeout(() => {
-                                  img.style.display = "block";
-                                  img.style.opacity = "0";
-                                  img.src = "";
-                                  img.src = url;
-                                }, 900 * (retry + 1));
-                                return;
-                              }
-                              img.style.display = "none";
-                            }}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-                        <div className="rounded-pk border border-pk-border bg-white/5 p-2">
-                          <div className="flex items-center gap-1 text-pk-muted">
-                            <Gauge className="h-3.5 w-3.5" />
-                            BPM
-                          </div>
-                          <div className="mt-1 font-semibold text-pk-text">
-                            {typeof detailsLoop.details?.bpm === "number" && detailsLoop.details.bpm > 0 ? detailsLoop.details.bpm : "—"}
-                          </div>
-                        </div>
-                        <div className="rounded-pk border border-pk-border bg-white/5 p-2">
-                          <div className="flex items-center gap-1 text-pk-muted">
-                            <Clock className="h-3.5 w-3.5" />
-                            Duration
-                          </div>
-                          <div className="mt-1 font-semibold text-pk-text">
-                            {(() => {
-                              const dur = (detailsLoop.details?.duration ?? durationsSecById[detailsLoop.id]) as number | null | undefined;
-                              return typeof dur === "number" && isFinite(dur) && dur > 0 ? formatTime(dur) : "—";
-                            })()}
-                          </div>
-                        </div>
-                        <div className="rounded-pk border border-pk-border bg-white/5 p-2">
-                          <div className="flex items-center gap-1 text-pk-muted">
-                            <KeyRound className="h-3.5 w-3.5" />
-                            Key
-                          </div>
-                          <div className="mt-1 font-semibold text-pk-text">{detailsLoop.details?.keyScale || "—"}</div>
-                        </div>
-                        <div className="rounded-pk border border-pk-border bg-white/5 p-2">
-                          <div className="flex items-center gap-1 text-pk-muted">
-                            <Sigma className="h-3.5 w-3.5" />
-                            Time Sig
-                          </div>
-                          <div className="mt-1 font-semibold text-pk-text">{detailsLoop.details?.timeSignature || "—"}</div>
-                        </div>
-                      </div>
-
-                      <div className="mt-4">
-                        <div className="flex items-center gap-2 text-xs font-semibold text-pk-text">
-                          <Info className="h-4 w-4 text-pk-muted" />
-                          Details
-                        </div>
-                        <div className="mt-2 rounded-pk border border-pk-border bg-white/5 p-3 text-xs text-pk-text">
-                          {detailsLoop.details?.caption || detailsLoop.prompt || "—"}
-                        </div>
-                      </div>
-
-                      <div className="mt-4">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="text-xs font-semibold text-pk-text">Lyrics</div>
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            disabled={!detailsLoop.details?.lyrics?.trim()}
-                            onClick={() => {
-                              const text = detailsLoop.details?.lyrics?.trim() ?? "";
-                              if (!text) return;
-                              void (async () => {
-                                try {
-                                  await navigator.clipboard.writeText(text);
-                                  toast.success("Lyrics copied");
-                                } catch {
-                                  toast.error("Copy failed");
-                                }
-                              })();
-                            }}
-                            aria-label="Copy lyrics"
-                            title="Copy lyrics"
-                          >
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        <pre className="mt-2 whitespace-pre-wrap rounded-pk border border-pk-border bg-white/5 p-3 text-xs text-pk-text">
-                          {detailsLoop.details?.lyrics?.trim() ? detailsLoop.details.lyrics.trim() : "—"}
-                        </pre>
-                      </div>
+                      <LoopDetailsSheetHeader
+                        title={detailsLoop.name}
+                        subtitle={detailsLoop.genre}
+                        onClose={() => setDetailsId(null)}
+                        closeLabel={isFr ? "Fermer" : "Close"}
+                      />
+                      <LoopDetailsPanel
+                        loop={detailsLoop}
+                        locale={locale}
+                        detailsTitle={detailsTitle}
+                        onDetailsTitleChange={setDetailsTitle}
+                        savingDetailsTitle={savingDetailsTitle}
+                        onSaveTitle={saveDetailsTitle}
+                        durationSec={durationsSecById[detailsLoop.id]}
+                      />
                     </div>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {filtered.map((l) => (
                   <div key={l.id}>
-                    <LoopCardItem loop={l} onDelete={() => setConfirmId(l.id)} onOpenDetails={(loop) => setDetailsId(loop.id)} />
+                    <LoopCardItem
+                      loop={l}
+                      compact={mobileUiV2}
+                      onDelete={() => setConfirmId(l.id)}
+                      onOpenDetails={(loop) => setDetailsId(loop.id)}
+                    />
                   </div>
                 ))}
               </div>
@@ -538,7 +331,29 @@ export default function Library() {
 
       
 
-      <Modal
+      {mobileUiV2 && detailsLoop ? (
+        <LoopDetailsSheet open onClose={() => setDetailsId(null)}>
+          <LoopDetailsSheetHeader
+            title={detailsLoop.name}
+            subtitle={detailsLoop.genre}
+            onClose={() => setDetailsId(null)}
+            closeLabel={isFr ? "Fermer" : "Close"}
+          />
+          <div className="px-5 pb-4">
+            <LoopDetailsPanel
+              loop={detailsLoop}
+              locale={locale}
+              detailsTitle={detailsTitle}
+              onDetailsTitleChange={setDetailsTitle}
+              savingDetailsTitle={savingDetailsTitle}
+              onSaveTitle={saveDetailsTitle}
+              durationSec={durationsSecById[detailsLoop.id]}
+            />
+          </div>
+        </LoopDetailsSheet>
+      ) : null}
+
+            <Modal
         open={!!confirmId}
         title="Delete beat"
         description="Cette action est irréversible."

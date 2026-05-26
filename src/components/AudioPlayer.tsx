@@ -4,6 +4,7 @@ import { Download, Pause, Play, SkipBack, SkipForward, Volume2 } from "lucide-re
 import { usePlayerStore } from "@/stores/playerStore";
 import { Button } from "@/components/ui/Button";
 import { coverGradient, coverImageUrl } from "@/lib/utils";
+import { resolvePlayableAudioUrl, shouldUseWebAudioGraph } from "@/lib/playableAudio";
 
 function formatTime(sec: number): string {
   if (!sec || !isFinite(sec) || sec < 0) return "0:00";
@@ -49,11 +50,17 @@ export function AudioPlayer() {
   const canPrev = queueLen > 0 && queueIndex > 0;
   const canNext = queueLen > 0 && queueIndex < queueLen - 1;
 
-  const ensureAudioGraph = useCallback(() => {
+  const lastLoadedKeyRef = useRef<string | null>(null);
+  const loadGenRef = useRef(0);
+
+  const ensureAudioGraph = useCallback((sourceUrl?: string) => {
     const audio = audioRef.current;
     if (!audio) return;
     if (audioCtxRef.current && analyserRef.current && mediaSourceRef.current) return;
     if (audioGraphFailedRef.current) return;
+
+    const src = sourceUrl ?? audio.currentSrc ?? audio.src;
+    if (src && !shouldUseWebAudioGraph(src)) return;
 
     try {
       const w = window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
@@ -161,7 +168,9 @@ export function AudioPlayer() {
 
   useEffect(() => {
     const onPointerDownOnce = () => {
-      ensureAudioGraph();
+      const audio = audioRef.current;
+      if (!audio) return;
+      ensureAudioGraph(audio.currentSrc || audio.src);
       const ctx = audioCtxRef.current;
       if (ctx && ctx.state === "suspended") void ctx.resume().catch(() => undefined);
     };
@@ -173,27 +182,39 @@ export function AudioPlayer() {
     setIsPlaying(storeIsPlaying);
   }, [storeIsPlaying]);
 
+  const tryPlayAudio = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio || !audio.src || audio.readyState < 2) return false;
+    ensureAudioGraph(audio.currentSrc || audio.src);
+    const ctx = audioCtxRef.current;
+    if (ctx && ctx.state === "suspended") void ctx.resume().catch(() => undefined);
+    void audio.play().catch(() => {
+      setIsPlaying(false);
+      setPlaying(false);
+    });
+    return true;
+  }, [ensureAudioGraph, setPlaying]);
+
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
     if (storeIsPlaying === true) {
-      if (audio.paused && audio.src && audio.readyState >= 2) {
-        ensureAudioGraph();
-        const ctx = audioCtxRef.current;
-        if (ctx && ctx.state === "suspended") void ctx.resume().catch(() => undefined);
-        void audio.play().catch(() => {
-          setIsPlaying(false);
-          setPlaying(false);
-        });
-      }
-      return;
+      if (tryPlayAudio()) return;
+      if (!audio.src) return;
+
+      const onCanPlayOnce = () => {
+        audio.removeEventListener("canplay", onCanPlayOnce);
+        tryPlayAudio();
+      };
+      audio.addEventListener("canplay", onCanPlayOnce);
+      return () => audio.removeEventListener("canplay", onCanPlayOnce);
     }
 
     if (storeIsPlaying === false) {
       if (!audio.paused) audio.pause();
     }
-  }, [currentBeat?.audioUrl, ensureAudioGraph, setPlaying, storeIsPlaying]);
+  }, [currentBeat?.audioUrl, storeIsPlaying, tryPlayAudio]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -251,7 +272,7 @@ export function AudioPlayer() {
     if (!audio) return;
 
     const onPlay = () => {
-      ensureAudioGraph();
+      ensureAudioGraph(audio.currentSrc || audio.src);
       const ctx = audioCtxRef.current;
       if (ctx && ctx.state === "suspended") void ctx.resume().catch(() => undefined);
       setHasError(false);
@@ -327,11 +348,39 @@ export function AudioPlayer() {
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !currentBeat?.audioUrl) return;
+
+    const rawUrl = currentBeat.audioUrl.trim();
+    const gen = ++loadGenRef.current;
+
     setHasError(false);
     errorToastShownRef.current = false;
-    audioGraphFailedRef.current = false;
-    if (audio.src !== currentBeat.audioUrl) {
-      audio.src = currentBeat.audioUrl;
+
+    void (async () => {
+      let playableUrl = rawUrl;
+      try {
+        playableUrl = await resolvePlayableAudioUrl(rawUrl, currentBeat.id);
+      } catch {
+        if (gen !== loadGenRef.current) return;
+        setHasError(true);
+        setIsLoading(false);
+        setIsPlaying(false);
+        setPlaying(false);
+        toast.error("Playback failed — tap to retry");
+        errorToastShownRef.current = true;
+        return;
+      }
+
+      if (gen !== loadGenRef.current) return;
+
+      const resolvedKey = `${currentBeat.id}:${playableUrl}`;
+      if (lastLoadedKeyRef.current === resolvedKey && audio.src) {
+        if (storeIsPlaying && audio.paused) tryPlayAudio();
+        return;
+      }
+
+      audioGraphFailedRef.current = false;
+      lastLoadedKeyRef.current = resolvedKey;
+      audio.src = playableUrl;
       audio.load();
       audio.muted = false;
       audio.volume = volume;
@@ -345,13 +394,8 @@ export function AudioPlayer() {
 
       if (storeIsPlaying) {
         const playNow = () => {
-          ensureAudioGraph();
-          const ctx = audioCtxRef.current;
-          if (ctx && ctx.state === "suspended") void ctx.resume().catch(() => undefined);
-          void audio.play().catch(() => {
-            setIsPlaying(false);
-            setPlaying(false);
-          });
+          if (gen !== loadGenRef.current) return;
+          tryPlayAudio();
         };
 
         if (audio.readyState >= 3) {
@@ -364,19 +408,17 @@ export function AudioPlayer() {
           playNow();
         };
         audio.addEventListener("canplay", onCanPlayOnce);
-        return () => {
-          audio.removeEventListener("canplay", onCanPlayOnce);
-        };
       }
-    }
+    })();
   }, [
+    currentBeat?.id,
     currentBeat?.audioUrl,
     setCurrentTimeStore,
     setDurationStore,
     setPlaying,
     setProgressStore,
     storeIsPlaying,
-    ensureAudioGraph,
+    tryPlayAudio,
     volume,
   ]);
 
@@ -419,7 +461,7 @@ export function AudioPlayer() {
       return;
     }
     try {
-      ensureAudioGraph();
+      ensureAudioGraph(audio.currentSrc || audio.src);
       const ctx = audioCtxRef.current;
       if (ctx && ctx.state === "suspended") await ctx.resume();
       await audio.play();
@@ -439,7 +481,7 @@ export function AudioPlayer() {
     setIsLoading(true);
     audio.load();
     try {
-      ensureAudioGraph();
+      ensureAudioGraph(audio.currentSrc || audio.src);
       const ctx = audioCtxRef.current;
       if (ctx && ctx.state === "suspended") await ctx.resume();
       await audio.play();
@@ -499,30 +541,33 @@ export function AudioPlayer() {
       className="pk-prism-player pk-prism-player--dock fixed bottom-[var(--pk-bottom-nav)] left-0 right-0 z-50 pb-[env(safe-area-inset-bottom)] md:bottom-0 md:pb-0"
       aria-busy={isLoading}
     >
-      <div className="mx-auto flex max-w-[1440px] items-center gap-4 px-4 py-3">
-        <div className="flex min-w-0 items-center gap-3">
+      <div className="mx-auto flex max-w-[1440px] items-center gap-2 px-3 py-2.5 sm:gap-4 sm:px-4 sm:py-3">
+        <div className="flex min-w-0 flex-1 items-center gap-2 sm:max-w-none sm:gap-3">
           <div className="pk-prism-cover relative hidden h-11 w-11 shrink-0 overflow-hidden rounded-xl sm:block" style={{ background: coverBg }}>
             <img src={coverUrl} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" decoding="async" referrerPolicy="no-referrer" />
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-semibold text-white">{currentBeat.name}</div>
-            <div className="mt-0.5 flex flex-wrap gap-2 text-xs text-white/50">
+            <div className="mt-0.5 hidden flex-wrap gap-2 text-xs text-white/50 sm:flex">
               <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5">{currentBeat.genre}</span>
               <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5">
                 {currentBeat.key} {currentBeat.scale}
               </span>
               <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5">{currentBeat.bpm} BPM</span>
             </div>
+            <div className="mt-0.5 text-[11px] text-white/45 sm:hidden">
+              {formatTime(currentTimeSec)} / {durationSec > 0 ? formatTime(durationSec) : "--:--"}
+            </div>
           </div>
         </div>
 
-        <div className="flex min-w-0 flex-1 flex-col items-center">
-          <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex min-w-0 flex-[1.2] flex-col items-center sm:flex-1">
+          <div className="flex items-center gap-1.5 sm:gap-3">
             <button
               type="button"
               onClick={prev}
               disabled={!canPrev}
-              className="pk-prism-player-btn inline-flex h-9 w-9 items-center justify-center rounded-xl disabled:opacity-40"
+              className="pk-prism-player-btn hidden h-9 w-9 items-center justify-center rounded-xl disabled:opacity-40 sm:inline-flex"
               aria-label="Previous"
             >
               <SkipBack className="h-4 w-4" />
@@ -530,7 +575,7 @@ export function AudioPlayer() {
             <button
               type="button"
               onClick={() => void togglePlay()}
-              className="pk-prism-player-btn pk-prism-player-btn--primary inline-flex h-10 w-10 items-center justify-center rounded-xl"
+              className="pk-prism-player-btn pk-prism-player-btn--primary inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
               aria-label={isPlaying ? "Pause" : "Play"}
             >
               {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
@@ -539,7 +584,7 @@ export function AudioPlayer() {
               type="button"
               onClick={next}
               disabled={!canNext}
-              className="pk-prism-player-btn inline-flex h-9 w-9 items-center justify-center rounded-xl disabled:opacity-40"
+              className="pk-prism-player-btn hidden h-9 w-9 items-center justify-center rounded-xl disabled:opacity-40 sm:inline-flex"
               aria-label="Next"
             >
               <SkipForward className="h-4 w-4" />
@@ -554,7 +599,7 @@ export function AudioPlayer() {
               {queueLen > 0 ? ` · ${queueIndex + 1}/${queueLen}` : ""}
             </div>
           </div>
-          <canvas ref={vizCanvasRef} className="mt-2 h-7 w-full max-w-xl opacity-90" aria-hidden />
+          <canvas ref={vizCanvasRef} className="mt-1.5 hidden h-7 w-full max-w-xl opacity-90 sm:mt-2 sm:block" aria-hidden />
           <div
             className={`relative mt-2 flex h-3 w-full max-w-xl items-center group ${durationSec > 0 ? "cursor-pointer" : "cursor-default"}`}
             onClick={durationSec > 0 ? handleSeek : undefined}
@@ -640,7 +685,7 @@ export function AudioPlayer() {
       </div>
     </div>
       ) : null}
-      <audio ref={audioRef} id="pk-audio" preload="metadata" className="hidden" aria-hidden />
+      <audio ref={audioRef} id="pk-audio" preload="metadata" crossOrigin="anonymous" playsInline className="hidden" aria-hidden />
     </>
   );
 }

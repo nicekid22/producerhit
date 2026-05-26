@@ -13,15 +13,22 @@ import type { Loop, LoopLength } from "@/types/loop";
 import { usePlayerStore } from "@/stores/playerStore";
 import { LoopCardItem } from "@/components/LoopCardItem";
 import { LoopCardSkeleton } from "@/components/LoopCardSkeleton";
-import { AlertTriangle, AudioWaveform, Clock, Copy, Gauge, Info, KeyRound, Loader2, Search, Sigma, X } from "lucide-react";
+import { AlertTriangle, AudioWaveform, Copy, Loader2, Search, X } from "lucide-react";
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
 import { useAuthStore } from "@/stores/authStore";
 import { useLocaleStore } from "@/stores/localeStore";
 import { getRemainingBeats, PLAN_LIMITS } from "@/lib/planLimits";
 import { generateBeat } from "@/lib/audioApi";
 import { buildAceCaption, type GenerateParams } from "@/lib/promptBuilder";
-import { coverGradient, coverImageUrl } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { BrandLogo } from "@/components/landing/BrandLogo";
+import { MOBILE_DASHBOARD_V2 } from "@/lib/featureFlags";
+import { useIsDesktop } from "@/hooks/useMediaQuery";
+import { useMobileDashboardTab } from "@/hooks/useMobileDashboardTab";
+import { DashboardMobileTabs } from "@/components/dashboard/DashboardMobileTabs";
+import { GeneratorSection } from "@/components/dashboard/GeneratorSection";
+import { LoopDetailsPanel } from "@/components/dashboard/LoopDetailsPanel";
+import { LoopDetailsSheet, LoopDetailsSheetHeader } from "@/components/dashboard/LoopDetailsSheet";
 
 function formatTime(sec: number) {
   const s = Math.max(0, Math.floor(sec));
@@ -416,6 +423,10 @@ export default function Dashboard() {
   const user = useAuthStore((s) => s.user);
   const authStatus = useAuthStore((s) => s.status);
   const locale = useLocaleStore((s) => s.locale);
+  const isDesktop = useIsDesktop();
+  const mobileV2 = MOBILE_DASHBOARD_V2 && !isDesktop;
+  const { tab: mobileTab, setTab: setMobileTab, goResults } = useMobileDashboardTab("create");
+  const hasPlayer = usePlayerStore((s) => !!s.current);
   const [generating, setGenerating] = useState(false);
   const [generationSlots, setGenerationSlots] = useState<GenerationSlot[] | null>(null);
   const [workspaceJobs, setWorkspaceJobs] = useState<Array<{ id: string; title: string; sub: string }>>([]);
@@ -781,6 +792,12 @@ export default function Dashboard() {
       return hay.includes(normalized);
     }).length;
   }, [loops, query, savedOnly]);
+
+  const mobileResultsBadge = useMemo(() => {
+    const jobs = workspaceJobs.length;
+    const slots = generationSlots?.filter((s) => s.visible).length ?? 0;
+    return jobs + slots;
+  }, [generationSlots, workspaceJobs]);
 
   const startWorkspaceJob = useCallback(
     (title: string, sub: string) => {
@@ -1515,14 +1532,54 @@ export default function Dashboard() {
     void handleGenerate();
   }, [autoGeneratePending, form.genre, generating, handleGenerate, profileLoading, user]);
 
+  useEffect(() => {
+    if (!mobileV2) return;
+    if (generating) goResults();
+  }, [generating, goResults, mobileV2]);
+
+  const saveDetailsTitle = useCallback(() => {
+    if (!detailsLoop) return;
+    const next = detailsTitle.trim();
+    if (!next || next === detailsLoop.name) return;
+    void (async () => {
+      setSavingDetailsTitle(true);
+      try {
+        await renameLoopRemote(detailsLoop.id, next);
+        toast.success(locale === "fr" ? "Titre mis à jour" : "Title updated");
+      } catch (err) {
+        const message = err instanceof Error ? err.message : locale === "fr" ? "Erreur" : "Error";
+        toast.error(message);
+      } finally {
+        setSavingDetailsTitle(false);
+      }
+    })();
+  }, [detailsLoop, detailsTitle, locale, renameLoopRemote]);
+
+  const chipRowClass = mobileV2 ? "pk-chip-scroll mt-2" : "mt-2 flex flex-wrap gap-2";
+
   return (
     <AppShell
       theme="prism"
+      mobileLayoutV2={mobileV2}
+      mobilePanel={mobileTab}
+      mobileTabs={
+        mobileV2 ? (
+          <DashboardMobileTabs
+            tab={mobileTab}
+            onChange={setMobileTab}
+            createLabel={locale === "fr" ? "Créer" : "Create"}
+            resultsLabel={locale === "fr" ? "Résultats" : "Results"}
+            resultsBadge={mobileResultsBadge}
+          />
+        ) : undefined
+      }
       left={
         <div className="flex h-full flex-col overflow-hidden">
-          <div className="border-b border-white/10 px-4 pb-3 pt-4">
-            <BrandLogo />
-          </div>
+          {!mobileV2 ? (
+            <div className="border-b border-white/10 px-4 pb-3 pt-4">
+              <BrandLogo />
+            </div>
+          ) : null}
           <div className="border-b border-pk-border p-4">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
@@ -1583,9 +1640,12 @@ export default function Dashboard() {
           <div className="flex-1 overflow-y-auto min-h-0">
             {mode === "beat" ? (
               <>
-                <div className="border-b border-pk-border p-4">
-                  <div className="text-sm font-semibold">{locale === "fr" ? "Style & Vibe" : "Style & Vibe"}</div>
-                  <div className="mt-4 grid gap-4">
+                <GeneratorSection
+                  title={locale === "fr" ? "Style & Vibe" : "Style & Vibe"}
+                  collapsible={mobileV2}
+                  defaultOpen
+                >
+                  <div className="grid gap-4">
                     <Dropdown
                       label={locale === "fr" ? "Genre" : "Genre"}
                       value={form.genre}
@@ -1596,7 +1656,7 @@ export default function Dashboard() {
                     
                     <div>
                       <div className="text-xs text-pk-muted">{locale === "fr" ? "Ambiance" : "Mood"}</div>
-                      <div className="mt-2 flex flex-wrap gap-2">
+                      <div className={chipRowClass}>
                         {moodOptions.map((m) => {
                           const active = form.mood === m;
                           return (
@@ -1626,11 +1686,14 @@ export default function Dashboard() {
                       />
                     )}
                   </div>
-                </div>
+                </GeneratorSection>
 
-                <div className="border-b border-pk-border p-4">
-                  <div className="text-sm font-semibold">{locale === "fr" ? "L’idée" : "The Idea"}</div>
-                  <div className="mt-2 text-xs text-pk-muted">
+                <GeneratorSection
+                  title={locale === "fr" ? "L’idée" : "The Idea"}
+                  collapsible={mobileV2}
+                  defaultOpen
+                >
+                  <div className="text-xs text-pk-muted">
                     {locale === "fr" ? "Décris le son, ou utilise les chips." : "Describe the sound or use chips."}
                   </div>
                   
@@ -1641,7 +1704,7 @@ export default function Dashboard() {
                     placeholder={locale === "fr" ? "ex: dark melodic, smooth 808s" : "e.g. dark melodic, smooth 808s"}
                   />
                   
-                  <div className="mt-3 flex flex-wrap gap-2">
+                  <div className={cn(mobileV2 ? "pk-chip-scroll mt-3" : "mt-3 flex flex-wrap gap-2")}>
                     {getInspirationChipsForGenre(form.genre).map((chip) => {
                       const on = activeChips.includes(chip);
                       return (
@@ -1662,11 +1725,14 @@ export default function Dashboard() {
                       );
                     })}
                   </div>
-                </div>
+                </GeneratorSection>
 
-                <div className="border-b border-pk-border p-4">
-                  <div className="text-sm font-semibold">{locale === "fr" ? "Titre du son" : "Sound Title"}</div>
-                  <div className="mt-2 text-xs text-pk-muted">
+                <GeneratorSection
+                  title={locale === "fr" ? "Titre du son" : "Sound Title"}
+                  collapsible={mobileV2}
+                  defaultOpen={false}
+                >
+                  <div className="text-xs text-pk-muted">
                     {locale === "fr" ? "Choisis un titre (optionnel)." : "Choose a title (optional)."}
                   </div>
                   <input
@@ -1675,7 +1741,7 @@ export default function Dashboard() {
                     className="mt-3 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2 text-sm outline-none placeholder:text-pk-muted focus:border-pk-accent"
                     placeholder={locale === "fr" ? "ex: Pluie sur la ville" : "e.g. Rainy city nights"}
                   />
-                </div>
+                </GeneratorSection>
 
                 {advancedOpen && debugEnabled ? (
                   <div className="border-b border-pk-border p-4">
@@ -1973,9 +2039,12 @@ export default function Dashboard() {
 
             {mode === "song" ? (
               <>
-                <div className="border-b border-pk-border p-4">
-                  <div className="text-sm font-semibold">{locale === "fr" ? "Style & Vibe" : "Style & Vibe"}</div>
-                  <div className="mt-4 grid gap-4">
+                <GeneratorSection
+                  title={locale === "fr" ? "Style & Vibe" : "Style & Vibe"}
+                  collapsible={mobileV2}
+                  defaultOpen
+                >
+                  <div className="grid gap-4">
                     <Dropdown
                       label={locale === "fr" ? "Genre" : "Genre"}
                       value={form.genre}
@@ -2000,7 +2069,7 @@ export default function Dashboard() {
 
                     <div>
                       <div className="text-xs text-pk-muted">{locale === "fr" ? "Style vocal" : "Vocal Style"}</div>
-                      <div className="mt-2 flex flex-wrap gap-2">
+                      <div className={chipRowClass}>
                         {vocalStyleOptions.map((v) => {
                           const active = songVocalStyle === v.value;
                           return (
@@ -2021,11 +2090,14 @@ export default function Dashboard() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </GeneratorSection>
 
-                <div className="border-b border-pk-border p-4">
-                  <div className="text-sm font-semibold">{locale === "fr" ? "L’idée" : "The Idea"}</div>
-                  <div className="mt-2 text-xs text-pk-muted">
+                <GeneratorSection
+                  title={locale === "fr" ? "L’idée" : "The Idea"}
+                  collapsible={mobileV2}
+                  defaultOpen
+                >
+                  <div className="text-xs text-pk-muted">
                     {locale === "fr" ? "Décris ton idée de chanson, ou utilise les chips." : "Describe your song idea or use chips."}
                   </div>
                   
@@ -2036,7 +2108,7 @@ export default function Dashboard() {
                     placeholder={locale === "fr" ? "ex: refrain émotionnel, pop radio-ready" : "e.g. emotional hook, radio-ready pop sound"}
                   />
                   
-                  <div className="mt-3 flex flex-wrap gap-2">
+                  <div className={cn(mobileV2 ? "pk-chip-scroll mt-3" : "mt-3 flex flex-wrap gap-2")}>
                     {getInspirationChipsForGenre(form.genre).map((chip) => {
                       const on = songDescription.includes(chip);
                       return (
@@ -2062,11 +2134,14 @@ export default function Dashboard() {
                       );
                     })}
                   </div>
-                </div>
+                </GeneratorSection>
 
-                <div className="border-b border-pk-border p-4">
-                  <div className="text-sm font-semibold">{locale === "fr" ? "Paroles" : "The Lyrics"}</div>
-                  <div className="mt-3 flex items-center gap-2">
+                <GeneratorSection
+                  title={locale === "fr" ? "Paroles" : "The Lyrics"}
+                  collapsible={mobileV2}
+                  defaultOpen
+                >
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
                       onClick={() => setLyricsMode("manual")}
@@ -2090,7 +2165,10 @@ export default function Dashboard() {
                     <textarea
                       value={lyrics}
                       onChange={(e) => setLyrics(e.target.value)}
-                      className="mt-3 min-h-[160px] w-full resize-none rounded-pk border border-pk-border bg-pk-input px-3 py-2 text-sm outline-none placeholder:text-pk-muted focus:border-pk-accent"
+                      className={cn(
+                        "mt-3 w-full resize-none rounded-pk border border-pk-border bg-pk-input px-3 py-2 text-sm outline-none placeholder:text-pk-muted focus:border-pk-accent",
+                        mobileV2 ? "min-h-[120px]" : "min-h-[160px]",
+                      )}
                       placeholder={
                         locale === "fr"
                           ? "[Couplet]\nÉcris tes paroles ici...\n\n[Refrain]\nÉcris ton hook ici..."
@@ -2106,11 +2184,14 @@ export default function Dashboard() {
                       </p>
                     </div>
                   )}
-                </div>
+                </GeneratorSection>
 
-                <div className="border-b border-pk-border p-4">
-                  <div className="text-sm font-semibold">{locale === "fr" ? "Titre de la chanson" : "Song Title"}</div>
-                  <div className="mt-2 text-xs text-pk-muted">
+                <GeneratorSection
+                  title={locale === "fr" ? "Titre de la chanson" : "Song Title"}
+                  collapsible={mobileV2}
+                  defaultOpen={false}
+                >
+                  <div className="text-xs text-pk-muted">
                     {locale === "fr" ? "Choisis un titre (optionnel)." : "Choose a title (optional)."}
                   </div>
                   <input
@@ -2119,7 +2200,7 @@ export default function Dashboard() {
                     className="mt-3 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2 text-sm outline-none placeholder:text-pk-muted focus:border-pk-accent"
                     placeholder={locale === "fr" ? "ex: Pluie sur la ville" : "e.g. Rainy city nights"}
                   />
-                </div>
+                </GeneratorSection>
 
                 {songIsCustom && (
                   <div className="border-b border-pk-border p-4 bg-pk-bg/30">
@@ -2447,7 +2528,14 @@ export default function Dashboard() {
             ) : null}
           </div>
 
-          <div className="border-t border-pk-border p-4 flex-shrink-0">
+          <div
+            className={cn("border-t border-pk-border p-4 flex-shrink-0", mobileV2 && "pk-dashboard-mobile-footer")}
+            style={
+              mobileV2
+                ? { bottom: hasPlayer ? "var(--pk-mobile-dock-player)" : "var(--pk-mobile-dock)" }
+                : undefined
+            }
+          >
             <div className="mb-3 flex items-center justify-between text-xs">
               <span className="text-gray-500">{locale === "fr" ? "Versions" : "Versions"}</span>
               <div className="flex items-center gap-1 rounded-full bg-white/5 p-1">
@@ -2566,7 +2654,7 @@ export default function Dashboard() {
         </div>
       }
     >
-      <div className="mx-auto w-full max-w-[1120px] px-4 pb-32 pt-6 md:px-6">
+      <div className="mx-auto w-full max-w-[1120px] px-4 pt-6 md:px-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="text-lg font-semibold">{locale === "fr" ? "Mon espace" : "My Workspace"}</div>
@@ -2723,375 +2811,51 @@ export default function Dashboard() {
           ) : (
             detailsLoop ? (
               <div className="md:grid md:grid-cols-[minmax(0,1fr)_420px] md:gap-4">
-              <div className="space-y-4">
-                {workspaceDisplayedLoops.map((l) => (
-                  <div key={l.id}>
-                    <LoopCardItem
-                      loop={l}
-                      onOpenDetails={(loop) => setDetailsId((prev) => (prev === loop.id ? null : loop.id))}
-                      onGenerationUsed={consumeCredit}
-                      onStartWorkspaceJob={(title, sub) => startWorkspaceJob(title, sub)}
-                    />
-                  </div>
-                ))}
+                <div className="space-y-4">
+                  {workspaceDisplayedLoops.map((l) => (
+                    <div key={l.id}>
+                      <LoopCardItem
+                        loop={l}
+                        compact={mobileV2}
+                        onOpenDetails={(loop) => setDetailsId((prev) => (prev === loop.id ? null : loop.id))}
+                        onGenerationUsed={consumeCredit}
+                        onStartWorkspaceJob={(title, sub) => startWorkspaceJob(title, sub)}
+                      />
+                    </div>
+                  ))}
+                </div>
 
-                {detailsLoop ? (
-                  <div className="md:hidden">
+                <div className="hidden md:block">
+                  <div className="sticky top-6 max-h-[calc(100vh-32px)] overflow-y-auto">
                     <div className="relative overflow-hidden rounded-2xl border border-pk-border bg-pk-panel/70 p-5 backdrop-blur md:border-pk-border/70">
                       <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[rgba(157,124,255,0.16)] to-transparent" />
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm font-semibold text-pk-text">{detailsLoop.name}</div>
-                          <div className="mt-1 text-xs text-pk-muted">{detailsLoop.genre}</div>
-                        </div>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => setDetailsId(null)}
-                          aria-label={locale === "fr" ? "Fermer" : "Close"}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-
-                      <div className="mt-4 overflow-hidden rounded-pk border border-pk-border bg-white/5">
-                        <div className="relative aspect-square w-full bg-center bg-cover" style={{ backgroundImage: coverGradient(detailsLoop) }} aria-hidden>
-                          <img
-                            key={coverImageUrl(detailsLoop)}
-                            src={coverImageUrl(detailsLoop)}
-                            alt=""
-                            className="absolute inset-0 h-full w-full object-contain"
-                            loading="lazy"
-                            decoding="async"
-                            referrerPolicy="no-referrer"
-                            style={{ display: "block", opacity: 0 }}
-                            onLoad={(e) => {
-                              e.currentTarget.style.display = "block";
-                              e.currentTarget.style.opacity = "1";
-                              e.currentTarget.dataset.retry = "0";
-                            }}
-                            onError={(e) => {
-                              const img = e.currentTarget;
-                              img.style.opacity = "0";
-                              const retry = Number(img.dataset.retry ?? "0");
-                              if (retry < 4) {
-                                img.dataset.retry = String(retry + 1);
-                                const url = coverImageUrl(detailsLoop);
-                                window.setTimeout(() => {
-                                  img.style.display = "block";
-                                  img.style.opacity = "0";
-                                  img.src = "";
-                                  img.src = url;
-                                }, 900 * (retry + 1));
-                                return;
-                              }
-                              img.style.display = "none";
-                            }}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-                        <div className="rounded-pk border border-pk-border bg-white/5 p-2">
-                          <div className="flex items-center gap-1 text-pk-muted">
-                            <Gauge className="h-3.5 w-3.5" />
-                            BPM
-                          </div>
-                          <div className="mt-1 font-semibold text-pk-text">
-                            {typeof detailsLoop.details?.bpm === "number" && detailsLoop.details.bpm > 0 ? detailsLoop.details.bpm : "—"}
-                          </div>
-                        </div>
-                        <div className="rounded-pk border border-pk-border bg-white/5 p-2">
-                          <div className="flex items-center gap-1 text-pk-muted">
-                            <Clock className="h-3.5 w-3.5" />
-                            {locale === "fr" ? "Durée" : "Duration"}
-                          </div>
-                          <div className="mt-1 font-semibold text-pk-text">
-                            {(() => {
-                              const dur = (detailsLoop.details?.duration ?? durationsSecById[detailsLoop.id]) as number | null | undefined;
-                              return typeof dur === "number" && isFinite(dur) && dur > 0 ? formatTime(dur) : "—";
-                            })()}
-                          </div>
-                        </div>
-                        <div className="rounded-pk border border-pk-border bg-white/5 p-2">
-                          <div className="flex items-center gap-1 text-pk-muted">
-                            <KeyRound className="h-3.5 w-3.5" />
-                            {locale === "fr" ? "Tonalité" : "Key"}
-                          </div>
-                          <div className="mt-1 font-semibold text-pk-text">{detailsLoop.details?.keyScale || "—"}</div>
-                        </div>
-                        <div className="rounded-pk border border-pk-border bg-white/5 p-2">
-                          <div className="flex items-center gap-1 text-pk-muted">
-                            <Sigma className="h-3.5 w-3.5" />
-                            {locale === "fr" ? "Signature" : "Time Sig"}
-                          </div>
-                          <div className="mt-1 font-semibold text-pk-text">{detailsLoop.details?.timeSignature || "—"}</div>
-                        </div>
-                      </div>
-
-                      <div className="mt-4">
-                        <div className="flex items-center gap-2 text-xs font-semibold text-pk-text">
-                          <Info className="h-4 w-4 text-pk-muted" />
-                          {locale === "fr" ? "Détails" : "Details"}
-                        </div>
-                        <div className="mt-2 rounded-pk border border-pk-border bg-white/5 p-3 text-xs text-pk-text">
-                          {detailsLoop.details?.caption || detailsLoop.prompt || "—"}
-                        </div>
-                      </div>
-
-                      <div className="mt-4">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="text-xs font-semibold text-pk-text">{locale === "fr" ? "Paroles" : "Lyrics"}</div>
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            disabled={!detailsLoop.details?.lyrics?.trim()}
-                            onClick={() => {
-                              const text = detailsLoop.details?.lyrics?.trim() ?? "";
-                              if (!text) return;
-                              void (async () => {
-                                try {
-                                  await navigator.clipboard.writeText(text);
-                                  toast.success(locale === "fr" ? "Paroles copiées" : "Lyrics copied");
-                                } catch {
-                                  toast.error(locale === "fr" ? "Copie impossible" : "Copy failed");
-                                }
-                              })();
-                            }}
-                            aria-label={locale === "fr" ? "Copier les paroles" : "Copy lyrics"}
-                            title={locale === "fr" ? "Copier les paroles" : "Copy lyrics"}
-                          >
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        <pre className="mt-2 whitespace-pre-wrap rounded-pk border border-pk-border bg-white/5 p-3 text-xs text-pk-text">
-                          {detailsLoop.details?.lyrics?.trim() ? detailsLoop.details.lyrics.trim() : "—"}
-                        </pre>
-                      </div>
-
-                      <div className="mt-4">
-                        <div className="text-xs font-semibold text-pk-text">{locale === "fr" ? "Titre" : "Title"}</div>
-                        <div className="mt-2 flex items-center gap-2">
-                          <input
-                            value={detailsTitle}
-                            onChange={(e) => setDetailsTitle(e.target.value)}
-                            className="w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2 text-sm font-semibold text-pk-text outline-none placeholder:text-pk-muted focus:border-pk-accent"
-                            placeholder={locale === "fr" ? "Titre…" : "Title…"}
-                          />
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            disabled={savingDetailsTitle || detailsTitle.trim().length === 0 || detailsTitle.trim() === detailsLoop.name}
-                            onClick={() => {
-                              const next = detailsTitle.trim();
-                              if (!next || next === detailsLoop.name) return;
-                              void (async () => {
-                                setSavingDetailsTitle(true);
-                                try {
-                                  await renameLoopRemote(detailsLoop.id, next);
-                                  toast.success(locale === "fr" ? "Titre mis à jour" : "Title updated");
-                                } catch (err) {
-                                  const message = err instanceof Error ? err.message : locale === "fr" ? "Erreur" : "Error";
-                                  toast.error(message);
-                                } finally {
-                                  setSavingDetailsTitle(false);
-                                }
-                              })();
-                            }}
-                          >
-                            {savingDetailsTitle ? <Loader2 className="h-4 w-4 animate-spin" /> : locale === "fr" ? "OK" : "Save"}
-                          </Button>
-                        </div>
-                      </div>
+                      <LoopDetailsSheetHeader
+                        title={detailsLoop.name}
+                        subtitle={detailsLoop.genre}
+                        onClose={() => setDetailsId(null)}
+                        closeLabel={locale === "fr" ? "Fermer" : "Close"}
+                      />
+                      <LoopDetailsPanel
+                        loop={detailsLoop}
+                        locale={locale}
+                        detailsTitle={detailsTitle}
+                        onDetailsTitleChange={setDetailsTitle}
+                        savingDetailsTitle={savingDetailsTitle}
+                        onSaveTitle={saveDetailsTitle}
+                        durationSec={durationsSecById[detailsLoop.id]}
+                        className="px-0"
+                      />
                     </div>
                   </div>
-                ) : null}
-              </div>
-
-              <div className="hidden md:block">
-                <div className="sticky top-6 max-h-[calc(100vh-32px)] overflow-y-auto">
-                  {detailsLoop ? (
-                    <div className="relative overflow-hidden rounded-2xl border border-pk-border bg-pk-panel/70 p-5 backdrop-blur md:border-pk-border/70">
-                      <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[rgba(157,124,255,0.16)] to-transparent" />
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm font-semibold text-pk-text">{detailsLoop.name}</div>
-                          <div className="mt-1 text-xs text-pk-muted">{detailsLoop.genre}</div>
-                        </div>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => setDetailsId(null)}
-                          aria-label={locale === "fr" ? "Fermer" : "Close"}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-
-                      <div className="mt-4 overflow-hidden rounded-pk border border-pk-border bg-white/5">
-                        <div className="relative aspect-square w-full bg-center bg-cover" style={{ backgroundImage: coverGradient(detailsLoop) }} aria-hidden>
-                          <img
-                            key={coverImageUrl(detailsLoop)}
-                            src={coverImageUrl(detailsLoop)}
-                            alt=""
-                            className="absolute inset-0 h-full w-full object-contain"
-                            loading="lazy"
-                            decoding="async"
-                            referrerPolicy="no-referrer"
-                            style={{ display: "block", opacity: 0 }}
-                            onLoad={(e) => {
-                              e.currentTarget.style.display = "block";
-                              e.currentTarget.style.opacity = "1";
-                              e.currentTarget.dataset.retry = "0";
-                            }}
-                            onError={(e) => {
-                              const img = e.currentTarget;
-                              img.style.opacity = "0";
-                              const retry = Number(img.dataset.retry ?? "0");
-                              if (retry < 4) {
-                                img.dataset.retry = String(retry + 1);
-                                const url = coverImageUrl(detailsLoop);
-                                window.setTimeout(() => {
-                                  img.style.display = "block";
-                                  img.style.opacity = "0";
-                                  img.src = "";
-                                  img.src = url;
-                                }, 900 * (retry + 1));
-                                return;
-                              }
-                              img.style.display = "none";
-                            }}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-                        <div className="rounded-pk border border-pk-border bg-white/5 p-2">
-                          <div className="flex items-center gap-1 text-pk-muted">
-                            <Gauge className="h-3.5 w-3.5" />
-                            BPM
-                          </div>
-                          <div className="mt-1 font-semibold text-pk-text">
-                            {typeof detailsLoop.details?.bpm === "number" && detailsLoop.details.bpm > 0 ? detailsLoop.details.bpm : "—"}
-                          </div>
-                        </div>
-                        <div className="rounded-pk border border-pk-border bg-white/5 p-2">
-                          <div className="flex items-center gap-1 text-pk-muted">
-                            <Clock className="h-3.5 w-3.5" />
-                            {locale === "fr" ? "Durée" : "Duration"}
-                          </div>
-                          <div className="mt-1 font-semibold text-pk-text">
-                            {(() => {
-                              const dur = (detailsLoop.details?.duration ?? durationsSecById[detailsLoop.id]) as number | null | undefined;
-                              return typeof dur === "number" && isFinite(dur) && dur > 0 ? formatTime(dur) : "—";
-                            })()}
-                          </div>
-                        </div>
-                        <div className="rounded-pk border border-pk-border bg-white/5 p-2">
-                          <div className="flex items-center gap-1 text-pk-muted">
-                            <KeyRound className="h-3.5 w-3.5" />
-                            {locale === "fr" ? "Tonalité" : "Key"}
-                          </div>
-                          <div className="mt-1 font-semibold text-pk-text">{detailsLoop.details?.keyScale || "—"}</div>
-                        </div>
-                        <div className="rounded-pk border border-pk-border bg-white/5 p-2">
-                          <div className="flex items-center gap-1 text-pk-muted">
-                            <Sigma className="h-3.5 w-3.5" />
-                            {locale === "fr" ? "Signature" : "Time Sig"}
-                          </div>
-                          <div className="mt-1 font-semibold text-pk-text">{detailsLoop.details?.timeSignature || "—"}</div>
-                        </div>
-                      </div>
-
-                      <div className="mt-4">
-                        <div className="flex items-center gap-2 text-xs font-semibold text-pk-text">
-                          <Info className="h-4 w-4 text-pk-muted" />
-                          {locale === "fr" ? "Détails" : "Details"}
-                        </div>
-                        <div className="mt-2 rounded-pk border border-pk-border bg-white/5 p-3 text-xs text-pk-text">
-                          {detailsLoop.details?.caption || detailsLoop.prompt || "—"}
-                        </div>
-                      </div>
-
-                      <div className="mt-4">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="text-xs font-semibold text-pk-text">{locale === "fr" ? "Paroles" : "Lyrics"}</div>
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            disabled={!detailsLoop.details?.lyrics?.trim()}
-                            onClick={() => {
-                              const text = detailsLoop.details?.lyrics?.trim() ?? "";
-                              if (!text) return;
-                              void (async () => {
-                                try {
-                                  await navigator.clipboard.writeText(text);
-                                  toast.success(locale === "fr" ? "Paroles copiées" : "Lyrics copied");
-                                } catch {
-                                  toast.error(locale === "fr" ? "Copie impossible" : "Copy failed");
-                                }
-                              })();
-                            }}
-                            aria-label={locale === "fr" ? "Copier les paroles" : "Copy lyrics"}
-                            title={locale === "fr" ? "Copier les paroles" : "Copy lyrics"}
-                          >
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        <pre className="mt-2 whitespace-pre-wrap rounded-pk border border-pk-border bg-white/5 p-3 text-xs text-pk-text">
-                          {detailsLoop.details?.lyrics?.trim() ? detailsLoop.details.lyrics.trim() : "—"}
-                        </pre>
-                      </div>
-
-                      <div className="mt-4">
-                        <div className="text-xs font-semibold text-pk-text">{locale === "fr" ? "Titre" : "Title"}</div>
-                        <div className="mt-2 flex items-center gap-2">
-                          <input
-                            value={detailsTitle}
-                            onChange={(e) => setDetailsTitle(e.target.value)}
-                            className="w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2 text-sm font-semibold text-pk-text outline-none placeholder:text-pk-muted focus:border-pk-accent"
-                            placeholder={locale === "fr" ? "Titre…" : "Title…"}
-                          />
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            disabled={savingDetailsTitle || detailsTitle.trim().length === 0 || detailsTitle.trim() === detailsLoop.name}
-                            onClick={() => {
-                              const next = detailsTitle.trim();
-                              if (!next || next === detailsLoop.name) return;
-                              void (async () => {
-                                setSavingDetailsTitle(true);
-                                try {
-                                  await renameLoopRemote(detailsLoop.id, next);
-                                  toast.success(locale === "fr" ? "Titre mis à jour" : "Title updated");
-                                } catch (err) {
-                                  const message = err instanceof Error ? err.message : locale === "fr" ? "Erreur" : "Error";
-                                  toast.error(message);
-                                } finally {
-                                  setSavingDetailsTitle(false);
-                                }
-                              })();
-                            }}
-                          >
-                            {savingDetailsTitle ? <Loader2 className="h-4 w-4 animate-spin" /> : locale === "fr" ? "OK" : "Save"}
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="rounded-2xl border border-pk-border bg-pk-panel/40 p-5 text-sm text-pk-muted backdrop-blur">
-                      {locale === "fr" ? "Clique sur une carte pour voir les infos ici." : "Click a card to see details here."}
-                    </div>
-                  )}
                 </div>
               </div>
-            </div>
             ) : (
               <div className="space-y-4">
                 {workspaceDisplayedLoops.map((l) => (
                   <div key={l.id}>
                     <LoopCardItem
                       loop={l}
+                      compact={mobileV2}
                       onOpenDetails={(loop) => setDetailsId(loop.id)}
                       onGenerationUsed={consumeCredit}
                       onStartWorkspaceJob={(title, sub) => startWorkspaceJob(title, sub)}
@@ -3122,6 +2886,27 @@ export default function Dashboard() {
           navigate("/pricing?plan=pro&checkout=1");
         }}
       />
+      {mobileV2 && detailsLoop ? (
+        <LoopDetailsSheet open onClose={() => setDetailsId(null)}>
+          <LoopDetailsSheetHeader
+            title={detailsLoop.name}
+            subtitle={detailsLoop.genre}
+            onClose={() => setDetailsId(null)}
+            closeLabel={locale === "fr" ? "Fermer" : "Close"}
+          />
+          <div className="px-5 pb-4">
+            <LoopDetailsPanel
+              loop={detailsLoop}
+              locale={locale}
+              detailsTitle={detailsTitle}
+              onDetailsTitleChange={setDetailsTitle}
+              savingDetailsTitle={savingDetailsTitle}
+              onSaveTitle={saveDetailsTitle}
+              durationSec={durationsSecById[detailsLoop.id]}
+            />
+          </div>
+        </LoopDetailsSheet>
+      ) : null}
     </AppShell>
   );
 }

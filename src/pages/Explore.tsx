@@ -11,10 +11,9 @@ import { Button } from "@/components/ui/Button";
 import { coverGradient, coverImageUrl } from "@/lib/utils";
 import {
   ensurePublicLoopAudioUrl,
-  extractAceTaskId,
   fetchPublicLoops,
+  resolvePlayableCommunityAudio,
   type PublicLoopRow,
-  resolveAceAudioUrl,
 } from "@/lib/publicLoops";
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
 import { useLocaleStore } from "@/stores/localeStore";
@@ -278,9 +277,15 @@ export default function Explore() {
     if (resolvingId && resolvingId !== r.id) return "";
     setResolvingId(r.id);
     try {
-      const resolved = await ensurePublicLoopAudioUrl(r);
+      const resolved = await resolvePlayableCommunityAudio(r);
       if (resolved) {
-        setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, audio_url: resolved } : x)));
+        setRows((prev) =>
+          prev.map((x) =>
+            x.id === r.id && !x.audio_url?.trim()
+              ? { ...x, audio_url: resolved.startsWith("blob:") ? x.audio_url : resolved }
+              : x,
+          ),
+        );
       }
       return resolved;
     } finally {
@@ -289,32 +294,41 @@ export default function Explore() {
   };
 
   const playQueue = async (list: PublicLoopRow[], startIndex: number) => {
-    const clean = list.filter((r) => typeof r.audio_url === "string" && r.audio_url.trim().length > 0);
-    if (!clean.length) {
-      const fallback = list[startIndex] ?? list[0] ?? null;
-      if (!fallback) return;
-      const resolved = await ensurePlayableUrl(fallback);
-      if (!resolved) return;
-      const nextRow: PublicLoopRow = { ...fallback, audio_url: resolved };
-      trackClientEvent("community_play", { loop_id: nextRow.id, source: "queue_resolve" });
-      setQueue([toLoop(nextRow)], 0, true, "community");
+    const startRow = list[startIndex] ?? list[0] ?? null;
+    if (!startRow) return;
+
+    const startUrl = await ensurePlayableUrl(startRow);
+    if (!startUrl) {
+      toast.error(isFr ? "Audio indisponible" : "Audio unavailable");
       return;
     }
-    const idx = Math.max(0, Math.min(clean.length - 1, startIndex));
-    const picked = clean[idx]!;
-    trackClientEvent("community_play", { loop_id: picked.id, source: "queue" });
-    const queueLoops = clean.map((r) => toLoop(r));
-    setQueue(queueLoops, idx, true, "community");
 
-    const taskId = extractAceTaskId(picked.stems_url);
-    if (!taskId) return;
-    const resolved = await resolveAceAudioUrl(taskId).catch(() => "");
-    if (!resolved) return;
-    setRows((prev) => prev.map((x) => (x.id === picked.id ? { ...x, audio_url: resolved } : x)));
-    const repairedPicked: PublicLoopRow = { ...picked, audio_url: resolved };
-    const repairedClean = clean.map((r) => (r.id === picked.id ? repairedPicked : r));
-    const repairedQueue = repairedClean.map((r) => toLoop(r));
-    setQueue(repairedQueue, idx, true, "community");
+    const withUrls = await Promise.all(
+      list.map(async (r) => {
+        const trimmed = typeof r.audio_url === "string" ? r.audio_url.trim() : "";
+        if (trimmed) return r;
+        const http = await ensurePublicLoopAudioUrl(r).catch(() => "");
+        return http ? { ...r, audio_url: http } : r;
+      }),
+    );
+    const clean = withUrls.filter((r) => typeof r.audio_url === "string" && r.audio_url.trim().length > 0);
+    if (!clean.length) {
+      trackClientEvent("community_play", { loop_id: startRow.id, source: "queue_resolve" });
+      setQueue([toLoop({ ...startRow, audio_url: startUrl })], 0, true, "community");
+      return;
+    }
+
+    const idx = Math.max(0, clean.findIndex((r) => r.id === startRow.id));
+    const picked = clean[idx >= 0 ? idx : 0]!;
+    trackClientEvent("community_play", { loop_id: picked.id, source: "queue" });
+
+    const queueLoops = await Promise.all(
+      clean.map(async (r) => {
+        const playable = r.id === picked.id ? startUrl : await resolvePlayableCommunityAudio(r).catch(() => r.audio_url!.trim());
+        return toLoop({ ...r, audio_url: playable });
+      }),
+    );
+    setQueue(queueLoops, idx >= 0 ? idx : 0, true, "community");
   };
 
   const togglePlay = async (r: PublicLoopRow) => {
@@ -373,7 +387,7 @@ export default function Explore() {
       theme="prism"
       variant="single"
     >
-      <div className="mx-auto w-full max-w-[1280px] space-y-5 px-4 pb-32 pt-6 md:px-6">
+      <div className="mx-auto w-full max-w-[1280px] space-y-5 px-4 pt-6 md:px-6">
         <PrismPageHero
           eyebrow={isFr ? "FLUX LIVE" : "LIVE FEED"}
           title={<span className="pk-prism-holo-text">{isFr ? "Communauté ProducerHit" : "ProducerHit Community"}</span>}
@@ -477,7 +491,7 @@ export default function Explore() {
             </div>
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center gap-2">
+          <div className="mt-4 flex flex-wrap items-center gap-2 pk-chip-scroll md:overflow-visible">
             <span className="text-xs font-semibold uppercase tracking-[0.14em] text-white/40">{isFr ? "Tri" : "Sort"}</span>
             <PrismFilterPill active={sort === "new"} onClick={() => setSort("new")}>
               {isFr ? "Nouveaux" : "Newest"}
@@ -603,7 +617,7 @@ export default function Explore() {
           )}
         </div>
 
-        <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {loading
             ? Array.from({ length: 9 }).map((_, i) => (
                 <div key={i} className="rounded-2xl pk-prism-card-soft p-4 animate-pulse">

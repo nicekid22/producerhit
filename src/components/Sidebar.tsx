@@ -104,33 +104,31 @@ export function Sidebar() {
         </div>
       </div>
 
-      <div className="flex items-center gap-3 md:hidden">
-        <div className="hidden md:flex md:flex-col md:gap-2">
-          <button
-            type="button"
-            onClick={() => setLocale("en")}
-            className={cn(
-              "flex h-10 w-10 items-center justify-center rounded-pk text-xs font-semibold transition-colors",
-              locale === "en" ? "bg-pk-accent/15 text-pk-accent" : "text-pk-muted hover:bg-white/5 hover:text-pk-text",
-            )}
-            aria-label="English"
-            title="English"
-          >
-            EN
-          </button>
-          <button
-            type="button"
-            onClick={() => setLocale("fr")}
-            className={cn(
-              "flex h-10 w-10 items-center justify-center rounded-pk text-xs font-semibold transition-colors",
-              locale === "fr" ? "bg-pk-accent/15 text-pk-accent" : "text-pk-muted hover:bg-white/5 hover:text-pk-text",
-            )}
-            aria-label="Français"
-            title="Français"
-          >
-            FR
-          </button>
-        </div>
+      <div className="flex items-center gap-2 md:hidden">
+        <button
+          type="button"
+          onClick={() => setLocale("en")}
+          className={cn(
+            "flex h-9 w-9 items-center justify-center rounded-lg text-[10px] font-semibold transition-colors",
+            locale === "en" ? "bg-pk-accent/15 text-pk-accent" : "text-pk-muted hover:bg-white/5 hover:text-pk-text",
+          )}
+          aria-label="English"
+          title="English"
+        >
+          EN
+        </button>
+        <button
+          type="button"
+          onClick={() => setLocale("fr")}
+          className={cn(
+            "flex h-9 w-9 items-center justify-center rounded-lg text-[10px] font-semibold transition-colors",
+            locale === "fr" ? "bg-pk-accent/15 text-pk-accent" : "text-pk-muted hover:bg-white/5 hover:text-pk-text",
+          )}
+          aria-label="Français"
+          title="Français"
+        >
+          FR
+        </button>
         {user ? (
           <button
             type="button"
