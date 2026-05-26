@@ -1574,7 +1574,7 @@ export default function Dashboard() {
         ) : undefined
       }
       left={
-        <div className="flex h-full flex-col overflow-hidden">
+        <div className="flex flex-col overflow-visible md:h-full md:overflow-hidden">
           {!mobileV2 ? (
             <div className="border-b border-white/10 px-4 pb-3 pt-4">
               <BrandLogo />
@@ -1637,7 +1637,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto min-h-0">
+          <div className="flex-1 overflow-visible md:min-h-0 md:overflow-y-auto">
             {mode === "beat" ? (
               <>
                 <GeneratorSection

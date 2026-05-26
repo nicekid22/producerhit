@@ -59,7 +59,7 @@ export function AppShell({
       </div>
 
       <div className="relative mx-auto min-h-screen min-h-[100svh] max-w-[1600px] md:h-screen">
-        <div className="flex min-h-screen min-h-[100svh] flex-col px-3 py-3 md:h-screen md:flex-row md:gap-3 md:overflow-hidden">
+        <div className="flex min-h-screen min-h-[100svh] flex-col px-3 py-3 md:h-screen md:min-h-0 md:flex-row md:gap-3 md:overflow-hidden">
           <div className="relative z-10 hidden w-[60px] md:flex md:flex-col md:overflow-hidden">
             <div
               className={[
@@ -87,11 +87,10 @@ export function AppShell({
 
               <div
                 className={cn(
-                  "w-full overflow-hidden rounded-2xl backdrop-blur md:w-[420px] md:min-h-0",
+                  "w-full overflow-visible rounded-2xl backdrop-blur md:w-[420px] md:min-h-0 md:overflow-hidden",
                   isPrism ? "pk-prism-glass border border-white/10" : "border border-pk-border/70 bg-pk-panel/70",
                   dockPb,
                   hideLeftOnMobile && "hidden md:flex md:flex-col",
-                  mobileLayoutV2 && "md:overflow-hidden",
                 )}
               >
                 {!mobileLayoutV2 ? (
@@ -115,7 +114,7 @@ export function AppShell({
 
               <div
                 className={cn(
-                  "min-w-0 flex-1 overflow-y-auto rounded-2xl backdrop-blur md:min-h-0",
+                  "min-w-0 flex-1 overflow-visible rounded-2xl backdrop-blur md:min-h-0 md:overflow-y-auto",
                   isPrism ? "pk-prism-glass border border-white/10 bg-white/[0.02]" : "border border-pk-border/70 bg-pk-panel/30",
                   dockPb,
                   hideChildrenOnMobile && "hidden md:block",
@@ -127,7 +126,7 @@ export function AppShell({
           ) : (
             <div
               className={cn(
-                "min-w-0 flex-1 overflow-y-auto rounded-2xl backdrop-blur md:min-h-0",
+                "min-w-0 flex-1 overflow-visible rounded-2xl backdrop-blur md:min-h-0 md:overflow-y-auto",
                 isPrism ? "pk-prism-glass border border-white/10 bg-white/[0.02]" : "border border-pk-border/70 bg-pk-panel/30",
                 dockPb,
               )}
@@ -140,7 +139,7 @@ export function AppShell({
 
       <div
         className={[
-          "fixed bottom-0 left-0 right-0 z-10 pb-[env(safe-area-inset-bottom)] md:hidden",
+          "fixed bottom-0 left-0 right-0 z-40 pb-[env(safe-area-inset-bottom)] md:hidden",
           isPrism ? "border-t border-white/10 bg-[rgba(4,3,10,0.88)] backdrop-blur-xl" : "border-t border-pk-border bg-pk-panel",
         ].join(" ")}
       >

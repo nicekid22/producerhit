@@ -538,7 +538,7 @@ export function AudioPlayer() {
     <>
       {currentBeat ? (
     <div
-      className="pk-prism-player pk-prism-player--dock fixed bottom-[var(--pk-bottom-nav)] left-0 right-0 z-50 pb-[env(safe-area-inset-bottom)] md:bottom-0 md:pb-0"
+      className="pk-prism-player pk-prism-player--dock fixed bottom-[calc(var(--pk-bottom-nav)+env(safe-area-inset-bottom,0px))] left-0 right-0 z-30 md:bottom-0 md:z-50"
       aria-busy={isLoading}
     >
       <div className="mx-auto flex max-w-[1440px] items-center gap-2 px-3 py-2.5 sm:gap-4 sm:px-4 sm:py-3">

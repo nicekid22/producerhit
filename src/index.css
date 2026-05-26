@@ -19,9 +19,30 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+@media (max-width: 767px) {
+  :root {
+    --pk-bottom-nav: 56px;
+    --pk-player-height: 88px;
+    --pk-mobile-dock: calc(var(--pk-bottom-nav) + env(safe-area-inset-bottom, 0px));
+    --pk-mobile-dock-player: calc(var(--pk-bottom-nav) + var(--pk-player-height) + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 html,
 body {
   height: 100%;
+}
+
+@media (max-width: 767px) {
+  html,
+  body,
+  #root {
+    height: auto;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 body {
@@ -773,7 +794,7 @@ body {
   position: fixed;
   left: 0;
   right: 0;
-  z-index: 30;
+  z-index: 35;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(5, 5, 8, 0.94);
   backdrop-filter: blur(16px);
