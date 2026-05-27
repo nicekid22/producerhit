@@ -1,13 +1,16 @@
 import { Link, useLocation } from "react-router-dom";
 import { useMemo } from "react";
 import { Navbar } from "@/components/Navbar";
+import { LandingFooter } from "@/components/landing/LandingFooter";
 import { useLocaleStore } from "@/stores/localeStore";
+import { useAuthStore } from "@/stores/authStore";
 
 type SeoPageKey = "ai-beat-generator" | "ai-music-generator" | "type-beat-generator-ai" | "generate-beats-online-free" | "generic";
 
 export default function Home() {
   const { pathname } = useLocation();
   const locale = useLocaleStore((s) => s.locale);
+  const user = useAuthStore((s) => s.user);
 
   const key: SeoPageKey = useMemo(() => {
     if (pathname === "/ai-beat-generator") return "ai-beat-generator";
@@ -182,41 +185,7 @@ export default function Home() {
           </div>
         ) : null}
 
-        <div className="mt-14 border-t border-white/10 pt-8 text-sm text-white/60">
-          <div className="flex flex-wrap gap-x-5 gap-y-2">
-            <Link to="/ai-beat-generator" className="hover:text-white">
-              AI Beat Generator
-            </Link>
-            <Link to="/ai-music-generator" className="hover:text-white">
-              AI Music Generator
-            </Link>
-            <Link to="/type-beat-generator-ai" className="hover:text-white">
-              Type Beat Generator AI
-            </Link>
-            <Link to="/generate-beats-online-free" className="hover:text-white">
-              Generate Beats Online Free
-            </Link>
-            <Link to="/legal" className="hover:text-white">
-              {locale === "fr" ? "Légal" : "Legal"}
-            </Link>
-            <Link to="/legal#privacy" className="hover:text-white">
-              {locale === "fr" ? "Privacy" : "Privacy"}
-            </Link>
-            <Link to="/legal#terms" className="hover:text-white">
-              {locale === "fr" ? "Terms" : "Terms"}
-            </Link>
-            <Link to="/legal#cookies" className="hover:text-white">
-              {locale === "fr" ? "Cookies" : "Cookies"}
-            </Link>
-            <Link to="/legal#refunds" className="hover:text-white">
-              {locale === "fr" ? "Refunds" : "Refunds"}
-            </Link>
-            <a href="mailto:info.producermarket@gmail.com" className="hover:text-white">
-              {locale === "fr" ? "Contact" : "Contact"}
-            </a>
-          </div>
-          <div className="mt-4">© 2026 ProducerHit</div>
-        </div>
+        <LandingFooter locale={locale} user={user} />
       </div>
     </div>
   );

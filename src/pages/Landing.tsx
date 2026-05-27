@@ -17,6 +17,14 @@ import {
 import { WaveformVisualizer } from "@/components/WaveformVisualizer";
 import { LandingPrismScene } from "@/components/landing/LandingPrismScene";
 import { BrandLogo } from "@/components/landing/BrandLogo";
+import { LandingFooter } from "@/components/landing/LandingFooter";
+import { LogoMarquee } from "@/components/landing/LogoMarquee";
+import { SocialProofStats } from "@/components/landing/SocialProofStats";
+import { TestimonialsStrip } from "@/components/landing/TestimonialsStrip";
+import { VisualCarousel } from "@/components/landing/VisualCarousel";
+import { LandingGenerator, type GeneratorSideCard } from "@/components/landing/LandingGenerator";
+import { landingCopy, landingSectionClass } from "@/lib/landingContent";
+import { useIsMobileViewport } from "@/hooks/useIsMobileViewport";
 import { PLAN_LIMITS } from "@/lib/planLimits";
 
 type CreateMode = "song" | "beat";
@@ -58,8 +66,8 @@ function RevealSection({
       id={id}
       ref={ref}
       className={[
-        "pk-prism-reveal will-change-transform",
-        shown ? "pk-prism-reveal--shown" : "pk-prism-reveal--hidden",
+        "pk-prism-reveal",
+        shown ? "pk-prism-reveal--shown" : "pk-prism-reveal--hidden will-change-transform",
         className ?? "",
       ].join(" ")}
     >
@@ -74,6 +82,8 @@ export default function Landing() {
   const user = useAuthStore((s) => s.user);
   const locale = useLocaleStore((s) => s.locale);
   const setLocale = useLocaleStore((s) => s.setLocale);
+  const isMobileViewport = useIsMobileViewport();
+  const copy = useMemo(() => landingCopy(locale), [locale]);
 
   const [navScrolled, setNavScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -186,32 +196,6 @@ export default function Landing() {
     return () => obs.disconnect();
   }, [reduceMotion]);
 
-  useEffect(() => {
-    if (reduceMotion) return;
-    const el = pageRef.current;
-    if (!el) return;
-    let raf: number | null = null;
-    const tick = () => {
-      raf = null;
-      const y = typeof window !== "undefined" ? window.scrollY || 0 : 0;
-      const vh = typeof window !== "undefined" ? window.innerHeight || 1 : 1;
-      const p = Math.max(0, Math.min(1, y / Math.max(1, vh * 0.9)));
-      el.style.setProperty("--pk-scroll", p.toFixed(4));
-    };
-    const onScroll = () => {
-      if (raf != null) return;
-      raf = window.requestAnimationFrame(tick);
-    };
-    tick();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-      if (raf != null) window.cancelAnimationFrame(raf);
-    };
-  }, [reduceMotion]);
-
   const attachMagnetic = (strength: number) => {
     if (reduceMotion || !allowPointer) return {};
     return {
@@ -260,21 +244,9 @@ export default function Landing() {
     return mode === "beat" ? beat : song;
   }, [locale, mode]);
 
-  const heroBadge =
-    locale === "fr"
-      ? "Libre de droits · Chansons complètes · Type beats · Qualité studio"
-      : "Royalty-free · Full songs · Type beats · Studio quality";
+  const heroBadge = copy.heroBadge;
 
-  const smartChips = useMemo(() => {
-    if (mode === "song") {
-      return locale === "fr"
-        ? ["+ vocals féminines", "+ hook catchy", "+ radio-ready", "+ gros refrain", "+ émotionnel", "+ mix moderne"]
-        : ["+ female vocals", "+ catchy hook", "+ radio-ready", "+ big chorus", "+ emotional", "+ modern mix"];
-    }
-    return locale === "fr"
-      ? ["+ 808 lourdes", "+ mélodie dark", "+ trap", "+ drill", "+ émotionnel", "+ hard hitting"]
-      : ["+ heavy 808s", "+ dark melody", "+ trap", "+ drill", "+ emotional", "+ hard hitting"];
-  }, [locale, mode]);
+  const [generatorSideCards, setGeneratorSideCards] = useState<GeneratorSideCard[]>([]);
 
   const ideaPrompts = useMemo(() => {
     if (locale === "fr") {
@@ -316,6 +288,11 @@ export default function Landing() {
   }, []);
 
   useEffect(() => {
+    try {
+      if (window.matchMedia("(pointer: coarse)").matches) return;
+    } catch {
+      return;
+    }
     const t = window.setTimeout(() => inputRef.current?.focus(), 180);
     return () => window.clearTimeout(t);
   }, []);
@@ -331,12 +308,6 @@ export default function Landing() {
 
   const toggleGenre = (g: string) => {
     setBeatGenres((prev) => (prev.includes(g) ? prev.filter((x) => x !== g) : [g, ...prev].slice(0, 3)));
-  };
-
-  const handleChipClick = (chip: string) => {
-    const cleaned = chip.replace(/^\+\s*/, "");
-    setPrompt((prev) => (prev ? `${prev}, ${cleaned}` : cleaned));
-    inputRef.current?.focus();
   };
 
   const scrollTo = (id: string) => {
@@ -407,18 +378,6 @@ export default function Landing() {
     scrollTo("create");
   };
 
-  const generatorSeed = `${mode}:${prompt}:${beatMood}:${beatBpm}:${beatGenres.join("|")}`;
-  const heroCoverSeed = hashString(generatorSeed) % 5;
-  const heroCoverGradient = [
-    "from-[#7c3aed]/40 via-[#0ea5e9]/20 to-transparent",
-    "from-[#0ea5e9]/30 via-[#7c3aed]/20 to-transparent",
-    "from-[#db2777]/25 via-[#7c3aed]/20 to-transparent",
-    "from-[#22c55e]/20 via-[#7c3aed]/20 to-transparent",
-    "from-[#f97316]/20 via-[#0ea5e9]/20 to-transparent",
-  ][heroCoverSeed];
-
-  const previewTags = mode === "beat" ? ["Type Beat", beatGenres[0] ?? "Trap", beatMood, `${beatBpm} BPM`] : ["Song", "Vocals", "Hook", "Release-ready"];
-
   type PublicTrack = {
     id: string;
     name: string;
@@ -438,7 +397,7 @@ export default function Landing() {
   };
 
   const [trending, setTrending] = useState<PublicTrack[]>([]);
-  const [trendingLoading, setTrendingLoading] = useState(true);
+  const [trendingLoading, setTrendingLoading] = useState(false);
   const [trendingTimedOut, setTrendingTimedOut] = useState(false);
   const [trendingError, setTrendingError] = useState<string | null>(null);
   const [trendingRefreshKey, setTrendingRefreshKey] = useState(0);
@@ -475,6 +434,154 @@ export default function Landing() {
     const looksLikeBeat = ["type beat", "beat", "trap", "drill", "trapsoul", "rnb"].some((k) => hay.includes(k));
     return looksLikeBeat ? { kind: "beat" as const, badge: "Type Beat" as const } : { kind: "song" as const, badge: "Song" as const };
   };
+
+  const pickRandomSideCards = (pool: GeneratorSideCard[], count: number, seed: string) => {
+    if (pool.length <= count) return pool;
+    const items = [...pool];
+    let h = hashString(seed);
+    for (let i = items.length - 1; i > 0; i--) {
+      h = (h * 1664525 + 1013904223) >>> 0;
+      const j = h % (i + 1);
+      [items[i], items[j]] = [items[j], items[i]];
+    }
+    return items.slice(0, count);
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    const cacheKey = "producerhit_landing_gen_cards_v1";
+    const seedKey = "producerhit_landing_gen_cards_seed";
+
+    try {
+      const raw = window.sessionStorage.getItem(cacheKey);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { ts?: unknown; cards?: unknown };
+        const ts = typeof parsed?.ts === "number" ? parsed.ts : 0;
+        const cards = Array.isArray(parsed?.cards) ? (parsed.cards as GeneratorSideCard[]) : [];
+        if (Date.now() - ts < 15 * 60 * 1000 && cards.length >= 2) {
+          setGeneratorSideCards(cards.slice(0, 2));
+          return;
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    void (async () => {
+      try {
+        const rows = await fetchPublicLoops({ limit: 32, timeoutMs: 8000 });
+        if (cancelled) return;
+
+        const pool: GeneratorSideCard[] = rows
+          .filter((r) => typeof r.id === "string")
+          .filter((r) => {
+            const stemsUrlObj = (() => {
+              if (r.stems_url && typeof r.stems_url === "object") return r.stems_url as Record<string, unknown>;
+              if (typeof r.stems_url === "string") {
+                const raw = r.stems_url.trim();
+                if (!raw) return null;
+                try {
+                  const parsed = JSON.parse(raw) as unknown;
+                  return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
+                } catch {
+                  return null;
+                }
+              }
+              return null;
+            })();
+            return isPlayablePublicLoop(r.audio_url, stemsUrlObj);
+          })
+          .map((r) => {
+            const name = (r.name ?? "Untitled").trim() || "Untitled";
+            const genre = (r.genre ?? "").trim();
+            const mood = (r.mood ?? "").trim();
+            const bpm = typeof r.bpm === "number" ? r.bpm : null;
+            const { badge } = classifyTrack(genre, mood, name);
+            const prompt = (r.prompt ?? "").trim() || [name, genre, mood, bpm ? `${bpm} BPM` : ""].filter(Boolean).join(", ");
+            const audioUrlRaw = typeof r.audio_url === "string" ? r.audio_url.trim() : "";
+            const stemsUrlObj = (() => {
+              if (r.stems_url && typeof r.stems_url === "object") return r.stems_url as Record<string, unknown>;
+              if (typeof r.stems_url === "string") {
+                const raw = r.stems_url.trim();
+                if (!raw) return null;
+                try {
+                  const parsed = JSON.parse(raw) as unknown;
+                  return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
+                } catch {
+                  return null;
+                }
+              }
+              return null;
+            })();
+            const loopForCover: Loop = {
+              id: r.id,
+              name,
+              genre: genre || "",
+              influence: "No Influence",
+              key: "",
+              scale: "",
+              bpm: bpm ?? 0,
+              loopLength: "16 bars",
+              swing: 0,
+              mood: mood || "",
+              energyLevel: "Medium",
+              reverb: "Subtle",
+              prompt,
+              audioUrl: audioUrlRaw || null,
+              details: null,
+              stemsUrl: stemsUrlObj,
+              isSaved: false,
+              isPublic: true,
+              createdAt: r.created_at ?? new Date().toISOString(),
+              seed: typeof r.seed === "number" ? r.seed : null,
+            };
+            const subtitle = [badge, genre || mood, bpm ? `${bpm} BPM` : ""].filter((x) => x.length > 0).join(" · ");
+            return {
+              id: r.id,
+              title: name,
+              subtitle,
+              coverUrl: coverImageUrl(loopForCover),
+              coverBg: coverGradient(loopForCover),
+              audioUrl: audioUrlRaw.length > 0 ? audioUrlRaw : null,
+              stemsUrl: stemsUrlObj,
+              name,
+              genre: genre || null,
+              mood: mood || null,
+              bpm,
+              prompt,
+            };
+          });
+
+        if (!pool.length || cancelled) return;
+
+        let seed = "";
+        try {
+          seed = window.sessionStorage.getItem(seedKey) ?? "";
+          if (!seed) {
+            seed = `${Date.now()}-${hashString(pool.map((p) => p.id).join(":"))}`;
+            window.sessionStorage.setItem(seedKey, seed);
+          }
+        } catch {
+          seed = `${Date.now()}`;
+        }
+
+        const picked = pickRandomSideCards(pool, 2, seed);
+        if (cancelled) return;
+        setGeneratorSideCards(picked);
+        try {
+          window.sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), cards: picked }));
+        } catch {
+          // ignore
+        }
+      } catch {
+        // ignore — cards stay hidden if fetch fails
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const heroCovers = useMemo(() => {
     const base = trending.length ? trending : placeholderTrending;
@@ -540,6 +647,20 @@ export default function Landing() {
     })();
   };
 
+  const handlePlaySideCard = (card: GeneratorSideCard) => {
+    trackClientEvent("landing_gen_card_play", { loop_id: card.id });
+    handlePlay({
+      id: card.id,
+      audioUrl: card.audioUrl,
+      stemsUrl: card.stemsUrl ?? null,
+      name: card.name,
+      prompt: card.prompt,
+      genre: card.genre,
+      mood: card.mood,
+      bpm: card.bpm,
+    });
+  };
+
   const playlistItems = useMemo(() => {
     return trending.filter((t) => isPlayablePublicLoop(t.audioUrl, t.stemsUrl)).slice(0, 6);
   }, [trending]);
@@ -591,7 +712,26 @@ export default function Landing() {
     }
   };
 
+  const [shouldLoadTrending, setShouldLoadTrending] = useState(false);
+
   useEffect(() => {
+    const el = document.getElementById("trending");
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setShouldLoadTrending(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "480px", threshold: 0.01 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!shouldLoadTrending) return;
     let cancelled = false;
     const cacheKey = "producerhit_landing_trending_cache_v1";
     let loadedFromCache = false;
@@ -692,7 +832,7 @@ export default function Landing() {
       cancelled = true;
       window.clearTimeout(slowTimer);
     };
-  }, [placeholderTrending, trendingRefreshKey, locale]);
+  }, [placeholderTrending, shouldLoadTrending, trendingRefreshKey, locale]);
 
   const pricing = useMemo(() => {
     if (locale === "fr") {
@@ -893,8 +1033,8 @@ export default function Landing() {
         <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
           <LandingPrismScene spot={spot} reduceMotion={reduceMotion} />
         </div>
-        <RevealSection className="mx-auto flex min-h-screen max-w-6xl flex-col justify-center px-4 py-24">
-          <section className="w-full pk-heroScroll" aria-label="Hero">
+        <RevealSection className={`${landingSectionClass()} flex min-h-[calc(100dvh-5rem)] flex-col justify-center sm:min-h-screen`}>
+          <section className="w-full" aria-label="Hero">
             <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
               <div className="text-center lg:text-left">
                 <div className="inline-flex items-center justify-center rounded-full y2k-chip pk-prism-chip px-4 py-1.5 text-sm font-semibold text-white/85">
@@ -913,18 +1053,14 @@ export default function Landing() {
                     </>
                   )}
                 </h1>
-                <div className="mt-6 max-w-xl text-balance text-[clamp(1rem,2vw,1.125rem)] text-white/70">
-                  {locale === "fr"
-                    ? "De la drill au K‑Pop : génère des chansons et type beats avec une identité visuelle métallique — écoute, remixe, exporte."
-                    : "From drill to K‑Pop: generate songs and type beats with a metallic visual identity — listen, remix, export."}
+                <div className="mt-5 max-w-xl text-balance text-[clamp(0.95rem,2vw,1.125rem)] leading-relaxed text-white/70 sm:mt-6">
+                  {copy.heroLead}
                 </div>
-                <div className="mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-white/45">
-                  {locale === "fr"
-                    ? "Holographic metal · covers IA · engine 2026"
-                    : "Holographic metal · AI covers · 2026 engine"}
+                <div className="mt-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/45 sm:mt-4 sm:text-xs sm:tracking-[0.18em]">
+                  {copy.heroTagline}
                 </div>
 
-                <div className="mt-7 grid gap-3 sm:grid-cols-3">
+                <div className="mt-6 grid grid-cols-1 gap-2.5 sm:mt-7 sm:grid-cols-3 sm:gap-3">
                   <div className="y2k-chip pk-prism-chip flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold text-white/90">
                     <ShieldCheck className="h-4 w-4 text-[var(--prism-cyan)]" />
                     {locale === "fr" ? "Libre de droits" : "Royalty-free"}
@@ -939,8 +1075,8 @@ export default function Landing() {
                   </div>
                 </div>
 
-                <div className="mt-8 grid gap-2 text-left sm:grid-cols-2">
-                  {ideaPrompts.slice(0, 6).map((x) => (
+                <div className="mt-6 grid gap-2 text-left sm:mt-8 sm:grid-cols-2">
+                  {ideaPrompts.slice(0, isMobileViewport ? 4 : 6).map((x) => (
                     <button
                       key={x.text}
                       type="button"
@@ -1030,7 +1166,7 @@ export default function Landing() {
                         </div>
                       </div>
                       <div className="mt-4">
-                        <WaveformVisualizer isPlaying={isPlaying} barCount={48} variant="prism" />
+                        <WaveformVisualizer isPlaying={isPlaying} barCount={isMobileViewport ? 24 : 40} variant="prism" />
                       </div>
                       <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
                         <div className="h-full bg-[linear-gradient(90deg,var(--prism-chrome),var(--prism-cyan),var(--prism-violet))]" style={{ width: `${Math.round(Math.max(0, Math.min(1, progress)) * 100)}%` }} />
@@ -1222,217 +1358,57 @@ export default function Landing() {
             </div>
           </section>
 
-          <div id="create" className="relative mx-auto mt-12 w-full max-w-4xl">
-            <div className="pointer-events-none absolute inset-0 -z-10">
-              <div className="absolute left-1/2 top-1/2 h-[480px] w-[480px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle_at_center,rgba(157,124,255,0.12)_0%,transparent_68%)] blur-3xl" />
-            </div>
-            <div className="y2k-window pk-prism-glass p-5">
-              <div className="flex items-center justify-between gap-3">
-                <div className="y2k-chip pk-prism-chip inline-flex rounded-full p-1">
-                  <button
-                    type="button"
-                    onClick={() => setMode("song")}
-                    className={[
-                      "h-9 rounded-full px-4 text-sm font-semibold transition-all",
-                      mode === "song"
-                        ? "pk-prism-pill-active"
-                        : "text-white/60 hover:text-white",
-                    ].join(" ")}
-                  >
-                    {locale === "fr" ? "Song Mode" : "Song Mode"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMode("beat")}
-                    className={[
-                      "h-9 rounded-full px-4 text-sm font-semibold transition-all",
-                      mode === "beat"
-                        ? "pk-prism-pill-active"
-                        : "text-white/60 hover:text-white",
-                    ].join(" ")}
-                  >
-                    {locale === "fr" ? "Type Beat Mode" : "Type Beat Mode"}
-                  </button>
-                </div>
-
-                <div className="hidden items-center gap-2 text-xs font-semibold text-white/70 sm:flex">
-                  <span className="y2k-chip pk-prism-chip rounded-full px-3 py-1">
-                    {locale === "fr" ? "Entrée pour générer" : "Press Enter to generate"}
-                  </span>
-                  <span className="y2k-chip pk-prism-chip rounded-full px-3 py-1">
-                    {locale === "fr" ? "1 génération gratuite" : "Try 1 free generation"}
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-4 grid gap-4 lg:grid-cols-5">
-                <div
-                  className={[
-                    "y2k-chip pk-prism-chip rounded-2xl p-4 transition-all lg:col-span-3",
-                    focused ? "shadow-[0_0_0_3px_rgba(103,195,255,0.16)]" : "shadow-none",
-                  ].join(" ")}
-                >
-                  <div className="relative">
-                    <textarea
-                      ref={inputRef}
-                      value={prompt}
-                      onChange={(e) => setPrompt(e.target.value)}
-                      onFocus={() => setFocused(true)}
-                      onBlur={() => setFocused(false)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          void onGenerate();
-                        }
-                      }}
-                      placeholder={placeholders[placeholderIndex]}
-                      rows={2}
-                      className="w-full resize-none bg-transparent px-3 py-2 text-center text-lg font-semibold leading-snug text-white outline-none placeholder:text-[#6b7280] sm:text-xl"
-                    />
-                    <div className="pointer-events-none absolute right-4 top-1/2 hidden h-6 w-[2px] -translate-y-1/2 animate-pulse bg-[#7c3aed] sm:block" />
-                  </div>
-
-                  <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-                    {smartChips.map((c) => (
-                      <button
-                        key={c}
-                        type="button"
-                        onClick={() => handleChipClick(c)}
-                        className="y2k-chip pk-prism-chip rounded-full px-3 py-1 text-xs font-semibold text-white/70 transition-all hover:brightness-110"
-                      >
-                        {c}
-                      </button>
-                    ))}
-                  </div>
-
-                  {mode === "beat" ? (
-                    <div className="mt-4 grid gap-3 md:grid-cols-2">
-                      <div className="y2k-chip pk-prism-chip rounded-2xl p-4">
-                        <div className="text-xs font-semibold text-white/70">{locale === "fr" ? "Style artiste (optionnel)" : "Artist style (optional)"}</div>
-                        <input
-                          value={beatArtist}
-                          onChange={(e) => setBeatArtist(e.target.value)}
-                          placeholder={locale === "fr" ? "ex: Drake, Travis Scott…" : "e.g. Drake, Travis Scott..."}
-                          className="y2k-chip pk-prism-chip mt-2 h-10 w-full rounded-xl px-3 text-sm font-semibold text-white outline-none placeholder:text-white/45 focus:shadow-[0_0_0_3px_rgba(157,124,255,0.14)]"
-                        />
-                      </div>
-                      <div className="y2k-chip pk-prism-chip rounded-2xl p-4">
-                        <div className="flex items-center justify-between text-xs font-semibold text-white/70">
-                          <span>BPM</span>
-                          <span className="text-white/80">{beatBpm}</span>
-                        </div>
-                        <input
-                          type="range"
-                          min={80}
-                          max={170}
-                          value={beatBpm}
-                          onChange={(e) => setBeatBpm(Number(e.target.value))}
-                          className="mt-3 w-full accent-[var(--prism-cyan)]"
-                        />
-                      </div>
-                      <div className="y2k-chip pk-prism-chip rounded-2xl p-4 md:col-span-2">
-                        <div className="text-xs font-semibold text-white/70">{locale === "fr" ? "Mood" : "Mood"}</div>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {["Trap", "Drill", "Afro", "RnB", "Jersey", "UK Garage"].map((g) => (
-                            <button
-                              key={g}
-                              type="button"
-                              onClick={() => toggleGenre(g)}
-                              className={[
-                                "y2k-chip pk-prism-chip rounded-full px-3 py-1 text-xs font-semibold transition-all",
-                                beatGenres.includes(g)
-                                  ? "pk-prism-pill-active"
-                                  : "text-white/70 hover:brightness-110",
-                              ].join(" ")}
-                            >
-                              {g}
-                            </button>
-                          ))}
-                        </div>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {["Chill", "Hype", "Dark", "Romantic"].map((m) => (
-                            <button
-                              key={m}
-                              type="button"
-                              onClick={() => setBeatMood(m)}
-                              className={[
-                                "y2k-chip pk-prism-chip rounded-full px-3 py-1 text-xs font-semibold transition-all",
-                                beatMood === m
-                                  ? "pk-prism-pill-active"
-                                  : "text-white/70 hover:brightness-110",
-                              ].join(" ")}
-                            >
-                              {m}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
-
-                  <div className="mt-5 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                    <button
-                      type="button"
-                      onClick={() => void onGenerate()}
-                      disabled={generating}
-                      aria-label={locale === "fr" ? "Générer ton premier beat gratuitement" : "Generate your first beat free"}
-                      className="inline-flex h-[54px] w-full items-center justify-center rounded-full pk-prism-btn px-8 text-base font-semibold text-black transition-all hover:brightness-110 disabled:opacity-70 sm:w-auto"
-                    >
-                      <span className="inline-flex items-center gap-2">
-                        {generating ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : null}
-                        {generating ? (locale === "fr" ? "Génération…" : "Generating…") : locale === "fr" ? "Générer" : "Generate"}
-                      </span>
-                    </button>
-                    <div className="text-sm font-semibold text-white/65">
-                      {locale === "fr" ? "Aucune compétence requise. Décris juste ton idée." : "No skills needed. Just describe your idea."}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="y2k-window pk-prism-glass p-4 lg:col-span-2">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="text-sm font-semibold text-white">{locale === "fr" ? "Aperçu" : "Output preview"}</div>
-                    <div className="inline-flex items-center gap-2 text-xs font-semibold text-white/70">
-                      <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--prism-cyan)]" />
-                      {locale === "fr" ? "Prêt industrie" : "Industry-ready"}
-                    </div>
-                  </div>
-                  <div className={`mt-4 h-40 rounded-2xl border border-white/10 bg-gradient-to-tr ${heroCoverGradient}`} />
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {previewTags.map((x) => (
-                      <span key={x} className="y2k-chip pk-prism-chip rounded-full px-3 py-1 text-[11px] font-semibold text-white/70">
-                        {x}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="mt-4 text-sm font-semibold text-white/65">
-                    {locale === "fr" ? "Mix clean. Bounce solide. Prêt pour ton DAW ou l’upload." : "Clean mix. Strong bounce. Ready for your DAW or upload."}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <LandingGenerator
+            locale={locale}
+            mode={mode}
+            setMode={setMode}
+            prompt={prompt}
+            setPrompt={setPrompt}
+            placeholders={placeholders}
+            placeholderIndex={placeholderIndex}
+            inputRef={inputRef}
+            focused={focused}
+            setFocused={setFocused}
+            generating={generating}
+            onGenerate={onGenerate}
+            beatArtist={beatArtist}
+            setBeatArtist={setBeatArtist}
+            beatBpm={beatBpm}
+            setBeatBpm={setBeatBpm}
+            beatMood={beatMood}
+            setBeatMood={setBeatMood}
+            beatGenres={beatGenres}
+            toggleGenre={toggleGenre}
+            sideCards={generatorSideCards}
+            activeCardId={current?.id ?? null}
+            isPlaying={isPlaying}
+            onPlayCard={handlePlaySideCard}
+          />
         </RevealSection>
 
-        <RevealSection id="features" className="mx-auto max-w-6xl px-4 py-24">
+        <RevealSection className={landingSectionClass("!py-10 sm:!py-12 md:!py-16")}>
+          <LogoMarquee locale={locale} />
+          <SocialProofStats locale={locale} />
+        </RevealSection>
+
+        <RevealSection id="features" className={landingSectionClass()}>
           <div className="text-center">
-            <h2 className="text-balance text-[clamp(1.75rem,4vw,2.5rem)] font-bold tracking-tight text-white">
-              {locale === "fr" ? "Tout pour créer." : "Everything you need to create."}
-            </h2>
+            <h2 className="text-balance text-[clamp(1.5rem,4vw,2.5rem)] font-bold tracking-tight text-white">{copy.featuresTitle}</h2>
+            <p className="mx-auto mt-3 max-w-2xl text-balance text-sm leading-relaxed text-white/55">{copy.featuresLead}</p>
           </div>
-          <div className="mt-10 grid gap-4 md:grid-cols-2">
+          <div className="mt-8 grid gap-3 sm:mt-10 sm:gap-4 md:grid-cols-2">
             {(locale === "fr"
               ? [
-                  { icon: Mic2, t: "Song Mode", d: "Chansons complètes avec voix. Structure, hooks, couplets. Prêt release." },
-                  { icon: Keyboard, t: "Type Beat Mode", d: "Type beats niveau pro avec contrôle du vibe et itération rapide." },
-                  { icon: Zap, t: "Génère en secondes", d: "Autour de ~20 secondes par track. Garde ce qui hit, regen le reste." },
-                  { icon: FolderOpen, t: "Construis ton catalogue", d: "Sauvegarde, télécharge, organise. Exports prêts pour ton DAW." },
+                  { icon: Mic2, t: "Song Mode", d: "Chansons complètes avec voix, structure et hooks — prêtes à itérer ou release." },
+                  { icon: Keyboard, t: "Type Beat Mode", d: "BPM, mood, tags producteur : verrouille un bounce propre en quelques clics." },
+                  { icon: Zap, t: "Génère en ~20 s", d: "Versions x2, variations seed, regen ciblée — garde ce qui hit." },
+                  { icon: FolderOpen, t: "Catalogue & export", d: "Bibliothèque, MP3/WAV, remix communauté — prêt pour ton DAW." },
                 ]
               : [
-                  { icon: Mic2, t: "Song Mode", d: "Full songs with vocals. Structure, hooks, verses. Ready to release." },
-                  { icon: Keyboard, t: "Type Beat Mode", d: "Producer-grade beats with controls for vibe, bounce, and fast iteration." },
-                  { icon: Zap, t: "Generate in seconds", d: "Around ~20 seconds per track. Keep what hits, regenerate the rest." },
-                  { icon: FolderOpen, t: "Build your catalog", d: "Save, download, organize. Exports ready for your DAW." },
+                  { icon: Mic2, t: "Song Mode", d: "Full songs with vocals, structure, and hooks — ready to iterate or release." },
+                  { icon: Keyboard, t: "Type Beat Mode", d: "BPM, mood, producer tags — lock a clean bounce in a few clicks." },
+                  { icon: Zap, t: "Generate in ~20s", d: "Versions x2, seed variations, targeted regen — keep what hits." },
+                  { icon: FolderOpen, t: "Catalog & export", d: "Library, MP3/WAV, community remix — ready for your DAW." },
                 ]
             ).map((x) => (
               <div key={x.t} className="pk-prism-card p-6">
@@ -1446,7 +1422,7 @@ export default function Landing() {
           </div>
         </RevealSection>
 
-        <RevealSection id="how" className="mx-auto max-w-6xl px-4 py-24">
+        <RevealSection id="how" className={landingSectionClass()}>
           {(() => {
             const steps =
               locale === "fr"
@@ -1526,21 +1502,21 @@ export default function Landing() {
           })()}
         </RevealSection>
 
-        <RevealSection id="trending" className="mx-auto max-w-6xl px-4 py-24">
-          <div className="flex items-end justify-between gap-4">
-            <h2 className="text-balance text-[clamp(1.75rem,3.2vw,2.25rem)] font-bold tracking-tight text-white">
-              <span className="pk-prism-holo-text">
-                {locale === "fr" ? "Écoute ce que la communauté génère" : "Hear what the community generates"}
-              </span>
-            </h2>
+        <RevealSection className={landingSectionClass()}>
+          <VisualCarousel locale={locale} />
+        </RevealSection>
+
+        <RevealSection id="trending" className={landingSectionClass()}>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-balance text-[clamp(1.5rem,3.2vw,2.25rem)] font-bold tracking-tight text-white">
+                <span className="pk-prism-holo-text">{copy.communityTitle}</span>
+              </h2>
+              <p className="mt-3 max-w-3xl text-balance text-sm leading-relaxed text-white/60">{copy.communityLead}</p>
+            </div>
           </div>
-          <div className="mt-3 max-w-3xl text-balance text-sm text-white/60">
-            {locale === "fr"
-              ? "Covers métalliques générées par track — même signature visuelle, qualité studio."
-              : "Metallic covers per track — same visual signature, studio-grade quality."}
-          </div>
-          <div className="mt-8 grid gap-4 md:grid-cols-3">
-            {trendingLoading ? (
+          <div className="mt-6 grid gap-3 sm:mt-8 sm:grid-cols-2 sm:gap-4 md:grid-cols-3">
+            {trendingLoading || !shouldLoadTrending ? (
               [0, 1, 2].map((i) => (
                 <div key={i} className="pk-prism-card p-4 animate-pulse">
                   <div className="h-40 rounded-2xl bg-white/5" />
@@ -1744,7 +1720,7 @@ export default function Landing() {
           ) : null}
         </RevealSection>
 
-        <RevealSection className="mx-auto max-w-6xl px-4 py-24">
+        <RevealSection className={landingSectionClass()}>
           <div className="text-center">
             <div className="text-balance text-[clamp(1.75rem,4vw,2.5rem)] font-bold tracking-tight">
               <span className="pk-prism-holo-text">{locale === "fr" ? "Tarifs" : "Pricing"}</span>
@@ -1793,17 +1769,19 @@ export default function Landing() {
           </div>
         </RevealSection>
 
-        <RevealSection className="mx-auto max-w-6xl px-4 py-24">
-          <div className="pk-prism-card relative overflow-hidden p-10">
+        <RevealSection className={landingSectionClass()}>
+          <TestimonialsStrip locale={locale} />
+        </RevealSection>
+
+        <RevealSection className={landingSectionClass()}>
+          <div className="pk-prism-card relative overflow-hidden p-6 sm:p-10">
             <div className="pointer-events-none absolute inset-0">
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(157,124,255,0.08)_0%,transparent_72%)]" />
             </div>
             <div className="relative">
-              <div className="text-balance text-[clamp(2rem,4.2vw,3rem)] font-extrabold tracking-tight text-white">
-                {locale === "fr" ? "Ton son. Tes règles." : "Your sound. Your rules."}
-              </div>
-              <div className="mt-3 text-balance text-[clamp(1rem,2vw,1.125rem)] font-semibold text-white/55">
-                {locale === "fr" ? "Gratuit pour commencer. Pas de carte. Zéro limite d’idées." : "Free to start. No credit card. No limits on ideas."}
+              <div className="text-balance text-[clamp(1.75rem,4.2vw,3rem)] font-extrabold tracking-tight text-white">{copy.ctaTitle}</div>
+              <div className="mt-3 text-balance text-[clamp(0.95rem,2vw,1.125rem)] font-semibold leading-relaxed text-white/55">
+                {copy.ctaLead}
               </div>
               <div className="mt-8">
                 <Link
@@ -1817,8 +1795,8 @@ export default function Landing() {
           </div>
         </RevealSection>
 
-        <RevealSection className="mx-auto max-w-6xl px-4 py-24">
-          <div className="pk-prism-card p-8">
+        <RevealSection className={landingSectionClass()}>
+          <div className="pk-prism-card p-5 sm:p-8">
             <h2 className="text-balance text-[clamp(1.75rem,3.2vw,2.25rem)] font-bold tracking-tight text-white">FAQ</h2>
             <div className="mt-6 grid gap-2">
               {faqs.map((f, i) => {
@@ -1845,53 +1823,7 @@ export default function Landing() {
           </div>
         </RevealSection>
 
-        <RevealSection className="border-t border-white/10 py-12">
-          <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 text-sm text-white/70 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-3">
-              <BrandLogo compact />
-              <span>© 2026 ProducerHit</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <Link to="/pricing" className="hover:text-white">
-                {locale === "fr" ? "Tarifs" : "Pricing"}
-              </Link>
-              <Link to="/ai-beat-generator" className="hover:text-white">
-                AI Beat Generator
-              </Link>
-              <Link to="/ai-music-generator" className="hover:text-white">
-                AI Music Generator
-              </Link>
-              <Link to="/community" className="hover:text-white">
-                {locale === "fr" ? "Communauté" : "Community"}
-              </Link>
-              <Link to="/blog" className="hover:text-white">
-                {locale === "fr" ? "Blog" : "Blog"}
-              </Link>
-              <Link to="/legal#privacy" className="hover:text-white">
-                {locale === "fr" ? "Privacy" : "Privacy"}
-              </Link>
-              <Link to="/legal#cookies" className="hover:text-white">
-                {locale === "fr" ? "Cookies" : "Cookies"}
-              </Link>
-              <Link to="/legal#terms" className="hover:text-white">
-                {locale === "fr" ? "Terms" : "Terms"}
-              </Link>
-              <Link to="/legal#refunds" className="hover:text-white">
-                {locale === "fr" ? "Refunds" : "Refunds"}
-              </Link>
-              <Link to="/legal#contact" className="hover:text-white">
-                {locale === "fr" ? "Support" : "Support"}
-              </Link>
-              <Link to="/type-beat-generator-ai" className="hover:text-white">
-                Type Beat AI
-              </Link>
-              <Link to={user ? "/dashboard" : "/auth"} className="hover:text-white">
-                {user ? "Dashboard" : locale === "fr" ? "Connexion" : "Login"}
-              </Link>
-              <span>Powered by ACE-Step</span>
-            </div>
-          </div>
-        </RevealSection>
+        <LandingFooter locale={locale} user={user} />
       </main>
     </div>
   );

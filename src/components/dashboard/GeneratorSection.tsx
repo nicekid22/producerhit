@@ -30,7 +30,7 @@ export function GeneratorSection({
     <div className={cn("border-b border-pk-border", className)}>
       <button
         type="button"
-        className="flex w-full items-center justify-between gap-3 p-4 md:cursor-default"
+        className="flex w-full items-center justify-between gap-3 p-4 md:pointer-events-none md:cursor-default"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
       >

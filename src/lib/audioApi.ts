@@ -332,7 +332,7 @@ async function generateLoopAceDirect(
 
   const clampNumber = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
 
-  const requestedDuration: number = (() => {
+  const requestedDuration: number | null = (() => {
     if (!instrumental) {
       const raw = typeof options?.duration === "number" && Number.isFinite(options.duration) && options.duration > 0 ? options.duration : 90;
       return clampNumber(raw, 10, 120);
@@ -340,10 +340,11 @@ async function generateLoopAceDirect(
     if (typeof options?.duration === "number" && Number.isFinite(options.duration) && options.duration > 0) {
       return clampNumber(options.duration, 10, 120);
     }
-    return 90;
+    return null;
   })();
 
-  const paramObj: Record<string, unknown> = { duration: clampNumber(requestedDuration, 10, 120) };
+  const paramObj: Record<string, unknown> = {};
+  if (requestedDuration != null) paramObj.duration = requestedDuration;
   if (!options?.autoMeta && params.bpm > 0) paramObj.bpm = params.bpm;
   if (!options?.autoMeta && params.key && params.scale) paramObj.key = `${params.key} ${params.scale}`;
   if (options?.timeSignature) paramObj.time_signature = options.timeSignature;
@@ -600,10 +601,10 @@ export async function generateLoopAce(
   const clampNumber = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
   const bars = typeof params.loopLengthBars === "number" && Number.isFinite(params.loopLengthBars) && params.loopLengthBars > 0 ? params.loopLengthBars : 8;
   const durationRaw = typeof options?.duration === "number" && Number.isFinite(options.duration) && options.duration > 0 ? options.duration : null;
-  const desiredDurationSec = (() => {
+  const desiredDurationSec: number | null = (() => {
     if (!instrumental) return clampNumber(durationRaw ?? 90, 10, 120);
     if (durationRaw != null) return clampNumber(durationRaw, 10, 120);
-    return 90;
+    return null;
   })();
 
   const body: Record<string, unknown> = {
@@ -616,8 +617,8 @@ export async function generateLoopAce(
     sampleMode: effectiveSampleMode,
     audioFormat,
     loopLengthBars: bars,
-    duration: clampNumber(desiredDurationSec, 10, instrumental ? 120 : 120),
   };
+  if (desiredDurationSec != null) body.duration = clampNumber(desiredDurationSec, 10, 120);
   if (typeof options?.seed === "number" && Number.isFinite(options.seed)) body.seed = options.seed;
   if (typeof options?.generationKey === "string" && options.generationKey.trim().length > 0) body.generationKey = options.generationKey.trim();
   if (effectiveSampleQuery) body.sampleQuery = effectiveSampleQuery;

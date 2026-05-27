@@ -544,7 +544,37 @@ export function AudioPlayer() {
       <div className="mx-auto flex max-w-[1440px] items-center gap-2 px-3 py-2.5 sm:gap-4 sm:px-4 sm:py-3">
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:max-w-none sm:gap-3">
           <div className="pk-prism-cover relative hidden h-11 w-11 shrink-0 overflow-hidden rounded-xl sm:block" style={{ background: coverBg }}>
-            <img src={coverUrl} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" decoding="async" referrerPolicy="no-referrer" />
+            {coverUrl ? (
+              <img
+                key={coverUrl}
+                src={coverUrl}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover"
+                loading="lazy"
+                decoding="async"
+                referrerPolicy="no-referrer"
+                style={{ opacity: 0 }}
+                onLoad={(e) => {
+                  e.currentTarget.style.opacity = "1";
+                  e.currentTarget.dataset.retry = "0";
+                }}
+                onError={(e) => {
+                  const img = e.currentTarget;
+                  img.style.opacity = "0";
+                  const retry = Number(img.dataset.retry ?? "0");
+                  if (retry < 4) {
+                    img.dataset.retry = String(retry + 1);
+                    window.setTimeout(() => {
+                      img.style.opacity = "0";
+                      img.src = "";
+                      img.src = coverUrl;
+                    }, 800 * (retry + 1));
+                    return;
+                  }
+                  img.style.display = "none";
+                }}
+              />
+            ) : null}
           </div>
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-semibold text-white">{currentBeat.name}</div>

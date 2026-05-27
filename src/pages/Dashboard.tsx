@@ -2105,7 +2105,11 @@ export default function Dashboard() {
                     value={songDescription}
                     onChange={(e) => setSongDescription(e.target.value)}
                     className="mt-3 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2 text-sm outline-none placeholder:text-pk-muted focus:border-pk-accent"
-                    placeholder={locale === "fr" ? "ex: refrain émotionnel, pop radio-ready" : "e.g. emotional hook, radio-ready pop sound"}
+                    placeholder={
+                      locale === "fr"
+                        ? "Une chanson R&B mélancolique sur les nuits en ville…"
+                        : "A melancholic R&B song about late nights in the city…"
+                    }
                   />
                   
                   <div className={cn(mobileV2 ? "pk-chip-scroll mt-3" : "mt-3 flex flex-wrap gap-2")}>

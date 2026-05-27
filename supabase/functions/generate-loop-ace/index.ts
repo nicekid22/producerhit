@@ -30,13 +30,13 @@ function computeRequestedDurationSec(input: {
   durationRaw: number | null;
   bpm: number | null;
   bars: number | null;
-}) {
+}): number | null {
   if (!input.instrumental) {
     const base = input.durationRaw ?? 90;
     return clampNumber(base, 10, 120);
   }
   if (input.durationRaw != null) return clampNumber(input.durationRaw, 10, 120);
-  return 90;
+  return null;
 }
 
 function toAbsoluteUrl(baseUrl: string, maybePath: string) {
@@ -507,7 +507,8 @@ serve(async (req) => {
       const startedAt = Date.now();
       const keyValue = keyScale.trim().length > 0 ? keyScale.trim() : "";
       const attemptOnce = async (apiKey: string, baseUrl: string) => {
-        const paramObj: Record<string, unknown> = { duration: requestedDuration };
+        const paramObj: Record<string, unknown> = {};
+        if (requestedDuration != null) paramObj.duration = requestedDuration;
         if (bpm && bpm > 0) paramObj.bpm = bpm;
         if (timeSignature.trim().length > 0) paramObj.time_signature = timeSignature.trim();
         if (keyValue) paramObj.key = keyValue;
