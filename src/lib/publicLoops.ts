@@ -1,8 +1,11 @@
 import { clearPlayableAudioBlobCache, resolvePlayableAudioUrl } from "@/lib/playableAudio";
+import { fetchPublicProfileCards, type PublicProfileCard } from "@/lib/creatorProfile";
+import { SUPABASE_LOOP_AUDIO_UPLOAD } from "@/lib/storageAudio";
 import { supabase } from "@/lib/supabaseClient";
 
 export type PublicLoopRow = {
   id: string;
+  user_id?: string | null;
   name: string | null;
   genre: string | null;
   influence?: string | null;
@@ -13,10 +16,11 @@ export type PublicLoopRow = {
   stems_url: unknown;
   created_at: string | null;
   seed?: number | null;
+  author?: PublicProfileCard | null;
 };
 
 const PUBLIC_LOOP_SELECT =
-  "id, name, genre, influence, mood, bpm, prompt, audio_url, stems_url, created_at, seed";
+  "id, user_id, name, genre, influence, mood, bpm, prompt, audio_url, stems_url, created_at, seed";
 
 export function parseStemsUrl(stemsUrl: unknown): Record<string, unknown> | null {
   if (!stemsUrl) return null;
@@ -68,12 +72,22 @@ export async function resolveAceAudioUrl(taskId: string): Promise<string> {
     headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
   });
   if (error) throw error;
-  const url =
-    typeof (data as { audioUrl?: unknown } | null)?.audioUrl === "string"
-      ? ((data as { audioUrl: string }).audioUrl || "").trim()
-      : "";
+  const payload = (data ?? null) as { audioUrl?: unknown; error?: unknown } | null;
+  if (typeof payload?.error === "string" && payload.error.trim()) {
+    throw new Error(payload.error.trim());
+  }
+  const url = typeof payload?.audioUrl === "string" ? payload.audioUrl.trim() : "";
   if (!url) throw new Error("Audio manquant");
   return url;
+}
+
+async function resolveAceAudioUrlWithRetry(taskId: string): Promise<string> {
+  let resolved = await resolveAceAudioUrl(taskId).catch(() => "");
+  if (!isHttpAudioUrl(resolved)) {
+    await new Promise((r) => setTimeout(r, 900));
+    resolved = await resolveAceAudioUrl(taskId).catch(() => "");
+  }
+  return isHttpAudioUrl(resolved) ? resolved.trim() : "";
 }
 
 export function normalizePublicLoopRow(row: PublicLoopRow): PublicLoopRow {
@@ -85,16 +99,27 @@ export function normalizePublicLoopRow(row: PublicLoopRow): PublicLoopRow {
   };
 }
 
-export async function fetchPublicLoops(options?: { limit?: number; timeoutMs?: number }): Promise<PublicLoopRow[]> {
+export async function fetchPublicLoops(options?: {
+  limit?: number;
+  timeoutMs?: number;
+  /** Exclut les loops sans audio_url ni taskId ACE — requis pour la lecture publique. */
+  playableOnly?: boolean;
+}): Promise<PublicLoopRow[]> {
   const limit = options?.limit ?? 36;
   const timeoutMs = options?.timeoutMs ?? 8000;
+  const playableOnly = options?.playableOnly ?? false;
 
-  const query = supabase
+  let query = supabase
     .from("loops")
     .select(PUBLIC_LOOP_SELECT)
     .eq("is_public", true)
-    .order("created_at", { ascending: false })
-    .limit(limit);
+    .order("created_at", { ascending: false });
+
+  if (playableOnly) {
+    query = query.not("audio_url", "is", null);
+  }
+
+  query = query.limit(limit);
 
   const result = (await Promise.race([
     query,
@@ -103,7 +128,22 @@ export async function fetchPublicLoops(options?: { limit?: number; timeoutMs?: n
 
   if (result.error) throw result.error;
 
-  return ((result.data ?? []) as PublicLoopRow[]).map(normalizePublicLoopRow);
+  let rows = ((result.data ?? []) as PublicLoopRow[]).map(normalizePublicLoopRow);
+  if (playableOnly) {
+    rows = rows.filter((row) => isPlayablePublicLoop(row.audio_url, row.stems_url));
+  }
+  return attachAuthorsToPublicLoops(rows);
+}
+
+export async function attachAuthorsToPublicLoops(rows: PublicLoopRow[]): Promise<PublicLoopRow[]> {
+  const userIds = rows.map((r) => r.user_id).filter((id): id is string => !!id);
+  if (!userIds.length) return rows;
+  const cards = await fetchPublicProfileCards(userIds);
+  if (!cards.size) return rows;
+  return rows.map((row) => {
+    const author = row.user_id ? cards.get(row.user_id) ?? null : null;
+    return author ? { ...row, author } : row;
+  });
 }
 
 export async function ensurePublicLoopAudioUrl(row: PublicLoopRow): Promise<string> {
@@ -111,14 +151,22 @@ export async function ensurePublicLoopAudioUrl(row: PublicLoopRow): Promise<stri
   if (existing) return existing;
   const taskId = extractAceTaskId(row.stems_url);
   if (!taskId) return "";
-  return resolveAceAudioUrl(taskId).catch(() => "");
+  return resolveAceAudioUrlWithRetry(taskId);
 }
 
-/** Résout l’URL HTTP puis la convertit en blob: pour lecture fiable (Web Audio / CORS). */
+/** Résout l’URL HTTP (DB ou ACE) puis tente blob: ; retombe sur l’URL directe si CORS bloque le fetch. */
 export async function resolvePlayableCommunityAudio(row: PublicLoopRow): Promise<string> {
+  const cacheKey = `community:${row.id}`;
+  const existing = typeof row.audio_url === "string" ? row.audio_url.trim() : "";
+  if (existing) {
+    const playable = await resolvePlayableAudioUrl(existing, cacheKey);
+    return playable || existing;
+  }
+
   const httpUrl = await ensurePublicLoopAudioUrl(row);
   if (!httpUrl) return "";
-  return resolvePlayableAudioUrl(httpUrl, `community:${row.id}`);
+  const playable = await resolvePlayableAudioUrl(httpUrl, cacheKey);
+  return playable || httpUrl;
 }
 
 export function clearCommunityAudioBlobCache(loopId?: string) {
@@ -145,6 +193,7 @@ function guessAudioExtension(sourceUrl: string, mimeType: string): string {
 }
 
 export async function uploadPublicLoopAudio(userId: string, loopId: string, sourceUrl: string): Promise<string | null> {
+  if (!SUPABASE_LOOP_AUDIO_UPLOAD) return null;
   const trimmed = sourceUrl.trim();
   if (!trimmed || (!trimmed.startsWith("data:") && !trimmed.startsWith("blob:"))) return null;
   try {
@@ -175,6 +224,7 @@ export function buildStemsUrlForDb(
     keyScale?: string;
     timeSignature?: string;
     audioFormat?: string | null;
+    coverPrompt?: string;
   } | null,
 ): Record<string, unknown> | null {
   const taskIdFromInput = extractAceTaskId(inputStemsUrl);
@@ -225,9 +275,7 @@ export async function finalizePublicLoopRecord(args: {
     (taskId ? await resolveAceAudioUrl(taskId).catch(() => "") : "") ||
     null;
 
-  if (!audioUrl) {
-    audioUrl = await uploadPublicLoopAudio(args.userId, args.loopId, args.audioUrlInput);
-  }
+  // Pas d'upload Storage — on persiste uniquement une URL HTTP externe (ACE).
 
   const updatePayload: { is_public: boolean; audio_url?: string; stems_url?: Record<string, unknown> } = {
     is_public: true,

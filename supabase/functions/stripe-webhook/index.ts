@@ -33,11 +33,18 @@ async function hmacSha256(secret: string, message: string) {
   return new Uint8Array(sig);
 }
 
-function planFromPriceId(priceId: string) {
+async function planFromPriceId(supabase: ReturnType<typeof createClient>, priceId: string) {
   const pro = Deno.env.get("STRIPE_PRICE_ID_PRO") ?? "";
   const studio = Deno.env.get("STRIPE_PRICE_ID_STUDIO") ?? "";
+  const plus = Deno.env.get("STRIPE_PRICE_ID_PLUS") ?? "";
   if (priceId && priceId === pro) return "pro";
   if (priceId && priceId === studio) return "studio";
+  if (priceId && priceId === plus) return "plus";
+  if (!priceId) return "free";
+
+  const { data } = await supabase.from("billing_stripe_prices").select("plan").eq("stripe_price_id", priceId).maybeSingle();
+  const mapped = typeof data?.plan === "string" ? data.plan : "";
+  if (mapped === "pro" || mapped === "studio" || mapped === "plus") return mapped;
   return "free";
 }
 
@@ -121,8 +128,11 @@ serve(async (req) => {
       const currentPeriodEnd = typeof sub.current_period_end === "number" ? sub.current_period_end : null;
       const periodEndIso = currentPeriodEnd ? new Date(currentPeriodEnd * 1000).toISOString() : null;
 
-      const plan = planFromPriceId(priceId);
-      await supabase
+      const plan = await planFromPriceId(supabase, priceId);
+      if (plan === "free" && priceId) {
+        console.error("checkout.session.completed: unknown price id", priceId);
+      }
+      const { error: checkoutUpdateError } = await supabase
         .from("profiles")
         .update({
           plan,
@@ -132,6 +142,18 @@ serve(async (req) => {
           stripe_current_period_end: periodEndIso,
         })
         .eq("id", userId);
+      if (checkoutUpdateError) throw checkoutUpdateError;
+
+      if (plan === "plus") {
+        const { data: referralResult, error: referralError } = await supabase.rpc("grant_referral_plus_bonus", {
+          p_referee_id: userId,
+        });
+        if (referralError) {
+          console.error("grant_referral_plus_bonus:", referralError.message);
+        } else if (referralResult && typeof referralResult === "object" && (referralResult as { ok?: boolean }).ok) {
+          console.log("referral plus bonus granted", referralResult);
+        }
+      }
 
       return new Response("ok");
     }
@@ -153,9 +175,12 @@ serve(async (req) => {
       if (!userId) return new Response("ok");
 
       const active = status === "active" || status === "trialing";
-      const plan = active ? planFromPriceId(priceId) : "free";
+      const plan = active ? await planFromPriceId(supabase, priceId) : "free";
+      if (active && plan === "free" && priceId) {
+        console.error("subscription event: unknown price id", priceId, type);
+      }
 
-      await supabase
+      const { error: subscriptionUpdateError } = await supabase
         .from("profiles")
         .update({
           plan,
@@ -165,12 +190,26 @@ serve(async (req) => {
           stripe_current_period_end: active ? periodEndIso : null,
         })
         .eq("id", userId);
+      if (subscriptionUpdateError) throw subscriptionUpdateError;
+
+      if (active && plan === "plus") {
+        const { data: referralResult, error: referralError } = await supabase.rpc("grant_referral_plus_bonus", {
+          p_referee_id: userId,
+        });
+        if (referralError) {
+          console.error("grant_referral_plus_bonus:", referralError.message);
+        } else if (referralResult && typeof referralResult === "object" && (referralResult as { ok?: boolean }).ok) {
+          console.log("referral plus bonus granted", referralResult);
+        }
+      }
 
       return new Response("ok");
     }
 
     return new Response("ok");
-  } catch {
-    return new Response("ok");
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("stripe-webhook error:", message);
+    return new Response(message, { status: 500 });
   }
 });

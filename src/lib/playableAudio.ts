@@ -67,6 +67,20 @@ export async function fetchAudioAsBlobUrl(sourceUrl: string, cacheKey: string): 
   const cached = blobCache.get(cacheKey);
   if (cached) return cached;
 
+  if (cacheKey && !cacheKey.includes(":")) {
+    try {
+      const { fetchCachedLoopAudioBlob } = await import("@/stores/loopsStore");
+      const blob = await fetchCachedLoopAudioBlob(cacheKey);
+      if (blob?.size) {
+        const blobUrl = URL.createObjectURL(blob);
+        blobCache.set(cacheKey, blobUrl);
+        return blobUrl;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   if (isBlobOrDataUrl(trimmed)) {
     blobCache.set(cacheKey, trimmed);
     return trimmed;
@@ -92,7 +106,7 @@ export async function resolvePlayableAudioUrl(sourceUrl: string, cacheKey?: stri
   try {
     return await fetchAudioAsBlobUrl(trimmed, key);
   } catch {
-    if (AUDIO_SKIP_WEB_AUDIO) return trimmed;
-    throw new Error("playable audio unavailable");
+    // CORS / réseau : retomber sur l’URL directe (lecture <audio> sans visualizer).
+    return trimmed;
   }
 }

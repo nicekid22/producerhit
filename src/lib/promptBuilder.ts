@@ -1,3 +1,10 @@
+import {
+  extendedGenreAceTagMap,
+  extendedGenreBpmMap,
+  extendedGenrePromptMap,
+  extendedGenreSonautoMap,
+} from "@/lib/genres/extendedCatalog";
+
 export type GenerateParams = {
   genre: string;
   influence: string;
@@ -35,6 +42,13 @@ const sonautoValidTags = new Set([
   "2000s",
   "2010s",
   "2020s",
+  "1960s",
+  "1970s",
+  "1980s",
+  "jazz",
+  "happy",
+  "hypnotic",
+  "experimental",
 ]);
 
 const genreMap: Record<string, string> = {
@@ -146,6 +160,8 @@ const genreMap: Record<string, string> = {
   "Ethereal Trap": "ethereal trap, airy pads, shimmering plucks, minimal trap drums, deep 808, dreamy floating atmosphere",
   "Nostalgic Future Beats": "nostalgic future beats, retro melodic motifs with futuristic textures, warm chords, modern drums, shimmering nostalgia",
 };
+
+Object.assign(genreMap, extendedGenrePromptMap());
 
 const influenceMap: Record<string, string> = {
   "Metro Boomin":
@@ -322,6 +338,7 @@ export function buildAceCaption(
     Latin: 100,
     "Rage + Ambient": 165,
     "Ambient Drill": 142,
+    ...extendedGenreBpmMap(),
   };
 
   const bpmHint = (Number.isFinite(params.bpm) && params.bpm > 0 ? Math.round(params.bpm) : defaultBpmByGenre[genreKey]) || 0;
@@ -417,6 +434,7 @@ export function buildAceCaption(
     "Sci-Fi R&B": "sci-fi R&B, alien textures, moody futuristic pads, deep sub, minimal drums, wide space",
     "Ethereal Trap": "ethereal trap, airy pads, shimmering plucks, minimal trap drums, deep 808, dreamy atmosphere",
     "Nostalgic Future Beats": "nostalgic future beats, retro melodic motifs with futuristic textures, warm chords, modern drums",
+    ...extendedGenreAceTagMap(),
   };
 
   const aceGenreTagsSong: Record<string, string> = {
@@ -706,6 +724,7 @@ export function buildSonautoTags(params: GenerateParams) {
     "Study Beats": ["lo-fi", "hip-hop/rap", "melancholic"],
     "Rage + Ambient": ["hip-hop/rap", "energetic", "atmospheric", "2020s"],
     "Ambient Drill": ["hip-hop/rap", "dark", "atmospheric", "2020s"],
+    ...extendedGenreSonautoMap(),
   };
 
   const byMood: Record<string, string> = {

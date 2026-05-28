@@ -6,6 +6,10 @@ import { RouteFade } from "@/components/RouteFade";
 import { LoopsBootstrap } from "@/components/LoopsBootstrap";
 import { ThemeBootstrap } from "@/components/ThemeBootstrap";
 import { AppToaster } from "@/components/AppToaster";
+import { LootRevealModal } from "@/components/growth/LootRevealModal";
+import { ReferralReferrerWatcher } from "@/components/growth/ReferralReferrerWatcher";
+import { PkIconLoader } from "@/components/ui/PkIconLoader";
+import { loaderIconFromPath } from "@/lib/loaderIcons";
 import Landing from "@/pages/Landing";
 import Home from "@/pages/Home";
 import Blog from "@/pages/Blog";
@@ -13,21 +17,36 @@ import { AudioPlayer } from "@/components/AudioPlayer";
 import { useLocaleStore } from "@/stores/localeStore";
 import { BLOG_POSTS, getBlogPostBySlug } from "@/content/blog";
 import { PLAN_LIMITS } from "@/lib/planLimits";
+import { getSeoPageByPath, SEO_PAGE_PATHS } from "@/lib/seoPages";
+import { GrowthBootstrap } from "@/components/GrowthBootstrap";
 
 const ExplorePage = lazy(() => import("@/pages/Explore"));
 const PublicLoopPage = lazy(() => import("@/pages/PublicLoop"));
+const CreatorProfilePage = lazy(() => import("@/pages/CreatorProfile"));
 const BlogPostPage = lazy(() => import("@/pages/BlogPost"));
 const AuthPage = lazy(() => import("@/pages/Auth"));
+const AuthCallbackPage = lazy(() => import("@/pages/AuthCallback"));
 const PricingPage = lazy(() => import("@/pages/Pricing"));
 const LegalPage = lazy(() => import("@/pages/Legal"));
 const DashboardPage = lazy(() => import("@/pages/Dashboard"));
 const LibraryPage = lazy(() => import("@/pages/Library"));
 const SettingsPage = lazy(() => import("@/pages/Settings"));
+const GrowthAdminPage = lazy(() => import("@/pages/GrowthAdmin"));
 
 function PageLoader() {
+  const { pathname } = useLocation();
+  const locale = useLocaleStore((s) => s.locale);
+  const isFr = locale === "fr";
+  const icon = loaderIconFromPath(pathname);
+
   return (
     <div className="grid min-h-[60vh] place-items-center px-6">
-      <div className="text-sm font-semibold text-pk-muted">Loading…</div>
+      <PkIconLoader
+        icon={icon}
+        size="lg"
+        label={isFr ? "Chargement…" : "Loading…"}
+        sublabel={isFr ? "On prépare ton studio" : "Setting up your studio"}
+      />
     </div>
   );
 }
@@ -86,7 +105,10 @@ function SeoBootstrap() {
       pathname.startsWith("/dashboard") || pathname.startsWith("/library") || pathname.startsWith("/settings") || pathname.startsWith("/auth");
     const robots = isAppRoute ? "noindex,nofollow" : "index,follow";
 
+    const seoPage = getSeoPageByPath(pathname);
+
     const slugKey = (() => {
+      if (seoPage) return seoPage.slugKey;
       if (pathname === "/") return "home";
       if (pathname === "/blog") return "blog";
       if (pathname.startsWith("/blog/")) return "blog-post";
@@ -108,7 +130,12 @@ function SeoBootstrap() {
     const t = (en: string, fr: string) => (locale === "fr" ? fr : en);
 
     const title = (() => {
-      if (slugKey === "home") return t("ProducerHit — AI Beat Generator & AI Music Generator", "ProducerHit — Générateur de beats IA & musique IA");
+      if (seoPage) return locale === "fr" ? seoPage.titleFr : seoPage.titleEn;
+      if (slugKey === "home")
+        return t(
+          "ProducerHit — AI Song Creator & Type Beat Generator | Royalty-Free",
+          "ProducerHit — Créateur de chansons IA & générateur de type beats | Royalty-free",
+        );
       if (slugKey === "blog") return t("Blog — ProducerHit", "Blog — ProducerHit");
       if (slugKey === "blog-post") return t("Blog — ProducerHit", "Blog — ProducerHit");
       if (slugKey === "explore") return t("Explore — ProducerHit", "Explorer — ProducerHit");
@@ -127,10 +154,11 @@ function SeoBootstrap() {
     })();
 
     const description = (() => {
+      if (seoPage) return locale === "fr" ? seoPage.descriptionFr : seoPage.descriptionEn;
       if (slugKey === "home")
         return t(
-          "ProducerHit is an AI beat generator and AI music generator to create type beats and full songs online. Short clips by default, seed variations, MP3/WAV exports.",
-          "ProducerHit est un générateur de beats IA et de musique IA pour créer des type beats et des chansons en ligne. Clips courts, variations via seed, exports MP3/WAV.",
+          "ProducerHit is an AI song creator and type beat generator: Song Mode, Remix covers, royalty-free MP3/WAV exports, video clips, and mastering — Spotify Ready for producers and artists.",
+          "ProducerHit est un créateur de chansons IA et générateur de type beats : Song Mode, covers Remix, exports MP3/WAV royalty-free, clips vidéo et mastering — Spotify Ready pour producteurs et artistes.",
         );
       if (slugKey === "ai-beat-generator")
         return t(
@@ -185,7 +213,7 @@ function SeoBootstrap() {
     setMeta("description", effectiveDescription, "name");
     setMeta("robots", robots, "name");
     setMeta("googlebot", robots, "name");
-    setMeta("keywords", blogPost ? blogPost.keywords.join(", ") : "", "name");
+    setMeta("keywords", blogPost ? blogPost.keywords.join(", ") : seoPage ? seoPage.keywords.join(", ") : "", "name");
 
     setMeta("og:type", blogPost ? "article" : "website", "property");
     setMeta("og:site_name", "ProducerHit", "property");
@@ -238,6 +266,7 @@ function SeoBootstrap() {
           { "@type": "Offer", name: "Free Plan", price: "0", priceCurrency: "EUR", description: `${PLAN_LIMITS.free} AI generated tracks per month` },
           { "@type": "Offer", name: "Pro Plan", price: "10", priceCurrency: "EUR", description: `${PLAN_LIMITS.pro} AI generated tracks per month` },
           { "@type": "Offer", name: "Studio Plan", price: "30", priceCurrency: "EUR", description: `${PLAN_LIMITS.studio} AI generated tracks per month` },
+          { "@type": "Offer", name: "Plus Plan", price: "89", priceCurrency: "EUR", description: `${PLAN_LIMITS.plus} AI generated tracks per month` },
         ],
         creator: { "@type": "Organization", name: "ProducerHit", url: origin },
         featureList: [
@@ -384,7 +413,10 @@ export default function App() {
         <ThemeBootstrap>
           <LoopsBootstrap>
             <AppToaster />
+            <LootRevealModal />
+            <ReferralReferrerWatcher />
             <SeoBootstrap />
+            <GrowthBootstrap />
             <RouteFade>
               <Suspense fallback={<PageLoader />}>
                 <Routes>
@@ -393,13 +425,14 @@ export default function App() {
                   <Route path="/explore" element={<ExplorePage />} />
                   <Route path="/community" element={<ExplorePage />} />
                   <Route path="/loop/:id" element={<PublicLoopPage />} />
+                  <Route path="/u/:username" element={<CreatorProfilePage />} />
                   <Route path="/blog" element={<Blog />} />
                   <Route path="/blog/:slug" element={<BlogPostPage />} />
-                  <Route path="/ai-beat-generator" element={<Home />} />
-                  <Route path="/ai-music-generator" element={<Home />} />
-                  <Route path="/type-beat-generator-ai" element={<Home />} />
-                  <Route path="/generate-beats-online-free" element={<Home />} />
+                  {SEO_PAGE_PATHS.map((path) => (
+                    <Route key={path} path={path} element={<Home />} />
+                  ))}
                   <Route path="/auth" element={<AuthPage />} />
+                  <Route path="/auth/callback" element={<AuthCallbackPage />} />
                   <Route path="/pricing" element={<PricingPage />} />
                   <Route path="/legal" element={<LegalPage />} />
 
@@ -408,6 +441,7 @@ export default function App() {
                   <Route element={<ProtectedRoute />}>
                     <Route path="/library" element={<LibraryPage />} />
                     <Route path="/settings" element={<SettingsPage />} />
+                    <Route path="/admin/growth" element={<GrowthAdminPage />} />
                   </Route>
 
                   <Route path="*" element={<Navigate to="/" replace />} />

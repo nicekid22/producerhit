@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabaseClient";
 import { buildAceCaption, buildRichPrompt, buildSonautoTags, type GenerateParams } from "@/lib/promptBuilder";
+import { appendAceQualityToParamObj, resolveAceQualityFlags } from "@/lib/aceQuality";
 
 export type AceMeta = {
   taskId?: string;
@@ -350,6 +351,13 @@ async function generateLoopAceDirect(
   if (options?.timeSignature) paramObj.time_signature = options.timeSignature;
   if (audioFormat) paramObj.audio_format = audioFormat;
   if (typeof options?.seed === "number" && Number.isFinite(options.seed)) paramObj.seed = options.seed;
+  appendAceQualityToParamObj(paramObj);
+
+  const quality = resolveAceQualityFlags({
+    thinking: null,
+    useFormat: options?.useFormat,
+    sampleMode: Boolean(options?.sampleMode),
+  });
 
   const createForm = new FormData();
   createForm.append("env", "production");
@@ -358,6 +366,8 @@ async function generateLoopAceDirect(
   createForm.append("lyrics", effectiveLyrics);
   createForm.append("model_name", "acestep-v15-xl-turbo");
   createForm.append("app", "studio-web");
+  createForm.append("thinking", quality.thinking ? "true" : "false");
+  createForm.append("use_format", quality.useFormat ? "true" : "false");
   createForm.append("param_obj", JSON.stringify(paramObj));
 
   const createRes = await fetch(`${baseUrl}/release_task`, {
@@ -607,13 +617,19 @@ export async function generateLoopAce(
     return null;
   })();
 
+  const quality = resolveAceQualityFlags({
+    thinking: options?.thinking,
+    useFormat: options?.useFormat,
+    sampleMode: effectiveSampleMode,
+  });
+
   const body: Record<string, unknown> = {
     caption,
     lyrics,
     instrumental,
     vocalLanguage,
-    useFormat: effectiveSampleMode ? false : (options?.useFormat ?? false),
-    thinking: options?.thinking ?? true,
+    useFormat: quality.useFormat,
+    thinking: quality.thinking,
     sampleMode: effectiveSampleMode,
     audioFormat,
     loopLengthBars: bars,
@@ -707,4 +723,88 @@ export async function generateBeat(
       throw new Error(primaryMessage || "Generation failed — please try again");
     }
   }
+}
+
+export async function remixLoopAce(input: import("@/lib/aceRemix").AceRemixInput): Promise<{ audioUrl: string; meta?: AceMeta | null }> {
+  const { runAceRemix, normalizeAceBaseUrl: normalizeRemixBase, validateRemixFile } = await import("@/lib/aceRemix");
+  const fileErr = validateRemixFile(input.audioFile);
+  if (fileErr === "file_too_large") throw new Error("Fichier trop lourd (max 12 Mo) / File too large (max 12 MB)");
+  if (fileErr) throw new Error("Fichier audio invalide / Invalid audio file");
+
+  const directKey = import.meta.env.VITE_ACE_STEP_API_KEY as string | undefined;
+  if (directKey) {
+    const baseUrl = normalizeRemixBase((import.meta.env.VITE_ACE_STEP_BASE_URL as string | undefined) ?? "https://api.acemusic.ai");
+    const result = await runAceRemix({ baseUrl, apiKey: directKey, input });
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        await supabase.functions.invoke("generate-loop-ace", {
+          body: {
+            action: "bump_usage",
+            ...(input.generationKey ? { generationKey: input.generationKey } : {}),
+          },
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+      }
+    } catch {
+      void 0;
+    }
+    return result;
+  }
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session?.access_token) throw new Error("Authentication required");
+
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+  const forcedRegion = import.meta.env.VITE_SUPABASE_FUNCTION_REGION as string | undefined;
+  const url = `${supabaseUrl}/functions/v1/generate-loop-ace${forcedRegion ? `?forceFunctionRegion=${encodeURIComponent(forcedRegion)}` : ""}`;
+
+  const form = new FormData();
+  form.append("action", "remix");
+  form.append("prompt", input.prompt);
+  form.append("lyrics", input.lyrics ?? "");
+  form.append("taskType", input.taskType ?? "cover");
+  form.append("coverStrength", String(input.coverStrength ?? 0.65));
+  form.append("instrumental", input.instrumental === false ? "0" : "1");
+  form.append("audioFormat", input.audioFormat ?? "mp3");
+  if (input.durationSec != null) form.append("duration", String(input.durationSec));
+  if (input.bpm != null) form.append("bpm", String(input.bpm));
+  if (input.generationKey) form.append("generationKey", input.generationKey);
+  form.append("src_audio", input.audioFile, input.audioFile.name || "source.mp3");
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+      apikey: anonKey,
+    },
+    body: form,
+  });
+  const text = await res.text().catch(() => "");
+  if (!res.ok) {
+    try {
+      const parsed = JSON.parse(text) as { error?: string; limitReached?: boolean };
+      if (parsed.error) {
+        const e = new Error(parsed.error) as Error & { limitReached?: boolean };
+        e.limitReached = parsed.limitReached;
+        throw e;
+      }
+    } catch (err) {
+      if (err instanceof Error && "limitReached" in err) throw err;
+    }
+    throw new Error(text || `Remix failed (${res.status})`);
+  }
+  const data = JSON.parse(text) as { audioUrl?: string; meta?: AceMeta | null; error?: string; limitReached?: boolean };
+  if (data.error) {
+    const e = new Error(data.error) as Error & { limitReached?: boolean };
+    e.limitReached = data.limitReached;
+    throw e;
+  }
+  if (!data.audioUrl) throw new Error("No audio URL returned");
+  return { audioUrl: data.audioUrl, meta: data.meta ?? null };
 }

@@ -10,12 +10,12 @@ export function LoopsBootstrap({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (status !== "ready") return;
-    if (!user) {
+    if (!user?.id) {
       clear();
       return;
     }
     void loadMyLoops();
-  }, [clear, loadMyLoops, status, user]);
+  }, [clear, loadMyLoops, status, user?.id]);
 
   return <>{children}</>;
 }

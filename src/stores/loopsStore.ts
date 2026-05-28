@@ -9,6 +9,8 @@ import {
   resolveAceAudioUrl,
   uploadPublicLoopAudio,
 } from "@/lib/publicLoops";
+import { removeLoopAudioStorage, SUPABASE_LOOP_AUDIO_UPLOAD } from "@/lib/storageAudio";
+import { buildCoverPromptSnapshot } from "@/lib/utils";
 import { useAuthStore } from "@/stores/authStore";
 import { usePlayerStore } from "@/stores/playerStore";
 import type { Loop } from "@/types/loop";
@@ -53,13 +55,15 @@ function isHttpUrl(v: unknown): v is string {
 }
 
 async function fetchMyLoopsRows(userId: string): Promise<DbLoop[]> {
+  const listSelect =
+    "id, user_id, engine, name, genre, influence, key, scale, bpm, loop_length, swing, mood, energy_level, reverb, audio_url, stems_url, is_saved, is_public, seed, created_at";
   const attempts: string[] = [
-    "id, user_id, engine, name, genre, influence, key, scale, bpm, loop_length, swing, mood, energy_level, reverb, prompt, audio_url, stems_url, is_saved, is_public, seed, created_at",
-    "id, user_id, name, genre, influence, key, scale, bpm, loop_length, swing, mood, energy_level, reverb, prompt, audio_url, stems_url, is_saved, is_public, seed, created_at",
-    "id, user_id, engine, name, genre, influence, key, scale, bpm, loop_length, swing, mood, vocal_type, reverb, prompt, audio_url, stems_url, is_saved, is_public, seed, created_at",
-    "id, user_id, name, genre, influence, key, scale, bpm, loop_length, swing, mood, vocal_type, reverb, prompt, audio_url, stems_url, is_saved, is_public, seed, created_at",
-    "id, user_id, name, genre, influence, key, scale, bpm, loop_length, swing, mood, energy_level, reverb, prompt, audio_url, stems_url, is_saved, created_at",
-    "id, user_id, name, genre, influence, key, scale, bpm, loop_length, swing, mood, vocal_type, reverb, prompt, audio_url, stems_url, is_saved, created_at",
+    listSelect,
+    "id, user_id, name, genre, influence, key, scale, bpm, loop_length, swing, mood, energy_level, reverb, audio_url, stems_url, is_saved, is_public, seed, created_at",
+    "id, user_id, engine, name, genre, influence, key, scale, bpm, loop_length, swing, mood, vocal_type, reverb, audio_url, stems_url, is_saved, is_public, seed, created_at",
+    "id, user_id, name, genre, influence, key, scale, bpm, loop_length, swing, mood, vocal_type, reverb, audio_url, stems_url, is_saved, is_public, seed, created_at",
+    "id, user_id, name, genre, influence, key, scale, bpm, loop_length, swing, mood, energy_level, reverb, audio_url, stems_url, is_saved, created_at",
+    "id, user_id, name, genre, influence, key, scale, bpm, loop_length, swing, mood, vocal_type, reverb, audio_url, stems_url, is_saved, created_at",
   ];
 
   let lastError: unknown = null;
@@ -198,9 +202,13 @@ async function resolveAceAudioUrlWithRetry(taskId: string): Promise<string> {
   return isHttpUrl(resolved) ? resolved.trim() : "";
 }
 
-async function cacheLoopAudioFromSrc(id: string, src: string | null | undefined): Promise<void> {
+async function cacheLoopAudioFromSrc(id: string, src: string | null | undefined, options?: { force?: boolean }): Promise<void> {
   const raw = typeof src === "string" ? src.trim() : "";
   if (!raw) return;
+  if (!options?.force) {
+    const existing = await audioCacheGet(id).catch(() => null);
+    if (existing?.blob?.size) return;
+  }
   try {
     const res = await fetch(raw);
     if (!res.ok) return;
@@ -282,6 +290,7 @@ function toLoop(row: DbLoop): Loop {
           keyScale: typeof aceObj.keyScale === "string" ? aceObj.keyScale : undefined,
           timeSignature: typeof aceObj.timeSignature === "string" ? aceObj.timeSignature : undefined,
           audioFormat: typeof aceObj.audioFormat === "string" ? aceObj.audioFormat : undefined,
+          coverPrompt: typeof aceObj.coverPrompt === "string" ? aceObj.coverPrompt : undefined,
         }
       : null;
 
@@ -373,8 +382,10 @@ async function resolvePublicAudioForLoop(loop: Loop, loopId: string, userId: str
   for (const candidate of [ensured, loop.audioUrl]) {
     const raw = typeof candidate === "string" ? candidate.trim() : "";
     if (raw.startsWith("blob:") || raw.startsWith("data:")) {
-      const uploaded = await uploadPublicLoopAudio(userId, loopId, raw).catch(() => null);
-      if (uploaded) return uploaded;
+      if (SUPABASE_LOOP_AUDIO_UPLOAD) {
+        const uploaded = await uploadPublicLoopAudio(userId, loopId, raw).catch(() => null);
+        if (uploaded) return uploaded;
+      }
     }
   }
 
@@ -431,6 +442,7 @@ type LoopsState = {
   togglePublicRemote: (id: string) => Promise<boolean>;
   renameLoopRemote: (id: string, name: string) => Promise<void>;
   deleteLoopRemote: (id: string) => Promise<void>;
+  replaceLoopAudioRemote: (id: string, blob: Blob) => Promise<Loop>;
 };
 
 async function asPlayableLoopUrl(loopId: string, url: string): Promise<string> {
@@ -677,63 +689,6 @@ export const useLoopsStore = create<LoopsState>((set) => ({
 
       void (async () => {
         if (epoch !== myLoopsLoadEpoch || useAuthStore.getState().user?.id !== userId) return;
-        const candidates = useLoopsStore
-          .getState()
-          .loops.filter((l) => !l.id.startsWith("preview-") && !isHttpUrl(l.audioUrl) && extractAceTaskIdFromStemsUrl(l.stemsUrl))
-          .slice(0, 12);
-        if (!candidates.length) return;
-
-        let changed = false;
-        for (const c of candidates) {
-          try {
-            const taskId = extractAceTaskIdFromStemsUrl(c.stemsUrl);
-            if (!taskId) continue;
-            const url = await resolveAceAudioUrlWithRetry(taskId);
-            if (!isHttpUrl(url)) continue;
-
-            if (epoch !== myLoopsLoadEpoch || useAuthStore.getState().user?.id !== userId) return;
-            const { error } = await supabase.from("loops").update({ audio_url: url }).eq("id", c.id).eq("user_id", userId);
-            if (error) continue;
-
-            changed = true;
-            useLoopsStore.setState((s) => ({
-              loops: s.loops.map((l) => (l.id === c.id ? { ...l, audioUrl: url } : l)),
-            }));
-            void cacheLoopAudioFromSrc(c.id, url);
-          } catch {
-            continue;
-          }
-        }
-
-        if (changed) {
-          const currentLoops = useLoopsStore.getState().loops;
-          if (epoch === myLoopsLoadEpoch && useAuthStore.getState().user?.id === userId) persistMyLoopsCache(userId, currentLoops);
-        }
-      })();
-
-      void (async () => {
-        if (epoch !== myLoopsLoadEpoch || useAuthStore.getState().user?.id !== userId) return;
-        const existing = useLoopsStore.getState().durationsSecById;
-        const candidates = nextLoops.filter((l) => l.audioUrl && !existing[l.id]);
-        if (!candidates.length) return;
-        const results = await Promise.all(
-          candidates.map(async (l) => {
-            const dur = await probeDurationSec(l.audioUrl as string);
-            return dur ? ([l.id, dur] as const) : null;
-          }),
-        );
-        const merged: Record<string, number> = { ...useLoopsStore.getState().durationsSecById };
-        let changed = false;
-        for (const pair of results) {
-          if (!pair) continue;
-          merged[pair[0]] = pair[1];
-          changed = true;
-        }
-        if (changed && epoch === myLoopsLoadEpoch && useAuthStore.getState().user?.id === userId) set({ durationsSecById: merged });
-      })();
-
-      void (async () => {
-        if (epoch !== myLoopsLoadEpoch || useAuthStore.getState().user?.id !== userId) return;
         const pendingNow = loadPendingSaves(userId);
         if (!pendingNow.length) return;
         let remaining = pendingNow.slice();
@@ -788,17 +743,17 @@ export const useLoopsStore = create<LoopsState>((set) => ({
       return s.length > 24 ? s.slice(0, 24) : s;
     };
 
-    const detailsForDb = input.details
-      ? {
-          caption: safeCaption(input.details.caption ?? ""),
-          lyrics: safeLyrics(input.details.lyrics ?? ""),
-          bpm: input.details.bpm ?? null,
-          duration: input.details.duration ?? null,
-          keyScale: safeCaption(input.details.keyScale ?? ""),
-          timeSignature: safeCaption(input.details.timeSignature ?? ""),
-          audioFormat: safeAudioFormat(input.details.audioFormat ?? null),
-        }
-      : null;
+    const coverPrompt = safeCaption(input.details?.coverPrompt?.trim() || buildCoverPromptSnapshot(input));
+    const detailsForDb = {
+      caption: safeCaption(input.details?.caption ?? ""),
+      lyrics: safeLyrics(input.details?.lyrics ?? ""),
+      bpm: input.details?.bpm ?? null,
+      duration: input.details?.duration ?? null,
+      keyScale: safeCaption(input.details?.keyScale ?? ""),
+      timeSignature: safeCaption(input.details?.timeSignature ?? ""),
+      audioFormat: safeAudioFormat(input.details?.audioFormat ?? null),
+      coverPrompt,
+    };
 
     const stemsUrlForDb = buildStemsUrlForDb(input.stemsUrl, detailsForDb);
 
@@ -1087,9 +1042,78 @@ export const useLoopsStore = create<LoopsState>((set) => ({
     const user = useAuthStore.getState().user;
     if (!user) throw new Error("Not authenticated");
 
+    const loop = useLoopsStore.getState().loops.find((l) => l.id === id);
     const { error } = await supabase.from("loops").delete().eq("id", id).eq("user_id", user.id);
     if (error) throw error;
+    void removeLoopAudioStorage(user.id, id);
+    if (loop?.audioUrl?.startsWith("blob:")) URL.revokeObjectURL(loop.audioUrl);
     useLoopsStore.getState().removeLoop(id);
+  },
+  replaceLoopAudioRemote: async (id, blob) => {
+    const user = useAuthStore.getState().user;
+    if (!user) throw new Error("Not authenticated");
+    if (id.startsWith("local-") || id.startsWith("preview-")) {
+      throw new Error("Save the track before mastering");
+    }
+    if (!blob.size) throw new Error("Empty audio");
+
+    const prev = useLoopsStore.getState().loops.find((l) => l.id === id);
+    if (!prev) throw new Error("Track not found");
+
+    const blobUrl = URL.createObjectURL(blob);
+    const durationSec = await probeDurationSec(blobUrl);
+    URL.revokeObjectURL(blobUrl);
+    await audioCachePut(id, blob, durationSec);
+    const playable = URL.createObjectURL(blob);
+
+    let httpUrl: string | null = null;
+    if (SUPABASE_LOOP_AUDIO_UPLOAD) {
+      httpUrl = await uploadPublicLoopAudio(user.id, id, playable).catch(() => null);
+      if (httpUrl) {
+        const { error } = await supabase.from("loops").update({ audio_url: httpUrl }).eq("id", id).eq("user_id", user.id);
+        if (error) throw error;
+        const remotePlayable = await asPlayableLoopUrl(id, httpUrl);
+        useLoopsStore.setState((s) => {
+          const loops = s.loops.map((l) => {
+            if (l.id !== id) return l;
+            if (l.audioUrl?.startsWith("blob:")) URL.revokeObjectURL(l.audioUrl);
+            return { ...l, audioUrl: remotePlayable };
+          });
+          const durationsSecById = { ...s.durationsSecById };
+          if (durationSec && isFinite(durationSec)) durationsSecById[id] = durationSec;
+          return { loops, durationsSecById };
+        });
+        URL.revokeObjectURL(playable);
+        return useLoopsStore.getState().loops.find((l) => l.id === id) ?? prev;
+      }
+    }
+
+    useLoopsStore.setState((s) => {
+      const loops = s.loops.map((l) => {
+        if (l.id !== id) return l;
+        if (l.audioUrl?.startsWith("blob:")) URL.revokeObjectURL(l.audioUrl);
+        return { ...l, audioUrl: playable };
+      });
+      const durationsSecById = { ...s.durationsSecById };
+      if (durationSec && isFinite(durationSec)) durationsSecById[id] = durationSec;
+      return { loops, durationsSecById };
+    });
+
+    const updated = useLoopsStore.getState().loops.find((l) => l.id === id);
+    if (!updated) throw new Error("Track update failed");
+
+    const player = usePlayerStore.getState();
+    if (player.current?.id === id) {
+      player.setCurrent({ ...updated, audioUrl: playable }, player.isPlaying);
+    }
+
+    persistMyLoopsCache(user.id, useLoopsStore.getState().loops);
+    try {
+      window.dispatchEvent(new CustomEvent("producerhit-audio-cached", { detail: { id } }));
+    } catch {
+      void 0;
+    }
+    return updated;
   },
 }));
 

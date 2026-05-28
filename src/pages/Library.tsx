@@ -16,6 +16,7 @@ import { LoopCardItem } from "@/components/LoopCardItem";
 import { useLocaleStore } from "@/stores/localeStore";
 import { useMobileUiV2 } from "@/hooks/useMobileUiV2";
 import { Bookmark, Disc3, Layers, Search, Sparkles } from "lucide-react";
+import { PkIconLoader } from "@/components/ui/PkIconLoader";
 
 type Filter = "all" | "genre" | "key" | "bpm";
 
@@ -200,11 +201,13 @@ export default function Library() {
               </div>
             </div>
           ) : loopsLoading ? (
-            <div className="rounded-pk pk-prism-card-soft p-4">
-              <div className="text-sm font-semibold">{locale === "fr" ? "Synchronisation…" : "Syncing…"}</div>
-              <div className="mt-1 text-sm text-pk-muted">
-                {locale === "fr" ? "Chargement de tes créations." : "Loading your creations."}
-              </div>
+            <div className="flex justify-center rounded-pk pk-prism-card-soft p-8">
+              <PkIconLoader
+                icon="library"
+                size="md"
+                label={locale === "fr" ? "Synchronisation…" : "Syncing…"}
+                sublabel={locale === "fr" ? "Chargement de tes créations." : "Loading your creations."}
+              />
             </div>
           ) : null}
 
@@ -280,6 +283,7 @@ export default function Library() {
                         <LoopCardItem
                           loop={l}
                           compact={mobileUiV2}
+                          queueLoops={filtered}
                           onDelete={() => setConfirmId(l.id)}
                           onOpenDetails={(loop) => setDetailsId((prev) => (prev === loop.id ? null : loop.id))}
                         />
@@ -318,6 +322,7 @@ export default function Library() {
                     <LoopCardItem
                       loop={l}
                       compact={mobileUiV2}
+                      queueLoops={filtered}
                       onDelete={() => setConfirmId(l.id)}
                       onOpenDetails={(loop) => setDetailsId(loop.id)}
                     />

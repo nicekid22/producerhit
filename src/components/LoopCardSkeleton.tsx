@@ -1,19 +1,12 @@
-import { Loader2 } from "lucide-react";
+import { PkIconLoader } from "@/components/ui/PkIconLoader";
 
 export function LoopCardSkeleton({ title, sub }: { title: string; sub?: string }) {
   return (
     <div className="relative overflow-hidden rounded-pk border border-pk-accent/30 bg-pk-panel p-4 shadow-[0_0_24px_rgba(124,58,237,0.14)]">
-      <div
-        className="absolute inset-0 -translate-x-full animate-[pkShimmer_2.2s_infinite]"
-        style={{ backgroundImage: "linear-gradient(90deg, transparent, rgba(124,58,237,0.12), transparent)" }}
-      />
-      
       <div className="relative flex gap-3">
-        <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-pk border border-pk-accent/25 bg-pk-accent/10">
+        <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-pk border border-pk-accent/25 bg-pk-accent/10">
           <div className="absolute inset-0 opacity-60" style={{ backgroundImage: "radial-gradient(circle at 30% 30%, rgba(124,58,237,0.45), transparent 55%)" }} />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Loader2 className="h-5 w-5 animate-spin text-pk-accent" />
-          </div>
+          <PkIconLoader icon="generator" size="xs" inline className="relative z-[1]" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">

@@ -10,7 +10,10 @@
     "preview": "vite preview",
     "check": "tsc -b --noEmit",
     "test": "vitest --run --passWithNoTests",
-    "blog:auto": "node scripts/auto-blog.mjs"
+    "blog:auto": "node scripts/auto-blog.mjs",
+    "growth:sync": "node scripts/growth-sync.mjs",
+    "growth:social": "node scripts/auto-social.mjs",
+    "icons:generate": "node scripts/generate-brand-icons.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",

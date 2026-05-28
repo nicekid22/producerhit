@@ -8,11 +8,12 @@ import {
   useState,
   type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
+  type ReactNode,
   type RefObject,
 } from "react";
 import { createPortal } from "react-dom";
 
-export type DropdownOption = { value: string; label: string; group?: string };
+export type DropdownOption = { value: string; label: string; group?: string; icon?: ReactNode };
 
 type PanelRect = { top: number; left: number; width: number; maxHeight: number };
 
@@ -55,11 +56,14 @@ function DropdownOptionsList({
         onMouseEnter={() => onHoverOption(o.value)}
         onClick={() => onSelect(o.value)}
         className={cn(
-          "flex w-full items-center justify-between rounded-pk px-3 py-2.5 text-left text-sm transition-colors",
+          "flex w-full items-center justify-between gap-2 rounded-pk px-3 py-2.5 text-left text-sm transition-colors",
           isActive ? "bg-pk-accent/15 text-pk-text" : "text-pk-text hover:bg-white/5",
         )}
       >
-        <span className={cn("truncate", isSelected ? "font-semibold" : "")}>{o.label}</span>
+        <span className="flex min-w-0 items-center gap-2">
+          {o.icon ? <span className="shrink-0">{o.icon}</span> : null}
+          <span className={cn("truncate", isSelected ? "font-semibold" : "")}>{o.label}</span>
+        </span>
         {isSelected ? <Check className="h-4 w-4 shrink-0 text-pk-accent" /> : <span className="h-4 w-4 shrink-0" />}
       </button>
     );
@@ -332,7 +336,16 @@ export function Dropdown({
             aria-haspopup="listbox"
             aria-expanded={open}
           >
-            {selected ? selected.label : placeholder ? <span className="text-pk-muted">{placeholder}</span> : <span className="text-pk-muted">—</span>}
+            {selected ? (
+              <span className="flex items-center gap-2">
+                {selected.icon ? <span className="shrink-0">{selected.icon}</span> : null}
+                <span className="truncate">{selected.label}</span>
+              </span>
+            ) : placeholder ? (
+              <span className="text-pk-muted">{placeholder}</span>
+            ) : (
+              <span className="text-pk-muted">—</span>
+            )}
           </button>
           <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-pk-muted" aria-hidden />
 

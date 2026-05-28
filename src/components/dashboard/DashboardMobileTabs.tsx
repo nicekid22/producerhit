@@ -1,16 +1,19 @@
 import { cn } from "@/lib/utils";
+import type { MobileDashboardTab } from "@/hooks/useMobileDashboardTab";
 
 export function DashboardMobileTabs({
   tab,
   onChange,
   createLabel,
   resultsLabel,
+  masterLabel,
   resultsBadge,
 }: {
-  tab: "create" | "results";
-  onChange: (tab: "create" | "results") => void;
+  tab: MobileDashboardTab;
+  onChange: (tab: MobileDashboardTab) => void;
   createLabel: string;
   resultsLabel: string;
+  masterLabel: string;
   resultsBadge?: number;
 }) {
   return (
@@ -19,6 +22,7 @@ export function DashboardMobileTabs({
         [
           { id: "create" as const, label: createLabel },
           { id: "results" as const, label: resultsLabel, badge: resultsBadge },
+          { id: "master" as const, label: masterLabel },
         ] as const
       ).map((item) => {
         const active = tab === item.id;
@@ -30,7 +34,7 @@ export function DashboardMobileTabs({
             aria-selected={active}
             onClick={() => onChange(item.id)}
             className={cn(
-              "relative flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold transition-colors",
+              "relative flex flex-1 items-center justify-center gap-1 rounded-full px-2 py-2 text-[11px] font-semibold transition-colors sm:px-3 sm:text-xs",
               active ? "pk-prism-pill-active shadow-[0_0_24px_rgba(157,124,255,0.18)]" : "text-white/50 hover:text-white",
             )}
           >

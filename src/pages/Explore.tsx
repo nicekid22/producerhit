@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Music2, Pause, Play, Radio, Search, Shuffle, Sparkles, Star, Trophy, Users, Zap } from "lucide-react";
+import { Music2, Pause, Play, Radio, Search, Shuffle, Sparkles, Star, Trophy, Users, Zap, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { AppShell } from "@/components/AppShell";
 import { PrismFilterPill } from "@/components/prism/PrismFilterPill";
 import { PrismPageHero } from "@/components/prism/PrismPageHero";
 import { PrismStat } from "@/components/prism/PrismStat";
+import { PkIconLoader } from "@/components/ui/PkIconLoader";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { Button } from "@/components/ui/Button";
+import { ProfileAuthorChip } from "@/components/profile/ProfileAuthorChip";
 import { coverGradient, coverImageUrl } from "@/lib/utils";
 import {
   ensurePublicLoopAudioUrl,
@@ -15,6 +17,7 @@ import {
   resolvePlayableCommunityAudio,
   type PublicLoopRow,
 } from "@/lib/publicLoops";
+import { savePendingRemix, buildRemixPromptFromMeta } from "@/lib/pendingRemix";
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
 import { useLocaleStore } from "@/stores/localeStore";
 import { useAuthStore } from "@/stores/authStore";
@@ -91,25 +94,43 @@ export default function Explore() {
   const isNew = (createdAt: string) => Date.now() - new Date(createdAt).getTime() < 24 * 60 * 60 * 1000;
 
   const remixFrom = (r: PublicLoopRow) => {
-    const promptValue = (r.prompt || "").trim();
-    if (!promptValue) return;
-    trackClientEvent("community_remix_click", { loop_id: r.id });
-    try {
-      window.localStorage.setItem("producerhit_pending_source", "community");
-    } catch {
-      void 0;
-    }
-    if (!user) {
-      window.localStorage.setItem("producerhit_pending_prompt", promptValue);
-      navigate("/auth", { state: { from: "/community" } });
-      return;
-    }
-    navigate(`/dashboard?prompt=${encodeURIComponent(promptValue)}`);
+    trackClientEvent("community_remix_vibe_click", { loop_id: r.id });
+    setResolvingId(r.id);
+    void (async () => {
+      try {
+        const audioUrl = await resolvePlayableCommunityAudio(r);
+        const promptValue = buildRemixPromptFromMeta({
+          prompt: r.prompt || "",
+          genre: r.genre || "",
+          mood: r.mood || "",
+          locale,
+        });
+        savePendingRemix({
+          sourceLoopId: r.id,
+          sourceLoopName: (r.name || "Track").trim() || "Track",
+          audioUrl,
+          prompt: promptValue,
+          genre: r.genre || undefined,
+          mood: r.mood || undefined,
+          bpm: typeof r.bpm === "number" ? r.bpm : undefined,
+          source: "community",
+        });
+        if (!user) {
+          navigate("/auth", { state: { from: "/dashboard?remix=1" } });
+          return;
+        }
+        navigate("/dashboard?remix=1");
+      } catch {
+        toast.error(isFr ? "Audio indisponible pour remix" : "Audio unavailable for remix");
+      } finally {
+        setResolvingId(null);
+      }
+    })();
   };
 
   useEffect(() => {
     let cancelled = false;
-    const cacheKey = "producerhit_community_cache_v1";
+    const cacheKey = "producerhit_community_cache_v3";
     let loadedFromCache = false;
     try {
       const raw = window.sessionStorage.getItem(cacheKey);
@@ -131,7 +152,7 @@ export default function Explore() {
     setFetchError(null);
     void (async () => {
       try {
-        const mapped = await fetchPublicLoops({ limit: 36, timeoutMs: 6000 });
+        const mapped = await fetchPublicLoops({ limit: 36, timeoutMs: 6000, playableOnly: true });
         if (cancelled) return;
         setRows(mapped);
         try {
@@ -274,7 +295,6 @@ export default function Explore() {
   const moodVariety = Math.max(0, moods.length - 1);
 
   const ensurePlayableUrl = async (r: PublicLoopRow) => {
-    if (resolvingId && resolvingId !== r.id) return "";
     setResolvingId(r.id);
     try {
       const resolved = await resolvePlayableCommunityAudio(r);
@@ -598,7 +618,14 @@ export default function Explore() {
                           </div>
                         </div>
                         <div className="mt-3 flex items-center justify-between gap-2">
-                          <div className="text-xs text-pk-muted">{r.genre}</div>
+                          <div className="min-w-0">
+                            <div className="text-xs text-pk-muted">{r.genre}</div>
+                            {r.author ? (
+                              <div className="mt-2">
+                                <ProfileAuthorChip author={r.author} isFr={isFr} size="sm" hideAvatar />
+                              </div>
+                            ) : null}
+                          </div>
                           {avg ? (
                             <div className="inline-flex items-center gap-1 rounded-full border border-pk-border bg-pk-bg px-2 py-1 text-[11px] font-semibold">
                               <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
@@ -618,8 +645,16 @@ export default function Explore() {
         </div>
 
         <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {loading
-            ? Array.from({ length: 9 }).map((_, i) => (
+          {loading ? (
+            <>
+              <div className="col-span-full flex justify-center py-6 sm:py-8">
+                <PkIconLoader
+                  icon="community"
+                  size="md"
+                  label={isFr ? "On explore la communauté…" : "Exploring the community…"}
+                />
+              </div>
+              {Array.from({ length: 9 }).map((_, i) => (
                 <div key={i} className="rounded-2xl pk-prism-card-soft p-4 animate-pulse">
                   <div className="h-40 rounded-2xl bg-white/5" />
                   <div className="mt-4 h-4 w-2/3 rounded bg-white/5" />
@@ -630,8 +665,9 @@ export default function Explore() {
                   </div>
                   <div className="mt-4 h-10 rounded-full bg-white/5" />
                 </div>
-              ))
-            : filtered.map((r) => (
+              ))}
+            </>
+          ) : filtered.map((r) => (
               <article
                 key={r.id}
                 role="button"
@@ -720,6 +756,12 @@ export default function Explore() {
                   <p className="line-clamp-3 text-sm text-pk-muted">{r.prompt || "—"}</p>
                 </div>
 
+                {r.author ? (
+                  <div className="mt-3">
+                    <ProfileAuthorChip author={r.author} isFr={isFr} hideAvatar />
+                  </div>
+                ) : null}
+
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-1">
                     {Array.from({ length: 5 }).map((_, i) => {
@@ -752,11 +794,16 @@ export default function Explore() {
                         e.stopPropagation();
                         remixFrom(r);
                       }}
-                      className="inline-flex h-10 items-center gap-2 rounded-full border border-pk-border bg-pk-bg px-4 text-sm font-semibold text-pk-text transition-all hover:border-pk-accent/50 hover:bg-white/5"
-                      aria-label={isFr ? "Remixer ce style" : "Remix this style"}
+                      disabled={resolvingId === r.id}
+                      className="inline-flex h-10 items-center gap-2 rounded-full border border-pk-border bg-pk-bg px-4 text-sm font-semibold text-pk-text transition-all hover:border-pk-accent/50 hover:bg-white/5 disabled:opacity-60"
+                      aria-label={isFr ? "Remix this vibe" : "Remix this vibe"}
                     >
-                      <Sparkles className="h-4 w-4 text-pk-accent" />
-                      {isFr ? "Remixer" : "Remix"}
+                      {resolvingId === r.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin text-pk-accent" />
+                      ) : (
+                        <Sparkles className="h-4 w-4 text-pk-accent" />
+                      )}
+                      {isFr ? "Remix this vibe" : "Remix this vibe"}
                     </button>
                     <Link
                       className="inline-flex h-10 items-center rounded-full border border-pk-border bg-pk-bg px-4 text-sm font-semibold text-pk-text transition-all hover:border-pk-accent/50 hover:bg-white/5"

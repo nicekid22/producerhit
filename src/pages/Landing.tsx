@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { useAuthStore } from "@/stores/authStore";
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
 import { useLocaleStore } from "@/stores/localeStore";
-import { BadgeCheck, FolderOpen, Keyboard, Mic2, Music2, Pause, Play, ShieldCheck, SkipBack, SkipForward, Sparkles, Zap } from "lucide-react";
+import { FolderOpen, Keyboard, Mic2, Sparkles, Video, Zap } from "lucide-react";
 import { usePlayerStore } from "@/stores/playerStore";
 import type { Loop } from "@/types/loop";
 import { coverGradient, coverImageUrl, hashString } from "@/lib/utils";
@@ -14,7 +14,6 @@ import {
   isPlayablePublicLoop,
   resolveAceAudioUrl,
 } from "@/lib/publicLoops";
-import { WaveformVisualizer } from "@/components/WaveformVisualizer";
 import { LandingPrismScene } from "@/components/landing/LandingPrismScene";
 import { BrandLogo } from "@/components/landing/BrandLogo";
 import { LandingFooter } from "@/components/landing/LandingFooter";
@@ -22,10 +21,15 @@ import { LogoMarquee } from "@/components/landing/LogoMarquee";
 import { SocialProofStats } from "@/components/landing/SocialProofStats";
 import { TestimonialsStrip } from "@/components/landing/TestimonialsStrip";
 import { VisualCarousel } from "@/components/landing/VisualCarousel";
+import { LandingCommunityRail } from "@/components/landing/LandingCommunityRail";
 import { LandingGenerator, type GeneratorSideCard } from "@/components/landing/LandingGenerator";
-import { landingCopy, landingSectionClass } from "@/lib/landingContent";
-import { useIsMobileViewport } from "@/hooks/useIsMobileViewport";
+import { HeroTypewriterPrompt } from "@/components/landing/HeroTypewriterPrompt";
+import { LandingValueGrid } from "@/components/landing/LandingValueGrid";
+import { LandingPitchSections } from "@/components/landing/LandingPitchSections";
+import { landingCopy, landingFeatureCards, landingFlowSectionClass, landingSectionClass } from "@/lib/landingContent";
 import { PLAN_LIMITS } from "@/lib/planLimits";
+import { isRecommendedPlan, normalizePlan, pricingCtaHref, pricingCtaMeta } from "@/lib/billing";
+import type { PublicProfileCard } from "@/lib/creatorProfile";
 
 type CreateMode = "song" | "beat";
 
@@ -80,9 +84,9 @@ export default function Landing() {
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
+  const profile = useAuthStore((s) => s.profile);
   const locale = useLocaleStore((s) => s.locale);
   const setLocale = useLocaleStore((s) => s.setLocale);
-  const isMobileViewport = useIsMobileViewport();
   const copy = useMemo(() => landingCopy(locale), [locale]);
 
   const [navScrolled, setNavScrolled] = useState(false);
@@ -104,22 +108,8 @@ export default function Landing() {
 
   const current = usePlayerStore((s) => s.current);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
-  const progress = usePlayerStore((s) => s.progress);
-  const currentTimeSec = usePlayerStore((s) => s.currentTimeSec);
-  const durationSec = usePlayerStore((s) => s.durationSec);
-  const queue = usePlayerStore((s) => s.queue);
-  const queueIndex = usePlayerStore((s) => s.queueIndex);
-  const queueSource = usePlayerStore((s) => s.queueSource);
   const setCurrent = usePlayerStore((s) => s.setCurrent);
-  const setQueue = usePlayerStore((s) => s.setQueue);
   const setPlaying = usePlayerStore((s) => s.setPlaying);
-
-  const formatTime = (sec: number) => {
-    if (!sec || !Number.isFinite(sec) || sec < 0) return "0:00";
-    const m = Math.floor(sec / 60);
-    const s = Math.floor(sec % 60);
-    return `${m}:${s.toString().padStart(2, "0")}`;
-  };
 
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const pageRef = useRef<HTMLDivElement | null>(null);
@@ -139,7 +129,6 @@ export default function Landing() {
     }
   }, []);
   const [spot, setSpot] = useState<{ x: number; y: number }>({ x: 56, y: 32 });
-  const [parallax, setParallax] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const rafRef = useRef<number | null>(null);
   const lastRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -159,9 +148,6 @@ export default function Landing() {
         const v = lastRef.current;
         if (!v) return;
         setSpot({ x: Math.round(v.x * 1000) / 10, y: Math.round(v.y * 1000) / 10 });
-        const dx = (v.x - 0.5) * 28;
-        const dy = (v.y - 0.5) * 22;
-        setParallax({ x: Math.round(dx * 10) / 10, y: Math.round(dy * 10) / 10 });
       });
     };
 
@@ -218,7 +204,7 @@ export default function Landing() {
         ? [
             "Une chanson R&B mélancolique sur les nuits en ville…",
             "Un anthem dark trap avec une grosse hook et des vocals gritty…",
-            "Un hit Afrobeats d’été avec guitares lumineuses et refrain catchy…",
+            "Un hit Afrobeats d'été avec guitares lumineuses et refrain catchy…",
             "Une ballade pop émotionnelle avec une montée cinématique…",
           ]
         : [
@@ -244,41 +230,7 @@ export default function Landing() {
     return mode === "beat" ? beat : song;
   }, [locale, mode]);
 
-  const heroBadge = copy.heroBadge;
-
   const [generatorSideCards, setGeneratorSideCards] = useState<GeneratorSideCard[]>([]);
-
-  const ideaPrompts = useMemo(() => {
-    if (locale === "fr") {
-      return [
-        { text: "Hyperpop sur mon addiction au café" },
-        { text: "Une love song dédiée à ma friteuse à air" },
-        { text: "Ballade acoustique triste sur mes plantes qui meurent" },
-        { text: "Hymne gym bro triomphal pour le leg day" },
-        { text: "Chanson de rupture mais les deux sont soulagés" },
-        { text: "Lo‑fi beats pour faire semblant de bosser à la maison" },
-        { text: "Country song sur le Wi‑Fi qui lâche en plein meeting" },
-        { text: "Death metal lullaby pour mon chat qui me réveille à 3h" },
-      ];
-    }
-    return [
-      { text: "Hyperpop anthem about my crippling coffee addiction" },
-      { text: "A love song dedicated to my air fryer" },
-      { text: "Sad acoustic ballad about my dying houseplants" },
-      { text: "Triumphant gym bro anthem for leg day" },
-      { text: "A breakup song but both people are relieved" },
-      { text: "Lo‑fi beats for pretending to work from home" },
-      { text: "Country song about my Wi‑Fi going out mid‑meeting" },
-      { text: "Death metal lullaby for my cat who woke me up at 3am" },
-    ];
-  }, [locale]);
-
-  const applyIdea = (text: string) => {
-    setMode("song");
-    setPrompt(text);
-    scrollTo("create");
-    window.setTimeout(() => inputRef.current?.focus(), 120);
-  };
 
   useEffect(() => {
     const onScroll = () => setNavScrolled(window.scrollY > 8);
@@ -394,6 +346,7 @@ export default function Landing() {
     duration?: string;
     color: string;
     prompt: string;
+    author?: PublicProfileCard | null;
   };
 
   const [trending, setTrending] = useState<PublicTrack[]>([]);
@@ -422,11 +375,6 @@ export default function Landing() {
     return gradients[index] ?? gradients[0];
   };
 
-  const isNew = (createdAt: string) => {
-    const diff = Date.now() - new Date(createdAt).getTime();
-    return diff < 24 * 60 * 60 * 1000;
-  };
-
   const classifyTrack = (genre: string, mood: string, name: string) => {
     const hay = `${genre} ${mood} ${name}`.toLowerCase();
     const looksLikeSong = ["song", "vocals", "vocal", "afro", "afrobeats", "pop"].some((k) => hay.includes(k));
@@ -449,7 +397,7 @@ export default function Landing() {
 
   useEffect(() => {
     let cancelled = false;
-    const cacheKey = "producerhit_landing_gen_cards_v1";
+    const cacheKey = "producerhit_landing_gen_cards_v2";
     const seedKey = "producerhit_landing_gen_cards_seed";
 
     try {
@@ -469,28 +417,12 @@ export default function Landing() {
 
     void (async () => {
       try {
-        const rows = await fetchPublicLoops({ limit: 32, timeoutMs: 8000 });
+        const rows = await fetchPublicLoops({ limit: 48, timeoutMs: 8000, playableOnly: true });
         if (cancelled) return;
 
         const pool: GeneratorSideCard[] = rows
           .filter((r) => typeof r.id === "string")
-          .filter((r) => {
-            const stemsUrlObj = (() => {
-              if (r.stems_url && typeof r.stems_url === "object") return r.stems_url as Record<string, unknown>;
-              if (typeof r.stems_url === "string") {
-                const raw = r.stems_url.trim();
-                if (!raw) return null;
-                try {
-                  const parsed = JSON.parse(raw) as unknown;
-                  return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
-                } catch {
-                  return null;
-                }
-              }
-              return null;
-            })();
-            return isPlayablePublicLoop(r.audio_url, stemsUrlObj);
-          })
+          .filter((r) => isPlayablePublicLoop(r.audio_url, r.stems_url))
           .map((r) => {
             const name = (r.name ?? "Untitled").trim() || "Untitled";
             const genre = (r.genre ?? "").trim();
@@ -583,11 +515,6 @@ export default function Landing() {
     };
   }, []);
 
-  const heroCovers = useMemo(() => {
-    const base = trending.length ? trending : placeholderTrending;
-    return base.slice(0, 9);
-  }, [placeholderTrending, trending]);
-
   const handlePlay = (track: { id: string; audioUrl: string | null; stemsUrl?: Record<string, unknown> | null; name: string; prompt: string; genre: string | null; mood: string | null; bpm: number | null }) => {
     if (track.id.startsWith("ph-")) {
       toast(locale === "fr" ? "Aperçu bientôt disponible" : "Preview coming soon");
@@ -630,14 +557,16 @@ export default function Landing() {
       }
 
       if (taskId) {
-        let resolved = "";
-        try {
-          resolved = await resolveAceAudioUrl(taskId);
-        } catch (e) {
-          void e;
+        let resolved = await resolveAceAudioUrl(taskId).catch(() => "");
+        if (!resolved) {
+          await new Promise((r) => setTimeout(r, 900));
+          resolved = await resolveAceAudioUrl(taskId).catch(() => "");
         }
         if (resolved) {
           setTrending((prev) => prev.map((t) => (t.id === track.id ? { ...t, audioUrl: resolved } : t)));
+          setGeneratorSideCards((prev) =>
+            prev.map((c) => (c.id === track.id ? { ...c, audioUrl: resolved } : c)),
+          );
           setCurrent(buildLoop(resolved), true);
           return;
         }
@@ -661,12 +590,8 @@ export default function Landing() {
     });
   };
 
-  const playlistItems = useMemo(() => {
-    return trending.filter((t) => isPlayablePublicLoop(t.audioUrl, t.stemsUrl)).slice(0, 6);
-  }, [trending]);
-
   const homeTrendingCards = useMemo(() => {
-    return trending.slice(0, 3);
+    return trending.slice(0, 12);
   }, [trending]);
 
   const repairMyPublicAudioLinks = async () => {
@@ -712,28 +637,16 @@ export default function Landing() {
     }
   };
 
-  const [shouldLoadTrending, setShouldLoadTrending] = useState(false);
+  const [shouldLoadTrending, setShouldLoadTrending] = useState(true);
 
   useEffect(() => {
-    const el = document.getElementById("trending");
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          setShouldLoadTrending(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "480px", threshold: 0.01 },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
+    setShouldLoadTrending(true);
   }, []);
 
   useEffect(() => {
     if (!shouldLoadTrending) return;
     let cancelled = false;
-    const cacheKey = "producerhit_landing_trending_cache_v1";
+    const cacheKey = "producerhit_landing_trending_cache_v2";
     let loadedFromCache = false;
     try {
       const raw = window.sessionStorage.getItem(cacheKey);
@@ -760,7 +673,7 @@ export default function Landing() {
 
     void (async () => {
       try {
-        const rows = await fetchPublicLoops({ limit: 24 });
+        const rows = await fetchPublicLoops({ limit: 48, timeoutMs: 6500, playableOnly: true });
         if (cancelled) return;
         window.clearTimeout(slowTimer);
         setTrendingTimedOut(false);
@@ -806,11 +719,11 @@ export default function Landing() {
               tags,
               color,
               prompt,
+              author: r.author ?? null,
             };
           });
 
-        const playable = mapped.filter((t) => isPlayablePublicLoop(t.audioUrl, t.stemsUrl));
-        const next = mapped.length ? mapped.slice(0, 6) : playable.slice(0, 6);
+        const next = mapped.slice(0, 12);
         setTrending(next);
         try {
           window.sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), items: next }));
@@ -838,71 +751,103 @@ export default function Landing() {
     if (locale === "fr") {
       return [
         {
+          tier: "free" as const,
           name: "Free",
           price: "0€",
           meta: `${PLAN_LIMITS.free} générations / mois`,
-          bullets: [`✓ ${PLAN_LIMITS.free} tracks/mois`, "✓ Download MP3", "✓ Song Mode + Type Beat Mode", "✗ Export WAV"],
+          bullets: [`✓ ${PLAN_LIMITS.free} gen Song + Beat`, "✓ Export MP3 royalty-free", "✓ Bibliothèque cloud", "✗ Export WAV / stems"],
           featured: false,
         },
         {
+          tier: "pro" as const,
           name: "Pro",
           price: "10€/mo",
           meta: "75 générations / mois",
-          bullets: ["✓ 75 tracks/mois", "✓ Export WAV", "✓ Priorité génération", "✓ Usage commercial"],
+          bullets: ["✓ Export WAV + MP3", "✓ Mastering complet", "✓ Usage commercial", "✓ 75 gen / mois"],
           featured: true,
         },
         {
+          tier: "studio" as const,
           name: "Studio",
           price: "30€/mo",
           meta: "250 générations / mois",
-          bullets: ["✓ 250 tracks/mois", "✓ Tout Pro inclus", "✓ Export WAV", "✓ Licence label"],
+          bullets: ["✓ Tout Pro inclus", "✓ 250 gen / mois", "✓ Remix ACE + seeds", "✓ Marge max releases"],
+          featured: false,
+        },
+        {
+          tier: "plus" as const,
+          name: "Plus",
+          price: "89€/mo",
+          meta: `${PLAN_LIMITS.plus} générations / mois`,
+          bullets: [`✓ ${PLAN_LIMITS.plus} gen / mois`, "✓ Priorité & rapidité", "✓ Stems ZIP séparés", "✓ Tout Studio inclus"],
           featured: false,
         },
       ];
     }
     return [
       {
+        tier: "free" as const,
         name: "Free",
         price: "$0",
         meta: `${PLAN_LIMITS.free} generations / month`,
-        bullets: [`✓ ${PLAN_LIMITS.free} tracks/month`, "✓ MP3 download", "✓ Song Mode + Type Beat Mode", "✗ WAV export"],
+        bullets: [`✓ ${PLAN_LIMITS.free} Song + Beat gens`, "✓ Royalty-free MP3", "✓ Cloud library", "✗ WAV / stems export"],
         featured: false,
       },
       {
+        tier: "pro" as const,
         name: "Pro",
         price: "$10/mo",
         meta: "75 generations / month",
-        bullets: ["✓ 75 tracks/month", "✓ WAV export", "✓ Priority generation", "✓ Commercial use"],
+        bullets: ["✓ WAV + MP3 export", "✓ Full mastering", "✓ Stems + commercial use", "✓ 75 gen / month"],
         featured: true,
       },
       {
+        tier: "studio" as const,
         name: "Studio",
         price: "$30/mo",
         meta: "250 generations / month",
-        bullets: ["✓ 250 tracks/month", "✓ Everything in Pro", "✓ WAV export", "✓ Label license"],
+        bullets: ["✓ Everything in Pro", "✓ 250 gen / month", "✓ Remix ACE + seeds", "✓ Max release headroom"],
+        featured: false,
+      },
+      {
+        tier: "plus" as const,
+        name: "Plus",
+        price: "$89/mo",
+        meta: `${PLAN_LIMITS.plus} generations / month`,
+        bullets: [`✓ ${PLAN_LIMITS.plus} gen / month`, "✓ Priority & speed", "✓ Separate stems ZIP", "✓ Everything in Studio"],
         featured: false,
       },
     ];
   }, [locale]);
 
+  const currentPlan = normalizePlan(profile?.plan);
+
   const faqs = useMemo(() => {
     if (locale === "fr") {
       return [
         {
+          q: "ProducerHit est-il un générateur de chansons IA royalty-free ?",
+          a: "Tu peux télécharger tes générations. Pour une release commerciale, respecte toujours les conditions des modèles/providers et les règles des plateformes.",
+        },
+        {
           q: "Usage commercial & propriété ?",
           a: "Tu peux télécharger tes générations. Pour une release commerciale, respecte toujours les conditions des modèles/providers et les règles des plateformes.",
         },
-        { q: "Tu génères des chansons complètes avec voix ?", a: "Oui — Song Mode vise des tracks complètes avec vocals, structure, hooks et couplets." },
-        { q: "C’est quoi Type Beat Mode ?", a: "Des contrôles orientés producteurs (BPM, mood, tags) pour verrouiller un bounce propre et itérer vite." },
-        { q: "C’est rapide ?", a: "La plupart des tracks sortent en ~20 secondes selon la charge et le modèle." },
-        { q: "Je peux télécharger en WAV ?", a: "Oui — l’export WAV est disponible sur Pro/Studio." },
+      { q: "Can I download WAV?", a: "Yes — WAV export is available on Pro/Studio." },
+      { q: "Can I download WAV?", a: "Yes — WAV export is available on Pro/Studio." },
+      { q: "Can I download WAV?", a: "Yes — WAV export is available on Pro/Studio." },
+      { q: "Can I download WAV?", a: "Yes — WAV export is available on Pro/Studio." },
       ];
     }
     return [
+      {
+        q: "Is ProducerHit a royalty-free AI song creator?",
+          a: "Tu peux télécharger tes générations. Pour une release commerciale, respecte toujours les conditions des modèles/providers et les règles des plateformes.",
+      },
       { q: "Commercial use & ownership?", a: "You can download your generations. For commercial releases, always follow the model/provider terms and platform rules." },
-      { q: "Do you generate full songs with vocals?", a: "Yes — Song Mode targets complete tracks with vocals, structure, hooks, and verses." },
-      { q: "What’s Type Beat Mode?", a: "Producer-first controls (BPM, mood, tags) to quickly lock a clean bounce and iterate." },
-      { q: "How fast is it?", a: "Most tracks generate in ~20 seconds depending on load and model." },
+      { q: "Can I download WAV?", a: "Yes — WAV export is available on Pro/Studio." },
+      { q: "Can I download WAV?", a: "Yes — WAV export is available on Pro/Studio." },
+      { q: "Can I download WAV?", a: "Yes — WAV export is available on Pro/Studio." },
       { q: "Can I download WAV?", a: "Yes — WAV export is available on Pro/Studio." },
     ];
   }, [locale]);
@@ -910,15 +855,15 @@ export default function Landing() {
   const [faqOpen, setFaqOpen] = useState<number | null>(0);
 
   return (
-    <div ref={pageRef} className="min-h-screen pk-prism-stage text-white">
+    <div ref={pageRef} className="min-h-screen pk-prism-stage pk-prism-stage--landing text-white">
 
       <header
         className={[
-          "sticky top-0 z-20 transition-all",
-          navScrolled ? "pk-prism-nav border-b border-white/10" : "bg-transparent",
+          "pk-landing-header fixed inset-x-0 top-0 z-30 bg-transparent transition-[box-shadow,backdrop-filter] duration-300",
+          navScrolled ? "pk-landing-header--scrolled" : "shadow-none",
         ].join(" ")}
       >
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-5 sm:py-3.5 lg:px-6">
           <BrandLogo />
 
           <nav className="hidden items-center gap-3 sm:flex">
@@ -1033,392 +978,137 @@ export default function Landing() {
         <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
           <LandingPrismScene spot={spot} reduceMotion={reduceMotion} />
         </div>
-        <RevealSection className={`${landingSectionClass()} flex min-h-[calc(100dvh-5rem)] flex-col justify-center sm:min-h-screen`}>
-          <section className="w-full" aria-label="Hero">
-            <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
-              <div className="text-center lg:text-left">
-                <div className="inline-flex items-center justify-center rounded-full y2k-chip pk-prism-chip px-4 py-1.5 text-sm font-semibold text-white/85">
-                  <span className="pk-prism-holo-text">{heroBadge}</span>
-                </div>
-                <h1 className="mt-7 text-balance text-[clamp(2.75rem,9vw,5.4rem)] font-extrabold leading-[0.95] tracking-tight text-white">
-                  {locale === "fr" ? (
-                    <>
-                      <div>Crée des hits</div>
-                      <div className="pk-prism-holo-text">release‑ready.</div>
-                    </>
-                  ) : (
-                    <>
-                      <div>Create hits</div>
-                      <div className="pk-prism-holo-text">that ship.</div>
-                    </>
-                  )}
-                </h1>
-                <div className="mt-5 max-w-xl text-balance text-[clamp(0.95rem,2vw,1.125rem)] leading-relaxed text-white/70 sm:mt-6">
-                  {copy.heroLead}
-                </div>
-                <div className="mt-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/45 sm:mt-4 sm:text-xs sm:tracking-[0.18em]">
-                  {copy.heroTagline}
-                </div>
-
-                <div className="mt-6 grid grid-cols-1 gap-2.5 sm:mt-7 sm:grid-cols-3 sm:gap-3">
-                  <div className="y2k-chip pk-prism-chip flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold text-white/90">
-                    <ShieldCheck className="h-4 w-4 text-[var(--prism-cyan)]" />
-                    {locale === "fr" ? "Libre de droits" : "Royalty-free"}
-                  </div>
-                  <div className="y2k-chip pk-prism-chip flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold text-white/90">
-                    <BadgeCheck className="h-4 w-4 text-[var(--prism-violet)]" />
-                    {locale === "fr" ? "Release-ready" : "Release-ready"}
-                  </div>
-                  <div className="y2k-chip pk-prism-chip flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold text-white/90">
-                    <Sparkles className="h-4 w-4 text-[var(--prism-cyan)]" />
-                    {locale === "fr" ? "Original" : "Original"}
-                  </div>
-                </div>
-
-                <div className="mt-6 grid gap-2 text-left sm:mt-8 sm:grid-cols-2">
-                  {ideaPrompts.slice(0, isMobileViewport ? 4 : 6).map((x) => (
-                    <button
-                      key={x.text}
-                      type="button"
-                      onClick={() => applyIdea(x.text)}
-                      className="y2k-chip pk-prism-chip group inline-flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-white/80 transition-all hover:brightness-110"
-                      aria-label={locale === "fr" ? "Utiliser cette idée de prompt" : "Use this prompt idea"}
-                    >
-                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[linear-gradient(135deg,var(--prism-chrome),var(--prism-cyan))]" aria-hidden />
-                      <span className="min-w-0 truncate">{x.text}</span>
-                    </button>
-                  ))}
-                </div>
-
-                <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
-                  <Link
-                    to={user ? "/dashboard" : "/auth"}
-                    {...attachMagnetic(6)}
-                    className="inline-flex h-[54px] w-full items-center justify-center rounded-full pk-prism-btn px-8 text-base font-semibold text-black transition-[transform,filter] duration-200 ease-out will-change-transform hover:brightness-110 sm:w-auto"
-                  >
-                    {user ? (locale === "fr" ? "Aller au Dashboard →" : "Go to Dashboard →") : locale === "fr" ? "Commencer gratuitement" : "Start creating free"}
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => scrollTo("trending")}
-                    {...attachMagnetic(4)}
-                    className="y2k-chip pk-prism-chip inline-flex h-[54px] w-full items-center justify-center rounded-full px-8 text-base font-semibold text-white transition-[transform,filter] duration-200 ease-out will-change-transform hover:brightness-110 sm:w-auto"
-                  >
-                    {locale === "fr" ? "Écouter ↓" : "Listen ↓"}
-                  </button>
-                </div>
-              </div>
-
-              <div
-                className="mx-auto w-full max-w-xl"
-                style={
-                  reduceMotion
-                    ? undefined
-                    : { transform: `translate3d(${parallax.x * 0.35}px, ${parallax.y * 0.35}px, 0)` }
-                }
-              >
-                <div className="pk-prism-player-card overflow-hidden">
-                  <div className="pk-prism-player-header">
-                    <div className="flex min-w-0 items-center gap-2.5">
-                      <div className="pk-prism-aside-icon h-9 w-9 shrink-0 rounded-xl">
-                        <Music2 className="h-4 w-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="truncate text-[11px] font-extrabold tracking-[0.22em] text-white/90">STUDIO PREVIEW</div>
-                        <div className="truncate text-[11px] font-medium text-white/45">{locale === "fr" ? "Écoute live · communauté" : "Live listen · community"}</div>
-                      </div>
-                    </div>
-                    <div className="pk-prism-live-pill">
-                      <span className="pk-prism-live-dot" style={{ opacity: isPlaying ? 1 : 0.35 }} />
-                      <span className="text-[11px] font-semibold text-white/75">{isPlaying ? "LIVE" : "READY"}</span>
-                    </div>
-                  </div>
-                  <div className="p-4 sm:p-5">
-                    <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
-                      <div className="flex items-center gap-3">
-                        {current ? (
-                          <div
-                            className="pk-prism-cover relative h-14 w-14 shrink-0 overflow-hidden rounded-xl"
-                            style={{ background: coverGradient(current) }}
-                          >
-                            <img
-                              src={coverImageUrl(current)}
-                              alt=""
-                              className="absolute inset-0 h-full w-full object-cover"
-                              loading="lazy"
-                              decoding="async"
-                              referrerPolicy="no-referrer"
-                            />
-                          </div>
-                        ) : (
-                          <div className="pk-prism-aside-icon flex h-14 w-14 shrink-0 items-center justify-center rounded-xl">
-                            <Music2 className="h-6 w-6" />
-                          </div>
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <div className="text-[10px] font-semibold tracking-[0.2em] text-white/45">NOW PLAYING</div>
-                          <div className="mt-1 truncate text-sm font-semibold text-white">
-                            {current?.name ?? (locale === "fr" ? "Clique Play sur un track" : "Click Play on a track")}
-                          </div>
-                          <div className="mt-1 text-[11px] font-medium text-white/45">
-                            {formatTime(currentTimeSec)} / {formatTime(durationSec)}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="mt-4">
-                        <WaveformVisualizer isPlaying={isPlaying} barCount={isMobileViewport ? 24 : 40} variant="prism" />
-                      </div>
-                      <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-                        <div className="h-full bg-[linear-gradient(90deg,var(--prism-chrome),var(--prism-cyan),var(--prism-violet))]" style={{ width: `${Math.round(Math.max(0, Math.min(1, progress)) * 100)}%` }} />
-                      </div>
-                    </div>
-
-                    <div className="mt-4 flex items-center justify-between gap-3">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const idx = queueIndex - 1;
-                          const prevLoop = idx >= 0 ? queue[idx] : null;
-                          if (!prevLoop?.audioUrl?.trim()) return;
-                          setQueue(queue, idx, true, queueSource ?? "landing_deck");
-                        }}
-                        disabled={queueIndex <= 0}
-                        className="pk-prism-player-btn inline-flex h-11 w-11 items-center justify-center rounded-2xl disabled:opacity-50"
-                        aria-label={locale === "fr" ? "Précédent" : "Previous"}
-                      >
-                        <SkipBack className="h-4 w-4" />
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const firstPlayable = playlistItems.find((t) => isPlayablePublicLoop(t.audioUrl, t.stemsUrl)) ?? null;
-                          if (!current?.audioUrl?.trim() && firstPlayable) {
-                            handlePlay(firstPlayable);
-                            return;
-                          }
-                          setPlaying(!isPlaying);
-                        }}
-                        className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-2xl pk-prism-btn px-4 text-sm font-extrabold tracking-[0.12em] text-black transition-all hover:brightness-110"
-                        aria-label={isPlaying ? (locale === "fr" ? "Pause" : "Pause") : locale === "fr" ? "Play" : "Play"}
-                      >
-                        {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                        {isPlaying ? (locale === "fr" ? "PAUSE" : "PAUSE") : "PLAY"}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const idx = queueIndex + 1;
-                          const nextLoop = idx < queue.length ? queue[idx] : null;
-                          if (!nextLoop?.audioUrl?.trim()) return;
-                          setQueue(queue, idx, true, queueSource ?? "landing_deck");
-                        }}
-                        disabled={queueIndex >= queue.length - 1}
-                        className="pk-prism-player-btn inline-flex h-11 w-11 items-center justify-center rounded-2xl disabled:opacity-50"
-                        aria-label={locale === "fr" ? "Suivant" : "Next"}
-                      >
-                        <SkipForward className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-4 pk-prism-player-card overflow-hidden">
-                  <div className="pk-prism-player-header">
-                    <div className="min-w-0">
-                      <div className="truncate text-[11px] font-extrabold tracking-[0.22em] text-white/90">{locale === "fr" ? "PLAYLIST" : "PLAYLIST"}</div>
-                      <div className="truncate text-[11px] font-medium text-white/45">{locale === "fr" ? "Picks du moment" : "Current picks"}</div>
-                    </div>
-                    <div className="text-[11px] font-semibold text-white/45">{(trending.length ? trending : placeholderTrending).length} tracks</div>
-                  </div>
-                  <div className="p-3">
-                    <div className="grid gap-2">
-                      {playlistItems.map((t, idx) => {
-                        const loopForCover: Loop = {
-                          id: t.id,
-                          name: t.name,
-                          genre: t.genre ?? "",
-                          influence: "No Influence",
-                          key: "",
-                          scale: "",
-                          bpm: typeof t.bpm === "number" ? t.bpm : 0,
-                          loopLength: "8 bars",
-                          swing: 0,
-                          mood: t.mood ?? "",
-                          energyLevel: "",
-                          reverb: "",
-                          prompt: t.prompt,
-                          audioUrl: t.audioUrl,
-                          seed: typeof t.seed === "number" ? t.seed : null,
-                          details: null,
-                          stemsUrl: null,
-                          isSaved: false,
-                          isPublic: true,
-                          createdAt: t.createdAt ?? new Date().toISOString(),
-                        };
-                        const bg = coverGradient(loopForCover);
-                        const url = coverImageUrl(loopForCover);
-                        const playable = isPlayablePublicLoop(t.audioUrl, t.stemsUrl);
-                        return (
-                          <div key={`${t.id}-${idx}`} className="y2k-chip pk-prism-chip flex items-center gap-3 rounded-2xl px-3 py-2">
-                            <button
-                              type="button"
-                              onClick={() => handlePlay(t)}
-                              className="group flex min-w-0 flex-1 items-center gap-3 text-left transition-all hover:brightness-110"
-                              aria-label={locale === "fr" ? "Écouter l’aperçu" : "Play preview"}
-                            >
-                              <div className="relative h-11 w-11 overflow-hidden rounded-xl border border-white/10" style={{ background: bg }}>
-                                <img
-                                  src={url}
-                                  alt=""
-                                  loading="lazy"
-                                  decoding="async"
-                                  referrerPolicy="no-referrer"
-                                  className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-300"
-                                  onLoad={(e) => {
-                                    e.currentTarget.style.opacity = "1";
-                                  }}
-                                  onError={(e) => {
-                                    e.currentTarget.style.display = "none";
-                                  }}
-                                />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="truncate text-sm font-semibold text-white">{t.name}</div>
-                                <div className="mt-0.5 truncate text-[11px] font-semibold text-white/55">
-                                  {[t.genre ?? "", t.mood ?? "", t.bpm ? `${t.bpm} BPM` : ""].filter(Boolean).join(" · ")}
-                                </div>
-                              </div>
-                              <div className="shrink-0 text-[11px] font-extrabold tracking-[0.12em] text-white/70">{playable ? "PLAY" : "—"}</div>
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => applyTrackPrompt(t.prompt, t.kind)}
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-black/20 text-white/80 transition-all hover:brightness-110"
-                              aria-label={locale === "fr" ? "Remixer" : "Remix"}
-                            >
-                              <Sparkles className="h-4 w-4 text-[#a78bfa]" />
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    <div className="mt-3 grid grid-cols-6 gap-2">
-                      {heroCovers.map((t) => {
-                        const loopForCover: Loop = {
-                          id: t.id,
-                          name: t.name,
-                          genre: t.genre ?? "",
-                          influence: "No Influence",
-                          key: "",
-                          scale: "",
-                          bpm: typeof t.bpm === "number" ? t.bpm : 0,
-                          loopLength: "8 bars",
-                          swing: 0,
-                          mood: t.mood ?? "",
-                          energyLevel: "",
-                          reverb: "",
-                          prompt: t.prompt,
-                          audioUrl: t.audioUrl,
-                          seed: typeof t.seed === "number" ? t.seed : null,
-                          details: null,
-                          stemsUrl: null,
-                          isSaved: false,
-                          isPublic: true,
-                          createdAt: t.createdAt ?? new Date().toISOString(),
-                        };
-                        const bg = coverGradient(loopForCover);
-                        const url = coverImageUrl(loopForCover);
-                        return (
-                          <div key={t.id} className="relative aspect-square overflow-hidden rounded-xl border border-white/10" style={{ background: bg }}>
-                            <img
-                              src={url}
-                              alt=""
-                              loading="lazy"
-                              decoding="async"
-                              referrerPolicy="no-referrer"
-                              className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-300"
-                              onLoad={(e) => {
-                                e.currentTarget.style.opacity = "1";
-                              }}
-                              onError={(e) => {
-                                e.currentTarget.style.display = "none";
-                              }}
-                            />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              </div>
+        <RevealSection className={landingFlowSectionClass()}>
+          <section className="pk-landing-flow__stack w-full" aria-label="Hero">
+            <div className="pk-landing-flow__intro mx-auto w-full max-w-2xl text-center">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/40">
+                {copy.heroTagline}
+              </p>
+              <HeroTypewriterPrompt locale={locale} reduceMotion={reduceMotion} className="mt-2" />
+              <p className="mx-auto mt-2 max-w-lg text-pretty text-xs leading-relaxed text-white/45 sm:text-[13px]">
+                {copy.heroLead}
+              </p>
             </div>
-          </section>
 
-          <LandingGenerator
-            locale={locale}
-            mode={mode}
-            setMode={setMode}
-            prompt={prompt}
-            setPrompt={setPrompt}
-            placeholders={placeholders}
-            placeholderIndex={placeholderIndex}
-            inputRef={inputRef}
-            focused={focused}
-            setFocused={setFocused}
-            generating={generating}
-            onGenerate={onGenerate}
-            beatArtist={beatArtist}
-            setBeatArtist={setBeatArtist}
-            beatBpm={beatBpm}
-            setBeatBpm={setBeatBpm}
-            beatMood={beatMood}
-            setBeatMood={setBeatMood}
-            beatGenres={beatGenres}
-            toggleGenre={toggleGenre}
-            sideCards={generatorSideCards}
-            activeCardId={current?.id ?? null}
-            isPlaying={isPlaying}
-            onPlayCard={handlePlaySideCard}
-          />
+            <div className="pk-landing-flow__handoff" aria-hidden />
+
+            <LandingGenerator
+              embedded
+              locale={locale}
+              mode={mode}
+              setMode={setMode}
+              prompt={prompt}
+              setPrompt={setPrompt}
+              placeholders={placeholders}
+              placeholderIndex={placeholderIndex}
+              inputRef={inputRef}
+              focused={focused}
+              setFocused={setFocused}
+              generating={generating}
+              onGenerate={onGenerate}
+              beatArtist={beatArtist}
+              setBeatArtist={setBeatArtist}
+              beatBpm={beatBpm}
+              setBeatBpm={setBeatBpm}
+              beatMood={beatMood}
+              setBeatMood={setBeatMood}
+              beatGenres={beatGenres}
+              toggleGenre={toggleGenre}
+              sideCards={generatorSideCards}
+              activeCardId={current?.id ?? null}
+              isPlaying={isPlaying}
+              onPlayCard={handlePlaySideCard}
+            />
+          </section>
         </RevealSection>
 
-        <RevealSection className={landingSectionClass("!py-10 sm:!py-12 md:!py-16")}>
+        <RevealSection className={landingSectionClass("pk-landing-section--trust")}>
           <LogoMarquee locale={locale} />
           <SocialProofStats locale={locale} />
         </RevealSection>
 
-        <RevealSection id="features" className={landingSectionClass()}>
-          <div className="text-center">
-            <h2 className="text-balance text-[clamp(1.5rem,4vw,2.5rem)] font-bold tracking-tight text-white">{copy.featuresTitle}</h2>
-            <p className="mx-auto mt-3 max-w-2xl text-balance text-sm leading-relaxed text-white/55">{copy.featuresLead}</p>
-          </div>
-          <div className="mt-8 grid gap-3 sm:mt-10 sm:gap-4 md:grid-cols-2">
-            {(locale === "fr"
-              ? [
-                  { icon: Mic2, t: "Song Mode", d: "Chansons complètes avec voix, structure et hooks — prêtes à itérer ou release." },
-                  { icon: Keyboard, t: "Type Beat Mode", d: "BPM, mood, tags producteur : verrouille un bounce propre en quelques clics." },
-                  { icon: Zap, t: "Génère en ~20 s", d: "Versions x2, variations seed, regen ciblée — garde ce qui hit." },
-                  { icon: FolderOpen, t: "Catalogue & export", d: "Bibliothèque, MP3/WAV, remix communauté — prêt pour ton DAW." },
-                ]
-              : [
-                  { icon: Mic2, t: "Song Mode", d: "Full songs with vocals, structure, and hooks — ready to iterate or release." },
-                  { icon: Keyboard, t: "Type Beat Mode", d: "BPM, mood, producer tags — lock a clean bounce in a few clicks." },
-                  { icon: Zap, t: "Generate in ~20s", d: "Versions x2, seed variations, targeted regen — keep what hits." },
-                  { icon: FolderOpen, t: "Catalog & export", d: "Library, MP3/WAV, community remix — ready for your DAW." },
-                ]
-            ).map((x) => (
-              <div key={x.t} className="pk-prism-card p-6">
-                <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04]">
-                  <x.icon className="h-5 w-5 text-[var(--prism-cyan)]" strokeWidth={1.75} />
+        <RevealSection className={landingSectionClass()}>
+          <LandingCommunityRail
+            locale={locale}
+            title={copy.communityTitle}
+            lead={copy.communityLead}
+            tracks={homeTrendingCards}
+            loading={trendingLoading || !shouldLoadTrending}
+            activeTrackId={current?.id ?? null}
+            isPlaying={isPlaying}
+            onPlay={handlePlay}
+            onRemix={(t) => applyTrackPrompt(t.prompt, t.kind)}
+            onRefresh={() => setTrendingRefreshKey((k) => k + 1)}
+            footer={
+              !trendingLoading && (trendingError || trendingTimedOut || typeof repairFixedCount === "number") ? (
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#2d2d3d] bg-[#0a0a0f] px-4 py-3">
+                  <div className="text-sm font-semibold text-white/80">
+                    {typeof repairFixedCount === "number"
+                      ? locale === "fr"
+                        ? `Réparation: ${repairFixedCount} lien(s) restauré(s).`
+                        : `Repair: ${repairFixedCount} link(s) restored.`
+                      : trendingError
+                        ? trendingError
+                        : trendingTimedOut
+                          ? locale === "fr"
+                        ? "Chargement lent…"
+                        : "Slow load…"
+                          : ""}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setTrendingRefreshKey((k) => k + 1)}
+                      className="inline-flex h-10 items-center justify-center rounded-full border border-[#2d2d3d] bg-transparent px-5 text-sm font-semibold text-white/80 transition-all hover:border-[#7c3aed]/50 hover:text-white"
+                    >
+                      {locale === "fr" ? "Réessayer" : "Retry"}
+                    </button>
+                    {user ? (
+                      <button
+                        type="button"
+                        onClick={() => void repairMyPublicAudioLinks()}
+                        disabled={repairingPublicLinks}
+                        className={[
+                          "inline-flex h-10 items-center justify-center rounded-full border border-[#2d2d3d] bg-transparent px-5 text-sm font-semibold transition-all",
+                          repairingPublicLinks ? "cursor-not-allowed text-white/40 opacity-70" : "text-white/80 hover:border-[#7c3aed]/50 hover:text-white",
+                        ].join(" ")}
+                      >
+                    {repairingPublicLinks ? (locale === "fr" ? "Réparation…" : "Repairing…") : locale === "fr" ? "Réparer mes Public" : "Repair my Public"}
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
-                <h3 className="mt-4 text-lg font-semibold text-white">{x.t}</h3>
-                <div className="mt-2 text-sm text-white/55">{x.d}</div>
+              ) : null
+            }
+          />
+        </RevealSection>
+
+        <RevealSection id="features" className={landingSectionClass()}>
+          <div className="pk-landing-section-head">
+            <h2 className="pk-landing-section-head__title">{copy.featuresTitle}</h2>
+            <p className="pk-landing-section-head__lead">{copy.featuresLead}</p>
+          </div>
+          <div className="mt-8 grid gap-3 sm:mt-10 sm:gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {landingFeatureCards(locale).map((x, i) => {
+              const icons = [Mic2, Keyboard, Sparkles, Video, Zap, FolderOpen] as const;
+              const Icon = icons[i] ?? Mic2;
+              return (
+              <div key={x.title} className="pk-prism-card p-6">
+                <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04]">
+                  <Icon className="h-5 w-5 text-[var(--prism-cyan)]" strokeWidth={1.75} />
+                </div>
+                <h3 className="mt-4 text-lg font-semibold text-white">{x.title}</h3>
+                <div className="mt-2 text-sm text-white/55">{x.description}</div>
               </div>
-            ))}
+              );
+            })}
+          </div>
+        </RevealSection>
+
+        <RevealSection className={landingSectionClass()}>
+          <div className="grid gap-16 sm:gap-20">
+            <LandingPitchSections locale={locale} user={!!user} />
+            <LandingValueGrid locale={locale} user={!!user} />
           </div>
         </RevealSection>
 
@@ -1427,28 +1117,22 @@ export default function Landing() {
             const steps =
               locale === "fr"
                 ? [
-                    { n: "01", t: "Décris ton son", d: "Prompt + tags. Un seul objectif: trouver le bounce." },
-                    { n: "02", t: "Génère & itère", d: "Variations rapides. Garde ce qui hit, regen le reste." },
-                    { n: "03", t: "Sauvegarde & exporte", d: "Bibliothèque + MP3/WAV. Prêt DAW & release.", note: "MP3 (Free) · WAV (Pro/Studio)" },
+                    { n: "01", t: "Décris ton son", d: "Prompt + tags. Un seul objectif : trouver le bounce." },
+                    { n: "02", t: "Génère & itère", d: "Variations rapides. Garde la meilleure prise, regen le reste." },
+                    { n: "03", t: "Sauvegarde & exporte", d: "Bibliothèque + MP3/WAV royalty-free. Prêt Spotify, DAW & release.", note: "MP3 (Free) · WAV (Pro/Studio)" },
                   ]
                 : [
-                    { n: "01", t: "Describe your sound", d: "Prompt + tags. One goal: find the bounce." },
-                    { n: "02", t: "Generate & iterate", d: "Fast variations. Keep what hits, regen the rest." },
-                    { n: "03", t: "Save & export", d: "Library + MP3/WAV. Ready for DAW & release.", note: "MP3 (Free) · WAV (Pro/Studio)" },
+                    { n: "01", t: "Describe your sound", d: "Prompt + genre tags. Song Mode or Type Beat — one clear goal." },
+                    { n: "02", t: "Generate & iterate", d: "Fast variations. Keep the best take, regen the rest." },
+                    { n: "03", t: "Save & export", d: "Library + royalty-free MP3/WAV. Spotify Ready, DAW & release.", note: "MP3 (Free) · WAV (Pro/Studio)" },
                   ];
 
             return (
               <div className="pk-bentoFrame">
                 <div className="grid gap-10 lg:grid-cols-2">
                   <div className="lg:sticky lg:top-28">
-                    <h2 className="text-balance text-[clamp(1.75rem,3.2vw,2.25rem)] font-bold tracking-tight text-white">
-                      {locale === "fr" ? "3 étapes. Zéro friction." : "Three steps. Zero friction."}
-                    </h2>
-                    <div className="mt-3 max-w-xl text-balance text-sm text-white/60">
-                      {locale === "fr"
-                        ? "Une expérience premium et moderne, avec un clin d’œil nostalgique. L’objectif: sortir des hits — vite."
-                        : "Premium, modern flow with a nostalgic wink. One goal: ship hits — fast."}
-                    </div>
+                    <h2 className="pk-landing-section-head__title text-left">{copy.howTitle}</h2>
+                    <div className="mt-3 max-w-xl text-sm leading-relaxed text-white/60">{copy.howLead}</div>
 
                     <div className="mt-7">
                       <div className="flex gap-2">
@@ -1506,267 +1190,91 @@ export default function Landing() {
           <VisualCarousel locale={locale} />
         </RevealSection>
 
-        <RevealSection id="trending" className={landingSectionClass()}>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h2 className="text-balance text-[clamp(1.5rem,3.2vw,2.25rem)] font-bold tracking-tight text-white">
-                <span className="pk-prism-holo-text">{copy.communityTitle}</span>
-              </h2>
-              <p className="mt-3 max-w-3xl text-balance text-sm leading-relaxed text-white/60">{copy.communityLead}</p>
-            </div>
-          </div>
-          <div className="mt-6 grid gap-3 sm:mt-8 sm:grid-cols-2 sm:gap-4 md:grid-cols-3">
-            {trendingLoading || !shouldLoadTrending ? (
-              [0, 1, 2].map((i) => (
-                <div key={i} className="pk-prism-card p-4 animate-pulse">
-                  <div className="h-40 rounded-2xl bg-white/5" />
-                  <div className="mt-4 h-4 w-2/3 rounded bg-white/5" />
-                  <div className="mt-3 flex gap-2">
-                    <div className="h-6 w-16 rounded-full bg-white/5" />
-                    <div className="h-6 w-20 rounded-full bg-white/5" />
-                    <div className="h-6 w-14 rounded-full bg-white/5" />
-                  </div>
-                </div>
-              ))
-            ) : (
-              homeTrendingCards.length ? (
-                homeTrendingCards.map((t) => (
-                  <div
-                    key={t.id}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={locale === "fr" ? "Écouter l’aperçu" : "Play preview"}
-                    onClick={() => {
-                      handlePlay(t);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        handlePlay(t);
-                      }
-                    }}
-                    className="group pk-prism-card cursor-pointer p-4 focus:outline-none focus:ring-2 focus:ring-[#b968ff]/40"
-                  >
-                    {(() => {
-                      const loopForCover: Loop = {
-                        id: t.id,
-                        name: t.name,
-                        genre: t.genre ?? "",
-                        influence: "No Influence",
-                        key: "",
-                        scale: "",
-                        bpm: typeof t.bpm === "number" ? t.bpm : 0,
-                        loopLength: "8 bars",
-                        swing: 0,
-                        mood: t.mood ?? "",
-                        energyLevel: "",
-                        reverb: "",
-                        prompt: t.prompt,
-                        audioUrl: t.audioUrl,
-                        seed: typeof t.seed === "number" ? t.seed : null,
-                        details: null,
-                        stemsUrl: null,
-                        isSaved: false,
-                        isPublic: true,
-                        createdAt: t.createdAt ?? new Date().toISOString(),
-                      };
-                      const bg = coverGradient(loopForCover);
-                      const url = coverImageUrl(loopForCover);
-                      return (
-                        <div className="pk-prism-cover relative h-48 overflow-hidden" style={{ background: bg }}>
-                          <img
-                            src={url}
-                            alt=""
-                            loading="lazy"
-                            decoding="async"
-                            referrerPolicy="no-referrer"
-                            className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-300"
-                            onLoad={(e) => {
-                              e.currentTarget.style.opacity = "1";
-                            }}
-                            onError={(e) => {
-                              e.currentTarget.style.display = "none";
-                            }}
-                          />
-                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.10),rgba(255,255,255,0)_52%)]" />
-                          <div className="absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,0.55)] via-[rgba(0,0,0,0.10)] to-transparent pointer-events-none" />
-                          <div className="absolute left-3 top-3 rounded-full border border-[#2d2d3d] bg-[rgba(10,10,15,0.7)] px-3 py-1 text-[11px] font-semibold text-white">
-                            {t.badge}
-                          </div>
-                          {t.createdAt && isNew(t.createdAt) ? (
-                            <div className="absolute right-3 top-3 inline-flex items-center gap-2 rounded-full border border-[#2d2d3d] bg-[rgba(10,10,15,0.7)] px-3 py-1 text-[11px] font-semibold text-white">
-                              <span className="h-2 w-2 rounded-full bg-[#22c55e]" />
-                              {locale === "fr" ? "Nouveau" : "New"}
-                            </div>
-                          ) : null}
-                        </div>
-                      );
-                    })()}
-                    <div className="mt-4 flex items-center justify-between gap-4">
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-semibold text-white">
-                          {t.name.length > 30 ? `${t.name.slice(0, 27)}…` : t.name}
-                        </div>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {t.tags.map((x) => (
-                            <span key={x} className="rounded-full border border-[#2d2d3d] bg-[#0a0a0f] px-3 py-1 text-[11px] font-semibold text-[#6b7280]">
-                              {x}
-                            </span>
-                          ))}
-                        </div>
-                        {t.duration ? <div className="mt-3 text-xs font-semibold text-white/60">{t.duration}</div> : null}
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handlePlay(t);
-                            }}
-                            className={[
-                              "inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold transition-all",
-                              isPlayablePublicLoop(t.audioUrl, t.stemsUrl)
-                                ? "pk-prism-btn text-black hover:brightness-110"
-                                : "border border-white/10 bg-white/5 text-white/70 hover:border-[#b968ff]/50 hover:text-white",
-                            ].join(" ")}
-                            aria-label={current?.id === t.id && isPlaying ? (locale === "fr" ? "Pause" : "Pause") : locale === "fr" ? "Écouter" : "Listen"}
-                          >
-                            {current?.id === t.id && isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                            {current?.id === t.id && isPlaying ? (locale === "fr" ? "Pause" : "Pause") : locale === "fr" ? "Écouter" : "Listen"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              applyTrackPrompt(t.prompt, t.kind);
-                            }}
-                            className="inline-flex h-10 items-center gap-2 rounded-full border border-[#2d2d3d] bg-[#0a0a0f] px-4 text-sm font-semibold text-white/70 transition-all hover:border-[#7c3aed]/50 hover:text-white"
-                            aria-label={locale === "fr" ? "Utiliser ce prompt" : "Use this prompt"}
-                          >
-                            <Sparkles className="h-4 w-4 text-[#a78bfa]" />
-                            {locale === "fr" ? "Remixer" : "Remix"}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="md:col-span-3 pk-prism-card p-6">
-                  <div className="text-sm font-semibold text-white">
-                    {locale === "fr" ? "Aucun aperçu audio disponible pour le moment" : "No audio previews available right now"}
-                  </div>
-                  <div className="mt-2 text-sm text-white/60">
-                    {locale === "fr"
-                      ? "Les tracks publiques apparaissent ici. Génère un nouveau track pour alimenter la communauté."
-                      : "Public tracks show up here. Generate a new track to feed the community."}
-                  </div>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setTrendingRefreshKey((k) => k + 1)}
-                      className="inline-flex h-10 items-center justify-center rounded-full border border-[#2d2d3d] bg-transparent px-5 text-sm font-semibold text-white/80 transition-all hover:border-[#7c3aed]/50 hover:text-white"
-                    >
-                      {locale === "fr" ? "Rafraîchir" : "Refresh"}
-                    </button>
-                    <Link
-                      to="/community"
-                      className="inline-flex h-10 items-center justify-center rounded-full bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] px-5 text-sm font-semibold text-white shadow-[0_0_40px_rgba(124,58,237,0.25)] transition-all hover:brightness-110"
-                    >
-                      {locale === "fr" ? "Voir la communauté" : "Open community"}
-                    </Link>
-                  </div>
-                </div>
-              )
-            )}
-          </div>
-          {!trendingLoading && (trendingError || trendingTimedOut || typeof repairFixedCount === "number") ? (
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#2d2d3d] bg-[#0a0a0f] px-4 py-3">
-              <div className="text-sm font-semibold text-white/80">
-                {typeof repairFixedCount === "number"
-                  ? locale === "fr"
-                    ? `Réparation: ${repairFixedCount} lien(s) restauré(s).`
-                    : `Repair: ${repairFixedCount} link(s) restored.`
-                  : trendingError
-                    ? trendingError
-                    : trendingTimedOut
-                      ? locale === "fr"
-                        ? "Chargement lent…"
-                        : "Slow load…"
-                      : ""}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => setTrendingRefreshKey((k) => k + 1)}
-                  className="inline-flex h-10 items-center justify-center rounded-full border border-[#2d2d3d] bg-transparent px-5 text-sm font-semibold text-white/80 transition-all hover:border-[#7c3aed]/50 hover:text-white"
-                >
-                  {locale === "fr" ? "Réessayer" : "Retry"}
-                </button>
-                {user ? (
-                  <button
-                    type="button"
-                    onClick={() => void repairMyPublicAudioLinks()}
-                    disabled={repairingPublicLinks}
-                    className={[
-                      "inline-flex h-10 items-center justify-center rounded-full border border-[#2d2d3d] bg-transparent px-5 text-sm font-semibold transition-all",
-                      repairingPublicLinks ? "cursor-not-allowed text-white/40 opacity-70" : "text-white/80 hover:border-[#7c3aed]/50 hover:text-white",
-                    ].join(" ")}
-                  >
-                    {repairingPublicLinks ? (locale === "fr" ? "Réparation…" : "Repairing…") : locale === "fr" ? "Réparer mes Public" : "Repair my Public"}
-                  </button>
-                ) : null}
-              </div>
-            </div>
-          ) : null}
-        </RevealSection>
 
         <RevealSection className={landingSectionClass()}>
-          <div className="text-center">
-            <div className="text-balance text-[clamp(1.75rem,4vw,2.5rem)] font-bold tracking-tight">
+          <div className="pk-landing-section-head">
+            <h2 className="pk-landing-section-head__title">
               <span className="pk-prism-holo-text">{locale === "fr" ? "Tarifs" : "Pricing"}</span>
-            </div>
+            </h2>
           </div>
-          <div className="mt-10 grid gap-4 md:grid-cols-3">
-            {pricing.map((p) => (
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4 xl:items-stretch">
+            {pricing.map((p) => {
+              const tier = p.tier;
+              const isCurrent = tier === currentPlan;
+              const recommended = isRecommendedPlan(tier, currentPlan);
+              const cta = pricingCtaMeta(tier, currentPlan, locale, { isLoggedIn: !!user });
+              const ctaHref = pricingCtaHref(tier, currentPlan, !!user);
+
+              return (
               <div
                 key={p.name}
                 className={[
-                  "pk-prism-card p-6",
-                  p.featured ? "border-[#b968ff]/60 shadow-[0_0_70px_rgba(186,104,255,0.18)]" : "",
+                  "pk-prism-card flex h-full min-h-[400px] flex-col p-6",
+                  recommended ? "border-[#b968ff]/60 shadow-[0_0_70px_rgba(186,104,255,0.18)]" : "",
+                  isCurrent ? "ring-1 ring-[#7c3aed]/35" : "",
                 ].join(" ")}
               >
-                <div className="flex items-center justify-between">
+                <div className="flex min-h-7 items-center justify-between gap-2">
                   <div className="text-sm font-semibold text-white">{p.name}</div>
-                  {p.featured ? (
-                    <div className="rounded-full border border-[#7c3aed44] bg-[#7c3aed11] px-2 py-1 text-[11px] font-semibold text-[#a78bfa]">
+                  {isCurrent ? (
+                    <div className="shrink-0 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-1 text-[10px] font-semibold leading-none text-emerald-300">
+                      {locale === "fr" ? "Actif" : "Active"}
+                    </div>
+                  ) : recommended ? (
+                    <div className="shrink-0 rounded-full border border-[#7c3aed44] bg-[#7c3aed11] px-2 py-1 text-[11px] font-semibold leading-none text-[#a78bfa]">
                       {locale === "fr" ? "Le plus populaire" : "Most popular"}
                     </div>
-                  ) : null}
+                  ) : (
+                    <span className="h-6 w-6 shrink-0" aria-hidden />
+                  )}
                 </div>
-                <div className="mt-4 text-3xl font-extrabold tracking-tight text-white">{p.price}</div>
-                <div className="mt-2 text-sm font-semibold text-[#6b7280]">{p.meta}</div>
-                <div className="mt-5 grid gap-2 text-sm text-white/80">
+                <div className="mt-4 text-3xl font-extrabold leading-none tracking-tight text-white">{p.price}</div>
+                <div className="mt-2 text-sm font-semibold leading-snug text-[#6b7280]">{p.meta}</div>
+                <div className="mt-5 flex flex-1 flex-col gap-2.5 text-sm leading-snug text-white/80">
                   {p.bullets.map((b) => (
-                    <div key={b} className="flex items-center gap-2">
-                      <span className={b.startsWith("✓") ? "text-[#a78bfa]" : "text-[#6b7280]"}>{b.slice(0, 1)}</span>
-                      <span className={b.startsWith("✗") ? "text-[#6b7280]" : ""}>{b.slice(2)}</span>
+                    <div key={b} className="flex items-start gap-2.5">
+                      <span className={`mt-0.5 shrink-0 ${b.startsWith("✓") ? "text-[#a78bfa]" : "text-[#6b7280]"}`}>{b.slice(0, 1)}</span>
+                      <span className={`min-w-0 flex-1 ${b.startsWith("✗") ? "text-[#6b7280]" : ""}`}>{b.slice(2)}</span>
                     </div>
                   ))}
                 </div>
-                <div className="mt-6">
+                <div className="mt-auto pt-5">
                   <Link
-                    to="/auth"
+                    to={ctaHref}
                     className={[
-                      "inline-flex h-11 w-full items-center justify-center rounded-full text-sm font-semibold transition-all",
-                      p.featured ? "bg-[#7c3aed] text-white hover:bg-[#6d28d9]" : "border border-[#2d2d3d] bg-transparent text-white hover:border-[#7c3aed]/60",
+                      "flex h-11 w-full items-center justify-center rounded-full px-5 text-sm font-semibold leading-none transition-all",
+                      cta.disabled
+                        ? "border border-white/10 bg-white/[0.04] text-white/50 pointer-events-none"
+                        : cta.isPrimary
+                          ? "bg-[#7c3aed] text-white hover:bg-[#6d28d9]"
+                          : "border border-[#2d2d3d] bg-transparent text-white hover:border-[#7c3aed]/60",
                     ].join(" ")}
+                    aria-disabled={cta.disabled}
                   >
-                    {locale === "fr" ? "Essayer gratuit" : "Start Free"}
+                    <span className="truncate text-center">{cta.label}</span>
                   </Link>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
+          <p className="pk-landing-section-head__lead mt-6 text-center">
+            {locale === "fr" ? (
+              <>
+                Paiement Stripe sécurisé · crédits activés instantanément ·{" "}
+                <Link to="/pricing" className="text-[#a78bfa] hover:underline">
+                  voir tous les détails
+                </Link>
+              </>
+            ) : (
+              <>
+                Secure Stripe checkout · credits unlock instantly ·{" "}
+                <Link to="/pricing" className="text-[#a78bfa] hover:underline">
+                  see full details
+                </Link>
+              </>
+            )}
+          </p>
         </RevealSection>
 
         <RevealSection className={landingSectionClass()}>
@@ -1788,7 +1296,7 @@ export default function Landing() {
                   to="/auth"
                   className="inline-flex h-[54px] items-center justify-center rounded-full pk-prism-btn px-8 text-base font-semibold text-black transition-all hover:brightness-110"
                 >
-                  {locale === "fr" ? "Fais ton premier track gratuit →" : "Make your first track free →"}
+                  {copy.ctaButton}
                 </Link>
               </div>
             </div>
@@ -1797,7 +1305,7 @@ export default function Landing() {
 
         <RevealSection className={landingSectionClass()}>
           <div className="pk-prism-card p-5 sm:p-8">
-            <h2 className="text-balance text-[clamp(1.75rem,3.2vw,2.25rem)] font-bold tracking-tight text-white">FAQ</h2>
+            <h2 className="pk-landing-section-head__title text-left">FAQ</h2>
             <div className="mt-6 grid gap-2">
               {faqs.map((f, i) => {
                 const open = faqOpen === i;

@@ -11,7 +11,12 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-const LIMITS = { free: 10, pro: 75, studio: 250 } as const;
+const LIMITS = { free: 10, pro: 75, studio: 250, plus: 1000 } as const;
+
+function normalizeAuthedPlan(plan: string): keyof typeof LIMITS {
+  if (plan === "plus" || plan === "studio" || plan === "pro") return plan;
+  return "free";
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -23,7 +28,7 @@ serve(async (req) => {
     let useIdempotentUsage = false;
     let authedSupabase: ReturnType<typeof createClient> | null = null;
     let authedUserId: string | null = null;
-    let authedPlan: "free" | "pro" | "studio" = "free";
+    let authedPlan: "free" | "pro" | "studio" | "plus" = "free";
 
     const body = (await req.json().catch(() => ({}))) as {
       prompt?: unknown;
@@ -64,7 +69,7 @@ serve(async (req) => {
 
             const { data: profile, error: profileError } = await supabase
               .from("profiles")
-              .select("plan, loops_used_this_month")
+              .select("plan, loops_used_this_month, referral_bonus, level_bonus, daily_bonus_month")
               .eq("id", user.id)
               .single();
 
@@ -72,9 +77,13 @@ serve(async (req) => {
               console.error("Profile error:", profileError.message);
             } else {
               const plan = (typeof profile?.plan === "string" ? profile.plan : "free") as string;
-              authedPlan = plan === "studio" ? "studio" : plan === "pro" ? "pro" : "free";
+              authedPlan = normalizeAuthedPlan(plan);
               const used = typeof profile?.loops_used_this_month === "number" ? profile.loops_used_this_month : 0;
-              const limit = LIMITS[plan as keyof typeof LIMITS] ?? LIMITS.free;
+              const baseLimit = LIMITS[plan as keyof typeof LIMITS] ?? LIMITS.free;
+              const referralBonus = typeof profile?.referral_bonus === "number" ? profile.referral_bonus : 0;
+              const levelBonus = typeof profile?.level_bonus === "number" ? profile.level_bonus : 0;
+              const dailyBonus = typeof profile?.daily_bonus_month === "number" ? profile.daily_bonus_month : 0;
+              const limit = baseLimit + Math.max(0, referralBonus) + Math.max(0, levelBonus) + Math.max(0, dailyBonus);
 
               const { data: existing, error: existingErr } = await supabase
                 .from("generation_usage_keys")
@@ -101,7 +110,7 @@ serve(async (req) => {
             if (resetErr) console.error("reset_loops_usage_if_needed error:", resetErr.message);
             const { data: profile, error: profileError } = await supabase
               .from("profiles")
-              .select("plan, loops_used_this_month")
+              .select("plan, loops_used_this_month, referral_bonus, level_bonus, daily_bonus_month")
               .eq("id", user.id)
               .single();
 
@@ -109,9 +118,13 @@ serve(async (req) => {
               console.error("Profile error:", profileError.message);
             } else {
               const plan = (typeof profile?.plan === "string" ? profile.plan : "free") as string;
-              authedPlan = plan === "studio" ? "studio" : plan === "pro" ? "pro" : "free";
+              authedPlan = normalizeAuthedPlan(plan);
               const used = typeof profile?.loops_used_this_month === "number" ? profile.loops_used_this_month : 0;
-              const limit = LIMITS[plan as keyof typeof LIMITS] ?? LIMITS.free;
+              const baseLimit = LIMITS[plan as keyof typeof LIMITS] ?? LIMITS.free;
+              const referralBonus = typeof profile?.referral_bonus === "number" ? profile.referral_bonus : 0;
+              const levelBonus = typeof profile?.level_bonus === "number" ? profile.level_bonus : 0;
+              const dailyBonus = typeof profile?.daily_bonus_month === "number" ? profile.daily_bonus_month : 0;
+              const limit = baseLimit + Math.max(0, referralBonus) + Math.max(0, levelBonus) + Math.max(0, dailyBonus);
 
               if (used >= limit) {
                 return new Response(
@@ -144,8 +157,8 @@ serve(async (req) => {
 
     if (!prompt) throw new Error("Missing prompt");
 
-    const maxPerMinute = authedPlan === "free" ? 3 : authedPlan === "pro" ? 10 : 20;
-    const minIntervalSeconds = authedPlan === "free" ? 8 : 4;
+    const maxPerMinute = authedPlan === "plus" ? 30 : authedPlan === "studio" ? 20 : authedPlan === "pro" ? 10 : 3;
+    const minIntervalSeconds = authedPlan === "plus" ? 2 : authedPlan === "free" ? 8 : 4;
     const { data: rateRows, error: rateErr } = await authedSupabase.rpc("check_and_bump_generation_rate_limit", {
       p_window_seconds: 60,
       p_max_in_window: maxPerMinute,
@@ -180,7 +193,7 @@ serve(async (req) => {
         const plan = (typeof row?.plan === "string" ? row.plan : "free") as string;
         const used = typeof row?.used === "number" ? row.used : 0;
         const limit = typeof row?.limit === "number" ? row.limit : LIMITS.free;
-        authedPlan = plan === "studio" ? "studio" : plan === "pro" ? "pro" : "free";
+        authedPlan = normalizeAuthedPlan(plan);
         if (!ok) {
           return new Response(
             JSON.stringify({

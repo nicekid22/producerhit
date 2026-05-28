@@ -7,7 +7,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-region",
 };
 
-const LIMITS = { free: 10, pro: 75, studio: 250 } as const;
+const LIMITS = { free: 10, pro: 75, studio: 250, plus: 1000 } as const;
+
+function normalizeAuthedPlan(plan: string): keyof typeof LIMITS {
+  if (plan === "plus" || plan === "studio" || plan === "pro") return plan;
+  return "free";
+}
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -15,6 +20,28 @@ function sleep(ms: number) {
 
 function asString(v: unknown) {
   return typeof v === "string" ? v : "";
+}
+
+function isSafeAceTaskId(tid: string): boolean {
+  return !!tid && tid === tid.replace(/[^a-zA-Z0-9_-]/g, "");
+}
+
+async function findPublicLoopIdByAceTaskId(
+  client: ReturnType<typeof createClient>,
+  tid: string,
+): Promise<string | null> {
+  if (!isSafeAceTaskId(tid)) return null;
+  const { data, error } = await client
+    .from("loops")
+    .select("id")
+    .eq("is_public", true)
+    .or(
+      `stems_url->ace->>taskId.eq.${tid},stems_url->ace->>task_id.eq.${tid},stems_url->>taskId.eq.${tid},stems_url->>task_id.eq.${tid}`,
+    )
+    .limit(1)
+    .maybeSingle();
+  if (error || !data?.id) return null;
+  return typeof data.id === "string" ? data.id : null;
 }
 
 function asNumber(v: unknown) {
@@ -37,6 +64,21 @@ function computeRequestedDurationSec(input: {
   }
   if (input.durationRaw != null) return clampNumber(input.durationRaw, 10, 120);
   return null;
+}
+
+/** ACE quality defaults — keep in sync with src/lib/aceQuality.ts */
+const ACE_SHIFT = 3;
+
+function resolveAceQualityFlags(input: {
+  thinking: boolean | null;
+  useFormat: boolean | null;
+  sampleMode: boolean;
+}) {
+  return {
+    thinking: input.thinking !== false,
+    useFormat: !input.sampleMode && input.useFormat !== false,
+    shift: ACE_SHIFT,
+  };
 }
 
 function toAbsoluteUrl(baseUrl: string, maybePath: string) {
@@ -159,6 +201,232 @@ function loadAceBaseUrls(): string[] {
   return out.length ? out : ["https://api.acemusic.ai"];
 }
 
+async function handleAceRemixMultipart(req: Request, corsHeaders: Record<string, string>) {
+  const requestId = crypto.randomUUID();
+  const supabaseUrl = (Deno.env.get("SUPABASE_URL") ?? "").trim();
+  const supabaseAnonKey = (Deno.env.get("SUPABASE_ANON_KEY") ?? "").trim();
+  const form = await req.formData();
+  const generationKey = asString(form.get("generationKey")) || asString(form.get("generation_key"));
+  const prompt = asString(form.get("prompt")).trim();
+  const lyricsRaw = asString(form.get("lyrics"));
+  const taskTypeRaw = asString(form.get("taskType")) || asString(form.get("task_type"));
+  const taskType = taskTypeRaw === "repaint" ? "repaint" : "cover";
+  const coverStrengthRaw = Number(asString(form.get("coverStrength")) || "0.65");
+  const coverStrength = clampNumber(Number.isFinite(coverStrengthRaw) ? coverStrengthRaw : 0.65, 0.15, 1);
+  const instrumental = asString(form.get("instrumental")) !== "0";
+  const duration = asNumber(form.get("duration"));
+  const bpm = asNumber(form.get("bpm"));
+  const audioFormatRaw = (asString(form.get("audioFormat")) || asString(form.get("audio_format"))).trim().toLowerCase();
+  const src = form.get("src_audio");
+  if (!(src instanceof File) || src.size <= 0) {
+    return new Response(JSON.stringify({ error: "Missing src_audio file" }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  if (src.size > 12 * 1024 * 1024) {
+    return new Response(JSON.stringify({ error: "Audio file too large (max 12 MB)" }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  if (!prompt) {
+    return new Response(JSON.stringify({ error: "Missing prompt" }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const authHeader = req.headers.get("Authorization") ?? req.headers.get("authorization");
+  if (!authHeader?.startsWith("Bearer ") || !supabaseUrl || !supabaseAnonKey) {
+    return new Response(JSON.stringify({ error: "Authentication required" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  const token = authHeader.replace("Bearer ", "").trim();
+  const authedSupabase = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: `Bearer ${token}` } } });
+  const {
+    data: { user },
+    error: authError,
+  } = await authedSupabase.auth.getUser(token);
+  if (authError || !user) {
+    return new Response(JSON.stringify({ error: "Authentication required" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  let useIdempotentUsage = false;
+  if (generationKey) {
+    const { data: reserveData, error: reserveError } = await authedSupabase.rpc("check_loops_usage_idempotent", { p_key: generationKey });
+    if (reserveError) {
+      return new Response(JSON.stringify({ error: reserveError.message }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const row = Array.isArray(reserveData) ? (reserveData[0] as { ok?: boolean; limit?: number; used?: number; plan?: string } | undefined) : null;
+    if (!row?.ok) {
+      return new Response(
+        JSON.stringify({
+          error: `Monthly limit reached (${row?.limit ?? "?"} beats for ${row?.plan ?? "free"} plan). Upgrade to generate more.`,
+          limitReached: true,
+          plan: row?.plan ?? "free",
+          limit: row?.limit,
+          used: row?.used,
+        }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    useIdempotentUsage = true;
+  } else {
+    await authedSupabase.rpc("reset_loops_usage_if_needed");
+    const { data: profile } = await authedSupabase.from("profiles").select("plan, loops_used_this_month, referral_bonus, level_bonus, daily_bonus_month").eq("id", user.id).single();
+    const plan = typeof profile?.plan === "string" ? profile.plan : "free";
+    const used = typeof profile?.loops_used_this_month === "number" ? profile.loops_used_this_month : 0;
+    const base = LIMITS[plan as keyof typeof LIMITS] ?? LIMITS.free;
+    const bonus =
+      Math.max(0, profile?.referral_bonus ?? 0) + Math.max(0, profile?.level_bonus ?? 0) + Math.max(0, profile?.daily_bonus_month ?? 0);
+    const limit = base + bonus;
+    if (used >= limit) {
+      return new Response(JSON.stringify({ error: `Monthly limit reached (${limit} beats for ${plan} plan).`, limitReached: true, plan, limit, used }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+  }
+
+  const { data: profilePlan } = await authedSupabase.from("profiles").select("plan").eq("id", user.id).single();
+  const authedPlan = normalizeAuthedPlan(typeof profilePlan?.plan === "string" ? profilePlan.plan : "free");
+  const requestedAudioFormat =
+    audioFormatRaw === "wav" || audioFormatRaw === "flac" || audioFormatRaw === "mp3" ? audioFormatRaw : "mp3";
+  const audioFormat = authedPlan === "free" ? "mp3" : requestedAudioFormat;
+  const effectiveLyrics = instrumental ? "" : lyricsRaw.trim();
+  const aceTargets = getAceTargets(generationKey || requestId);
+  if (!aceTargets.length) {
+    return new Response(JSON.stringify({ error: "ACE_STEP_API_KEY not set" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 150_000);
+  let audioUrl = "";
+  let meta: Record<string, unknown> | null = null;
+
+  try {
+    const startedAt = Date.now();
+    const attemptOnce = async (apiKey: string, baseUrl: string) => {
+      const paramObj: Record<string, unknown> = {
+        task_type: taskType,
+        audio_cover_strength: coverStrength,
+        audio_format: audioFormat,
+      };
+      if (duration && duration > 0) paramObj.duration = clampNumber(duration, 10, 240);
+      if (bpm && bpm > 0) paramObj.bpm = clampNumber(Math.round(bpm), 30, 200);
+
+      const releaseForm = new FormData();
+      releaseForm.append("env", "production");
+      releaseForm.append("ai_token", apiKey);
+      releaseForm.append("prompt", prompt);
+      releaseForm.append("lyrics", instrumental ? "[Instrumental]" : effectiveLyrics || "[Instrumental]");
+      releaseForm.append("model_name", "acestep-v15-xl-turbo");
+      releaseForm.append("app", "studio-web");
+      releaseForm.append("task_type", taskType);
+      releaseForm.append("src_audio", src, src.name || "source.mp3");
+      releaseForm.append("param_obj", JSON.stringify(paramObj));
+
+      const createRes = await fetch(`${baseUrl}/release_task`, {
+        method: "POST",
+        headers: { Accept: "application/json" },
+        body: releaseForm,
+        signal: controller.signal,
+      });
+      const createText = await readTextSafe(createRes);
+      if (!createRes.ok) throw new Error(`remix release_task failed (${createRes.status}): ${createText}`);
+      const createJson = JSON.parse(createText) as unknown;
+      const taskId = asString(
+        (createJson as { data?: unknown } | null)?.data && typeof (createJson as { data?: unknown }).data === "object"
+          ? ((createJson as { data: { task_id?: unknown } }).data.task_id as unknown)
+          : "",
+      );
+      if (!taskId) throw new Error("ACE API did not return a task_id");
+
+      while (Date.now() - startedAt < 140_000) {
+        const pollParams = new URLSearchParams();
+        pollParams.append("ai_token", apiKey);
+        pollParams.append("task_id_list", JSON.stringify([taskId]));
+        pollParams.append("app", "studio-web");
+        const pollRes = await fetch(`${baseUrl}/query_result`, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
+          body: pollParams,
+          signal: controller.signal,
+        });
+        const pollText = await readTextSafe(pollRes);
+        if (!pollRes.ok) throw new Error(`ACE query_result failed (${pollRes.status}): ${pollText}`);
+        const pollJson = JSON.parse(pollText) as unknown;
+        const item = Array.isArray((pollJson as { data?: unknown } | null)?.data) ? (pollJson as { data: unknown[] }).data[0] : null;
+        const statusNum = item && typeof (item as { status?: unknown }).status === "number" ? ((item as { status: number }).status as number) : 0;
+        if (statusNum === 1) {
+          const resultStr = asString((item as { result?: unknown } | null)?.result);
+          const results = JSON.parse(resultStr) as unknown;
+          const first = Array.isArray(results) ? results[0] : null;
+          const firstObj = first && typeof first === "object" && first !== null ? (first as Record<string, unknown>) : null;
+          const file = first && typeof (first as { file?: unknown }).file === "string" ? ((first as { file: string }).file as string) : "";
+          audioUrl = toAbsoluteUrl(baseUrl, file);
+          if (!audioUrl) throw new Error("remix returned no audio file");
+          meta = {
+            taskId,
+            task_id: taskId,
+            prompt,
+            lyrics: effectiveLyrics,
+            bpm,
+            duration,
+            audioFormat,
+            remixTaskType: taskType,
+            coverStrength,
+          };
+          if (firstObj) meta.result = firstObj;
+          return;
+        }
+        if (statusNum === 2) throw new Error("remix task failed");
+        await sleep(2000);
+      }
+      throw new Error("remix timed out");
+    };
+
+    let lastErr: unknown = null;
+    for (const t of aceTargets) {
+      try {
+        await attemptOnce(t.apiKey, t.baseUrl);
+        lastErr = null;
+        break;
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+    if (!audioUrl) {
+      const msg = lastErr instanceof Error ? lastErr.message : "remix failed";
+      throw new Error(msg);
+    }
+  } finally {
+    clearTimeout(timer);
+  }
+
+  const { error: bumpErr } =
+    useIdempotentUsage && generationKey
+      ? await authedSupabase.rpc("bump_loops_usage_idempotent", { p_key: generationKey })
+      : await authedSupabase.rpc("bump_loops_usage");
+  if (bumpErr) console.error("bump_loops_usage error:", bumpErr.message);
+
+  return new Response(JSON.stringify({ audioUrl, meta, engine: "ace-step-remix" }), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
 function hashToIndex(input: string, mod: number) {
   let h = 0;
   for (let i = 0; i < input.length; i++) h = (h * 31 + input.charCodeAt(i)) >>> 0;
@@ -191,12 +459,25 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  const contentType = req.headers.get("content-type") ?? "";
+  if (contentType.includes("multipart/form-data")) {
+    try {
+      return await handleAceRemixMultipart(req, corsHeaders);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return new Response(JSON.stringify({ error: message }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+  }
+
   try {
     const requestId = crypto.randomUUID();
     let useIdempotentUsage = false;
     let authedSupabase: ReturnType<typeof createClient> | null = null;
     let authedUserId: string | null = null;
-    let authedPlan: "free" | "pro" | "studio" = "free";
+    let authedPlan: "free" | "pro" | "studio" | "plus" = "free";
     const supabaseUrl = (Deno.env.get("SUPABASE_URL") ?? "").trim();
     const supabaseAnonKey = (Deno.env.get("SUPABASE_ANON_KEY") ?? "").trim();
     const supabaseServiceRoleKey = (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "").trim();
@@ -272,7 +553,7 @@ serve(async (req) => {
                 const plan = (typeof row?.plan === "string" ? row.plan : "free") as string;
                 const used = typeof row?.used === "number" ? row.used : 0;
                 const limit = typeof row?.limit === "number" ? row.limit : LIMITS.free;
-                authedPlan = plan === "studio" ? "studio" : plan === "pro" ? "pro" : "free";
+                authedPlan = normalizeAuthedPlan(plan);
                 if (!ok) {
                   return new Response(
                     JSON.stringify({
@@ -294,7 +575,7 @@ serve(async (req) => {
               if (resetErr) console.error("reset_loops_usage_if_needed error:", resetErr.message);
               const { data: profile, error: profileError } = await supabase
                 .from("profiles")
-                .select("plan, loops_used_this_month")
+                .select("plan, loops_used_this_month, referral_bonus, level_bonus, daily_bonus_month")
                 .eq("id", user.id)
                 .single();
 
@@ -302,9 +583,13 @@ serve(async (req) => {
                 console.error("Profile error:", profileError.message);
               } else {
                 const plan = (typeof profile?.plan === "string" ? profile.plan : "free") as string;
-                authedPlan = plan === "studio" ? "studio" : plan === "pro" ? "pro" : "free";
+                authedPlan = normalizeAuthedPlan(plan);
                 const used = typeof profile?.loops_used_this_month === "number" ? profile.loops_used_this_month : 0;
-                const limit = LIMITS[plan as keyof typeof LIMITS] ?? LIMITS.free;
+                const baseLimit = LIMITS[plan as keyof typeof LIMITS] ?? LIMITS.free;
+                const referralBonus = typeof profile?.referral_bonus === "number" ? profile.referral_bonus : 0;
+                const levelBonus = typeof profile?.level_bonus === "number" ? profile.level_bonus : 0;
+                const dailyBonus = typeof profile?.daily_bonus_month === "number" ? profile.daily_bonus_month : 0;
+                const limit = baseLimit + Math.max(0, referralBonus) + Math.max(0, levelBonus) + Math.max(0, dailyBonus);
                 if (used >= limit) {
                   return new Response(
                     JSON.stringify({
@@ -356,6 +641,7 @@ serve(async (req) => {
     const loopLengthBars = asNumber(body?.loopLengthBars);
     const timeSignature = asString(body?.timeSignature);
     const thinking = typeof body?.thinking === "boolean" ? Boolean(body.thinking) : null;
+    const useFormat = typeof body?.useFormat === "boolean" ? Boolean(body.useFormat) : null;
     const sampleMode = action === "format" ? false : (typeof body?.sampleMode === "boolean" ? Boolean(body.sampleMode) : false);
     const instrumental = body?.instrumental !== false;
     const seed = asNumber(body?.seed);
@@ -376,6 +662,7 @@ serve(async (req) => {
       instrumental,
       sampleMode,
       thinking,
+      useFormat,
       audioFormat,
       seed,
     });
@@ -407,14 +694,8 @@ serve(async (req) => {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
-        const { data: publicRow, error: publicErr } = await lookupSupabase
-          .from("loops")
-          .select("id")
-          .eq("is_public", true)
-          .contains("stems_url", { ace: { taskId: tid } })
-          .limit(1)
-          .maybeSingle();
-        if (publicErr || !publicRow) {
+        const publicLoopId = await findPublicLoopIdByAceTaskId(lookupSupabase, tid);
+        if (!publicLoopId) {
           return new Response(JSON.stringify({ error: "Not allowed" }), {
             status: 403,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -472,11 +753,10 @@ serve(async (req) => {
           throw new Error(msg);
         }
         if (lookupSupabase) {
-          await lookupSupabase
-            .from("loops")
-            .update({ audio_url: audioUrl })
-            .eq("is_public", true)
-            .contains("stems_url", { ace: { taskId: tid } });
+          const publicLoopId = await findPublicLoopIdByAceTaskId(lookupSupabase, tid);
+          if (publicLoopId) {
+            await lookupSupabase.from("loops").update({ audio_url: audioUrl }).eq("id", publicLoopId);
+          }
         }
         return new Response(JSON.stringify({ audioUrl }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -507,6 +787,7 @@ serve(async (req) => {
       const startedAt = Date.now();
       const keyValue = keyScale.trim().length > 0 ? keyScale.trim() : "";
       const attemptOnce = async (apiKey: string, baseUrl: string) => {
+        const quality = resolveAceQualityFlags({ thinking, useFormat, sampleMode });
         const paramObj: Record<string, unknown> = {};
         if (requestedDuration != null) paramObj.duration = requestedDuration;
         if (bpm && bpm > 0) paramObj.bpm = bpm;
@@ -514,6 +795,7 @@ serve(async (req) => {
         if (keyValue) paramObj.key = keyValue;
         if (audioFormat) paramObj.audio_format = audioFormat;
         if (seed && seed > 0) paramObj.seed = seed;
+        paramObj.shift = quality.shift;
 
         const createUrl = `${baseUrl}/release_task`;
         const releaseForm = new FormData();
@@ -523,6 +805,15 @@ serve(async (req) => {
         releaseForm.append("lyrics", effectiveLyrics);
         releaseForm.append("model_name", "acestep-v15-xl-turbo");
         releaseForm.append("app", "studio-web");
+        releaseForm.append("thinking", quality.thinking ? "true" : "false");
+        releaseForm.append("use_format", quality.useFormat ? "true" : "false");
+        if (sampleMode) {
+          releaseForm.append("sample_mode", "true");
+          const sq = sampleQuery.trim();
+          if (sq) releaseForm.append("sample_query", sq);
+        }
+        const vocalLanguage = asString(body?.vocalLanguage) || "en";
+        releaseForm.append("vocal_language", vocalLanguage);
         releaseForm.append("param_obj", JSON.stringify(paramObj));
         console.log("ACE release_task request", {
           requestId,
@@ -536,6 +827,10 @@ serve(async (req) => {
             lyrics: effectiveLyrics,
             model_name: "acestep-v15-xl-turbo",
             app: "studio-web",
+            thinking: quality.thinking,
+            use_format: quality.useFormat,
+            sample_mode: sampleMode,
+            vocal_language: vocalLanguage,
             param_obj: paramObj,
           }),
         });

@@ -3,6 +3,17 @@ import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { AppShell } from "@/components/AppShell";
 import { Dropdown, type DropdownOption } from "@/components/ui/Dropdown";
+import { GenrePickControl } from "@/components/dashboard/GenrePickControl";
+import {
+  GENRE_PICK_MODE_STORAGE_KEY,
+  isRandomGenreSelection,
+  normalizeGenrePickMode,
+  pickRandomGenreValue,
+  resolveGenreForGeneration,
+  RANDOM_GENRE_VALUE,
+  type GenrePickMode,
+} from "@/lib/genres/genrePickMode";
+import { vocalLanguageAutoOption, vocalLanguageDropdownOptions } from "@/lib/vocalLanguages";
 import { Slider } from "@/components/ui/Slider";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -13,14 +24,24 @@ import type { Loop, LoopLength } from "@/types/loop";
 import { usePlayerStore } from "@/stores/playerStore";
 import { LoopCardItem } from "@/components/LoopCardItem";
 import { LoopCardSkeleton } from "@/components/LoopCardSkeleton";
-import { AlertTriangle, AudioWaveform, Copy, Loader2, Search, X } from "lucide-react";
+import { AlertTriangle, AudioWaveform, Copy, Search, X } from "lucide-react";
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
+import { ShareMomentModal } from "@/components/growth/ShareMomentModal";
+import { ReferralInviteModal } from "@/components/growth/ReferralInviteModal";
+import { MasteringUpsellModal } from "@/components/growth/MasteringUpsellModal";
+import { GamificationStrip, notifyGamificationGeneration } from "@/components/growth/GamificationStrip";
+import { shouldShowSharePromptAfterGeneration } from "@/lib/sharePrompt";
+import { markReferralInvitePromptShown, shouldShowReferralInvitePrompt } from "@/lib/referralPrompt";
+import { ensureReferralCode } from "@/lib/referral";
+import { loadPendingRemix, clearPendingRemix, type PendingRemix } from "@/lib/pendingRemix";
+import { MobileOnboardingSheet, hasSeenMobileOnboarding } from "@/components/dashboard/MobileOnboardingSheet";
 import { useAuthStore } from "@/stores/authStore";
 import { useLocaleStore } from "@/stores/localeStore";
-import { getRemainingBeats, PLAN_LIMITS } from "@/lib/planLimits";
-import { generateBeat } from "@/lib/audioApi";
+import { getRemainingBeats, PLAN_LIMITS, FREE_MASTERING_UPSELL_AT, getTotalGenerationLimit } from "@/lib/planLimits";
+import { RemixStudioPanel } from "@/components/dashboard/RemixStudioPanel";
+import { generateBeat, remixLoopAce } from "@/lib/audioApi";
 import { buildAceCaption, type GenerateParams } from "@/lib/promptBuilder";
-import { cn } from "@/lib/utils";
+import { buildCoverPromptSnapshot, cn } from "@/lib/utils";
 import { BrandLogo } from "@/components/landing/BrandLogo";
 import { MOBILE_DASHBOARD_V2 } from "@/lib/featureFlags";
 import { useIsDesktop } from "@/hooks/useMediaQuery";
@@ -29,6 +50,11 @@ import { DashboardMobileTabs } from "@/components/dashboard/DashboardMobileTabs"
 import { GeneratorSection } from "@/components/dashboard/GeneratorSection";
 import { LoopDetailsPanel } from "@/components/dashboard/LoopDetailsPanel";
 import { LoopDetailsSheet, LoopDetailsSheetHeader } from "@/components/dashboard/LoopDetailsSheet";
+import { MasteringPanel } from "@/components/mastering/MasteringPanel";
+import { GenElectricMark } from "@/components/dashboard/GenElectricMark";
+import { triggerBeatReady } from "@/lib/delight/moments";
+import { loadGamification } from "@/lib/gamification";
+import { profileLoadErrorMessage, readProfileCache, shouldShowProfileLoadToast, syncProfileCache, type UserProfileRow } from "@/lib/profileBootstrap";
 
 function formatTime(sec: number) {
   const s = Math.max(0, Math.floor(sec));
@@ -36,102 +62,6 @@ function formatTime(sec: number) {
   const r = s % 60;
   return `${m}:${String(r).padStart(2, "0")}`;
 }
-
-const genreOptions: DropdownOption[] = [
-  { value: "Auto", label: "Auto" },
-  { group: "Trap / Hip-Hop", value: "Contemporary Rap", label: "Contemporary Rap" },
-  { group: "Trap / Hip-Hop", value: "Dark Trap", label: "Dark Trap" },
-  { group: "Trap / Hip-Hop", value: "Melodic Trap", label: "Melodic Trap" },
-  { group: "Trap / Hip-Hop", value: "PluggnB", label: "PluggnB" },
-  { group: "Trap / Hip-Hop", value: "Rage", label: "Rage" },
-  { group: "Trap / Hip-Hop", value: "Cloud Rap", label: "Cloud Rap" },
-  { group: "Trap / Hip-Hop", value: "Emo Rap", label: "Emo Rap" },
-  { group: "Trap / Hip-Hop", value: "Sad Rap", label: "Sad Rap" },
-  { group: "Trap / Hip-Hop", value: "Atmospheric Rap", label: "Atmospheric Rap" },
-  { group: "Trap / Hip-Hop", value: "Emotional Trap", label: "Emotional Trap" },
-  { group: "Trap / Hip-Hop", value: "Ambient Trap", label: "Ambient Trap" },
-  { group: "Trap / Hip-Hop", value: "Cinematic Trap", label: "Cinematic Trap" },
-  { group: "Trap / Hip-Hop", value: "Experimental Trap", label: "Experimental Trap" },
-  { group: "Trap / Hip-Hop", value: "Old School Hip-Hop", label: "Old School (Boom Bap)" },
-  { group: "Trap / Hip-Hop", value: "Drill", label: "Drill" },
-  { group: "Trap / Hip-Hop", value: "Jersey Drill", label: "Jersey Drill" },
-  { group: "Trap / Hip-Hop", value: "Afrotrap", label: "Afrotrap" },
-  { group: "Trap / Hip-Hop", value: "Sample Drill", label: "Sample Drill" },
-  { group: "Trap / Hip-Hop", value: "Melodic Drill", label: "Melodic Drill" },
-  { group: "Trap / Hip-Hop", value: "Lo-Fi Hip-Hop", label: "Lo‑Fi (Hip Hop)" },
-  { group: "R&B / Soul", value: "Trapsoul", label: "Trap Soul" },
-  { group: "R&B / Soul", value: "90s R&B", label: "90s R&B" },
-  { group: "R&B / Soul", value: "Contemporary R&B", label: "Contemporary R&B" },
-  { group: "R&B / Soul", value: "R&B Alternative", label: "R&B Alternative" },
-  { group: "R&B / Soul", value: "Dark R&B", label: "Dark R&B" },
-  { group: "R&B / Soul", value: "Future R&B", label: "Future R&B" },
-  { group: "R&B / Soul", value: "Afro R&B", label: "Afro R&B" },
-  { group: "R&B / Soul", value: "Toxic R&B", label: "Toxic R&B" },
-  { group: "R&B / Soul", value: "Neo Soul", label: "Neo Soul" },
-  { group: "R&B / Soul", value: "Soul", label: "Soul" },
-  { group: "R&B / Soul", value: "Funk", label: "Funk" },
-  { group: "R&B / Soul", value: "Lo-fi R&B", label: "Lo‑Fi R&B" },
-  { group: "Afro / Latin / Island", value: "Afrobeats", label: "Afrobeats" },
-  { group: "Afro / Latin / Island", value: "Amapiano", label: "Amapiano" },
-  { group: "Afro / Latin / Island", value: "Afro House", label: "Afro House" },
-  { group: "Afro / Latin / Island", value: "Latin", label: "Latin" },
-  { group: "Afro / Latin / Island", value: "Reggaeton", label: "Reggaeton" },
-  { group: "Afro / Latin / Island", value: "Baile Funk", label: "Baile Funk" },
-  { group: "Afro / Latin / Island", value: "Dancehall", label: "Dancehall" },
-  { group: "Afro / Latin / Island", value: "Reggae", label: "Reggae" },
-  { group: "Electronic / Pop", value: "House", label: "House" },
-  { group: "Electronic / Pop", value: "Pop", label: "Pop" },
-  { group: "Electronic / Pop", value: "K-Pop", label: "K‑Pop" },
-  { group: "Electronic / Pop", value: "Indie Pop", label: "Indie Pop" },
-  { group: "Electronic / Pop", value: "Dream Pop", label: "Dream Pop" },
-  { group: "Electronic / Pop", value: "Dance Pop", label: "Dance Pop" },
-  { group: "Electronic / Pop", value: "Viral TikTok", label: "Viral TikTok" },
-  { group: "Electronic / Pop", value: "Viral TikTok Pop", label: "Viral TikTok Pop" },
-  { group: "Electronic / Pop", value: "French Pop", label: "French Pop" },
-  { group: "Electronic / Pop", value: "UK Garage", label: "UK Garage" },
-  { group: "Electronic / Pop", value: "Speed Garage", label: "Speed Garage" },
-  { group: "Electronic / Pop", value: "Drum and Bass", label: "Drum & Bass" },
-  { group: "Electronic / Pop", value: "Jersey Club", label: "Jersey Club" },
-  { group: "Electronic / Pop", value: "Electro", label: "Electro" },
-  { group: "Electronic / Pop", value: "Video Game", label: "Video Game" },
-  { group: "Electronic / Pop", value: "Hyperpop", label: "Hyperpop" },
-  { group: "Electronic / Pop", value: "Hyperpop (Hip-Hop/R&B)", label: "Hyperpop (Hip-Hop/R&B)" },
-  { group: "Electronic / Pop", value: "EDM", label: "EDM" },
-  { group: "Electronic / Pop", value: "Chillstep", label: "Chillstep" },
-  { group: "Electronic / Pop", value: "Dubstep", label: "Dubstep" },
-  { group: "Electronic / Pop", value: "Vaporwave", label: "Vaporwave" },
-  { group: "Electronic / Pop", value: "Synthwave", label: "SynthWave" },
-  { group: "Electronic / Pop", value: "Witch House", label: "Witch House" },
-  { group: "Electronic / Pop", value: "Glitchcore", label: "Glitchcore" },
-  { group: "Electronic / Pop", value: "Digicore", label: "Digicore" },
-  { group: "Electronic / Pop", value: "Brazilian Phonk", label: "Brazilian Phonk" },
-  { group: "Electronic / Pop", value: "VinaHouse", label: "VinaHouse (VN House)" },
-  { group: "Electronic / Pop", value: "Study Beats", label: "Study Beats" },
-  { group: "Rock", value: "Pop Rock", label: "Pop Rock" },
-  { group: "Rock", value: "Rock", label: "Rock" },
-  { group: "Other", value: "Jazz", label: "Jazz" },
-  { group: "Other", value: "New Jazz", label: "New Jazz" },
-  { group: "Other", value: "Classical", label: "Musique Classique" },
-  { group: "Other", value: "Opera", label: "Opera" },
-  { group: "Other", value: "Oriental", label: "Oriental" },
-  { group: "Other", value: "Guitar Acoustic Live", label: "Guitar Acoustic Live" },
-  { group: "Other", value: "Piano Acoustic Live", label: "Piano Acoustic Live" },
-  { group: "Other", value: "Country", label: "Country" },
-  { group: "LAB (Futur)", value: "Rage + Ambient", label: "Rage + Ambient" },
-  { group: "LAB (Futur)", value: "Holographic R&B", label: "Holographic R&B" },
-  { group: "LAB (Futur)", value: "Futuristic Trap Soul", label: "Futuristic Trap Soul" },
-  { group: "LAB (Futur)", value: "Ambient Drill", label: "Ambient Drill" },
-  { group: "LAB (Futur)", value: "Cinematic Afro Trap", label: "Cinematic Afro Trap" },
-  { group: "LAB (Futur)", value: "AI-assisted Pop", label: "AI‑assisted Pop" },
-  { group: "LAB (Futur)", value: "Experimental Afro House", label: "Experimental Afro House" },
-  { group: "LAB (Futur)", value: "Hyper Melodic Rap", label: "Hyper Melodic Rap" },
-  { group: "LAB (Futur)", value: "Dark Atmospheric Pop", label: "Dark Atmospheric Pop" },
-  { group: "LAB (Futur)", value: "Y2K Futuristic Pop", label: "Y2K Futuristic Pop" },
-  { group: "LAB (Futur)", value: "Hybrid Electronic Rap", label: "Hybrid Electronic Rap" },
-  { group: "LAB (Futur)", value: "Sci-Fi R&B", label: "Sci‑Fi R&B" },
-  { group: "LAB (Futur)", value: "Ethereal Trap", label: "Ethereal Trap" },
-  { group: "LAB (Futur)", value: "Nostalgic Future Beats", label: "Nostalgic Future Beats" },
-];
 
 const influenceOptions: DropdownOption[] = [
   { group: "Modern Trap", value: "Metro Boomin", label: "Metro Boomin" },
@@ -183,22 +113,11 @@ const bpmPresets = [
 ] as const;
 const songDurationPresets = [15, 30, 45] as const;
 const timeSignatureOptions = ["2/4", "3/4", "4/4", "6/8"] as const;
-const vocalLanguageOptions: DropdownOption[] = [
-  { value: "en", label: "🇺🇸 English" },
-  { value: "fr", label: "🇫🇷 French" },
-  { value: "es", label: "🇪🇸 Spanish" },
-  { value: "pt", label: "🇵🇹 Portuguese" },
-  { value: "it", label: "🇮🇹 Italian" },
-  { value: "de", label: "🇩🇪 German" },
-  { value: "ja", label: "🇯🇵 Japanese" },
-  { value: "zh", label: "🇨🇳 Chinese" },
-];
-
 const vocalStyleOptions = [
-  { value: "Singer", label: "🎤 Singer" },
-  { value: "Rapper", label: "🎙️ Rapper" },
-  { value: "Singer-Rapper", label: "🎶 Hybrid" },
-  { value: "Choir", label: "🧑‍🤝‍🧑 Vocal" },
+  { value: "Singer", label: "Singer" },
+  { value: "Rapper", label: "Rapper" },
+  { value: "Singer-Rapper", label: "Hybrid" },
+  { value: "Choir", label: "Vocal group" },
 ] as const;
 
 const genreInspirationChips: Record<string, readonly string[]> = {
@@ -419,13 +338,19 @@ export default function Dashboard() {
   const primeAudioCache = useLoopsStore((s) => s.primeAudioCache);
   const migrateAudioCache = useLoopsStore((s) => s.migrateAudioCache);
   const renameLoopRemote = useLoopsStore((s) => s.renameLoopRemote);
-  const setCurrent = usePlayerStore((s) => s.setCurrent);
+  const togglePublicRemote = useLoopsStore((s) => s.togglePublicRemote);
+  const setQueue = usePlayerStore((s) => s.setQueue);
+  const mergeQueue = usePlayerStore((s) => s.mergeQueue);
   const user = useAuthStore((s) => s.user);
   const authStatus = useAuthStore((s) => s.status);
+  const authProfile = useAuthStore((s) => s.profile);
+  const profileReady = useAuthStore((s) => s.profileReady);
+  const refreshAuthProfile = useAuthStore((s) => s.refreshProfile);
+  const authProfileError = useAuthStore((s) => s.lastError);
   const locale = useLocaleStore((s) => s.locale);
   const isDesktop = useIsDesktop();
   const mobileV2 = MOBILE_DASHBOARD_V2 && !isDesktop;
-  const { tab: mobileTab, setTab: setMobileTab, goResults } = useMobileDashboardTab("create");
+  const { tab: mobileTab, setTab: setMobileTab, goResults, goMaster } = useMobileDashboardTab("create");
   const hasPlayer = usePlayerStore((s) => !!s.current);
   const [generating, setGenerating] = useState(false);
   const [generationSlots, setGenerationSlots] = useState<GenerationSlot[] | null>(null);
@@ -434,25 +359,27 @@ export default function Dashboard() {
     const saved = typeof window !== "undefined" ? window.localStorage.getItem("producerhit_versions") : null;
     return saved === "1" ? 1 : 2;
   });
-  const [plan, setPlan] = useState(() => {
-    try {
-      const raw = window.localStorage.getItem("producerhit_plan");
-      return raw === "pro" || raw === "studio" || raw === "free" ? raw : "free";
-    } catch {
-      return "free";
-    }
-  });
-  const [usedThisMonth, setUsedThisMonth] = useState(() => {
-    try {
-      const raw = window.localStorage.getItem("producerhit_used_this_month");
-      const n = raw ? Number(raw) : 0;
-      return Number.isFinite(n) && n >= 0 ? n : 0;
-    } catch {
-      return 0;
-    }
-  });
+  const [plan, setPlan] = useState("free");
+  const planRef = useRef("free");
+  const [usedThisMonth, setUsedThisMonth] = useState(0);
+  const [referralBonus, setReferralBonus] = useState(0);
+  const [levelBonus, setLevelBonus] = useState(0);
+  const [dailyBonusMonth, setDailyBonusMonth] = useState(0);
   const [profileLoading, setProfileLoading] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [shareMomentLoop, setShareMomentLoop] = useState<Loop | null>(null);
+  const [referralPromptOpen, setReferralPromptOpen] = useState(false);
+  const [referralCodeForPrompt, setReferralCodeForPrompt] = useState<string | null>(null);
+  const pendingReferralAfterShareRef = useRef(false);
+  const genAutoplayStartedRef = useRef(false);
+  const referralPromptTimerRef = useRef<number | null>(null);
+  const [externalRemix, setExternalRemix] = useState<PendingRemix | null>(null);
+  const [mobileOnboardingOpen, setMobileOnboardingOpen] = useState(false);
+  const [masteringUpsellLoop, setMasteringUpsellLoop] = useState<Loop | null>(null);
+  const [gamificationRefreshKey, setGamificationRefreshKey] = useState(0);
+  const usedCountRef = useRef(usedThisMonth);
+  const [workspaceView, setWorkspaceView] = useState<"tracks" | "master">("tracks");
+  const [masterLoopId, setMasterLoopId] = useState<string | null>(null);
   const [entrySource, setEntrySource] = useState<string>("unknown");
   const [audioFormat, setAudioFormat] = useState<"mp3" | "wav">("mp3");
   const audioFormatTouchedRef = useRef(false);
@@ -470,8 +397,9 @@ export default function Dashboard() {
     }
   });
   const [detailsId, setDetailsId] = useState<string | null>(null);
-  const [mode, setMode] = useState<"beat" | "song">(() => {
+  const [mode, setMode] = useState<"beat" | "song" | "remix">(() => {
     const saved = typeof window !== "undefined" ? window.localStorage.getItem("producerhit_mode") : null;
+    if (saved === "remix") return "remix";
     return saved === "beat" ? "beat" : "song";
   });
   const [advancedOpen, setAdvancedOpen] = useState<boolean>(() => {
@@ -481,6 +409,14 @@ export default function Dashboard() {
   const engine = "ace-step" as const;
   const [lyricsMode, setLyricsMode] = useState<"ai" | "manual">("manual");
   const [songUiMode, setSongUiMode] = useState<"simple" | "custom">("simple");
+  const [genrePickMode, setGenrePickMode] = useState<GenrePickMode>(() => {
+    try {
+      return normalizeGenrePickMode(window.localStorage.getItem(GENRE_PICK_MODE_STORAGE_KEY));
+    } catch {
+      return "auto";
+    }
+  });
+  const [lastRandomGenre, setLastRandomGenre] = useState("");
   const [lyrics, setLyrics] = useState("");
   const [songDescription, setSongDescription] = useState("");
   const [songVocalStyle, setSongVocalStyle] = useState<(typeof vocalStyleOptions)[number]["value"]>("Singer");
@@ -509,40 +445,97 @@ export default function Dashboard() {
     }
   }, []);
 
-  const refreshProfile = useMemo(() => {
-    return async () => {
-      if (!user) return;
-      setProfileLoading(true);
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (!session?.access_token) throw new Error("Not authenticated");
-        await supabase.rpc("reset_loops_usage_if_needed");
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("plan, loops_used_this_month")
-          .eq("id", user.id)
-          .single();
-        if (error) throw error;
-        const nextPlan = typeof data?.plan === "string" ? data.plan : "free";
-        const nextUsed = typeof data?.loops_used_this_month === "number" ? data.loops_used_this_month : 0;
-        setPlan(nextPlan);
-        setUsedThisMonth(nextUsed);
-        try {
-          window.localStorage.setItem("producerhit_plan", nextPlan);
-          window.localStorage.setItem("producerhit_used_this_month", String(nextUsed));
-        } catch {
-          // ignore
-        }
-        return nextPlan;
-      } catch {
-        return plan;
-      } finally {
-        setProfileLoading(false);
+  const applyProfile = useCallback((data: UserProfileRow) => {
+    planRef.current = data.plan;
+    setPlan(data.plan);
+    setUsedThisMonth(data.loops_used_this_month);
+    setReferralBonus(data.referral_bonus);
+    setLevelBonus(data.level_bonus);
+    setDailyBonusMonth(data.daily_bonus_month);
+    if (user?.id) syncProfileCache(data.plan, data.loops_used_this_month, user.id);
+    else syncProfileCache(data.plan, data.loops_used_this_month);
+    toast.dismiss("dashboard-profile-load");
+  }, [user?.id]);
+
+  const refreshProfile = useCallback(async () => {
+    if (!user) return planRef.current;
+    setProfileLoading(true);
+    try {
+      const data = await refreshAuthProfile();
+      if (data) {
+        applyProfile(data);
+        return data.plan;
       }
+      return planRef.current;
+    } catch (err) {
+      if (shouldShowProfileLoadToast(err)) {
+        toast.error(profileLoadErrorMessage(err, locale), { id: "dashboard-profile-load" });
+      }
+      return planRef.current;
+    } finally {
+      setProfileLoading(false);
+    }
+  }, [applyProfile, locale, refreshAuthProfile, user]);
+
+  const openReferralPromptIfEligible = useCallback(async () => {
+    if (planRef.current !== "free") return;
+    if (!shouldShowReferralInvitePrompt()) return;
+
+    let code = authProfile?.referral_code ?? null;
+    if (!code) {
+      code = await ensureReferralCode();
+      if (code) void refreshAuthProfile();
+    }
+    if (!code) return;
+
+    markReferralInvitePromptShown();
+    setReferralCodeForPrompt(code);
+    setReferralPromptOpen(true);
+    trackClientEvent("referral_prompt_shown", { source: "post_first_gen" });
+  }, [authProfile?.referral_code, refreshAuthProfile]);
+
+  const scheduleReferralPrompt = useCallback(
+    (delayMs: number) => {
+      if (referralPromptTimerRef.current) window.clearTimeout(referralPromptTimerRef.current);
+      referralPromptTimerRef.current = window.setTimeout(() => {
+        referralPromptTimerRef.current = null;
+        void openReferralPromptIfEligible();
+      }, delayMs);
+    },
+    [openReferralPromptIfEligible],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (referralPromptTimerRef.current) window.clearTimeout(referralPromptTimerRef.current);
     };
-  }, [plan, user]);
+  }, []);
+
+  useEffect(() => {
+    if (authProfile) applyProfile(authProfile);
+  }, [applyProfile, authProfile]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const cached = readProfileCache(user.id);
+    if (!cached) return;
+    planRef.current = cached.plan;
+    setPlan(cached.plan);
+    setUsedThisMonth(cached.usedThisMonth);
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (authProfile) {
+      toast.dismiss("dashboard-profile-load");
+      return;
+    }
+    if (!profileReady || !authProfileError) return;
+    if (!shouldShowProfileLoadToast(authProfileError)) return;
+    toast.error(profileLoadErrorMessage(authProfileError, locale), { id: "dashboard-profile-load" });
+  }, [authProfile, authProfileError, locale, profileReady]);
+
+  const profileSyncing = authStatus === "ready" && !!user && !profileReady;
+  const profileBusy = profileLoading || profileSyncing;
 
   const detailsLoop = useMemo(() => {
     if (!detailsId) return null;
@@ -570,12 +563,6 @@ export default function Dashboard() {
   useEffect(() => {
     if (authStatus !== "ready") return;
     if (!user) return;
-    void refreshProfile();
-  }, [authStatus, refreshProfile, user]);
-
-  useEffect(() => {
-    if (authStatus !== "ready") return;
-    if (!user) return;
     if (loopsLoading) return;
     if (loops.length > 0) return;
     const t = window.setTimeout(() => {
@@ -596,22 +583,36 @@ export default function Dashboard() {
   }, [audioFormat, plan]);
 
   useEffect(() => {
+    if (!user) return;
+    try {
+      const key = "producerhit_dashboard_welcome_v1";
+      if (window.localStorage.getItem(key)) return;
+      window.localStorage.setItem(key, "1");
+      toast(locale === "fr" ? "Studio chargé — fais du bruit 🎧" : "Studio loaded — make some noise 🎧", { icon: "✨" });
+    } catch {
+      void 0;
+    }
+  }, [locale, user]);
+
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("upgraded") === "true") {
       toast.success(locale === "fr" ? "🎉 Paiement reçu. Activation de ton plan…" : "🎉 Payment received. Activating your plan…");
       window.history.replaceState({}, "", "/dashboard");
       void (async () => {
         for (let i = 0; i < 8; i++) {
-          const nextPlan = await refreshProfile();
+          const fromStore = await refreshAuthProfile().catch(() => null);
+          const nextPlan = fromStore?.plan ?? (await refreshProfile());
           if (nextPlan && nextPlan !== "free") {
             toast.success(locale === "fr" ? `Plan activé : ${nextPlan}` : `Plan activated: ${nextPlan}`);
             return;
           }
           await new Promise((r) => setTimeout(r, 1200));
         }
+        toast(locale === "fr" ? "Plan en cours d'activation — rafraîchis dans quelques secondes." : "Plan activating — refresh in a few seconds.");
       })();
     }
-  }, [locale, refreshProfile]);
+  }, [locale, refreshAuthProfile, refreshProfile]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -620,16 +621,29 @@ export default function Dashboard() {
     const urlSeed = urlSeedRaw && /^\d+$/.test(urlSeedRaw) ? Number(urlSeedRaw) : null;
     const localPrompt = window.localStorage.getItem("producerhit_pending_prompt");
     const pendingPrompt = urlPrompt || localPrompt;
-    if (!pendingPrompt && urlSeed === null) return;
+    const pendingRemix = loadPendingRemix();
+    const remixParam = params.get("remix") === "1";
+
+    if (pendingRemix || remixParam) {
+      setMode("remix");
+      if (pendingRemix) {
+        setExternalRemix(pendingRemix);
+        clearPendingRemix();
+        setEntrySource(pendingRemix.source === "public_loop" ? "public_loop_remix" : "community_remix");
+      }
+      if (remixParam) window.history.replaceState({}, "", "/dashboard");
+    }
+
+    if (!pendingPrompt && urlSeed === null && !pendingRemix && !remixParam) return;
 
     let decoded = pendingPrompt;
     try {
-      decoded = decodeURIComponent(pendingPrompt);
+      decoded = pendingPrompt ? decodeURIComponent(pendingPrompt) : null;
     } catch {
       decoded = pendingPrompt;
     }
 
-    if (pendingPrompt) setPendingLandingPrompt(decoded);
+    if (pendingPrompt && decoded) setPendingLandingPrompt(decoded);
     if (urlSeed !== null && Number.isFinite(urlSeed)) setExternalSeed(urlSeed);
     window.localStorage.removeItem("producerhit_pending_prompt");
     try {
@@ -643,6 +657,12 @@ export default function Dashboard() {
     }
     if (urlPrompt) window.history.replaceState({}, "", "/dashboard");
   }, []);
+
+  useEffect(() => {
+    if (!mobileV2 || !user || hasSeenMobileOnboarding()) return;
+    const timer = window.setTimeout(() => setMobileOnboardingOpen(true), 900);
+    return () => window.clearTimeout(timer);
+  }, [mobileV2, user]);
 
   useEffect(() => {
     trackClientEvent("dashboard_view", { source: entrySource });
@@ -665,14 +685,60 @@ export default function Dashboard() {
   }, [advancedOpen]);
 
   useEffect(() => {
-    setActiveChips([]);
-  }, [form.genre]);
+    try {
+      window.localStorage.setItem(GENRE_PICK_MODE_STORAGE_KEY, genrePickMode);
+    } catch {
+      void 0;
+    }
+  }, [genrePickMode]);
 
   useEffect(() => {
-    if (!form.genre) setField("genre", "Auto");
-  }, [form.genre, setField]);
+    setActiveChips([]);
+  }, [form.genre, genrePickMode, lastRandomGenre]);
 
-  const remaining = getRemainingBeats(plan, usedThisMonth);
+  useEffect(() => {
+    if (genrePickMode === "auto") {
+      if (form.genre !== "Auto") setField("genre", "Auto");
+      return;
+    }
+    if (!form.genre || form.genre === "Auto") {
+      setField("genre", RANDOM_GENRE_VALUE);
+    }
+  }, [form.genre, genrePickMode, setField]);
+
+  useEffect(() => {
+    usedCountRef.current = usedThisMonth;
+  }, [usedThisMonth]);
+
+  const chipGenre = useMemo(() => {
+    if (genrePickMode === "custom") {
+      if (isRandomGenreSelection(form.genre)) {
+        return lastRandomGenre || (locale === "fr" ? "Aléatoire" : "Random");
+      }
+      return form.genre !== "Auto" ? form.genre : "Melodic Trap";
+    }
+    return "Auto";
+  }, [form.genre, genrePickMode, lastRandomGenre, locale]);
+
+  const genreReady = genrePickMode === "auto" || (form.genre.length > 0 && form.genre !== "Auto");
+
+  const handleGenrePickModeChange = useCallback(
+    (next: GenrePickMode) => {
+      setGenrePickMode(next);
+      if (next === "auto") {
+        setField("genre", "Auto");
+        return;
+      }
+      if (form.genre === "Auto" || !form.genre) {
+        setField("genre", RANDOM_GENRE_VALUE);
+      }
+    },
+    [form.genre, setField],
+  );
+
+  const remaining = getRemainingBeats(plan, usedThisMonth, referralBonus, levelBonus, dailyBonusMonth);
+  const totalLimit = getTotalGenerationLimit(plan, { referralBonus, levelBonus, dailyBonusMonth });
+  const bonusCreditsTotal = referralBonus + levelBonus + dailyBonusMonth;
   const remainingAfterGenerate = Math.max(0, remaining - versions);
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -683,9 +749,30 @@ export default function Dashboard() {
     if (versions === 2 && remaining < 2) setVersions(1);
   }, [remaining, versions]);
   const consumeCredit = useCallback(() => {
-    setUsedThisMonth((v) => v + 1);
-    if (user) void refreshProfile();
-  }, [refreshProfile, user]);
+    setUsedThisMonth((v) => {
+      const next = v + 1;
+      usedCountRef.current = next;
+      try {
+        window.localStorage.setItem("producerhit_used_this_month", String(next));
+      } catch {
+        void 0;
+      }
+      return next;
+    });
+    notifyGamificationGeneration(locale, {
+      syncRewards: !!user,
+      onBonusCreditsChange: (credits) => {
+        setLevelBonus(credits.levelBonus);
+        setDailyBonusMonth(credits.dailyBonusMonth);
+      },
+    });
+    setGamificationRefreshKey((k) => k + 1);
+  }, [locale, user]);
+
+  const openMasteringUpgrade = useCallback(() => {
+    trackClientEvent("mastering_upgrade_click", { plan, source: "dashboard" });
+    navigate("/pricing?plan=pro&checkout=1");
+  }, [navigate, plan]);
   const inferGenreFromPrompt = useCallback((p: string) => {
     const s = p.toLowerCase();
     if (s.includes("pluggnb") || s.includes("pluggn")) return "PluggnB";
@@ -783,6 +870,20 @@ export default function Dashboard() {
     if (!generationBatchLoopIds.size) return displayedLoops;
     return displayedLoops.filter((l) => !generationBatchLoopIds.has(l.id));
   }, [displayedLoops, generationBatchLoopIds]);
+  const generationBatchLoops = useMemo(() => {
+    if (!generationSlots?.length) return [];
+    const items: Loop[] = [];
+    for (const slot of generationSlots) {
+      const batchLoop =
+        (slot.previewLoopId ? loops.find((l) => l.id === slot.previewLoopId) : null) ??
+        loops
+          .filter((l) => l.name === slot.title && !l.id.startsWith("preview-"))
+          .sort((a, b) => Date.parse(b.createdAt ?? "") - Date.parse(a.createdAt ?? ""))[0] ??
+        null;
+      if (batchLoop) items.push(batchLoop);
+    }
+    return items.filter((l, i, arr) => arr.findIndex((x) => x.id === l.id) === i);
+  }, [generationSlots, loops]);
   const totalMatches = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     return loops.filter((l) => {
@@ -811,6 +912,7 @@ export default function Dashboard() {
 
   const bars = barsFromLoopLength(form.loopLength);
   const isSong = mode === "song";
+  const isRemix = mode === "remix";
   const effectiveEngine = isSong ? "ace-step" : engine;
   const songIsCustom = isSong && songUiMode === "custom";
   const effectiveAudioFormat = plan === "free" ? "mp3" : audioFormat;
@@ -840,7 +942,7 @@ export default function Dashboard() {
   const chipExtra = !isSong ? activeChips.join(", ") : "";
   const uiPrompt = isSong
     ? [
-        form.genre && form.genre !== "Auto" ? `${form.genre}` : "",
+        genrePickMode === "custom" && !isRandomGenreSelection(form.genre) && form.genre !== "Auto" ? `${form.genre}` : "",
         songDescription.trim(),
         songVocalStyle ? `vocal style: ${songVocalStyle}` : "",
       ]
@@ -881,6 +983,7 @@ export default function Dashboard() {
     if (remaining < versions) return;
     if (generating) return;
     setGenerating(true);
+    genAutoplayStartedRef.current = false;
     const titleCase = (s: string) =>
       s
         .toLowerCase()
@@ -953,12 +1056,17 @@ export default function Dashboard() {
         .replace(/[<>]/g, "")
         .slice(0, 72);
 
-    const normalizedGenreForPrompt = form.genre === "Auto" ? "" : form.genre;
+    const randomGenre =
+      genrePickMode === "custom" && isRandomGenreSelection(form.genre) ? pickRandomGenreValue() : undefined;
+    if (randomGenre) setLastRandomGenre(randomGenre);
+    const { promptGenre, displayGenre } = resolveGenreForGeneration(genrePickMode, form.genre, randomGenre);
+
+    const normalizedGenreForPrompt = promptGenre;
     const source = (isSong ? songDescription : form.prompt || uiPrompt || normalizedGenreForPrompt).trim();
     const inferredWords = compactWords(source);
     const defaultBase = inferredWords.length
       ? titleCase(inferredWords.join(" "))
-      : titleCase(form.genre === "Auto" ? "Auto" : form.genre);
+      : titleCase(displayGenre === "Auto" ? "Auto" : displayGenre);
     const baseTitle = normalizeTitle(requestedTitle) || defaultBase;
 
     const titleIndexStart = (() => {
@@ -1077,7 +1185,7 @@ export default function Dashboard() {
         const draft: Omit<Loop, "id" | "createdAt" | "userId"> = {
           engine: result.engine,
           name: "",
-          genre: form.genre,
+          genre: displayGenre,
           influence: form.influence,
           key: usedKey,
           scale: usedScale,
@@ -1099,6 +1207,12 @@ export default function Dashboard() {
                 keyScale: result.meta.keyScale ?? "",
                 timeSignature: result.meta.timeSignature ?? "",
                 audioFormat: result.meta.audioFormat ?? effectiveAudioFormat,
+                coverPrompt: buildCoverPromptSnapshot({
+                  prompt: storedPrompt,
+                  genre: displayGenre,
+                  mood: isSong ? "" : form.mood,
+                  influence: form.influence,
+                }),
               }
             : null,
           stemsUrl: (() => {
@@ -1171,6 +1285,15 @@ export default function Dashboard() {
       };
 
       const created: Loop[] = [];
+
+      const maybeAutoplayFirstReady = (loop: Loop) => {
+        if (genAutoplayStartedRef.current) return;
+        if (!loop.audioUrl?.trim()) return;
+        genAutoplayStartedRef.current = true;
+        setQueue([loop], 0, true, "generation");
+        trackClientEvent("growth_autoplay", { loop_id: loop.id, count: 1, early: true });
+        if (mobileV2) goResults();
+      };
 
       const setSlot = (idx: 1 | 2, next: Partial<GenerationSlot>) => {
         setGenerationSlots((prev) => {
@@ -1255,6 +1378,7 @@ export default function Dashboard() {
               const loop = await persistDraft(draft, audioUrl, value.engine, previewId);
               await migrateAudioCache(previewId, loop.id);
               created.push(loop);
+              maybeAutoplayFirstReady(loop);
               trackClientEvent("generate_success", { loop_id: loop.id, mode, versions, plan, source: entrySource });
               consumeCredit();
               previewId = null;
@@ -1304,20 +1428,62 @@ export default function Dashboard() {
 
       if (!created.length) throw new Error(locale === "fr" ? "Échec de génération — réessaie" : "Generation failed — please try again");
 
+      const playableCreated = created.filter((l) => typeof l.audioUrl === "string" && l.audioUrl.trim().length > 0);
+      if (playableCreated.length) {
+        if (genAutoplayStartedRef.current) {
+          if (playableCreated.length > 1) {
+            mergeQueue(playableCreated, "generation");
+            const after = usePlayerStore.getState();
+            if (!after.isPlaying && after.queue.length > 1 && after.queueIndex < after.queue.length - 1) {
+              usePlayerStore.getState().next();
+            }
+          }
+        } else {
+          setQueue(playableCreated, 0, true, "generation");
+          trackClientEvent("growth_autoplay", { loop_id: playableCreated[0]?.id, count: playableCreated.length });
+        }
+
+        const queueIdx = playableCreated.findIndex((l) => l.id === usePlayerStore.getState().current?.id);
+        const first = playableCreated[queueIdx >= 0 ? queueIdx : 0] ?? playableCreated[0];
+        if (first) {
+          const usedBefore = usedCountRef.current - created.length;
+          if (shouldShowSharePromptAfterGeneration()) {
+            trackClientEvent("growth_share_prompt", { loop_id: first.id, source: "post_generate" });
+            setShareMomentLoop(first);
+            if (usedBefore === 0) pendingReferralAfterShareRef.current = true;
+          } else if (usedBefore === 0 && plan === "free") {
+            scheduleReferralPrompt(3800);
+          }
+          if (
+            plan === "free" &&
+            usedBefore < FREE_MASTERING_UPSELL_AT &&
+            usedCountRef.current >= FREE_MASTERING_UPSELL_AT
+          ) {
+            try {
+              const monthKey = new Date().toISOString().slice(0, 7);
+              const upsellKey = `producerhit_master_upsell_${monthKey}`;
+              if (!window.localStorage.getItem(upsellKey)) {
+                window.localStorage.setItem(upsellKey, "1");
+                trackClientEvent("mastering_upsell_prompt", { loop_id: first.id, generation_count: usedCountRef.current });
+                setMasteringUpsellLoop(first);
+              }
+            } catch {
+              setMasteringUpsellLoop(first);
+            }
+          }
+        }
+      }
+
       setExternalSeed(null);
       const successCount = created.length;
-      if (versions === 2) {
-        toast.success(
-          successCount === 2
-            ? locale === "fr"
-              ? "2 versions générées — choisis la meilleure !"
-              : "2 versions generated — pick the best one!"
-            : locale === "fr"
-              ? "1 version sur 2 générée — l’autre a échoué."
-              : "1 of 2 versions generated — the other failed.",
+      const totalGens = loadGamification().totalGenerations;
+      const isFirstEver = totalGens === successCount && successCount > 0;
+      const seed = playableCreated[0]?.id ?? String(Date.now());
+      triggerBeatReady(locale, seed, { isFirst: isFirstEver, versionCount: successCount >= 2 ? successCount : 1 });
+      if (versions === 2 && successCount === 1) {
+        toast.error(
+          locale === "fr" ? "1 version sur 2 — l'autre a flop, réessaie" : "1 of 2 versions — the other flopped, retry",
         );
-      } else {
-        toast.success(locale === "fr" ? "Beat généré !" : "Beat generated!");
       }
     } catch (err) {
       const anyErr = err as unknown as { limitReached?: boolean };
@@ -1394,6 +1560,7 @@ export default function Dashboard() {
     form.bpm,
     form.energyLevel,
     form.genre,
+    genrePickMode,
     form.influence,
     form.key,
     form.loopLength,
@@ -1417,19 +1584,142 @@ export default function Dashboard() {
     navigate,
     remaining,
     versions,
-    setCurrent,
+    setQueue,
+    mergeQueue,
     songDescription,
     songLyrics,
     songVocalStyle,
     uiPrompt,
     refreshProfile,
     user,
+    goResults,
+    mobileV2,
   ]);
+
+  const handleRemixGenerate = useCallback(
+    async (input: {
+      audioFile: File;
+      prompt: string;
+      lyrics: string;
+      taskType: "cover" | "repaint";
+      coverStrength: number;
+      durationSec: number | null;
+      bpm: number | null;
+      instrumental: boolean;
+      sourceLoopName?: string;
+    }) => {
+      if (remaining < 1 || generating) return;
+      setGenerating(true);
+      const generationKey = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `remix-${Date.now()}`;
+      const baseTitle = (input.sourceLoopName || (locale === "fr" ? "Remix" : "Remix")).replace(/\.[^.]+$/, "").slice(0, 48);
+      const title = `${baseTitle} Remix`;
+      setGenerationSlots([{ idx: 1, status: "generating", title, seed: 0, visible: true, previewReady: false }]);
+      try {
+        trackClientEvent("remix_start", { task_type: input.taskType, plan, source: entrySource });
+        const result = await remixLoopAce({
+          audioFile: input.audioFile,
+          prompt: input.prompt,
+          lyrics: input.lyrics,
+          taskType: input.taskType,
+          coverStrength: input.coverStrength,
+          durationSec: input.durationSec,
+          bpm: input.bpm,
+          instrumental: input.instrumental,
+          audioFormat: effectiveAudioFormat,
+          generationKey,
+        });
+        const parsedKey = parseKeyScale(result.meta?.keyScale ?? "");
+        const draft: Omit<Loop, "id" | "createdAt" | "userId"> = {
+          engine: "ace-step-remix",
+          name: title,
+          genre: form.genre === "Auto" ? "Remix" : form.genre,
+          influence: form.influence,
+          key: parsedKey.key,
+          scale: parsedKey.scale,
+          bpm: result.meta?.bpm && result.meta.bpm > 0 ? result.meta.bpm : form.bpm,
+          loopLength: form.loopLength,
+          swing: form.swing,
+          mood: form.mood,
+          energyLevel: form.energyLevel,
+          reverb: form.reverb,
+          prompt: input.prompt,
+          audioUrl: result.audioUrl,
+          seed: typeof result.meta?.seed === "number" ? result.meta.seed : null,
+          details: {
+            caption: input.prompt,
+            lyrics: input.instrumental ? "" : input.lyrics,
+            bpm: result.meta?.bpm ?? null,
+            duration: result.meta?.duration ?? input.durationSec,
+            keyScale: result.meta?.keyScale ?? "",
+            timeSignature: result.meta?.timeSignature ?? "",
+            audioFormat: result.meta?.audioFormat ?? effectiveAudioFormat,
+            coverPrompt: buildCoverPromptSnapshot({
+              prompt: input.prompt,
+              genre: form.genre === "Auto" ? "Remix" : form.genre,
+              mood: form.mood,
+              influence: form.influence,
+            }),
+          },
+          stemsUrl: result.meta?.taskId ? { ace: { taskId: result.meta.taskId } } : null,
+          isSaved: false,
+          isPublic: true,
+        };
+        const loop = await createLoop({ ...draft, name: title });
+        setGenerationSlots(null);
+        setQueue([loop], 0, true, "generation");
+        trackClientEvent("generate_success", { loop_id: loop.id, mode: "remix", versions: 1, plan, source: entrySource });
+        consumeCredit();
+        triggerBeatReady(locale, loop.id, { isFirst: false, versionCount: 1 });
+        toast.success(locale === "fr" ? "Remix prêt — écoute le résultat 🎧" : "Remix ready — listen to the result 🎧");
+        if (shouldShowSharePromptAfterGeneration()) {
+            trackClientEvent("growth_share_prompt", { loop_id: loop.id, source: "post_remix" });
+            setShareMomentLoop(loop);
+          }
+        if (mobileV2) goResults();
+        if (user) void refreshProfile();
+      } catch (err) {
+        const anyErr = err as { limitReached?: boolean };
+        if (anyErr?.limitReached) {
+          toast.error(locale === "fr" ? "Limite mensuelle atteinte" : "Monthly limit reached");
+          navigate("/pricing?plan=pro&checkout=1");
+        } else {
+          toast.error(err instanceof Error ? err.message : locale === "fr" ? "Remix échoué" : "Remix failed");
+        }
+        setGenerationSlots(null);
+      } finally {
+        setGenerating(false);
+      }
+    },
+    [
+      consumeCredit,
+      createLoop,
+      effectiveAudioFormat,
+      entrySource,
+      form.bpm,
+      form.energyLevel,
+      form.genre,
+      form.influence,
+      form.loopLength,
+      form.mood,
+      form.reverb,
+      form.swing,
+      generating,
+      goResults,
+      locale,
+      mobileV2,
+      navigate,
+      plan,
+      refreshProfile,
+      remaining,
+      setQueue,
+      user,
+    ],
+  );
 
   useEffect(() => {
     if (!pendingLandingPrompt) return;
     if (autoLandingGenerateRef.current) return;
-    if (profileLoading) return;
+    if (profileBusy) return;
 
     if (remaining === 0) {
       toast.error(locale === "fr" ? "Plus de crédits — upgrade ton plan" : "No credits remaining — upgrade your plan");
@@ -1444,7 +1734,10 @@ export default function Dashboard() {
     setLyricsMode("ai");
     setSongDescription(pendingLandingPrompt);
     setField("prompt", pendingLandingPrompt);
-    if (!form.genre) setField("genre", inferGenreFromPrompt(pendingLandingPrompt));
+    if (!form.genre) {
+      setGenrePickMode("custom");
+      setField("genre", inferGenreFromPrompt(pendingLandingPrompt));
+    }
 
     const timer = window.setTimeout(() => {
       void handleGenerate();
@@ -1458,7 +1751,7 @@ export default function Dashboard() {
     locale,
     navigate,
     pendingLandingPrompt,
-    profileLoading,
+    profileBusy,
     remaining,
     setField,
     setLyricsMode,
@@ -1492,6 +1785,7 @@ export default function Dashboard() {
         lyricsMode?: "ai" | "manual";
         lyrics?: string;
         songUiMode?: "simple" | "custom";
+        genrePickMode?: GenrePickMode;
         songDescription?: string;
         songVocalStyle?: string;
       };
@@ -1512,6 +1806,7 @@ export default function Dashboard() {
       if (pending.lyricsMode) setLyricsMode(pending.lyricsMode);
       if (typeof pending.lyrics === "string") setLyrics(pending.lyrics);
       if (pending.songUiMode) setSongUiMode(pending.songUiMode);
+      if (pending.genrePickMode) setGenrePickMode(pending.genrePickMode);
       if (typeof pending.songDescription === "string") setSongDescription(pending.songDescription);
       if (typeof pending.songVocalStyle === "string") {
         const allowed = vocalStyleOptions.some((v) => v.value === pending.songVocalStyle);
@@ -1526,11 +1821,11 @@ export default function Dashboard() {
   useEffect(() => {
     if (!autoGeneratePending) return;
     if (!user) return;
-    if (generating || profileLoading) return;
-    if (!form.genre) return;
+    if (generating || profileBusy) return;
+    if (!genreReady) return;
     setAutoGeneratePending(false);
     void handleGenerate();
-  }, [autoGeneratePending, form.genre, generating, handleGenerate, profileLoading, user]);
+  }, [autoGeneratePending, genreReady, generating, handleGenerate, profileBusy, user]);
 
   useEffect(() => {
     if (!mobileV2) return;
@@ -1557,6 +1852,18 @@ export default function Dashboard() {
 
   const chipRowClass = mobileV2 ? "pk-chip-scroll mt-2" : "mt-2 flex flex-wrap gap-2";
 
+  const openMaster = useCallback(
+    (loop: Loop) => {
+      setMasterLoopId(loop.id);
+      setWorkspaceView("master");
+      if (mobileV2) goMaster();
+      trackClientEvent("mastering_open", { loop_id: loop.id, source: "loop_card" });
+    },
+    [goMaster, mobileV2],
+  );
+
+  const showMasterWorkspace = mobileV2 ? mobileTab === "master" : workspaceView === "master";
+
   return (
     <AppShell
       theme="prism"
@@ -1566,9 +1873,14 @@ export default function Dashboard() {
         mobileV2 ? (
           <DashboardMobileTabs
             tab={mobileTab}
-            onChange={setMobileTab}
+            onChange={(next) => {
+              setMobileTab(next);
+              if (next === "master") setWorkspaceView("master");
+              if (next === "results") setWorkspaceView("tracks");
+            }}
             createLabel={locale === "fr" ? "Créer" : "Create"}
             resultsLabel={locale === "fr" ? "Résultats" : "Results"}
+            masterLabel={locale === "fr" ? "Studio" : "Studio"}
             resultsBadge={mobileResultsBadge}
           />
         ) : undefined
@@ -1586,7 +1898,7 @@ export default function Dashboard() {
                 <button
                   type="button"
                   onClick={() => setMode("song")}
-                  className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                  className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
                     mode === "song" ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
                   }`}
                 >
@@ -1595,50 +1907,55 @@ export default function Dashboard() {
                 <button
                   type="button"
                   onClick={() => setMode("beat")}
-                  className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                  className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
                     mode === "beat" ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
                   }`}
                 >
                   Beat
                 </button>
-              </div>
-              {mode === "song" ? (
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setSongUiMode("simple")}
-                    className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-                      songUiMode === "simple" ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
-                    }`}
-                  >
-                    Simple
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSongUiMode("custom")}
-                    className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-                      songUiMode === "custom" ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
-                    }`}
-                  >
-                    {locale === "fr" ? "Perso" : "Custom"}
-                  </button>
-                </div>
-              ) : (
                 <button
                   type="button"
-                  onClick={() => setAdvancedOpen((v) => !v)}
-                  className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-                    advancedOpen ? "bg-white/10 text-pk-text" : "bg-white/5 text-pk-muted hover:text-pk-text"
+                  onClick={() => setMode("remix")}
+                  className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                    mode === "remix" ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
                   }`}
                 >
-                  {locale === "fr" ? "Avancé" : "Advanced"}
+                  Remix
                 </button>
-              )}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (mode === "song") {
+                    setSongUiMode((m) => (m === "simple" ? "custom" : "simple"));
+                    return;
+                  }
+                  setAdvancedOpen((v) => !v);
+                }}
+                className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                  (mode === "song" ? songUiMode === "custom" : advancedOpen)
+                    ? "bg-white/10 text-pk-text"
+                    : "bg-white/5 text-pk-muted hover:text-pk-text"
+                }`}
+              >
+                {locale === "fr" ? "Avancé" : "Advanced"}
+              </button>
             </div>
           </div>
 
-          <div className="flex-1 overflow-visible md:min-h-0 md:overflow-y-auto">
-            {mode === "beat" ? (
+          <div className={cn("flex-1 overflow-visible md:min-h-0 md:overflow-y-auto", isRemix && mobileV2 && "pb-36")}>
+            {mode === "remix" ? (
+              <RemixStudioPanel
+                locale={locale}
+                loops={loops}
+                generating={generating}
+                remaining={remaining}
+                plan={plan}
+                externalRemix={externalRemix}
+                onExternalRemixConsumed={() => setExternalRemix(null)}
+                onGenerate={(input) => void handleRemixGenerate(input)}
+              />
+            ) : mode === "beat" ? (
               <>
                 <GeneratorSection
                   title={locale === "fr" ? "Style & Vibe" : "Style & Vibe"}
@@ -1646,14 +1963,17 @@ export default function Dashboard() {
                   defaultOpen
                 >
                   <div className="grid gap-4">
-                    <Dropdown
-                      label={locale === "fr" ? "Genre" : "Genre"}
-                      value={form.genre}
-                      onChange={(v) => setField("genre", v)}
-                      options={genreOptions}
-                      placeholder={locale === "fr" ? "Sélectionner…" : "Select…"}
+                    <GenrePickControl
+                      locale={locale}
+                      mode={genrePickMode}
+                      onModeChange={handleGenrePickModeChange}
+                      genre={form.genre}
+                      onGenreChange={(v) => {
+                        setGenrePickMode("custom");
+                        setField("genre", v);
+                      }}
+                      lastRandomGenre={lastRandomGenre}
                     />
-                    
                     <div>
                       <div className="text-xs text-pk-muted">{locale === "fr" ? "Ambiance" : "Mood"}</div>
                       <div className={chipRowClass}>
@@ -1705,7 +2025,7 @@ export default function Dashboard() {
                   />
                   
                   <div className={cn(mobileV2 ? "pk-chip-scroll mt-3" : "mt-3 flex flex-wrap gap-2")}>
-                    {getInspirationChipsForGenre(form.genre).map((chip) => {
+                    {getInspirationChipsForGenre(chipGenre).map((chip) => {
                       const on = activeChips.includes(chip);
                       return (
                         <button
@@ -2015,6 +2335,7 @@ export default function Dashboard() {
                           key={p.name}
                           type="button"
                           onClick={() => {
+                            setGenrePickMode("custom");
                             setField("genre", p.genre);
                             setField("influence", p.influence);
                             setBpm(p.bpm);
@@ -2045,12 +2366,16 @@ export default function Dashboard() {
                   defaultOpen
                 >
                   <div className="grid gap-4">
-                    <Dropdown
-                      label={locale === "fr" ? "Genre" : "Genre"}
-                      value={form.genre}
-                      onChange={(v) => setField("genre", v)}
-                      options={genreOptions}
-                      placeholder={locale === "fr" ? "Sélectionner…" : "Select…"}
+                    <GenrePickControl
+                      locale={locale}
+                      mode={genrePickMode}
+                      onModeChange={handleGenrePickModeChange}
+                      genre={form.genre}
+                      onGenreChange={(v) => {
+                        setGenrePickMode("custom");
+                        setField("genre", v);
+                      }}
+                      lastRandomGenre={lastRandomGenre}
                     />
 
                     <Dropdown
@@ -2064,31 +2389,8 @@ export default function Dashboard() {
                           setManualVocalLanguage(v);
                         }
                       }}
-                      options={[{ value: "auto", label: "🌐 Auto" }, ...vocalLanguageOptions]}
+                      options={[vocalLanguageAutoOption(locale), ...vocalLanguageDropdownOptions(locale)]}
                     />
-
-                    <div>
-                      <div className="text-xs text-pk-muted">{locale === "fr" ? "Style vocal" : "Vocal Style"}</div>
-                      <div className={chipRowClass}>
-                        {vocalStyleOptions.map((v) => {
-                          const active = songVocalStyle === v.value;
-                          return (
-                            <button
-                              key={v.value}
-                              type="button"
-                              onClick={() => setSongVocalStyle(v.value)}
-                              className={
-                                active
-                                  ? "rounded-full border border-pk-accent/40 bg-pk-accent/15 px-3 py-1 text-xs font-semibold text-pk-accent"
-                                  : "rounded-full border border-pk-border bg-pk-bg px-3 py-1 text-xs text-pk-muted hover:bg-white/5 hover:text-pk-text"
-                              }
-                            >
-                              {v.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
                   </div>
                 </GeneratorSection>
 
@@ -2107,13 +2409,13 @@ export default function Dashboard() {
                     className="mt-3 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2 text-sm outline-none placeholder:text-pk-muted focus:border-pk-accent"
                     placeholder={
                       locale === "fr"
-                        ? "Une chanson R&B mélancolique sur les nuits en ville…"
-                        : "A melancholic R&B song about late nights in the city…"
+                        ? "ex: Une chanson R&B mélancolique sur les nuits en ville…"
+                        : "ex: A melancholic R&B song about late nights in the city…"
                     }
                   />
                   
                   <div className={cn(mobileV2 ? "pk-chip-scroll mt-3" : "mt-3 flex flex-wrap gap-2")}>
-                    {getInspirationChipsForGenre(form.genre).map((chip) => {
+                    {getInspirationChipsForGenre(chipGenre).map((chip) => {
                       const on = songDescription.includes(chip);
                       return (
                         <button
@@ -2210,6 +2512,29 @@ export default function Dashboard() {
                   <div className="border-b border-pk-border p-4 bg-pk-bg/30">
                     <div className="text-sm font-semibold">{locale === "fr" ? "Réglages chanson" : "Song Customization"}</div>
                     <div className="mt-4 grid gap-4">
+                      <div>
+                        <div className="text-xs text-pk-muted">{locale === "fr" ? "Style vocal" : "Vocal Style"}</div>
+                        <div className={chipRowClass}>
+                          {vocalStyleOptions.map((v) => {
+                            const active = songVocalStyle === v.value;
+                            return (
+                              <button
+                                key={v.value}
+                                type="button"
+                                onClick={() => setSongVocalStyle(v.value)}
+                                className={
+                                  active
+                                    ? "rounded-full border border-pk-accent/40 bg-pk-accent/15 px-3.5 py-2 text-xs font-semibold text-pk-accent"
+                                    : "rounded-full border border-pk-border bg-pk-bg px-3.5 py-2 text-xs text-pk-muted hover:bg-white/5 hover:text-pk-text"
+                                }
+                              >
+                                {v.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
                       <Dropdown
                         label={locale === "fr" ? "Influence" : "Influence"}
                         value={form.influence}
@@ -2380,7 +2705,7 @@ export default function Dashboard() {
                           {locale === "fr" ? "Contexte & inspiration (chips)" : "Context & Inspiration (Chips)"}
                         </div>
                         <div className="flex flex-wrap gap-1.5">
-                          {getInspirationChipsForGenre(form.genre).map((chip) => {
+                          {getInspirationChipsForGenre(chipGenre).map((chip) => {
                             const on = songDescription.includes(chip);
                             return (
                               <button
@@ -2540,88 +2865,111 @@ export default function Dashboard() {
                 : undefined
             }
           >
-            <div className="mb-3 flex items-center justify-between text-xs">
-              <span className="text-gray-500">{locale === "fr" ? "Versions" : "Versions"}</span>
-              <div className="flex items-center gap-1 rounded-full bg-white/5 p-1">
-                <button
-                  type="button"
-                  onClick={() => setVersions(1)}
-                  className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${
-                    versions === 1 ? "pk-prism-pill-active" : "text-white/50 hover:text-white"
-                  }`}
+            {!isRemix ? (
+              <>
+                <div className="mb-3 flex items-center justify-between text-xs">
+                  <span className="text-gray-500">{locale === "fr" ? "Versions" : "Versions"}</span>
+                  <div className="flex items-center gap-1 rounded-full bg-white/5 p-1">
+                    <button
+                      type="button"
+                      onClick={() => setVersions(1)}
+                      className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${
+                        versions === 1 ? "pk-prism-pill-active" : "text-white/50 hover:text-white"
+                      }`}
+                    >
+                      1
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setVersions(2)}
+                      disabled={remaining < 2}
+                      className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${
+                        versions === 2 ? "pk-prism-pill-active" : "text-white/50 hover:text-white"
+                      } ${remaining < 2 ? "opacity-50" : ""}`}
+                    >
+                      2
+                    </button>
+                  </div>
+                </div>
+                <Button
+                  variant="primary"
+                  className={cn("relative w-full overflow-hidden", generating && "pk-gen-btn-electric is-active")}
+                  disabled={!genreReady || generating || profileBusy || remaining < versions}
+                  onClick={async () => {
+                    if (remaining < versions) return;
+                    if (generating) return;
+                    if (!user) {
+                      window.localStorage.setItem(
+                        "producerhit_pending_generation",
+                        JSON.stringify({
+                          mode,
+                          engine,
+                          form,
+                          genrePickMode,
+                          lyricsMode,
+                          lyrics,
+                          songUiMode,
+                          songDescription,
+                          songVocalStyle,
+                        }),
+                      );
+                      navigate("/auth", { state: { from: "/dashboard" } });
+                      return;
+                    }
+                    await handleGenerate();
+                  }}
                 >
-                  1
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setVersions(2)}
-                  disabled={remaining < 2}
-                  className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${
-                    versions === 2 ? "pk-prism-pill-active" : "text-white/50 hover:text-white"
-                  } ${remaining < 2 ? "opacity-50" : ""}`}
-                >
-                  2
-                </button>
-              </div>
-            </div>
-            <Button
-              variant="primary"
-              className="w-full"
-              disabled={!form.genre || generating || profileLoading || remaining < versions}
-              onClick={async () => {
-                if (remaining < versions) return;
-                if (generating) return;
-                if (!user) {
-                  window.localStorage.setItem(
-                    "producerhit_pending_generation",
-                    JSON.stringify({
-                      mode,
-                      engine,
-                      form,
-                      lyricsMode,
-                      lyrics,
-                      songUiMode,
-                      songDescription,
-                      songVocalStyle,
-                    }),
-                  );
-                  navigate("/auth", { state: { from: "/dashboard" } });
-                  return;
-                }
-                await handleGenerate();
-              }}
-            >
-              <span className="inline-flex items-center gap-2">
-                {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <AudioWaveform className="h-4 w-4" />}
-                {generating
-                  ? locale === "fr"
-                    ? "Génération…"
-                    : "Generating..."
-                  : mode === "song"
-                    ? locale === "fr"
-                      ? "Générer une chanson"
-                      : "Generate Song"
-                    : locale === "fr"
-                      ? "Générer un beat"
-                      : "Generate Beat"}
-              </span>
-            </Button>
-            {generating ? (
-              <div className="mt-2 text-[11px] text-gray-500">
-                {locale === "fr"
-                  ? "Génération en cours — tu peux préparer la suivante, puis générer dès qu’une version est terminée."
-                  : "Generation in progress — you can prepare the next one, then generate as soon as a version finishes."}
-              </div>
+                  {generating ? (
+                    <>
+                      <span className="pk-gen-btn-electric__sheen" aria-hidden />
+                      <span className="pk-gen-btn-electric__arc pk-gen-btn-electric__arc--left" aria-hidden />
+                      <span className="pk-gen-btn-electric__arc pk-gen-btn-electric__arc--right" aria-hidden />
+                    </>
+                  ) : null}
+                  <span className="relative z-[1] inline-flex items-center justify-center gap-2">
+                    {generating ? <GenElectricMark /> : <AudioWaveform className="h-4 w-4" />}
+                    {generating
+                      ? locale === "fr"
+                        ? "Génération…"
+                        : "Generating..."
+                      : mode === "song"
+                        ? locale === "fr"
+                          ? "Générer une chanson"
+                          : "Generate Song"
+                        : locale === "fr"
+                          ? "Générer un beat"
+                          : "Generate Beat"}
+                  </span>
+                </Button>
+              </>
             ) : null}
-
             <div className="mt-3 flex items-center justify-between text-xs">
               <span className="text-gray-500">
-                {locale === "fr"
-                  ? `${remainingAfterGenerate} génération${remainingAfterGenerate !== 1 ? "s" : ""} restante${remainingAfterGenerate !== 1 ? "s" : ""} ce mois-ci`
-                  : `${remainingAfterGenerate} generation${remainingAfterGenerate !== 1 ? "s" : ""} remaining this month`}
+                {profileBusy
+                  ? locale === "fr"
+                    ? "Chargement du quota…"
+                    : "Loading quota…"
+                  : locale === "fr"
+                    ? `${remainingAfterGenerate}/${totalLimit} restantes ce mois-ci`
+                    : `${remainingAfterGenerate}/${totalLimit} left this month`}
               </span>
-              <span className="text-gray-600">{locale === "fr" ? `Plan ${plan}` : `${plan} plan`}</span>
+              <span className="text-gray-600">
+                {profileBusy
+                  ? locale === "fr"
+                    ? "Plan…"
+                    : "Plan…"
+                  : locale === "fr"
+                    ? `Plan ${plan}`
+                    : `${plan} plan`}
+              </span>
             </div>
+            {bonusCreditsTotal > 0 ? (
+              <div className="mt-1 text-[10px] text-cyan-200/70">
+                {locale === "fr"
+                  ? `+${bonusCreditsTotal} bonus actifs (niveau, parrainage, daily)`
+                  : `+${bonusCreditsTotal} active bonus (level, referral, daily)`}
+              </div>
+            ) : null}
             {plan === "free" && remaining > 0 && remaining <= 2 ? (
               <div className="mt-2 flex flex-col gap-2 rounded-lg border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-100/90">
                 <span>
@@ -2638,8 +2986,8 @@ export default function Dashboard() {
               <div className="mt-2 flex flex-col gap-2 text-xs text-gray-500">
                 {plan === "free"
                   ? locale === "fr"
-                    ? `Tu as utilisé tes ${PLAN_LIMITS.free} générations gratuites ce mois-ci`
-                    : `You've used all ${PLAN_LIMITS.free} free generations this month`
+                    ? `Quota mensuel épuisé (${usedThisMonth}/${totalLimit}) — monte de niveau ou reviens demain pour des bonus`
+                    : `Monthly quota used (${usedThisMonth}/${totalLimit}) — level up or come back tomorrow for bonuses`
                   : locale === "fr"
                     ? "Plus de crédits — upgrade ton plan"
                     : "No credits remaining — upgrade your plan"}
@@ -2659,6 +3007,37 @@ export default function Dashboard() {
       }
     >
       <div className="mx-auto w-full max-w-[1120px] px-4 pt-6 md:px-6">
+        <div className="mb-5">
+          <GamificationStrip
+            locale={locale}
+            refreshKey={gamificationRefreshKey}
+            syncRewards={!!user}
+            onBonusCreditsChange={(credits) => {
+              setLevelBonus(credits.levelBonus);
+              setDailyBonusMonth(credits.dailyBonusMonth);
+            }}
+          />
+        </div>
+        {showMasterWorkspace ? (
+          <MasteringPanel
+            locale={locale}
+            loops={loops}
+            selectedLoopId={masterLoopId}
+            onSelectLoop={setMasterLoopId}
+            plan={plan}
+            onUpgrade={openMasteringUpgrade}
+            gamificationRefresh={() => setGamificationRefreshKey((k) => k + 1)}
+            onApplied={() => {
+              setWorkspaceView("tracks");
+              if (mobileV2) setMobileTab("results");
+            }}
+            onExit={() => {
+              setWorkspaceView("tracks");
+              if (mobileV2) setMobileTab("results");
+            }}
+          />
+        ) : (
+          <>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="text-lg font-semibold">{locale === "fr" ? "Mon espace" : "My Workspace"}</div>
@@ -2669,6 +3048,29 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setWorkspaceView("tracks")}
+                className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                  workspaceView === "tracks" ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
+                }`}
+              >
+                {locale === "fr" ? "Tracks" : "Tracks"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setWorkspaceView("master");
+                  if (mobileV2) goMaster();
+                }}
+                className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                  workspaceView === "master" ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
+                }`}
+              >
+                {locale === "fr" ? "Mastering Studio" : "Mastering Studio"}
+              </button>
+            </div>
             <div className="relative w-full sm:w-80">
               <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-pk-muted" />
               <input
@@ -2750,9 +3152,12 @@ export default function Dashboard() {
                     <div key={slot.idx}>
                       <LoopCardItem
                         loop={batchLoop}
+                        queueLoops={generationBatchLoops}
+                        queueSource="generation"
                         onOpenDetails={(loop) => setDetailsId((prev) => (prev === loop.id ? null : loop.id))}
                         onGenerationUsed={consumeCredit}
                         onStartWorkspaceJob={(title, sub) => startWorkspaceJob(title, sub)}
+                        onOpenMaster={openMaster}
                       />
                     </div>
                   );
@@ -2821,9 +3226,11 @@ export default function Dashboard() {
                       <LoopCardItem
                         loop={l}
                         compact={mobileV2}
+                        queueLoops={workspaceDisplayedLoops}
                         onOpenDetails={(loop) => setDetailsId((prev) => (prev === loop.id ? null : loop.id))}
                         onGenerationUsed={consumeCredit}
                         onStartWorkspaceJob={(title, sub) => startWorkspaceJob(title, sub)}
+                        onOpenMaster={openMaster}
                       />
                     </div>
                   ))}
@@ -2860,9 +3267,11 @@ export default function Dashboard() {
                     <LoopCardItem
                       loop={l}
                       compact={mobileV2}
+                      queueLoops={workspaceDisplayedLoops}
                       onOpenDetails={(loop) => setDetailsId(loop.id)}
                       onGenerationUsed={consumeCredit}
                       onStartWorkspaceJob={(title, sub) => startWorkspaceJob(title, sub)}
+                      onOpenMaster={openMaster}
                     />
                   </div>
                 ))}
@@ -2870,6 +3279,8 @@ export default function Dashboard() {
             )
           )}
         </div>
+          </>
+        )}
       </div>
       <Modal
         open={upgradeOpen}
@@ -2911,6 +3322,62 @@ export default function Dashboard() {
           </div>
         </LoopDetailsSheet>
       ) : null}
+      <ShareMomentModal
+        open={!!shareMomentLoop}
+        loop={shareMomentLoop}
+        locale={locale}
+        plan={plan}
+        onClose={() => {
+          setShareMomentLoop(null);
+          if (pendingReferralAfterShareRef.current) {
+            pendingReferralAfterShareRef.current = false;
+            scheduleReferralPrompt(1400);
+          }
+        }}
+        onMakePublic={
+          shareMomentLoop && !shareMomentLoop.isPublic
+            ? () => {
+                void (async () => {
+                  if (!shareMomentLoop) return;
+                  try {
+                    await togglePublicRemote(shareMomentLoop.id);
+                    const updated = useLoopsStore.getState().loops.find((l) => l.id === shareMomentLoop.id);
+                    if (updated) setShareMomentLoop(updated);
+                    toast.success(locale === "fr" ? "Track publique — lien /loop actif" : "Track public — /loop link live");
+                  } catch (err) {
+                    toast.error(err instanceof Error ? err.message : locale === "fr" ? "Erreur" : "Error");
+                  }
+                })();
+              }
+            : undefined
+        }
+      />
+      <ReferralInviteModal
+        open={referralPromptOpen}
+        locale={locale}
+        referralCode={referralCodeForPrompt ?? authProfile?.referral_code ?? null}
+        onClose={() => setReferralPromptOpen(false)}
+      />
+      <MobileOnboardingSheet
+        locale={locale}
+        open={mobileOnboardingOpen}
+        onClose={() => setMobileOnboardingOpen(false)}
+      />
+      <MasteringUpsellModal
+        open={!!masteringUpsellLoop}
+        loop={masteringUpsellLoop}
+        locale={locale}
+        onClose={() => setMasteringUpsellLoop(null)}
+        onTryMastering={() => {
+          const loop = masteringUpsellLoop;
+          setMasteringUpsellLoop(null);
+          if (loop) openMaster(loop);
+        }}
+        onUpgrade={() => {
+          setMasteringUpsellLoop(null);
+          openMasteringUpgrade();
+        }}
+      />
     </AppShell>
   );
 }

@@ -1,6 +1,7 @@
 import { useState, type RefObject } from "react";
 import { Music2, Pause, Play, SlidersHorizontal, Sparkles } from "lucide-react";
 import { PLAN_LIMITS } from "@/lib/planLimits";
+import { PkIconLoader } from "@/components/ui/PkIconLoader";
 
 type CreateMode = "song" | "beat";
 
@@ -44,6 +45,7 @@ type Props = {
   activeCardId: string | null;
   isPlaying: boolean;
   onPlayCard: (card: GeneratorSideCard) => void;
+  embedded?: boolean;
 };
 
 function FloatingCard({
@@ -67,7 +69,7 @@ function FloatingCard({
   return (
     <div
       className={[
-        "pk-landing-gen-card absolute top-1/2 hidden w-[168px] lg:block xl:w-[190px]",
+        "pk-landing-gen-card hidden shrink-0 lg:block",
         side === "left" ? "pk-landing-gen-card--left" : "pk-landing-gen-card--right",
       ].join(" ")}
     >
@@ -163,6 +165,7 @@ export function LandingGenerator({
   activeCardId,
   isPlaying,
   onPlayCard,
+  embedded = false,
 }: Props) {
   const isFr = locale === "fr";
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -182,51 +185,59 @@ export function LandingGenerator({
   const sub =
     mode === "song"
       ? isFr
-        ? "Un prompt suffit — voix, structure et hook en ~20 secondes."
-        : "One prompt is enough — vocals, structure, and hook in ~20 seconds."
+        ? "Un prompt suffit — voix, structure et hook prêts à itérer."
+        : "One prompt is enough — vocals, structure, and hook ready to iterate."
       : isFr
-        ? "BPM et vibe optionnels. Lance la génération en un clic."
-        : "Optional BPM and vibe. Start generating in one click.";
+        ? "BPM et mood optionnels. Instrumentale royalty-free en un clic."
+        : "Optional BPM and mood. Royalty-free instrumental in one click.";
+
+  const showSideCards = sideCards.length >= 2;
 
   return (
-    <div id="create" className="pk-landing-gen relative mx-auto mt-10 w-full max-w-3xl sm:mt-14">
-      {sideCards[0] ? (
-        <FloatingCard
-          card={sideCards[0]}
-          side="left"
-          locale={locale}
-          isActive={activeCardId === sideCards[0].id}
-          isPlaying={isPlaying}
-          onPlay={onPlayCard}
-        />
-      ) : null}
-      {sideCards[1] ? (
-        <FloatingCard
-          card={sideCards[1]}
-          side="right"
-          locale={locale}
-          isActive={activeCardId === sideCards[1].id}
-          isPlaying={isPlaying}
-          onPlay={onPlayCard}
-        />
-      ) : null}
-
-      <div className="relative z-[1] text-center">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/40">
-          {isFr ? "Générateur" : "Generator"}
-        </p>
-        <h2 className="mt-3 text-balance text-[clamp(1.65rem,4.5vw,2.75rem)] font-bold leading-tight tracking-tight text-white">
-          {headline}
-        </h2>
-        <p className="mx-auto mt-3 max-w-xl text-balance text-sm leading-relaxed text-white/55">{sub}</p>
-      </div>
-
+    <div
+      id="create"
+      className={[
+        "pk-landing-gen mx-auto w-full max-w-7xl",
+        embedded ? "mt-0" : "mt-10 sm:mt-14",
+      ].join(" ")}
+    >
       <div
         className={[
-          "pk-landing-gen__shell relative z-[1] mt-6 sm:mt-8",
-          focused ? "pk-landing-gen__shell--focused" : "",
+          "pk-landing-gen__row flex w-full items-center",
+          showSideCards ? "justify-between gap-5 xl:gap-8 2xl:gap-10" : "justify-center",
         ].join(" ")}
       >
+        {sideCards[0] ? (
+          <FloatingCard
+            card={sideCards[0]}
+            side="left"
+            locale={locale}
+            isActive={activeCardId === sideCards[0].id}
+            isPlaying={isPlaying}
+            onPlay={onPlayCard}
+          />
+        ) : null}
+
+        <div className="pk-landing-gen__center relative z-[1] w-full min-w-0 max-w-3xl flex-1 lg:max-w-4xl">
+          {embedded ? null : (
+            <div className="relative z-[1] text-center">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/40">
+                {isFr ? "Générateur" : "Generator"}
+              </p>
+              <h2 className="mt-3 text-balance text-[clamp(1.65rem,4.5vw,2.75rem)] font-bold leading-tight tracking-tight text-white">
+                {headline}
+              </h2>
+              <p className="mx-auto mt-3 max-w-xl text-balance text-sm leading-relaxed text-white/55">{sub}</p>
+            </div>
+          )}
+
+          <div
+            className={[
+              "pk-landing-gen__shell relative z-[1]",
+              embedded ? "mt-0" : "mt-6 sm:mt-8",
+              focused ? "pk-landing-gen__shell--focused" : "",
+            ].join(" ")}
+          >
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.08] px-3 py-2.5 sm:px-4">
           <div className="inline-flex rounded-full border border-white/10 bg-white/[0.04] p-0.5">
             <button
@@ -362,7 +373,7 @@ export function LandingGenerator({
             className="pk-landing-gen__cta inline-flex h-12 w-full items-center justify-center gap-2 rounded-full px-6 text-sm font-bold text-black transition-all hover:brightness-110 disabled:opacity-70 sm:w-auto sm:min-w-[148px]"
           >
             {generating ? (
-              <span className="h-4 w-4 animate-spin rounded-full border-2 border-black/20 border-t-black" />
+              <PkIconLoader icon="generator" size="xs" inline />
             ) : (
               <Music2 className="h-4 w-4" />
             )}
@@ -371,10 +382,23 @@ export function LandingGenerator({
         </div>
       </div>
 
-      <p className="relative z-[1] mt-4 flex items-center justify-center gap-2 text-center text-xs text-white/45">
-        <Sparkles className="h-3.5 w-3.5 text-[var(--prism-violet)]" aria-hidden />
-        {isFr ? "Aucune compétence requise — décris ton idée, on s’occupe du reste." : "No skills needed — describe your idea, we handle the rest."}
-      </p>
+          <p className="relative z-[1] mt-4 flex items-center justify-center gap-2 text-center text-xs text-white/45">
+            <Sparkles className="h-3.5 w-3.5 text-[var(--prism-violet)]" aria-hidden />
+            {isFr ? "Aucune compétence requise — décris ton idée, on s’occupe du reste." : "No skills needed — describe your idea, we handle the rest."}
+          </p>
+        </div>
+
+        {sideCards[1] ? (
+          <FloatingCard
+            card={sideCards[1]}
+            side="right"
+            locale={locale}
+            isActive={activeCardId === sideCards[1].id}
+            isPlaying={isPlaying}
+            onPlay={onPlayCard}
+          />
+        ) : null}
+      </div>
     </div>
   );
 }

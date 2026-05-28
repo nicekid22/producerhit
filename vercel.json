@@ -1,3 +1,20 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "redirects": [
+    { "source": "/explore", "destination": "/community", "permanent": true },
+    { "source": "/explore/:path*", "destination": "/community/:path*", "permanent": true }
+  ],
+  "rewrites": [
+    {
+      "source": "/loop/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Discordbot|WhatsApp|TelegramBot|Pinterest|redditbot).*"
+        }
+      ],
+      "destination": "/api/loop-social?id=:id"
+    },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }

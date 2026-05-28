@@ -8,6 +8,8 @@ export type LoopDetails = {
   keyScale?: string;
   timeSignature?: string;
   audioFormat?: string;
+  /** Frozen at generation time — Pollinations cover must not follow prompt edits. */
+  coverPrompt?: string;
 };
 
 export type Loop = {

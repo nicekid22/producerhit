@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Download, Pause, Play, SkipBack, SkipForward, Volume2 } from "lucide-react";
+import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import { usePlayerStore } from "@/stores/playerStore";
 import { Button } from "@/components/ui/Button";
-import { coverGradient, coverImageUrl } from "@/lib/utils";
+import { coverGradient, coverImageKey, coverImageUrl } from "@/lib/utils";
 import { resolvePlayableAudioUrl, shouldUseWebAudioGraph } from "@/lib/playableAudio";
 
 function formatTime(sec: number): string {
@@ -45,6 +46,8 @@ export function AudioPlayer() {
   const [volume, setVolume] = useState(0.8);
   const [isLoading, setIsLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const coarsePointer = useCoarsePointer();
+  const skipVisualizer = coarsePointer;
 
   const queueLen = queue.length;
   const canPrev = queueLen > 0 && queueIndex > 0;
@@ -53,7 +56,26 @@ export function AudioPlayer() {
   const lastLoadedKeyRef = useRef<string | null>(null);
   const loadGenRef = useRef(0);
 
+  const stopRaf = useCallback(() => {
+    if (rafRef.current != null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+  }, []);
+
+  const applyAudioCrossOrigin = useCallback((url: string) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const needsCors = url.startsWith("blob:") || url.startsWith("data:") || shouldUseWebAudioGraph(url);
+    if (needsCors) {
+      audio.crossOrigin = "anonymous";
+    } else {
+      audio.removeAttribute("crossorigin");
+    }
+  }, []);
+
   const ensureAudioGraph = useCallback((sourceUrl?: string) => {
+    if (skipVisualizer) return;
     const audio = audioRef.current;
     if (!audio) return;
     if (audioCtxRef.current && analyserRef.current && mediaSourceRef.current) return;
@@ -83,14 +105,7 @@ export function AudioPlayer() {
       analyserRef.current = null;
       freqDataRef.current = null;
     }
-  }, []);
-
-  const stopRaf = useCallback(() => {
-    if (rafRef.current != null) {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
-    }
-  }, []);
+  }, [skipVisualizer]);
 
   const drawVisualizer = useCallback(() => {
     const canvas = vizCanvasRef.current;
@@ -142,15 +157,17 @@ export function AudioPlayer() {
   }, []);
 
   const startVisualizer = useCallback(() => {
+    if (skipVisualizer) return;
     stopRaf();
     const tick = () => {
       drawVisualizer();
       rafRef.current = requestAnimationFrame(tick);
     };
     tick();
-  }, [drawVisualizer, stopRaf]);
+  }, [drawVisualizer, skipVisualizer, stopRaf]);
 
   const decayVisualizerToZero = useCallback(() => {
+    if (skipVisualizer) return;
     stopRaf();
     const bars = lastBarsRef.current;
     const tick = () => {
@@ -164,7 +181,7 @@ export function AudioPlayer() {
       if (any) rafRef.current = requestAnimationFrame(tick);
     };
     tick();
-  }, [drawVisualizer, stopRaf]);
+  }, [drawVisualizer, skipVisualizer, stopRaf]);
 
   useEffect(() => {
     const onPointerDownOnce = () => {
@@ -287,6 +304,11 @@ export function AudioPlayer() {
       stopRaf();
     };
     const onEnded = () => {
+      const { queue: q, queueIndex: qi, next: goNext } = usePlayerStore.getState();
+      if (q.length > 0 && qi < q.length - 1) {
+        goNext();
+        return;
+      }
       setIsPlaying(false);
       setPlaying(false);
       setIsLoading(false);
@@ -374,12 +396,14 @@ export function AudioPlayer() {
 
       const resolvedKey = `${currentBeat.id}:${playableUrl}`;
       if (lastLoadedKeyRef.current === resolvedKey && audio.src) {
+        applyAudioCrossOrigin(playableUrl);
         if (storeIsPlaying && audio.paused) tryPlayAudio();
         return;
       }
 
       audioGraphFailedRef.current = false;
       lastLoadedKeyRef.current = resolvedKey;
+      applyAudioCrossOrigin(playableUrl);
       audio.src = playableUrl;
       audio.load();
       audio.muted = false;
@@ -411,6 +435,7 @@ export function AudioPlayer() {
       }
     })();
   }, [
+    applyAudioCrossOrigin,
     currentBeat?.id,
     currentBeat?.audioUrl,
     setCurrentTimeStore,
@@ -533,6 +558,7 @@ export function AudioPlayer() {
 
   const coverBg = currentBeat ? coverGradient(currentBeat) : "";
   const coverUrl = currentBeat ? coverImageUrl(currentBeat) : "";
+  const coverKey = currentBeat ? coverImageKey(currentBeat) : "";
 
   return (
     <>
@@ -543,10 +569,11 @@ export function AudioPlayer() {
     >
       <div className="mx-auto flex max-w-[1440px] items-center gap-2 px-3 py-2.5 sm:gap-4 sm:px-4 sm:py-3">
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:max-w-none sm:gap-3">
-          <div className="pk-prism-cover relative hidden h-11 w-11 shrink-0 overflow-hidden rounded-xl sm:block" style={{ background: coverBg }}>
+          <div className="pk-prism-cover relative hidden h-11 w-11 shrink-0 rounded-xl p-[2px] sm:block" style={{ background: coverBg }}>
+            <div className="relative h-full w-full overflow-hidden rounded-[10px] bg-[#050508]">
             {coverUrl ? (
               <img
-                key={coverUrl}
+                key={coverKey}
                 src={coverUrl}
                 alt=""
                 className="absolute inset-0 h-full w-full object-cover"
@@ -575,6 +602,7 @@ export function AudioPlayer() {
                 }}
               />
             ) : null}
+            </div>
           </div>
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-semibold text-white">{currentBeat.name}</div>
@@ -715,7 +743,7 @@ export function AudioPlayer() {
       </div>
     </div>
       ) : null}
-      <audio ref={audioRef} id="pk-audio" preload="metadata" crossOrigin="anonymous" playsInline className="hidden" aria-hidden />
+      <audio ref={audioRef} id="pk-audio" preload="metadata" playsInline className="hidden" aria-hidden />
     </>
   );
 }

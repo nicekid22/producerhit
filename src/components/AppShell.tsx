@@ -19,13 +19,13 @@ export function AppShell({
   theme?: "default" | "prism";
   /** Onglets Créer/Résultats — mobile Dashboard v2 */
   mobileTabs?: React.ReactNode;
-  mobilePanel?: "create" | "results";
+  mobilePanel?: "create" | "results" | "master";
   mobileLayoutV2?: boolean;
 }) {
   const hasPlayer = usePlayerStore((s) => !!s.current);
   const isPrism = theme === "prism";
   const dockPb = hasPlayer ? "pk-shell-dock-pb--player" : "pk-shell-dock-pb";
-  const hideLeftOnMobile = mobileLayoutV2 && mobilePanel === "results";
+  const hideLeftOnMobile = mobileLayoutV2 && (mobilePanel === "results" || mobilePanel === "master");
   const hideChildrenOnMobile = mobileLayoutV2 && mobilePanel === "create";
 
   return (
@@ -44,16 +44,16 @@ export function AppShell({
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {isPrism ? (
           <>
-            <div className="pk-prism-grain opacity-[0.035]" />
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_42%,rgba(0,0,0,0.42)_100%)]" />
-            <div className="absolute -top-48 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-[rgba(157,124,255,0.10)] blur-3xl" />
-            <div className="absolute -bottom-56 left-12 h-[520px] w-[520px] rounded-full bg-[rgba(103,195,255,0.06)] blur-3xl" />
+            <div className="pk-prism-fx-grain pk-prism-grain opacity-[0.035]" aria-hidden />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_42%,rgba(0,0,0,0.42)_100%)]" aria-hidden />
+            <div className="pk-prism-fx-orb absolute -top-48 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-[rgba(157,124,255,0.10)] blur-3xl" aria-hidden />
+            <div className="pk-prism-fx-orb absolute -bottom-56 left-12 h-[520px] w-[520px] rounded-full bg-[rgba(103,195,255,0.06)] blur-3xl" aria-hidden />
           </>
         ) : (
           <>
-            <div className="absolute -top-48 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-[#7c3aed]/15 blur-3xl" />
-            <div className="absolute -bottom-56 left-12 h-[520px] w-[520px] rounded-full bg-fuchsia-500/10 blur-3xl" />
-            <div className="absolute -top-56 -right-24 h-[520px] w-[520px] rounded-full bg-cyan-500/10 blur-3xl" />
+            <div className="pk-prism-fx-orb absolute -top-48 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-[#7c3aed]/15 blur-3xl" aria-hidden />
+            <div className="pk-prism-fx-orb absolute -bottom-56 left-12 h-[520px] w-[520px] rounded-full bg-fuchsia-500/10 blur-3xl" aria-hidden />
+            <div className="pk-prism-fx-orb absolute -top-56 -right-24 h-[520px] w-[520px] rounded-full bg-cyan-500/10 blur-3xl" aria-hidden />
           </>
         )}
       </div>

@@ -1,7 +1,7 @@
 import toast from "react-hot-toast";
 import { Clock, Copy, Gauge, Info, KeyRound, Loader2, Sigma } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { coverGradient, coverImageUrl } from "@/lib/utils";
+import { coverGradient, coverImageKey, coverImageUrl } from "@/lib/utils";
 import type { Loop } from "@/types/loop";
 
 function formatTime(sec: number) {
@@ -45,7 +45,7 @@ export function LoopDetailsPanel({
           aria-hidden
         >
           <img
-            key={coverImageUrl(loop)}
+            key={coverImageKey(loop)}
             src={coverImageUrl(loop)}
             alt=""
             className="absolute inset-0 h-full w-full object-contain"

@@ -19,6 +19,10 @@ export function LandingFooter({ locale, user }: Props) {
 
   const seoLinks = [
     { to: "/ai-beat-generator", label: "AI Beat Generator" },
+    { to: "/ai-trap-beat-generator", label: "Trap AI" },
+    { to: "/ai-drill-beat-generator", label: "Drill AI" },
+    { to: "/ai-rnb-beat-generator", label: "R&B AI" },
+    { to: "/ai-afrobeats-generator", label: "Afrobeats AI" },
     { to: "/ai-music-generator", label: "AI Music Generator" },
     { to: "/type-beat-generator-ai", label: "Type Beat AI" },
     { to: "/generate-beats-online-free", label: isFr ? "Beats gratuits" : "Free Beats" },
@@ -33,15 +37,15 @@ export function LandingFooter({ locale, user }: Props) {
   ];
 
   return (
-    <footer className="pk-landing-footer border-t border-white/10 bg-[rgba(4,3,10,0.55)] backdrop-blur-xl">
+    <footer className="pk-landing-footer relative z-[1] border-t border-white/[0.06] bg-[#04030a]">
       <div className="mx-auto max-w-6xl px-4 py-12 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:py-14 md:py-16">
         <div className="grid gap-10 md:grid-cols-12 md:gap-8">
           <div className="md:col-span-4">
             <BrandLogo compact />
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-white/55">
               {isFr
-                ? "Générateur IA de chansons et type beats — holographic metal, release-ready."
-                : "AI song & type beat generator — holographic metal aesthetic, release-ready output."}
+                ? "Générateur IA de chansons et type beats — studio quality, release-ready."
+                : "AI song & type beat generator — studio quality, release-ready output."}
             </p>
             <p className="mt-4 text-xs font-semibold text-white/35">Powered by ACE-Step</p>
           </div>
@@ -86,7 +90,7 @@ export function LandingFooter({ locale, user }: Props) {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col gap-4 border-t border-white/10 pt-8 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-10 flex flex-col gap-4 border-t border-white/[0.06] pt-8 sm:flex-row sm:items-center sm:justify-between">
           <span className="text-sm text-white/50">© 2026 ProducerHit</span>
           <div className="flex flex-wrap gap-x-5 gap-y-2">
             <Link to={user ? "/dashboard" : "/auth"} className="text-sm font-semibold text-[var(--prism-cyan)] hover:text-white">

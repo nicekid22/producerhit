@@ -1,16 +1,19 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import toast from "react-hot-toast";
-import { cn, coverGradient, coverImageUrl } from "@/lib/utils";
-import { resolvePlayableAudioUrl } from "@/lib/playableAudio";
+import { buildCoverPromptSnapshot, cn, coverGradient, coverImageKey, coverImageUrl } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { AudioWaveform } from "@/components/WaveformVisualizer";
 import { useLoopsStore } from "@/stores/loopsStore";
-import { usePlayerStore } from "@/stores/playerStore";
+import { playLoopInContext, usePlayerStore } from "@/stores/playerStore";
+import { buildLoopShareUrl } from "@/lib/growthLinks";
 import { useLocaleStore } from "@/stores/localeStore";
 import type { Loop } from "@/types/loop";
 import { generateBeat } from "@/lib/audioApi";
-import { Bookmark, Check, Copy, Download, Globe, Info, Layers, Loader2, MoreHorizontal, Pause, Pencil, Play, RefreshCcw, Share2, Video, X } from "lucide-react";
+import { canDownloadStems, canShareWithoutWatermark } from "@/lib/planEntitlements";
+import { downloadShareVideoBlob, exportShareVideo } from "@/lib/shareVideo";
+import { Bookmark, Check, Copy, Download, Globe, Info, Layers, Loader2, MoreHorizontal, Pause, Pencil, Play, RefreshCcw, Share2, Sparkles, Video, X } from "lucide-react";
 
 function formatTime(sec: number) {
   const s = Math.max(0, Math.floor(sec));
@@ -31,6 +34,9 @@ export function LoopCardItem({
   onGenerationUsed,
   onStartWorkspaceJob,
   compact = false,
+  queueLoops,
+  queueSource = "workspace",
+  onOpenMaster,
 }: {
   loop: Loop;
   onDelete?: () => void;
@@ -38,6 +44,9 @@ export function LoopCardItem({
   onGenerationUsed?: () => void;
   onStartWorkspaceJob?: (title: string, sub: string) => (() => void) | void;
   compact?: boolean;
+  queueLoops?: Loop[];
+  queueSource?: string;
+  onOpenMaster?: (loop: Loop) => void;
 }) {
   const locale = useLocaleStore((s) => s.locale);
   const plan = (() => {
@@ -52,9 +61,15 @@ export function LoopCardItem({
   const isPlaying = usePlayerStore((s) => s.isPlaying);
   const progress = usePlayerStore((s) => s.progress);
   const currentTimeSec = usePlayerStore((s) => s.currentTimeSec);
-  const setCurrent = usePlayerStore((s) => s.setCurrent);
   const requestSeek = usePlayerStore((s) => s.requestSeek);
   const setPlaying = usePlayerStore((s) => s.setPlaying);
+
+  const startPlayback = useCallback(
+    (target: Loop, autoPlay = true) => {
+      playLoopInContext(target, queueLoops, autoPlay, queueSource);
+    },
+    [queueLoops, queueSource],
+  );
 
   const toggleSavedRemote = useLoopsStore((s) => s.toggleSavedRemote);
   const togglePublicRemote = useLoopsStore((s) => s.togglePublicRemote);
@@ -75,6 +90,17 @@ export function LoopCardItem({
   const [menuOpen, setMenuOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const coverUrl = useMemo(() => coverImageUrl(loop), [loop.details?.coverPrompt, loop.genre, loop.id, loop.influence, loop.mood, loop.seed]);
+  const coverKey = useMemo(() => coverImageKey(loop), [loop.details?.coverPrompt, loop.genre, loop.id, loop.influence, loop.mood, loop.seed]);
+
+  useEffect(() => {
+    if (!shareOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [shareOpen]);
 
   const active = current?.id === loop.id;
   const activePlaying = active && isPlaying;
@@ -251,6 +277,12 @@ export function LoopCardItem({
                 keyScale: result.meta.keyScale ?? "",
                 timeSignature: result.meta.timeSignature ?? "",
                 audioFormat: result.meta.audioFormat ?? loop.details?.audioFormat ?? "mp3",
+                coverPrompt: buildCoverPromptSnapshot({
+                  prompt: variantPrompt,
+                  genre: loop.genre,
+                  mood: loop.mood,
+                  influence: loop.influence,
+                }),
               }
             : loop.details
               ? { ...loop.details }
@@ -269,7 +301,7 @@ export function LoopCardItem({
 
         try {
           const created = await createLoop(draft);
-          setCurrent(created, true);
+          startPlayback(created, true);
           toast.success(kind === "remix" ? (locale === "fr" ? "Remix généré !" : "Remix generated!") : locale === "fr" ? "Variation générée !" : "Variation generated!");
           onGenerationUsed?.();
         } catch (err) {
@@ -302,7 +334,7 @@ export function LoopCardItem({
             };
             upsertLoop(temp);
             enqueuePendingSave(draft, id, createdAt);
-            setCurrent(temp, true);
+            startPlayback(temp, true);
             toast.error(locale === "fr" ? `Généré, mais l’enregistrement a échoué : ${message}` : `Generated, but saving failed: ${message}`);
             onGenerationUsed?.();
           } else {
@@ -349,7 +381,7 @@ export function LoopCardItem({
     return Math.max(12, Math.min(maxTop, Math.floor(rawTop)));
   }, []);
 
-  const shareUrl = `https://www.producerhit.com/loop/${loop.id}`;
+  const shareUrl = buildLoopShareUrl(loop.id, "twitter");
   const shareText =
     locale === "fr"
       ? `Écoute mon dernier track "${loop.name}" (${loop.genre}) sur ProducerHit : ${shareUrl}`
@@ -396,207 +428,17 @@ export function LoopCardItem({
     }
     setShareBusy(true);
     try {
-      const w = 1080;
-      const h = 1920;
-      const fps = 30;
-      const durationSec = 12;
-
-      const canvas = document.createElement("canvas");
-      canvas.width = w;
-      canvas.height = h;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("canvas");
-
-      const coverUrl = coverImageUrl(loop);
-      const coverBitmap = await (async () => {
-        try {
-          const res = await fetch(coverUrl);
-          if (!res.ok) return null;
-          const blob = await res.blob();
-          return await createImageBitmap(blob);
-        } catch {
-          return null;
-        }
-      })();
-
-      const audio = new Audio();
-      audio.crossOrigin = "anonymous";
-      audio.preload = "auto";
-      audio.src = loop.audioUrl;
-      audio.currentTime = 0;
-
-      const audioStream =
-        (audio as unknown as { captureStream?: () => MediaStream; mozCaptureStream?: () => MediaStream }).captureStream?.() ??
-        (audio as unknown as { captureStream?: () => MediaStream; mozCaptureStream?: () => MediaStream }).mozCaptureStream?.() ??
-        null;
-
-      const canvasStream = canvas.captureStream(fps);
-      const out = new MediaStream([
-        ...canvasStream.getVideoTracks(),
-        ...(audioStream ? audioStream.getAudioTracks() : []),
-      ]);
-
-      const mime =
-        MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
-          ? "video/webm;codecs=vp9,opus"
-          : MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")
-            ? "video/webm;codecs=vp8,opus"
-            : "video/webm";
-
-      const rec = new MediaRecorder(out, { mimeType: mime, videoBitsPerSecond: 5_500_000 });
-      const chunks: BlobPart[] = [];
-      rec.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) chunks.push(e.data);
-      };
-      const stopPromise = new Promise<Blob>((resolve) => {
-        rec.onstop = () => resolve(new Blob(chunks, { type: mime }));
-      });
-
-      const startTs = performance.now();
-      const pad = 72;
-      const coverSize = 980;
-      const coverX = Math.floor((w - coverSize) / 2);
-      const coverY = 220;
-      const radius = 46;
-
-      const drawRoundedRect = (x: number, y: number, rw: number, rh: number, r: number) => {
-        const rr = Math.max(0, Math.min(r, Math.floor(Math.min(rw, rh) / 2)));
-        ctx.beginPath();
-        ctx.moveTo(x + rr, y);
-        ctx.arcTo(x + rw, y, x + rw, y + rh, rr);
-        ctx.arcTo(x + rw, y + rh, x, y + rh, rr);
-        ctx.arcTo(x, y + rh, x, y, rr);
-        ctx.arcTo(x, y, x + rw, y, rr);
-        ctx.closePath();
-      };
-
-      const tick = () => {
-        const t = (performance.now() - startTs) / 1000;
-
-        const bg = ctx.createLinearGradient(0, 0, w, h);
-        bg.addColorStop(0, "rgba(10,10,18,1)");
-        bg.addColorStop(0.5, "rgba(18,12,28,1)");
-        bg.addColorStop(1, "rgba(7,16,24,1)");
-        ctx.fillStyle = bg;
-        ctx.fillRect(0, 0, w, h);
-
-        const glow1 = ctx.createRadialGradient(w * 0.25, h * 0.22, 0, w * 0.25, h * 0.22, 520);
-        glow1.addColorStop(0, "rgba(124,58,237,0.35)");
-        glow1.addColorStop(1, "rgba(124,58,237,0)");
-        ctx.fillStyle = glow1;
-        ctx.fillRect(0, 0, w, h);
-
-        const glow2 = ctx.createRadialGradient(w * 0.78, h * 0.74, 0, w * 0.78, h * 0.74, 620);
-        glow2.addColorStop(0, "rgba(6,182,212,0.25)");
-        glow2.addColorStop(1, "rgba(6,182,212,0)");
-        ctx.fillStyle = glow2;
-        ctx.fillRect(0, 0, w, h);
-
-        ctx.save();
-        drawRoundedRect(coverX, coverY, coverSize, coverSize, radius);
-        ctx.clip();
-        ctx.fillStyle = "rgba(255,255,255,0.04)";
-        ctx.fillRect(coverX, coverY, coverSize, coverSize);
-        if (coverBitmap) {
-          const sw = coverBitmap.width;
-          const sh = coverBitmap.height;
-          const scale = Math.max(coverSize / sw, coverSize / sh);
-          const dw = sw * scale;
-          const dh = sh * scale;
-          const dx = coverX + (coverSize - dw) / 2;
-          const dy = coverY + (coverSize - dh) / 2;
-          ctx.drawImage(coverBitmap, dx, dy, dw, dh);
-        }
-        const sheenX = (t * 380) % (coverSize + 520) - 520;
-        const sheen = ctx.createLinearGradient(coverX + sheenX, coverY, coverX + sheenX + 520, coverY + coverSize);
-        sheen.addColorStop(0, "rgba(255,255,255,0)");
-        sheen.addColorStop(0.5, "rgba(255,255,255,0.08)");
-        sheen.addColorStop(1, "rgba(255,255,255,0)");
-        ctx.fillStyle = sheen;
-        ctx.fillRect(coverX, coverY, coverSize, coverSize);
-        ctx.restore();
-
-        ctx.fillStyle = "rgba(255,255,255,0.92)";
-        ctx.font = "700 56px Inter, system-ui, -apple-system, Segoe UI, Arial";
-        const title = (loop.name || "ProducerHit").slice(0, 40);
-        ctx.fillText(title, pad, 140);
-        ctx.fillStyle = "rgba(255,255,255,0.64)";
-        ctx.font = "500 34px Inter, system-ui, -apple-system, Segoe UI, Arial";
-        ctx.fillText(`${loop.genre} • ${loop.bpm ? `${loop.bpm} BPM` : "Auto BPM"}`, pad, 188);
-
-        const barCount = 64;
-        const areaW = w - pad * 2;
-        const baseY = 1580;
-        const maxH = 180;
-        const barW = Math.max(3, Math.floor(areaW / (barCount * 1.8)));
-        const gap = Math.max(3, Math.floor(barW * 0.8));
-        const totalW = barCount * barW + (barCount - 1) * gap;
-        const startX = pad + Math.floor((areaW - totalW) / 2);
-        for (let i = 0; i < barCount; i++) {
-          const v =
-            0.12 +
-            0.88 *
-              (0.5 + 0.5 * Math.sin(t * 3.2 + i * 0.28)) *
-              (0.65 + 0.35 * Math.sin(t * 1.1 + i * 0.17));
-          const hh = Math.max(6, Math.floor(v * maxH));
-          const x = startX + i * (barW + gap);
-          const y = baseY - hh;
-          const tt = i / (barCount - 1);
-          const r = Math.round(124 + (167 - 124) * tt);
-          const g = Math.round(58 + (139 - 58) * tt);
-          const b = Math.round(237 + (250 - 237) * tt);
-          ctx.fillStyle = `rgba(${r},${g},${b},0.92)`;
-          ctx.fillRect(x, y, barW, hh);
-        }
-
-        ctx.fillStyle = "rgba(255,255,255,0.45)";
-        ctx.font = "600 28px Inter, system-ui, -apple-system, Segoe UI, Arial";
-        ctx.fillText("producerhit.com", pad, 1828);
-
-        if (t < durationSec) {
-          requestAnimationFrame(tick);
-        }
-      };
-
-      rec.start(100);
-      await audio.play().catch(() => undefined);
-      tick();
-
-      await new Promise<void>((resolve) => {
-        const stopAt = window.setTimeout(() => {
-          window.clearTimeout(stopAt);
-          resolve();
-        }, durationSec * 1000);
-      });
-
-      rec.stop();
-      audio.pause();
-      canvasStream.getTracks().forEach((tr) => tr.stop());
-      audioStream?.getTracks().forEach((tr) => tr.stop());
-
-      const blob = await stopPromise;
-
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      const cleanName = (loop.name || "producerhit")
-        .replace(/[^a-zA-Z0-9\s-]/g, "")
-        .replace(/\s+/g, "-")
-        .toLowerCase()
-        .slice(0, 64);
-      a.download = `${cleanName || "producerhit"}-share.webm`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      toast.success(locale === "fr" ? "Vidéo prête à partager" : "Video ready to share");
+      const showWatermark = !canShareWithoutWatermark(plan);
+      const blob = await exportShareVideo(loop, { durationSec: 15, showWatermark, watermarkText: "made with ProducerHit" });
+      downloadShareVideoBlob(loop, blob);
+      toast.success(locale === "fr" ? "Vidéo TikTok prête à partager" : "TikTok video ready to share");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "";
       toast.error(locale === "fr" ? `Impossible de créer la vidéo${msg ? `: ${msg}` : ""}` : `Failed to create video${msg ? `: ${msg}` : ""}`);
     } finally {
       setShareBusy(false);
     }
-  }, [locale, loop]);
+  }, [locale, loop, plan]);
 
   return (
     <div
@@ -618,12 +460,13 @@ export function LoopCardItem({
     >
       <div className="flex gap-3">
         <div
-          className="relative h-12 w-12 shrink-0 overflow-hidden rounded-pk border border-pk-border bg-center bg-cover"
-          style={{ backgroundImage: coverGradient(loop) }}
+          className="relative h-12 w-12 shrink-0 rounded-pk p-[2px]"
+          style={{ background: coverGradient(loop) }}
         >
+          <div className="relative h-full w-full overflow-hidden rounded-[6px] bg-[#050508]">
           <img
-            key={coverImageUrl(loop)}
-            src={coverImageUrl(loop)}
+            key={coverKey}
+            src={coverUrl}
             alt=""
             className="absolute inset-0 h-full w-full object-cover"
             loading="lazy"
@@ -641,7 +484,7 @@ export function LoopCardItem({
               const retry = Number(img.dataset.retry ?? "0");
               if (retry < 4) {
                 img.dataset.retry = String(retry + 1);
-                const url = coverImageUrl(loop);
+                const url = coverUrl;
                 window.setTimeout(() => {
                   img.style.display = "block";
                   img.style.opacity = "0";
@@ -653,6 +496,7 @@ export function LoopCardItem({
               img.style.display = "none";
             }}
           />
+          </div>
         </div>
         <div className="min-w-0">
           <div className="flex items-start justify-between gap-2">
@@ -772,7 +616,7 @@ export function LoopCardItem({
           onSeek={
             canPlay
               ? (pct) => {
-                  if (!active) setCurrent(loop, true);
+                  if (!active) startPlayback(loop, true);
                   requestSeek(pct);
                 }
               : undefined
@@ -800,12 +644,7 @@ export function LoopCardItem({
                 }
                 const directUrl = typeof loop.audioUrl === "string" ? loop.audioUrl.trim() : "";
                 if (directUrl) {
-                  const playable = await resolvePlayableAudioUrl(directUrl, loop.id).catch(() => "");
-                  if (!playable) {
-                    toast.error(locale === "fr" ? "Audio indisponible — réessaie dans un instant" : "Audio unavailable — try again in a moment");
-                    return;
-                  }
-                  setCurrent({ ...loop, audioUrl: playable }, true);
+                  startPlayback({ ...loop, audioUrl: directUrl }, true);
                   return;
                 }
                 let url = "";
@@ -819,7 +658,7 @@ export function LoopCardItem({
                   return;
                 }
                 const fresh = useLoopsStore.getState().loops.find((l) => l.id === loop.id) ?? loop;
-                setCurrent({ ...fresh, audioUrl: url }, true);
+                startPlayback({ ...fresh, audioUrl: url }, true);
               })();
             }}
           >
@@ -922,6 +761,20 @@ export function LoopCardItem({
                   <Share2 className="h-3.5 w-3.5" />
                   Share
                 </button>
+                {onOpenMaster ? (
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs font-semibold text-pk-text hover:bg-white/5"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMenuOpen(false);
+                      onOpenMaster(loop);
+                    }}
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    {locale === "fr" ? "Mastering Studio" : "Mastering Studio"}
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs font-semibold text-pk-text hover:bg-white/5 disabled:opacity-40"
@@ -980,12 +833,7 @@ export function LoopCardItem({
 
               const directUrl = typeof loop.audioUrl === "string" ? loop.audioUrl.trim() : "";
               if (directUrl) {
-                const playable = await resolvePlayableAudioUrl(directUrl, loop.id).catch(() => "");
-                if (!playable) {
-                  toast.error(locale === "fr" ? "Audio indisponible — réessaie dans un instant" : "Audio unavailable — try again in a moment");
-                  return;
-                }
-                setCurrent({ ...loop, audioUrl: playable }, true);
+                startPlayback({ ...loop, audioUrl: directUrl }, true);
                 return;
               }
 
@@ -1001,7 +849,7 @@ export function LoopCardItem({
               }
 
               const fresh = useLoopsStore.getState().loops.find((l) => l.id === loop.id) ?? loop;
-              setCurrent({ ...fresh, audioUrl: url }, true);
+              startPlayback({ ...fresh, audioUrl: url }, true);
             })();
           }}
           aria-label={activePlaying ? "Pause" : "Play"}
@@ -1058,6 +906,20 @@ export function LoopCardItem({
           <Globe className="h-4 w-4" />
           {loop.isPublic ? (locale === "fr" ? "Privé" : "Private") : locale === "fr" ? "Public" : "Public"}
         </Button>
+        {onOpenMaster ? (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenMaster(loop);
+            }}
+            title={locale === "fr" ? "Ouvrir Mastering Studio" : "Open Mastering Studio"}
+          >
+            <Sparkles className="h-4 w-4" />
+            Studio
+          </Button>
+        ) : null}
         <Button
           variant="secondary"
           size="sm"
@@ -1127,9 +989,9 @@ export function LoopCardItem({
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              if (plan === "free") {
-                toast(locale === "fr" ? "Export stems: Pro/Studio" : "Stem export: Pro/Studio");
-                window.location.href = "/pricing";
+              if (!canDownloadStems(plan)) {
+                toast(locale === "fr" ? "Stems séparés ZIP : plan Plus" : "Separate stems ZIP: Plus plan");
+                window.location.href = "/pricing?plan=plus&checkout=1";
                 return;
               }
               if (isDownloadingStems) return;
@@ -1206,15 +1068,16 @@ export function LoopCardItem({
       </div>
       )}
 
-      {shareOpen ? (
-        <div className="fixed inset-0 z-50">
-          <button
-            type="button"
-            className="absolute inset-0 cursor-default bg-black/60"
-            aria-label={locale === "fr" ? "Fermer" : "Close"}
-            onClick={() => setShareOpen(false)}
-          />
-          <div className="absolute left-1/2 top-1/2 w-[min(92vw,560px)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl border border-pk-border bg-pk-panel/90 shadow-[0_0_80px_rgba(0,0,0,0.55)] backdrop-blur">
+      {shareOpen
+        ? createPortal(
+            <div className="fixed inset-0 z-[200] flex items-center justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
+              <button
+                type="button"
+                className="absolute inset-0 cursor-default"
+                aria-label={locale === "fr" ? "Fermer" : "Close"}
+                onClick={() => setShareOpen(false)}
+              />
+              <div className="relative my-auto w-full max-w-lg overflow-hidden rounded-2xl border border-pk-border bg-pk-panel shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
             <div className="flex items-center justify-between gap-3 border-b border-pk-border p-4">
               <div className="min-w-0">
                 <div className="truncate text-sm font-semibold">{locale === "fr" ? "Partager" : "Share"}</div>
@@ -1414,9 +1277,11 @@ export function LoopCardItem({
                 </Button>
               </div>
             </div>
-          </div>
-        </div>
-      ) : null}
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }

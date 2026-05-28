@@ -1,5 +1,5 @@
 import { Bookmark, Download, RefreshCcw, Play, Pause, Loader2 } from "lucide-react";
-import { cn, coverGradient, coverImageUrl } from "@/lib/utils";
+import { cn, coverGradient, coverImageKey, coverImageUrl } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import type { Loop } from "@/types/loop";
@@ -36,12 +36,13 @@ export function LoopCard({
     <div className={cn("rounded-pk border border-pk-border bg-pk-panel p-4", isActive ? "shadow-glow" : "")}>
       <div className="flex gap-3">
         <div
-          className="relative h-12 w-12 shrink-0 overflow-hidden rounded-pk border border-pk-border bg-center bg-cover"
-          style={{ backgroundImage: coverGradient(loop) }}
+          className="relative h-12 w-12 shrink-0 rounded-pk p-[2px]"
+          style={{ background: coverGradient(loop) }}
           aria-hidden
         >
+          <div className="relative h-full w-full overflow-hidden rounded-[6px] bg-[#050508]">
           <img
-            key={coverImageUrl(loop)}
+            key={coverImageKey(loop)}
             src={coverImageUrl(loop)}
             alt=""
             className="absolute inset-0 h-full w-full object-cover"
@@ -72,6 +73,7 @@ export function LoopCard({
               img.style.display = "none";
             }}
           />
+          </div>
         </div>
         <div className="min-w-0">
           <div className="truncate text-sm font-semibold">{loop.name}</div>

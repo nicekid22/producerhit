@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import { fetchCachedLoopAudioBlob } from "@/stores/loopsStore";
 
 const PEAK_POINTS = 256;
@@ -356,6 +357,8 @@ export function AudioWaveform({
   );
   const [decodeAttempt, setDecodeAttempt] = useState(0);
   const clampedProgress = Math.max(0, Math.min(1, Number.isFinite(progress) ? progress : 0));
+  const coarsePointer = useCoarsePointer();
+  const liteWaveform = coarsePointer;
 
   const retryDecode = useCallback(() => {
     if (!audioUrl) return;
@@ -407,7 +410,7 @@ export function AudioWaveform({
 
   useEffect(() => {
     const url = audioUrl;
-    if (!visible || !url) return;
+    if (!visible || !url || liteWaveform) return;
     if (peaksCache.get(url)) return;
 
     const controller = new AbortController();
@@ -429,7 +432,7 @@ export function AudioWaveform({
       cancelled = true;
       controller.abort();
     };
-  }, [audioUrl, visible, loopId, decodeAttempt]);
+  }, [audioUrl, liteWaveform, visible, loopId, decodeAttempt]);
 
   const draw = useMemo(() => {
     return () => {
@@ -440,6 +443,7 @@ export function AudioWaveform({
   }, [clampedProgress, color, peaks, unplayedColor]);
 
   useEffect(() => {
+    if (liteWaveform) return;
     let raf = 0;
     const run = () => {
       draw();
@@ -447,13 +451,41 @@ export function AudioWaveform({
     };
     run();
     return () => cancelAnimationFrame(raf);
-  }, [draw, isPlaying]);
+  }, [draw, isPlaying, liteWaveform]);
 
   useEffect(() => {
     draw();
   }, [draw]);
 
-  const seekEnabled = Boolean(onSeek && peaks);
+  const seekEnabled = Boolean(onSeek && peaks && !liteWaveform);
+
+  if (liteWaveform) {
+    return (
+      <div
+        className="w-full overflow-hidden rounded-md border border-white/10 bg-white/[0.03]"
+        style={{ height }}
+        aria-hidden
+      >
+        <div className="flex h-full items-end gap-[2px] px-1 pb-1">
+          {Array.from({ length: 24 }).map((_, i) => {
+            const played = i / 24 <= clampedProgress;
+            const barH = `${Math.max(18, 35 + Math.sin(i * 0.65) * 28)}%`;
+            return (
+              <div
+                key={i}
+                className="flex-1 rounded-full"
+                style={{
+                  height: barH,
+                  backgroundColor: played ? color : unplayedColor,
+                  opacity: played ? 1 : 0.85,
+                }}
+              />
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

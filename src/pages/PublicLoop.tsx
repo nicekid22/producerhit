@@ -1,9 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, Navigate, useParams } from "react-router-dom";
-import { Pause, Play, Share2, Star } from "lucide-react";
+import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
+import { Loader2, Pause, Play, Share2, Sparkles, Star } from "lucide-react";
+import { PkIconLoader } from "@/components/ui/PkIconLoader";
 import toast from "react-hot-toast";
 import { Navbar } from "@/components/Navbar";
 import { isPlayablePublicLoop, resolvePlayableCommunityAudio, type PublicLoopRow } from "@/lib/publicLoops";
+import { fetchPublicProfileCards, type PublicProfileCard } from "@/lib/creatorProfile";
+import { ProfileAuthorChip } from "@/components/profile/ProfileAuthorChip";
+import { savePendingRemix, buildRemixPromptFromMeta } from "@/lib/pendingRemix";
+import { buildOgLoopImageUrl, setLoopOpenGraph } from "@/lib/seoMeta";
+import { buildLoopShareUrl } from "@/lib/growthLinks";
 import { supabase } from "@/lib/supabaseClient";
 import { useLocaleStore } from "@/stores/localeStore";
 import { useAuthStore } from "@/stores/authStore";
@@ -12,6 +18,7 @@ import type { Loop } from "@/types/loop";
 
 type LoopRow = {
   id: string;
+  user_id: string;
   name: string;
   genre: string;
   influence: string;
@@ -33,6 +40,7 @@ type LoopRow = {
 
 export default function PublicLoop() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const locale = useLocaleStore((s) => s.locale);
   const isFr = locale === "fr";
   const user = useAuthStore((s) => s.user);
@@ -47,8 +55,32 @@ export default function PublicLoop() {
   const [myRating, setMyRating] = useState<number | null>(null);
   const [savingRating, setSavingRating] = useState(false);
   const [resolvingAudio, setResolvingAudio] = useState(false);
+  const [remixLoading, setRemixLoading] = useState(false);
+  const [author, setAuthor] = useState<PublicProfileCard | null>(null);
 
-  const shareUrl = useMemo(() => (id ? `https://www.producerhit.com/loop/${id}` : "https://www.producerhit.com/explore"), [id]);
+  const shareUrl = useMemo(
+    () => (id ? buildLoopShareUrl(id, "twitter") : "https://www.producerhit.com/community"),
+    [id],
+  );
+
+  useEffect(() => {
+    if (!row || !id) return;
+    const title = `${row.name} — ${row.genre || "Beat"} | ProducerHit`;
+    const description = [
+      row.genre,
+      row.mood,
+      row.bpm ? `${row.bpm} BPM` : null,
+      isFr ? "Écoute et remixe sur ProducerHit" : "Listen and remix on ProducerHit",
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    setLoopOpenGraph({
+      title,
+      description,
+      url: `https://www.producerhit.com/loop/${id}`,
+      imageUrl: buildOgLoopImageUrl({ id, title: row.name, genre: row.genre, bpm: row.bpm }),
+    });
+  }, [id, isFr, row]);
 
   const toLoop = (r: LoopRow): Loop => {
     return {
@@ -82,14 +114,22 @@ export default function PublicLoop() {
     void (async () => {
       const { data, error } = await supabase
         .from("loops")
-        .select("id,name,genre,influence,key,scale,bpm,loop_length,swing,mood,energy_level,reverb,prompt,audio_url,stems_url,is_public,created_at,seed")
+        .select("id,user_id,name,genre,influence,key,scale,bpm,loop_length,swing,mood,energy_level,reverb,prompt,audio_url,stems_url,is_public,created_at,seed")
         .eq("id", id)
         .maybeSingle();
       if (cancelled) return;
       if (error) {
         setRow(null);
+        setAuthor(null);
       } else {
-        setRow((data as LoopRow | null) ?? null);
+        const nextRow = (data as LoopRow | null) ?? null;
+        setRow(nextRow);
+        if (nextRow?.user_id) {
+          const cards = await fetchPublicProfileCards([nextRow.user_id]);
+          if (!cancelled) setAuthor(cards.get(nextRow.user_id) ?? null);
+        } else {
+          setAuthor(null);
+        }
       }
       setLoading(false);
     })();
@@ -177,14 +217,51 @@ export default function PublicLoop() {
     }
   };
 
-  const remix = () => {
-    const seed = typeof row?.seed === "number" ? row.seed : null;
-    const prompt = row?.prompt ?? "";
-    const next = seed !== null ? seed + Math.floor(Math.random() * 100) : undefined;
-    const qs = new URLSearchParams();
-    if (prompt) qs.set("prompt", prompt);
-    if (typeof next === "number") qs.set("seed", String(next));
-    window.location.href = `/dashboard?${qs.toString()}`;
+  const remixThisVibe = () => {
+    if (!row || !id) return;
+    setRemixLoading(true);
+    void (async () => {
+      try {
+        const publicRow: PublicLoopRow = {
+          id: row.id,
+          name: row.name,
+          genre: row.genre,
+          influence: row.influence,
+          mood: row.mood,
+          bpm: row.bpm,
+          prompt: row.prompt,
+          audio_url: row.audio_url,
+          stems_url: row.stems_url,
+          created_at: row.created_at,
+          seed: row.seed,
+        };
+        const audioUrl = await resolvePlayableCommunityAudio(publicRow);
+        savePendingRemix({
+          sourceLoopId: id,
+          sourceLoopName: row.name,
+          audioUrl,
+          prompt: buildRemixPromptFromMeta({
+            prompt: row.prompt,
+            genre: row.genre,
+            mood: row.mood,
+            locale,
+          }),
+          genre: row.genre || undefined,
+          mood: row.mood || undefined,
+          bpm: row.bpm > 0 ? row.bpm : undefined,
+          source: "public_loop",
+        });
+        if (!user) {
+          navigate("/auth", { state: { from: "/dashboard?remix=1" } });
+          return;
+        }
+        navigate("/dashboard?remix=1");
+      } catch {
+        toast.error(isFr ? "Audio indisponible pour remix" : "Audio unavailable for remix");
+      } finally {
+        setRemixLoading(false);
+      }
+    })();
   };
 
   const setRating = (value: number) => {
@@ -228,11 +305,12 @@ export default function PublicLoop() {
 
         <div className="mt-8 rounded-2xl border border-pk-border bg-pk-panel/70 p-6 shadow-[0_24px_70px_rgba(0,0,0,0.55)] backdrop-blur-xl">
           {loading || !row ? (
-            <div>
-              <div className="h-5 w-2/3 animate-pulse rounded bg-white/5" />
-              <div className="mt-4 h-3 w-full animate-pulse rounded bg-white/5" />
-              <div className="mt-2 h-3 w-5/6 animate-pulse rounded bg-white/5" />
-              <div className="mt-6 h-11 w-36 animate-pulse rounded-full bg-white/5" />
+            <div className="flex flex-col items-center py-10 text-center">
+              <PkIconLoader
+                icon="community"
+                size="md"
+                label={isFr ? "Chargement du morceau…" : "Loading track…"}
+              />
             </div>
           ) : (
             <>
@@ -243,6 +321,11 @@ export default function PublicLoop() {
                     {row.genre} · {row.bpm > 0 ? `${row.bpm} BPM` : isFr ? "Auto BPM" : "Auto BPM"} ·{" "}
                     {row.key ? `${row.key} ${row.scale}` : isFr ? "Auto key" : "Auto key"}
                   </div>
+                  {author ? (
+                    <div className="mt-3">
+                      <ProfileAuthorChip author={author} isFr={isFr} size="md" hideAvatar />
+                    </div>
+                  ) : null}
                 </div>
                 <button
                   type="button"
@@ -293,10 +376,12 @@ export default function PublicLoop() {
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                 <button
                   type="button"
-                  onClick={remix}
-                  className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#7c3aed] to-[#22d3ee] px-5 py-2 text-sm font-semibold text-white shadow-[0_0_70px_rgba(124,58,237,0.18)] transition-all hover:brightness-110"
+                  onClick={remixThisVibe}
+                  disabled={remixLoading}
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#7c3aed] to-[#22d3ee] px-5 py-2 text-sm font-semibold text-white shadow-[0_0_70px_rgba(124,58,237,0.18)] transition-all hover:brightness-110 disabled:opacity-60"
                 >
-                  {isFr ? "Remix (similaire)" : "Remix (similar)"}
+                  {remixLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                  {isFr ? "Remix this vibe" : "Remix this vibe"}
                 </button>
                 <button
                   type="button"

@@ -1,7 +1,8 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Grid3X3, Settings, LogIn, LogOut, AudioWaveform, Users } from "lucide-react";
+import { Grid3X3, Settings, LogIn, LogOut, AudioWaveform, Users, BarChart3 } from "lucide-react";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
+import { useGrowthAdmin } from "@/hooks/useGrowthAdmin";
 import { useAuthStore } from "@/stores/authStore";
 import { useLocaleStore } from "@/stores/localeStore";
 
@@ -14,12 +15,16 @@ export function Sidebar() {
   const signOut = useAuthStore((s) => s.signOut);
   const locale = useLocaleStore((s) => s.locale);
   const setLocale = useLocaleStore((s) => s.setLocale);
+  const isGrowthAdmin = useGrowthAdmin();
 
   const items: Item[] = [
     { to: "/dashboard", label: locale === "fr" ? "Générateur" : "Generator", icon: <AudioWaveform className="h-5 w-5" /> },
     { to: "/library", label: locale === "fr" ? "Bibliothèque" : "Library", icon: <Grid3X3 className="h-5 w-5" /> },
     { to: "/community", label: locale === "fr" ? "Communauté" : "Community", icon: <Users className="h-5 w-5" /> },
     { to: "/settings", label: locale === "fr" ? "Paramètres" : "Settings", icon: <Settings className="h-5 w-5" /> },
+    ...(isGrowthAdmin
+      ? [{ to: "/admin/growth", label: "Growth", icon: <BarChart3 className="h-5 w-5" /> } satisfies Item]
+      : []),
   ];
 
   async function onLogout() {

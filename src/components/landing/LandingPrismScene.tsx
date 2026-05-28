@@ -10,7 +10,7 @@ export function LandingPrismScene({ spot, reduceMotion }: Props) {
       <div className="pk-prism-grain" />
 
       <div
-        className="pk-prism-spotlight absolute inset-0 transition-opacity duration-700"
+        className="pk-prism-scene-spotlight absolute inset-0 transition-opacity duration-700"
         style={
           reduceMotion
             ? undefined
@@ -21,7 +21,6 @@ export function LandingPrismScene({ spot, reduceMotion }: Props) {
       />
 
       <div className="pk-prism-aurora" />
-      <div className="pk-prism-grid" />
     </div>
   );
 }
