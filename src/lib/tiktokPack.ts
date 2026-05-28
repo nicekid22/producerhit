@@ -48,11 +48,11 @@ export function buildTikTokCaption(loop: Loop, locale: "en" | "fr"): string {
 }
 
 export function buildShareMomentTitle(locale: "en" | "fr"): string {
-  return locale === "fr" ? "Ton moment est prêt ✨" : "Your moment is ready ✨";
+  return locale === "fr" ? "Partage l'univers" : "Share the void";
 }
 
 export function buildShareMomentSubtitle(locale: "en" | "fr"): string {
   return locale === "fr"
-    ? "Exporte pour TikTok ou partage ta vibe — fais découvrir ta création."
-    : "Export for TikTok or share your vibe — spread your energy.";
+    ? "Un son de ta library — visuel déjà prêt. Export mystérieux pour les réseaux."
+    : "A track from your library — visual already rendered. Mysterious export for social.";
 }

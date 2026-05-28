@@ -1,3 +1,5 @@
+import type { Loop } from "@/types/loop";
+
 const GEN_SINCE_KEY = "producerhit_share_prompt_gen_since_v2";
 const LAST_SHOWN_KEY = "producerhit_share_prompt_last_shown_v2";
 const HOURLY_KEY = "producerhit_share_prompt_hourly_v2";
@@ -182,6 +184,31 @@ export function pickSharePromptCopy(locale: "en" | "fr", seed?: string): SharePr
     index = hash % pool.length;
   }
   return pool[index] ?? pool[0]!;
+}
+
+function isPlayableLoop(loop: Loop): boolean {
+  return typeof loop.audioUrl === "string" && loop.audioUrl.trim().length > 0;
+}
+
+/** Pick an older track for share prompts — Pollinations cover is usually warmed already. */
+export function pickLoopForSharePrompt(loops: Loop[], excludeIds: string[] = [], seed = ""): Loop | null {
+  const exclude = new Set(excludeIds);
+  const eligible = loops.filter((l) => isPlayableLoop(l) && !exclude.has(l.id));
+  const fallback = loops.find((l) => isPlayableLoop(l)) ?? null;
+  if (!eligible.length) return fallback;
+
+  const sorted = [...eligible].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
+  const skipFresh = Math.min(1, sorted.length - 1);
+  const olderPool = sorted.slice(skipFresh);
+  const pool = (olderPool.length > 0 ? olderPool : sorted).slice(0, Math.min(12, sorted.length));
+  if (pool.length === 1) return pool[0]!;
+
+  let hash = 0;
+  const mix = `${seed}:${excludeIds.join(",")}:${pool.map((l) => l.id).join(",")}`;
+  for (let i = 0; i < mix.length; i++) hash = (hash * 31 + mix.charCodeAt(i)) >>> 0;
+  return pool[hash % pool.length] ?? pool[0] ?? fallback;
 }
 
 export function buildShareMessage(loopName: string, locale: "en" | "fr", isPublic: boolean): string {

@@ -18,7 +18,7 @@ export async function exportVisualizerVideo(loop: Loop, options: VisualizerExpor
   if (typeof MediaRecorder === "undefined") throw new Error("unsupported");
 
   const layout = options.layout ?? "story";
-  const preset: VisualizerPresetId = options.preset ?? "prism";
+  const preset: VisualizerPresetId = options.preset ?? "void";
   const durationSec = resolveExportDuration(loop, options.durationSec);
   const fps = options.fps ?? 30;
   const showWatermark = options.showWatermark !== false;

@@ -30,7 +30,7 @@ import { ShareMomentModal } from "@/components/growth/ShareMomentModal";
 import { ReferralInviteModal } from "@/components/growth/ReferralInviteModal";
 import { MasteringUpsellModal } from "@/components/growth/MasteringUpsellModal";
 import { GamificationStrip, notifyGamificationGeneration } from "@/components/growth/GamificationStrip";
-import { shouldShowSharePromptAfterGeneration } from "@/lib/sharePrompt";
+import { pickLoopForSharePrompt, shouldShowSharePromptAfterGeneration } from "@/lib/sharePrompt";
 import { markReferralInvitePromptShown, shouldShowReferralInvitePrompt } from "@/lib/referralPrompt";
 import { ensureReferralCode } from "@/lib/referral";
 import { loadPendingRemix, clearPendingRemix, type PendingRemix } from "@/lib/pendingRemix";
@@ -1448,8 +1448,15 @@ export default function Dashboard() {
         if (first) {
           const usedBefore = usedCountRef.current - created.length;
           if (shouldShowSharePromptAfterGeneration()) {
-            trackClientEvent("growth_share_prompt", { loop_id: first.id, source: "post_generate" });
-            setShareMomentLoop(first);
+            const shareLoop =
+              pickLoopForSharePrompt(useLoopsStore.getState().loops, playableCreated.map((l) => l.id), first.id) ??
+              first;
+            trackClientEvent("growth_share_prompt", {
+              loop_id: shareLoop.id,
+              source: "post_generate",
+              suggested: shareLoop.id !== first.id,
+            });
+            setShareMomentLoop(shareLoop);
             if (usedBefore === 0) pendingReferralAfterShareRef.current = true;
           } else if (usedBefore === 0 && plan === "free") {
             scheduleReferralPrompt(3800);
@@ -1672,8 +1679,14 @@ export default function Dashboard() {
         triggerBeatReady(locale, loop.id, { isFirst: false, versionCount: 1 });
         toast.success(locale === "fr" ? "Remix prêt — écoute le résultat 🎧" : "Remix ready — listen to the result 🎧");
         if (shouldShowSharePromptAfterGeneration()) {
-            trackClientEvent("growth_share_prompt", { loop_id: loop.id, source: "post_remix" });
-            setShareMomentLoop(loop);
+            const shareLoop =
+              pickLoopForSharePrompt(useLoopsStore.getState().loops, [loop.id], loop.id) ?? loop;
+            trackClientEvent("growth_share_prompt", {
+              loop_id: shareLoop.id,
+              source: "post_remix",
+              suggested: shareLoop.id !== loop.id,
+            });
+            setShareMomentLoop(shareLoop);
           }
         if (mobileV2) goResults();
         if (user) void refreshProfile();

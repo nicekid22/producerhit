@@ -1,6 +1,6 @@
 import type { Loop } from "@/types/loop";
 
-export type VisualizerPresetId = "prism" | "vhs" | "particles";
+export type VisualizerPresetId = "void" | "prism" | "vhs" | "particles";
 
 export type VisualizerLayout = "story" | "square";
 

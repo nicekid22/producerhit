@@ -2,6 +2,13 @@ import type { PresetMeta, VisualizerPresetId } from "@/lib/visualizer/types";
 
 export const VISUALIZER_PRESETS: PresetMeta[] = [
   {
+    id: "void",
+    labelFr: "Void",
+    labelEn: "Void",
+    hintFr: "Noir profond, cover organique, scratches",
+    hintEn: "Deep black, organic cover, subtle scratches",
+  },
+  {
     id: "prism",
     labelFr: "Prism",
     labelEn: "Prism",

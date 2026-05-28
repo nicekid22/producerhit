@@ -108,13 +108,44 @@ export function getLevel(xp: number): number {
   return level;
 }
 
-export function getLevelProgress(xp: number): { level: number; current: number; next: number; pct: number } {
+export function getLevelProgress(xp: number): {
+  level: number;
+  current: number;
+  next: number;
+  pct: number;
+  isMax: boolean;
+  xpTotal: number;
+  xpToNextLevel: number;
+} {
   const level = getLevel(xp);
+  const maxLevel = LEVEL_XP.length;
+  const isMax = level >= maxLevel;
   const floor = LEVEL_XP[level - 1] ?? 0;
+
+  if (isMax) {
+    return {
+      level,
+      current: xp - floor,
+      next: 0,
+      pct: 100,
+      isMax: true,
+      xpTotal: xp,
+      xpToNextLevel: 0,
+    };
+  }
+
   const ceiling = LEVEL_XP[level] ?? floor + 400;
   const current = xp - floor;
   const span = Math.max(1, ceiling - floor);
-  return { level, current, next: ceiling - floor, pct: Math.min(100, Math.round((current / span) * 100)) };
+  return {
+    level,
+    current,
+    next: span,
+    pct: Math.min(100, Math.round((current / span) * 100)),
+    isMax: false,
+    xpTotal: xp,
+    xpToNextLevel: Math.max(0, span - current),
+  };
 }
 
 function unlockAchievements(state: GamificationState): AchievementId[] {

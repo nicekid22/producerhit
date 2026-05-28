@@ -37,6 +37,153 @@ function drawFilmGrain(ctx: CanvasRenderingContext2D, w: number, h: number, seed
   ctx.restore();
 }
 
+function drawSubtleScratches(ctx: CanvasRenderingContext2D, w: number, h: number, seed: number, t: number) {
+  ctx.save();
+  ctx.lineCap = "round";
+  for (let i = 0; i < 8; i++) {
+    const gate = pseudo(seed, i, 0, t * 0.04);
+    if (gate < 0.42) continue;
+    const x1 = pseudo(seed, i, 1, 0) * w;
+    const y1 = pseudo(seed, i, 2, 0) * h;
+    const len = 28 + pseudo(seed, i, 3, 0) * 140;
+    const angle = pseudo(seed, i, 4, 0) * Math.PI * 2;
+    ctx.strokeStyle = `rgba(255,255,255,${0.025 + pseudo(seed, i, 5, t) * 0.035})`;
+    ctx.lineWidth = 0.45 + pseudo(seed, i, 6, 0) * 0.55;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x1 + Math.cos(angle) * len, y1 + Math.sin(angle) * len);
+    ctx.stroke();
+  }
+
+  if (Math.sin(t * 0.65 + seed * 0.001) > 0.985) {
+    const sy = h * (0.18 + pseudo(seed, 11, 1, t) * 0.58);
+    ctx.strokeStyle = "rgba(255,255,255,0.055)";
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(-w * 0.02, sy);
+    ctx.lineTo(w * 1.02, sy + Math.sin(t * 1.4) * 3);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawVoidDust(ctx: CanvasRenderingContext2D, w: number, h: number, seed: number, t: number) {
+  ctx.save();
+  for (let i = 0; i < 18; i++) {
+    const n = pseudo(seed, i, 7, t * 0.08);
+    if (n < 0.55) continue;
+    const x = pseudo(seed, i, 8, t * 0.03) * w;
+    const y = pseudo(seed, i, 9, t * 0.02) * h;
+    const r = 0.4 + pseudo(seed, i, 10, 0) * 1.2;
+    ctx.fillStyle = `rgba(255,255,255,${0.02 + n * 0.03})`;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function voidCoverRect(w: number, h: number, layout: "story" | "square") {
+  if (layout === "square") {
+    const size = Math.min(w, h) * 0.74;
+    return { x: (w - size) / 2, y: h * 0.16, size };
+  }
+  const size = Math.min(w * 0.9, h * 0.56);
+  return { x: (w - size) / 2, y: h * 0.24, size };
+}
+
+function drawVoidCover(
+  ctx: CanvasRenderingContext2D,
+  loop: Loop,
+  coverBitmap: ImageBitmap | null,
+  w: number,
+  h: number,
+  layout: "story" | "square",
+  t: number,
+) {
+  const { x, y, size } = voidCoverRect(w, h, layout);
+  const breathe = 1 + Math.sin(t * 0.52) * 0.016 + t * 0.008;
+  const driftX = Math.sin(t * 0.11) * w * 0.007;
+  const driftY = Math.cos(t * 0.085) * h * 0.005;
+
+  if (!coverBitmap) {
+    drawGradientCoverFallback(ctx, loop, { x, y, size, radius: 0 });
+    return;
+  }
+
+  const sw = coverBitmap.width;
+  const sh = coverBitmap.height;
+  const scale = Math.max(size / sw, size / sh) * breathe;
+  const dw = sw * scale;
+  const dh = sh * scale;
+  const cx = x + (size - dw) / 2 + driftX;
+  const cy = y + (size - dh) / 2 + driftY;
+  ctx.drawImage(coverBitmap, cx, cy, dw, dh);
+}
+
+function drawVoidVignette(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  const cx = w * 0.5;
+  const cy = h * 0.42;
+  const vig = ctx.createRadialGradient(cx, cy, w * 0.12, cx, cy, w * 0.82);
+  vig.addColorStop(0, "rgba(0,0,0,0)");
+  vig.addColorStop(0.72, "rgba(0,0,0,0.18)");
+  vig.addColorStop(1, "rgba(0,0,0,0.72)");
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, w, h);
+}
+
+function drawVoidMetadata(ctx: CanvasRenderingContext2D, loop: Loop, w: number, h: number) {
+  const title = (loop.name || "ProducerHit").slice(0, 42);
+  const sub = [loop.genre, loop.mood].filter(Boolean).join(" · ").slice(0, 36);
+  const titleSize = Math.round(w * 0.034);
+  const subSize = Math.round(w * 0.022);
+
+  ctx.textAlign = "center";
+  ctx.fillStyle = "rgba(255,255,255,0.42)";
+  ctx.font = `500 ${titleSize}px Inter, system-ui, -apple-system, Segoe UI, Arial`;
+  ctx.fillText(title, w * 0.5, h * 0.905);
+
+  if (sub) {
+    ctx.fillStyle = "rgba(255,255,255,0.22)";
+    ctx.font = `400 ${subSize}px Inter, system-ui, -apple-system, Segoe UI, Arial`;
+    ctx.fillText(sub, w * 0.5, h * 0.905 + titleSize * 1.15);
+  }
+  ctx.textAlign = "left";
+}
+
+function renderVoidFrame(input: RenderFrameContext, t: number): void {
+  const {
+    ctx,
+    width: w,
+    height: h,
+    loop,
+    coverBitmap,
+    showMetadata = true,
+    showWatermark = false,
+    watermarkText = "made with ProducerHit",
+    layout = "story",
+    seed,
+  } = input;
+
+  ctx.fillStyle = "#000000";
+  ctx.fillRect(0, 0, w, h);
+
+  drawVoidCover(ctx, loop, coverBitmap, w, h, layout, t);
+  drawVoidVignette(ctx, w, h);
+  drawSubtleScratches(ctx, w, h, seed, t);
+  drawVoidDust(ctx, w, h, seed, t);
+  drawFilmGrain(ctx, w, h, seed, t, 0.055);
+
+  if (showMetadata) drawVoidMetadata(ctx, loop, w, h);
+  if (showWatermark) {
+    ctx.textAlign = "right";
+    ctx.fillStyle = "rgba(255,255,255,0.28)";
+    ctx.font = `500 ${Math.round(w * 0.02)}px Inter, system-ui, -apple-system, Segoe UI, Arial`;
+    ctx.fillText(watermarkText, w * 0.93, h * 0.965);
+    ctx.textAlign = "left";
+  }
+}
+
 function drawBackground(ctx: CanvasRenderingContext2D, w: number, h: number, loop: Loop, t: number) {
   const hue = hashString(`${loop.id}:${loop.genre}`) % 360;
   const bg = ctx.createLinearGradient(0, 0, w, h);
@@ -236,6 +383,11 @@ export function renderVisualizerFrame(input: RenderFrameContext, dt = 1 / 30): v
     layout = "story",
     seed,
   } = input;
+
+  if (preset === "void") {
+    renderVoidFrame(input, t);
+    return;
+  }
 
   drawBackground(ctx, w, h, loop, t);
   const coverRect = layoutCoverRect(w, h, layout);

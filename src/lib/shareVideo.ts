@@ -13,7 +13,7 @@ export type ShareVideoOptions = VisualizerExportOptions & {
 export async function exportShareVideo(loop: Loop, options: ShareVideoOptions = {}): Promise<Blob> {
   return exportVisualizerVideo(loop, {
     durationSec: options.durationSec,
-    preset: options.preset ?? "prism",
+    preset: options.preset ?? "void",
     showWatermark: options.showWatermark,
     watermarkText: options.watermarkText,
     layout: options.layout ?? "story",
