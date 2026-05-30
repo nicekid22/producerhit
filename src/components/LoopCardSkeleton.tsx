@@ -1,4 +1,5 @@
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
+import { WaveformLoader } from "@/components/WaveformVisualizer";
 
 export function LoopCardSkeleton({ title, sub }: { title: string; sub?: string }) {
   return (
@@ -21,17 +22,8 @@ export function LoopCardSkeleton({ title, sub }: { title: string; sub?: string }
         </div>
       </div>
 
-      <div className="relative mt-3 flex h-7 items-center gap-1 opacity-45">
-        {Array.from({ length: 40 }).map((_, i) => (
-          <div
-            key={i}
-            className="flex-1 rounded-full bg-pk-border animate-pulse"
-            style={{
-              height: `${Math.max(10, Math.min(100, Math.sin(i * 0.5) * 46 + 54))}%`,
-              animationDelay: `${i * 0.05}s`,
-            }}
-          />
-        ))}
+      <div className="relative mt-3">
+        <WaveformLoader height={28} active />
       </div>
 
       <div className="relative mt-2 flex items-center justify-between text-xs text-pk-muted opacity-50">

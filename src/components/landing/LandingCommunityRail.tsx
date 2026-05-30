@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Pause, Play, Radio, Shuffle, Sparkles } from "lucide-react";
 import type { Loop } from "@/types/loop";
 import type { PublicProfileCard } from "@/lib/creatorProfile";
-import { coverGradient, coverImageUrl, coverImageKey } from "@/lib/utils";
+import { resolveCoverImageUrl } from "@/lib/coverArt";
+import { coverGradient } from "@/lib/utils";
 import { isPlayablePublicLoop } from "@/lib/publicLoops";
 import { ProfileAuthorChip } from "@/components/profile/ProfileAuthorChip";
 
@@ -22,6 +23,8 @@ export type LandingCommunityTrack = {
   tags: string[];
   prompt: string;
   author?: PublicProfileCard | null;
+  /** URL persistée en DB — pas de Pollinations à la volée sur la landing */
+  coverUrl?: string | null;
 };
 
 type Props = {
@@ -152,14 +155,14 @@ export function LandingCommunityRail({
             type="button"
             onClick={shufflePlay}
             disabled={loading || !tracks.length}
-            className="inline-flex h-10 items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 text-xs font-semibold text-white/80 transition-all hover:border-cyan-400/35 hover:text-white disabled:opacity-40"
+            className="pk-glass-btn pk-glass-btn--ghost inline-flex h-10 items-center gap-2 rounded-full px-4 text-xs font-semibold disabled:opacity-40"
           >
             <Shuffle className="h-3.5 w-3.5" />
             {isFr ? "Aléatoire" : "Shuffle"}
           </button>
           <Link
             to="/community"
-            className="inline-flex h-10 items-center gap-2 rounded-full bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] px-4 text-xs font-semibold text-white shadow-[0_0_32px_rgba(124,58,237,0.22)] transition-all hover:brightness-110"
+            className="pk-glass-btn pk-glass-btn--primary inline-flex h-10 items-center gap-2 rounded-full px-4 text-xs font-semibold"
           >
             <Radio className="h-3.5 w-3.5" />
             {isFr ? "Toute la communauté" : "Full community"}
@@ -217,8 +220,7 @@ export function LandingCommunityRail({
               ? tracks.map((t, idx) => {
                   const loopForCover = toCoverLoop(t);
                   const bg = coverGradient(loopForCover);
-                  const url = coverImageUrl(loopForCover);
-                  const coverKey = coverImageKey(loopForCover);
+                  const url = t.coverUrl?.trim() || resolveCoverImageUrl(loopForCover);
                   const active = activeTrackId === t.id;
                   const playingNow = active && isPlaying;
                   const playable = isPlayablePublicLoop(t.audioUrl, t.stemsUrl);
@@ -240,21 +242,23 @@ export function LandingCommunityRail({
                         aria-label={playingNow ? (isFr ? `Pause ${t.name}` : `Pause ${t.name}`) : isFr ? `Écouter ${t.name}` : `Play ${t.name}`}
                       >
                         <div className="pk-landing-community__cover relative h-44 overflow-hidden rounded-2xl" style={{ background: bg }}>
-                          <img
-                            key={coverKey}
-                            src={url}
-                            alt=""
-                            loading={idx < 4 ? "eager" : "lazy"}
-                            decoding="async"
-                            referrerPolicy="no-referrer"
-                            className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-500 group-hover:scale-[1.03]"
-                            onLoad={(e) => {
-                              e.currentTarget.style.opacity = "1";
-                            }}
-                            onError={(e) => {
-                              e.currentTarget.style.display = "none";
-                            }}
-                          />
+                          {url ? (
+                            <img
+                              key={`${t.id}:${url}`}
+                              src={url}
+                              alt=""
+                              loading={idx < 4 ? "eager" : "lazy"}
+                              decoding="async"
+                              referrerPolicy="no-referrer"
+                              className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-500 group-hover:scale-[1.03]"
+                              onLoad={(e) => {
+                                e.currentTarget.style.opacity = "1";
+                              }}
+                              onError={(e) => {
+                                e.currentTarget.style.display = "none";
+                              }}
+                            />
+                          ) : null}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
                           <div className="absolute left-3 top-3 rounded-full border border-white/15 bg-black/45 px-3 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
                             {t.badge}
@@ -299,7 +303,7 @@ export function LandingCommunityRail({
                             disabled={!playable}
                             className={[
                               "inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-full text-xs font-semibold transition-all",
-                              playable ? "pk-prism-btn text-black hover:brightness-110" : "border border-white/10 bg-white/5 text-white/40",
+                              playable ? "pk-prism-btn rounded-full px-3 py-1.5 text-[11px] font-semibold" : "border border-white/10 bg-white/5 text-white/40",
                             ].join(" ")}
                           >
                             {playingNow ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
@@ -308,7 +312,7 @@ export function LandingCommunityRail({
                           <button
                             type="button"
                             onClick={() => onRemix(t)}
-                            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3 text-xs font-semibold text-white/75 transition-all hover:border-violet-400/40 hover:text-white"
+                            className="pk-glass-btn pk-glass-btn--ghost inline-flex h-9 items-center justify-center gap-1.5 rounded-full px-3 text-xs font-semibold"
                           >
                             <Sparkles className="h-3.5 w-3.5 text-violet-300" />
                             {isFr ? "Remixer" : "Remix"}
@@ -330,7 +334,7 @@ export function LandingCommunityRail({
                     <button
                       type="button"
                       onClick={onRefresh}
-                      className="mt-4 inline-flex h-10 items-center justify-center rounded-full border border-white/15 px-5 text-sm font-semibold text-white/80 hover:border-violet-400/40 hover:text-white"
+                      className="pk-glass-btn pk-glass-btn--ghost mt-4 inline-flex h-10 items-center justify-center rounded-full px-5 text-sm font-semibold"
                     >
                       {isFr ? "Rafraîchir" : "Refresh"}
                     </button>

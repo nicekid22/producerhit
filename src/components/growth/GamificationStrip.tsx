@@ -12,6 +12,7 @@ import {
   getLevelRewardCredits,
   getTotalLevelRewardCreditsUpTo,
   loadGamification,
+  MAX_LEVEL,
   recordGeneration,
   recordMasteringPreview,
   recordVisit,
@@ -58,34 +59,24 @@ async function syncLevelAndMaybeLoot(
 
 function buildXpLabel(progress: ReturnType<typeof getLevelProgress>, isFr: boolean): string {
   if (progress.isMax) {
-    return isFr ? `${progress.xpTotal.toLocaleString()} XP · niveau max` : `${progress.xpTotal.toLocaleString()} XP · max level`;
+    return isFr
+      ? `${progress.xpTotal.toLocaleString()} XP · niveau ${MAX_LEVEL}`
+      : `${progress.xpTotal.toLocaleString()} XP · level ${MAX_LEVEL}`;
   }
-  return isFr
-    ? `${progress.current} / ${progress.next} XP`
-    : `${progress.current} / ${progress.next} XP`;
+  return `${progress.current} / ${progress.next} XP`;
 }
 
 function buildLevelHint(progress: ReturnType<typeof getLevelProgress>, isFr: boolean): string {
+  const rank = isFr ? progress.rank.labelFr : progress.rank.labelEn;
   if (progress.isMax) {
-    return isFr ? "Producteur élite — tous les bonus de niveau débloqués" : "Elite producer — all level bonuses unlocked";
+    return isFr
+      ? `${rank} — tous les bonus débloqués (+${getTotalLevelRewardCreditsUpTo(MAX_LEVEL)} gen au total)`
+      : `${rank} — all level bonuses unlocked (+${getTotalLevelRewardCreditsUpTo(MAX_LEVEL)} gen total)`;
   }
   const nextCredits = getNextLevelRewardCredits(progress.level);
   return isFr
-    ? `Encore ${progress.xpToNextLevel} XP → niveau ${progress.level + 1} (+${nextCredits} gen)`
-    : `${progress.xpToNextLevel} XP to level ${progress.level + 1} (+${nextCredits} gen)`;
-}
-
-function buildRewardPill(progress: ReturnType<typeof getLevelProgress>, isFr: boolean): { label: string; detail: string } {
-  if (progress.isMax) {
-    const earned = getTotalLevelRewardCreditsUpTo(progress.level);
-    return isFr
-      ? { label: `+${earned} gen`, detail: "Bonus niveaux" }
-      : { label: `+${earned} gen`, detail: "Level bonus" };
-  }
-  const nextCredits = getLevelRewardCredits(progress.level + 1);
-  return isFr
-    ? { label: `+${nextCredits} gen`, detail: `Au niveau ${progress.level + 1}` }
-    : { label: `+${nextCredits} gen`, detail: `At level ${progress.level + 1}` };
+    ? `${rank} · encore ${progress.xpToNextLevel} XP → niv. ${progress.level + 1} (+${nextCredits} gen)`
+    : `${rank} · ${progress.xpToNextLevel} XP to lv. ${progress.level + 1} (+${nextCredits} gen)`;
 }
 
 function buildStreakPill(streak: number, isFr: boolean): { label: string; detail: string } {
@@ -95,6 +86,26 @@ function buildStreakPill(streak: number, isFr: boolean): { label: string; detail
   return isFr
     ? { label: `${streak} jour${streak > 1 ? "s" : ""}`, detail: "Série" }
     : { label: `${streak} day${streak > 1 ? "s" : ""}`, detail: "Streak" };
+}
+
+function buildRewardPill(progress: ReturnType<typeof getLevelProgress>, isFr: boolean): { label: string; detail: string } {
+  if (progress.isMax) {
+    const earned = getTotalLevelRewardCreditsUpTo(progress.level);
+    return isFr
+      ? { label: `+${earned} gen`, detail: "Bonus max" }
+      : { label: `+${earned} gen`, detail: "Max bonus" };
+  }
+  const nextCredits = getLevelRewardCredits(progress.level + 1);
+  const milestone = (progress.level + 1) % 5 === 0;
+  return isFr
+    ? {
+        label: `+${nextCredits} gen`,
+        detail: milestone ? `Palier niv. ${progress.level + 1}` : `Au niveau ${progress.level + 1}`,
+      }
+    : {
+        label: `+${nextCredits} gen`,
+        detail: milestone ? `Milestone lv. ${progress.level + 1}` : `At level ${progress.level + 1}`,
+      };
 }
 
 function buildMotivationHint(progress: ReturnType<typeof getLevelProgress>, dailyReady: boolean, isFr: boolean): string {
@@ -111,15 +122,25 @@ function buildMotivationHint(progress: ReturnType<typeof getLevelProgress>, dail
   }
   if (progress.isMax) {
     return isFr
-      ? "Niveau max — garde ta série active et reviens chaque jour pour +1 gen"
-      : "Max level — keep your streak and come back daily for +1 gen";
+      ? "Niveau légendaire atteint — garde ta série et ton bonus quotidien actifs"
+      : "Legendary level reached — keep your streak and daily bonus going";
+  }
+  if (progress.level >= 10) {
+    return isFr
+      ? "Ascension en cours — paliers 15 / 20 / 25 = loot bonus · 1 gen/jour toujours actif"
+      : "Ascension mode — milestones 15 / 20 / 25 = bonus loot · daily +1 gen still active";
   }
   return isFr
     ? "Chaque track te fait monter · 1 bonus gratuit par jour · chaque niveau = générations en plus"
     : "Every track levels you up · 1 free daily bonus · each level = extra generations";
 }
 
-export function GamificationStrip({ locale, refreshKey = 0, syncRewards = false, onBonusCreditsChange }: Props) {
+export function GamificationStrip({
+  locale,
+  refreshKey = 0,
+  syncRewards = false,
+  onBonusCreditsChange,
+}: Props) {
   const isFr = locale === "fr";
   const [state, setState] = useState<GamificationState>(() => loadGamification());
   const showLoot = useLootRevealStore((s) => s.showLoot);
@@ -219,9 +240,7 @@ export function GamificationStrip({ locale, refreshKey = 0, syncRewards = false,
   };
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-black/50 p-[1px] shadow-[0_12px_40px_rgba(0,0,0,0.35)]">
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/[0.12] via-transparent to-cyan-500/[0.08]" />
-      <div className="relative rounded-[15px] bg-[#0a0a0f]/90 px-3 py-3 sm:px-4 sm:py-4">
+    <>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-4">
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500/25 to-cyan-500/15 text-base font-bold text-white ring-1 ring-white/15">
@@ -233,8 +252,11 @@ export function GamificationStrip({ locale, refreshKey = 0, syncRewards = false,
               <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
                 <div className="text-sm font-semibold text-white">
                   {isFr ? "Niveau" : "Level"} {progress.level}
+                  <span className="ml-2 rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white/55">
+                    {isFr ? progress.rank.labelFr : progress.rank.labelEn}
+                  </span>
                   {progress.isMax ? (
-                    <span className="ml-2 rounded-full bg-violet-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-200/90">
+                    <span className="ml-1.5 rounded-full bg-violet-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-200/90">
                       {isFr ? "Max" : "Max"}
                     </span>
                   ) : null}
@@ -329,8 +351,7 @@ export function GamificationStrip({ locale, refreshKey = 0, syncRewards = false,
           <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-300/70" />
           <p className="text-[11px] leading-relaxed text-white/45">{motivationHint}</p>
         </div>
-      </div>
-    </div>
+    </>
   );
 }
 

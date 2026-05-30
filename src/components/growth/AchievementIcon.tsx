@@ -1,9 +1,11 @@
 import {
+  Crown,
   Flame,
   Gem,
   Gift,
   Music2,
   Sparkles,
+  Star,
   Trophy,
   Zap,
   type LucideIcon,
@@ -18,6 +20,10 @@ const ICONS: Record<AchievementId, LucideIcon> = {
   streak_3: Zap,
   streak_7: Trophy,
   level_5: Gem,
+  level_10: Star,
+  level_15: Sparkles,
+  level_20: Trophy,
+  level_25: Crown,
   daily_claim: Gift,
 };
 
@@ -28,6 +34,10 @@ const TONE: Partial<Record<AchievementId, string>> = {
   streak_3: "text-cyan-300",
   streak_7: "text-yellow-300",
   level_5: "text-fuchsia-300",
+  level_10: "text-slate-300",
+  level_15: "text-cyan-200",
+  level_20: "text-violet-200",
+  level_25: "text-amber-200",
   daily_claim: "text-emerald-300",
 };
 

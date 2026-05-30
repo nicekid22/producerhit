@@ -1,5 +1,6 @@
 import { Bookmark, Download, RefreshCcw, Play, Pause, Loader2 } from "lucide-react";
 import { cn, coverGradient, coverImageKey, coverImageUrl } from "@/lib/utils";
+import { loopCardClass, loopCoverClass, loopPlayButtonClass, loopToggleButtonClass } from "@/lib/loopCardUi";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import type { Loop } from "@/types/loop";
@@ -33,10 +34,13 @@ export function LoopCard({
   isDownloading?: boolean;
 }) {
   return (
-    <div className={cn("rounded-pk border border-pk-border bg-pk-panel p-4", isActive ? "shadow-glow" : "")}>
+    <div className={cn("rounded-pk border border-pk-border bg-pk-panel p-4", loopCardClass(isActive, isActive && isPlaying))}>
       <div className="flex gap-3">
         <div
-          className="relative h-12 w-12 shrink-0 rounded-pk p-[2px]"
+          className={cn(
+            "relative h-12 w-12 shrink-0 rounded-pk p-[2px]",
+            loopCoverClass(isActive, isActive && isPlaying),
+          )}
           style={{ background: coverGradient(loop) }}
           aria-hidden
         >
@@ -116,6 +120,7 @@ export function LoopCard({
         <Button
           variant="secondary"
           size="sm"
+          className={loopPlayButtonClass(isActive, isActive && isPlaying)}
           onClick={onPlayPause}
           aria-label={isPlaying ? "Pause" : "Play"}
           title={isPlaying ? "Pause" : "Play"}
@@ -123,8 +128,15 @@ export function LoopCard({
           {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           {isPlaying ? "Pause" : "Play"}
         </Button>
-        <Button variant={loop.isSaved ? "primary" : "secondary"} size="sm" onClick={onSave} title={loop.isSaved ? "Unsave" : "Save"}>
-          <Bookmark className="h-4 w-4" />
+        <Button
+          variant="secondary"
+          size="sm"
+          className={loopToggleButtonClass(loop.isSaved)}
+          onClick={onSave}
+          title={loop.isSaved ? "Unsave" : "Save"}
+          aria-pressed={loop.isSaved}
+        >
+          <Bookmark className={cn("h-4 w-4", loop.isSaved && "fill-current")} />
           Save
         </Button>
         <Button variant="secondary" size="sm" onClick={onDownloadWav} disabled={isDownloading} title="Download">

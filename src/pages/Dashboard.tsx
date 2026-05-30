@@ -24,12 +24,15 @@ import type { Loop, LoopLength } from "@/types/loop";
 import { usePlayerStore } from "@/stores/playerStore";
 import { LoopCardItem } from "@/components/LoopCardItem";
 import { LoopCardSkeleton } from "@/components/LoopCardSkeleton";
-import { AlertTriangle, AudioWaveform, Copy, Search, X } from "lucide-react";
+import { AlertTriangle, Copy, Search, X } from "lucide-react";
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
 import { ShareMomentModal } from "@/components/growth/ShareMomentModal";
 import { ReferralInviteModal } from "@/components/growth/ReferralInviteModal";
 import { MasteringUpsellModal } from "@/components/growth/MasteringUpsellModal";
 import { GamificationStrip, notifyGamificationGeneration } from "@/components/growth/GamificationStrip";
+import { GamificationCollapsedPreview } from "@/components/growth/GamificationCollapsedPreview";
+import { DashboardPromoBillboard } from "@/components/growth/DashboardPromoBillboard";
+import { DashboardGamingPanelShell, type DashboardGamingPanelHandle } from "@/components/dashboard/DashboardGamingPanelShell";
 import { pickLoopForSharePrompt, shouldShowSharePromptAfterGeneration } from "@/lib/sharePrompt";
 import { markReferralInvitePromptShown, shouldShowReferralInvitePrompt } from "@/lib/referralPrompt";
 import { ensureReferralCode } from "@/lib/referral";
@@ -51,7 +54,7 @@ import { GeneratorSection } from "@/components/dashboard/GeneratorSection";
 import { LoopDetailsPanel } from "@/components/dashboard/LoopDetailsPanel";
 import { LoopDetailsSheet, LoopDetailsSheetHeader } from "@/components/dashboard/LoopDetailsSheet";
 import { MasteringPanel } from "@/components/mastering/MasteringPanel";
-import { GenElectricMark } from "@/components/dashboard/GenElectricMark";
+import { DashboardGenerateButton } from "@/components/dashboard/DashboardGenerateButton";
 import { triggerBeatReady } from "@/lib/delight/moments";
 import { loadGamification } from "@/lib/gamification";
 import { profileLoadErrorMessage, readProfileCache, shouldShowProfileLoadToast, syncProfileCache, type UserProfileRow } from "@/lib/profileBootstrap";
@@ -373,6 +376,7 @@ export default function Dashboard() {
   const pendingReferralAfterShareRef = useRef(false);
   const genAutoplayStartedRef = useRef(false);
   const referralPromptTimerRef = useRef<number | null>(null);
+  const progressionPanelRef = useRef<DashboardGamingPanelHandle>(null);
   const [externalRemix, setExternalRemix] = useState<PendingRemix | null>(null);
   const [mobileOnboardingOpen, setMobileOnboardingOpen] = useState(false);
   const [masteringUpsellLoop, setMasteringUpsellLoop] = useState<Loop | null>(null);
@@ -504,6 +508,66 @@ export default function Dashboard() {
     },
     [openReferralPromptIfEligible],
   );
+
+  const openBillboardShare = useCallback(() => {
+    const loopList = useLoopsStore.getState().loops;
+    const shareLoop = pickLoopForSharePrompt(loopList, [], loopList[0]?.id ?? "") ?? loopList[0] ?? null;
+    if (!shareLoop) {
+      toast.error(locale === "fr" ? "Génère une track d'abord" : "Generate a track first");
+      return;
+    }
+    trackClientEvent("growth_billboard_share", { loop_id: shareLoop.id, source: "dashboard_billboard" });
+    setShareMomentLoop(shareLoop);
+  }, [locale]);
+
+  const openBillboardReferral = useCallback(async () => {
+    let code = authProfile?.referral_code ?? referralCodeForPrompt ?? null;
+    if (!code) {
+      code = await ensureReferralCode();
+      if (code) void refreshAuthProfile();
+    }
+    if (!code) {
+      toast.error(locale === "fr" ? "Lien indisponible — réessaie" : "Link unavailable — try again");
+      return;
+    }
+    setReferralCodeForPrompt(code);
+    setReferralPromptOpen(true);
+    trackClientEvent("referral_prompt_shown", { source: "dashboard_billboard" });
+  }, [authProfile?.referral_code, locale, referralCodeForPrompt, refreshAuthProfile]);
+
+  const openBillboardCommunity = useCallback(() => {
+    navigate("/community");
+  }, [navigate]);
+
+  const openBillboardMastering = useCallback(() => {
+    setWorkspaceView("master");
+    if (mobileV2) goMaster();
+    trackClientEvent("dashboard_billboard_mastering", { source: "spotlight" });
+  }, [goMaster, mobileV2]);
+
+  const openBillboardProgress = useCallback(() => {
+    progressionPanelRef.current?.expand();
+    window.setTimeout(() => {
+      document.getElementById("pk-dashboard-progression")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 120);
+    trackClientEvent("dashboard_billboard_progress", { source: "spotlight" });
+  }, []);
+
+  const openBillboardPricing = useCallback(() => {
+    navigate("/pricing?plan=plus");
+    trackClientEvent("dashboard_billboard_pricing", { source: "spotlight" });
+  }, [navigate]);
+
+  const openBillboardProfile = useCallback(() => {
+    navigate("/settings");
+    trackClientEvent("dashboard_billboard_profile", { source: "spotlight" });
+  }, [navigate]);
+
+  const openBillboardCreate = useCallback(() => {
+    if (mobileV2) setMobileTab("create");
+    else window.scrollTo({ top: 0, behavior: "smooth" });
+    trackClientEvent("dashboard_billboard_create", { source: "spotlight" });
+  }, [mobileV2, setMobileTab]);
 
   useEffect(() => {
     return () => {
@@ -2904,10 +2968,19 @@ export default function Dashboard() {
                     </button>
                   </div>
                 </div>
-                <Button
-                  variant="primary"
-                  className={cn("relative w-full overflow-hidden", generating && "pk-gen-btn-electric is-active")}
+                <DashboardGenerateButton
+                  generating={generating}
                   disabled={!genreReady || generating || profileBusy || remaining < versions}
+                  idleLabel={
+                    mode === "song"
+                      ? locale === "fr"
+                        ? "Générer une chanson"
+                        : "Generate Song"
+                      : locale === "fr"
+                        ? "Générer un beat"
+                        : "Generate Beat"
+                  }
+                  generatingLabel={locale === "fr" ? "Génération…" : "Generating..."}
                   onClick={async () => {
                     if (remaining < versions) return;
                     if (generating) return;
@@ -2931,29 +3004,7 @@ export default function Dashboard() {
                     }
                     await handleGenerate();
                   }}
-                >
-                  {generating ? (
-                    <>
-                      <span className="pk-gen-btn-electric__sheen" aria-hidden />
-                      <span className="pk-gen-btn-electric__arc pk-gen-btn-electric__arc--left" aria-hidden />
-                      <span className="pk-gen-btn-electric__arc pk-gen-btn-electric__arc--right" aria-hidden />
-                    </>
-                  ) : null}
-                  <span className="relative z-[1] inline-flex items-center justify-center gap-2">
-                    {generating ? <GenElectricMark /> : <AudioWaveform className="h-4 w-4" />}
-                    {generating
-                      ? locale === "fr"
-                        ? "Génération…"
-                        : "Generating..."
-                      : mode === "song"
-                        ? locale === "fr"
-                          ? "Générer une chanson"
-                          : "Generate Song"
-                        : locale === "fr"
-                          ? "Générer un beat"
-                          : "Generate Beat"}
-                  </span>
-                </Button>
+                />
               </>
             ) : null}
             <div className="mt-3 flex items-center justify-between text-xs">
@@ -3019,17 +3070,40 @@ export default function Dashboard() {
         </div>
       }
     >
-      <div className="mx-auto w-full max-w-[1120px] px-4 pt-6 md:px-6">
+      <div className="mx-auto w-full max-w-[1120px] px-4 pt-4 md:px-6 md:pt-5">
+        <DashboardPromoBillboard
+          locale={locale}
+          plan={plan}
+          onShare={openBillboardShare}
+          onReferral={() => void openBillboardReferral()}
+          onCommunity={openBillboardCommunity}
+          onMastering={openBillboardMastering}
+          onProgress={openBillboardProgress}
+          onPricing={openBillboardPricing}
+          onProfile={openBillboardProfile}
+          onCreate={openBillboardCreate}
+        />
+
         <div className="mb-5">
-          <GamificationStrip
+          <DashboardGamingPanelShell
+            ref={progressionPanelRef}
+            id="pk-dashboard-progression"
             locale={locale}
-            refreshKey={gamificationRefreshKey}
-            syncRewards={!!user}
-            onBonusCreditsChange={(credits) => {
-              setLevelBonus(credits.levelBonus);
-              setDailyBonusMonth(credits.dailyBonusMonth);
-            }}
-          />
+            title={locale === "fr" ? "Progression" : "Progress"}
+            subtitle={locale === "fr" ? "Niveau · série · bonus" : "Level · streak · bonus"}
+            storageKey="producerhit_dashboard_gaming_collapsed_v1"
+            collapsedPreview={<GamificationCollapsedPreview locale={locale} />}
+          >
+            <GamificationStrip
+              locale={locale}
+              refreshKey={gamificationRefreshKey}
+              syncRewards={!!user}
+              onBonusCreditsChange={(credits) => {
+                setLevelBonus(credits.levelBonus);
+                setDailyBonusMonth(credits.dailyBonusMonth);
+              }}
+            />
+          </DashboardGamingPanelShell>
         </div>
         {showMasterWorkspace ? (
           <MasteringPanel

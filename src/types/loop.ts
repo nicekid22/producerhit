@@ -10,6 +10,8 @@ export type LoopDetails = {
   audioFormat?: string;
   /** Frozen at generation time — Pollinations cover must not follow prompt edits. */
   coverPrompt?: string;
+  /** URL canonique enregistrée une fois (Pollinations ou storage) — évite de régénérer à chaque visite. */
+  coverUrl?: string;
 };
 
 export type Loop = {

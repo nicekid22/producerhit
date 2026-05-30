@@ -13,6 +13,7 @@ import {
 import { landingCopy, landingValueBlocks } from "@/lib/landingContent";
 import { PLAN_LIMITS } from "@/lib/planLimits";
 import { Button } from "@/components/ui/Button";
+import { HeroCtaButton } from "@/components/landing/HeroCtaButton";
 
 type Props = {
   locale: "en" | "fr";
@@ -49,9 +50,9 @@ export function LandingValueGrid({ locale, user }: Props) {
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/60">{copy.freeSpotlightLead}</p>
             <div className="mt-6">
-              <Link to={user ? "/dashboard" : "/auth"}>
-                <Button variant="primary">{copy.heroCtaPrimary}</Button>
-              </Link>
+              <HeroCtaButton to={user ? "/dashboard" : "/auth"} variant="drift">
+                {copy.heroCtaPrimary}
+              </HeroCtaButton>
             </div>
           </div>
         </div>
@@ -88,9 +89,9 @@ export function LandingValueGrid({ locale, user }: Props) {
                 {copy.exploreCtaButton}
               </Button>
             </Link>
-            <Link to={user ? "/dashboard" : "/auth"}>
-              <Button variant="primary">{copy.heroCtaPrimary}</Button>
-            </Link>
+            <HeroCtaButton to={user ? "/dashboard" : "/auth"} variant="wave">
+              {copy.heroCtaPrimary}
+            </HeroCtaButton>
           </div>
           <p className="mt-4 text-[11px] font-semibold text-white/35">
             {isFr

@@ -137,7 +137,7 @@ export default function Library() {
           ) : null}
           <Link
             to="/dashboard"
-            className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full pk-prism-btn px-4 py-2.5 text-xs font-bold uppercase tracking-[0.12em] text-[#050508] transition-all hover:brightness-110"
+            className="pk-prism-btn mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-2.5 text-xs font-bold uppercase tracking-[0.12em]"
           >
             <Sparkles className="h-3.5 w-3.5" />
             {isFr ? "Nouveau beat" : "New beat"}

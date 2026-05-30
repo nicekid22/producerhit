@@ -221,7 +221,7 @@ export default function Auth() {
             <button
               type="submit"
               disabled={busy}
-              className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-[#7c3aed] to-[#22d3ee] px-4 py-3 text-sm font-semibold text-white shadow-[0_0_70px_rgba(124,58,237,0.18)] transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+              className="pk-prism-btn inline-flex w-full items-center justify-center rounded-full px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
             >
               {busy ? (isFr ? "Chargement…" : "Loading…") : mode === "login" ? "Login" : "Create account"}
             </button>

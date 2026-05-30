@@ -1,4 +1,4 @@
-import { useState, type RefObject } from "react";
+import { useEffect, useState, type RefObject } from "react";
 import { Music2, Pause, Play, SlidersHorizontal, Sparkles } from "lucide-react";
 import { PLAN_LIMITS } from "@/lib/planLimits";
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
@@ -65,6 +65,11 @@ function FloatingCard({
 }) {
   const isFr = locale === "fr";
   const playingNow = isActive && isPlaying;
+  const [coverReady, setCoverReady] = useState(false);
+
+  useEffect(() => {
+    setCoverReady(false);
+  }, [card.id, card.coverUrl]);
 
   return (
     <div
@@ -87,39 +92,45 @@ function FloatingCard({
               : `Play ${card.title}`
         }
       >
-        <div className="pk-landing-gen-card__frame overflow-hidden rounded-2xl border border-white/10 shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
+        <div className="pk-landing-gen-card__frame pk-landing-gen-card__frame--swap-in overflow-hidden rounded-2xl border border-white/10 shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
           <div
             className={[
-              "pk-landing-gen-card__media relative aspect-[4/5]",
+              "pk-landing-gen-card__media relative aspect-[4/5] overflow-hidden",
               playingNow ? "pk-landing-gen-card__media--active" : "",
+              coverReady ? "pk-landing-gen-card__media--cover-ready" : "",
             ].join(" ")}
           >
             <div className="absolute inset-0" style={{ background: card.coverBg }} aria-hidden />
-            <img
-              src={card.coverUrl}
-              alt=""
-              loading="lazy"
-              decoding="async"
-              referrerPolicy="no-referrer"
-              className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-500"
-              onLoad={(e) => {
-                e.currentTarget.style.opacity = "1";
-              }}
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-              }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-black/5" aria-hidden />
+            {card.coverUrl ? (
+              <img
+                src={card.coverUrl}
+                alt=""
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
+                referrerPolicy="no-referrer"
+                className={[
+                  "pk-landing-gen-card__cover absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-500",
+                  coverReady ? "opacity-100" : "opacity-0",
+                ].join(" ")}
+                onLoad={() => setCoverReady(true)}
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
+              />
+            ) : null}
+            <div className="pk-landing-gen-card__fx" aria-hidden />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/10" aria-hidden />
 
             <div
               className={[
-                "pk-landing-gen-card__play absolute inset-0 flex items-center justify-center",
+                "pk-landing-gen-card__play absolute inset-0 z-[2] flex items-center justify-center",
                 playingNow ? "pk-landing-gen-card__play--visible" : "",
               ].join(" ")}
             >
               <span
                 className={[
-                  "flex h-12 w-12 items-center justify-center rounded-full border backdrop-blur-md transition-all duration-300",
+                  "pk-landing-gen-card__play-btn flex h-11 w-11 items-center justify-center rounded-full border backdrop-blur-md transition-all duration-300",
                   playingNow
                     ? "border-white/35 bg-black/55 text-white"
                     : "border-white/25 bg-black/40 text-white group-hover:scale-105 group-hover:border-white/40 group-hover:bg-black/55",
@@ -129,7 +140,7 @@ function FloatingCard({
               </span>
             </div>
 
-            <div className="absolute bottom-3 left-3 right-3">
+            <div className="pk-landing-gen-card__meta absolute bottom-3 left-3 right-3 z-[3]">
               <div className="truncate text-sm font-semibold text-white">{card.title}</div>
               <div className="mt-0.5 truncate text-[11px] font-medium text-white/55">{card.subtitle}</div>
             </div>
@@ -209,6 +220,7 @@ export function LandingGenerator({
       >
         {sideCards[0] ? (
           <FloatingCard
+            key={sideCards[0].id}
             card={sideCards[0]}
             side="left"
             locale={locale}
@@ -366,19 +378,31 @@ export function LandingGenerator({
           <p className="hidden text-xs text-white/45 sm:block">
             {isFr ? "Entrée pour générer · Shift+Entrée nouvelle ligne" : "Enter to generate · Shift+Enter new line"}
           </p>
-          <button
-            type="button"
-            onClick={() => void onGenerate()}
-            disabled={generating}
-            className="pk-landing-gen__cta inline-flex h-12 w-full items-center justify-center gap-2 rounded-full px-6 text-sm font-bold text-black transition-all hover:brightness-110 disabled:opacity-70 sm:w-auto sm:min-w-[148px]"
-          >
-            {generating ? (
-              <PkIconLoader icon="generator" size="xs" inline />
-            ) : (
-              <Music2 className="h-4 w-4" />
-            )}
-            {generating ? (isFr ? "Génération…" : "Generating…") : isFr ? "Créer" : "Create"}
-          </button>
+          <div className="pk-landing-gen__cta-shell relative inline-flex w-full sm:w-auto sm:min-w-[148px]">
+            <span className="pk-landing-gen__cta-field" aria-hidden />
+            <button
+              type="button"
+              onClick={() => void onGenerate()}
+              disabled={generating}
+              className={`pk-landing-gen__cta group inline-flex h-12 w-full items-center justify-center rounded-full px-6 sm:w-auto sm:min-w-[148px]${generating ? " is-generating" : ""}`}
+            >
+              <span className="pk-landing-gen__cta-rim" aria-hidden />
+              <span className="pk-landing-gen__cta-spark" aria-hidden />
+              <span className="pk-landing-gen__cta-spark pk-landing-gen__cta-spark--alt" aria-hidden />
+              <span className="pk-landing-gen__cta-glass" aria-hidden>
+                <span className="pk-landing-gen__cta-liquid" aria-hidden />
+                <span className="pk-landing-gen__cta-shine" aria-hidden />
+              </span>
+              <span className="pk-landing-gen__cta-inner inline-flex items-center justify-center gap-2 text-sm font-bold">
+                {generating ? (
+                  <PkIconLoader icon="generator" size="xs" inline />
+                ) : (
+                  <Music2 className="h-4 w-4" aria-hidden />
+                )}
+                {generating ? (isFr ? "Génération…" : "Generating…") : isFr ? "Créer" : "Create"}
+              </span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -390,6 +414,7 @@ export function LandingGenerator({
 
         {sideCards[1] ? (
           <FloatingCard
+            key={sideCards[1].id}
             card={sideCards[1]}
             side="right"
             locale={locale}

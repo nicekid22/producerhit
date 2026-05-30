@@ -1,20 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Music2, Pause, Play, Radio, Search, Shuffle, Sparkles, Star, Trophy, Users, Zap, Loader2 } from "lucide-react";
+import { Play, Search, Shuffle, Sparkles, Trophy, Zap } from "lucide-react";
 import toast from "react-hot-toast";
 import { AppShell } from "@/components/AppShell";
 import { PrismFilterPill } from "@/components/prism/PrismFilterPill";
-import { PrismPageHero } from "@/components/prism/PrismPageHero";
-import { PrismStat } from "@/components/prism/PrismStat";
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { Button } from "@/components/ui/Button";
-import { ProfileAuthorChip } from "@/components/profile/ProfileAuthorChip";
-import { coverGradient, coverImageUrl } from "@/lib/utils";
+import { CommunityFeatured } from "@/components/community/CommunityFeatured";
+import { CommunityRail } from "@/components/community/CommunityRail";
+import { CommunityTrackCard } from "@/components/community/CommunityTrackCard";
+import { publicRowToCoverLoop } from "@/lib/coverArt";
 import {
   ensurePublicLoopAudioUrl,
   fetchPublicLoops,
   resolvePlayableCommunityAudio,
+  sortPublicLoopsByNewest,
   type PublicLoopRow,
 } from "@/lib/publicLoops";
 import { savePendingRemix, buildRemixPromptFromMeta } from "@/lib/pendingRemix";
@@ -23,15 +24,6 @@ import { useLocaleStore } from "@/stores/localeStore";
 import { useAuthStore } from "@/stores/authStore";
 import { usePlayerStore } from "@/stores/playerStore";
 import type { Loop } from "@/types/loop";
-
-function formatDate(d: string) {
-  try {
-    const dt = new Date(d);
-    return dt.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "2-digit" });
-  } catch {
-    return d;
-  }
-}
 
 export default function Explore() {
   const navigate = useNavigate();
@@ -67,29 +59,7 @@ export default function Explore() {
     return ["All", ...Array.from(set).sort((a, b) => a.localeCompare(b))];
   }, [rows]);
 
-  const toLoop = (r: PublicLoopRow): Loop => {
-    return {
-      id: r.id,
-      name: (r.name ?? "Untitled").trim() || "Untitled",
-      genre: r.genre ?? "",
-      influence: r.influence || "No Influence",
-      key: "",
-      scale: "",
-      bpm: typeof r.bpm === "number" ? r.bpm : 0,
-      loopLength: "8 bars",
-      swing: 0,
-      mood: r.mood || "",
-      energyLevel: "",
-      reverb: "",
-      prompt: r.prompt || "",
-      audioUrl: r.audio_url ?? null,
-      details: null,
-      stemsUrl: r.stems_url && typeof r.stems_url === "object" ? (r.stems_url as Record<string, unknown>) : null,
-      isSaved: false,
-      isPublic: true,
-      createdAt: r.created_at ?? new Date().toISOString(),
-    };
-  };
+  const toLoop = (r: PublicLoopRow): Loop => publicRowToCoverLoop(r);
 
   const isNew = (createdAt: string) => Date.now() - new Date(createdAt).getTime() < 24 * 60 * 60 * 1000;
 
@@ -130,7 +100,7 @@ export default function Explore() {
 
   useEffect(() => {
     let cancelled = false;
-    const cacheKey = "producerhit_community_cache_v3";
+    const cacheKey = "producerhit_community_cache_v6";
     let loadedFromCache = false;
     try {
       const raw = window.sessionStorage.getItem(cacheKey);
@@ -259,10 +229,10 @@ export default function Explore() {
         });
     }
 
-    return base;
+    return sortPublicLoopsByNewest(base);
   }, [genre, mood, query, ratingsById, rows, sort]);
 
-  const newestRail = useMemo(() => rows.slice(0, 12), [rows]);
+  const newestRail = useMemo(() => sortPublicLoopsByNewest(rows).slice(0, 12), [rows]);
 
   const topRail = useMemo(() => {
     return rows
@@ -281,18 +251,26 @@ export default function Explore() {
       .slice(0, 12);
   }, [ratingsById, rows]);
 
-  const vibesRail = useMemo(() => {
-    const copy = rows.slice();
-    for (let i = copy.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [copy[i], copy[j]] = [copy[j], copy[i]];
-    }
-    return copy.slice(0, 12);
-  }, [rows]);
 
   const spotlight = topRail[0] ?? newestRail[0] ?? null;
   const genreVariety = Math.max(0, genres.length - 1);
-  const moodVariety = Math.max(0, moods.length - 1);
+  const hasActiveFilters = query.trim().length > 0 || genre !== "All" || mood !== "All" || sort !== "new";
+  const catalogTitle =
+    sort === "top"
+      ? isFr
+        ? "Top communauté"
+        : "Community top picks"
+      : sort === "random"
+        ? isFr
+          ? "Sélection aléatoire"
+          : "Random picks"
+        : hasActiveFilters
+          ? isFr
+            ? `${filtered.length} résultat${filtered.length > 1 ? "s" : ""}`
+            : `${filtered.length} result${filtered.length === 1 ? "" : "s"}`
+          : isFr
+            ? "Toute la communauté"
+            : "All community tracks";
 
   const ensurePlayableUrl = async (r: PublicLoopRow) => {
     setResolvingId(r.id);
@@ -403,98 +381,87 @@ export default function Explore() {
   };
 
   return (
-    <AppShell
-      theme="prism"
-      variant="single"
-    >
-      <div className="mx-auto w-full max-w-[1280px] space-y-5 px-4 pt-6 md:px-6">
-        <PrismPageHero
-          eyebrow={isFr ? "FLUX LIVE" : "LIVE FEED"}
-          title={<span className="pk-prism-holo-text">{isFr ? "Communauté ProducerHit" : "ProducerHit Community"}</span>}
-          description={
-            isFr
-              ? "Découvre les créations publiques, enchaîne les tracks et remixe les vibes qui t’inspirent."
-              : "Discover public creations, queue tracks, and remix the vibes that inspire you."
-          }
-          actions={
-            <>
-              <span className="pk-prism-live-badge">
-                <span className="pk-prism-live-badge__dot" />
-                {loading ? "…" : `${rows.length} live`}
-              </span>
+    <AppShell theme="prism" variant="single">
+      <div className="pk-community mx-auto w-full max-w-[1280px] space-y-6 px-4 pb-10 pt-5 md:px-6 md:pt-6">
+        <header className="pk-community-header">
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="pk-prism-live-badge">
+                  <span className="pk-prism-live-badge__dot" />
+                  {loading ? "…" : `${rows.length} live`}
+                </span>
+                <span className="text-xs font-medium text-white/40">
+                  {genreVariety} {isFr ? "genres" : "genres"}
+                </span>
+              </div>
+              <h1 className="mt-3 text-2xl font-bold tracking-tight md:text-3xl">
+                <span className="pk-prism-holo-text">{isFr ? "Communauté" : "Community"}</span>
+              </h1>
+              <p className="mt-2 max-w-xl text-sm text-white/55">
+                {isFr
+                  ? "Écoute, filtre et remixe les créations publiques — comme un mini-catalogue streaming."
+                  : "Listen, filter, and remix public tracks — a simple streaming-style catalog."}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={loading || filtered.length === 0}
+                onClick={() => {
+                  const first = filtered[0];
+                  if (first) void playQueue(filtered, 0);
+                }}
+              >
+                <Play className="h-4 w-4" />
+                {isFr ? "Tout lire" : "Play all"}
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={loading || filtered.length === 0}
+                onClick={() => {
+                  const pick = filtered[Math.floor(Math.random() * filtered.length)];
+                  if (!pick) return;
+                  const idx = filtered.findIndex((x) => x.id === pick.id);
+                  void playQueue(filtered, idx >= 0 ? idx : 0);
+                }}
+              >
+                <Shuffle className="h-4 w-4" />
+                Shuffle
+              </Button>
               <Link to="/dashboard">
                 <Button variant="primary" size="sm">
                   <Zap className="h-4 w-4" />
                   {isFr ? "Créer" : "Create"}
                 </Button>
               </Link>
-            </>
-          }
-        >
-          <div className="pk-prism-stat-grid">
-            <PrismStat label={isFr ? "Tracks" : "Tracks"} value={rows.length} icon={<Music2 className="h-4 w-4" />} accent="cyan" />
-            <PrismStat label={isFr ? "Genres" : "Genres"} value={genreVariety} icon={<Radio className="h-4 w-4" />} accent="violet" />
-            <PrismStat label="Moods" value={moodVariety} icon={<Sparkles className="h-4 w-4" />} />
-            <PrismStat label={isFr ? "Résultats" : "Results"} value={filtered.length} icon={<Users className="h-4 w-4" />} />
-          </div>
-
-          {spotlight && !loading ? (
-            <div className="pk-prism-spotlight mt-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="min-w-0">
-                <div className="pk-prism-eyebrow">{isFr ? "SPOTLIGHT" : "SPOTLIGHT"}</div>
-                <div className="mt-1 truncate text-lg font-bold text-white">{spotlight.name}</div>
-                <div className="mt-1 flex flex-wrap gap-2 text-xs text-pk-muted">
-                  {spotlight.genre ? <span className="pk-prism-vibe-chip">{spotlight.genre}</span> : null}
-                  {spotlight.mood ? <span className="pk-prism-vibe-chip">{spotlight.mood}</span> : null}
-                  {(spotlight.bpm ?? 0) > 0 ? <span className="pk-prism-vibe-chip">{spotlight.bpm} BPM</span> : null}
-                </div>
-              </div>
-              <div className="flex shrink-0 gap-2">
-                <Button variant="secondary" size="sm" onClick={() => void playQueue(topRail.length ? topRail : filtered, 0)}>
-                  <Play className="h-4 w-4" />
-                  {isFr ? "Écouter le top" : "Play top"}
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => {
-                    const pick = filtered[Math.floor(Math.random() * Math.max(1, filtered.length))];
-                    if (pick) {
-                      const idx = filtered.findIndex((x) => x.id === pick.id);
-                      void playQueue(filtered, idx >= 0 ? idx : 0);
-                    }
-                  }}
-                >
-                  <Shuffle className="h-4 w-4" />
-                  Shuffle
-                </Button>
-              </div>
             </div>
-          ) : null}
-        </PrismPageHero>
-
-        <div className="sticky top-0 z-20 -mx-4 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-4 backdrop-blur-xl md:mx-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              disabled={loading || filtered.length === 0}
-              onClick={() => {
-                const first = filtered[0];
-                if (first) void playQueue(filtered, 0);
-              }}
-            >
-              <Play className="h-4 w-4" />
-              {isFr ? "Play all" : "Play all"}
-            </Button>
-            <Link to="/library">
-              <Button variant="secondary" size="sm">
-                {isFr ? "Ma bibliothèque" : "My library"}
-              </Button>
-            </Link>
           </div>
+        </header>
 
-          <div className="mt-4 grid gap-3 md:grid-cols-12">
+        {spotlight && !loading ? (
+          <CommunityFeatured
+            row={spotlight}
+            isFr={isFr}
+            isActive={current?.id === spotlight.id}
+            isPlaying={isPlaying}
+            resolving={resolvingId === spotlight.id}
+            onPlay={() => void togglePlay(spotlight)}
+            onShuffle={() => {
+              const pick = filtered[Math.floor(Math.random() * Math.max(1, filtered.length))];
+              if (pick) {
+                const idx = filtered.findIndex((x) => x.id === pick.id);
+                void playQueue(filtered, idx >= 0 ? idx : 0);
+              }
+            }}
+            onRemix={() => remixFrom(spotlight)}
+          />
+        ) : null}
+
+        <div className="pk-community-toolbar sticky top-0 z-20 rounded-2xl border border-white/10 bg-[#06060c]/88 px-4 py-3 backdrop-blur-xl">
+          <div className="grid gap-3 md:grid-cols-12 md:items-end">
             <div className="pk-prism-input-shell md:col-span-5">
               <Search />
               <input
@@ -507,12 +474,13 @@ export default function Explore() {
               <Dropdown label={isFr ? "Genre" : "Genre"} value={genre} onChange={setGenre} options={genres.map((g) => ({ value: g, label: g }))} />
             </div>
             <div className="md:col-span-4">
-              <Dropdown label={isFr ? "Mood" : "Mood"} value={mood} onChange={setMood} options={moods.map((m) => ({ value: m, label: m }))} />
+              <Dropdown label="Mood" value={mood} onChange={setMood} options={moods.map((m) => ({ value: m, label: m }))} />
             </div>
           </div>
-
-          <div className="mt-4 flex flex-wrap items-center gap-2 pk-chip-scroll md:overflow-visible">
-            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-white/40">{isFr ? "Tri" : "Sort"}</span>
+          <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-2">
+            <span className="mr-1 shrink-0 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/35">
+              {isFr ? "Tri" : "Sort"}
+            </span>
             <PrismFilterPill active={sort === "new"} onClick={() => setSort("new")}>
               {isFr ? "Nouveaux" : "Newest"}
             </PrismFilterPill>
@@ -522,329 +490,111 @@ export default function Explore() {
             <PrismFilterPill active={sort === "random"} onClick={() => setSort("random")}>
               {isFr ? "Aléatoire" : "Random"}
             </PrismFilterPill>
+            <Link to="/library" className="ml-auto text-xs font-semibold text-white/45 transition-colors hover:text-white/70">
+              {isFr ? "Ma bibliothèque →" : "My library →"}
+            </Link>
           </div>
         </div>
 
-        {!loading && filtered.length === 0 ? (
-          <div className="mt-6 rounded-2xl pk-prism-card-soft p-6 text-center">
-            <div className="text-sm font-semibold">{isFr ? "Aucune track à afficher" : "No tracks to show"}</div>
-            <div className="mt-2 text-sm text-pk-muted">
-              {fetchError ??
-                (isFr
-                  ? "Génère un track sur le Dashboard — il apparaîtra ici automatiquement s’il est Public."
-                  : "Generate a track on the Dashboard — it will show up here automatically if Public.")}
-            </div>
-            <div className="mt-4 flex justify-center gap-2">
-              <Button variant="secondary" onClick={() => setRefetchToken((x) => x + 1)}>
-                {isFr ? "Réessayer" : "Retry"}
-              </Button>
-              <Link to="/dashboard">
-                <Button variant="primary">{isFr ? "Créer un track" : "Create a track"}</Button>
-              </Link>
-            </div>
+        {!loading && !hasActiveFilters ? (
+          <div className="space-y-8">
+            <CommunityRail
+              title={isFr ? "Nouveautés" : "New releases"}
+              icon={<Sparkles className="h-4 w-4 text-cyan-300" />}
+              items={newestRail.slice(0, 10)}
+              isFr={isFr}
+              currentId={current?.id ?? null}
+              isPlaying={isPlaying}
+              resolvingId={resolvingId}
+              ratingsById={ratingsById}
+              isNew={isNew}
+              onPlay={(_row, idx) => void playQueue(newestRail, idx)}
+              onRemix={remixFrom}
+              onRate={setRating}
+              onSeeAll={() => {
+                setSort("new");
+                window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+              }}
+            />
+            <CommunityRail
+              title={isFr ? "Les mieux notés" : "Top rated"}
+              icon={<Trophy className="h-4 w-4 text-yellow-400" />}
+              items={topRail.slice(0, 10)}
+              isFr={isFr}
+              currentId={current?.id ?? null}
+              isPlaying={isPlaying}
+              resolvingId={resolvingId}
+              ratingsById={ratingsById}
+              isNew={isNew}
+              onPlay={(_row, idx) => void playQueue(topRail, idx)}
+              onRemix={remixFrom}
+              onRate={setRating}
+              onSeeAll={() => {
+                setSort("top");
+                window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+              }}
+            />
           </div>
         ) : null}
-        <div className="mt-6 grid gap-6">
-          {[
-            { key: "new", title: isFr ? "Nouveautés" : "New releases", icon: <Sparkles className="h-4 w-4 text-pk-accent" />, items: newestRail },
-            { key: "top", title: isFr ? "Top de la semaine" : "Top this week", icon: <Trophy className="h-4 w-4 text-yellow-400" />, items: topRail },
-            { key: "vibes", title: isFr ? "Vibes" : "Vibes", icon: <Music2 className="h-4 w-4 text-pk-accent" />, items: vibesRail },
-          ].map((rail) =>
-            rail.items.length ? (
-              <div key={rail.key}>
-                <div className="pk-prism-rail-head">
-                  <div className="flex items-center gap-2 text-sm font-semibold">
-                    {rail.icon}
-                    {rail.title}
-                  </div>
-                  <div className="pk-prism-rail-head__line" />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (rail.key === "top") setSort("top");
-                      else if (rail.key === "vibes") setSort("random");
-                      else setSort("new");
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
-                    className="text-xs font-semibold text-pk-accent hover:underline"
-                  >
-                    {isFr ? "Voir plus" : "See more"}
-                  </button>
-                </div>
-                <div className="mt-3 flex gap-3 overflow-x-auto pb-2">
-                  {rail.items.map((r, idx) => {
-                    const loopForCover = toLoop(r);
-                    const bg = coverGradient(loopForCover);
-                    const url = coverImageUrl(loopForCover);
-                    const avg = (() => {
-                      const s = ratingsById[r.id];
-                      if (!s || s.count === 0) return "";
-                      return (s.sum / s.count).toFixed(1);
-                    })();
-                    return (
-                      <button
-                        key={r.id}
-                        type="button"
-                        onClick={() => void playQueue(rail.items, idx)}
-                        className="group min-w-[210px] rounded-2xl pk-prism-card-soft p-3 text-left transition-all hover:border-pk-accent/40 hover:shadow-[0_0_48px_rgba(157,124,255,0.14)]"
-                      >
-                        <div className="relative h-28 overflow-hidden rounded-2xl" style={{ background: bg }}>
-                          <img
-                            src={url}
-                            alt=""
-                            loading="lazy"
-                            decoding="async"
-                            referrerPolicy="no-referrer"
-                            className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-300"
-                            onLoad={(e) => {
-                              e.currentTarget.style.opacity = "1";
-                            }}
-                            onError={(e) => {
-                              e.currentTarget.style.display = "none";
-                            }}
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/15 to-transparent" />
-                          <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between gap-2">
-                            <div className="min-w-0">
-                              <div className="truncate text-xs font-semibold text-white">{r.name}</div>
-                              <div className="mt-0.5 flex flex-wrap gap-2 text-[10px] font-semibold text-white/70">
-                                {r.mood ? <span className="rounded-full bg-black/35 px-2 py-0.5">{r.mood}</span> : null}
-                                {(r.bpm ?? 0) > 0 ? <span className="rounded-full bg-black/35 px-2 py-0.5">{r.bpm} BPM</span> : null}
-                              </div>
-                            </div>
-                            <div className="inline-flex h-9 w-9 items-center justify-center rounded-full pk-prism-btn text-[#050508] shadow-[0_0_32px_rgba(157,124,255,0.2)]">
-                              <Play className="h-4 w-4" />
-                            </div>
-                          </div>
-                        </div>
-                        <div className="mt-3 flex items-center justify-between gap-2">
-                          <div className="min-w-0">
-                            <div className="text-xs text-pk-muted">{r.genre}</div>
-                            {r.author ? (
-                              <div className="mt-2">
-                                <ProfileAuthorChip author={r.author} isFr={isFr} size="sm" hideAvatar />
-                              </div>
-                            ) : null}
-                          </div>
-                          {avg ? (
-                            <div className="inline-flex items-center gap-1 rounded-full border border-pk-border bg-pk-bg px-2 py-1 text-[11px] font-semibold">
-                              <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                              {avg}
-                            </div>
-                          ) : (
-                            <div className="text-[11px] font-semibold text-pk-muted">—</div>
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : null,
-          )}
-        </div>
 
-        <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {loading ? (
-            <>
-              <div className="col-span-full flex justify-center py-6 sm:py-8">
-                <PkIconLoader
-                  icon="community"
-                  size="md"
-                  label={isFr ? "On explore la communauté…" : "Exploring the community…"}
+        <section>
+          <div className="mb-4 flex items-end justify-between gap-3">
+            <h2 className="text-lg font-semibold text-white">{catalogTitle}</h2>
+            {!loading ? <span className="text-xs font-medium text-white/40">{filtered.length}</span> : null}
+          </div>
+
+          {!loading && filtered.length === 0 ? (
+            <div className="rounded-2xl pk-prism-card-soft p-8 text-center">
+              <div className="text-sm font-semibold">{isFr ? "Aucune track à afficher" : "No tracks to show"}</div>
+              <div className="mt-2 text-sm text-pk-muted">
+                {fetchError ??
+                  (isFr
+                    ? "Génère un track public sur le Dashboard pour qu'il apparaisse ici."
+                    : "Generate a public track on the Dashboard to show up here.")}
+              </div>
+              <div className="mt-4 flex justify-center gap-2">
+                <Button variant="secondary" onClick={() => setRefetchToken((x) => x + 1)}>
+                  {isFr ? "Réessayer" : "Retry"}
+                </Button>
+                <Link to="/dashboard">
+                  <Button variant="primary">{isFr ? "Créer un track" : "Create a track"}</Button>
+                </Link>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 xl:gap-4">
+            {loading ? (
+              <>
+                <div className="col-span-full flex justify-center py-8">
+                  <PkIconLoader icon="community" size="md" label={isFr ? "Chargement…" : "Loading…"} />
+                </div>
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="rounded-2xl pk-prism-card-soft p-3 animate-pulse">
+                    <div className="aspect-square rounded-2xl bg-white/5" />
+                    <div className="mt-3 h-4 w-2/3 rounded bg-white/5" />
+                  </div>
+                ))}
+              </>
+            ) : (
+              filtered.map((r) => (
+                <CommunityTrackCard
+                  key={r.id}
+                  row={r}
+                  isFr={isFr}
+                  isActive={current?.id === r.id}
+                  isPlaying={isPlaying}
+                  resolving={resolvingId === r.id}
+                  rating={ratingsById[r.id]}
+                  isNew={r.created_at ? isNew(r.created_at) : false}
+                  onPlay={() => void togglePlayFromFiltered(r)}
+                  onRemix={() => remixFrom(r)}
+                  onRate={(stars) => setRating(r.id, stars)}
                 />
-              </div>
-              {Array.from({ length: 9 }).map((_, i) => (
-                <div key={i} className="rounded-2xl pk-prism-card-soft p-4 animate-pulse">
-                  <div className="h-40 rounded-2xl bg-white/5" />
-                  <div className="mt-4 h-4 w-2/3 rounded bg-white/5" />
-                  <div className="mt-3 flex gap-2">
-                    <div className="h-6 w-16 rounded-full bg-white/5" />
-                    <div className="h-6 w-20 rounded-full bg-white/5" />
-                    <div className="h-6 w-14 rounded-full bg-white/5" />
-                  </div>
-                  <div className="mt-4 h-10 rounded-full bg-white/5" />
-                </div>
-              ))}
-            </>
-          ) : filtered.map((r) => (
-              <article
-                key={r.id}
-                role="button"
-                tabIndex={0}
-                onClick={() => void togglePlayFromFiltered(r)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    void togglePlayFromFiltered(r);
-                  }
-                }}
-                className="group relative overflow-hidden rounded-2xl pk-prism-card-soft p-4 transition-all hover:border-pk-accent/40 hover:shadow-[0_0_56px_rgba(157,124,255,0.14)] focus:outline-none focus:ring-2 focus:ring-pk-accent/30"
-              >
-                {(() => {
-                  const loopForCover = toLoop(r);
-                  const bg = coverGradient(loopForCover);
-                  const url = coverImageUrl(loopForCover);
-                  return (
-                    <div className="relative h-40 overflow-hidden rounded-2xl" style={{ background: bg }}>
-                      <img
-                        src={url}
-                        alt=""
-                        loading="lazy"
-                        decoding="async"
-                        referrerPolicy="no-referrer"
-                        className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-300"
-                        onLoad={(e) => {
-                          e.currentTarget.style.opacity = "1";
-                        }}
-                        onError={(e) => {
-                          e.currentTarget.style.display = "none";
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/15 to-transparent" />
-                      <div className="absolute left-3 top-3 flex flex-wrap gap-2">
-                        <span className="rounded-full border border-pk-border bg-black/40 px-2.5 py-1 text-[11px] font-semibold">
-                          {r.genre || (isFr ? "Track" : "Track")}
-                        </span>
-                        {isNew(r.created_at) ? (
-                          <span className="inline-flex items-center gap-2 rounded-full border border-pk-border bg-black/40 px-2.5 py-1 text-[11px] font-semibold">
-                            <span className="h-2 w-2 rounded-full bg-[#22c55e]" />
-                            {isFr ? "Nouveau" : "New"}
-                          </span>
-                        ) : null}
-                      </div>
-                      <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="truncate text-sm font-semibold text-white">{r.name}</div>
-                          <div className="mt-1 flex flex-wrap gap-2 text-[11px] font-semibold text-white/70">
-                            {r.mood ? <span className="rounded-full bg-black/35 px-2 py-0.5">{r.mood}</span> : null}
-                            {(r.bpm ?? 0) > 0 ? <span className="rounded-full bg-black/35 px-2 py-0.5">{r.bpm} BPM</span> : null}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="inline-flex items-center gap-1 rounded-full border border-pk-border bg-black/40 px-2.5 py-1 text-[11px] font-semibold text-white">
-                            <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                            {(() => {
-                              const s = ratingsById[r.id];
-                              if (!s || s.count === 0) return "—";
-                              const avg = s.sum / s.count;
-                              return avg.toFixed(1);
-                            })()}
-                          </div>
-                          <div className="inline-flex h-10 w-10 items-center justify-center rounded-full pk-prism-btn text-[#050508] shadow-[0_0_32px_rgba(157,124,255,0.22)] transition-all group-hover:shadow-[0_0_48px_rgba(157,124,255,0.28)]">
-                            {current?.id === r.id && isPlaying ? (
-                              <div className="flex h-4 items-end gap-0.5">
-                                {[3, 5, 4, 6].map((h, i) => (
-                                  <div
-                                    key={i}
-                                    className="w-1 rounded-full bg-[#0a0a0f] animate-bounce"
-                                    style={{ height: `${h * 3}px`, animationDelay: `${i * 0.1}s`, animationDuration: "0.6s" }}
-                                  />
-                                ))}
-                              </div>
-                            ) : (
-                              <Play className={resolvingId === r.id ? "h-4 w-4 opacity-50" : "h-4 w-4"} />
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                <div className="mt-4">
-                  <p className="line-clamp-3 text-sm text-pk-muted">{r.prompt || "—"}</p>
-                </div>
-
-                {r.author ? (
-                  <div className="mt-3">
-                    <ProfileAuthorChip author={r.author} isFr={isFr} hideAvatar />
-                  </div>
-                ) : null}
-
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: 5 }).map((_, i) => {
-                      const star = i + 1;
-                      const my = ratingsById[r.id]?.myRating ?? 0;
-                      const on = star <= my;
-                      return (
-                        <button
-                          key={star}
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setRating(r.id, star);
-                          }}
-                          className="inline-flex"
-                          aria-label={isFr ? `Noter ${star} sur 5` : `Rate ${star} of 5`}
-                          title={isFr ? `Noter ${star}/5` : `Rate ${star}/5`}
-                        >
-                          <Star className={on ? "h-4 w-4 fill-yellow-400 text-yellow-400" : "h-4 w-4 text-pk-border"} />
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        remixFrom(r);
-                      }}
-                      disabled={resolvingId === r.id}
-                      className="inline-flex h-10 items-center gap-2 rounded-full border border-pk-border bg-pk-bg px-4 text-sm font-semibold text-pk-text transition-all hover:border-pk-accent/50 hover:bg-white/5 disabled:opacity-60"
-                      aria-label={isFr ? "Remix this vibe" : "Remix this vibe"}
-                    >
-                      {resolvingId === r.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-pk-accent" />
-                      ) : (
-                        <Sparkles className="h-4 w-4 text-pk-accent" />
-                      )}
-                      {isFr ? "Remix this vibe" : "Remix this vibe"}
-                    </button>
-                    <Link
-                      className="inline-flex h-10 items-center rounded-full border border-pk-border bg-pk-bg px-4 text-sm font-semibold text-pk-text transition-all hover:border-pk-accent/50 hover:bg-white/5"
-                      to={`/loop/${r.id}`}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {isFr ? "Voir" : "View"}
-                    </Link>
-                  </div>
-                </div>
-
-                <div className="mt-4">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      void togglePlayFromFiltered(r);
-                    }}
-                    className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-pk-accent px-5 text-sm font-semibold text-white transition-all hover:brightness-110"
-                    aria-label={current?.id === r.id && isPlaying ? (isFr ? "Pause" : "Pause") : isFr ? "Écouter" : "Listen"}
-                  >
-                    {current?.id === r.id && isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                    {resolvingId === r.id ? (isFr ? "Préparation…" : "Preparing…") : current?.id === r.id && isPlaying ? (isFr ? "Pause" : "Pause") : isFr ? "Écouter" : "Listen"}
-                  </button>
-                </div>
-
-                <div className="mt-4 flex items-center justify-between text-xs text-pk-muted">
-                  <div className="min-w-0 truncate">{r.created_at ? formatDate(r.created_at) : "—"}</div>
-                  <div className="font-semibold">
-                    {(() => {
-                      const s = ratingsById[r.id];
-                      if (!s || s.count === 0) return isFr ? "Pas encore de note" : "No ratings yet";
-                      const avg = s.sum / s.count;
-                      return `${avg.toFixed(1)} (${s.count})`;
-                    })()}
-                  </div>
-                </div>
-              </article>
-            ))}
-        </div>
+              ))
+            )}
+          </div>
+        </section>
       </div>
     </AppShell>
   );

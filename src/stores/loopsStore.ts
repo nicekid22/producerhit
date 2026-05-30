@@ -10,6 +10,7 @@ import {
   uploadPublicLoopAudio,
 } from "@/lib/publicLoops";
 import { removeLoopAudioStorage, SUPABASE_LOOP_AUDIO_UPLOAD } from "@/lib/storageAudio";
+import { warmCoverAndPersist } from "@/lib/coverArt";
 import { buildCoverPromptSnapshot } from "@/lib/utils";
 import { useAuthStore } from "@/stores/authStore";
 import { usePlayerStore } from "@/stores/playerStore";
@@ -291,6 +292,7 @@ function toLoop(row: DbLoop): Loop {
           timeSignature: typeof aceObj.timeSignature === "string" ? aceObj.timeSignature : undefined,
           audioFormat: typeof aceObj.audioFormat === "string" ? aceObj.audioFormat : undefined,
           coverPrompt: typeof aceObj.coverPrompt === "string" ? aceObj.coverPrompt : undefined,
+          coverUrl: typeof aceObj.coverUrl === "string" ? aceObj.coverUrl : undefined,
         }
       : null;
 
@@ -744,6 +746,10 @@ export const useLoopsStore = create<LoopsState>((set) => ({
     };
 
     const coverPrompt = safeCaption(input.details?.coverPrompt?.trim() || buildCoverPromptSnapshot(input));
+    const coverUrl = (() => {
+      const u = input.details?.coverUrl?.trim() ?? "";
+      return u.startsWith("http://") || u.startsWith("https://") ? u : undefined;
+    })();
     const detailsForDb = {
       caption: safeCaption(input.details?.caption ?? ""),
       lyrics: safeLyrics(input.details?.lyrics ?? ""),
@@ -753,6 +759,7 @@ export const useLoopsStore = create<LoopsState>((set) => ({
       timeSignature: safeCaption(input.details?.timeSignature ?? ""),
       audioFormat: safeAudioFormat(input.details?.audioFormat ?? null),
       coverPrompt,
+      ...(coverUrl ? { coverUrl } : {}),
     };
 
     const stemsUrlForDb = buildStemsUrlForDb(input.stemsUrl, detailsForDb);
@@ -916,6 +923,17 @@ export const useLoopsStore = create<LoopsState>((set) => ({
     });
     persistMyLoopsCache(user.id, useLoopsStore.getState().loops);
     void cacheLoopAudioFromSrc(row.id, finalLoop.audioUrl ?? trimmedAudioUrl);
+    if (!finalLoop.details?.coverUrl) {
+      warmCoverAndPersist(row.id, user.id, finalLoop, stemsUrlForDb, (coverUrl) => {
+        if (!coverUrl) return;
+        useLoopsStore.setState((s) => ({
+          loops: s.loops.map((l) =>
+            l.id === row.id ? { ...l, details: { ...(l.details ?? {}), coverUrl, coverPrompt: l.details?.coverPrompt } } : l,
+          ),
+        }));
+        persistMyLoopsCache(user.id, useLoopsStore.getState().loops);
+      });
+    }
 
     const player = usePlayerStore.getState();
     const current = player.current;

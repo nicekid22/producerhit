@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/stores/authStore";
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
@@ -7,12 +7,14 @@ import { useLocaleStore } from "@/stores/localeStore";
 import { FolderOpen, Keyboard, Mic2, Sparkles, Video, Zap } from "lucide-react";
 import { usePlayerStore } from "@/stores/playerStore";
 import type { Loop } from "@/types/loop";
-import { coverGradient, coverImageUrl, hashString } from "@/lib/utils";
+import { publicRowToCoverLoop, resolvePublicRowCoverUrl } from "@/lib/coverArt";
+import { coverGradient, hashString } from "@/lib/utils";
 import {
   extractAceTaskId,
   fetchPublicLoops,
   isPlayablePublicLoop,
   resolveAceAudioUrl,
+  type PublicLoopRow,
 } from "@/lib/publicLoops";
 import { LandingPrismScene } from "@/components/landing/LandingPrismScene";
 import { BrandLogo } from "@/components/landing/BrandLogo";
@@ -23,15 +25,56 @@ import { TestimonialsStrip } from "@/components/landing/TestimonialsStrip";
 import { VisualCarousel } from "@/components/landing/VisualCarousel";
 import { LandingCommunityRail } from "@/components/landing/LandingCommunityRail";
 import { LandingGenerator, type GeneratorSideCard } from "@/components/landing/LandingGenerator";
+import { LandingWorkflow } from "@/components/landing/LandingWorkflow";
+import { HeroCtaButton } from "@/components/landing/HeroCtaButton";
 import { HeroTypewriterPrompt } from "@/components/landing/HeroTypewriterPrompt";
 import { LandingValueGrid } from "@/components/landing/LandingValueGrid";
 import { LandingPitchSections } from "@/components/landing/LandingPitchSections";
 import { landingCopy, landingFeatureCards, landingFlowSectionClass, landingSectionClass } from "@/lib/landingContent";
 import { PLAN_LIMITS } from "@/lib/planLimits";
 import { isRecommendedPlan, normalizePlan, pricingCtaHref, pricingCtaMeta } from "@/lib/billing";
+import { PricingPlanButton } from "@/components/pricing/PricingPlanButton";
 import type { PublicProfileCard } from "@/lib/creatorProfile";
 
 type CreateMode = "song" | "beat";
+
+const SIDE_CARD_POOL_LIMIT = 24;
+const SIDE_CARD_ROTATE_MIN_MS = 48_000;
+const SIDE_CARD_ROTATE_MAX_MS = 92_000;
+
+function mergeSideCardPool(existing: GeneratorSideCard[], incoming: GeneratorSideCard[]): GeneratorSideCard[] {
+  const byId = new Map<string, GeneratorSideCard>();
+  for (const card of existing) byId.set(card.id, card);
+  for (const card of incoming) byId.set(card.id, card);
+  return Array.from(byId.values()).slice(0, SIDE_CARD_POOL_LIMIT);
+}
+
+function pickRandomSideCards(pool: GeneratorSideCard[], count: number, seed: string) {
+  if (pool.length <= count) return pool;
+  const items = [...pool];
+  let h = hashString(seed);
+  for (let i = items.length - 1; i > 0; i--) {
+    h = (h * 1664525 + 1013904223) >>> 0;
+    const j = h % (i + 1);
+    [items[i], items[j]] = [items[j], items[i]];
+  }
+  return items.slice(0, count);
+}
+
+function pickNextSideCard(pool: GeneratorSideCard[], visible: GeneratorSideCard[]): GeneratorSideCard | null {
+  const visibleIds = new Set(visible.map((c) => c.id));
+  const candidates = pool.filter((c) => !visibleIds.has(c.id));
+  if (!candidates.length) return null;
+  return candidates[Math.floor(Math.random() * candidates.length)] ?? null;
+}
+
+function classifyTrack(genre: string, mood: string, name: string) {
+  const hay = `${genre} ${mood} ${name}`.toLowerCase();
+  const looksLikeSong = ["song", "vocals", "vocal", "afro", "afrobeats", "pop"].some((k) => hay.includes(k));
+  if (looksLikeSong) return { kind: "song" as const, badge: "Song" as const };
+  const looksLikeBeat = ["type beat", "beat", "trap", "drill", "trapsoul", "rnb"].some((k) => hay.includes(k));
+  return looksLikeBeat ? { kind: "beat" as const, badge: "Type Beat" as const } : { kind: "song" as const, badge: "Song" as const };
+}
 
 function RevealSection({
   id,
@@ -71,7 +114,7 @@ function RevealSection({
       ref={ref}
       className={[
         "pk-prism-reveal",
-        shown ? "pk-prism-reveal--shown" : "pk-prism-reveal--hidden will-change-transform",
+        shown ? "pk-prism-reveal--shown" : "pk-prism-reveal--hidden",
         className ?? "",
       ].join(" ")}
     >
@@ -85,6 +128,7 @@ export default function Landing() {
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
   const profile = useAuthStore((s) => s.profile);
+  const refreshProfile = useAuthStore((s) => s.refreshProfile);
   const locale = useLocaleStore((s) => s.locale);
   const setLocale = useLocaleStore((s) => s.setLocale);
   const copy = useMemo(() => landingCopy(locale), [locale]);
@@ -96,8 +140,6 @@ export default function Landing() {
   const [prompt, setPrompt] = useState("");
   const [focused, setFocused] = useState(false);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
-  const [howActive, setHowActive] = useState(0);
-  const howCardRefs = useRef<Array<HTMLDivElement | null>>([]);
 
   const [beatArtist, setBeatArtist] = useState("");
   const [beatBpm, setBeatBpm] = useState(130);
@@ -160,28 +202,6 @@ export default function Landing() {
     };
   }, [allowPointer, reduceMotion]);
 
-  useEffect(() => {
-    if (reduceMotion) return;
-    const els = howCardRefs.current.filter(Boolean) as HTMLDivElement[];
-    if (!els.length) return;
-    const thresholds = [0.15, 0.25, 0.35, 0.5, 0.65, 0.8];
-    const obs = new IntersectionObserver(
-      (entries) => {
-        let best: IntersectionObserverEntry | null = null;
-        for (const e of entries) {
-          if (!e.isIntersecting) continue;
-          if (!best || e.intersectionRatio > best.intersectionRatio) best = e;
-        }
-        if (!best) return;
-        const idx = els.indexOf(best.target as HTMLDivElement);
-        if (idx >= 0) setHowActive(idx);
-      },
-      { threshold: thresholds },
-    );
-    els.forEach((el) => obs.observe(el));
-    return () => obs.disconnect();
-  }, [reduceMotion]);
-
   const attachMagnetic = (strength: number) => {
     if (reduceMotion || !allowPointer) return {};
     return {
@@ -231,6 +251,95 @@ export default function Landing() {
   }, [locale, mode]);
 
   const [generatorSideCards, setGeneratorSideCards] = useState<GeneratorSideCard[]>([]);
+  const sideCardPoolRef = useRef<GeneratorSideCard[]>([]);
+  const sideCardRotateSlotRef = useRef(0);
+  const sideCardPoolReadyRef = useRef(false);
+  const activeCardIdRef = useRef<string | null>(null);
+  const isPlayingRef = useRef(false);
+
+  useEffect(() => {
+    activeCardIdRef.current = current?.id ?? null;
+    isPlayingRef.current = isPlaying;
+  }, [current?.id, isPlaying]);
+
+  const mapRowToSideCard = useCallback((r: PublicLoopRow): GeneratorSideCard | null => {
+    if (typeof r.id !== "string") return null;
+    if (!isPlayablePublicLoop(r.audio_url, r.stems_url)) return null;
+
+    const name = (r.name ?? "Untitled").trim() || "Untitled";
+    const genre = (r.genre ?? "").trim();
+    const mood = (r.mood ?? "").trim();
+    const bpm = typeof r.bpm === "number" ? r.bpm : null;
+    const { badge } = classifyTrack(genre, mood, name);
+    const prompt = (r.prompt ?? "").trim() || [name, genre, mood, bpm ? `${bpm} BPM` : ""].filter(Boolean).join(", ");
+    const audioUrlRaw = typeof r.audio_url === "string" ? r.audio_url.trim() : "";
+    const stemsUrlObj = (() => {
+      if (r.stems_url && typeof r.stems_url === "object") return r.stems_url as Record<string, unknown>;
+      if (typeof r.stems_url === "string") {
+        const raw = r.stems_url.trim();
+        if (!raw) return null;
+        try {
+          const parsed = JSON.parse(raw) as unknown;
+          return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
+        } catch {
+          return null;
+        }
+      }
+      return null;
+    })();
+    const loopForCover = publicRowToCoverLoop(r);
+    const subtitle = [badge, genre || mood, bpm ? `${bpm} BPM` : ""].filter((x) => x.length > 0).join(" · ");
+    const coverUrl = resolvePublicRowCoverUrl(r);
+    if (!coverUrl.startsWith("http")) return null;
+
+    return {
+      id: r.id,
+      title: name,
+      subtitle,
+      coverUrl,
+      coverBg: coverGradient(loopForCover),
+      audioUrl: audioUrlRaw.length > 0 ? audioUrlRaw : null,
+      stemsUrl: stemsUrlObj,
+      name,
+      genre: genre || null,
+      mood: mood || null,
+      bpm,
+      prompt,
+    };
+  }, []);
+
+  const mapTrackToSideCard = useCallback(
+    (t: PublicTrack): GeneratorSideCard | null => {
+      const coverUrl = t.coverUrl?.trim() ?? "";
+      if (!coverUrl.startsWith("http")) return null;
+      const loopForCover = publicRowToCoverLoop({
+        id: t.id,
+        name: t.name,
+        genre: t.genre,
+        mood: t.mood,
+        bpm: t.bpm,
+        prompt: t.prompt,
+        stems_url: t.stemsUrl ?? null,
+        seed: t.seed ?? null,
+        created_at: t.createdAt,
+      });
+      return {
+        id: t.id,
+        title: t.name,
+        subtitle: t.tags.slice(0, 3).join(" · ") || t.badge,
+        coverUrl,
+        coverBg: coverGradient(loopForCover),
+        audioUrl: t.audioUrl,
+        stemsUrl: t.stemsUrl ?? null,
+        name: t.name,
+        genre: t.genre,
+        mood: t.mood,
+        bpm: t.bpm,
+        prompt: t.prompt,
+      };
+    },
+    [],
+  );
 
   useEffect(() => {
     const onScroll = () => setNavScrolled(window.scrollY > 8);
@@ -346,6 +455,7 @@ export default function Landing() {
     duration?: string;
     color: string;
     prompt: string;
+    coverUrl?: string | null;
     author?: PublicProfileCard | null;
   };
 
@@ -357,48 +467,27 @@ export default function Landing() {
   const [repairingPublicLinks, setRepairingPublicLinks] = useState(false);
   const [repairFixedCount, setRepairFixedCount] = useState<number | null>(null);
 
-  const placeholderTrending = useMemo<PublicTrack[]>(
-    () => [
-      { id: "ph-1", name: "Late Night R&B", genre: "R&B", mood: "Melancholic", bpm: null, audioUrl: null, createdAt: null, kind: "song", badge: "Song", tags: ["R&B", "Vocals"], duration: "3:24", color: "from-violet-900 to-blue-900", prompt: "A melancholic R&B song about late nights in the city, smooth vocals, warm chords, clean drums, radio-ready hook" },
-      { id: "ph-2", name: "Dark Trap Anthem", genre: "Trap", mood: "Dark", bpm: null, audioUrl: null, createdAt: null, kind: "song", badge: "Song", tags: ["Trap", "Vocals"], duration: "2:58", color: "from-purple-900 to-pink-900", prompt: "A dark trap anthem with gritty vocals, huge hook, sliding 808s, tight hats, modern mix, festival energy" },
-      { id: "ph-3", name: "Afrobeats Summer", genre: "Afrobeats", mood: "Bright", bpm: null, audioUrl: null, createdAt: null, kind: "song", badge: "Song", tags: ["Afrobeats", "Vocals"], duration: "3:41", color: "from-green-900 to-teal-900", prompt: "An Afrobeats summer song with bright guitars, catchy chorus, warm bass, clean percussion groove, release-ready mix" },
-      { id: "ph-4", name: "Metro Boomin Type Beat", genre: "Trap", mood: "Dark", bpm: null, audioUrl: null, createdAt: null, kind: "beat", badge: "Type Beat", tags: ["Trap", "Dark"], duration: "2:30", color: "from-rose-900 to-orange-900", prompt: "Metro Boomin type beat, dark bounce, clean 808s, punchy drums, minimal melody, industry-ready mix" },
-      { id: "ph-5", name: "Drill Pocket", genre: "Drill", mood: "Hard", bpm: 140, audioUrl: null, createdAt: null, kind: "beat", badge: "Type Beat", tags: ["Drill", "Hard", "140 BPM"], duration: "2:15", color: "from-blue-900 to-cyan-900", prompt: "Drill type beat, aggressive pocket, sliding bass, tight hats, dark melody, clean mix, hard bounce" },
-      { id: "ph-6", name: "Trapsoul Loop", genre: "R&B", mood: "Moody", bpm: 90, audioUrl: null, createdAt: null, kind: "beat", badge: "Type Beat", tags: ["R&B", "Moody", "90 BPM"], duration: "2:45", color: "from-yellow-900 to-red-900", prompt: "Trapsoul loop, warm chords, moody drums, subtle bass, spacey texture, clean mix, hook-ready bounce" },
-    ],
-    [],
-  );
-
   const getTrackGradient = (id: string) => {
     const gradients = ["from-violet-900 to-blue-900", "from-purple-900 to-pink-900", "from-blue-900 to-cyan-900", "from-rose-900 to-orange-900", "from-green-900 to-teal-900", "from-yellow-900 to-red-900"];
     const index = id.charCodeAt(0) % gradients.length;
     return gradients[index] ?? gradients[0];
   };
 
-  const classifyTrack = (genre: string, mood: string, name: string) => {
-    const hay = `${genre} ${mood} ${name}`.toLowerCase();
-    const looksLikeSong = ["song", "vocals", "vocal", "afro", "afrobeats", "pop"].some((k) => hay.includes(k));
-    if (looksLikeSong) return { kind: "song" as const, badge: "Song" as const };
-    const looksLikeBeat = ["type beat", "beat", "trap", "drill", "trapsoul", "rnb"].some((k) => hay.includes(k));
-    return looksLikeBeat ? { kind: "beat" as const, badge: "Type Beat" as const } : { kind: "song" as const, badge: "Song" as const };
-  };
-
-  const pickRandomSideCards = (pool: GeneratorSideCard[], count: number, seed: string) => {
-    if (pool.length <= count) return pool;
-    const items = [...pool];
-    let h = hashString(seed);
-    for (let i = items.length - 1; i > 0; i--) {
-      h = (h * 1664525 + 1013904223) >>> 0;
-      const j = h % (i + 1);
-      [items[i], items[j]] = [items[j], items[i]];
+  const syncSideCardPool = useCallback((incoming: GeneratorSideCard[]) => {
+    if (!incoming.length) return;
+    sideCardPoolRef.current = mergeSideCardPool(sideCardPoolRef.current, incoming);
+    if (sideCardPoolRef.current.length >= 2) {
+      sideCardPoolReadyRef.current = true;
     }
-    return items.slice(0, count);
-  };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
-    const cacheKey = "producerhit_landing_gen_cards_v2";
+    const cacheKey = "producerhit_landing_gen_cards_v4";
     const seedKey = "producerhit_landing_gen_cards_seed";
+
+    const hasValidCoverUrl = (cards: GeneratorSideCard[]) =>
+      cards.length >= 2 && cards.every((c) => typeof c.coverUrl === "string" && c.coverUrl.startsWith("http"));
 
     try {
       const raw = window.sessionStorage.getItem(cacheKey);
@@ -406,9 +495,9 @@ export default function Landing() {
         const parsed = JSON.parse(raw) as { ts?: unknown; cards?: unknown };
         const ts = typeof parsed?.ts === "number" ? parsed.ts : 0;
         const cards = Array.isArray(parsed?.cards) ? (parsed.cards as GeneratorSideCard[]) : [];
-        if (Date.now() - ts < 15 * 60 * 1000 && cards.length >= 2) {
+        if (Date.now() - ts < 15 * 60 * 1000 && hasValidCoverUrl(cards)) {
           setGeneratorSideCards(cards.slice(0, 2));
-          return;
+          syncSideCardPool(cards);
         }
       }
     } catch {
@@ -420,91 +509,36 @@ export default function Landing() {
         const rows = await fetchPublicLoops({ limit: 48, timeoutMs: 8000, playableOnly: true });
         if (cancelled) return;
 
-        const pool: GeneratorSideCard[] = rows
-          .filter((r) => typeof r.id === "string")
-          .filter((r) => isPlayablePublicLoop(r.audio_url, r.stems_url))
-          .map((r) => {
-            const name = (r.name ?? "Untitled").trim() || "Untitled";
-            const genre = (r.genre ?? "").trim();
-            const mood = (r.mood ?? "").trim();
-            const bpm = typeof r.bpm === "number" ? r.bpm : null;
-            const { badge } = classifyTrack(genre, mood, name);
-            const prompt = (r.prompt ?? "").trim() || [name, genre, mood, bpm ? `${bpm} BPM` : ""].filter(Boolean).join(", ");
-            const audioUrlRaw = typeof r.audio_url === "string" ? r.audio_url.trim() : "";
-            const stemsUrlObj = (() => {
-              if (r.stems_url && typeof r.stems_url === "object") return r.stems_url as Record<string, unknown>;
-              if (typeof r.stems_url === "string") {
-                const raw = r.stems_url.trim();
-                if (!raw) return null;
-                try {
-                  const parsed = JSON.parse(raw) as unknown;
-                  return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
-                } catch {
-                  return null;
-                }
-              }
-              return null;
-            })();
-            const loopForCover: Loop = {
-              id: r.id,
-              name,
-              genre: genre || "",
-              influence: "No Influence",
-              key: "",
-              scale: "",
-              bpm: bpm ?? 0,
-              loopLength: "16 bars",
-              swing: 0,
-              mood: mood || "",
-              energyLevel: "Medium",
-              reverb: "Subtle",
-              prompt,
-              audioUrl: audioUrlRaw || null,
-              details: null,
-              stemsUrl: stemsUrlObj,
-              isSaved: false,
-              isPublic: true,
-              createdAt: r.created_at ?? new Date().toISOString(),
-              seed: typeof r.seed === "number" ? r.seed : null,
-            };
-            const subtitle = [badge, genre || mood, bpm ? `${bpm} BPM` : ""].filter((x) => x.length > 0).join(" · ");
-            return {
-              id: r.id,
-              title: name,
-              subtitle,
-              coverUrl: coverImageUrl(loopForCover),
-              coverBg: coverGradient(loopForCover),
-              audioUrl: audioUrlRaw.length > 0 ? audioUrlRaw : null,
-              stemsUrl: stemsUrlObj,
-              name,
-              genre: genre || null,
-              mood: mood || null,
-              bpm,
-              prompt,
-            };
-          });
+        const pool = rows
+          .map(mapRowToSideCard)
+          .filter((c): c is GeneratorSideCard => c !== null);
 
         if (!pool.length || cancelled) return;
 
-        let seed = "";
-        try {
-          seed = window.sessionStorage.getItem(seedKey) ?? "";
-          if (!seed) {
-            seed = `${Date.now()}-${hashString(pool.map((p) => p.id).join(":"))}`;
-            window.sessionStorage.setItem(seedKey, seed);
-          }
-        } catch {
-          seed = `${Date.now()}`;
-        }
+        syncSideCardPool(pool);
 
-        const picked = pickRandomSideCards(pool, 2, seed);
-        if (cancelled) return;
-        setGeneratorSideCards(picked);
-        try {
-          window.sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), cards: picked }));
-        } catch {
-          // ignore
-        }
+        setGeneratorSideCards((prev) => {
+          if (prev.length >= 2 && hasValidCoverUrl(prev)) return prev;
+
+          let seed = "";
+          try {
+            seed = window.sessionStorage.getItem(seedKey) ?? "";
+            if (!seed) {
+              seed = `${Date.now()}-${hashString(pool.map((p) => p.id).join(":"))}`;
+              window.sessionStorage.setItem(seedKey, seed);
+            }
+          } catch {
+            seed = `${Date.now()}`;
+          }
+
+          const picked = pickRandomSideCards(pool, 2, seed);
+          try {
+            window.sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), cards: picked }));
+          } catch {
+            // ignore
+          }
+          return picked;
+        });
       } catch {
         // ignore — cards stay hidden if fetch fails
       }
@@ -512,6 +546,71 @@ export default function Landing() {
 
     return () => {
       cancelled = true;
+    };
+  }, [mapRowToSideCard, syncSideCardPool]);
+
+  useEffect(() => {
+    if (!trending.length) return;
+    const fromTrending = trending
+      .map(mapTrackToSideCard)
+      .filter((c): c is GeneratorSideCard => c !== null);
+    syncSideCardPool(fromTrending);
+  }, [trending, mapTrackToSideCard, syncSideCardPool]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let timeoutId: number | null = null;
+
+    const randomRotateDelay = () =>
+      SIDE_CARD_ROTATE_MIN_MS +
+      Math.floor(Math.random() * (SIDE_CARD_ROTATE_MAX_MS - SIDE_CARD_ROTATE_MIN_MS + 1));
+
+    const scheduleNext = () => {
+      if (cancelled) return;
+      timeoutId = window.setTimeout(tick, randomRotateDelay());
+    };
+
+    const tick = () => {
+      if (cancelled) return;
+      if (document.hidden) {
+        scheduleNext();
+        return;
+      }
+
+      const pool = sideCardPoolRef.current;
+      if (!sideCardPoolReadyRef.current || pool.length < 3) {
+        scheduleNext();
+        return;
+      }
+
+      setGeneratorSideCards((prev) => {
+        if (prev.length < 2) return prev;
+
+        let slot = sideCardRotateSlotRef.current % 2;
+        sideCardRotateSlotRef.current += 1;
+
+        const playingId = activeCardIdRef.current;
+        const playing = isPlayingRef.current;
+        if (playing && playingId && prev[slot]?.id === playingId) {
+          slot = slot === 0 ? 1 : 0;
+          if (prev[slot]?.id === playingId) return prev;
+        }
+
+        const next = pickNextSideCard(pool, prev);
+        if (!next) return prev;
+
+        const updated: GeneratorSideCard[] = [...prev];
+        updated[slot] = next;
+        return updated;
+      });
+
+      scheduleNext();
+    };
+
+    scheduleNext();
+    return () => {
+      cancelled = true;
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
     };
   }, []);
 
@@ -625,7 +724,8 @@ export default function Landing() {
 
       setRepairFixedCount(fixed);
       try {
-        window.sessionStorage.removeItem("producerhit_landing_trending_cache_v1");
+        window.sessionStorage.removeItem("producerhit_landing_trending_cache_v7");
+        window.sessionStorage.removeItem("producerhit_community_cache_v6");
       } catch {
         void 0;
       }
@@ -637,16 +737,28 @@ export default function Landing() {
     }
   };
 
-  const [shouldLoadTrending, setShouldLoadTrending] = useState(true);
+  const [shouldLoadTrending, setShouldLoadTrending] = useState(false);
 
   useEffect(() => {
-    setShouldLoadTrending(true);
+    const el = document.getElementById("trending");
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setShouldLoadTrending(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "480px 0px", threshold: 0 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
     if (!shouldLoadTrending) return;
     let cancelled = false;
-    const cacheKey = "producerhit_landing_trending_cache_v2";
+    const cacheKey = "producerhit_landing_trending_cache_v7";
     let loadedFromCache = false;
     try {
       const raw = window.sessionStorage.getItem(cacheKey);
@@ -704,6 +816,7 @@ export default function Landing() {
               }
               return null;
             })();
+            const coverUrl = resolvePublicRowCoverUrl(r);
             return {
               id: r.id,
               name,
@@ -719,6 +832,7 @@ export default function Landing() {
               tags,
               color,
               prompt,
+              coverUrl,
               author: r.author ?? null,
             };
           });
@@ -745,7 +859,7 @@ export default function Landing() {
       cancelled = true;
       window.clearTimeout(slowTimer);
     };
-  }, [placeholderTrending, shouldLoadTrending, trendingRefreshKey, locale]);
+  }, [shouldLoadTrending, trendingRefreshKey, locale]);
 
   const pricing = useMemo(() => {
     if (locale === "fr") {
@@ -822,33 +936,41 @@ export default function Landing() {
 
   const currentPlan = normalizePlan(profile?.plan);
 
+  useEffect(() => {
+    if (!user?.id || profile) return;
+    void refreshProfile();
+  }, [user?.id, profile, refreshProfile]);
+
   const faqs = useMemo(() => {
     if (locale === "fr") {
       return [
         {
           q: "ProducerHit est-il un générateur de chansons IA royalty-free ?",
-          a: "Tu peux télécharger tes générations. Pour une release commerciale, respecte toujours les conditions des modèles/providers et les règles des plateformes.",
+          a: "Oui — tu peux créer, écouter et exporter des morceaux pour tes projets. Pour une release commerciale, respecte les conditions des modèles/providers et les règles des plateformes.",
         },
         {
           q: "Usage commercial & propriété ?",
-          a: "Tu peux télécharger tes générations. Pour une release commerciale, respecte toujours les conditions des modèles/providers et les règles des plateformes.",
+          a: "Tu peux télécharger tes générations. Pour une exploitation commerciale, vérifie toujours les termes des services utilisés et les politiques des distributeurs.",
         },
-      { q: "Can I download WAV?", a: "Yes — WAV export is available on Pro/Studio." },
-      { q: "Can I download WAV?", a: "Yes — WAV export is available on Pro/Studio." },
-      { q: "Can I download WAV?", a: "Yes — WAV export is available on Pro/Studio." },
-      { q: "Can I download WAV?", a: "Yes — WAV export is available on Pro/Studio." },
+        {
+          q: "Puis-je exporter en WAV ?",
+          a: "Oui — l'export WAV est disponible sur les offres Pro et Studio.",
+        },
       ];
     }
     return [
       {
         q: "Is ProducerHit a royalty-free AI song creator?",
-          a: "Tu peux télécharger tes générations. Pour une release commerciale, respecte toujours les conditions des modèles/providers et les règles des plateformes.",
+        a: "Yes — you can create, preview, and export tracks for your projects. For commercial releases, follow model/provider terms and platform rules.",
       },
-      { q: "Commercial use & ownership?", a: "You can download your generations. For commercial releases, always follow the model/provider terms and platform rules." },
-      { q: "Can I download WAV?", a: "Yes — WAV export is available on Pro/Studio." },
-      { q: "Can I download WAV?", a: "Yes — WAV export is available on Pro/Studio." },
-      { q: "Can I download WAV?", a: "Yes — WAV export is available on Pro/Studio." },
-      { q: "Can I download WAV?", a: "Yes — WAV export is available on Pro/Studio." },
+      {
+        q: "Commercial use & ownership?",
+        a: "You can download your generations. For commercial use, always follow the model/provider terms and your distributor's policies.",
+      },
+      {
+        q: "Can I download WAV?",
+        a: "Yes — WAV export is available on Pro and Studio plans.",
+      },
     ];
   }, [locale]);
 
@@ -873,7 +995,7 @@ export default function Landing() {
             {user ? (
               <Link
                 to="/dashboard"
-                className="inline-flex h-10 items-center justify-center rounded-full pk-prism-btn px-6 text-sm font-semibold text-black transition-all hover:brightness-110"
+                className="pk-prism-btn inline-flex h-10 items-center justify-center rounded-full px-6 text-sm font-semibold"
               >
                 {locale === "fr" ? "Dashboard" : "Dashboard"}
               </Link>
@@ -881,16 +1003,13 @@ export default function Landing() {
               <>
                 <Link
                   to="/auth"
-                  className="inline-flex h-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] px-5 text-sm font-semibold text-white transition-all hover:border-white/20 hover:bg-white/[0.06]"
+                  className="pk-glass-btn pk-glass-btn--ghost inline-flex h-10 items-center justify-center rounded-full px-5 text-sm font-semibold"
                 >
                   {locale === "fr" ? "Connexion" : "Login"}
                 </Link>
-                <Link
-                  to="/auth"
-                  className="inline-flex h-10 items-center justify-center rounded-full pk-prism-btn px-6 text-sm font-semibold text-black transition-all hover:brightness-110"
-                >
+                <HeroCtaButton to="/auth" variant="spark" size="nav">
                   {locale === "fr" ? "Essayer gratuit" : "Start Free"}
-                </Link>
+                </HeroCtaButton>
               </>
             )}
             <div className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] p-1">
@@ -934,7 +1053,7 @@ export default function Landing() {
                 {locale === "fr" ? "Tarifs" : "Pricing"}
               </Link>
               {user ? (
-                <Link to="/dashboard" className="rounded-2xl bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] px-4 py-3 text-sm font-semibold text-white" onClick={() => setMobileOpen(false)}>
+                <Link to="/dashboard" className="pk-prism-btn inline-flex items-center justify-center rounded-2xl px-4 py-3 text-sm font-semibold" onClick={() => setMobileOpen(false)}>
                   {locale === "fr" ? "Dashboard" : "Dashboard"}
                 </Link>
               ) : (
@@ -942,9 +1061,15 @@ export default function Landing() {
                   <Link to="/auth" className="rounded-2xl border border-[#2d2d3d] bg-transparent px-4 py-3 text-sm font-semibold text-white" onClick={() => setMobileOpen(false)}>
                     {locale === "fr" ? "Connexion" : "Login"}
                   </Link>
-                  <Link to="/auth" className="rounded-2xl bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] px-4 py-3 text-sm font-semibold text-white" onClick={() => setMobileOpen(false)}>
+                  <HeroCtaButton
+                    to="/auth"
+                    variant="spark"
+                    size="nav"
+                    className="w-full rounded-2xl"
+                    onClick={() => setMobileOpen(false)}
+                  >
                     {locale === "fr" ? "Essayer gratuit" : "Start Free"}
-                  </Link>
+                  </HeroCtaButton>
                 </>
               )}
               <div className="flex items-center gap-2">
@@ -1022,12 +1147,12 @@ export default function Landing() {
           </section>
         </RevealSection>
 
-        <RevealSection className={landingSectionClass("pk-landing-section--trust")}>
+        <RevealSection className={`${landingSectionClass("pk-landing-section--trust")} pk-landing-below-fold`}>
           <LogoMarquee locale={locale} />
           <SocialProofStats locale={locale} />
         </RevealSection>
 
-        <RevealSection className={landingSectionClass()}>
+        <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
           <LandingCommunityRail
             locale={locale}
             title={copy.communityTitle}
@@ -1083,7 +1208,7 @@ export default function Landing() {
           />
         </RevealSection>
 
-        <RevealSection id="features" className={landingSectionClass()}>
+        <RevealSection id="features" className={`${landingSectionClass()} pk-landing-below-fold`}>
           <div className="pk-landing-section-head">
             <h2 className="pk-landing-section-head__title">{copy.featuresTitle}</h2>
             <p className="pk-landing-section-head__lead">{copy.featuresLead}</p>
@@ -1105,93 +1230,22 @@ export default function Landing() {
           </div>
         </RevealSection>
 
-        <RevealSection className={landingSectionClass()}>
+        <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
           <div className="grid gap-16 sm:gap-20">
             <LandingPitchSections locale={locale} user={!!user} />
             <LandingValueGrid locale={locale} user={!!user} />
           </div>
         </RevealSection>
 
-        <RevealSection id="how" className={landingSectionClass()}>
-          {(() => {
-            const steps =
-              locale === "fr"
-                ? [
-                    { n: "01", t: "Décris ton son", d: "Prompt + tags. Un seul objectif : trouver le bounce." },
-                    { n: "02", t: "Génère & itère", d: "Variations rapides. Garde la meilleure prise, regen le reste." },
-                    { n: "03", t: "Sauvegarde & exporte", d: "Bibliothèque + MP3/WAV royalty-free. Prêt Spotify, DAW & release.", note: "MP3 (Free) · WAV (Pro/Studio)" },
-                  ]
-                : [
-                    { n: "01", t: "Describe your sound", d: "Prompt + genre tags. Song Mode or Type Beat — one clear goal." },
-                    { n: "02", t: "Generate & iterate", d: "Fast variations. Keep the best take, regen the rest." },
-                    { n: "03", t: "Save & export", d: "Library + royalty-free MP3/WAV. Spotify Ready, DAW & release.", note: "MP3 (Free) · WAV (Pro/Studio)" },
-                  ];
-
-            return (
-              <div className="pk-bentoFrame">
-                <div className="grid gap-10 lg:grid-cols-2">
-                  <div className="lg:sticky lg:top-28">
-                    <h2 className="pk-landing-section-head__title text-left">{copy.howTitle}</h2>
-                    <div className="mt-3 max-w-xl text-sm leading-relaxed text-white/60">{copy.howLead}</div>
-
-                    <div className="mt-7">
-                      <div className="flex gap-2">
-                        {steps.map((s, idx) => (
-                          <div key={s.n} className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
-                            <div
-                              className={[
-                                "h-full w-full bg-[linear-gradient(90deg,var(--prism-chrome),var(--prism-cyan),var(--prism-violet))] transition-opacity duration-300",
-                                idx <= howActive ? "opacity-100" : "opacity-0",
-                              ].join(" ")}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                      <div className="mt-3 flex items-center justify-between text-[11px] font-semibold text-white/55">
-                        {steps.map((s, idx) => (
-                          <div key={`${s.n}-label`} className={idx === howActive ? "text-white" : ""}>
-                            {s.n}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-5">
-                    {steps.map((x, idx) => (
-                      <div
-                        key={x.n}
-                        ref={(el) => {
-                          howCardRefs.current[idx] = el;
-                        }}
-                        className={["pk-stepCard", idx === howActive ? "pk-stepActive" : ""].join(" ")}
-                      >
-                        <div className="flex items-start justify-between gap-6">
-                          <div className="min-w-0">
-                            <div className="text-[11px] font-extrabold tracking-[0.24em] text-white/60">{x.n}</div>
-                            <h3 className="mt-2 text-lg font-semibold text-white">{x.t}</h3>
-                            <div className="mt-2 text-sm text-white/60">{x.d}</div>
-                            {x.note ? <div className="mt-3 text-xs font-semibold text-white/70">{x.note}</div> : null}
-                          </div>
-                          <div className="hidden shrink-0 sm:block">
-                            <div className="h-10 w-10 rounded-2xl bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.22),rgba(255,255,255,0)_70%)]" />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
+        <RevealSection id="how" className={`${landingSectionClass()} pk-landing-below-fold`}>
+          <LandingWorkflow locale={locale} />
         </RevealSection>
 
-        <RevealSection className={landingSectionClass()}>
+        <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
           <VisualCarousel locale={locale} />
         </RevealSection>
 
-
-        <RevealSection className={landingSectionClass()}>
+        <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
           <div className="pk-landing-section-head">
             <h2 className="pk-landing-section-head__title">
               <span className="pk-prism-holo-text">{locale === "fr" ? "Tarifs" : "Pricing"}</span>
@@ -1239,20 +1293,12 @@ export default function Landing() {
                   ))}
                 </div>
                 <div className="mt-auto pt-5">
-                  <Link
+                  <PricingPlanButton
+                    tier={tier}
+                    cta={cta}
+                    disabled={cta.disabled}
                     to={ctaHref}
-                    className={[
-                      "flex h-11 w-full items-center justify-center rounded-full px-5 text-sm font-semibold leading-none transition-all",
-                      cta.disabled
-                        ? "border border-white/10 bg-white/[0.04] text-white/50 pointer-events-none"
-                        : cta.isPrimary
-                          ? "bg-[#7c3aed] text-white hover:bg-[#6d28d9]"
-                          : "border border-[#2d2d3d] bg-transparent text-white hover:border-[#7c3aed]/60",
-                    ].join(" ")}
-                    aria-disabled={cta.disabled}
-                  >
-                    <span className="truncate text-center">{cta.label}</span>
-                  </Link>
+                  />
                 </div>
               </div>
               );
@@ -1277,11 +1323,11 @@ export default function Landing() {
           </p>
         </RevealSection>
 
-        <RevealSection className={landingSectionClass()}>
+        <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
           <TestimonialsStrip locale={locale} />
         </RevealSection>
 
-        <RevealSection className={landingSectionClass()}>
+        <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
           <div className="pk-prism-card relative overflow-hidden p-6 sm:p-10">
             <div className="pointer-events-none absolute inset-0">
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(157,124,255,0.08)_0%,transparent_72%)]" />
@@ -1292,18 +1338,15 @@ export default function Landing() {
                 {copy.ctaLead}
               </div>
               <div className="mt-8">
-                <Link
-                  to="/auth"
-                  className="inline-flex h-[54px] items-center justify-center rounded-full pk-prism-btn px-8 text-base font-semibold text-black transition-all hover:brightness-110"
-                >
+                <HeroCtaButton to="/auth" variant="beam" size="lg">
                   {copy.ctaButton}
-                </Link>
+                </HeroCtaButton>
               </div>
             </div>
           </div>
         </RevealSection>
 
-        <RevealSection className={landingSectionClass()}>
+        <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
           <div className="pk-prism-card p-5 sm:p-8">
             <h2 className="pk-landing-section-head__title text-left">FAQ</h2>
             <div className="mt-6 grid gap-2">

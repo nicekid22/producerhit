@@ -81,6 +81,34 @@ export const LANDING_GALLERY_IMAGES = [
   "/img/img/fe3efb70b1b529c4f7843147bfb623c0.jpg",
 ] as const;
 
+/** Galerie landing lite — 8 visuels lifestyle (pas de mosaic 30+ tuiles). */
+export const LANDING_GALLERY_FEATURED: readonly string[] = [
+  "/img/img/0a83e344393ef9b5157fb8f2a59345b7.jpg",
+  "/img/img/293b75cb01e0c747be01d9a6f74d197d.jpg",
+  "/img/img/5324a6a6e010dc761c51822bda8d5074.jpg",
+  "/img/img/7ac398f9999859951a49e7f6c3a41cc0.jpg",
+  "/img/img/921b96e860f021a15db7cafda25b093a.jpg",
+  "/img/img/c1b5da44f733893a46ec51a69a49115c.jpg",
+  "/img/img/e78f23b7b55720cfbadfc569b3a54f00.jpg",
+  "/img/img/fe3efb70b1b529c4f7843147bfb623c0.jpg",
+] as const;
+
+/** @deprecated Ancien mosaic — conservé pour rollback git / tests. */
+export const LANDING_GALLERY_MAX_TILES = 30;
+
+export function pickLandingGalleryImages(
+  images: readonly string[],
+  max = LANDING_GALLERY_MAX_TILES,
+): string[] {
+  if (images.length <= max) return [...images];
+  const out: string[] = [];
+  const step = images.length / max;
+  for (let i = 0; i < max; i++) {
+    out.push(images[Math.floor(i * step)] ?? images[0]!);
+  }
+  return out;
+}
+
 type Locale = "en" | "fr";
 
 export type LandingTestimonial = {

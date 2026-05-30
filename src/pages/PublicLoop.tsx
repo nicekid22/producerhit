@@ -378,7 +378,7 @@ export default function PublicLoop() {
                   type="button"
                   onClick={remixThisVibe}
                   disabled={remixLoading}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#7c3aed] to-[#22d3ee] px-5 py-2 text-sm font-semibold text-white shadow-[0_0_70px_rgba(124,58,237,0.18)] transition-all hover:brightness-110 disabled:opacity-60"
+                  className="pk-prism-btn inline-flex items-center justify-center gap-2 rounded-full px-5 py-2 text-sm font-semibold disabled:opacity-60"
                 >
                   {remixLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                   {isFr ? "Remix this vibe" : "Remix this vibe"}
@@ -386,7 +386,7 @@ export default function PublicLoop() {
                 <button
                   type="button"
                   onClick={copyLink}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-pk-border bg-white/5 px-5 py-2 text-sm font-semibold text-pk-text hover:bg-white/10"
+                  className="pk-glass-btn pk-glass-btn--ghost inline-flex items-center justify-center gap-2 rounded-full px-5 py-2 text-sm font-semibold"
                 >
                   <Share2 className="h-4 w-4" />
                   {isFr ? "Copier le lien" : "Copy link"}

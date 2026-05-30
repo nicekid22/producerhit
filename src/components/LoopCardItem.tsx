@@ -1,19 +1,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import toast from "react-hot-toast";
-import { buildCoverPromptSnapshot, cn, coverGradient, coverImageKey, coverImageUrl } from "@/lib/utils";
+import { persistCoverUrlForLoop, resolveCoverImageUrl, coverImageKeyFromLoop } from "@/lib/coverArt";
+import { buildCoverPromptSnapshot, cn, coverGradient } from "@/lib/utils";
+import { loopCardClass, loopCoverClass, loopPlayButtonClass, loopPublicButtonClass, loopToggleButtonClass } from "@/lib/loopCardUi";
+import { useAuthStore } from "@/stores/authStore";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { ShareMomentModal } from "@/components/growth/ShareMomentModal";
 import { AudioWaveform } from "@/components/WaveformVisualizer";
 import { useLoopsStore } from "@/stores/loopsStore";
 import { playLoopInContext, usePlayerStore } from "@/stores/playerStore";
-import { buildLoopShareUrl } from "@/lib/growthLinks";
 import { useLocaleStore } from "@/stores/localeStore";
 import type { Loop } from "@/types/loop";
 import { generateBeat } from "@/lib/audioApi";
-import { canDownloadStems, canShareWithoutWatermark } from "@/lib/planEntitlements";
-import { downloadShareVideoBlob, exportShareVideo } from "@/lib/shareVideo";
-import { Bookmark, Check, Copy, Download, Globe, Info, Layers, Loader2, MoreHorizontal, Pause, Pencil, Play, RefreshCcw, Share2, Sparkles, Video, X } from "lucide-react";
+import { canDownloadStems } from "@/lib/planEntitlements";
+import { Bookmark, Check, Download, Globe, Info, Layers, Loader2, MoreHorizontal, Pause, Pencil, Play, RefreshCcw, Share2, Sparkles, X } from "lucide-react";
 
 function formatTime(sec: number) {
   const s = Math.max(0, Math.floor(sec));
@@ -73,6 +74,7 @@ export function LoopCardItem({
 
   const toggleSavedRemote = useLoopsStore((s) => s.toggleSavedRemote);
   const togglePublicRemote = useLoopsStore((s) => s.togglePublicRemote);
+  const loops = useLoopsStore((s) => s.loops);
   const renameLoopRemote = useLoopsStore((s) => s.renameLoopRemote);
   const createLoop = useLoopsStore((s) => s.createLoop);
   const upsertLoop = useLoopsStore((s) => s.upsertLoop);
@@ -82,7 +84,6 @@ export function LoopCardItem({
   const [isDownloading, setIsDownloading] = useState(false);
   const [isDownloadingStems, setIsDownloadingStems] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
-  const [shareBusy, setShareBusy] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [draftTitle, setDraftTitle] = useState(loop.name);
   const [savingTitle, setSavingTitle] = useState(false);
@@ -90,17 +91,27 @@ export function LoopCardItem({
   const [menuOpen, setMenuOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
-  const coverUrl = useMemo(() => coverImageUrl(loop), [loop.details?.coverPrompt, loop.genre, loop.id, loop.influence, loop.mood, loop.seed]);
-  const coverKey = useMemo(() => coverImageKey(loop), [loop.details?.coverPrompt, loop.genre, loop.id, loop.influence, loop.mood, loop.seed]);
-
-  useEffect(() => {
-    if (!shareOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [shareOpen]);
+  const user = useAuthStore((s) => s.user);
+  const coverUrl = useMemo(
+    () => resolveCoverImageUrl(loop),
+    [loop.details?.coverPrompt, loop.details?.coverUrl, loop.genre, loop.id, loop.influence, loop.mood, loop.seed],
+  );
+  const coverKey = useMemo(
+    () => coverImageKeyFromLoop(loop),
+    [loop.details?.coverPrompt, loop.details?.coverUrl, loop.genre, loop.id, loop.influence, loop.mood, loop.seed],
+  );
+  const persistCoverOnLoad = () => {
+    if (loop.details?.coverUrl?.trim() || !user?.id || loop.id.startsWith("local-") || loop.id.startsWith("preview-")) return;
+    void persistCoverUrlForLoop(loop.id, user.id, loop, loop.stemsUrl).then((saved) => {
+      if (!saved) return;
+      useLoopsStore.setState((s) => ({
+        loops: s.loops.map((l) =>
+          l.id === loop.id ? { ...l, details: { ...(l.details ?? {}), coverUrl: saved, coverPrompt: l.details?.coverPrompt } } : l,
+        ),
+      }));
+    });
+  };
+  const shareLoop = useMemo(() => loops.find((l) => l.id === loop.id) ?? loop, [loop, loops]);
 
   const active = current?.id === loop.id;
   const activePlaying = active && isPlaying;
@@ -381,70 +392,11 @@ export function LoopCardItem({
     return Math.max(12, Math.min(maxTop, Math.floor(rawTop)));
   }, []);
 
-  const shareUrl = buildLoopShareUrl(loop.id, "twitter");
-  const shareText =
-    locale === "fr"
-      ? `Écoute mon dernier track "${loop.name}" (${loop.genre}) sur ProducerHit : ${shareUrl}`
-      : `Listen to my latest track "${loop.name}" (${loop.genre}) on ProducerHit: ${shareUrl}`;
-
-  const openShareLink = useCallback((url: string) => {
-    try {
-      window.open(url, "_blank", "noopener,noreferrer");
-    } catch {
-      window.location.href = url;
-    }
-  }, []);
-
-  const nativeShare = useCallback(async () => {
-    const anyNav = navigator as unknown as { share?: (data: { title?: string; text?: string; url?: string }) => Promise<void> };
-    if (typeof anyNav.share !== "function") {
-      toast.error(locale === "fr" ? "Partage direct non supporté — copie le lien" : "Direct share not supported — copy the link");
-      return;
-    }
-    try {
-      await anyNav.share({ title: loop.name, text: shareText, url: shareUrl });
-    } catch {
-      void 0;
-    }
-  }, [locale, loop.name, shareText, shareUrl]);
-
-  const copyText = useCallback(async (text: string, okMsg: string, errMsg: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success(okMsg);
-    } catch {
-      toast.error(errMsg);
-    }
-  }, []);
-
-  const downloadShareVideo = useCallback(async () => {
-    if (!loop.audioUrl) {
-      toast.error(locale === "fr" ? "Audio indisponible — régénère une variation" : "Audio unavailable — generate a variation");
-      return;
-    }
-    if (typeof MediaRecorder === "undefined") {
-      toast.error(locale === "fr" ? "Vidéo non supportée sur ce navigateur" : "Video not supported in this browser");
-      return;
-    }
-    setShareBusy(true);
-    try {
-      const showWatermark = !canShareWithoutWatermark(plan);
-      const blob = await exportShareVideo(loop, { durationSec: 15, showWatermark, watermarkText: "made with ProducerHit" });
-      downloadShareVideoBlob(loop, blob);
-      toast.success(locale === "fr" ? "Vidéo TikTok prête à partager" : "TikTok video ready to share");
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "";
-      toast.error(locale === "fr" ? `Impossible de créer la vidéo${msg ? `: ${msg}` : ""}` : `Failed to create video${msg ? `: ${msg}` : ""}`);
-    } finally {
-      setShareBusy(false);
-    }
-  }, [locale, loop, plan]);
-
   return (
     <div
       data-loop-card
       ref={cardRef}
-      className={cn("rounded-pk border border-pk-border bg-pk-panel p-4", active ? "shadow-glow" : "")}
+      className={cn("rounded-pk border border-pk-border bg-pk-panel p-4", loopCardClass(active, activePlaying))}
       onClick={() => {
         if (!onOpenDetails) return;
         onOpenDetails(loop, computeAnchorTop());
@@ -460,7 +412,10 @@ export function LoopCardItem({
     >
       <div className="flex gap-3">
         <div
-          className="relative h-12 w-12 shrink-0 rounded-pk p-[2px]"
+          className={cn(
+            "relative h-12 w-12 shrink-0 rounded-pk p-[2px]",
+            loopCoverClass(active, activePlaying),
+          )}
           style={{ background: coverGradient(loop) }}
         >
           <div className="relative h-full w-full overflow-hidden rounded-[6px] bg-[#050508]">
@@ -477,6 +432,7 @@ export function LoopCardItem({
               e.currentTarget.style.display = "block";
               e.currentTarget.style.opacity = "1";
               e.currentTarget.dataset.retry = "0";
+              persistCoverOnLoad();
             }}
             onError={(e) => {
               const img = e.currentTarget;
@@ -634,7 +590,7 @@ export function LoopCardItem({
           <Button
             variant="secondary"
             size="sm"
-            className="min-h-11 flex-1"
+            className={loopPlayButtonClass(active, activePlaying, "min-h-11 flex-1")}
             onClick={(e) => {
               e.stopPropagation();
               void (async () => {
@@ -666,26 +622,28 @@ export function LoopCardItem({
             {activePlaying ? "Pause" : "Play"}
           </Button>
           <Button
-            variant={loop.isSaved ? "primary" : "secondary"}
+            variant="secondary"
             size="sm"
-            className="min-h-11 min-w-11 px-0"
+            className={loopToggleButtonClass(loop.isSaved, "min-h-11 min-w-11 px-0")}
             onClick={(e) => {
               e.stopPropagation();
               void toggleSavedRemote(loop.id).then((next) => toast.success(next ? "Sauvegardé" : "Retiré de la bibliothèque")).catch((err) => toast.error(err instanceof Error ? err.message : "Erreur"));
             }}
-            title="Save"
+            title={loop.isSaved ? (locale === "fr" ? "Retirer" : "Unsave") : "Save"}
+            aria-pressed={loop.isSaved}
           >
-            <Bookmark className="h-4 w-4" />
+            <Bookmark className={cn("h-4 w-4", loop.isSaved && "fill-current")} />
           </Button>
           <Button
-            variant={loop.isPublic ? "primary" : "secondary"}
+            variant="secondary"
             size="sm"
-            className="min-h-11 min-w-11 px-0"
+            className={loopPublicButtonClass(loop.isPublic, "min-h-11 min-w-11 px-0")}
             onClick={(e) => {
               e.stopPropagation();
               void togglePublicRemote(loop.id).then((next) => toast.success(next ? "Public" : "Private")).catch((err) => toast.error(err instanceof Error ? err.message : "Erreur"));
             }}
-            title={loop.isPublic ? "Private" : "Public"}
+            title={loop.isPublic ? (locale === "fr" ? "Passer privé" : "Make private") : locale === "fr" ? "Public" : "Public"}
+            aria-pressed={loop.isPublic}
           >
             <Globe className="h-4 w-4" />
           </Button>
@@ -823,6 +781,7 @@ export function LoopCardItem({
         <Button
           variant="secondary"
           size="sm"
+          className={loopPlayButtonClass(active, activePlaying)}
           onClick={(e) => {
             e.stopPropagation();
             void (async () => {
@@ -867,8 +826,9 @@ export function LoopCardItem({
           {activePlaying ? "Pause" : "Play"}
         </Button>
         <Button
-          variant={loop.isSaved ? "primary" : "secondary"}
+          variant="secondary"
           size="sm"
+          className={loopToggleButtonClass(loop.isSaved)}
           onClick={(e) => {
             e.stopPropagation();
             void (async () => {
@@ -881,14 +841,16 @@ export function LoopCardItem({
               }
             })();
           }}
-          title={loop.isSaved ? "Unsave" : "Save"}
+          title={loop.isSaved ? (locale === "fr" ? "Retirer" : "Unsave") : "Save"}
+          aria-pressed={loop.isSaved}
         >
-          <Bookmark className="h-4 w-4" />
+          <Bookmark className={cn("h-4 w-4", loop.isSaved && "fill-current")} />
           Save
         </Button>
         <Button
-          variant={loop.isPublic ? "primary" : "secondary"}
+          variant="secondary"
           size="sm"
+          className={loopPublicButtonClass(loop.isPublic)}
           onClick={(e) => {
             e.stopPropagation();
             void (async () => {
@@ -901,7 +863,8 @@ export function LoopCardItem({
               }
             })();
           }}
-          title={loop.isPublic ? "Make private" : "Make public"}
+          title={loop.isPublic ? (locale === "fr" ? "Passer privé" : "Make private") : locale === "fr" ? "Rendre public" : "Make public"}
+          aria-pressed={loop.isPublic}
         >
           <Globe className="h-4 w-4" />
           {loop.isPublic ? (locale === "fr" ? "Privé" : "Private") : locale === "fr" ? "Public" : "Public"}
@@ -1068,220 +1031,27 @@ export function LoopCardItem({
       </div>
       )}
 
-      {shareOpen
-        ? createPortal(
-            <div className="fixed inset-0 z-[200] flex items-center justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
-              <button
-                type="button"
-                className="absolute inset-0 cursor-default"
-                aria-label={locale === "fr" ? "Fermer" : "Close"}
-                onClick={() => setShareOpen(false)}
-              />
-              <div className="relative my-auto w-full max-w-lg overflow-hidden rounded-2xl border border-pk-border bg-pk-panel shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
-            <div className="flex items-center justify-between gap-3 border-b border-pk-border p-4">
-              <div className="min-w-0">
-                <div className="truncate text-sm font-semibold">{locale === "fr" ? "Partager" : "Share"}</div>
-                <div className="mt-1 text-xs text-pk-muted">
-                  {locale === "fr"
-                    ? "Télécharge une vidéo verticale prête pour TikTok / Instagram."
-                    : "Download a vertical video ready for TikTok / Instagram."}
-                </div>
-              </div>
-              <Button variant="secondary" size="sm" onClick={() => setShareOpen(false)} aria-label={locale === "fr" ? "Fermer" : "Close"}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="p-4">
-              <div className="grid gap-2">
-                {!loop.isPublic ? (
-                  <div className="rounded-2xl border border-pk-border bg-white/5 p-3 text-xs text-pk-muted">
-                    <div className="font-semibold text-pk-text">{locale === "fr" ? "Pour partager un lien public" : "To share a public link"}</div>
-                    <div className="mt-1">
-                      {locale === "fr"
-                        ? "Passe la track en Public pour que le lien fonctionne sur TikTok/Instagram/etc."
-                        : "Make the track Public so the link works on TikTok/Instagram/etc."}
-                    </div>
-                    <div className="mt-3">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        disabled={!loop.audioUrl}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void (async () => {
-                            try {
-                              if (!loop.audioUrl) {
-                                toast.error(
-                                  locale === "fr"
-                                    ? "Audio indisponible — régénère une variation"
-                                    : "Audio unavailable — generate a variation",
-                                );
-                                return;
-                              }
-                              await togglePublicRemote(loop.id);
-                              toast.success(locale === "fr" ? "Public activé" : "Public enabled");
-                            } catch {
-                              toast.error(locale === "fr" ? "Impossible" : "Failed");
-                            }
-                          })();
-                        }}
-                      >
-                        <Globe className="h-4 w-4" />
-                        {locale === "fr" ? "Passer en Public" : "Make Public"}
-                      </Button>
-                    </div>
-                  </div>
-                ) : null}
-
-                <div className="rounded-2xl border border-pk-border bg-white/5 p-3">
-                  <div className="text-xs font-semibold text-pk-text">{locale === "fr" ? "Partager le lien" : "Share link"}</div>
-                  <div className="mt-2 grid grid-cols-2 gap-2">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => void nativeShare()}
-                      title={locale === "fr" ? "Ouvre le partage du téléphone (TikTok/Instagram…)" : "Opens device share (TikTok/Instagram…)"}
-                    >
-                      <Share2 className="h-4 w-4" />
-                      {locale === "fr" ? "TikTok / IG" : "TikTok / IG"}
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() =>
-                        void copyText(
-                          shareUrl,
-                          locale === "fr" ? "Lien copié" : "Link copied",
-                          locale === "fr" ? "Copie impossible" : "Copy failed",
-                        )
-                      }
-                    >
-                      <Copy className="h-4 w-4" />
-                      {locale === "fr" ? "Copier le lien" : "Copy link"}
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => openShareLink(`https://wa.me/?text=${encodeURIComponent(shareText)}`)}
-                    >
-                      WA
-                      <span className="ml-1">{locale === "fr" ? "WhatsApp" : "WhatsApp"}</span>
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => openShareLink(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`)}
-                    >
-                      TG
-                      <span className="ml-1">{locale === "fr" ? "Telegram" : "Telegram"}</span>
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() =>
-                        openShareLink(
-                          `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`,
-                        )
-                      }
-                    >
-                      X
-                      <span className="ml-1">Twitter</span>
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => openShareLink(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`)}
-                    >
-                      FB
-                      <span className="ml-1">Facebook</span>
-                    </Button>
-                  </div>
-                </div>
-
-                <Button
-                  variant="primary"
-                  size="sm"
-                  disabled={shareBusy || !loop.audioUrl}
-                  onClick={() => void downloadShareVideo()}
-                  title={!loop.audioUrl ? (locale === "fr" ? "Audio indisponible" : "Audio unavailable") : undefined}
-                >
-                  {shareBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Video className="h-4 w-4" />}
-                  {locale === "fr" ? "Télécharger la vidéo (9:16)" : "Download video (9:16)"}
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  disabled={!loop.audioUrl}
-                  onClick={() => {
-                    void (async () => {
-                      if (!loop.audioUrl) return;
-                      try {
-                        const response = await fetch(loop.audioUrl);
-                        const blob = await response.blob();
-                        const formatHint = (loop.details?.audioFormat || "").toLowerCase();
-                        const type = (blob.type || "").toLowerCase();
-                        const ext =
-                          formatHint === "wav" || formatHint === "wav32"
-                            ? "wav"
-                            : formatHint === "flac"
-                              ? "flac"
-                              : formatHint === "opus"
-                                ? "opus"
-                                : formatHint === "aac"
-                                  ? "aac"
-                                  : type.includes("wav")
-                                    ? "wav"
-                                    : type.includes("flac")
-                                      ? "flac"
-                                      : type.includes("opus")
-                                        ? "opus"
-                                        : type.includes("aac")
-                                          ? "aac"
-                                          : "mp3";
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement("a");
-                        a.href = url;
-                        const cleanName = (loop.name || "producerhit")
-                          .replace(/[^a-zA-Z0-9\s-]/g, "")
-                          .replace(/\s+/g, "-")
-                          .toLowerCase()
-                          .slice(0, 64);
-                        a.download = `${cleanName || "producerhit"}.${ext}`;
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        URL.revokeObjectURL(url);
-                      } catch {
-                        toast.error(locale === "fr" ? "Téléchargement impossible" : "Download failed");
-                      }
-                    })();
-                  }}
-                >
-                  <Download className="h-4 w-4" />
-                  {locale === "fr" ? "Télécharger l’audio" : "Download audio"}
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => {
-                    const text = (loop.details?.caption || loop.prompt || "").trim();
-                    if (!text) {
-                      toast.error(locale === "fr" ? "Aucun texte" : "No text");
-                      return;
-                    }
-                    void copyText(text, locale === "fr" ? "Texte copié" : "Copied", locale === "fr" ? "Copie impossible" : "Copy failed");
-                  }}
-                >
-                  <Copy className="h-4 w-4" />
-                  {locale === "fr" ? "Copier le texte" : "Copy caption"}
-                </Button>
-              </div>
-            </div>
-              </div>
-            </div>,
-            document.body,
-          )
-        : null}
+      <ShareMomentModal
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        loop={shareLoop}
+        locale={locale}
+        plan={plan}
+        onMakePublic={
+          !shareLoop.isPublic
+            ? () => {
+                void (async () => {
+                  try {
+                    await togglePublicRemote(shareLoop.id);
+                    toast.success(locale === "fr" ? "Track publique — lien d'écoute actif" : "Track public — listen link live");
+                  } catch (err) {
+                    toast.error(err instanceof Error ? err.message : locale === "fr" ? "Erreur" : "Error");
+                  }
+                })();
+              }
+            : undefined
+        }
+      />
     </div>
   );
 }

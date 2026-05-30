@@ -6,6 +6,7 @@ import { animateFakeBars, BAR_COUNT, createBarBuffer, readAnalyserBars } from "@
 import { renderVisualizerFrame } from "@/lib/visualizer/renderFrame";
 import type { VisualizerLayout, VisualizerPresetId } from "@/lib/visualizer/types";
 import { resolvePlayableAudioUrl, shouldUseWebAudioGraph } from "@/lib/playableAudio";
+import { cn } from "@/lib/utils";
 
 type Props = {
   loop: Loop;
@@ -87,7 +88,7 @@ export function MusicVisualizerPreview({
       coverRef.current?.close?.();
       coverRef.current = null;
     };
-  }, [loop.id, loop.details?.coverPrompt, loop.seed]);
+  }, [loop.id, loop.details?.coverPrompt, loop.details?.coverUrl, loop.genre, loop.influence, loop.mood, loop.seed]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -181,8 +182,14 @@ export function MusicVisualizerPreview({
   useEffect(() => () => stop(), [stop]);
 
   return (
-    <div className={className}>
+    <div className={cn("relative", className)}>
       <canvas ref={canvasRef} className="h-full w-full" aria-hidden />
+      {!ready && active ? (
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/80 text-center">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/15 border-t-white/70" aria-hidden />
+          <span className="px-4 text-[10px] text-white/45">Cover…</span>
+        </div>
+      ) : null}
       <audio ref={audioRef} playsInline preload="auto" className="hidden" />
     </div>
   );

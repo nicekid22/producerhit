@@ -15,10 +15,12 @@ export function Button({
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-pk text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60",
+        "inline-flex items-center justify-center gap-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60",
         size === "sm" ? "px-3 py-2" : "px-4 py-2",
-        variant === "primary" && "bg-pk-accent text-white shadow-glow hover:bg-pk-accentHover",
-        variant === "secondary" && "border border-pk-border bg-pk-panel text-pk-text hover:bg-white/5",
+        variant === "primary" &&
+          "pk-glass-btn pk-glass-btn--primary rounded-full border-0 text-white shadow-none hover:bg-transparent",
+        variant === "secondary" &&
+          "pk-glass-btn pk-glass-btn--ghost rounded-full border-0 bg-transparent text-white/84 shadow-none hover:bg-transparent",
         variant === "ghost" && "bg-transparent text-pk-text hover:bg-white/5",
         variant === "danger" && "border border-pk-danger/50 bg-pk-danger/15 text-pk-text hover:bg-pk-danger/25",
         className,

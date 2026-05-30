@@ -21,6 +21,7 @@ export type PublicLoopRow = {
 
 const PUBLIC_LOOP_SELECT =
   "id, user_id, name, genre, influence, mood, bpm, prompt, audio_url, stems_url, created_at, seed";
+/** stems_url.ace.coverUrl + coverPrompt — pas de régénération Pollinations côté landing. */
 
 export function parseStemsUrl(stemsUrl: unknown): Record<string, unknown> | null {
   if (!stemsUrl) return null;
@@ -97,6 +98,12 @@ export function normalizePublicLoopRow(row: PublicLoopRow): PublicLoopRow {
     audio_url: url || null,
     stems_url: parseStemsUrl(row.stems_url) ?? row.stems_url,
   };
+}
+
+export function sortPublicLoopsByNewest(rows: PublicLoopRow[]): PublicLoopRow[] {
+  return rows.slice().sort(
+    (a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime(),
+  );
 }
 
 export async function fetchPublicLoops(options?: {
@@ -225,6 +232,7 @@ export function buildStemsUrlForDb(
     timeSignature?: string;
     audioFormat?: string | null;
     coverPrompt?: string;
+    coverUrl?: string;
   } | null,
 ): Record<string, unknown> | null {
   const taskIdFromInput = extractAceTaskId(inputStemsUrl);

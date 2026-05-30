@@ -1,6 +1,6 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check, CreditCard, Crown, Loader2, Shield, Sparkles, Zap } from "lucide-react";
+import { Check, Shield } from "lucide-react";
 import toast from "react-hot-toast";
 import { Navbar } from "@/components/Navbar";
 import { useAuthStore } from "@/stores/authStore";
@@ -14,8 +14,8 @@ import {
   runCheckoutWithAuth,
   type PaidPlan,
   type PlanTier,
-  type PricingCtaMeta,
 } from "@/lib/billing";
+import { PricingPlanButton } from "@/components/pricing/PricingPlanButton";
 
 type PlanCard = {
   tier: PlanTier;
@@ -24,14 +24,6 @@ type PlanCard = {
   meta: string;
   bullets: string[];
 };
-
-function PricingPlanCtaIcon({ tier, kind }: { tier: PlanTier; kind: PricingCtaMeta["kind"] }) {
-  if (kind !== "upgrade" && kind !== "downgrade") return null;
-  if (kind === "downgrade") return <CreditCard className="h-4 w-4 shrink-0 opacity-90" aria-hidden />;
-  if (tier === "plus") return <Crown className="h-4 w-4 shrink-0 opacity-95" aria-hidden />;
-  if (tier === "studio") return <Sparkles className="h-4 w-4 shrink-0 opacity-95" aria-hidden />;
-  return <Zap className="h-4 w-4 shrink-0 opacity-95" aria-hidden />;
-}
 
 export default function Pricing() {
   const user = useAuthStore((s) => s.user);
@@ -256,15 +248,18 @@ export default function Pricing() {
     : ["Secure Stripe checkout", "Cancel anytime", "Credits activated instantly"];
 
   return (
-    <div className="min-h-screen bg-pk-bg text-pk-text">
+    <div className="min-h-screen pk-prism-stage text-white">
       <Navbar variant="marketing" />
 
       <main className="mx-auto max-w-6xl px-4 py-14">
-        <div className="rounded-2xl border border-pk-border bg-pk-panel/70 p-8 shadow-[0_24px_70px_rgba(0,0,0,0.55)] backdrop-blur-xl">
-          <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="pk-prism-card relative overflow-hidden p-8 sm:p-10">
+          <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_20%_0%,rgba(157,124,255,0.12),transparent_55%),radial-gradient(ellipse_at_90%_100%,rgba(103,195,255,0.08),transparent_50%)]" />
+          <div className="relative flex flex-wrap items-start justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">{isFr ? "Tarifs" : "Pricing"}</h1>
-              <p className="mt-2 max-w-xl text-sm text-pk-muted">
+              <h1 className="text-balance text-[clamp(1.75rem,4vw,2.25rem)] font-bold tracking-tight">
+                <span className="pk-prism-holo-text">{isFr ? "Tarifs" : "Pricing"}</span>
+              </h1>
+              <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/60">
                 {isFr
                   ? "Commence gratuit. Upgrade quand tu veux — crédits et exports débloqués immédiatement."
                   : "Start free. Upgrade anytime — credits and exports unlock instantly."}
@@ -275,7 +270,7 @@ export default function Pricing() {
                 <div className="font-semibold text-[#a78bfa]">
                   {isFr ? "Plan actuel" : "Current plan"} · {currentPlan.toUpperCase()}
                 </div>
-                <div className="mt-1 text-pk-muted">
+                <div className="mt-1 text-white/55">
                   {profile.loops_used_this_month ?? 0} / {getPlanBaseLimit(currentPlan)}{" "}
                   {isFr ? "utilisées ce mois" : "used this month"}
                 </div>
@@ -283,13 +278,13 @@ export default function Pricing() {
             ) : null}
           </div>
 
-          <div className="mt-6 flex flex-wrap gap-3">
+          <div className="relative mt-6 flex flex-wrap gap-3">
             {trustPoints.map((t) => (
               <span
                 key={t}
-                className="inline-flex items-center gap-1.5 rounded-full border border-pk-border bg-white/[0.03] px-3 py-1.5 text-xs font-semibold text-pk-muted"
+                className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-white/55"
               >
-                <Shield className="h-3.5 w-3.5 text-pk-accent" />
+                <Shield className="h-3.5 w-3.5 text-[var(--prism-cyan)]" />
                 {t}
               </span>
             ))}
@@ -307,8 +302,10 @@ export default function Pricing() {
               <div
                 key={p.tier}
                 className={[
-                  "relative flex h-full min-h-[420px] flex-col rounded-2xl border bg-pk-panel/65 p-6 backdrop-blur-xl",
-                  recommended ? "border-[#7c3aed]/50 bg-pk-panel/75 shadow-[0_0_90px_rgba(124,58,237,0.18)]" : "border-pk-border",
+                  "pk-pricing-card relative flex h-full min-h-[420px] flex-col rounded-2xl border p-6",
+                  recommended
+                    ? "pk-pricing-card--popular border-[#7c3aed]/45 shadow-[0_0_70px_rgba(124,58,237,0.16)]"
+                    : "border-white/10 bg-white/[0.03]",
                   isCurrent ? "ring-1 ring-[#7c3aed]/40" : "",
                 ].join(" ")}
               >
@@ -319,7 +316,7 @@ export default function Pricing() {
                 ) : null}
 
                 <div className="flex min-h-7 items-center justify-between gap-2">
-                  <div className="text-sm font-semibold">{p.name}</div>
+                  <div className="text-sm font-semibold text-white">{p.name}</div>
                   {recommended ? (
                     <div className="shrink-0 rounded-full border border-[#7c3aed]/30 bg-[#7c3aed]/10 px-2 py-1 text-[11px] font-semibold leading-none text-[#a78bfa]">
                       {isFr ? "Populaire" : "Popular"}
@@ -330,41 +327,28 @@ export default function Pricing() {
                 </div>
 
                 <div className="mt-4 flex items-baseline gap-1">
-                  <span className="text-3xl font-semibold leading-none tracking-tight">{p.price}</span>
-                  <span className="text-sm text-pk-muted">/mo</span>
+                  <span className="text-3xl font-semibold leading-none tracking-tight text-white">{p.price}</span>
+                  <span className="text-sm text-white/45">/mo</span>
                 </div>
-                <div className="mt-2 text-sm font-medium leading-snug text-pk-muted">{p.meta}</div>
+                <div className="mt-2 text-sm font-medium leading-snug text-white/55">{p.meta}</div>
 
-                <ul className="mt-5 flex-1 space-y-2.5 text-sm leading-snug text-pk-muted">
+                <ul className="mt-5 flex-1 space-y-2.5 text-sm leading-snug text-white/55">
                   {p.bullets.map((b) => (
                     <li key={b} className="flex items-start gap-2.5">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-pk-accent" />
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-[var(--prism-cyan)]" />
                       <span className="min-w-0 flex-1">{b}</span>
                     </li>
                   ))}
                 </ul>
 
                 <div className="mt-auto pt-5">
-                  <button
-                    type="button"
+                  <PricingPlanButton
+                    tier={p.tier}
+                    cta={cta}
+                    busy={busy}
+                    disabled={loading !== null}
                     onClick={() => void handlePlanAction(p.tier)}
-                    disabled={loading !== null || cta.disabled}
-                    className={[
-                      "flex h-11 w-full items-center justify-center rounded-full px-5 text-sm font-semibold leading-none transition-all disabled:cursor-not-allowed disabled:opacity-60",
-                      cta.isPrimary
-                        ? "bg-gradient-to-r from-[#7c3aed] to-[#22d3ee] text-white shadow-[0_0_80px_rgba(124,58,237,0.18)] hover:brightness-110"
-                        : "border border-pk-border bg-white/5 text-pk-text hover:bg-white/10",
-                    ].join(" ")}
-                  >
-                    {busy ? (
-                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                    ) : (
-                      <span className="inline-flex max-w-full items-center justify-center gap-2">
-                        <PricingPlanCtaIcon tier={p.tier} kind={cta.kind} />
-                        <span className="truncate text-center">{cta.label}</span>
-                      </span>
-                    )}
-                  </button>
+                  />
                 </div>
               </div>
             );
@@ -377,7 +361,7 @@ export default function Pricing() {
               type="button"
               disabled={loading !== null}
               onClick={() => void openPortal()}
-              className="text-sm font-semibold text-pk-accent hover:underline disabled:opacity-50"
+              className="pk-pricing-plan-btn pk-pricing-plan-btn--muted pk-pricing-plan-btn--inline inline-flex h-10 max-w-full items-center justify-center rounded-full px-5 text-sm font-semibold disabled:opacity-50"
             >
               {isFr ? "Gérer ou annuler via le portail Stripe →" : "Manage or cancel via Stripe portal →"}
             </button>
@@ -385,49 +369,49 @@ export default function Pricing() {
         ) : null}
 
         <section className="mt-14">
-          <h2 className="text-xl font-semibold">FAQ</h2>
+          <h2 className="text-xl font-semibold text-white">FAQ</h2>
           <div className="mt-5 grid gap-3">
             {faqs.map((f, i) => {
               const isOpen = open === i;
               return (
-                <div key={f.q} className="rounded-2xl border border-pk-border bg-pk-panel/60 backdrop-blur-xl">
+                <div key={f.q} className="pk-prism-card overflow-hidden">
                   <button
                     type="button"
                     className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
                     onClick={() => setOpen((v) => (v === i ? null : i))}
                   >
-                    <div className="text-sm font-semibold">{f.q}</div>
-                    <div className="text-pk-accent">{isOpen ? "–" : "+"}</div>
+                    <div className="text-sm font-semibold text-white">{f.q}</div>
+                    <div className="text-[var(--prism-cyan)]">{isOpen ? "–" : "+"}</div>
                   </button>
-                  {isOpen ? <div className="px-5 pb-5 text-sm text-pk-muted">{f.a}</div> : null}
+                  {isOpen ? <div className="px-5 pb-5 text-sm text-white/55">{f.a}</div> : null}
                 </div>
               );
             })}
           </div>
         </section>
 
-        <footer className="mt-14 border-t border-pk-border pt-8 text-sm text-pk-muted">
+        <footer className="mt-14 border-t border-white/10 pt-8 text-sm text-white/45">
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-            <Link to="/legal#privacy" className="hover:text-pk-text">
+            <Link to="/legal#privacy" className="transition-colors hover:text-white">
               {isFr ? "Confidentialité" : "Privacy"}
             </Link>
-            <Link to="/legal#cookies" className="hover:text-pk-text">
+            <Link to="/legal#cookies" className="transition-colors hover:text-white">
               Cookies
             </Link>
-            <Link to="/legal#terms" className="hover:text-pk-text">
+            <Link to="/legal#terms" className="transition-colors hover:text-white">
               {isFr ? "Conditions" : "Terms"}
             </Link>
-            <Link to="/legal#refunds" className="hover:text-pk-text">
+            <Link to="/legal#refunds" className="transition-colors hover:text-white">
               {isFr ? "Paiements & remboursements" : "Payments & Refunds"}
             </Link>
-            <Link to="/legal#contact" className="hover:text-pk-text">
+            <Link to="/legal#contact" className="transition-colors hover:text-white">
               Support
             </Link>
-            <a className="hover:text-pk-text" href="mailto:info.producermarket@gmail.com">
+            <a className="transition-colors hover:text-white" href="mailto:info.producermarket@gmail.com">
               info.producermarket@gmail.com
             </a>
           </div>
-          <div className="mt-4">© 2026 ProducerHit</div>
+          <div className="mt-4 text-white/35">© 2026 ProducerHit</div>
         </footer>
       </main>
     </div>

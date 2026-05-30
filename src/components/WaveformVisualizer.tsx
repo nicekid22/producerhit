@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import { fetchCachedLoopAudioBlob } from "@/stores/loopsStore";
 
@@ -206,7 +206,7 @@ function drawWaveform({
   }
 }
 
-const LOADER_BAR_RATIOS = [0.32, 0.58, 0.78, 0.44, 0.92, 0.62, 0.38, 0.86, 0.52, 0.72, 0.48, 0.68];
+const LOADER_SEGMENT_COUNT = 32;
 
 export function WaveformLoader({
   height = 28,
@@ -217,7 +217,6 @@ export function WaveformLoader({
   active?: boolean;
   onRetry?: () => void;
 }) {
-  const gradientId = useId().replace(/:/g, "");
   return (
     <div
       className={`pk-waveform-loader ${active ? "pk-waveform-loader--active" : "pk-waveform-loader--idle"}`}
@@ -238,33 +237,21 @@ export function WaveformLoader({
           : undefined
       }
     >
-      <svg className="pk-waveform-loader__scope" viewBox="0 0 200 32" preserveAspectRatio="none" aria-hidden>
-        <defs>
-          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="rgba(124, 58, 237, 0.15)" />
-            <stop offset="35%" stopColor="rgba(157, 124, 255, 0.85)" />
-            <stop offset="65%" stopColor="rgba(103, 195, 255, 0.95)" />
-            <stop offset="100%" stopColor="rgba(124, 58, 237, 0.2)" />
-          </linearGradient>
-        </defs>
-        <path
-          className="pk-waveform-loader__wave"
-          d="M0,16 C12,6 24,26 36,16 S60,6 72,16 S96,26 108,16 S132,6 144,16 S168,26 180,16 S196,10 200,16"
-          fill="none"
-          stroke={`url(#${gradientId})`}
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-      </svg>
-      <div className="pk-waveform-loader__bars">
-        {LOADER_BAR_RATIOS.map((ratio, i) => (
-          <div
+      <div className="pk-waveform-loader__grid" aria-hidden />
+      <div className="pk-waveform-loader__baseline" aria-hidden />
+      <div className="pk-waveform-loader__scan" aria-hidden />
+      <div className="pk-waveform-loader__segments" aria-hidden>
+        {Array.from({ length: LOADER_SEGMENT_COUNT }).map((_, i) => (
+          <span
             key={i}
-            className="pk-waveform-loader__bar"
-            style={{ height: `${Math.round(ratio * 100)}%`, animationDelay: `${(i * 0.07) % 0.5}s` }}
+            className="pk-waveform-loader__segment"
+            style={{ animationDelay: `${(i * 0.045) % 0.72}s` }}
           />
         ))}
       </div>
+      {!active && onRetry ? (
+        <span className="pk-waveform-loader__hint">↻</span>
+      ) : null}
     </div>
   );
 }
