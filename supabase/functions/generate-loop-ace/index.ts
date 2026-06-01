@@ -549,13 +549,129 @@ function parseAceChatCompletionsJson(json: unknown, baseUrl: string) {
   };
 }
 
-/** Fallback when /release_task returns 404 on all bases — same path as localhost with VITE_ACE_STEP_API_KEY. */
-async function generateViaChatCompletionsAce(input: {
-  apiKey: string;
-  baseUrl: string;
+function pickOneBySeed<T>(items: T[], seed: string): T {
+  if (items.length <= 1) return items[0]!;
+  return items[hashToIndex(seed, items.length)]!;
+}
+
+function parseAceChatContent(content: string) {
+  const pick = (re: RegExp) => {
+    const m = content.match(re);
+    return m && typeof m[1] === "string" ? m[1].trim() : "";
+  };
+  const caption = pick(/\*\*Caption:\*\*\s*([^\n]+)/i);
+  const bpmStr = pick(/\*\*BPM:\*\*\s*([0-9]{2,3})/i);
+  const durationStr = pick(/\*\*Duration:\*\*\s*([0-9]{1,3})/i);
+  const keyScaleMatch =
+    content.match(/\*\*(?:Key|Key Scale|KeyScale):\*\*\s*([^\n]+)/i) ?? content.match(/\*\*Key:\*\*\s*([^\n]+)/i);
+  const keyScale = keyScaleMatch?.[1]?.trim() ?? "";
+  const tsMatch = content.match(/\*\*(?:Time Signature|TimeSignature):\*\*\s*([^\n]+)/i);
+  const timeSignature = tsMatch?.[1]?.trim() ?? "";
+  const bpmNum = bpmStr ? Number(bpmStr) : null;
+  const durationNum = durationStr ? Number(durationStr) : null;
+
+  let extractedLyrics = "";
+  const idx = content.toLowerCase().indexOf("## lyrics");
+  if (idx >= 0) extractedLyrics = content.slice(idx + "## lyrics".length).trim();
+
+  const fallbackBpmMatch = content.match(/(^|[\s,])([0-9]{2,3})\s*bpm\b/i);
+  const fallbackBpm = fallbackBpmMatch?.[2] ? Number(fallbackBpmMatch[2]) : null;
+  const fallbackDurMatch = content.match(/(^|[\s,])([0-9]{1,3})\s*s(ec(onds)?)?\b/i);
+  const fallbackDuration = fallbackDurMatch?.[2] ? Number(fallbackDurMatch[2]) : null;
+  const bpmFinal = bpmNum && isFinite(bpmNum) ? bpmNum : fallbackBpm && isFinite(fallbackBpm) ? fallbackBpm : null;
+  const durationFinal =
+    durationNum && isFinite(durationNum) ? durationNum : fallbackDuration && isFinite(fallbackDuration) ? fallbackDuration : null;
+
+  return {
+    prompt: caption || undefined,
+    lyrics: extractedLyrics || undefined,
+    bpm: bpmFinal,
+    duration: durationFinal,
+    keyScale: keyScale || undefined,
+    timeSignature: timeSignature || undefined,
+  };
+}
+
+function buildAceChatCompletionsParts(input: {
+  seedKey: string;
+  baseCaption: string;
   prompt: string;
   lyrics: string;
   instrumental: boolean;
+  genre: string;
+  mood: string;
+  energyLevel: string;
+  autoMeta: boolean;
+  bpm: number | null;
+  key: string;
+  scale: string;
+  timeSignature: string;
+}): string[] {
+  const parts: string[] = [];
+  const baseCaption = input.baseCaption.trim() || input.prompt.trim();
+  if (input.instrumental) {
+    const beatTemplate =
+      input.genre === "Old School Hip-Hop"
+        ? pickOneBySeed(
+            [
+              "Create a classic old-school hip-hop / boom bap beat with a sample-based chopped loop.",
+              "Generate an old-school boom bap hip-hop instrumental with dusty drums and a deconstructed sample chop.",
+              "Old-school hip-hop beat: chopped soul/jazz sample, punchy kick/snare, MPC swing, subtle scratches.",
+            ],
+            input.seedKey,
+          )
+        : pickOneBySeed(
+            [
+              `Create a modern 2026 ${input.genre || "hip-hop"} beat with contemporary drums and sound design.`,
+              `Generate a modern 2026 ${input.genre || "hip-hop"} beat that feels current, clean, and release-ready.`,
+              `Modern 2026 ${input.genre || "hip-hop"} beat with a strong groove, modern textures, and a polished mix.`,
+            ],
+            input.seedKey,
+          );
+    parts.push(beatTemplate);
+    parts.push(baseCaption);
+    if (input.mood) parts.push(`Mood: ${input.mood}.`);
+    if (input.energyLevel) parts.push(`Energy: ${input.energyLevel}.`);
+    parts.push("No lead singing and no rapped verses. Avoid intelligible lyrics or spoken words.");
+    parts.push("Vocal chops/samples are allowed as texture (short, chopped, and non-lyrical).");
+    parts.push("Do not output any lyrics text. Omit the '## Lyrics' section entirely.");
+  } else {
+    parts.push(baseCaption);
+  }
+  const effectiveLyrics = input.instrumental ? "[Instrumental]" : input.lyrics.trim();
+  if (!input.instrumental && effectiveLyrics) parts.push(`Lyrics:\n${effectiveLyrics}`);
+  parts.push(
+    input.instrumental
+      ? "Instrumental beat. No lead singing and no rapped verses. Avoid intelligible lyrics or spoken words. Vocal chops are allowed."
+      : "Include vocals.",
+  );
+  if (!input.autoMeta && input.bpm && input.bpm > 0) parts.push(`BPM: ${input.bpm}.`);
+  if (!input.autoMeta && input.key && input.scale) parts.push(`Key: ${input.key} ${input.scale}.`);
+  if (input.timeSignature.trim()) parts.push(`Time signature: ${input.timeSignature.trim()}.`);
+  if (input.genre) {
+    parts.push(`In the generated Metadata caption, explicitly include the genre: "${input.genre}".`);
+  }
+  if (input.genre === "Dancehall") {
+    parts.push('In the generated Metadata caption, explicitly include the words: "dancehall" and "riddim".');
+  }
+  return parts;
+}
+
+/** Aligné sur generateLoopAceDirect (localhost) — chat/completions ACE. */
+async function generateViaChatCompletionsAce(input: {
+  apiKey: string;
+  baseUrl: string;
+  seedKey: string;
+  prompt: string;
+  baseCaption: string;
+  lyrics: string;
+  instrumental: boolean;
+  genre: string;
+  mood: string;
+  energyLevel: string;
+  autoMeta: boolean;
+  key: string;
+  scale: string;
   requestedDuration: number | null;
   bpm: number | null;
   keyScale: string;
@@ -564,13 +680,23 @@ async function generateViaChatCompletionsAce(input: {
   audioFormat: string;
   signal?: AbortSignal;
 }): Promise<{ audioUrl: string; meta: Record<string, unknown> }> {
-  const parts: string[] = [input.prompt.trim()];
-  if (!input.instrumental && input.lyrics.trim()) parts.push(`Lyrics:\n${input.lyrics.trim()}`);
-  parts.push(
-    input.instrumental
-      ? "Instrumental beat. No lead singing and no rapped verses. Avoid intelligible lyrics or spoken words."
-      : "Include vocals.",
-  );
+  const effectiveLyrics = input.instrumental ? "[Instrumental]" : input.lyrics.trim();
+  const aceLyricsField = input.instrumental ? "[instrumental]" : effectiveLyrics;
+  const parts = buildAceChatCompletionsParts({
+    seedKey: input.seedKey,
+    baseCaption: input.baseCaption,
+    prompt: input.prompt,
+    lyrics: input.lyrics,
+    instrumental: input.instrumental,
+    genre: input.genre,
+    mood: input.mood,
+    energyLevel: input.energyLevel,
+    autoMeta: input.autoMeta,
+    bpm: input.bpm,
+    key: input.key,
+    scale: input.scale,
+    timeSignature: input.timeSignature,
+  });
 
   const res = await fetch(`${input.baseUrl}/v1/chat/completions`, {
     method: "POST",
@@ -582,13 +708,16 @@ async function generateViaChatCompletionsAce(input: {
     body: JSON.stringify({
       model: "acemusic/acestep-v1.5-turbo",
       messages: [{ role: "user", content: parts.join("\n\n") }],
-      lyrics: input.instrumental ? "[instrumental]" : input.lyrics.trim() || "[instrumental]",
+      lyrics: aceLyricsField,
       task_type: "text2music",
       audio_config: {
         instrumental: input.instrumental,
         ...(input.requestedDuration != null ? { duration: input.requestedDuration } : {}),
-        bpm: input.bpm && input.bpm > 0 ? input.bpm : null,
-        key_scale: input.keyScale.trim() || null,
+        bpm: !input.autoMeta && input.bpm && input.bpm > 0 ? input.bpm : null,
+        key_scale:
+          !input.autoMeta && input.key && input.scale
+            ? `${input.key} ${input.scale}`
+            : input.keyScale.trim() || null,
         time_signature: input.timeSignature.trim() || null,
         vocal_language: input.vocalLanguage || "en",
         format: input.audioFormat,
@@ -605,15 +734,28 @@ async function generateViaChatCompletionsAce(input: {
   const parsed = parseAceChatCompletionsJson(json, input.baseUrl);
   if (!parsed.audioUrl) throw new Error("ACE API returned no audio");
 
+  const choices = (json as { choices?: unknown } | null)?.choices;
+  const firstChoice = Array.isArray(choices) ? choices[0] : null;
+  const messageObj =
+    firstChoice && typeof firstChoice === "object" && firstChoice !== null
+      ? (firstChoice as { message?: unknown }).message
+      : null;
+  const content =
+    messageObj && typeof messageObj === "object" && messageObj !== null && typeof (messageObj as { content?: unknown }).content === "string"
+      ? ((messageObj as { content: string }).content as string)
+      : "";
+  const parsedContent = content ? parseAceChatContent(content) : {};
+  const fallbackKeyScale = !input.autoMeta && input.key && input.scale ? `${input.key} ${input.scale}` : "";
+
   return {
     audioUrl: parsed.audioUrl,
     meta: {
-      prompt: input.prompt,
-      lyrics: input.instrumental ? "" : input.lyrics.trim(),
-      bpm: input.bpm,
-      duration: input.requestedDuration,
-      keyScale: input.keyScale.trim() || null,
-      timeSignature: input.timeSignature.trim() || null,
+      prompt: parsedContent.prompt || input.baseCaption || input.prompt,
+      lyrics: input.instrumental ? "" : parsedContent.lyrics || effectiveLyrics || undefined,
+      bpm: (parsedContent.bpm && parsedContent.bpm > 0 ? parsedContent.bpm : input.bpm) ?? null,
+      duration: (parsedContent.duration && parsedContent.duration > 0 ? parsedContent.duration : input.requestedDuration) ?? null,
+      keyScale: parsedContent.keyScale || fallbackKeyScale || input.keyScale.trim() || null,
+      timeSignature: parsedContent.timeSignature || input.timeSignature.trim() || null,
       audioFormat: input.audioFormat,
       engine: "chat-completions",
       ...(parsed.taskId ? { taskId: parsed.taskId, task_id: parsed.taskId } : {}),
@@ -695,6 +837,13 @@ serve(async (req) => {
       sampleMode?: unknown;
       audioFormat?: unknown;
       audio_format?: unknown;
+      genre?: unknown;
+      mood?: unknown;
+      energyLevel?: unknown;
+      autoMeta?: unknown;
+      key?: unknown;
+      scale?: unknown;
+      isSong?: unknown;
     };
 
     const action = String(body?.action ?? "generate");
@@ -950,15 +1099,64 @@ serve(async (req) => {
       }
     }
 
-    const effectiveLyrics = instrumental ? "" : (lyricsRaw ? lyricsRaw.trim() : "");
+    const effectiveLyrics = instrumental ? "[Instrumental]" : (lyricsRaw ? lyricsRaw.trim() : "");
+    const baseCaption = caption.trim() || sampleQuery.trim();
     const effectivePrompt = (sampleMode ? (sampleQuery.trim() || caption) : caption).trim();
     if (!effectivePrompt) throw new Error("Missing caption");
+    const genre = asString(body?.genre);
+    const mood = asString(body?.mood);
+    const energyLevel = asString(body?.energyLevel);
+    const autoMeta = body?.autoMeta === true;
+    const key = asString(body?.key);
+    const scale = asString(body?.scale);
     const requestedDuration = computeRequestedDurationSec({
       instrumental,
       durationRaw: duration && duration > 0 ? duration : null,
       bpm,
       bars: loopLengthBars,
     });
+
+    const vocalLanguage = asString(body?.vocalLanguage) || "en";
+    const keyValue = keyScale.trim().length > 0 ? keyScale.trim() : key && scale ? `${key} ${scale}` : keyScale.trim();
+
+    const chatAceArgs = {
+      seedKey,
+      prompt: effectivePrompt,
+      baseCaption: baseCaption || effectivePrompt,
+      lyrics: effectiveLyrics,
+      instrumental,
+      genre,
+      mood,
+      energyLevel,
+      autoMeta,
+      key,
+      scale,
+      requestedDuration: requestedDuration ?? null,
+      bpm,
+      keyScale: keyValue,
+      timeSignature,
+      vocalLanguage,
+      audioFormat,
+    };
+
+    const runChatCompletions = async (signal: AbortSignal) => {
+      let lastChatErr: unknown = null;
+      for (const t of aceTargets) {
+        try {
+          const out = await generateViaChatCompletionsAce({
+            ...chatAceArgs,
+            apiKey: t.apiKey,
+            baseUrl: t.baseUrl,
+            signal,
+          });
+          return out;
+        } catch (e) {
+          lastChatErr = e;
+        }
+      }
+      const msg = lastChatErr instanceof Error ? lastChatErr.message : "ACE chat/completions failed";
+      throw new Error(msg);
+    };
 
     const controller = new AbortController();
     const requestTimeoutMs = 150_000;
@@ -969,14 +1167,22 @@ serve(async (req) => {
 
     try {
       const startedAt = Date.now();
-      const keyValue = keyScale.trim().length > 0 ? keyScale.trim() : "";
+      let lastErr: unknown = null;
+
+      if (!instrumental) {
+        console.log("Song mode — chat/completions only (aligned with localhost)", { requestId, sampleMode });
+        const out = await runChatCompletions(controller.signal);
+        audioUrl = out.audioUrl;
+        meta = out.meta;
+      } else {
+      const keyValueRelease = keyValue;
       const attemptOnce = async (apiKey: string, baseUrl: string) => {
         const quality = resolveAceQualityFlags({ thinking, useFormat, sampleMode });
         const paramObj: Record<string, unknown> = {};
         if (requestedDuration != null) paramObj.duration = requestedDuration;
         if (bpm && bpm > 0) paramObj.bpm = bpm;
         if (timeSignature.trim().length > 0) paramObj.time_signature = timeSignature.trim();
-        if (keyValue) paramObj.key = keyValue;
+        if (keyValueRelease) paramObj.key = keyValueRelease;
         if (audioFormat) paramObj.audio_format = audioFormat;
         if (seed && seed > 0) paramObj.seed = seed;
         paramObj.shift = quality.shift;
@@ -996,7 +1202,6 @@ serve(async (req) => {
           const sq = sampleQuery.trim();
           if (sq) releaseForm.append("sample_query", sq);
         }
-        const vocalLanguage = asString(body?.vocalLanguage) || "en";
         releaseForm.append("vocal_language", vocalLanguage);
         releaseForm.append("param_obj", JSON.stringify(paramObj));
         console.log("ACE release_task request", {
@@ -1125,7 +1330,7 @@ serve(async (req) => {
               lyrics: lyricsFromResult ? lyricsFromResult.trim() : effectiveLyrics,
               bpm: bpmFromMetas ?? bpm ?? null,
               duration: durationFromMetas ?? requestedDuration ?? null,
-              keyScale: keyScaleFromMetas ?? (keyValue || null),
+              keyScale: keyScaleFromMetas ?? (keyValueRelease || null),
               timeSignature: timeSignatureFromMetas ?? (timeSignature.trim().length > 0 ? timeSignature.trim() : null),
               audioFormat,
               seed: usedSeed,
@@ -1140,7 +1345,6 @@ serve(async (req) => {
         throw new Error("ACE generation timed out");
       };
 
-      let lastErr: unknown = null;
       let sawRelease404 = false;
       for (const t of aceTargets) {
         try {
@@ -1161,32 +1365,13 @@ serve(async (req) => {
 
       if (!audioUrl && sawRelease404) {
         console.log("ACE release_task 404 on all bases — fallback chat/completions", { requestId });
-        const vocalLanguage = asString(body?.vocalLanguage) || "en";
-        for (const t of aceTargets) {
-          try {
-            const out = await generateViaChatCompletionsAce({
-              apiKey: t.apiKey,
-              baseUrl: t.baseUrl,
-              prompt: effectivePrompt,
-              lyrics: effectiveLyrics,
-              instrumental,
-              requestedDuration: requestedDuration ?? null,
-              bpm,
-              keyScale: keyValue,
-              timeSignature,
-              vocalLanguage,
-              audioFormat,
-              signal: controller.signal,
-            });
-            audioUrl = out.audioUrl;
-            meta = out.meta;
-            lastErr = null;
-            break;
-          } catch (e) {
-            lastErr = e;
-          }
-        }
+        const out = await runChatCompletions(controller.signal);
+        audioUrl = out.audioUrl;
+        meta = out.meta;
+        lastErr = null;
       }
+
+      } // beat / instrumental path
 
       if (!audioUrl) {
         const msg = lastErr instanceof Error ? lastErr.message : "ACE generation failed";

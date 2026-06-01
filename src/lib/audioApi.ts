@@ -636,6 +636,13 @@ export async function generateLoopAce(
   if (!options?.autoMeta && params.bpm > 0) body.bpm = params.bpm;
   if (!options?.autoMeta && params.key && params.scale) body.keyScale = `${params.key} ${params.scale}`;
   if (options?.timeSignature) body.timeSignature = options.timeSignature;
+  if (params.genre) body.genre = params.genre;
+  if (params.mood) body.mood = params.mood;
+  if (params.energyLevel) body.energyLevel = params.energyLevel;
+  if (options?.autoMeta) body.autoMeta = true;
+  if (!options?.autoMeta && params.key) body.key = params.key;
+  if (!options?.autoMeta && params.scale) body.scale = params.scale;
+  body.isSong = isSong;
 
   const { data, errorText } = await invokeSupabaseFunction<{ audioUrl?: string; meta?: AceMeta | null; error?: string; limitReached?: boolean }>(
     {
