@@ -439,6 +439,93 @@ function isRetryableAceHttpStatus(status: number) {
   return false;
 }
 
+/** Fallback when /release_task returns 404 — same path as localhost with VITE_ACE_STEP_API_KEY. */
+async function generateViaChatCompletionsAce(input: {
+  apiKey: string;
+  baseUrl: string;
+  prompt: string;
+  lyrics: string;
+  instrumental: boolean;
+  requestedDuration: number | null;
+  bpm: number | null;
+  keyScale: string;
+  timeSignature: string;
+  vocalLanguage: string;
+  audioFormat: string;
+  signal?: AbortSignal;
+}): Promise<{ audioUrl: string; meta: Record<string, unknown> }> {
+  const parts: string[] = [input.prompt.trim()];
+  if (!input.instrumental && input.lyrics.trim()) parts.push(`Lyrics:\n${input.lyrics.trim()}`);
+  parts.push(
+    input.instrumental
+      ? "Instrumental beat. No lead singing and no rapped verses. Avoid intelligible lyrics or spoken words."
+      : "Include vocals.",
+  );
+
+  const res = await fetch(`${input.baseUrl}/v1/chat/completions`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${input.apiKey}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      model: "acemusic/acestep-v1.5-turbo",
+      messages: [{ role: "user", content: parts.join("\n\n") }],
+      lyrics: input.instrumental ? "[instrumental]" : input.lyrics.trim() || "[instrumental]",
+      task_type: "text2music",
+      audio_config: {
+        instrumental: input.instrumental,
+        ...(input.requestedDuration != null ? { duration: input.requestedDuration } : {}),
+        bpm: input.bpm && input.bpm > 0 ? input.bpm : null,
+        key_scale: input.keyScale.trim() || null,
+        time_signature: input.timeSignature.trim() || null,
+        vocal_language: input.vocalLanguage || "en",
+        format: input.audioFormat,
+        audio_format: input.audioFormat,
+      },
+      stream: false,
+    }),
+    signal: input.signal,
+  });
+  const text = await readTextSafe(res);
+  if (!res.ok) throw new Error(`ACE API chat/completions failed (${res.status}): ${text}`);
+
+  const json = JSON.parse(text) as unknown;
+  const choices = (json as { choices?: unknown } | null)?.choices;
+  const firstChoice = Array.isArray(choices) ? choices[0] : null;
+  const messageObj =
+    firstChoice && typeof firstChoice === "object" && firstChoice !== null
+      ? (firstChoice as { message?: unknown }).message
+      : null;
+  const audioArr =
+    messageObj && typeof messageObj === "object" && messageObj !== null && Array.isArray((messageObj as { audio?: unknown }).audio)
+      ? ((messageObj as { audio: unknown[] }).audio as unknown[])
+      : [];
+  const firstAudio = audioArr[0] && typeof audioArr[0] === "object" && audioArr[0] !== null ? (audioArr[0] as Record<string, unknown>) : null;
+  const audioUrlRaw =
+    firstAudio && typeof firstAudio.audio_url === "object" && firstAudio.audio_url !== null
+      ? ((firstAudio.audio_url as { url?: unknown }).url as unknown)
+      : null;
+  const audioUrlStr = typeof audioUrlRaw === "string" ? audioUrlRaw : "";
+  const audioUrl = audioUrlStr.startsWith("data:") ? audioUrlStr : toAbsoluteUrl(input.baseUrl, audioUrlStr);
+  if (!audioUrl) throw new Error("ACE API returned no audio");
+
+  return {
+    audioUrl,
+    meta: {
+      prompt: input.prompt,
+      lyrics: input.instrumental ? "" : input.lyrics.trim(),
+      bpm: input.bpm,
+      duration: input.requestedDuration,
+      keyScale: input.keyScale.trim() || null,
+      timeSignature: input.timeSignature.trim() || null,
+      audioFormat: input.audioFormat,
+      engine: "chat-completions",
+    },
+  };
+}
+
 function getAceTargets(seedKey: string): Array<{ apiKey: string; baseUrl: string }> {
   const keys = loadAceApiKeys();
   if (!keys.length) return [];
@@ -844,6 +931,27 @@ serve(async (req) => {
         const createText = await readTextSafe(createRes);
         console.log("ACE release_task response", { requestId, status: createRes.status, ok: createRes.ok, body: createText });
         if (!createRes.ok) {
+          if (createRes.status === 404) {
+            console.log("ACE release_task 404 — fallback chat/completions", { requestId, baseUrl });
+            const vocalLanguage = asString(body?.vocalLanguage) || "en";
+            const out = await generateViaChatCompletionsAce({
+              apiKey,
+              baseUrl,
+              prompt: effectivePrompt,
+              lyrics: effectiveLyrics,
+              instrumental,
+              requestedDuration: requestedDuration ?? null,
+              bpm,
+              keyScale: keyValue,
+              timeSignature,
+              vocalLanguage,
+              audioFormat,
+              signal: controller.signal,
+            });
+            audioUrl = out.audioUrl;
+            meta = out.meta;
+            return;
+          }
           const err = new Error(`ACE API release_task failed (${createRes.status}): ${createText}`) as Error & { status?: number };
           err.status = createRes.status;
           throw err;
