@@ -18,6 +18,39 @@ const GENRE_SEO_PATHS = [
   "/ai-pop-beat-generator",
 ];
 
+const COMPARISON_SEO_PATHS = [
+  "/suno-alternatives",
+  "/alternatives-suno",
+  "/udio-alternatives",
+  "/alternatives-udio",
+  "/producerhit-vs-suno",
+  "/producteurhit-vs-suno",
+  "/producerhit-vs-udio",
+  "/producteurhit-vs-udio",
+  "/ai-music-generator-comparison-2026",
+  "/comparatif-generateur-musique-ia-2026",
+  "/suno-vs-udio",
+  "/comparatif-suno-udio",
+  "/beatoven-alternatives",
+  "/alternatives-beatoven",
+  "/best-ai-beat-generator-for-producers",
+  "/meilleur-generateur-beats-ia-producteurs",
+  "/ai-song-generator-alternatives",
+  "/alternatives-generateur-chanson-ia",
+  "/remix-cover-ai",
+  "/remix-cover-ia",
+  "/soundraw-alternatives",
+  "/alternatives-soundraw",
+  "/mubert-alternatives",
+  "/alternatives-mubert",
+  "/loudly-alternatives",
+  "/alternatives-loudly",
+  "/ai-cover-song-generator",
+  "/generateur-cover-chanson-ia",
+  "/spotify-ready-ai-music",
+  "/musique-ia-spotify-ready",
+];
+
 function formatDateYmd(d = new Date()) {
   const yyyy = d.getUTCFullYear();
   const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
@@ -61,10 +94,12 @@ async function fetchPublicLoopIds() {
 
 async function ensureGenreUrlsInMainSitemap() {
   let src = await fs.readFile(sitemapMain, "utf8");
-  for (const p of GENRE_SEO_PATHS) {
+  const paths = [...GENRE_SEO_PATHS, ...COMPARISON_SEO_PATHS];
+  for (const p of paths) {
     const loc = `${ORIGIN}${p}`;
     if (src.includes(loc)) continue;
-    src = src.replace("</urlset>", `${urlNode(loc, "0.75", "weekly")}</urlset>`);
+    const priority = COMPARISON_SEO_PATHS.includes(p) ? "0.85" : "0.75";
+    src = src.replace("</urlset>", `${urlNode(loc, priority, "weekly")}</urlset>`);
   }
   await fs.writeFile(sitemapMain, src, "utf8");
 }
@@ -135,6 +170,7 @@ async function submitIndexNow(urls) {
 async function collectIndexNowUrls(loopRows) {
   const urls = [`${ORIGIN}/`, `${ORIGIN}/community`, `${ORIGIN}/blog`, `${ORIGIN}/pricing`];
   for (const p of GENRE_SEO_PATHS) urls.push(`${ORIGIN}${p}`);
+  for (const p of COMPARISON_SEO_PATHS) urls.push(`${ORIGIN}${p}`);
   for (const r of loopRows) urls.push(`${ORIGIN}/loop/${encodeURIComponent(r.id)}`);
   return urls;
 }

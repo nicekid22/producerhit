@@ -12,12 +12,14 @@ import { PkIconLoader } from "@/components/ui/PkIconLoader";
 import { loaderIconFromPath } from "@/lib/loaderIcons";
 import Landing from "@/pages/Landing";
 import Home from "@/pages/Home";
+import ComparePage from "@/pages/ComparePage";
 import Blog from "@/pages/Blog";
 import { AudioPlayer } from "@/components/AudioPlayer";
 import { useLocaleStore } from "@/stores/localeStore";
 import { BLOG_POSTS, getBlogPostBySlug } from "@/content/blog";
 import { PLAN_LIMITS } from "@/lib/planLimits";
 import { getSeoPageByPath, SEO_PAGE_PATHS } from "@/lib/seoPages";
+import { getComparisonByPath, COMPARISON_PAGE_PATHS, getComparisonCanonicalPath, getComparisonLocaleForPath } from "@/lib/seoComparisons";
 import { GrowthBootstrap } from "@/components/GrowthBootstrap";
 
 const ExplorePage = lazy(() => import("@/pages/Explore"));
@@ -106,8 +108,12 @@ function SeoBootstrap() {
     const robots = isAppRoute ? "noindex,nofollow" : "index,follow";
 
     const seoPage = getSeoPageByPath(pathname);
+    const comparisonPage = getComparisonByPath(pathname);
+    const comparisonLocale = comparisonPage ? getComparisonLocaleForPath(pathname) : locale;
+    const contentLocale = comparisonPage ? comparisonLocale : locale;
 
     const slugKey = (() => {
+      if (comparisonPage) return comparisonPage.slugKey;
       if (seoPage) return seoPage.slugKey;
       if (pathname === "/") return "home";
       if (pathname === "/blog") return "blog";
@@ -130,7 +136,8 @@ function SeoBootstrap() {
     const t = (en: string, fr: string) => (locale === "fr" ? fr : en);
 
     const title = (() => {
-      if (seoPage) return locale === "fr" ? seoPage.titleFr : seoPage.titleEn;
+      if (comparisonPage) return contentLocale === "fr" ? comparisonPage.titleFr : comparisonPage.titleEn;
+      if (seoPage) return contentLocale === "fr" ? seoPage.titleFr : seoPage.titleEn;
       if (slugKey === "home")
         return t(
           "ProducerHit — AI Song Creator & Type Beat Generator | Royalty-Free",
@@ -154,7 +161,8 @@ function SeoBootstrap() {
     })();
 
     const description = (() => {
-      if (seoPage) return locale === "fr" ? seoPage.descriptionFr : seoPage.descriptionEn;
+      if (comparisonPage) return contentLocale === "fr" ? comparisonPage.descriptionFr : comparisonPage.descriptionEn;
+      if (seoPage) return contentLocale === "fr" ? seoPage.descriptionFr : seoPage.descriptionEn;
       if (slugKey === "home")
         return t(
           "ProducerHit is an AI song creator and type beat generator: Song Mode, Remix covers, royalty-free MP3/WAV exports, video clips, and mastering — Spotify Ready for producers and artists.",
@@ -205,6 +213,10 @@ function SeoBootstrap() {
     const effectiveDescription = blogPost ? blogPost.description : description;
     const effectiveCanonicalUrl = (() => {
       if (blogPost) return `${origin}/blog/${blogPost.slug}`;
+      if (comparisonPage) {
+        const pageLocale = getComparisonLocaleForPath(pathname);
+        return `${origin}${getComparisonCanonicalPath(comparisonPage, pageLocale)}`;
+      }
       if (slugKey === "explore") return `${origin}/community`;
       return canonicalUrl;
     })();
@@ -213,7 +225,7 @@ function SeoBootstrap() {
     setMeta("description", effectiveDescription, "name");
     setMeta("robots", robots, "name");
     setMeta("googlebot", robots, "name");
-    setMeta("keywords", blogPost ? blogPost.keywords.join(", ") : seoPage ? seoPage.keywords.join(", ") : "", "name");
+    setMeta("keywords", blogPost ? blogPost.keywords.join(", ") : comparisonPage ? comparisonPage.keywords.join(", ") : seoPage ? seoPage.keywords.join(", ") : "", "name");
 
     setMeta("og:type", blogPost ? "article" : "website", "property");
     setMeta("og:site_name", "ProducerHit", "property");
@@ -234,8 +246,14 @@ function SeoBootstrap() {
     setMeta("twitter:image", ogImageUrl, "name");
 
     setLink("canonical", effectiveCanonicalUrl);
-    setLink("alternate", `${origin}${pathname}?lang=en`, { hreflang: "en" });
-    setLink("alternate", `${origin}${pathname}?lang=fr`, { hreflang: "fr" });
+    if (comparisonPage) {
+      setLink("alternate", `${origin}${comparisonPage.path}`, { hreflang: "en" });
+      setLink("alternate", `${origin}${comparisonPage.pathFr}`, { hreflang: "fr" });
+      setLink("alternate", `${origin}${comparisonPage.path}`, { hreflang: "x-default" });
+    } else {
+      setLink("alternate", `${origin}${pathname}?lang=en`, { hreflang: "en" });
+      setLink("alternate", `${origin}${pathname}?lang=fr`, { hreflang: "fr" });
+    }
 
     const faq = (items: { q: string; a: string }[]) => ({
       "@context": "https://schema.org",
@@ -373,6 +391,39 @@ function SeoBootstrap() {
       return;
     }
 
+    if (comparisonPage) {
+      const faqItems = contentLocale === "fr" ? comparisonPage.faqFr : comparisonPage.faqEn;
+      setJsonLd([
+        ...baseJsonLd,
+        faq(faqItems),
+        {
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          name: contentLocale === "fr" ? comparisonPage.h1Fr : comparisonPage.h1En,
+          description: contentLocale === "fr" ? comparisonPage.descriptionFr : comparisonPage.descriptionEn,
+          url: `${origin}${getComparisonCanonicalPath(comparisonPage, comparisonLocale)}`,
+          dateModified: comparisonPage.updatedAt,
+          inLanguage: comparisonLocale,
+          isPartOf: { "@type": "WebSite", name: "ProducerHit", url: origin },
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: `${origin}/` },
+            { "@type": "ListItem", position: 2, name: contentLocale === "fr" ? "Comparatifs" : "Comparisons", item: `${origin}${comparisonPage.pathFr}` },
+            {
+              "@type": "ListItem",
+              position: 3,
+              name: contentLocale === "fr" ? comparisonPage.h1Fr : comparisonPage.h1En,
+              item: `${origin}${getComparisonCanonicalPath(comparisonPage, comparisonLocale)}`,
+            },
+          ],
+        },
+      ]);
+      return;
+    }
+
     if (slugKey === "home" || slugKey === "pricing") {
       setJsonLd([
         ...baseJsonLd,
@@ -430,6 +481,9 @@ export default function App() {
                   <Route path="/blog/:slug" element={<BlogPostPage />} />
                   {SEO_PAGE_PATHS.map((path) => (
                     <Route key={path} path={path} element={<Home />} />
+                  ))}
+                  {COMPARISON_PAGE_PATHS.map((path) => (
+                    <Route key={path} path={path} element={<ComparePage />} />
                   ))}
                   <Route path="/auth" element={<AuthPage />} />
                   <Route path="/auth/callback" element={<AuthCallbackPage />} />

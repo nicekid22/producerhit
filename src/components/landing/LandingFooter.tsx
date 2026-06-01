@@ -28,6 +28,18 @@ export function LandingFooter({ locale, user }: Props) {
     { to: "/generate-beats-online-free", label: isFr ? "Beats gratuits" : "Free Beats" },
   ];
 
+  const compareLinks = [
+    { to: "/suno-alternatives", label: isFr ? "Alternatives Suno" : "Suno Alternatives" },
+    { to: isFr ? "/alternatives-generateur-chanson-ia" : "/ai-song-generator-alternatives", label: isFr ? "Générateur chanson IA" : "AI Song Generator" },
+    { to: isFr ? "/alternatives-udio" : "/udio-alternatives", label: isFr ? "Alternatives Udio" : "Udio Alternatives" },
+    { to: isFr ? "/remix-cover-ia" : "/remix-cover-ai", label: isFr ? "Remix & Cover IA" : "AI Remix & Cover" },
+    { to: isFr ? "/musique-ia-spotify-ready" : "/spotify-ready-ai-music", label: isFr ? "Spotify Ready" : "Spotify Ready" },
+    { to: isFr ? "/alternatives-mubert" : "/mubert-alternatives", label: isFr ? "Alternatives Mubert" : "Mubert Alternatives" },
+    { to: "/beatoven-alternatives", label: isFr ? "Alternatives Beatoven" : "Beatoven Alternatives" },
+    { to: isFr ? "/meilleur-generateur-beats-ia-producteurs" : "/best-ai-beat-generator-for-producers", label: isFr ? "Meilleur beats IA" : "Best Beat AI" },
+    { to: isFr ? "/comparatif-generateur-musique-ia-2026" : "/ai-music-generator-comparison-2026", label: isFr ? "Comparatif IA 2026" : "AI Comparison 2026" },
+  ];
+
   const legalLinks = [
     { to: "/legal#privacy", label: "Privacy" },
     { to: "/legal#terms", label: isFr ? "Conditions" : "Terms" },
@@ -50,7 +62,7 @@ export function LandingFooter({ locale, user }: Props) {
             <p className="mt-4 text-xs font-semibold text-white/35">Powered by ACE-Step</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 md:col-span-8">
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-2 md:grid-cols-4 md:col-span-8">
             <div>
               <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-white/40">{isFr ? "Produit" : "Product"}</h3>
               <ul className="mt-4 space-y-2.5">
@@ -75,7 +87,19 @@ export function LandingFooter({ locale, user }: Props) {
                 ))}
               </ul>
             </div>
-            <div className="col-span-2 sm:col-span-1">
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-white/40">{isFr ? "Comparatifs" : "Compare"}</h3>
+              <ul className="mt-4 space-y-2.5">
+                {compareLinks.map((l) => (
+                  <li key={l.to}>
+                    <Link to={l.to} className="text-sm text-white/65 transition-colors hover:text-white">
+                      {l.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
               <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-white/40">{isFr ? "Légal" : "Legal"}</h3>
               <ul className="mt-4 space-y-2.5">
                 {legalLinks.map((l) => (

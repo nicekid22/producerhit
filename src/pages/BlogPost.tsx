@@ -64,6 +64,20 @@ export default function BlogPost() {
                     ))}
                   </ul>
                 );
+              if (b.type === "links")
+                return (
+                  <div key={idx} className="not-prose mt-4 flex flex-wrap gap-2">
+                    {b.items.map((link) => (
+                      <Link
+                        key={link.href}
+                        to={link.href}
+                        className="rounded-full border border-pk-border bg-white/5 px-4 py-2 text-xs font-semibold text-pk-accent hover:bg-white/10"
+                      >
+                        {locale === "fr" ? link.labelFr : link.labelEn}
+                      </Link>
+                    ))}
+                  </div>
+                );
               return null;
             })}
           </div>
@@ -72,14 +86,20 @@ export default function BlogPost() {
         <section className="mt-8 rounded-2xl border border-pk-border bg-pk-panel/60 p-6 backdrop-blur-xl">
           <div className="text-sm font-semibold">{locale === "fr" ? "Aller plus loin" : "Next steps"}</div>
           <div className="mt-3 flex flex-wrap gap-2">
+            <Link to={locale === "fr" ? "/alternatives-generateur-chanson-ia" : "/ai-song-generator-alternatives"} className="rounded-full border border-pk-border bg-white/5 px-4 py-2 text-xs font-semibold text-pk-accent hover:bg-white/10">
+              {locale === "fr" ? "Générateur chanson IA" : "AI Song Generator"}
+            </Link>
+            <Link to={locale === "fr" ? "/remix-cover-ia" : "/remix-cover-ai"} className="rounded-full border border-pk-border bg-white/5 px-4 py-2 text-xs font-semibold text-pk-accent hover:bg-white/10">
+              {locale === "fr" ? "Remix & Cover IA" : "AI Remix & Cover"}
+            </Link>
+            <Link to={locale === "fr" ? "/alternatives-suno" : "/suno-alternatives"} className="rounded-full border border-pk-border bg-white/5 px-4 py-2 text-xs font-semibold text-pk-accent hover:bg-white/10">
+              {locale === "fr" ? "Alternatives Suno" : "Suno Alternatives"}
+            </Link>
             <Link to="/ai-beat-generator" className="rounded-full border border-pk-border bg-white/5 px-4 py-2 text-xs font-semibold text-pk-accent hover:bg-white/10">
               {locale === "fr" ? "Générateur de beats IA" : "AI Beat Generator"}
             </Link>
-            <Link to="/ai-music-generator" className="rounded-full border border-pk-border bg-white/5 px-4 py-2 text-xs font-semibold text-pk-accent hover:bg-white/10">
-              {locale === "fr" ? "Générateur de musique IA" : "AI Music Generator"}
-            </Link>
             <Link to="/community" className="rounded-full border border-pk-border bg-white/5 px-4 py-2 text-xs font-semibold text-pk-accent hover:bg-white/10">
-              {locale === "fr" ? "Écouter la communauté" : "Listen to Community"}
+              {locale === "fr" ? "Communauté & remix" : "Community & remix"}
             </Link>
           </div>
         </section>

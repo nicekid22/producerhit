@@ -125,6 +125,19 @@ async function main() {
       "Type beat generator AI: drill prompts that keep the mix clean",
       "AI music generator: how to improve consistency with short generations",
       "AI beat generator: beginner workflow to get producer-ready results",
+      "Suno alternatives for producers: type beats and seed control",
+      "ProducerHit vs Suno: which tool for type beat makers",
+      "Udio alternatives for beat makers: instrumentals and exports",
+      "Best AI music generator comparison 2026 for producers",
+      "Alternatives Suno pour producteurs francophones",
+      "Suno vs Udio quel outil pour beat makers",
+      "Meilleur studio musique IA producteurs 2026",
+      "AI song generator guide Song Mode release workflow",
+      "AI remix cover workflow upload audio ProducerHit",
+      "Soundraw alternatives for full songs and remix",
+      "Mubert alternatives for vocal songs and release",
+      "Spotify Ready AI music mastering export workflow",
+      "AI cover song generator upload remix export",
     ];
     const firstUnused = defaultTopics.find((t) => !existingSlugs.has(slugify(t))) ?? defaultTopics[0];
     topic = firstUnused;

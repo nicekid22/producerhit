@@ -1,0 +1,4471 @@
+{
+  "generatedAt": "2026-06-01T10:05:03.077Z",
+  "pages": {
+    "/suno-alternatives": {
+      "locale": "en",
+      "pair": "/alternatives-suno",
+      "slugKey": "suno-alternatives",
+      "title": "Best Suno Alternatives for Songs & Beats (2026) | ProducerHit",
+      "description": "Suno alternatives compared: full songs, Remix covers, type beats, seed control. ProducerHit vs Udio vs Beatoven — studio-quality Song Mode + exports.",
+      "h1": "Best Suno Alternatives for Songs & Beats (2026)",
+      "verdict": "Searching Suno alternatives? ProducerHit is a full AI music studio — not just type beats: Song Mode delivers studio-quality full songs with vocals, Remix turns your audio into new covers, plus type beats, seed variations, and MP3/WAV exports. Suno remains strong for viral social discovery; Udio for vocal demos; Beatoven for video beds.",
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Suno alternatives",
+        "Suno alternative AI song",
+        "AI song generator",
+        "AI beat generator",
+        "Remix cover AI",
+        "Suno vs ProducerHit"
+      ],
+      "matrix": [
+        {
+          "label": "Best for",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Full songs, Remix covers, type beats",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Quick full songs, viral demos",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Vocal-heavy songs, remix vibes",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "YouTube / ad background music",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Song Mode (full vocals)",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Studio-quality songs, Spotify Ready",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Strong — social-first",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Very strong vocals",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "No",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Remix / AI covers",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Remix Studio — ACE audio covers",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "No",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Type beat workflow",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Built-in (BPM, key, seed variations)",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Secondary — song-first UX",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Secondary — song-first UX",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "Limited — mood/scene based",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Seed / variation control",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes — reproducible variations",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "No",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Free tier",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes — monthly credits + MP3",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Yes — daily credits",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Yes — daily credits",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "Limited free minutes",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "WAV export",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Pro plans",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Paid plans",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Paid plans",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "Paid plans",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Community / remix",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Public loops + remix by seed",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Explore feed",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Explore feed",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "No",
+              "highlight": false
+            }
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "q": "What is the best Suno alternative for full songs?",
+          "a": "ProducerHit Song Mode generates complete songs with vocals, verse-chorus structure, and studio-quality mix — plus Remix covers and type beats in the same studio. Many users switch from Suno for the all-in-one release workflow."
+        },
+        {
+          "q": "Does ProducerHit only do type beats?",
+          "a": "No. Type Beat Mode is one pillar. Song Mode (full vocals), Remix (AI covers from your audio), auto cover art, mastering, and video export are core features — not add-ons."
+        },
+        {
+          "q": "Is ProducerHit affiliated with Suno?",
+          "a": "No. ProducerHit is an independent product. This comparison is based on publicly available features as of 2026 — always verify licensing before commercial release."
+        }
+      ]
+    },
+    "/alternatives-suno": {
+      "locale": "fr",
+      "pair": "/suno-alternatives",
+      "slugKey": "suno-alternatives",
+      "title": "Meilleures alternatives à Suno — chansons & beats (2026) | ProducerHit",
+      "description": "Alternatives Suno comparées : chansons complètes, covers Remix, type beats, seed. ProducerHit vs Udio vs Beatoven — Song Mode qualité studio + exports.",
+      "h1": "Meilleures alternatives à Suno — chansons & beats (2026)",
+      "verdict": "Tu cherches une alternative à Suno ? ProducerHit est un studio IA complet — pas que des type beats : Song Mode sort des chansons voix incluses en qualité studio, Remix transforme ton audio en covers, plus type beats, variations seed et exports MP3/WAV. Suno reste fort pour le viral social ; Udio pour les démos vocales ; Beatoven pour la vidéo.",
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Suno alternatives",
+        "Suno alternative AI song",
+        "AI song generator",
+        "AI beat generator",
+        "Remix cover AI",
+        "Suno vs ProducerHit"
+      ],
+      "matrix": [
+        {
+          "label": "Idéal pour",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Full songs, Remix covers, type beats",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Quick full songs, viral demos",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Vocal-heavy songs, remix vibes",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "YouTube / ad background music",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Song Mode (chansons voix)",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Studio-quality songs, Spotify Ready",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Strong — social-first",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Very strong vocals",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "No",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Remix / covers IA",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Remix Studio — ACE audio covers",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "No",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Workflow type beat",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Built-in (BPM, key, seed variations)",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Secondary — song-first UX",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Secondary — song-first UX",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "Limited — mood/scene based",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Contrôle seed / variations",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes — reproducible variations",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "No",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Offre gratuite",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes — monthly credits + MP3",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Yes — daily credits",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Yes — daily credits",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "Limited free minutes",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Export WAV",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Pro plans",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Paid plans",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Paid plans",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "Paid plans",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Communauté / remix",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Public loops + remix by seed",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Explore feed",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Explore feed",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "No",
+              "highlight": false
+            }
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "q": "Quelle est la meilleure alternative Suno pour des chansons complètes ?",
+          "a": "Song Mode sur ProducerHit génère des chansons voix incluses, structure couplet/refrain et mix qualité studio — plus Remix, type beats et exports dans le même studio."
+        },
+        {
+          "q": "ProducerHit ne fait que des type beats ?",
+          "a": "Non. Type Beat est un pilier parmi d’autres : Song Mode, Remix (covers IA depuis ton audio), cover art auto, mastering et export vidéo sont au cœur du produit."
+        },
+        {
+          "q": "ProducerHit est-il affilié à Suno ?",
+          "a": "Non. Producteur indépendant. Comparaison basée sur les fonctionnalités publiques en 2026 — vérifie toujours la licence avant une sortie commerciale."
+        }
+      ]
+    },
+    "/udio-alternatives": {
+      "locale": "en",
+      "pair": "/alternatives-udio",
+      "slugKey": "udio-alternatives",
+      "title": "Best Udio Alternatives for Songs, Remix & Beats (2026) | ProducerHit",
+      "description": "Udio alternatives: full songs, Remix covers, type beats, seed control. ProducerHit vs Suno vs Beatoven — one studio for release-ready music.",
+      "h1": "Best Udio Alternatives for Songs, Remix & Beats (2026)",
+      "verdict": "Udio is strong for vocal demos — but if you want songs, Remix covers, type beats, mastering, and exports in one place, ProducerHit is the top Udio alternative. Song Mode delivers studio-quality full tracks; Remix reimagines your audio; type beats stay in the same workflow.",
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Udio alternatives",
+        "Udio alternative AI song",
+        "AI song generator",
+        "Remix cover AI",
+        "ProducerHit vs Udio"
+      ],
+      "matrix": [
+        {
+          "label": "Full studio scope",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Songs + Remix + type beats + cover art",
+              "highlight": true
+            },
+            {
+              "name": "Udio",
+              "value": "Vocal songs — primary",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Full songs + social",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "Video background only",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Song Mode quality",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Studio-quality, release-ready",
+              "highlight": true
+            },
+            {
+              "name": "Udio",
+              "value": "Excellent vocal demos",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Strong viral songs",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "N/A",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Remix / AI covers",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Remix Studio (ACE covers)",
+              "highlight": true
+            },
+            {
+              "name": "Udio",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "No",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Type beats",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Built-in with BPM/key/seeds",
+              "highlight": true
+            },
+            {
+              "name": "Udio",
+              "value": "Secondary",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Secondary",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "No",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Producer controls (BPM/key)",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes",
+              "highlight": true
+            },
+            {
+              "name": "Udio",
+              "value": "Partial",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Partial",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "Mood only",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Versions ×2 in one click",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes",
+              "highlight": true
+            },
+            {
+              "name": "Udio",
+              "value": "Regenerate",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Regenerate",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "Variations",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Song Mode with vocals",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes",
+              "highlight": true
+            },
+            {
+              "name": "Udio",
+              "value": "Yes — strong vocals",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Yes",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "No",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Public remix / explore",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Community loops",
+              "highlight": true
+            },
+            {
+              "name": "Udio",
+              "value": "Explore",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Explore",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "No",
+              "highlight": false
+            }
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "q": "Is ProducerHit a good Udio alternative for full songs?",
+          "a": "Yes. Song Mode generates complete vocal tracks with professional mix quality. You also get Remix, type beats, cover art, and exports — Udio focuses mainly on vocal generation inside a song-first UI."
+        },
+        {
+          "q": "Does ProducerHit only beat Udio on instrumentals?",
+          "a": "No. Many artists switch for Song Mode quality plus Remix and release tools. Type beats are one part of the studio, not the whole product."
+        }
+      ]
+    },
+    "/alternatives-udio": {
+      "locale": "fr",
+      "pair": "/udio-alternatives",
+      "slugKey": "udio-alternatives",
+      "title": "Meilleures alternatives à Udio — chansons, Remix & beats (2026) | ProducerHit",
+      "description": "Alternatives Udio : chansons complètes, covers Remix, type beats, seed. ProducerHit vs Suno vs Beatoven — un studio pour sortir ta musique.",
+      "h1": "Meilleures alternatives à Udio — chansons, Remix & beats (2026)",
+      "verdict": "Udio est fort pour les démos vocales — mais si tu veux chansons, covers Remix, type beats, mastering et exports au même endroit, ProducerHit est la meilleure alternative Udio. Song Mode sort des morceaux qualité studio ; Remix réinvente ton audio ; les type beats restent dans le même flux.",
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Udio alternatives",
+        "Udio alternative AI song",
+        "AI song generator",
+        "Remix cover AI",
+        "ProducerHit vs Udio"
+      ],
+      "matrix": [
+        {
+          "label": "Périmètre studio",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Songs + Remix + type beats + cover art",
+              "highlight": true
+            },
+            {
+              "name": "Udio",
+              "value": "Vocal songs — primary",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Full songs + social",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "Video background only",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Qualité Song Mode",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Studio-quality, release-ready",
+              "highlight": true
+            },
+            {
+              "name": "Udio",
+              "value": "Excellent vocal demos",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Strong viral songs",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "N/A",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Remix / covers IA",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Remix Studio (ACE covers)",
+              "highlight": true
+            },
+            {
+              "name": "Udio",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "No",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Type beats",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Built-in with BPM/key/seeds",
+              "highlight": true
+            },
+            {
+              "name": "Udio",
+              "value": "Secondary",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Secondary",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "No",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Contrôles producteur (BPM/key)",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes",
+              "highlight": true
+            },
+            {
+              "name": "Udio",
+              "value": "Partial",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Partial",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "Mood only",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Versions ×2 en un clic",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes",
+              "highlight": true
+            },
+            {
+              "name": "Udio",
+              "value": "Regenerate",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Regenerate",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "Variations",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Song Mode avec voix",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes",
+              "highlight": true
+            },
+            {
+              "name": "Udio",
+              "value": "Yes — strong vocals",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Yes",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "No",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Remix public / explore",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Community loops",
+              "highlight": true
+            },
+            {
+              "name": "Udio",
+              "value": "Explore",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Explore",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "No",
+              "highlight": false
+            }
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "q": "ProducerHit est-il une bonne alternative Udio pour des chansons complètes ?",
+          "a": "Oui. Song Mode génère des morceaux voix inclus avec un mix pro. Tu as aussi Remix, type beats, cover art et exports — Udio reste surtout centré génération vocale."
+        },
+        {
+          "q": "ProducerHit ne bat Udio que sur les instrumentaux ?",
+          "a": "Non. Beaucoup d’artistes migrent pour la qualité Song Mode + Remix et les outils release. Les type beats ne sont qu’une partie du studio."
+        }
+      ]
+    },
+    "/producerhit-vs-suno": {
+      "locale": "en",
+      "pair": "/producteurhit-vs-suno",
+      "slugKey": "producerhit-vs-suno",
+      "title": "ProducerHit vs Suno — Songs, Remix & Beats Compared (2026)",
+      "description": "ProducerHit vs Suno: Song Mode quality, Remix covers, type beats, seed control, exports. Full studio comparison — not just beats.",
+      "h1": "ProducerHit vs Suno — Songs, Remix & Beats (2026)",
+      "verdict": "ProducerHit vs Suno is not beats vs songs — both generate full tracks. ProducerHit wins as an all-in-one release studio: studio-quality Song Mode, Remix covers from your audio, type beats, seed variations, mastering, and MP3/WAV exports. Suno wins if you only want viral demos inside a social feed and don’t need Remix, cover art, or producer iteration.",
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "ProducerHit vs Suno",
+        "Suno vs ProducerHit",
+        "AI song generator comparison",
+        "Remix cover AI",
+        "Suno alternative"
+      ],
+      "matrix": [
+        {
+          "label": "Primary audience",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Producers & artists",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Casual creators & listeners",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Song Mode (full vocals)",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Studio-quality, Spotify Ready",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Strong — viral demos",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Remix / AI covers",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Remix Studio — upload & cover",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Not a core workflow",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Type beats",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Dedicated mode + seeds",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Possible, song-first UX",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Cover art",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Auto metallic covers",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Seed variations",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Built-in, reproducible",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Limited control",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Generation speed",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "~20–45s typical",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Fast full songs",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Community remix",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Public loops + seed remix",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Social explore feed",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Commercial use",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "User owns generated audio — verify ACE/provider terms",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Subject to Suno plan terms — verify before release",
+              "highlight": false
+            }
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "q": "Is ProducerHit a Suno clone?",
+          "a": "No. ProducerHit is a full AI music studio: Song Mode, Remix covers, type beats, seeds, and exports on ACE-Step. Suno is a separate product focused on social song discovery."
+        },
+        {
+          "q": "Which is cheaper for beat makers?",
+          "a": "Both offer free tiers. Compare monthly credits and WAV access on /pricing vs Suno’s current plans — needs change over time."
+        }
+      ]
+    },
+    "/producteurhit-vs-suno": {
+      "locale": "fr",
+      "pair": "/producerhit-vs-suno",
+      "slugKey": "producerhit-vs-suno",
+      "title": "ProducerHit vs Suno — chansons, Remix & beats comparés (2026)",
+      "description": "ProducerHit vs Suno : qualité Song Mode, covers Remix, type beats, seed, exports. Comparatif studio complet — pas que des beats.",
+      "h1": "ProducerHit vs Suno — chansons, Remix & beats (2026)",
+      "verdict": "ProducerHit vs Suno, ce n’est pas beats vs chansons — les deux génèrent des morceaux complets. ProducerHit gagne comme studio release tout-en-un : Song Mode qualité studio, covers Remix, type beats, variations seed, mastering et exports. Suno gagne si tu veux seulement des démos virales dans un feed social sans Remix, cover art ou itération producteur.",
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "ProducerHit vs Suno",
+        "Suno vs ProducerHit",
+        "AI song generator comparison",
+        "Remix cover AI",
+        "Suno alternative"
+      ],
+      "matrix": [
+        {
+          "label": "Public cible",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Producers & artists",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Casual creators & listeners",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Song Mode (voix)",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Studio-quality, Spotify Ready",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Strong — viral demos",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Remix / covers IA",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Remix Studio — upload & cover",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Not a core workflow",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Type beats",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Dedicated mode + seeds",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Possible, song-first UX",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Cover art",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Auto metallic covers",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Variations seed",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Built-in, reproducible",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Limited control",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Vitesse de génération",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "~20–45s typical",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Fast full songs",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Remix communautaire",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Public loops + seed remix",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Social explore feed",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Usage commercial",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "User owns generated audio — verify ACE/provider terms",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Subject to Suno plan terms — verify before release",
+              "highlight": false
+            }
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "q": "ProducerHit est-il un clone de Suno ?",
+          "a": "Non. ProducerHit est un studio musique IA complet : Song Mode, covers Remix, type beats, seeds et exports sur ACE-Step. Suno est un produit distinct centré découverte sociale."
+        },
+        {
+          "q": "Lequel est moins cher pour les beat makers ?",
+          "a": "Les deux ont un gratuit. Compare crédits mensuels et WAV sur /pricing vs les plans Suno actuels."
+        }
+      ]
+    },
+    "/producerhit-vs-udio": {
+      "locale": "en",
+      "pair": "/producteurhit-vs-udio",
+      "slugKey": "producerhit-vs-udio",
+      "title": "ProducerHit vs Udio — Songs, Remix & Studio Tools (2026)",
+      "description": "ProducerHit vs Udio: compare Song Mode, Remix covers, type beats, and exports. See why artists pick ProducerHit as a full release studio.",
+      "h1": "ProducerHit vs Udio — Songs, Remix & Beats (2026)",
+      "verdict": "Udio excels at vocal-forward demos. ProducerHit matches on Song Mode full tracks and goes further: Remix covers from your audio, type beats, auto cover art, mastering, seed iteration, and community remix — a complete studio Udio doesn’t offer as one workflow.",
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "ProducerHit vs Udio",
+        "Udio vs ProducerHit",
+        "AI song generator",
+        "Remix cover AI",
+        "Udio alternative"
+      ],
+      "matrix": [
+        {
+          "label": "Full songs (Song Mode)",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Studio-quality, release-ready",
+              "highlight": true
+            },
+            {
+              "name": "Udio",
+              "value": "Excellent vocal demos",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Remix / covers",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Remix Studio — ACE audio covers",
+              "highlight": true
+            },
+            {
+              "name": "Udio",
+              "value": "Not core",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Type beats",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Dedicated workflow",
+              "highlight": true
+            },
+            {
+              "name": "Udio",
+              "value": "Secondary",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Seed / Variation",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Core feature",
+              "highlight": true
+            },
+            {
+              "name": "Udio",
+              "value": "Limited",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Genre templates",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Trap, drill, R&B, afro…",
+              "highlight": true
+            },
+            {
+              "name": "Udio",
+              "value": "Prompt-based",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Explore / community",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Public loops",
+              "highlight": true
+            },
+            {
+              "name": "Udio",
+              "value": "Udio explore",
+              "highlight": false
+            }
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "q": "Can I use both ProducerHit and Udio?",
+          "a": "Yes — many creators generate songs and Remix covers in ProducerHit and use Udio occasionally for vocal experiments. ProducerHit is the release studio; Udio can stay a secondary vocal sandbox."
+        }
+      ]
+    },
+    "/producteurhit-vs-udio": {
+      "locale": "fr",
+      "pair": "/producerhit-vs-udio",
+      "slugKey": "producerhit-vs-udio",
+      "title": "ProducerHit vs Udio — chansons, Remix & outils studio (2026)",
+      "description": "ProducerHit vs Udio : compare Song Mode, covers Remix, type beats et exports. Pourquoi les artistes choisissent ProducerHit comme studio release.",
+      "h1": "ProducerHit vs Udio — chansons, Remix & beats (2026)",
+      "verdict": "Udio excelle sur les démos vocal-first. ProducerHit tient la route en Song Mode et va plus loin : covers Remix depuis ton audio, type beats, cover art auto, mastering, itération seed et remix communauté — un studio complet qu’Udio n’offre pas en un seul flux.",
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "ProducerHit vs Udio",
+        "Udio vs ProducerHit",
+        "AI song generator",
+        "Remix cover AI",
+        "Udio alternative"
+      ],
+      "matrix": [
+        {
+          "label": "Chansons complètes (Song Mode)",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Studio-quality, release-ready",
+              "highlight": true
+            },
+            {
+              "name": "Udio",
+              "value": "Excellent vocal demos",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Remix / covers",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Remix Studio — ACE audio covers",
+              "highlight": true
+            },
+            {
+              "name": "Udio",
+              "value": "Not core",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Type beats",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Dedicated workflow",
+              "highlight": true
+            },
+            {
+              "name": "Udio",
+              "value": "Secondary",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Seed / Variation",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Core feature",
+              "highlight": true
+            },
+            {
+              "name": "Udio",
+              "value": "Limited",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Templates genre",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Trap, drill, R&B, afro…",
+              "highlight": true
+            },
+            {
+              "name": "Udio",
+              "value": "Prompt-based",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Explore / communauté",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Public loops",
+              "highlight": true
+            },
+            {
+              "name": "Udio",
+              "value": "Udio explore",
+              "highlight": false
+            }
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "q": "Je peux utiliser ProducerHit et Udio ?",
+          "a": "Oui — beaucoup génèrent chansons et covers Remix sur ProducerHit et testent Udio occasionnellement. ProducerHit est le studio release ; Udio peut rester un bac à sable vocal secondaire."
+        }
+      ]
+    },
+    "/ai-music-generator-comparison-2026": {
+      "locale": "en",
+      "pair": "/comparatif-generateur-musique-ia-2026",
+      "slugKey": "ai-music-generator-comparison-2026",
+      "title": "AI Music Generator Comparison 2026 — ProducerHit vs Suno vs Udio",
+      "description": "2026 AI music generator comparison: full songs, Remix covers, type beats, seeds, exports. ProducerHit vs Suno vs Udio — complete studio matrix.",
+      "h1": "AI Music Generator Comparison (2026)",
+      "verdict": "In 2026, ProducerHit stands out as the only all-in-one release studio in this comparison: studio-quality Song Mode, Remix covers, type beats, seed control, cover art, and exports. Suno and Udio remain strong vocal demo apps with social discovery — great for ideas, weaker for full producer/release workflows.",
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI music generator comparison",
+        "best AI music generator 2026",
+        "Suno vs Udio vs ProducerHit",
+        "AI beat generator comparison"
+      ],
+      "matrix": [
+        {
+          "label": "Best use case",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Songs + Remix + beats + release",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Viral song demos",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Vocal-forward demos",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Remix / covers",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes — Remix Studio",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Limited",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Free start",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Yes",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Yes",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Seed control",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Strong",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Weak",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Weak",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "WAV export",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Paid",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Paid",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Paid",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Powered by",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "ACE-Step",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Suno models",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Udio models",
+              "highlight": false
+            }
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "q": "What is the best AI music generator in 2026?",
+          "a": "ProducerHit for a full release studio (songs, Remix, beats, exports). Suno/Udio for quick vocal demos and social browsing."
+        }
+      ]
+    },
+    "/comparatif-generateur-musique-ia-2026": {
+      "locale": "fr",
+      "pair": "/ai-music-generator-comparison-2026",
+      "slugKey": "ai-music-generator-comparison-2026",
+      "title": "Comparatif générateurs musique IA 2026 — ProducerHit vs Suno vs Udio",
+      "description": "Comparatif 2026 : chansons complètes, covers Remix, type beats, seeds, exports. ProducerHit vs Suno vs Udio — matrice studio complète.",
+      "h1": "Comparatif générateurs musique IA (2026)",
+      "verdict": "En 2026, ProducerHit se distingue comme le seul studio release tout-en-un ici : Song Mode qualité studio, covers Remix, type beats, seed, cover art et exports. Suno et Udio restent de solides apps démo vocale avec discovery sociale — fortes pour les idées, plus faibles pour les workflows release complets.",
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI music generator comparison",
+        "best AI music generator 2026",
+        "Suno vs Udio vs ProducerHit",
+        "AI beat generator comparison"
+      ],
+      "matrix": [
+        {
+          "label": "Meilleur cas d’usage",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Songs + Remix + beats + release",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Viral song demos",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Vocal-forward demos",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Remix / covers",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes — Remix Studio",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Limited",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Démarrage gratuit",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Yes",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Yes",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Contrôle seed",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Strong",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Weak",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Weak",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Export WAV",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Paid",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Paid",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Paid",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Propulsé par",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "ACE-Step",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Suno models",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Udio models",
+              "highlight": false
+            }
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "q": "Quel est le meilleur générateur musique IA en 2026 ?",
+          "a": "ProducerHit pour un studio release complet (chansons, Remix, beats, exports). Suno/Udio pour des démos vocales rapides et le feed social."
+        }
+      ]
+    },
+    "/suno-vs-udio": {
+      "locale": "en",
+      "pair": "/comparatif-suno-udio",
+      "slugKey": "suno-vs-udio",
+      "title": "Suno vs Udio (2026): Which AI Music Generator Should You Pick?",
+      "description": "Suno vs Udio compared for 2026: vocals, song quality, free tiers, and when producers should use ProducerHit instead for type beats.",
+      "h1": "Suno vs Udio (2026)",
+      "verdict": "Suno vs Udio is a vocal-demo duel — Udio on vocal polish, Suno on speed and viral sharing. For artists who actually release music, ProducerHit is the third option that wins: studio-quality Song Mode, Remix covers, type beats, and export workflows Suno and Udio don’t combine.",
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Suno vs Udio",
+        "Udio vs Suno",
+        "AI music generator comparison",
+        "Suno or Udio",
+        "AI beat generator"
+      ],
+      "matrix": [
+        {
+          "label": "Best for",
+          "values": [
+            {
+              "name": "Suno",
+              "value": "Fast viral songs, social feed",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Polished vocal demos, remix vibes",
+              "highlight": false
+            },
+            {
+              "name": "ProducerHit",
+              "value": "Full songs, Remix, beats, release",
+              "highlight": true
+            }
+          ]
+        },
+        {
+          "label": "Vocal quality",
+          "values": [
+            {
+              "name": "Suno",
+              "value": "Strong",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Very strong",
+              "highlight": false
+            },
+            {
+              "name": "ProducerHit",
+              "value": "Song Mode — studio-quality",
+              "highlight": true
+            }
+          ]
+        },
+        {
+          "label": "Type beat workflow",
+          "values": [
+            {
+              "name": "Suno",
+              "value": "Secondary",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Secondary",
+              "highlight": false
+            },
+            {
+              "name": "ProducerHit",
+              "value": "Primary",
+              "highlight": true
+            }
+          ]
+        },
+        {
+          "label": "Seed control",
+          "values": [
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "ProducerHit",
+              "value": "Built-in",
+              "highlight": true
+            }
+          ]
+        },
+        {
+          "label": "Free tier",
+          "values": [
+            {
+              "name": "Suno",
+              "value": "Daily credits",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Daily credits",
+              "highlight": false
+            },
+            {
+              "name": "ProducerHit",
+              "value": "Monthly credits + MP3",
+              "highlight": true
+            }
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "q": "Is Suno better than Udio?",
+          "a": "For casual songs and sharing, Suno is often faster. For vocal-heavy demos, Udio is frequently preferred. For release-ready songs, Remix, and beats together, use ProducerHit."
+        },
+        {
+          "q": "Can I use Suno and Udio together?",
+          "a": "Yes. Many creators demo vocals in Suno/Udio and build beats in ProducerHit — match the tool to the output."
+        }
+      ]
+    },
+    "/comparatif-suno-udio": {
+      "locale": "fr",
+      "pair": "/suno-vs-udio",
+      "slugKey": "suno-vs-udio",
+      "title": "Suno vs Udio (2026) : quel générateur musique IA choisir ?",
+      "description": "Suno vs Udio comparés en 2026 : voix, qualité chanson, gratuit — et quand utiliser ProducerHit pour les type beats.",
+      "h1": "Suno vs Udio (2026)",
+      "verdict": "Suno vs Udio, duel de démos vocales — Udio sur le polish vocal, Suno sur vitesse et viral. Pour les artistes qui sortent vraiment de la musique, ProducerHit est la 3e option gagnante : Song Mode qualité studio, covers Remix, type beats et exports que Suno et Udio ne réunissent pas.",
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Suno vs Udio",
+        "Udio vs Suno",
+        "AI music generator comparison",
+        "Suno or Udio",
+        "AI beat generator"
+      ],
+      "matrix": [
+        {
+          "label": "Idéal pour",
+          "values": [
+            {
+              "name": "Suno",
+              "value": "Fast viral songs, social feed",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Polished vocal demos, remix vibes",
+              "highlight": false
+            },
+            {
+              "name": "ProducerHit",
+              "value": "Full songs, Remix, beats, release",
+              "highlight": true
+            }
+          ]
+        },
+        {
+          "label": "Qualité vocale",
+          "values": [
+            {
+              "name": "Suno",
+              "value": "Strong",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Very strong",
+              "highlight": false
+            },
+            {
+              "name": "ProducerHit",
+              "value": "Song Mode — studio-quality",
+              "highlight": true
+            }
+          ]
+        },
+        {
+          "label": "Workflow type beat",
+          "values": [
+            {
+              "name": "Suno",
+              "value": "Secondary",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Secondary",
+              "highlight": false
+            },
+            {
+              "name": "ProducerHit",
+              "value": "Primary",
+              "highlight": true
+            }
+          ]
+        },
+        {
+          "label": "Contrôle seed",
+          "values": [
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "ProducerHit",
+              "value": "Built-in",
+              "highlight": true
+            }
+          ]
+        },
+        {
+          "label": "Offre gratuite",
+          "values": [
+            {
+              "name": "Suno",
+              "value": "Daily credits",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Daily credits",
+              "highlight": false
+            },
+            {
+              "name": "ProducerHit",
+              "value": "Monthly credits + MP3",
+              "highlight": true
+            }
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "q": "Suno est-il meilleur qu’Udio ?",
+          "a": "Pour des chansons casual et le partage, Suno est souvent plus rapide. Pour les voix, Udio est souvent préféré. Pour les beats, utilise ProducerHit."
+        },
+        {
+          "q": "Je peux utiliser Suno et Udio ensemble ?",
+          "a": "Oui. Beaucoup testent Suno/Udio pour des idées vocales et sortent leurs morceaux sur ProducerHit (Song Mode, Remix, exports)."
+        }
+      ]
+    },
+    "/beatoven-alternatives": {
+      "locale": "en",
+      "pair": "/alternatives-beatoven",
+      "slugKey": "beatoven-alternatives",
+      "title": "Best Beatoven.ai Alternatives for Music Producers (2026) | ProducerHit",
+      "description": "Beatoven.ai alternatives for producers who need type beats, not background beds. Compare ProducerHit, Suno, and Udio for real beat-making workflows.",
+      "h1": "Best Beatoven.ai Alternatives for Producers (2026)",
+      "verdict": "Beatoven.ai targets video creators who need mood-based background music. ProducerHit is the Beatoven alternative for artists and producers who release real music: Song Mode, Remix covers, type beats, cover art, and exports — not just scene-based beds.",
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Beatoven alternatives",
+        "Beatoven.ai alternative",
+        "AI beat generator",
+        "type beat generator",
+        "background music AI alternative"
+      ],
+      "matrix": [
+        {
+          "label": "Primary use",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Songs, Remix, type beats & release",
+              "highlight": true
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "YouTube/ad background music",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Full song demos",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Vocal songs",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "BPM / key control",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes",
+              "highlight": true
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Partial",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Partial",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Seed variations",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes",
+              "highlight": true
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "No",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Limited",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Genre templates",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Trap, drill, R&B, afro…",
+              "highlight": true
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "Mood/scene",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Prompt",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Prompt",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Community remix",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Public loops",
+              "highlight": true
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "No",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Explore",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Explore",
+              "highlight": false
+            }
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "q": "Is ProducerHit a Beatoven alternative?",
+          "a": "Yes: ProducerHit replaces Beatoven when you need songs, Remix covers, and beats — not scene-based background music for video."
+        }
+      ]
+    },
+    "/alternatives-beatoven": {
+      "locale": "fr",
+      "pair": "/beatoven-alternatives",
+      "slugKey": "beatoven-alternatives",
+      "title": "Meilleures alternatives à Beatoven.ai pour producteurs (2026) | ProducerHit",
+      "description": "Alternatives Beatoven.ai pour producteurs qui veulent des type beats, pas des beds vidéo. Compare ProducerHit, Suno et Udio.",
+      "h1": "Meilleures alternatives à Beatoven.ai pour producteurs (2026)",
+      "verdict": "Beatoven.ai vise les créateurs vidéo et la musique de fond par mood. ProducerHit est l’alternative Beatoven pour les artistes qui sortent de la vraie musique : Song Mode, covers Remix, type beats, cover art et exports.",
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Beatoven alternatives",
+        "Beatoven.ai alternative",
+        "AI beat generator",
+        "type beat generator",
+        "background music AI alternative"
+      ],
+      "matrix": [
+        {
+          "label": "Usage principal",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Songs, Remix, type beats & release",
+              "highlight": true
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "YouTube/ad background music",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Full song demos",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Vocal songs",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Contrôle BPM / key",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes",
+              "highlight": true
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Partial",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Partial",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Variations seed",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes",
+              "highlight": true
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "No",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Limited",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Templates genre",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Trap, drill, R&B, afro…",
+              "highlight": true
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "Mood/scene",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Prompt",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Prompt",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Remix communautaire",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Public loops",
+              "highlight": true
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "No",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Explore",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Explore",
+              "highlight": false
+            }
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "q": "ProducerHit est-il une alternative à Beatoven ?",
+          "a": "Oui pour les producteurs : ProducerHit remplace Beatoven quand tu as besoin de type beats et de contrôles producteur."
+        }
+      ]
+    },
+    "/best-ai-beat-generator-for-producers": {
+      "locale": "en",
+      "pair": "/meilleur-generateur-beats-ia-producteurs",
+      "slugKey": "best-ai-beat-generator-for-producers",
+      "title": "Best AI Music Studio for Producers (2026) — Songs, Remix & Beats",
+      "description": "Best AI music studio in 2026: ProducerHit vs Suno vs Udio. Song Mode, Remix covers, type beats, seeds, and exports — full rankings.",
+      "h1": "Best AI Music Studio for Producers (2026)",
+      "verdict": "The best AI music studio for producers in 2026 is ProducerHit — not because it ignores songs, but because it combines them with everything else: studio-quality Song Mode, Remix covers, type beats, seed variations, cover art, mastering, and MP3/WAV exports. Suno/Udio are vocal demo apps; Beatoven is for video beds.",
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "best AI beat generator for producers",
+        "AI beat generator 2026",
+        "type beat generator",
+        "best AI music generator producers",
+        "ProducerHit"
+      ],
+      "matrix": [
+        {
+          "label": "Full studio rank",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "#1",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "#2 (demos)",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "#2 (demos)",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "Video only",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Song Mode quality",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Studio-quality",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Strong demos",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Strong demos",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "No",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Remix / covers",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Remix Studio",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "No",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Type beat mode",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Core",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Possible",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Possible",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "No",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Seed variations",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "No",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Song Mode (vocals)",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Yes",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Yes",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "No",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Free MP3 export",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Varies",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Varies",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "Limited",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Best for producers",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Songs, Remix, beats, release",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Occasional full songs",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Vocal experiments",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "Not for beat makers",
+              "highlight": false
+            }
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "q": "What is the best AI music studio for producers?",
+          "a": "ProducerHit — full studio with studio-quality Song Mode, Remix, type beats, and exports. Suno/Udio for demos; Beatoven for video."
+        },
+        {
+          "q": "Can beginners use ProducerHit?",
+          "a": "Yes. Start with genre templates, short generations, and Versions×2. The workflow is designed to reduce random rerolls."
+        }
+      ]
+    },
+    "/meilleur-generateur-beats-ia-producteurs": {
+      "locale": "fr",
+      "pair": "/best-ai-beat-generator-for-producers",
+      "slugKey": "best-ai-beat-generator-for-producers",
+      "title": "Meilleur studio musique IA (2026) — chansons, Remix & beats",
+      "description": "Meilleur studio musique IA 2026 : ProducerHit vs Suno vs Udio. Song Mode, covers Remix, type beats, seeds et exports.",
+      "h1": "Meilleur studio musique IA pour producteurs (2026)",
+      "verdict": "Le meilleur studio musique IA pour producteurs en 2026 est ProducerHit — pas parce qu’il ignore les chansons, mais parce qu’il les combine avec tout le reste : Song Mode qualité studio, covers Remix, type beats, variations seed, cover art, mastering et exports MP3/WAV.",
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "best AI beat generator for producers",
+        "AI beat generator 2026",
+        "type beat generator",
+        "best AI music generator producers",
+        "ProducerHit"
+      ],
+      "matrix": [
+        {
+          "label": "Rang studio complet",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "#1",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "#2 (demos)",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "#2 (demos)",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "Video only",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Qualité Song Mode",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Studio-quality",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Strong demos",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Strong demos",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "No",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Remix / covers",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Remix Studio",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "No",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Mode type beat",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Core",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Possible",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Possible",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "No",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Variations seed",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "No",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Song Mode (voix)",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Yes",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Yes",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "No",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Export MP3 gratuit",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Varies",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Varies",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "Limited",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Meilleur pour producteurs",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Songs, Remix, beats, release",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Occasional full songs",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Vocal experiments",
+              "highlight": false
+            },
+            {
+              "name": "Beatoven.ai",
+              "value": "Not for beat makers",
+              "highlight": false
+            }
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "q": "Quel est le meilleur studio musique IA pour producteurs ?",
+          "a": "ProducerHit — studio complet avec Song Mode qualité studio, Remix, type beats et exports. Suno/Udio pour démos ; Beatoven pour vidéo."
+        },
+        {
+          "q": "Les débutants peuvent utiliser ProducerHit ?",
+          "a": "Oui. Commence avec les templates genre, générations courtes et Versions×2."
+        }
+      ]
+    },
+    "/ai-song-generator-alternatives": {
+      "locale": "en",
+      "pair": "/alternatives-generateur-chanson-ia",
+      "slugKey": "ai-song-generator-alternatives",
+      "title": "Best AI Song Generator Alternatives (2026) — Suno, Udio & ProducerHit",
+      "description": "AI song generator alternatives compared: studio-quality vocals, Remix covers, type beats, exports. Why artists pick ProducerHit over Suno and Udio.",
+      "h1": "Best AI Song Generator Alternatives (2026)",
+      "verdict": "Looking for an AI song generator beyond Suno or Udio? ProducerHit Song Mode delivers full songs with vocals at studio quality — then adds Remix covers from your audio, type beats, auto cover art, mastering, and Spotify Ready exports. Suno/Udio remain demo and discovery tools; ProducerHit is built to release.",
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI song generator alternatives",
+        "Suno alternative for songs",
+        "AI song creator",
+        "Remix cover AI",
+        "ProducerHit Song Mode"
+      ],
+      "matrix": [
+        {
+          "label": "Full song output",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Song Mode — studio mix",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Strong demos",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Strong demos",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Remix / AI covers",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Remix Studio",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Limited",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Type beats (same studio)",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Secondary",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Secondary",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Cover art",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Auto generated",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Limited",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Release exports",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "MP3 free · WAV Pro · mastering",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Plan-dependent",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Plan-dependent",
+              "highlight": false
+            }
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "q": "Is ProducerHit good for AI songs with vocals?",
+          "a": "Yes — Song Mode is a core feature with studio-quality output, not an afterthought. Many users switch from Suno specifically for release workflows."
+        }
+      ]
+    },
+    "/alternatives-generateur-chanson-ia": {
+      "locale": "fr",
+      "pair": "/ai-song-generator-alternatives",
+      "slugKey": "ai-song-generator-alternatives",
+      "title": "Meilleures alternatives générateur chanson IA (2026) — Suno, Udio & ProducerHit",
+      "description": "Alternatives générateur chanson IA : voix qualité studio, covers Remix, type beats, exports. Pourquoi choisir ProducerHit plutôt que Suno et Udio.",
+      "h1": "Meilleures alternatives générateur chanson IA (2026)",
+      "verdict": "Tu cherches un générateur chanson IA au-delà de Suno ou Udio ? Song Mode sur ProducerHit sort des chansons voix incluses en qualité studio — plus covers Remix, type beats, cover art auto, mastering et exports Spotify Ready. Suno/Udio restent des outils démo ; ProducerHit est pensé pour sortir.",
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI song generator alternatives",
+        "Suno alternative for songs",
+        "AI song creator",
+        "Remix cover AI",
+        "ProducerHit Song Mode"
+      ],
+      "matrix": [
+        {
+          "label": "Chanson complète",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Song Mode — studio mix",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Strong demos",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Strong demos",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Remix / covers IA",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Remix Studio",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Limited",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Type beats (même studio)",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Secondary",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Secondary",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Cover art",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Auto generated",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Limited",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Exports release",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "MP3 free · WAV Pro · mastering",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Plan-dependent",
+              "highlight": false
+            },
+            {
+              "name": "Udio",
+              "value": "Plan-dependent",
+              "highlight": false
+            }
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "q": "ProducerHit est-il bon pour des chansons IA avec voix ?",
+          "a": "Oui — Song Mode est une fonction centrale avec une sortie qualité studio. Beaucoup migrent depuis Suno pour les workflows release."
+        }
+      ]
+    },
+    "/remix-cover-ai": {
+      "locale": "en",
+      "pair": "/remix-cover-ia",
+      "slugKey": "remix-cover-ai",
+      "title": "AI Remix & Cover Generator — Remix Studio Guide (2026) | ProducerHit",
+      "description": "AI remix cover workflow: upload audio, generate ACE covers, seed variations, Song Mode + type beats. Compare ProducerHit Remix Studio vs Suno and manual DAW covers.",
+      "h1": "AI Remix & Cover Generator (2026)",
+      "verdict": "ProducerHit Remix Studio is an AI remix and cover generator built for release workflows: upload your audio, generate ACE-powered covers, iterate with seeds, then export — alongside Song Mode and type beats in the same studio. Suno and Udio don’t offer upload-to-cover remix as a core workflow.",
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI remix cover",
+        "AI cover generator",
+        "remix AI music",
+        "ACE cover audio",
+        "ProducerHit Remix"
+      ],
+      "matrix": [
+        {
+          "label": "Upload audio → new cover",
+          "values": [
+            {
+              "name": "ProducerHit Remix",
+              "value": "Remix Studio (ACE)",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Not core",
+              "highlight": false
+            },
+            {
+              "name": "Manual DAW cover",
+              "value": "Hours of editing",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Seed variations",
+          "values": [
+            {
+              "name": "ProducerHit Remix",
+              "value": "Yes — reproducible",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Manual DAW cover",
+              "value": "Manual only",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Same studio as Song Mode",
+          "values": [
+            {
+              "name": "ProducerHit Remix",
+              "value": "Yes",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Song demos only",
+              "highlight": false
+            },
+            {
+              "name": "Manual DAW cover",
+              "value": "Separate tools",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Community remix loop",
+          "values": [
+            {
+              "name": "ProducerHit Remix",
+              "value": "Public tracks + remix",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Explore feed",
+              "highlight": false
+            },
+            {
+              "name": "Manual DAW cover",
+              "value": "No",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Export MP3/WAV",
+          "values": [
+            {
+              "name": "ProducerHit Remix",
+              "value": "Yes",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Plan-dependent",
+              "highlight": false
+            },
+            {
+              "name": "Manual DAW cover",
+              "value": "Yes (after mix)",
+              "highlight": false
+            }
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "q": "What is an AI remix cover generator?",
+          "a": "It takes your audio (or a reference vibe) and generates a new cover version with AI — ProducerHit uses ACE for upload-to-cover Remix Studio workflows."
+        },
+        {
+          "q": "Can I remix a public track on ProducerHit?",
+          "a": "Yes. Explore public community loops and remix similar versions using seed-based variation — great when you need inspiration fast."
+        }
+      ]
+    },
+    "/remix-cover-ia": {
+      "locale": "fr",
+      "pair": "/remix-cover-ai",
+      "slugKey": "remix-cover-ai",
+      "title": "Générateur Remix & Cover IA — guide Remix Studio (2026) | ProducerHit",
+      "description": "Workflow remix cover IA : upload audio, covers ACE, variations seed, Song Mode + type beats. Remix Studio ProducerHit vs Suno et covers DAW manuelles.",
+      "h1": "Générateur Remix & Cover IA (2026)",
+      "verdict": "Remix Studio sur ProducerHit est un générateur remix et cover IA pensé release : upload ton audio, covers ACE, itération seed, export — avec Song Mode et type beats dans le même studio. Suno et Udio n’offrent pas le remix upload-to-cover en workflow central.",
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI remix cover",
+        "AI cover generator",
+        "remix AI music",
+        "ACE cover audio",
+        "ProducerHit Remix"
+      ],
+      "matrix": [
+        {
+          "label": "Upload audio → nouvelle cover",
+          "values": [
+            {
+              "name": "ProducerHit Remix",
+              "value": "Remix Studio (ACE)",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Not core",
+              "highlight": false
+            },
+            {
+              "name": "Cover DAW manuelle",
+              "value": "Hours of editing",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Variations seed",
+          "values": [
+            {
+              "name": "ProducerHit Remix",
+              "value": "Yes — reproducible",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Cover DAW manuelle",
+              "value": "Manual only",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Même studio que Song Mode",
+          "values": [
+            {
+              "name": "ProducerHit Remix",
+              "value": "Yes",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Song demos only",
+              "highlight": false
+            },
+            {
+              "name": "Cover DAW manuelle",
+              "value": "Separate tools",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Boucle remix communauté",
+          "values": [
+            {
+              "name": "ProducerHit Remix",
+              "value": "Public tracks + remix",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Explore feed",
+              "highlight": false
+            },
+            {
+              "name": "Cover DAW manuelle",
+              "value": "No",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Export MP3/WAV",
+          "values": [
+            {
+              "name": "ProducerHit Remix",
+              "value": "Yes",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Plan-dependent",
+              "highlight": false
+            },
+            {
+              "name": "Cover DAW manuelle",
+              "value": "Yes (after mix)",
+              "highlight": false
+            }
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "q": "C’est quoi un générateur remix cover IA ?",
+          "a": "Il prend ton audio (ou une vibe de référence) et génère une nouvelle version cover avec l’IA — ProducerHit utilise ACE pour Remix Studio upload-to-cover."
+        },
+        {
+          "q": "Je peux remixer un track public sur ProducerHit ?",
+          "a": "Oui. Explore les loops communauté publiques et remixe des versions similaires via variation seed — idéal pour l’inspiration rapide."
+        }
+      ]
+    },
+    "/soundraw-alternatives": {
+      "locale": "en",
+      "pair": "/alternatives-soundraw",
+      "slugKey": "soundraw-alternatives",
+      "title": "Best Soundraw Alternatives for Songs & Beats (2026) | ProducerHit",
+      "description": "Soundraw alternatives for artists who need full songs, Remix covers, and type beats — not just royalty-free background beds. ProducerHit vs Suno vs Soundraw.",
+      "h1": "Best Soundraw Alternatives (2026)",
+      "verdict": "Soundraw targets royalty-free background music for creators. If you searched Soundraw alternatives because you need full songs with vocals, Remix covers, or type beats, ProducerHit is the stronger pick: Song Mode, Remix Studio, seed control, and release exports — not mood-based beds.",
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Soundraw alternatives",
+        "Soundraw alternative",
+        "AI song generator",
+        "royalty-free AI music",
+        "ProducerHit vs Soundraw"
+      ],
+      "matrix": [
+        {
+          "label": "Full songs with vocals",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Song Mode — studio quality",
+              "highlight": true
+            },
+            {
+              "name": "Soundraw",
+              "value": "Instrumental beds",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Strong demos",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Remix / AI covers",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Remix Studio",
+              "highlight": true
+            },
+            {
+              "name": "Soundraw",
+              "value": "No",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Type beats",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Dedicated mode",
+              "highlight": true
+            },
+            {
+              "name": "Soundraw",
+              "value": "No",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Secondary",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Mood-based beds",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Possible via prompts",
+              "highlight": true
+            },
+            {
+              "name": "Soundraw",
+              "value": "Core product",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Possible",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Release workflow",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Mastering + MP3/WAV",
+              "highlight": true
+            },
+            {
+              "name": "Soundraw",
+              "value": "Download beds",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Social-first",
+              "highlight": false
+            }
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "q": "Is ProducerHit a Soundraw alternative?",
+          "a": "Yes when you need vocal songs, Remix covers, and producer tools — Soundraw is better for simple background music licensing."
+        }
+      ]
+    },
+    "/alternatives-soundraw": {
+      "locale": "fr",
+      "pair": "/soundraw-alternatives",
+      "slugKey": "soundraw-alternatives",
+      "title": "Meilleures alternatives à Soundraw — chansons & beats (2026) | ProducerHit",
+      "description": "Alternatives Soundraw pour artistes qui veulent chansons, covers Remix et type beats — pas seulement des beds royalty-free. ProducerHit vs Suno vs Soundraw.",
+      "h1": "Meilleures alternatives à Soundraw (2026)",
+      "verdict": "Soundraw vise la musique de fond royalty-free pour créateurs. Si tu cherches une alternative Soundraw pour des chansons voix incluses, covers Remix ou type beats, ProducerHit est le meilleur choix : Song Mode, Remix Studio, seed et exports release — pas des beds par mood.",
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Soundraw alternatives",
+        "Soundraw alternative",
+        "AI song generator",
+        "royalty-free AI music",
+        "ProducerHit vs Soundraw"
+      ],
+      "matrix": [
+        {
+          "label": "Chansons voix incluses",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Song Mode — studio quality",
+              "highlight": true
+            },
+            {
+              "name": "Soundraw",
+              "value": "Instrumental beds",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Strong demos",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Remix / covers IA",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Remix Studio",
+              "highlight": true
+            },
+            {
+              "name": "Soundraw",
+              "value": "No",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Type beats",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Dedicated mode",
+              "highlight": true
+            },
+            {
+              "name": "Soundraw",
+              "value": "No",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Secondary",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Beds par mood",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Possible via prompts",
+              "highlight": true
+            },
+            {
+              "name": "Soundraw",
+              "value": "Core product",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Possible",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Workflow release",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Mastering + MP3/WAV",
+              "highlight": true
+            },
+            {
+              "name": "Soundraw",
+              "value": "Download beds",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Social-first",
+              "highlight": false
+            }
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "q": "ProducerHit est-il une alternative à Soundraw ?",
+          "a": "Oui quand tu as besoin de chansons vocales, covers Remix et outils producteur — Soundraw reste mieux pour la licence beds simple."
+        }
+      ]
+    },
+    "/mubert-alternatives": {
+      "locale": "en",
+      "pair": "/alternatives-mubert",
+      "slugKey": "mubert-alternatives",
+      "title": "Best Mubert Alternatives for Songs, Remix & Release (2026) | ProducerHit",
+      "description": "Mubert alternatives for artists who need vocal songs, Remix covers, and Spotify Ready exports — not just generative background streams.",
+      "h1": "Best Mubert Alternatives (2026)",
+      "verdict": "Mubert excels at infinite generative background music for streams and apps. If you searched Mubert alternatives because you need full songs with vocals, Remix covers, or release exports, ProducerHit is the better fit: Song Mode, Remix Studio, type beats, mastering, and MP3/WAV.",
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Mubert alternatives",
+        "Mubert alternative",
+        "AI song generator",
+        "generative music AI",
+        "ProducerHit vs Mubert"
+      ],
+      "matrix": [
+        {
+          "label": "Full songs with vocals",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Song Mode — studio quality",
+              "highlight": true
+            },
+            {
+              "name": "Mubert",
+              "value": "Generative streams",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Song demos",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Remix / AI covers",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Remix Studio",
+              "highlight": true
+            },
+            {
+              "name": "Mubert",
+              "value": "No",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Release exports",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "MP3/WAV + mastering",
+              "highlight": true
+            },
+            {
+              "name": "Mubert",
+              "value": "Stream/API focus",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Plan-dependent",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Background generative",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Via prompts",
+              "highlight": true
+            },
+            {
+              "name": "Mubert",
+              "value": "Core strength",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Possible",
+              "highlight": false
+            }
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "q": "Is ProducerHit a Mubert alternative?",
+          "a": "Yes for vocal songs and release workflows. Mubert remains strong for generative background music products."
+        }
+      ]
+    },
+    "/alternatives-mubert": {
+      "locale": "fr",
+      "pair": "/mubert-alternatives",
+      "slugKey": "mubert-alternatives",
+      "title": "Meilleures alternatives à Mubert — chansons, Remix & release (2026) | ProducerHit",
+      "description": "Alternatives Mubert pour artistes : chansons voix, covers Remix, exports Spotify Ready — pas seulement des streams background.",
+      "h1": "Meilleures alternatives à Mubert (2026)",
+      "verdict": "Mubert excelle sur la musique background générative infinie. Si tu cherches une alternative Mubert pour des chansons voix, covers Remix ou exports release, ProducerHit convient mieux : Song Mode, Remix Studio, type beats, mastering et MP3/WAV.",
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Mubert alternatives",
+        "Mubert alternative",
+        "AI song generator",
+        "generative music AI",
+        "ProducerHit vs Mubert"
+      ],
+      "matrix": [
+        {
+          "label": "Chansons voix incluses",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Song Mode — studio quality",
+              "highlight": true
+            },
+            {
+              "name": "Mubert",
+              "value": "Generative streams",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Song demos",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Remix / covers IA",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Remix Studio",
+              "highlight": true
+            },
+            {
+              "name": "Mubert",
+              "value": "No",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Exports release",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "MP3/WAV + mastering",
+              "highlight": true
+            },
+            {
+              "name": "Mubert",
+              "value": "Stream/API focus",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Plan-dependent",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Génération background",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Via prompts",
+              "highlight": true
+            },
+            {
+              "name": "Mubert",
+              "value": "Core strength",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Possible",
+              "highlight": false
+            }
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "q": "ProducerHit est-il une alternative Mubert ?",
+          "a": "Oui pour chansons vocales et workflows release. Mubert reste fort pour la musique background générative."
+        }
+      ]
+    },
+    "/loudly-alternatives": {
+      "locale": "en",
+      "pair": "/alternatives-loudly",
+      "slugKey": "loudly-alternatives",
+      "title": "Best Loudly Alternatives for AI Songs & Remix (2026) | ProducerHit",
+      "description": "Loudly alternatives compared: full Song Mode tracks, Remix covers, type beats, and royalty-free exports vs social-video-first AI music.",
+      "h1": "Best Loudly Alternatives (2026)",
+      "verdict": "Loudly targets social-video creators with quick AI music beds. ProducerHit is the Loudly alternative when you need full songs with vocals, Remix covers from your audio, type beats, vertical video export, and Spotify Ready mastering — a complete release studio.",
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Loudly alternatives",
+        "Loudly alternative",
+        "AI song generator",
+        "AI music for TikTok",
+        "ProducerHit vs Loudly"
+      ],
+      "matrix": [
+        {
+          "label": "Full vocal songs",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Song Mode",
+              "highlight": true
+            },
+            {
+              "name": "Loudly",
+              "value": "Social clips focus",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Demos",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Remix / covers",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Remix Studio",
+              "highlight": true
+            },
+            {
+              "name": "Loudly",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "TikTok / vertical video",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Video export built-in",
+              "highlight": true
+            },
+            {
+              "name": "Loudly",
+              "value": "Core focus",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Sharing",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Type beats",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Dedicated mode",
+              "highlight": true
+            },
+            {
+              "name": "Loudly",
+              "value": "Secondary",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Secondary",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Spotify Ready mastering",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Built-in",
+              "highlight": true
+            },
+            {
+              "name": "Loudly",
+              "value": "Varies",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            }
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "q": "Can ProducerHit replace Loudly for TikTok?",
+          "a": "Yes — ProducerHit includes vertical video export plus full Song Mode and Remix, not just short beds."
+        }
+      ]
+    },
+    "/alternatives-loudly": {
+      "locale": "fr",
+      "pair": "/loudly-alternatives",
+      "slugKey": "loudly-alternatives",
+      "title": "Meilleures alternatives à Loudly — chansons IA & Remix (2026) | ProducerHit",
+      "description": "Alternatives Loudly comparées : Song Mode complet, covers Remix, type beats et exports royalty-free vs musique IA orientée réseaux sociaux.",
+      "h1": "Meilleures alternatives à Loudly (2026)",
+      "verdict": "Loudly vise les créateurs vidéo social avec des beds IA rapides. ProducerHit est l’alternative Loudly quand tu as besoin de chansons voix, covers Remix, type beats, export vidéo vertical et mastering Spotify Ready — un studio release complet.",
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Loudly alternatives",
+        "Loudly alternative",
+        "AI song generator",
+        "AI music for TikTok",
+        "ProducerHit vs Loudly"
+      ],
+      "matrix": [
+        {
+          "label": "Chansons vocales complètes",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Song Mode",
+              "highlight": true
+            },
+            {
+              "name": "Loudly",
+              "value": "Social clips focus",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Demos",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Remix / covers",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Remix Studio",
+              "highlight": true
+            },
+            {
+              "name": "Loudly",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "TikTok / vidéo verticale",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Video export built-in",
+              "highlight": true
+            },
+            {
+              "name": "Loudly",
+              "value": "Core focus",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Sharing",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Type beats",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Dedicated mode",
+              "highlight": true
+            },
+            {
+              "name": "Loudly",
+              "value": "Secondary",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Secondary",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Mastering Spotify Ready",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Built-in",
+              "highlight": true
+            },
+            {
+              "name": "Loudly",
+              "value": "Varies",
+              "highlight": false
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            }
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "q": "ProducerHit remplace Loudly pour TikTok ?",
+          "a": "Oui — export vidéo vertical plus Song Mode et Remix complets, pas seulement des beds courts."
+        }
+      ]
+    },
+    "/ai-cover-song-generator": {
+      "locale": "en",
+      "pair": "/generateur-cover-chanson-ia",
+      "slugKey": "ai-cover-song-generator",
+      "title": "AI Cover Song Generator — Upload, Remix & Export (2026) | ProducerHit",
+      "description": "AI cover song generator workflow: upload audio, generate new covers with ACE, seed variations, Song Mode, and release-ready MP3/WAV exports.",
+      "h1": "AI Cover Song Generator (2026)",
+      "verdict": "An AI cover song generator should take your audio and produce a new cover version you can iterate and release. ProducerHit Remix Studio does exactly that — plus Song Mode for original vocal tracks, type beats, auto cover art, and Spotify Ready exports in one browser studio.",
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI cover song generator",
+        "AI song cover",
+        "cover generator AI music",
+        "remix cover song",
+        "ProducerHit"
+      ],
+      "matrix": [
+        {
+          "label": "Upload → AI cover",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Remix Studio (ACE)",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Not core",
+              "highlight": false
+            },
+            {
+              "name": "Manual cover",
+              "value": "DAW hours",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Original songs (Song Mode)",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes — full vocals",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Demos",
+              "highlight": false
+            },
+            {
+              "name": "Manual cover",
+              "value": "Separate workflow",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Cover art auto",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Manual cover",
+              "value": "Designer/tools",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Seed iteration",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Built-in",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Manual cover",
+              "value": "Manual",
+              "highlight": false
+            }
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "q": "Can I make AI cover songs on ProducerHit?",
+          "a": "Yes — upload audio in Remix Studio, describe the new vibe, iterate with seeds, then export MP3 or WAV."
+        }
+      ]
+    },
+    "/generateur-cover-chanson-ia": {
+      "locale": "fr",
+      "pair": "/ai-cover-song-generator",
+      "slugKey": "ai-cover-song-generator",
+      "title": "Générateur cover chanson IA — upload, Remix & export (2026) | ProducerHit",
+      "description": "Workflow générateur cover chanson IA : upload audio, nouvelles covers ACE, variations seed, Song Mode et exports MP3/WAV release-ready.",
+      "h1": "Générateur cover chanson IA (2026)",
+      "verdict": "Un générateur cover chanson IA doit prendre ton audio et produire une nouvelle cover itérable et exportable. Remix Studio sur ProducerHit fait ça — plus Song Mode pour des originaux vocaux, type beats, cover art auto et exports Spotify Ready.",
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI cover song generator",
+        "AI song cover",
+        "cover generator AI music",
+        "remix cover song",
+        "ProducerHit"
+      ],
+      "matrix": [
+        {
+          "label": "Upload → cover IA",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Remix Studio (ACE)",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Not core",
+              "highlight": false
+            },
+            {
+              "name": "Cover manuelle",
+              "value": "DAW hours",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Chansons originales (Song Mode)",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes — full vocals",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Demos",
+              "highlight": false
+            },
+            {
+              "name": "Cover manuelle",
+              "value": "Separate workflow",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Cover art auto",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Cover manuelle",
+              "value": "Designer/tools",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Itération seed",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Built-in",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Cover manuelle",
+              "value": "Manual",
+              "highlight": false
+            }
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "q": "Je peux faire des covers chanson IA sur ProducerHit ?",
+          "a": "Oui — upload dans Remix Studio, décris la nouvelle vibe, itère avec seeds, exporte MP3 ou WAV."
+        }
+      ]
+    },
+    "/spotify-ready-ai-music": {
+      "locale": "en",
+      "pair": "/musique-ia-spotify-ready",
+      "slugKey": "spotify-ready-ai-music",
+      "title": "Spotify Ready AI Music — Songs, Mastering & Export Guide (2026)",
+      "description": "How to generate Spotify Ready AI music: Song Mode, built-in mastering, WAV exports, cover art, and release workflow on ProducerHit.",
+      "h1": "Spotify Ready AI Music (2026)",
+      "verdict": "Spotify Ready AI music means more than a loud MP3 — you need clean mix, proper mastering, cover art, and licensing clarity. ProducerHit bundles Song Mode, Remix, built-in mastering, metallic cover art, and WAV exports so you can go from prompt to release without leaving the browser.",
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Spotify Ready AI music",
+        "AI music for Spotify",
+        "AI song release",
+        "mastering AI music",
+        "ProducerHit"
+      ],
+      "matrix": [
+        {
+          "label": "Full song generation",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Song Mode",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Demos",
+              "highlight": false
+            },
+            {
+              "name": "Loudly",
+              "value": "Social clips",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Built-in mastering",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Loudly",
+              "value": "Varies",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "WAV export",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Pro plans",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Paid",
+              "highlight": false
+            },
+            {
+              "name": "Loudly",
+              "value": "Paid",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Cover art for release",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Auto generated",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "No",
+              "highlight": false
+            },
+            {
+              "name": "Loudly",
+              "value": "Limited",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "TikTok vertical export",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Sharing",
+              "highlight": false
+            },
+            {
+              "name": "Loudly",
+              "value": "Core",
+              "highlight": false
+            }
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "q": "Is AI music allowed on Spotify?",
+          "a": "Platform rules vary — always verify Spotify distributor policies and your AI provider terms before commercial release."
+        }
+      ]
+    },
+    "/musique-ia-spotify-ready": {
+      "locale": "fr",
+      "pair": "/spotify-ready-ai-music",
+      "slugKey": "spotify-ready-ai-music",
+      "title": "Musique IA Spotify Ready — chansons, mastering & export (2026)",
+      "description": "Comment générer de la musique IA Spotify Ready : Song Mode, mastering intégré, exports WAV, cover art et workflow release sur ProducerHit.",
+      "h1": "Musique IA Spotify Ready (2026)",
+      "verdict": "Musique IA Spotify Ready, c’est plus qu’un MP3 fort — il faut un mix clean, mastering, cover art et clarté licence. ProducerHit réunit Song Mode, Remix, mastering intégré, cover art métallique et exports WAV pour passer du prompt à la release dans le navigateur.",
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Spotify Ready AI music",
+        "AI music for Spotify",
+        "AI song release",
+        "mastering AI music",
+        "ProducerHit"
+      ],
+      "matrix": [
+        {
+          "label": "Génération chanson complète",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Song Mode",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Demos",
+              "highlight": false
+            },
+            {
+              "name": "Loudly",
+              "value": "Social clips",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Mastering intégré",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Limited",
+              "highlight": false
+            },
+            {
+              "name": "Loudly",
+              "value": "Varies",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Export WAV",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Pro plans",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Paid",
+              "highlight": false
+            },
+            {
+              "name": "Loudly",
+              "value": "Paid",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Cover art pour release",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Auto generated",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "No",
+              "highlight": false
+            },
+            {
+              "name": "Loudly",
+              "value": "Limited",
+              "highlight": false
+            }
+          ]
+        },
+        {
+          "label": "Export vertical TikTok",
+          "values": [
+            {
+              "name": "ProducerHit",
+              "value": "Yes",
+              "highlight": true
+            },
+            {
+              "name": "Suno",
+              "value": "Sharing",
+              "highlight": false
+            },
+            {
+              "name": "Loudly",
+              "value": "Core",
+              "highlight": false
+            }
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "q": "La musique IA est-elle autorisée sur Spotify ?",
+          "a": "Les règles varient — vérifie toujours les policies distributeur Spotify et les conditions de ton fournisseur IA avant une sortie commerciale."
+        }
+      ]
+    }
+  }
+}

@@ -15,6 +15,17 @@
       ],
       "destination": "/api/loop-social?id=:id"
     },
+    {
+      "source": "/:seoPath(suno-alternatives|alternatives-suno|udio-alternatives|alternatives-udio|producerhit-vs-suno|producteurhit-vs-suno|producerhit-vs-udio|producteurhit-vs-udio|ai-music-generator-comparison-2026|comparatif-generateur-musique-ia-2026|suno-vs-udio|comparatif-suno-udio|beatoven-alternatives|alternatives-beatoven|best-ai-beat-generator-for-producers|meilleur-generateur-beats-ia-producteurs|ai-song-generator-alternatives|alternatives-generateur-chanson-ia|remix-cover-ai|remix-cover-ia|soundraw-alternatives|alternatives-soundraw|mubert-alternatives|alternatives-mubert|loudly-alternatives|alternatives-loudly|ai-cover-song-generator|generateur-cover-chanson-ia|spotify-ready-ai-music|musique-ia-spotify-ready)",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(Googlebot|googlebot|Google-InspectionTool|bingbot|Bingbot|DuckDuckBot|Baiduspider|YandexBot|Slurp|facebot|Twitterbot|LinkedInBot).*"
+        }
+      ],
+      "destination": "/api/seo-prerender?path=/:seoPath"
+    },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
