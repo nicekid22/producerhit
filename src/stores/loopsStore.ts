@@ -6,6 +6,7 @@ import {
   buildStemsUrlForDb,
   finalizePublicLoopRecord,
   isHttpAudioUrl,
+  persistLoopAceAudioRecord,
   resolveAceAudioUrl,
   uploadPublicLoopAudio,
 } from "@/lib/publicLoops";
@@ -15,6 +16,9 @@ import { buildCoverPromptSnapshot } from "@/lib/utils";
 import { useAuthStore } from "@/stores/authStore";
 import { usePlayerStore } from "@/stores/playerStore";
 import type { Loop } from "@/types/loop";
+
+/** Rollback : VITE_LOOP_ACE_PERSIST=0 → pas de persistance ACE post-création. Voir ACE_AUDIO_ROLLBACK.md */
+const LOOP_ACE_PERSIST = import.meta.env.VITE_LOOP_ACE_PERSIST !== "0";
 
 type DbLoop = {
   id: string;
@@ -864,7 +868,41 @@ export const useLoopsStore = create<LoopsState>((set) => ({
       isPublic: Boolean(input.isPublic),
     };
 
-    if (input.isPublic) {
+    if (LOOP_ACE_PERSIST) {
+      void (async () => {
+        try {
+          const finalized = await persistLoopAceAudioRecord({
+            loopId: row.id,
+            userId: user.id,
+            audioUrlInput: trimmedAudioUrl,
+            audioUrlForDb,
+            stemsUrlForDb,
+          });
+
+          if (input.isPublic) {
+            await supabase.from("loops").update({ is_public: true }).eq("id", row.id).eq("user_id", user.id);
+          }
+
+          if (!finalized.audioUrl && !finalized.stemsUrl) return;
+
+          useLoopsStore.setState((s) => ({
+            loops: s.loops.map((l) =>
+              l.id === row.id
+                ? {
+                    ...l,
+                    audioUrl: finalized.audioUrl ?? l.audioUrl,
+                    stemsUrl: finalized.stemsUrl ?? l.stemsUrl,
+                    isPublic: Boolean(input.isPublic),
+                  }
+                : l,
+            ),
+          }));
+          persistMyLoopsCache(user.id, useLoopsStore.getState().loops);
+        } catch {
+          // ignore background persist errors
+        }
+      })();
+    } else if (input.isPublic) {
       void (async () => {
         try {
           const finalized = await finalizePublicLoopRecord({

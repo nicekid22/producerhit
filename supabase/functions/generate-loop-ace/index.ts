@@ -376,7 +376,7 @@ async function handleAceRemixMultipart(req: Request, corsHeaders: Record<string,
           const first = Array.isArray(results) ? results[0] : null;
           const firstObj = first && typeof first === "object" && first !== null ? (first as Record<string, unknown>) : null;
           const file = first && typeof (first as { file?: unknown }).file === "string" ? ((first as { file: string }).file as string) : "";
-          audioUrl = toAbsoluteUrl(baseUrl, file);
+          audioUrl = buildAceAudioUrlFromPath(baseUrl, file);
           if (!audioUrl) throw new Error("remix returned no audio file");
           meta = {
             taskId,
@@ -439,7 +439,117 @@ function isRetryableAceHttpStatus(status: number) {
   return false;
 }
 
-/** Fallback when /release_task returns 404 — same path as localhost with VITE_ACE_STEP_API_KEY. */
+function buildAceAudioUrlFromPath(baseUrl: string, filePath: string) {
+  const t = filePath.trim();
+  if (!t) return "";
+  if (t.startsWith("http://") || t.startsWith("https://")) return t;
+  const base = baseUrl.replace(/\/$/, "");
+  if (t.startsWith("/v1/audio?path=")) return `${base}${t}`;
+  if (t.startsWith("v1/audio?path=")) return `${base}/${t}`;
+  if (t.startsWith("/")) return `${base}/v1/audio?path=${encodeURIComponent(t)}`;
+  return `${base}/v1/audio?path=${encodeURIComponent(t)}`;
+}
+
+function pickAceTaskIdFromJson(json: unknown): string {
+  const root = json && typeof json === "object" ? (json as Record<string, unknown>) : {};
+  const dataObj = root.data && typeof root.data === "object" ? (root.data as Record<string, unknown>) : null;
+  const choices = root.choices;
+  const firstChoice = Array.isArray(choices) ? choices[0] : null;
+  const choiceObj =
+    firstChoice && typeof firstChoice === "object" && firstChoice !== null ? (firstChoice as Record<string, unknown>) : null;
+  const msg =
+    choiceObj?.message && typeof choiceObj.message === "object" && choiceObj.message !== null
+      ? (choiceObj.message as Record<string, unknown>)
+      : null;
+  const audioArr = msg && Array.isArray(msg.audio) ? (msg.audio as unknown[]) : [];
+  const firstAudio =
+    audioArr[0] && typeof audioArr[0] === "object" && audioArr[0] !== null ? (audioArr[0] as Record<string, unknown>) : null;
+
+  const candidates = [
+    root.task_id,
+    root.taskId,
+    root.id,
+    dataObj?.task_id,
+    dataObj?.taskId,
+    choiceObj?.task_id,
+    choiceObj?.taskId,
+    msg?.task_id,
+    msg?.taskId,
+    firstAudio?.task_id,
+    firstAudio?.taskId,
+  ];
+  for (const c of candidates) {
+    const t = asString(c).trim();
+    if (isSafeAceTaskId(t)) return t;
+  }
+  return "";
+}
+
+function pickAceFilePath(obj: Record<string, unknown> | null): string {
+  if (!obj) return "";
+  for (const key of ["file", "path", "audio_path", "file_path", "audioPath"]) {
+    const v = asString(obj[key]).trim();
+    if (v && !v.startsWith("data:")) return v;
+  }
+  const audioUrl = obj.audio_url;
+  if (audioUrl && typeof audioUrl === "object" && audioUrl !== null) {
+    const au = audioUrl as Record<string, unknown>;
+    const url = asString(au.url).trim();
+    if (url && !url.startsWith("data:")) return url;
+    for (const key of ["path", "file"]) {
+      const v = asString(au[key]).trim();
+      if (v && !v.startsWith("data:")) return v;
+    }
+  }
+  return "";
+}
+
+function parseAceChatCompletionsJson(json: unknown, baseUrl: string) {
+  const root = json && typeof json === "object" ? (json as Record<string, unknown>) : {};
+  const choices = root.choices;
+  const firstChoice = Array.isArray(choices) ? choices[0] : null;
+  const choiceObj =
+    firstChoice && typeof firstChoice === "object" && firstChoice !== null ? (firstChoice as Record<string, unknown>) : null;
+  const msg =
+    choiceObj?.message && typeof choiceObj.message === "object" && choiceObj.message !== null
+      ? (choiceObj.message as Record<string, unknown>)
+      : null;
+  const audioArr = msg && Array.isArray(msg.audio) ? (msg.audio as unknown[]) : [];
+  const firstAudio =
+    audioArr[0] && typeof audioArr[0] === "object" && audioArr[0] !== null ? (audioArr[0] as Record<string, unknown>) : null;
+
+  const taskId = pickAceTaskIdFromJson(json);
+  const pathCandidate = pickAceFilePath(firstAudio) || pickAceFilePath(msg);
+  const audioUrlRaw =
+    firstAudio && typeof firstAudio.audio_url === "object" && firstAudio.audio_url !== null
+      ? asString((firstAudio.audio_url as { url?: unknown }).url).trim()
+      : "";
+
+  let httpAudioUrl = "";
+  if (audioUrlRaw.startsWith("http://") || audioUrlRaw.startsWith("https://")) {
+    httpAudioUrl = audioUrlRaw;
+  } else if (pathCandidate) {
+    httpAudioUrl = buildAceAudioUrlFromPath(baseUrl, pathCandidate);
+  } else if (audioUrlRaw && !audioUrlRaw.startsWith("data:")) {
+    httpAudioUrl = buildAceAudioUrlFromPath(baseUrl, audioUrlRaw);
+  }
+
+  const dataUrl = audioUrlRaw.startsWith("data:") ? audioUrlRaw : "";
+  const audioUrl =
+    httpAudioUrl ||
+    dataUrl ||
+    (pathCandidate ? buildAceAudioUrlFromPath(baseUrl, pathCandidate) : "") ||
+    "";
+
+  return {
+    audioUrl,
+    httpAudioUrl: isHttpUrl(httpAudioUrl) ? httpAudioUrl : "",
+    taskId,
+    sessionOnly: !isHttpUrl(httpAudioUrl) && !taskId,
+  };
+}
+
+/** Fallback when /release_task returns 404 on all bases — same path as localhost with VITE_ACE_STEP_API_KEY. */
 async function generateViaChatCompletionsAce(input: {
   apiKey: string;
   baseUrl: string;
@@ -492,27 +602,11 @@ async function generateViaChatCompletionsAce(input: {
   if (!res.ok) throw new Error(`ACE API chat/completions failed (${res.status}): ${text}`);
 
   const json = JSON.parse(text) as unknown;
-  const choices = (json as { choices?: unknown } | null)?.choices;
-  const firstChoice = Array.isArray(choices) ? choices[0] : null;
-  const messageObj =
-    firstChoice && typeof firstChoice === "object" && firstChoice !== null
-      ? (firstChoice as { message?: unknown }).message
-      : null;
-  const audioArr =
-    messageObj && typeof messageObj === "object" && messageObj !== null && Array.isArray((messageObj as { audio?: unknown }).audio)
-      ? ((messageObj as { audio: unknown[] }).audio as unknown[])
-      : [];
-  const firstAudio = audioArr[0] && typeof audioArr[0] === "object" && audioArr[0] !== null ? (audioArr[0] as Record<string, unknown>) : null;
-  const audioUrlRaw =
-    firstAudio && typeof firstAudio.audio_url === "object" && firstAudio.audio_url !== null
-      ? ((firstAudio.audio_url as { url?: unknown }).url as unknown)
-      : null;
-  const audioUrlStr = typeof audioUrlRaw === "string" ? audioUrlRaw : "";
-  const audioUrl = audioUrlStr.startsWith("data:") ? audioUrlStr : toAbsoluteUrl(input.baseUrl, audioUrlStr);
-  if (!audioUrl) throw new Error("ACE API returned no audio");
+  const parsed = parseAceChatCompletionsJson(json, input.baseUrl);
+  if (!parsed.audioUrl) throw new Error("ACE API returned no audio");
 
   return {
-    audioUrl,
+    audioUrl: parsed.audioUrl,
     meta: {
       prompt: input.prompt,
       lyrics: input.instrumental ? "" : input.lyrics.trim(),
@@ -522,6 +616,9 @@ async function generateViaChatCompletionsAce(input: {
       timeSignature: input.timeSignature.trim() || null,
       audioFormat: input.audioFormat,
       engine: "chat-completions",
+      ...(parsed.taskId ? { taskId: parsed.taskId, task_id: parsed.taskId } : {}),
+      ...(parsed.httpAudioUrl ? { httpAudioUrl: parsed.httpAudioUrl } : {}),
+      sessionOnly: parsed.sessionOnly,
     },
   };
 }
@@ -828,7 +925,7 @@ serve(async (req) => {
             const results = JSON.parse(resultStr) as unknown;
             const first = Array.isArray(results) ? results[0] : null;
             const file = first && typeof (first as { file?: unknown }).file === "string" ? ((first as { file: string }).file as string) : "";
-            audioUrl = toAbsoluteUrl(t.baseUrl, file);
+            audioUrl = buildAceAudioUrlFromPath(t.baseUrl, file);
             if (audioUrl) break;
           } catch (e) {
             lastErr = e;
@@ -932,25 +1029,9 @@ serve(async (req) => {
         console.log("ACE release_task response", { requestId, status: createRes.status, ok: createRes.ok, body: createText });
         if (!createRes.ok) {
           if (createRes.status === 404) {
-            console.log("ACE release_task 404 — fallback chat/completions", { requestId, baseUrl });
-            const vocalLanguage = asString(body?.vocalLanguage) || "en";
-            const out = await generateViaChatCompletionsAce({
-              apiKey,
-              baseUrl,
-              prompt: effectivePrompt,
-              lyrics: effectiveLyrics,
-              instrumental,
-              requestedDuration: requestedDuration ?? null,
-              bpm,
-              keyScale: keyValue,
-              timeSignature,
-              vocalLanguage,
-              audioFormat,
-              signal: controller.signal,
-            });
-            audioUrl = out.audioUrl;
-            meta = out.meta;
-            return;
+            const err = new Error("ACE release_task 404") as Error & { release404?: boolean };
+            err.release404 = true;
+            throw err;
           }
           const err = new Error(`ACE API release_task failed (${createRes.status}): ${createText}`) as Error & { status?: number };
           err.status = createRes.status;
@@ -1008,7 +1089,7 @@ serve(async (req) => {
             const first = Array.isArray(results) ? results[0] : null;
             const firstObj = first && typeof first === "object" && first !== null ? (first as Record<string, unknown>) : null;
             const file = first && typeof (first as { file?: unknown }).file === "string" ? ((first as { file: string }).file as string) : "";
-            audioUrl = toAbsoluteUrl(baseUrl, file);
+            audioUrl = buildAceAudioUrlFromPath(baseUrl, file);
             if (!audioUrl) throw new Error("ACE task returned no audio file");
             const metasObj =
               firstObj && typeof firstObj.metas === "object" && firstObj.metas !== null ? (firstObj.metas as Record<string, unknown>) : null;
@@ -1060,6 +1141,7 @@ serve(async (req) => {
       };
 
       let lastErr: unknown = null;
+      let sawRelease404 = false;
       for (const t of aceTargets) {
         try {
           await attemptOnce(t.apiKey, t.baseUrl);
@@ -1067,11 +1149,45 @@ serve(async (req) => {
           break;
         } catch (e) {
           lastErr = e;
+          if ((e as { release404?: boolean }).release404) {
+            sawRelease404 = true;
+            continue;
+          }
           const status = typeof (e as { status?: unknown } | null)?.status === "number" ? ((e as { status: number }).status as number) : 0;
           if (status && !isRetryableAceHttpStatus(status) && status !== 404) break;
           if (audioUrl) break;
         }
       }
+
+      if (!audioUrl && sawRelease404) {
+        console.log("ACE release_task 404 on all bases — fallback chat/completions", { requestId });
+        const vocalLanguage = asString(body?.vocalLanguage) || "en";
+        for (const t of aceTargets) {
+          try {
+            const out = await generateViaChatCompletionsAce({
+              apiKey: t.apiKey,
+              baseUrl: t.baseUrl,
+              prompt: effectivePrompt,
+              lyrics: effectiveLyrics,
+              instrumental,
+              requestedDuration: requestedDuration ?? null,
+              bpm,
+              keyScale: keyValue,
+              timeSignature,
+              vocalLanguage,
+              audioFormat,
+              signal: controller.signal,
+            });
+            audioUrl = out.audioUrl;
+            meta = out.meta;
+            lastErr = null;
+            break;
+          } catch (e) {
+            lastErr = e;
+          }
+        }
+      }
+
       if (!audioUrl) {
         const msg = lastErr instanceof Error ? lastErr.message : "ACE generation failed";
         throw new Error(msg);

@@ -257,6 +257,40 @@ export function buildStemsUrlForDb(
   return { ...base, ace };
 }
 
+/** Persiste URL HTTP ACE + taskId en DB — sans Supabase Storage. */
+export async function persistLoopAceAudioRecord(args: {
+  loopId: string;
+  userId: string;
+  audioUrlInput: string;
+  audioUrlForDb: string | null;
+  stemsUrlForDb: unknown;
+}): Promise<{ audioUrl: string | null; stemsUrl: Record<string, unknown> | null }> {
+  const stemsRecord =
+    args.stemsUrlForDb && typeof args.stemsUrlForDb === "object" ? (args.stemsUrlForDb as Record<string, unknown>) : null;
+  const taskId = extractAceTaskId(stemsRecord);
+
+  const audioUrl =
+    args.audioUrlForDb ||
+    (isHttpAudioUrl(args.audioUrlInput) ? args.audioUrlInput.trim() : null) ||
+    (taskId ? await resolveAceAudioUrl(taskId).catch(() => "") : "") ||
+    null;
+
+  const updatePayload: { audio_url?: string; stems_url?: Record<string, unknown> } = {};
+  if (audioUrl) updatePayload.audio_url = audioUrl;
+  if (stemsRecord) updatePayload.stems_url = stemsRecord;
+
+  if (!Object.keys(updatePayload).length) {
+    return { audioUrl: args.audioUrlForDb, stemsUrl: stemsRecord };
+  }
+
+  const { error } = await supabase.from("loops").update(updatePayload).eq("id", args.loopId).eq("user_id", args.userId);
+  if (error) {
+    return { audioUrl: args.audioUrlForDb, stemsUrl: stemsRecord };
+  }
+
+  return { audioUrl, stemsUrl: stemsRecord };
+}
+
 export async function finalizePublicLoopRecord(args: {
   loopId: string;
   userId: string;
@@ -265,36 +299,22 @@ export async function finalizePublicLoopRecord(args: {
   audioUrlForDb: string | null;
   stemsUrlForDb: unknown;
 }): Promise<{ audioUrl: string | null; stemsUrl: Record<string, unknown> | null }> {
-  if (!args.isPublic) {
-    return {
-      audioUrl: args.audioUrlForDb,
-      stemsUrl:
-        args.stemsUrlForDb && typeof args.stemsUrlForDb === "object" ? (args.stemsUrlForDb as Record<string, unknown>) : null,
-    };
-  }
+  const result = await persistLoopAceAudioRecord({
+    loopId: args.loopId,
+    userId: args.userId,
+    audioUrlInput: args.audioUrlInput,
+    audioUrlForDb: args.audioUrlForDb,
+    stemsUrlForDb: args.stemsUrlForDb,
+  });
 
-  const stemsRecord =
-    args.stemsUrlForDb && typeof args.stemsUrlForDb === "object" ? (args.stemsUrlForDb as Record<string, unknown>) : null;
-  const taskId = extractAceTaskId(stemsRecord);
+  if (!args.isPublic) return result;
 
-  let audioUrl =
-    args.audioUrlForDb ||
-    (isHttpAudioUrl(args.audioUrlInput) ? args.audioUrlInput.trim() : null) ||
-    (taskId ? await resolveAceAudioUrl(taskId).catch(() => "") : "") ||
-    null;
+  const { error } = await supabase
+    .from("loops")
+    .update({ is_public: true })
+    .eq("id", args.loopId)
+    .eq("user_id", args.userId);
+  if (error) return result;
 
-  // Pas d'upload Storage — on persiste uniquement une URL HTTP externe (ACE).
-
-  const updatePayload: { is_public: boolean; audio_url?: string; stems_url?: Record<string, unknown> } = {
-    is_public: true,
-  };
-  if (audioUrl) updatePayload.audio_url = audioUrl;
-  if (stemsRecord) updatePayload.stems_url = stemsRecord;
-
-  const { error } = await supabase.from("loops").update(updatePayload).eq("id", args.loopId).eq("user_id", args.userId);
-  if (error) {
-    return { audioUrl: args.audioUrlForDb, stemsUrl: stemsRecord };
-  }
-
-  return { audioUrl, stemsUrl: stemsRecord };
+  return result;
 }

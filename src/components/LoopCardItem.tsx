@@ -13,6 +13,7 @@ import { playLoopInContext, usePlayerStore } from "@/stores/playerStore";
 import { useLocaleStore } from "@/stores/localeStore";
 import type { Loop } from "@/types/loop";
 import { generateBeat } from "@/lib/audioApi";
+import { getLoopAudioRetentionBadge } from "@/lib/loopAudioRetention";
 import { canDownloadStems } from "@/lib/planEntitlements";
 import { Bookmark, Check, Download, Globe, Info, Layers, Loader2, MoreHorizontal, Pause, Pencil, Play, RefreshCcw, Share2, Sparkles, X } from "lucide-react";
 
@@ -514,6 +515,15 @@ export function LoopCardItem({
               ) : (
                 <>
                   <div className="truncate text-sm font-semibold">{loop.name}</div>
+                  {(() => {
+                    const badge = getLoopAudioRetentionBadge(loop.createdAt, locale);
+                    if (!badge) return null;
+                    return (
+                      <span className="shrink-0 rounded-pk bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-300/90">
+                        {badge}
+                      </span>
+                    );
+                  })()}
                   <Button
                     variant="ghost"
                     size="sm"

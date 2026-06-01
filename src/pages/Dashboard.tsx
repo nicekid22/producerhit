@@ -1442,6 +1442,14 @@ export default function Dashboard() {
               const loop = await persistDraft(draft, audioUrl, value.engine, previewId);
               await migrateAudioCache(previewId, loop.id);
               created.push(loop);
+              if (value.meta?.sessionOnly) {
+                toast(
+                  locale === "fr"
+                    ? "Audio non lié au cloud — rejouable sur cet appareil seulement. Réessayez si besoin."
+                    : "Audio not linked to cloud — playable on this device only. Retry if needed.",
+                  { duration: 5000 },
+                );
+              }
               maybeAutoplayFirstReady(loop);
               trackClientEvent("generate_success", { loop_id: loop.id, mode, versions, plan, source: entrySource });
               consumeCredit();

@@ -1,10 +1,12 @@
 import { supabase } from "@/lib/supabaseClient";
 import { buildAceCaption, buildRichPrompt, buildSonautoTags, type GenerateParams } from "@/lib/promptBuilder";
 import { appendAceQualityToParamObj, resolveAceQualityFlags } from "@/lib/aceQuality";
+import { parseAceChatCompletionsResponse } from "@/lib/aceChatCompletions";
 
 export type AceMeta = {
   taskId?: string;
   task_id?: string;
+  sessionOnly?: boolean;
   prompt?: string;
   lyrics?: string;
   bpm?: number | null;
@@ -294,6 +296,9 @@ async function generateLoopAceDirect(
     if (!res.ok) throw new Error(`ACE API chat/completions failed (${res.status}): ${text}`);
 
     const json = JSON.parse(text) as unknown;
+    const parsedAudio = parseAceChatCompletionsResponse(json, baseUrl);
+    if (!parsedAudio.audioUrl) throw new Error("ACE API returned no audio");
+
     const choices = (json as { choices?: unknown } | null)?.choices;
     const firstChoice = Array.isArray(choices) ? choices[0] : null;
     const messageObj =
@@ -304,18 +309,6 @@ async function generateLoopAceDirect(
       messageObj && typeof messageObj === "object" && messageObj !== null && typeof (messageObj as { content?: unknown }).content === "string"
         ? ((messageObj as { content: string }).content as string)
         : "";
-    const audioArr =
-      messageObj && typeof messageObj === "object" && messageObj !== null && Array.isArray((messageObj as { audio?: unknown }).audio)
-        ? ((messageObj as { audio: unknown[] }).audio as unknown[])
-        : [];
-    const firstAudio = audioArr[0] && typeof audioArr[0] === "object" && audioArr[0] !== null ? (audioArr[0] as Record<string, unknown>) : null;
-    const audioUrlRaw =
-      firstAudio && typeof (firstAudio as { audio_url?: unknown }).audio_url === "object" && (firstAudio as { audio_url?: unknown }).audio_url !== null
-        ? ((firstAudio as { audio_url: { url?: unknown } }).audio_url.url as unknown)
-        : null;
-    const audioUrlStr = typeof audioUrlRaw === "string" ? audioUrlRaw : "";
-    const audioUrl = audioUrlStr.startsWith("data:") ? audioUrlStr : buildAceAudioUrl(baseUrl, audioUrlStr);
-    if (!audioUrl) throw new Error("ACE API returned no audio");
     const parsed = content ? parseChatContent(content) : {};
     const fallbackBpm = !options?.autoMeta && params.bpm > 0 ? params.bpm : null;
     const fallbackKeyScale = !options?.autoMeta && params.key && params.scale ? `${params.key} ${params.scale}` : "";
@@ -327,8 +320,10 @@ async function generateLoopAceDirect(
       keyScale: (parsed.keyScale || fallbackKeyScale || undefined) ?? undefined,
       timeSignature: (parsed.timeSignature || options?.timeSignature || undefined) ?? undefined,
       audioFormat,
+      ...(parsedAudio.taskId ? { taskId: parsedAudio.taskId } : {}),
+      sessionOnly: parsedAudio.sessionOnly,
     };
-    return { audioUrl, meta };
+    return { audioUrl: parsedAudio.audioUrl, meta };
   };
 
   const clampNumber = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
@@ -670,6 +665,7 @@ export async function generateLoopAce(
       ? ({
           ...(metaObj as unknown as AceMeta),
           taskId: taskIdFromMeta ? taskIdFromMeta.trim() : undefined,
+          sessionOnly: metaObj.sessionOnly === true,
         } as AceMeta)
       : null;
   return {
