@@ -5,7 +5,7 @@ import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import { usePlayerStore } from "@/stores/playerStore";
 import { Button } from "@/components/ui/Button";
 import { coverGradient, coverImageKey, coverImageUrl } from "@/lib/utils";
-import { resolvePlayableAudioUrl, shouldUseWebAudioGraph } from "@/lib/playableAudio";
+import { AUDIO_SKIP_WEB_AUDIO, resolvePlayableAudioUrl, shouldUseWebAudioGraph } from "@/lib/playableAudio";
 
 function formatTime(sec: number): string {
   if (!sec || !isFinite(sec) || sec < 0) return "0:00";
@@ -55,6 +55,8 @@ export function AudioPlayer() {
 
   const lastLoadedKeyRef = useRef<string | null>(null);
   const loadGenRef = useRef(0);
+  const graphAttachedRef = useRef(false);
+  const [audioMountKey, setAudioMountKey] = useState(0);
 
   const stopRaf = useCallback(() => {
     if (rafRef.current != null) {
@@ -74,38 +76,69 @@ export function AudioPlayer() {
     }
   }, []);
 
-  const ensureAudioGraph = useCallback((sourceUrl?: string) => {
-    if (skipVisualizer) return;
-    const audio = audioRef.current;
-    if (!audio) return;
-    if (audioCtxRef.current && analyserRef.current && mediaSourceRef.current) return;
-    if (audioGraphFailedRef.current) return;
-
-    const src = sourceUrl ?? audio.currentSrc ?? audio.src;
-    if (src && !shouldUseWebAudioGraph(src)) return;
-
+  const teardownAudioContext = useCallback(() => {
+    stopRaf();
     try {
-      const w = window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
-      const Ctor = w.AudioContext ?? w.webkitAudioContext ?? AudioContext;
-      const ctx = new Ctor();
-      const source = ctx.createMediaElementSource(audio);
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.85;
-      source.connect(analyser);
-      analyser.connect(ctx.destination);
-      audioCtxRef.current = ctx;
-      mediaSourceRef.current = source;
-      analyserRef.current = analyser;
-      freqDataRef.current = new Uint8Array(analyser.frequencyBinCount);
+      analyserRef.current?.disconnect();
     } catch {
-      audioGraphFailedRef.current = true;
-      audioCtxRef.current = null;
-      mediaSourceRef.current = null;
-      analyserRef.current = null;
-      freqDataRef.current = null;
+      /* ignore */
     }
-  }, [skipVisualizer]);
+    try {
+      mediaSourceRef.current?.disconnect();
+    } catch {
+      /* ignore */
+    }
+    const ctx = audioCtxRef.current;
+    audioCtxRef.current = null;
+    analyserRef.current = null;
+    mediaSourceRef.current = null;
+    freqDataRef.current = null;
+    graphAttachedRef.current = false;
+    audioGraphFailedRef.current = false;
+    if (ctx && typeof ctx.close === "function") void ctx.close().catch(() => undefined);
+  }, [stopRaf]);
+
+  const needsWebAudioGraph = useCallback(
+    (url: string) => {
+      const trimmed = url.trim();
+      if (!trimmed || skipVisualizer || AUDIO_SKIP_WEB_AUDIO) return false;
+      return shouldUseWebAudioGraph(trimmed);
+    },
+    [skipVisualizer],
+  );
+
+  const ensureAudioGraph = useCallback(
+    (sourceUrl?: string) => {
+      const audio = audioRef.current;
+      if (!audio) return;
+
+      const src = (sourceUrl ?? audio.currentSrc ?? audio.src).trim();
+      if (!src || !needsWebAudioGraph(src)) return;
+      if (audioGraphFailedRef.current) return;
+      if (audioCtxRef.current && analyserRef.current && mediaSourceRef.current) return;
+
+      try {
+        const w = window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
+        const Ctor = w.AudioContext ?? w.webkitAudioContext ?? AudioContext;
+        const ctx = new Ctor();
+        const source = ctx.createMediaElementSource(audio);
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 256;
+        analyser.smoothingTimeConstant = 0.85;
+        source.connect(analyser);
+        analyser.connect(ctx.destination);
+        audioCtxRef.current = ctx;
+        mediaSourceRef.current = source;
+        analyserRef.current = analyser;
+        freqDataRef.current = new Uint8Array(analyser.frequencyBinCount);
+        graphAttachedRef.current = true;
+      } catch {
+        audioGraphFailedRef.current = true;
+        teardownAudioContext();
+      }
+    },
+    [needsWebAudioGraph, teardownAudioContext],
+  );
 
   const drawVisualizer = useCallback(() => {
     const canvas = vizCanvasRef.current;
@@ -185,15 +218,12 @@ export function AudioPlayer() {
 
   useEffect(() => {
     const onPointerDownOnce = () => {
-      const audio = audioRef.current;
-      if (!audio) return;
-      ensureAudioGraph(audio.currentSrc || audio.src);
       const ctx = audioCtxRef.current;
       if (ctx && ctx.state === "suspended") void ctx.resume().catch(() => undefined);
     };
     window.addEventListener("pointerdown", onPointerDownOnce);
     return () => window.removeEventListener("pointerdown", onPointerDownOnce);
-  }, [ensureAudioGraph]);
+  }, []);
 
   useEffect(() => {
     setIsPlaying(storeIsPlaying);
@@ -394,6 +424,13 @@ export function AudioPlayer() {
 
       if (gen !== loadGenRef.current) return;
 
+      const useGraph = needsWebAudioGraph(playableUrl);
+      if (graphAttachedRef.current && !useGraph) {
+        teardownAudioContext();
+        setAudioMountKey((k) => k + 1);
+        return;
+      }
+
       const resolvedKey = `${currentBeat.id}:${playableUrl}`;
       if (lastLoadedKeyRef.current === resolvedKey && audio.src) {
         applyAudioCrossOrigin(playableUrl);
@@ -404,6 +441,7 @@ export function AudioPlayer() {
       audioGraphFailedRef.current = false;
       lastLoadedKeyRef.current = resolvedKey;
       applyAudioCrossOrigin(playableUrl);
+      ensureAudioGraph(playableUrl);
       audio.src = playableUrl;
       audio.load();
       audio.muted = false;
@@ -436,13 +474,17 @@ export function AudioPlayer() {
     })();
   }, [
     applyAudioCrossOrigin,
+    audioMountKey,
     currentBeat?.id,
     currentBeat?.audioUrl,
+    ensureAudioGraph,
+    needsWebAudioGraph,
     setCurrentTimeStore,
     setDurationStore,
     setPlaying,
     setProgressStore,
     storeIsPlaying,
+    teardownAudioContext,
     tryPlayAudio,
     volume,
   ]);
@@ -536,25 +578,9 @@ export function AudioPlayer() {
 
   useEffect(() => {
     return () => {
-      stopRaf();
-      try {
-        analyserRef.current?.disconnect();
-      } catch (e) {
-        void e;
-      }
-      try {
-        mediaSourceRef.current?.disconnect();
-      } catch (e) {
-        void e;
-      }
-      const ctx = audioCtxRef.current;
-      audioCtxRef.current = null;
-      analyserRef.current = null;
-      mediaSourceRef.current = null;
-      freqDataRef.current = null;
-      if (ctx && typeof ctx.close === "function") void ctx.close().catch(() => undefined);
+      teardownAudioContext();
     };
-  }, [stopRaf]);
+  }, [teardownAudioContext]);
 
   const coverBg = currentBeat ? coverGradient(currentBeat) : "";
   const coverUrl = currentBeat ? coverImageUrl(currentBeat) : "";
@@ -743,7 +769,7 @@ export function AudioPlayer() {
       </div>
     </div>
       ) : null}
-      <audio ref={audioRef} id="pk-audio" preload="metadata" playsInline className="hidden" aria-hidden />
+      <audio key={audioMountKey} ref={audioRef} id="pk-audio" preload="metadata" playsInline className="hidden" aria-hidden />
     </>
   );
 }

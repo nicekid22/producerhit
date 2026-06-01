@@ -86,7 +86,7 @@ export async function fetchAudioAsBlobUrl(sourceUrl: string, cacheKey: string): 
     return trimmed;
   }
 
-  const res = await fetch(trimmed, { mode: "cors", credentials: "omit" });
+  const res = await fetch(trimmed, { mode: "cors", credentials: "omit", referrerPolicy: "no-referrer" });
   if (!res.ok) throw new Error(`fetch ${res.status}`);
   const blob = await res.blob();
   if (!blob.size) throw new Error("empty blob");
