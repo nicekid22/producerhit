@@ -18,9 +18,10 @@ import { AudioPlayer } from "@/components/AudioPlayer";
 import { useLocaleStore } from "@/stores/localeStore";
 import { BLOG_POSTS, getBlogPostBySlug } from "@/content/blog";
 import { PLAN_LIMITS } from "@/lib/planLimits";
-import { getSeoPageByPath, SEO_PAGE_PATHS } from "@/lib/seoPages";
+import { getSeoPageByPath, SEO_PAGE_PATHS, getSeoPageCanonicalPath, getSeoPageLocaleForPath } from "@/lib/seoPages";
 import { getComparisonByPath, COMPARISON_PAGE_PATHS, getComparisonCanonicalPath, getComparisonLocaleForPath } from "@/lib/seoComparisons";
 import { GrowthBootstrap } from "@/components/GrowthBootstrap";
+import { PlayerDockBootstrap } from "@/components/PlayerDockBootstrap";
 
 const ExplorePage = lazy(() => import("@/pages/Explore"));
 const PublicLoopPage = lazy(() => import("@/pages/PublicLoop"));
@@ -110,7 +111,8 @@ function SeoBootstrap() {
     const seoPage = getSeoPageByPath(pathname);
     const comparisonPage = getComparisonByPath(pathname);
     const comparisonLocale = comparisonPage ? getComparisonLocaleForPath(pathname) : locale;
-    const contentLocale = comparisonPage ? comparisonLocale : locale;
+    const seoPageLocale = seoPage ? getSeoPageLocaleForPath(pathname) : locale;
+    const contentLocale = comparisonPage ? comparisonLocale : seoPage ? seoPageLocale : locale;
 
     const slugKey = (() => {
       if (comparisonPage) return comparisonPage.slugKey;
@@ -217,6 +219,10 @@ function SeoBootstrap() {
         const pageLocale = getComparisonLocaleForPath(pathname);
         return `${origin}${getComparisonCanonicalPath(comparisonPage, pageLocale)}`;
       }
+      if (seoPage) {
+        const pageLocale = getSeoPageLocaleForPath(pathname);
+        return `${origin}${getSeoPageCanonicalPath(seoPage, pageLocale)}`;
+      }
       if (slugKey === "explore") return `${origin}/community`;
       return canonicalUrl;
     })();
@@ -250,6 +256,10 @@ function SeoBootstrap() {
       setLink("alternate", `${origin}${comparisonPage.path}`, { hreflang: "en" });
       setLink("alternate", `${origin}${comparisonPage.pathFr}`, { hreflang: "fr" });
       setLink("alternate", `${origin}${comparisonPage.path}`, { hreflang: "x-default" });
+    } else if (seoPage) {
+      setLink("alternate", `${origin}${seoPage.path}`, { hreflang: "en" });
+      setLink("alternate", `${origin}${seoPage.pathFr}`, { hreflang: "fr" });
+      setLink("alternate", `${origin}${seoPage.path}`, { hreflang: "x-default" });
     } else {
       setLink("alternate", `${origin}${pathname}?lang=en`, { hreflang: "en" });
       setLink("alternate", `${origin}${pathname}?lang=fr`, { hreflang: "fr" });
@@ -468,6 +478,7 @@ export default function App() {
             <ReferralReferrerWatcher />
             <SeoBootstrap />
             <GrowthBootstrap />
+            <PlayerDockBootstrap />
             <RouteFade>
               <Suspense fallback={<PageLoader />}>
                 <Routes>

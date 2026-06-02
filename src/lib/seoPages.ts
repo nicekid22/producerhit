@@ -1,5 +1,6 @@
 export type SeoPageConfig = {
   path: string;
+  pathFr: string;
   slugKey: string;
   titleEn: string;
   titleFr: string;
@@ -19,6 +20,7 @@ export type SeoPageConfig = {
 const GENRE_PAGES: SeoPageConfig[] = [
   {
     path: "/ai-trap-beat-generator",
+    pathFr: "/generateur-trap-ia",
     slugKey: "ai-trap-beat-generator",
     titleEn: "AI Trap Beat Generator — Dark 808 Type Beats Online | ProducerHit",
     titleFr: "Générateur trap IA — Type beats 808 en ligne | ProducerHit",
@@ -36,6 +38,7 @@ const GENRE_PAGES: SeoPageConfig[] = [
   },
   {
     path: "/ai-drill-beat-generator",
+    pathFr: "/generateur-drill-ia",
     slugKey: "ai-drill-beat-generator",
     titleEn: "AI Drill Beat Generator — UK & NY Drill Online | ProducerHit",
     titleFr: "Générateur drill IA — UK & NY drill en ligne | ProducerHit",
@@ -53,6 +56,7 @@ const GENRE_PAGES: SeoPageConfig[] = [
   },
   {
     path: "/ai-rnb-beat-generator",
+    pathFr: "/generateur-rnb-ia",
     slugKey: "ai-rnb-beat-generator",
     titleEn: "AI R&B Beat Generator — Trapsoul & 90s R&B Online | ProducerHit",
     titleFr: "Générateur R&B IA — Trapsoul & 90s R&B en ligne | ProducerHit",
@@ -70,6 +74,7 @@ const GENRE_PAGES: SeoPageConfig[] = [
   },
   {
     path: "/ai-afrobeats-generator",
+    pathFr: "/generateur-afrobeats-ia",
     slugKey: "ai-afrobeats-generator",
     titleEn: "AI Afrobeats Generator — Summer Hits & Grooves Online | ProducerHit",
     titleFr: "Générateur Afrobeats IA — Hits d’été en ligne | ProducerHit",
@@ -87,6 +92,7 @@ const GENRE_PAGES: SeoPageConfig[] = [
   },
   {
     path: "/ai-hip-hop-beat-generator",
+    pathFr: "/generateur-hip-hop-ia",
     slugKey: "ai-hip-hop-beat-generator",
     titleEn: "AI Hip Hop Beat Generator — Boom Bap & Modern Beats | ProducerHit",
     titleFr: "Générateur hip-hop IA — Boom bap & beats modernes | ProducerHit",
@@ -104,6 +110,7 @@ const GENRE_PAGES: SeoPageConfig[] = [
   },
   {
     path: "/ai-pop-beat-generator",
+    pathFr: "/generateur-pop-ia",
     slugKey: "ai-pop-beat-generator",
     titleEn: "AI Pop Beat Generator — Catchy Hooks & Radio-Ready | ProducerHit",
     titleFr: "Générateur pop IA — Hooks catchy & radio-ready | ProducerHit",
@@ -124,6 +131,7 @@ const GENRE_PAGES: SeoPageConfig[] = [
 const CORE_PAGES: SeoPageConfig[] = [
   {
     path: "/ai-beat-generator",
+    pathFr: "/generateur-beats-ia",
     slugKey: "ai-beat-generator",
     titleEn: "AI Beat Generator — Create Type Beats Online | ProducerHit",
     titleFr: "Générateur de beats IA — Type beats en ligne | ProducerHit",
@@ -141,6 +149,7 @@ const CORE_PAGES: SeoPageConfig[] = [
   },
   {
     path: "/ai-music-generator",
+    pathFr: "/generateur-musique-ia",
     slugKey: "ai-music-generator",
     titleEn: "AI Music Generator — Generate Songs & Beats | ProducerHit",
     titleFr: "Générateur de musique IA — Songs & beats | ProducerHit",
@@ -158,6 +167,7 @@ const CORE_PAGES: SeoPageConfig[] = [
   },
   {
     path: "/type-beat-generator-ai",
+    pathFr: "/generateur-type-beat-ia",
     slugKey: "type-beat-generator-ai",
     titleEn: "Type Beat Generator AI — Producer-Ready Beats | ProducerHit",
     titleFr: "Type beat generator IA — Beats pro | ProducerHit",
@@ -175,6 +185,7 @@ const CORE_PAGES: SeoPageConfig[] = [
   },
   {
     path: "/generate-beats-online-free",
+    pathFr: "/generer-beats-gratuit",
     slugKey: "generate-beats-online-free",
     titleEn: "Generate Beats Online Free — AI Beat Generator | ProducerHit",
     titleFr: "Générer des beats en ligne gratuit — IA | ProducerHit",
@@ -194,12 +205,44 @@ const CORE_PAGES: SeoPageConfig[] = [
 
 export const SEO_PAGES: SeoPageConfig[] = [...CORE_PAGES, ...GENRE_PAGES];
 
-export const SEO_PAGE_PATHS = SEO_PAGES.map((p) => p.path);
+export const SEO_PAGE_PATHS = SEO_PAGES.flatMap((p) => [p.path, p.pathFr]);
 
 export function getSeoPageByPath(pathname: string): SeoPageConfig | null {
-  return SEO_PAGES.find((p) => p.path === pathname) ?? null;
+  return SEO_PAGES.find((p) => p.path === pathname || p.pathFr === pathname) ?? null;
+}
+
+export function getSeoPageLocaleForPath(pathname: string): "en" | "fr" {
+  const page = getSeoPageByPath(pathname);
+  if (!page) return "en";
+  return page.pathFr === pathname ? "fr" : "en";
+}
+
+export function getSeoPageCanonicalPath(page: SeoPageConfig, locale: "en" | "fr"): string {
+  return locale === "fr" ? page.pathFr : page.path;
 }
 
 export function getSeoPageBySlugKey(slugKey: string): SeoPageConfig | null {
   return SEO_PAGES.find((p) => p.slugKey === slugKey) ?? null;
+}
+
+const GENRE_SEO_HINTS: Array<{ match: RegExp; slugKey: string }> = [
+  { match: /trap/i, slugKey: "ai-trap-beat-generator" },
+  { match: /drill/i, slugKey: "ai-drill-beat-generator" },
+  { match: /r&b|rnb|trapsoul|neo-?soul/i, slugKey: "ai-rnb-beat-generator" },
+  { match: /afro|amapiano|afrobeats/i, slugKey: "ai-afrobeats-generator" },
+  { match: /hip[\s-]?hop|rap|boom bap/i, slugKey: "ai-hip-hop-beat-generator" },
+  { match: /pop|hyperpop|synth pop/i, slugKey: "ai-pop-beat-generator" },
+];
+
+/** Lien SEO genre depuis le libellé genre d’un track public. */
+export function getGenreSeoLink(genre: string | null | undefined, locale: "en" | "fr"): { path: string; label: string } | null {
+  const g = (genre ?? "").trim();
+  if (!g) return null;
+  const hint = GENRE_SEO_HINTS.find((h) => h.match.test(g));
+  if (!hint) return null;
+  const page = getSeoPageBySlugKey(hint.slugKey);
+  if (!page) return null;
+  const path = locale === "fr" ? page.pathFr : page.path;
+  const label = locale === "fr" ? page.h1Fr : page.h1En;
+  return { path, label };
 }

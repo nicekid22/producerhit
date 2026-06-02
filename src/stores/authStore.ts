@@ -8,6 +8,7 @@ import {
   type UserProfileRow,
 } from "@/lib/profileBootstrap";
 import { clearReferralBonusTracking, notifyReferrerReferralBonusIfIncreased } from "@/lib/referralReferrerLoot";
+import { resetClientSessionStores } from "@/lib/resetClientSession";
 import { useLocaleStore } from "@/stores/localeStore";
 
 type AuthStatus = "idle" | "loading" | "ready";
@@ -28,11 +29,48 @@ type AuthState = {
   setPassword: (password: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
+  /** Après OAuth Google / liaison — session + sync profil garanti (évite quota bloqué). */
+  completeAuthCallbackSession: (session: Session) => Promise<UserProfileRow | null>;
 };
 
 let authUnsub: (() => void) | null = null;
 let profileSyncToken = 0;
 let authInitDone = false;
+const PROFILE_SYNC_TIMEOUT_MS = 12_000;
+
+function authUserId(): string | null {
+  return useAuthStore.getState().user?.id ?? null;
+}
+
+function isSessionStillActive(session: Session | null): boolean {
+  const uid = session?.user?.id;
+  if (!uid) return false;
+  return authUserId() === uid;
+}
+
+function abortStaleProfileSync(token: number): boolean {
+  if (token === profileSyncToken) return false;
+  if (!authUserId()) {
+    useAuthStore.setState({ profileReady: true, profile: null, lastError: null });
+  }
+  return true;
+}
+
+async function loadProfileWithTimeout(session: Session): Promise<UserProfileRow> {
+  const userId = session.user.id;
+  const email = session.user.email ?? null;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      loadUserProfileWithRetry(userId, email),
+      new Promise<UserProfileRow>((_, reject) => {
+        timer = setTimeout(() => reject(new Error("profile_load_timeout")), PROFILE_SYNC_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
 
 function authCallbackUrl(nextPath = "/dashboard"): string {
   return `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`;
@@ -40,7 +78,9 @@ function authCallbackUrl(nextPath = "/dashboard"): string {
 
 /** Never call supabase.auth.* synchronously inside onAuthStateChange — defer to avoid deadlocks. */
 function scheduleProfileSync(session: Session): void {
+  const userId = session.user.id;
   window.setTimeout(() => {
+    if (authUserId() !== userId) return;
     void syncProfileForSession(session);
   }, 0);
 }
@@ -65,19 +105,19 @@ async function syncProfileForSession(
     useAuthStore.setState({ profileReady: true, profile: null, lastError: null });
     return null;
   }
+  if (!isSessionStillActive(session)) return null;
 
   const token = ++profileSyncToken;
   const hasProfile = !!useAuthStore.getState().profile;
   if (options?.soft && hasProfile) {
     useAuthStore.setState({ lastError: null });
-  } else {
+  } else if (isSessionStillActive(session)) {
     useAuthStore.setState({ profileReady: false, lastError: null });
   }
 
-  const load = () => loadUserProfileWithRetry(session.user.id, session.user.email ?? null);
-
   const commitProfile = (row: UserProfileRow): UserProfileRow | null => {
-    if (token !== profileSyncToken) return row;
+    if (abortStaleProfileSync(token)) return row;
+    if (!isSessionStillActive(session)) return null;
     const previousBonus = useAuthStore.getState().profile?.referral_bonus;
     useAuthStore.setState({ profile: row, profileReady: true, lastError: null });
     notifyReferrerReferralBonusIfIncreased(
@@ -90,22 +130,25 @@ async function syncProfileForSession(
   };
 
   try {
-    const row = await load();
+    const row = await loadProfileWithTimeout(session);
     return commitProfile(row);
   } catch (err) {
     const message = extractErrorMessage(err);
-    if (token !== profileSyncToken) return null;
+    if (abortStaleProfileSync(token)) return null;
+    if (!isSessionStillActive(session)) return null;
 
-    if (isBenignProfileSyncError(message)) {
+    if (isBenignProfileSyncError(message) || message === "profile_load_timeout") {
       await new Promise((r) => window.setTimeout(r, 700));
-      if (token !== profileSyncToken) return null;
+      if (abortStaleProfileSync(token)) return null;
+      if (!isSessionStillActive(session)) return null;
       try {
-        const row = await load();
+        const row = await loadProfileWithTimeout(session);
         return commitProfile(row);
       } catch (retryErr) {
-        if (token !== profileSyncToken) return null;
+        if (abortStaleProfileSync(token)) return null;
+        if (!isSessionStillActive(session)) return null;
         const retryMessage = extractErrorMessage(retryErr);
-        if (isBenignProfileSyncError(retryMessage)) {
+        if (isBenignProfileSyncError(retryMessage) || retryMessage === "profile_load_timeout") {
           useAuthStore.setState({ profileReady: true, lastError: null });
           return null;
         }
@@ -151,6 +194,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (!user) return null;
     const { data } = await supabase.auth.getSession();
     if (!data.session?.access_token) return null;
+    if (get().user?.id !== user.id) return null;
     set({ session: data.session, user: data.session.user });
     return syncProfileForSession(data.session, { soft: true });
   },
@@ -163,15 +207,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (!authUnsub) {
       const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
         if (event === "TOKEN_REFRESHED" && session) {
-          set({ session });
+          if (authUserId()) set({ session });
           return;
         }
-        set({ session, user: session?.user ?? null });
         if (event === "SIGNED_OUT") {
           clearAuthState();
           return;
         }
         if (!session?.user) return;
+        set({ session, user: session.user });
         if (event === "INITIAL_SESSION" || event === "SIGNED_IN" || event === "USER_UPDATED") {
           scheduleProfileSync(session);
         }
@@ -198,7 +242,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
     if (data.session) {
       set({ session: data.session, user: data.session.user });
-      await syncProfileForSession(data.session);
+      scheduleProfileSync(data.session);
     }
   },
   signUp: async (email, password) => {
@@ -217,7 +261,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const needsEmailConfirm = !data.session;
     if (data.session) {
       set({ session: data.session, user: data.session.user });
-      await syncProfileForSession(data.session);
+      scheduleProfileSync(data.session);
     }
     return { needsEmailConfirm };
   },
@@ -282,10 +326,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
   signOut: async () => {
     clearAuthState();
-    const { error } = await supabase.auth.signOut();
+    await resetClientSessionStores();
+    const { error } = await supabase.auth.signOut({ scope: "local" });
     if (error) {
       set({ lastError: error.message });
       throw error;
     }
+  },
+  completeAuthCallbackSession: async (session) => {
+    set({ session, user: session.user, lastError: null });
+    return syncProfileForSession(session);
   },
 }));

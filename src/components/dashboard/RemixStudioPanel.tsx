@@ -17,6 +17,16 @@ type Props = {
   plan?: string;
   externalRemix?: PendingRemix | null;
   onExternalRemixConsumed?: () => void;
+  mobileDock?: boolean;
+  onMobileDockChange?: (
+    state: {
+      canSubmit: boolean;
+      generating: boolean;
+      submit: () => void;
+      idleLabel: string;
+      generatingLabel: string;
+    } | null,
+  ) => void;
   onGenerate: (input: {
     audioFile: File;
     prompt: string;
@@ -38,6 +48,8 @@ export function RemixStudioPanel({
   plan,
   externalRemix,
   onExternalRemixConsumed,
+  mobileDock = false,
+  onMobileDockChange,
   onGenerate,
 }: Props) {
   const isFr = locale === "fr";
@@ -142,8 +154,49 @@ export function RemixStudioPanel({
 
   const canSubmit = !!audioFile && prompt.trim().length > 3 && remaining > 0 && !generating;
 
+  const runGenerate = useCallback(() => {
+    if (!audioFile || !canSubmit) return;
+    onGenerate({
+      audioFile,
+      prompt: prompt.trim(),
+      lyrics: lyrics.trim(),
+      taskType,
+      coverStrength,
+      durationSec: durationAuto ? null : durationSec,
+      bpm: bpmAuto ? null : bpm,
+      instrumental,
+      sourceLoopName: sourceLabel,
+    });
+  }, [
+    audioFile,
+    bpm,
+    bpmAuto,
+    canSubmit,
+    coverStrength,
+    durationAuto,
+    durationSec,
+    instrumental,
+    lyrics,
+    onGenerate,
+    prompt,
+    sourceLabel,
+    taskType,
+  ]);
+
+  useEffect(() => {
+    if (!mobileDock || !onMobileDockChange) return;
+    onMobileDockChange({
+      canSubmit,
+      generating,
+      submit: runGenerate,
+      idleLabel: isFr ? "Lancer le remix" : "Run remix",
+      generatingLabel: isFr ? "Remix en cours…" : "Remixing…",
+    });
+    return () => onMobileDockChange(null);
+  }, [canSubmit, generating, isFr, mobileDock, onMobileDockChange, runGenerate]);
+
   return (
-    <div className="space-y-4 p-4 pb-6">
+    <div className={cn("space-y-4", mobileDock ? "p-3 pb-2" : "p-4 pb-6")}>
       <div className="rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-cyan-500/10 via-transparent to-violet-500/10 p-3 md:p-4">
         <div className="flex items-center gap-2 text-sm font-semibold text-white">
           <Sparkles className="h-4 w-4 shrink-0 text-cyan-300" />
@@ -329,45 +382,29 @@ export function RemixStudioPanel({
         </div>
       </div>
 
-      <div className="space-y-2 border-t border-white/10 pt-4">
-        {remaining <= 0 ? (
-          <p className="text-xs text-amber-200/90">
-            {isFr ? "Plus de crédits ce mois-ci — upgrade ton plan pour remixer." : "No credits left this month — upgrade to remix."}
-          </p>
-        ) : !audioFile ? (
-          <p className="text-xs text-white/45">{isFr ? "Ajoute un audio pour activer le remix." : "Add audio to enable remix."}</p>
-        ) : prompt.trim().length <= 3 ? (
-          <p className="text-xs text-white/45">{isFr ? "Décris le style du remix (4+ caractères)." : "Describe the remix style (4+ chars)."}</p>
-        ) : (
-          <p className="text-xs text-white/45">
-            {isFr ? "1 crédit · résultat dans ta bibliothèque" : "1 credit · saved to your library"}
-            {plan ? ` · ${plan}` : ""}
-          </p>
-        )}
+      {!mobileDock ? (
+        <div className="space-y-2 border-t border-white/10 pt-4">
+          {remaining <= 0 ? (
+            <p className="text-xs text-amber-200/90">
+              {isFr ? "Plus de crédits ce mois-ci — upgrade ton plan pour remixer." : "No credits left this month — upgrade to remix."}
+            </p>
+          ) : !audioFile ? (
+            <p className="text-xs text-white/45">{isFr ? "Ajoute un audio pour activer le remix." : "Add audio to enable remix."}</p>
+          ) : prompt.trim().length <= 3 ? (
+            <p className="text-xs text-white/45">{isFr ? "Décris le style du remix (4+ caractères)." : "Describe the remix style (4+ chars)."}</p>
+          ) : (
+            <p className="text-xs text-white/45">
+              {isFr ? "1 crédit · résultat dans ta bibliothèque" : "1 credit · saved to your library"}
+              {plan ? ` · ${plan}` : ""}
+            </p>
+          )}
 
-        <Button
-          variant="primary"
-          className="w-full"
-          disabled={!canSubmit}
-          onClick={() => {
-            if (!audioFile) return;
-            onGenerate({
-              audioFile,
-              prompt: prompt.trim(),
-              lyrics: lyrics.trim(),
-              taskType,
-              coverStrength,
-              durationSec: durationAuto ? null : durationSec,
-              bpm: bpmAuto ? null : bpm,
-              instrumental,
-              sourceLoopName: sourceLabel,
-            });
-          }}
-        >
-          {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-          {generating ? (isFr ? "Remix en cours…" : "Remixing…") : isFr ? "Lancer le remix" : "Run remix"}
-        </Button>
-      </div>
+          <Button variant="primary" className="w-full" disabled={!canSubmit} onClick={runGenerate}>
+            {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+            {generating ? (isFr ? "Remix en cours…" : "Remixing…") : isFr ? "Lancer le remix" : "Run remix"}
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -77,7 +77,7 @@ async function fetchPublicLoopIds() {
     return [];
   }
 
-  const endpoint = `${url.replace(/\/$/, "")}/rest/v1/loops?select=id,updated_at,created_at&is_public=eq.true&order=created_at.desc&limit=500`;
+  const endpoint = `${url.replace(/\/$/, "")}/rest/v1/loops?select=id,updated_at,created_at,audio_url&is_public=eq.true&audio_url=not.is.null&order=created_at.desc&limit=500`;
   const res = await fetch(endpoint, {
     headers: {
       apikey: key,

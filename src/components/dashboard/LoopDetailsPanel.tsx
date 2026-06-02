@@ -1,7 +1,10 @@
 import toast from "react-hot-toast";
+import { useMemo } from "react";
 import { Clock, Copy, Gauge, Info, KeyRound, Loader2, Sigma } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { coverGradient, coverImageKey, coverImageUrl } from "@/lib/utils";
+import { CoverMedia } from "@/components/CoverMedia";
+import { coverImageKeyFromLoop, resolveCoverImageUrl } from "@/lib/coverArt";
+import { cn, coverGradient } from "@/lib/utils";
 import type { Loop } from "@/types/loop";
 
 function formatTime(sec: number) {
@@ -20,6 +23,7 @@ export function LoopDetailsPanel({
   onSaveTitle,
   durationSec,
   className,
+  compact = false,
 }: {
   loop: Loop;
   locale: "fr" | "en";
@@ -29,42 +33,31 @@ export function LoopDetailsPanel({
   onSaveTitle: () => void;
   durationSec?: number | null;
   className?: string;
+  /** Mobile bottom sheet — tighter spacing, taller lyrics area */
+  compact?: boolean;
 }) {
   const isFr = locale === "fr";
   const dur =
     (loop.details?.duration ?? durationSec) as number | null | undefined;
   const durationLabel =
     typeof dur === "number" && isFinite(dur) && dur > 0 ? formatTime(dur) : "—";
+  const coverUrl = useMemo(() => resolveCoverImageUrl(loop, 768), [loop]);
+  const coverKey = useMemo(() => coverImageKeyFromLoop(loop), [loop]);
 
   return (
     <div className={className}>
-      <div className="mt-4 overflow-hidden rounded-pk border border-pk-border bg-white/5">
+      <div className={cn("overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.04]", compact ? "mt-1" : "mt-4")}>
         <div
-          className="relative aspect-square w-full bg-cover bg-center"
+          className={cn("relative w-full", compact ? "aspect-[4/3] max-h-[220px]" : "aspect-square")}
           style={{ backgroundImage: coverGradient(loop) }}
           aria-hidden
         >
-          <img
-            key={coverImageKey(loop)}
-            src={coverImageUrl(loop)}
-            alt=""
-            className="absolute inset-0 h-full w-full object-contain"
-            loading="lazy"
-            decoding="async"
-            referrerPolicy="no-referrer"
-            style={{ display: "block", opacity: 0 }}
-            onLoad={(e) => {
-              e.currentTarget.style.opacity = "1";
-            }}
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
-            }}
-          />
+          <CoverMedia loop={loop} coverUrl={coverUrl} coverKey={coverKey} imageClassName="object-contain" />
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-        <div className="rounded-pk border border-pk-border bg-white/5 p-2">
+      <div className={cn("grid grid-cols-2 gap-2 text-xs", compact ? "mt-3" : "mt-4")}>
+        <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-2.5">
           <div className="flex items-center gap-1 text-pk-muted">
             <Gauge className="h-3.5 w-3.5" />
             BPM
@@ -73,21 +66,21 @@ export function LoopDetailsPanel({
             {typeof loop.details?.bpm === "number" && loop.details.bpm > 0 ? loop.details.bpm : "—"}
           </div>
         </div>
-        <div className="rounded-pk border border-pk-border bg-white/5 p-2">
+        <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-2.5">
           <div className="flex items-center gap-1 text-pk-muted">
             <Clock className="h-3.5 w-3.5" />
             {isFr ? "Durée" : "Duration"}
           </div>
           <div className="mt-1 font-semibold text-pk-text">{durationLabel}</div>
         </div>
-        <div className="rounded-pk border border-pk-border bg-white/5 p-2">
+        <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-2.5">
           <div className="flex items-center gap-1 text-pk-muted">
             <KeyRound className="h-3.5 w-3.5" />
             {isFr ? "Tonalité" : "Key"}
           </div>
           <div className="mt-1 font-semibold text-pk-text">{loop.details?.keyScale || "—"}</div>
         </div>
-        <div className="rounded-pk border border-pk-border bg-white/5 p-2">
+        <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-2.5">
           <div className="flex items-center gap-1 text-pk-muted">
             <Sigma className="h-3.5 w-3.5" />
             {isFr ? "Signature" : "Time Sig"}
@@ -101,7 +94,7 @@ export function LoopDetailsPanel({
           <Info className="h-4 w-4 text-pk-muted" />
           {isFr ? "Détails" : "Details"}
         </div>
-        <div className="mt-2 rounded-pk border border-pk-border bg-white/5 p-3 text-xs text-pk-text">
+        <div className="mt-2 rounded-xl border border-white/[0.08] bg-white/[0.04] p-3 text-xs text-pk-text">
           {loop.details?.caption || loop.prompt || "—"}
         </div>
       </div>
@@ -130,7 +123,12 @@ export function LoopDetailsPanel({
             <Copy className="h-4 w-4" />
           </Button>
         </div>
-        <pre className="mt-2 max-h-40 overflow-y-auto whitespace-pre-wrap rounded-pk border border-pk-border bg-white/5 p-3 text-xs text-pk-text">
+        <pre
+          className={cn(
+            "mt-2 overflow-y-auto whitespace-pre-wrap rounded-xl border border-white/[0.08] bg-white/[0.04] p-3 text-xs text-pk-text",
+            compact ? "max-h-52" : "max-h-40",
+          )}
+        >
           {loop.details?.lyrics?.trim() ? loop.details.lyrics.trim() : "—"}
         </pre>
       </div>

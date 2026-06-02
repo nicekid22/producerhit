@@ -31,7 +31,8 @@ export function AppShell({
   return (
     <div
       className={[
-        "relative text-pk-text md:h-screen md:overflow-hidden",
+        "pk-app-shell relative text-pk-text md:h-screen md:overflow-hidden",
+        mobileLayoutV2 && "pk-mobile-app-shell",
         isPrism ? "pk-prism-stage pk-prism-dashboard bg-[#050508]" : "bg-pk-bg",
       ].join(" ")}
       style={
@@ -48,6 +49,7 @@ export function AppShell({
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_42%,rgba(0,0,0,0.42)_100%)]" aria-hidden />
             <div className="pk-prism-fx-orb absolute -top-48 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-[rgba(157,124,255,0.10)] blur-3xl" aria-hidden />
             <div className="pk-prism-fx-orb absolute -bottom-56 left-12 h-[520px] w-[520px] rounded-full bg-[rgba(103,195,255,0.06)] blur-3xl" aria-hidden />
+            <div className="pk-prism-grid hidden md:block" aria-hidden />
           </>
         ) : (
           <>
@@ -58,12 +60,24 @@ export function AppShell({
         )}
       </div>
 
-      <div className="relative mx-auto min-h-screen min-h-[100svh] max-w-[1600px] md:h-screen">
-        <div className="flex min-h-screen min-h-[100svh] flex-col px-3 py-3 md:h-screen md:min-h-0 md:flex-row md:gap-3 md:overflow-hidden">
-          <div className="relative z-10 hidden w-[60px] md:flex md:flex-col md:overflow-hidden">
+      <div
+        className={cn(
+          "relative mx-auto max-w-[1600px]",
+          mobileLayoutV2
+            ? "flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden md:h-screen md:max-h-none"
+            : "min-h-screen min-h-[100svh] md:h-screen",
+        )}
+      >
+        <div
+          className={cn(
+            "flex flex-col px-3 py-3 md:h-screen md:min-h-0 md:flex-row md:gap-3 md:overflow-hidden",
+            mobileLayoutV2 ? "min-h-0 flex-1 overflow-hidden" : "min-h-screen min-h-[100svh]",
+          )}
+        >
+          <div className="relative z-10 hidden w-[68px] md:flex md:flex-col md:overflow-hidden">
             <div
               className={[
-                "h-full overflow-hidden rounded-2xl backdrop-blur",
+                "pk-studio-rail h-full overflow-hidden rounded-2xl backdrop-blur",
                 isPrism ? "pk-prism-glass border border-white/10" : "border border-pk-border/70 bg-pk-panel/70",
               ].join(" ")}
             >
@@ -72,24 +86,31 @@ export function AppShell({
           </div>
 
           {variant === "split" ? (
-            <div className="flex flex-1 flex-col gap-3 md:min-h-0 md:flex-row md:overflow-hidden">
+            <div
+              className={cn(
+                "flex flex-1 flex-col gap-3 md:min-h-0 md:flex-row md:overflow-hidden",
+                mobileLayoutV2 && cn("min-h-0 overflow-hidden", dockPb),
+              )}
+            >
               {mobileLayoutV2 && mobileTabs ? (
                 <div
                   className={cn(
-                    "md:hidden rounded-2xl border px-4 py-3 backdrop-blur",
-                    isPrism ? "pk-prism-glass border-white/10 bg-white/[0.03]" : "border-pk-border/70 bg-pk-panel/70",
+                    "flex-shrink-0 md:hidden rounded-2xl border px-3 py-2.5 backdrop-blur",
+                    isPrism ? "pk-prism-glass border-white/10 bg-white/[0.04]" : "border-pk-border/70 bg-pk-panel/70",
                   )}
                 >
-                  {isPrism ? <BrandLogo /> : <div className="text-sm font-semibold">ProducerHit</div>}
-                  <div className="mt-3">{mobileTabs}</div>
+                  <div className="flex items-center justify-between gap-3">
+                    {isPrism ? <BrandLogo className="scale-90 origin-left" /> : <div className="text-sm font-semibold">ProducerHit</div>}
+                  </div>
+                  <div className="mt-2.5">{mobileTabs}</div>
                 </div>
               ) : null}
 
               <div
                 className={cn(
-                  "w-full overflow-visible rounded-2xl backdrop-blur md:w-[420px] md:min-h-0 md:overflow-hidden",
-                  isPrism ? "pk-prism-glass border border-white/10" : "border border-pk-border/70 bg-pk-panel/70",
-                  dockPb,
+                  "w-full overflow-visible rounded-2xl backdrop-blur md:w-[440px] md:min-h-0 md:overflow-hidden",
+                  isPrism ? "pk-prism-glass pk-studio-console border border-white/10" : "border border-pk-border/70 bg-pk-panel/70",
+                  mobileLayoutV2 ? "flex min-h-0 flex-1 flex-col overflow-hidden" : dockPb,
                   hideLeftOnMobile && "hidden md:flex md:flex-col",
                 )}
               >
@@ -115,8 +136,10 @@ export function AppShell({
               <div
                 className={cn(
                   "min-w-0 flex-1 overflow-visible rounded-2xl backdrop-blur md:min-h-0 md:overflow-y-auto",
-                  isPrism ? "pk-prism-glass border border-white/10 bg-white/[0.02]" : "border border-pk-border/70 bg-pk-panel/30",
-                  dockPb,
+                  isPrism
+                    ? "pk-prism-glass pk-studio-workspace border border-white/10 bg-white/[0.02]"
+                    : "border border-pk-border/70 bg-pk-panel/30",
+                  mobileLayoutV2 ? "min-h-0 overflow-y-auto overscroll-contain" : dockPb,
                   hideChildrenOnMobile && "hidden md:block",
                 )}
               >
@@ -127,7 +150,9 @@ export function AppShell({
             <div
               className={cn(
                 "min-w-0 flex-1 overflow-visible rounded-2xl backdrop-blur md:min-h-0 md:overflow-y-auto",
-                isPrism ? "pk-prism-glass border border-white/10 bg-white/[0.02]" : "border border-pk-border/70 bg-pk-panel/30",
+                isPrism
+                  ? "pk-prism-glass pk-studio-workspace border border-white/10 bg-white/[0.02]"
+                  : "border border-pk-border/70 bg-pk-panel/30",
                 dockPb,
               )}
             >

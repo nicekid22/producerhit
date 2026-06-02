@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-region",
 };
 
@@ -68,6 +68,17 @@ function computeRequestedDurationSec(input: {
 
 /** ACE quality defaults — keep in sync with src/lib/aceQuality.ts */
 const ACE_SHIFT = 3;
+const ACE_INFERENCE_STEPS = 8;
+const ACE_RELEASE_MODEL = "acestep-v15-xl-turbo";
+
+function isAceSongQualityV2Enabled(): boolean {
+  return Deno.env.get("ACE_SONG_QUALITY_V2") !== "0";
+}
+
+/** Legacy release_task. Rollback only: ACE_RELEASE_TASK=1 */
+function isAceReleaseTaskEnabled(): boolean {
+  return Deno.env.get("ACE_RELEASE_TASK") === "1";
+}
 
 function resolveAceQualityFlags(input: {
   thinking: boolean | null;
@@ -174,14 +185,20 @@ function splitEnvList(v: string) {
 }
 
 function loadAceApiKeys(): string[] {
-  const list = splitEnvList(Deno.env.get("ACE_STEP_API_KEYS") ?? "");
-  if (list.length) return list;
-  const out: string[] = [];
+  const raw: string[] = [];
+  raw.push(...splitEnvList(Deno.env.get("ACE_STEP_API_KEYS") ?? ""));
   const k1 = (Deno.env.get("ACE_STEP_API_KEY") ?? "").trim();
-  if (k1) out.push(k1);
-  for (let i = 2; i <= 6; i++) {
+  if (k1) raw.push(k1);
+  for (let i = 2; i <= 10; i++) {
     const ki = (Deno.env.get(`ACE_STEP_API_KEY_${i}`) ?? "").trim();
-    if (ki) out.push(ki);
+    if (ki) raw.push(ki);
+  }
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const k of raw) {
+    if (!k || seen.has(k)) continue;
+    seen.add(k);
+    out.push(k);
   }
   return out;
 }
@@ -637,6 +654,10 @@ function buildAceChatCompletionsParts(input: {
     parts.push("Do not output any lyrics text. Omit the '## Lyrics' section entirely.");
   } else {
     parts.push(baseCaption);
+    if (input.genre) {
+      parts.push(`Create a full vocal song in the ${input.genre} style with a release-ready modern mix.`);
+    }
+    parts.push("Include clear lead vocals with professional production quality.");
   }
   const effectiveLyrics = input.instrumental ? "[Instrumental]" : input.lyrics.trim();
   if (!input.instrumental && effectiveLyrics) parts.push(`Lyrics:\n${effectiveLyrics}`);
@@ -678,6 +699,8 @@ async function generateViaChatCompletionsAce(input: {
   timeSignature: string;
   vocalLanguage: string;
   audioFormat: string;
+  thinking: boolean;
+  useFormat: boolean;
   signal?: AbortSignal;
 }): Promise<{ audioUrl: string; meta: Record<string, unknown> }> {
   const effectiveLyrics = input.instrumental ? "[Instrumental]" : input.lyrics.trim();
@@ -706,7 +729,9 @@ async function generateViaChatCompletionsAce(input: {
       Accept: "application/json",
     },
     body: JSON.stringify({
-      model: "acemusic/acestep-v1.5-turbo",
+      model: ACE_RELEASE_MODEL,
+      thinking: input.thinking,
+      use_format: input.useFormat,
       messages: [{ role: "user", content: parts.join("\n\n") }],
       lyrics: aceLyricsField,
       task_type: "text2music",
@@ -722,6 +747,8 @@ async function generateViaChatCompletionsAce(input: {
         vocal_language: input.vocalLanguage || "en",
         format: input.audioFormat,
         audio_format: input.audioFormat,
+        shift: ACE_SHIFT,
+        inference_steps: ACE_INFERENCE_STEPS,
       },
       stream: false,
     }),
@@ -765,24 +792,102 @@ async function generateViaChatCompletionsAce(input: {
   };
 }
 
-function getAceTargets(seedKey: string): Array<{ apiKey: string; baseUrl: string }> {
+function getAceTargets(
+  seedKey: string,
+  preferIndex?: number,
+): Array<{ apiKey: string; baseUrl: string; keyIndex: number }> {
   const keys = loadAceApiKeys();
   if (!keys.length) return [];
   const bases = loadAceBaseUrls();
   const slots = Math.max(keys.length, bases.length);
-  const targets: Array<{ apiKey: string; baseUrl: string }> = [];
+  const targets: Array<{ apiKey: string; baseUrl: string; keyIndex: number }> = [];
   for (let i = 0; i < slots; i++) {
-    const apiKey = keys[i % keys.length]!;
-    const baseUrl = bases[i % bases.length]!;
-    targets.push({ apiKey, baseUrl });
+    const keyIndex = i % keys.length;
+    targets.push({ apiKey: keys[keyIndex]!, baseUrl: bases[i % bases.length]!, keyIndex });
   }
-  const start = hashToIndex(seedKey, targets.length);
+  const start =
+    typeof preferIndex === "number" && Number.isFinite(preferIndex)
+      ? Math.abs(Math.floor(preferIndex)) % targets.length
+      : hashToIndex(seedKey, targets.length);
   return [...targets.slice(start), ...targets.slice(0, start)];
+}
+
+function decodeDataUrl(dataUrl: string): { bytes: Uint8Array; mime: string } | null {
+  const raw = dataUrl.trim();
+  const m = raw.match(/^data:([^;,]+)?(?:;[^,]*)?;base64,(.+)$/i);
+  if (!m) return null;
+  try {
+    const mime = m[1] || "audio/mpeg";
+    const bin = atob(m[2]!);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return { bytes, mime };
+  } catch {
+    return null;
+  }
+}
+
+async function handleStreamPublic(reqUrl: URL, corsHeaders: Record<string, string>) {
+  const loopId = (reqUrl.searchParams.get("loopId") ?? reqUrl.searchParams.get("loop_id") ?? "").trim();
+  if (!loopId) {
+    return new Response("Missing loopId", { status: 400, headers: corsHeaders });
+  }
+
+  const supabaseUrl = (Deno.env.get("SUPABASE_URL") ?? "").trim();
+  const serviceKey = (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "").trim();
+  if (!supabaseUrl || !serviceKey) {
+    return new Response("Server not configured", { status: 500, headers: corsHeaders });
+  }
+
+  const sb = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+  const { data, error } = await sb
+    .from("loops")
+    .select("id, is_public, audio_url, provider_audio_inline")
+    .eq("id", loopId)
+    .eq("is_public", true)
+    .maybeSingle();
+
+  if (error || !data) {
+    return new Response("Not found", { status: 404, headers: corsHeaders });
+  }
+
+  const row = data as { audio_url?: string | null; provider_audio_inline?: string | null };
+  const inline = typeof row.provider_audio_inline === "string" ? row.provider_audio_inline.trim() : "";
+  if (inline) {
+    const decoded = decodeDataUrl(inline);
+    if (decoded?.bytes.byteLength) {
+      return new Response(decoded.bytes, {
+        headers: {
+          ...corsHeaders,
+          "Content-Type": decoded.mime,
+          "Cache-Control": "public, max-age=86400",
+        },
+      });
+    }
+  }
+
+  const audioUrl = typeof row.audio_url === "string" ? row.audio_url.trim() : "";
+  if (audioUrl.startsWith("http://") || audioUrl.startsWith("https://")) {
+    if (audioUrl.includes("action=stream_public")) {
+      return new Response("No audio payload", { status: 404, headers: corsHeaders });
+    }
+    return Response.redirect(audioUrl, 302);
+  }
+
+  return new Response("No audio", { status: 404, headers: corsHeaders });
 }
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
+  }
+
+  const reqUrl = new URL(req.url);
+  if (req.method === "GET") {
+    const action = reqUrl.searchParams.get("action") ?? "";
+    if (action === "stream_public") {
+      return await handleStreamPublic(reqUrl, corsHeaders);
+    }
   }
 
   const contentType = req.headers.get("content-type") ?? "";
@@ -818,6 +923,11 @@ serve(async (req) => {
       generation_key?: unknown;
       taskId?: unknown;
       task_id?: unknown;
+      loopId?: unknown;
+      loop_id?: unknown;
+      sourceUrl?: unknown;
+      source_url?: unknown;
+      audioUrl?: unknown;
       caption?: unknown;
       sampleQuery?: unknown;
       sample_query?: unknown;
@@ -844,9 +954,13 @@ serve(async (req) => {
       key?: unknown;
       scale?: unknown;
       isSong?: unknown;
+      requirePersistableUrl?: unknown;
+      aceKeyPreferIndex?: unknown;
     };
 
     const action = String(body?.action ?? "generate");
+    const requirePersistableUrl = body?.requirePersistableUrl === true;
+    const aceKeyPreferIndex = asNumber(body?.aceKeyPreferIndex);
     const generationKey = asString(body?.generationKey) || asString(body?.generation_key);
     const taskIdInput = asString(body?.taskId) || asString(body?.task_id);
 
@@ -867,7 +981,7 @@ serve(async (req) => {
 
         if (authError) {
           console.error("Auth error:", authError.message);
-        } else if (user && action !== "format") {
+        } else if (user && action !== "format" && action !== "mirror_audio") {
           authedUserId = user.id;
           if (action !== "bump_usage") {
             if (generationKey) {
@@ -983,7 +1097,7 @@ serve(async (req) => {
       audioFormatRaw === "wav" || audioFormatRaw === "wav32" || audioFormatRaw === "flac" || audioFormatRaw === "mp3" || audioFormatRaw === "aac" || audioFormatRaw === "opus"
         ? audioFormatRaw
         : "mp3";
-    const audioFormat = authedPlan === "free" ? "mp3" : requestedAudioFormat;
+    const audioFormat = requirePersistableUrl || authedPlan === "free" ? "mp3" : requestedAudioFormat;
 
     console.log("ACE-Step request:", {
       requestId,
@@ -998,10 +1112,12 @@ serve(async (req) => {
       useFormat,
       audioFormat,
       seed,
+      requirePersistableUrl,
     });
 
     const seedKey = generationKey || requestId;
-    const aceTargets = getAceTargets(seedKey);
+    const aceTargets = getAceTargets(seedKey, aceKeyPreferIndex ?? undefined);
+    const aceKeyCount = loadAceApiKeys().length;
     if (!aceTargets.length) throw new Error("ACE_STEP_API_KEY not set");
 
     if (action === "format") {
@@ -1037,7 +1153,7 @@ serve(async (req) => {
       }
 
       const seedKey = generationKey || requestId;
-      const aceTargets = getAceTargets(seedKey);
+      const aceTargets = getAceTargets(seedKey, aceKeyPreferIndex ?? undefined);
       if (!aceTargets.length) throw new Error("ACE_STEP_API_KEY not set");
 
       const controller = new AbortController();
@@ -1118,6 +1234,7 @@ serve(async (req) => {
 
     const vocalLanguage = asString(body?.vocalLanguage) || "en";
     const keyValue = keyScale.trim().length > 0 ? keyScale.trim() : key && scale ? `${key} ${scale}` : keyScale.trim();
+    const quality = resolveAceQualityFlags({ thinking, useFormat, sampleMode });
 
     const chatAceArgs = {
       seedKey,
@@ -1137,6 +1254,8 @@ serve(async (req) => {
       timeSignature,
       vocalLanguage,
       audioFormat,
+      thinking: quality.thinking,
+      useFormat: quality.useFormat,
     };
 
     const runChatCompletions = async (signal: AbortSignal) => {
@@ -1149,7 +1268,14 @@ serve(async (req) => {
             baseUrl: t.baseUrl,
             signal,
           });
-          return out;
+          return {
+            ...out,
+            meta: {
+              ...(out.meta ?? {}),
+              aceKeyIndex: t.keyIndex,
+              aceKeyCount,
+            },
+          };
         } catch (e) {
           lastChatErr = e;
         }
@@ -1170,14 +1296,21 @@ serve(async (req) => {
       let lastErr: unknown = null;
 
       if (!instrumental) {
-        console.log("Song mode — chat/completions only (aligned with localhost)", { requestId, sampleMode });
+        console.log("Song mode — chat/completions only", { requestId, sampleMode, requirePersistableUrl });
+        const out = await runChatCompletions(controller.signal);
+        audioUrl = out.audioUrl;
+        meta = out.meta;
+        if (requirePersistableUrl && audioUrl.startsWith("data:audio")) {
+          meta = { ...(meta ?? {}), providerDataUrl: audioUrl, sessionOnly: false, aceKeyCount };
+        }
+      } else if (!isAceReleaseTaskEnabled()) {
+        console.log("Beat mode — chat/completions only", { requestId, sampleMode });
         const out = await runChatCompletions(controller.signal);
         audioUrl = out.audioUrl;
         meta = out.meta;
       } else {
       const keyValueRelease = keyValue;
       const attemptOnce = async (apiKey: string, baseUrl: string) => {
-        const quality = resolveAceQualityFlags({ thinking, useFormat, sampleMode });
         const paramObj: Record<string, unknown> = {};
         if (requestedDuration != null) paramObj.duration = requestedDuration;
         if (bpm && bpm > 0) paramObj.bpm = bpm;
@@ -1186,6 +1319,7 @@ serve(async (req) => {
         if (audioFormat) paramObj.audio_format = audioFormat;
         if (seed && seed > 0) paramObj.seed = seed;
         paramObj.shift = quality.shift;
+        paramObj.inference_steps = ACE_INFERENCE_STEPS;
 
         const createUrl = `${baseUrl}/release_task`;
         const releaseForm = new FormData();
@@ -1193,7 +1327,7 @@ serve(async (req) => {
         releaseForm.append("ai_token", apiKey);
         releaseForm.append("prompt", effectivePrompt);
         releaseForm.append("lyrics", effectiveLyrics);
-        releaseForm.append("model_name", "acestep-v15-xl-turbo");
+        releaseForm.append("model_name", ACE_RELEASE_MODEL);
         releaseForm.append("app", "studio-web");
         releaseForm.append("thinking", quality.thinking ? "true" : "false");
         releaseForm.append("use_format", quality.useFormat ? "true" : "false");
@@ -1206,6 +1340,8 @@ serve(async (req) => {
         releaseForm.append("param_obj", JSON.stringify(paramObj));
         console.log("ACE release_task request", {
           requestId,
+          instrumental,
+          songQualityV2: !instrumental && isAceSongQualityV2Enabled(),
           method: "POST",
           url: createUrl,
           headers: { Accept: "application/json" },
@@ -1214,7 +1350,7 @@ serve(async (req) => {
             ai_token: apiKey,
             prompt: effectivePrompt,
             lyrics: effectiveLyrics,
-            model_name: "acestep-v15-xl-turbo",
+            model_name: ACE_RELEASE_MODEL,
             app: "studio-web",
             thinking: quality.thinking,
             use_format: quality.useFormat,
@@ -1335,6 +1471,8 @@ serve(async (req) => {
               audioFormat,
               seed: usedSeed,
               stemsZipUrl: stemsZipUrl || null,
+              httpAudioUrl: isHttpUrl(audioUrl) ? audioUrl : null,
+              sessionOnly: false,
             };
             console.log("ACE task succeeded", { requestId, taskId, elapsedMs: Date.now() - startedAt });
             return;
@@ -1358,13 +1496,17 @@ serve(async (req) => {
             continue;
           }
           const status = typeof (e as { status?: unknown } | null)?.status === "number" ? ((e as { status: number }).status as number) : 0;
+          if (status === 404 || status === 502 || status === 503 || status === 504) {
+            sawRelease404 = true;
+            continue;
+          }
           if (status && !isRetryableAceHttpStatus(status) && status !== 404) break;
           if (audioUrl) break;
         }
       }
 
       if (!audioUrl && sawRelease404) {
-        console.log("ACE release_task 404 on all bases — fallback chat/completions", { requestId });
+        console.log("ACE release_task 404 on all bases — fallback chat/completions", { requestId, instrumental });
         const out = await runChatCompletions(controller.signal);
         audioUrl = out.audioUrl;
         meta = out.meta;

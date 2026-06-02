@@ -1,12 +1,21 @@
+import { nextAceKeyPreferIndex } from "@/lib/aceKeyRotation";
 import { supabase } from "@/lib/supabaseClient";
 import { buildAceCaption, buildRichPrompt, buildSonautoTags, type GenerateParams } from "@/lib/promptBuilder";
-import { appendAceQualityToParamObj, resolveAceQualityFlags } from "@/lib/aceQuality";
+import { appendAceQualityToParamObj, ACE_RELEASE_MODEL, ACE_QUALITY_DEFAULTS, isAceReleaseTaskEnabled, resolveAceQualityFlags } from "@/lib/aceQuality";
 import { parseAceChatCompletionsResponse } from "@/lib/aceChatCompletions";
+import { resolveAceAudioUrl } from "@/lib/publicLoops";
 
 export type AceMeta = {
   taskId?: string;
   task_id?: string;
   sessionOnly?: boolean;
+  /** Index de rotation clé ACE (load-balancing multi-clés). */
+  aceKeyIndex?: number;
+  aceKeyCount?: number;
+  /** Data URL ACE pour stream communauté (sans bucket Storage). */
+  providerDataUrl?: string;
+  /** URL HTTP ACE persistable en DB (community / rejouer ~7j) */
+  httpAudioUrl?: string;
   prompt?: string;
   lyrics?: string;
   bpm?: number | null;
@@ -95,66 +104,148 @@ async function invokeSupabaseFunction<T>(args: {
 }
 
 async function extractInvokeError(error: unknown): Promise<{ message: string; limitReached?: boolean }> {
-  const anyError = error as unknown as { message?: string; context?: { body?: unknown } };
+  const anyError = error as unknown as { message?: string; context?: unknown };
   const errContext = anyError.context as unknown;
-  const errBody = (anyError.context as { body?: unknown } | undefined)?.body;
 
   const fromParsed = (parsed: unknown) => {
     if (!parsed || typeof parsed !== "object") return null;
-    const obj = parsed as { error?: unknown; limitReached?: unknown };
-    const message = typeof obj.error === "string" ? obj.error : null;
+    const obj = parsed as { error?: unknown; limitReached?: unknown; message?: unknown };
+    const message =
+      (typeof obj.error === "string" ? obj.error : null) ||
+      (typeof obj.message === "string" ? obj.message : null);
     const limitReached = obj.limitReached === true ? true : undefined;
     return message ? { message, limitReached } : null;
   };
 
   if (errContext && typeof errContext === "object" && typeof (errContext as Response).text === "function") {
     try {
-      const text = await (errContext as Response).text();
-      try {
-        const parsed = JSON.parse(text) as unknown;
-        const extracted = fromParsed(parsed);
-        if (extracted) return extracted;
-      } catch {
-        if (text && text.trim().length > 0) return { message: text };
+      const res = errContext as Response;
+      const text = await res.text();
+      if (text) {
+        try {
+          const extracted = fromParsed(JSON.parse(text) as unknown);
+          if (extracted) return extracted;
+        } catch {
+          return { message: text.slice(0, 500) };
+        }
+      }
+      if (res.status === 504 || res.status === 546) {
+        return { message: "Génération trop longue (timeout Edge). Réessaie avec un clip plus court." };
+      }
+      if (res.status >= 500) {
+        return { message: `Erreur serveur Edge (${res.status}). Réessaie dans un instant.` };
       }
     } catch {
       // ignore
     }
   }
 
+  const errBody = (anyError.context as { body?: unknown } | undefined)?.body;
   if (typeof errBody === "string") {
     try {
-      const parsed = JSON.parse(errBody) as unknown;
-      const extracted = fromParsed(parsed);
+      const extracted = fromParsed(JSON.parse(errBody) as unknown);
       if (extracted) return extracted;
     } catch {
-      return { message: anyError.message ?? "Edge Function error" };
+      if (errBody.trim()) return { message: errBody.slice(0, 500) };
     }
   }
 
   const extracted = fromParsed(errBody);
   if (extracted) return extracted;
 
-  return { message: anyError.message ?? "Edge Function error" };
+  const fallback = anyError.message ?? "Edge Function error";
+  if (fallback.includes("non-2xx")) {
+    return { message: "Erreur Edge Function — génération interrompue (timeout ou réponse trop volumineuse). Réessaie." };
+  }
+  return { message: fallback };
+}
+
+type GenerateLoopAceOptions = {
+  instrumental?: boolean;
+  lyrics?: string;
+  vocalLanguage?: string;
+  autoMeta?: boolean;
+  useFormat?: boolean;
+  thinking?: boolean;
+  duration?: number;
+  timeSignature?: string;
+  sampleMode?: boolean;
+  sampleQuery?: string;
+  isSong?: boolean;
+  audioFormat?: string;
+  seed?: number;
+  generationKey?: string;
+  /** Passe par l’Edge Function (release_task serveur) pour une URL HTTP en DB — requis pour is_public. */
+  requirePersistableUrl?: boolean;
+};
+
+function isHttpAceUrl(url: unknown): url is string {
+  const s = typeof url === "string" ? url.trim() : "";
+  return s.startsWith("http://") || s.startsWith("https://");
+}
+
+async function enrichPersistableAceResult(
+  audioUrl: string,
+  meta: AceMeta | null,
+  requirePersistableUrl: boolean,
+): Promise<{ audioUrl: string; meta: AceMeta | null }> {
+  if (!requirePersistableUrl) return { audioUrl, meta };
+
+  const httpFromMeta = typeof meta?.httpAudioUrl === "string" ? meta.httpAudioUrl.trim() : "";
+  const httpFromUrl = isHttpAceUrl(audioUrl) ? audioUrl.trim() : "";
+  let http = isHttpAceUrl(httpFromMeta) ? httpFromMeta : httpFromUrl;
+
+  const taskId =
+    (typeof meta?.taskId === "string" ? meta.taskId.trim() : "") ||
+    (typeof meta?.task_id === "string" ? meta.task_id.trim() : "");
+
+  if (!http && taskId) {
+    const resolved = await resolveAceAudioUrl(taskId).catch(() => "");
+    if (isHttpAceUrl(resolved)) http = resolved.trim();
+  }
+
+  if (http) {
+    return {
+      audioUrl: http,
+      meta: { ...(meta ?? {}), httpAudioUrl: http, sessionOnly: false, ...(taskId ? { taskId } : {}) },
+    };
+  }
+
+  const dataUrl = typeof audioUrl === "string" && audioUrl.trim().startsWith("data:audio/") ? audioUrl.trim() : "";
+  if (dataUrl) {
+    return {
+      audioUrl: dataUrl,
+      meta: { ...(meta ?? {}), providerDataUrl: dataUrl, sessionOnly: false, ...(taskId ? { taskId } : {}) },
+    };
+  }
+
+  return {
+    audioUrl,
+    meta: { ...(meta ?? {}), sessionOnly: true, ...(taskId ? { taskId } : {}) },
+  };
+}
+
+async function bumpAceUsage(generationKey?: string) {
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session?.access_token) return;
+    await supabase.functions.invoke("generate-loop-ace", {
+      body: {
+        action: "bump_usage",
+        ...(typeof generationKey === "string" && generationKey.trim() ? { generationKey: generationKey.trim() } : {}),
+      },
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+  } catch (e) {
+    console.warn("bump_usage failed:", e);
+  }
 }
 
 async function generateLoopAceDirect(
   params: GenerateParams,
-  options?: {
-    instrumental?: boolean;
-    lyrics?: string;
-    vocalLanguage?: string;
-    autoMeta?: boolean;
-    useFormat?: boolean;
-    duration?: number;
-    timeSignature?: string;
-    sampleMode?: boolean;
-    sampleQuery?: string;
-    isSong?: boolean;
-    audioFormat?: string;
-    seed?: number;
-    generationKey?: string;
-  },
+  options?: GenerateLoopAceOptions,
 ): Promise<{ audioUrl: string; meta?: AceMeta | null }> {
   const aceApiKey = import.meta.env.VITE_ACE_STEP_API_KEY as string | undefined;
   const baseUrlRaw = (import.meta.env.VITE_ACE_STEP_BASE_URL as string | undefined) ?? "https://api.acemusic.ai";
@@ -180,6 +271,14 @@ async function generateLoopAceDirect(
 
   const lyrics = options?.lyrics ?? "";
   const effectiveLyrics = instrumental ? "[Instrumental]" : lyrics.trim();
+  const isAiLyrics = !instrumental && effectiveLyrics === "";
+  const effectiveSampleMode = Boolean(options?.sampleMode || isAiLyrics);
+  const releasePrompt = effectiveSampleMode ? (options?.sampleQuery?.trim() || baseCaption) : baseCaption;
+  const quality = resolveAceQualityFlags({
+    thinking: options?.thinking,
+    useFormat: options?.useFormat,
+    sampleMode: effectiveSampleMode,
+  });
   const audioFormatRaw = (options?.audioFormat || "").trim().toLowerCase();
   const audioFormat =
     audioFormatRaw === "wav" || audioFormatRaw === "wav32" || audioFormatRaw === "flac" || audioFormatRaw === "mp3" || audioFormatRaw === "aac" || audioFormatRaw === "opus"
@@ -249,6 +348,10 @@ async function generateLoopAceDirect(
       parts.push("Do not output any lyrics text. Omit the '## Lyrics' section entirely.");
     } else {
       parts.push(baseCaption.trim());
+      if (params.genre) {
+        parts.push(`Create a full vocal song in the ${params.genre} style with a release-ready modern mix.`);
+      }
+      parts.push("Include clear lead vocals with professional production quality.");
     }
     if (!instrumental && effectiveLyrics) parts.push(`Lyrics:\n${effectiveLyrics}`);
     parts.push(
@@ -274,7 +377,9 @@ async function generateLoopAceDirect(
         Accept: "application/json",
       },
       body: JSON.stringify({
-        model: "acemusic/acestep-v1.5-turbo",
+        model: ACE_RELEASE_MODEL,
+        thinking: quality.thinking,
+        use_format: quality.useFormat,
         messages: [{ role: "user", content: parts.join("\n\n") }],
         lyrics: instrumental ? "[instrumental]" : effectiveLyrics,
         task_type: "text2music",
@@ -287,6 +392,8 @@ async function generateLoopAceDirect(
           vocal_language: options?.vocalLanguage || "en",
           format: audioFormat,
           audio_format: audioFormat,
+          shift: ACE_QUALITY_DEFAULTS.shift,
+          inference_steps: ACE_QUALITY_DEFAULTS.inferenceSteps,
         },
         stream: false,
       }),
@@ -321,9 +428,10 @@ async function generateLoopAceDirect(
       timeSignature: (parsed.timeSignature || options?.timeSignature || undefined) ?? undefined,
       audioFormat,
       ...(parsedAudio.taskId ? { taskId: parsedAudio.taskId } : {}),
-      sessionOnly: parsedAudio.sessionOnly,
+      ...(parsedAudio.httpAudioUrl ? { httpAudioUrl: parsedAudio.httpAudioUrl } : {}),
+      sessionOnly: parsedAudio.sessionOnly && !parsedAudio.httpAudioUrl,
     };
-    return { audioUrl: parsedAudio.audioUrl, meta };
+    return { audioUrl: parsedAudio.httpAudioUrl || parsedAudio.audioUrl, meta };
   };
 
   const clampNumber = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
@@ -348,21 +456,27 @@ async function generateLoopAceDirect(
   if (typeof options?.seed === "number" && Number.isFinite(options.seed)) paramObj.seed = options.seed;
   appendAceQualityToParamObj(paramObj);
 
-  const quality = resolveAceQualityFlags({
-    thinking: null,
-    useFormat: options?.useFormat,
-    sampleMode: Boolean(options?.sampleMode),
-  });
+  if (!isAceReleaseTaskEnabled()) {
+    const out = await generateViaChatCompletions();
+    await bumpAceUsage(options?.generationKey);
+    return out;
+  }
 
   const createForm = new FormData();
   createForm.append("env", "production");
   createForm.append("ai_token", aceApiKey);
-  createForm.append("prompt", baseCaption);
+  createForm.append("prompt", releasePrompt);
   createForm.append("lyrics", effectiveLyrics);
-  createForm.append("model_name", "acestep-v15-xl-turbo");
+  createForm.append("model_name", ACE_RELEASE_MODEL);
   createForm.append("app", "studio-web");
   createForm.append("thinking", quality.thinking ? "true" : "false");
   createForm.append("use_format", quality.useFormat ? "true" : "false");
+  if (effectiveSampleMode) {
+    createForm.append("sample_mode", "true");
+    const sq = options?.sampleQuery?.trim() || baseCaption;
+    if (sq) createForm.append("sample_query", sq);
+  }
+  createForm.append("vocal_language", vocalLanguage);
   createForm.append("param_obj", JSON.stringify(paramObj));
 
   const createRes = await fetch(`${baseUrl}/release_task`, {
@@ -374,24 +488,7 @@ async function generateLoopAceDirect(
   if (!createRes.ok) {
     if (createRes.status === 404) {
       const out = await generateViaChatCompletions();
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (session?.access_token) {
-          await supabase.functions.invoke("generate-loop-ace", {
-            body: {
-              action: "bump_usage",
-              ...(typeof options?.generationKey === "string" && options.generationKey.trim().length > 0 ? { generationKey: options.generationKey.trim() } : {}),
-            },
-            headers: {
-              Authorization: "Bearer " + session.access_token,
-            },
-          });
-        }
-      } catch (e) {
-        console.warn("bump_usage failed:", e);
-      }
+      await bumpAceUsage(options?.generationKey);
       return { audioUrl: out.audioUrl, meta: out.meta };
     }
     throw new Error(`ACE API release_task failed (${createRes.status}): ${createText}`);
@@ -465,6 +562,7 @@ async function generateLoopAceDirect(
         timeSignature: timeSignature || undefined,
         audioFormat,
         seed: typeof seed === "number" && isFinite(seed) ? seed : null,
+        httpAudioUrl: audioUrl.startsWith("http") ? audioUrl : undefined,
       };
       break;
     }
@@ -473,25 +571,7 @@ async function generateLoopAceDirect(
   }
   if (!audioUrl) throw new Error("ACE generation timed out");
 
-  try {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (session?.access_token) {
-      await supabase.functions.invoke("generate-loop-ace", {
-        body: {
-          action: "bump_usage",
-          ...(typeof options?.generationKey === "string" && options.generationKey.trim().length > 0 ? { generationKey: options.generationKey.trim() } : {}),
-        },
-        headers: {
-          Authorization: "Bearer " + session.access_token,
-        },
-      });
-    }
-  } catch (e) {
-    console.warn("bump_usage failed:", e);
-  }
-
+  await bumpAceUsage(options?.generationKey);
   return { audioUrl, meta };
 }
 
@@ -558,22 +638,7 @@ export async function formatAceInput(input: {
 
 export async function generateLoopAce(
   params: GenerateParams,
-  options?: {
-    instrumental?: boolean;
-    lyrics?: string;
-    vocalLanguage?: string;
-    autoMeta?: boolean;
-    useFormat?: boolean;
-    thinking?: boolean;
-    duration?: number;
-    timeSignature?: string;
-    sampleMode?: boolean;
-    sampleQuery?: string;
-    isSong?: boolean;
-    audioFormat?: string;
-    seed?: number;
-    generationKey?: string;
-  },
+  options?: GenerateLoopAceOptions,
 ): Promise<{ audioUrl: string; meta?: AceMeta | null }> {
   const directKey = import.meta.env.VITE_ACE_STEP_API_KEY as string | undefined;
   if (directKey) return await generateLoopAceDirect(params, options);
@@ -643,6 +708,8 @@ export async function generateLoopAce(
   if (!options?.autoMeta && params.key) body.key = params.key;
   if (!options?.autoMeta && params.scale) body.scale = params.scale;
   body.isSong = isSong;
+  body.aceKeyPreferIndex = nextAceKeyPreferIndex();
+  if (options?.requirePersistableUrl) body.requirePersistableUrl = true;
 
   const { data, errorText } = await invokeSupabaseFunction<{ audioUrl?: string; meta?: AceMeta | null; error?: string; limitReached?: boolean }>(
     {
@@ -667,14 +734,19 @@ export async function generateLoopAce(
   const taskIdFromMeta =
     (typeof metaObj?.taskId === "string" ? metaObj.taskId : "") ||
     (typeof metaObj?.task_id === "string" ? metaObj.task_id : "");
-  const normalizedMeta =
+  let normalizedMeta: AceMeta | null =
     metaObj
       ? ({
           ...(metaObj as unknown as AceMeta),
           taskId: taskIdFromMeta ? taskIdFromMeta.trim() : undefined,
           sessionOnly: metaObj.sessionOnly === true,
+          ...(isHttpAceUrl(metaObj.httpAudioUrl) ? { httpAudioUrl: String(metaObj.httpAudioUrl).trim() } : {}),
+          ...(!metaObj.httpAudioUrl && isHttpAceUrl(audioUrl) ? { httpAudioUrl: audioUrl.trim() } : {}),
         } as AceMeta)
       : null;
+  if (options?.requirePersistableUrl) {
+    return enrichPersistableAceResult(audioUrl, normalizedMeta, true);
+  }
   return {
     audioUrl,
     meta: normalizedMeta,

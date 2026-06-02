@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { Download, Pause, Play, SkipBack, SkipForward, Volume2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Download, Pause, Play, SkipBack, SkipForward, Volume2 } from "lucide-react";
 import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import { usePlayerStore } from "@/stores/playerStore";
 import { Button } from "@/components/ui/Button";
@@ -37,6 +37,8 @@ export function AudioPlayer() {
   const queueIndex = usePlayerStore((s) => s.queueIndex);
   const prev = usePlayerStore((s) => s.prev);
   const next = usePlayerStore((s) => s.next);
+  const dockCollapsed = usePlayerStore((s) => s.dockCollapsed);
+  const toggleDockCollapsed = usePlayerStore((s) => s.toggleDockCollapsed);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTimeSec, setCurrentTimeSec] = useState(0);
@@ -431,7 +433,7 @@ export function AudioPlayer() {
         return;
       }
 
-      const resolvedKey = `${currentBeat.id}:${playableUrl}`;
+      const resolvedKey = playableUrl;
       if (lastLoadedKeyRef.current === resolvedKey && audio.src) {
         applyAudioCrossOrigin(playableUrl);
         if (storeIsPlaying && audio.paused) tryPlayAudio();
@@ -590,12 +592,15 @@ export function AudioPlayer() {
     <>
       {currentBeat ? (
     <div
-      className="pk-prism-player pk-prism-player--dock fixed bottom-[calc(var(--pk-bottom-nav)+env(safe-area-inset-bottom,0px))] left-0 right-0 z-30 md:bottom-0 md:z-50"
+      className={`pk-prism-player pk-prism-player--dock fixed bottom-[calc(var(--pk-bottom-nav)+env(safe-area-inset-bottom,0px))] left-0 right-0 z-30 md:bottom-0 md:z-50${dockCollapsed ? " pk-prism-player--collapsed" : ""}`}
       aria-busy={isLoading}
     >
-      <div className="mx-auto flex max-w-[1440px] items-center gap-2 px-3 py-2.5 sm:gap-4 sm:px-4 sm:py-3">
+      <div className="mx-auto flex max-w-[1440px] items-center gap-2 px-3 py-2 sm:gap-4 sm:px-4 sm:py-3">
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:max-w-none sm:gap-3">
-          <div className="pk-prism-cover relative hidden h-11 w-11 shrink-0 rounded-xl p-[2px] sm:block" style={{ background: coverBg }}>
+          <div
+            className={`pk-prism-cover relative h-9 w-9 shrink-0 rounded-xl p-[2px] sm:h-11 sm:w-11${dockCollapsed ? "" : " hidden sm:block"}`}
+            style={{ background: coverBg }}
+          >
             <div className="relative h-full w-full overflow-hidden rounded-[10px] bg-[#050508]">
             {coverUrl ? (
               <img
@@ -645,7 +650,29 @@ export function AudioPlayer() {
           </div>
         </div>
 
-        <div className="flex min-w-0 flex-[1.2] flex-col items-center sm:flex-1">
+        {dockCollapsed ? (
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <button
+              type="button"
+              onClick={() => void togglePlay()}
+              className="pk-prism-player-btn pk-prism-player-btn--primary inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl sm:h-10 sm:w-10"
+              aria-label={isPlaying ? "Pause" : "Play"}
+            >
+              {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+            </button>
+            <button
+              type="button"
+              onClick={toggleDockCollapsed}
+              className="pk-prism-player-btn inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl sm:h-9 sm:w-9"
+              aria-label="Expand player"
+              title="Expand"
+            >
+              <ChevronUp className="h-4 w-4" />
+            </button>
+          </div>
+        ) : null}
+
+        <div className="pk-prism-player__expanded flex min-w-0 flex-[1.2] flex-col items-center sm:flex-1">
           <div className="flex items-center gap-1.5 sm:gap-3">
             <button
               type="button"
@@ -682,6 +709,15 @@ export function AudioPlayer() {
               {formatTime(currentTimeSec)} / {durationSec > 0 ? formatTime(durationSec) : "--:--"}
               {queueLen > 0 ? ` · ${queueIndex + 1}/${queueLen}` : ""}
             </div>
+            <button
+              type="button"
+              onClick={toggleDockCollapsed}
+              className="pk-prism-player-btn ml-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl sm:ml-2 sm:h-9 sm:w-9"
+              aria-label="Minimize player"
+              title="Minimize"
+            >
+              <ChevronDown className="h-4 w-4" />
+            </button>
           </div>
           <canvas ref={vizCanvasRef} className="mt-1.5 hidden h-7 w-full max-w-xl opacity-90 sm:mt-2 sm:block" aria-hidden />
           <div
@@ -708,7 +744,7 @@ export function AudioPlayer() {
           </div>
         </div>
 
-        <div className="hidden items-center gap-3 sm:flex">
+        <div className="pk-prism-player__expanded hidden items-center gap-3 sm:flex">
           <div className="flex items-center gap-2 text-white/50">
             <Volume2 className="h-4 w-4" />
             <input

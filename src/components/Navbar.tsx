@@ -11,7 +11,7 @@ export function Navbar({ variant }: { variant: "marketing" | "auth" }) {
   return (
     <header
       className={[
-        "sticky top-0 z-20 border-b border-pk-border/70 backdrop-blur-xl",
+        "sticky top-0 z-20 border-b border-pk-border/70 backdrop-blur-xl pt-[env(safe-area-inset-top,0px)]",
         variant === "marketing" ? "bg-pk-bg/55" : "bg-pk-bg/80",
       ].join(" ")}
     >

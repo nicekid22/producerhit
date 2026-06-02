@@ -4,7 +4,7 @@ import { PrismPageHero } from "@/components/prism/PrismPageHero";
 import { PrismStat } from "@/components/prism/PrismStat";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
 import { syncProfileCache } from "@/lib/profileBootstrap";
 import {
@@ -32,6 +32,7 @@ import { useLocaleStore } from "@/stores/localeStore";
 import { CreditCard, Shield, Sparkles, UserRound, Zap } from "lucide-react";
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
 import { hasEmailPassword, hasGoogleAuth, mapAuthError } from "@/lib/authProviders";
+import { useMobileUiV2 } from "@/hooks/useMobileUiV2";
 
 function tierClass(plan: string) {
   if (plan === "plus") return "pk-prism-tier-badge--plus";
@@ -41,6 +42,7 @@ function tierClass(plan: string) {
 }
 
 export default function Settings() {
+  const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const authStatus = useAuthStore((s) => s.status);
   const authProfile = useAuthStore((s) => s.profile);
@@ -52,6 +54,7 @@ export default function Settings() {
   const setPassword = useAuthStore((s) => s.setPassword);
   const locale = useLocaleStore((s) => s.locale);
   const isFr = locale === "fr";
+  const mobileUiV2 = useMobileUiV2();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -151,7 +154,9 @@ export default function Settings() {
   return (
     <AppShell
       theme="prism"
+      variant={mobileUiV2 ? "single" : "split"}
       left={
+        mobileUiV2 ? undefined : (
         <AppShellAsideHeader
           eyebrow={isFr ? "CENTRE DE CONTRÔLE" : "CONTROL CENTER"}
           title={isFr ? "Paramètres" : "Settings"}
@@ -182,9 +187,10 @@ export default function Settings() {
             </Link>
           </div>
         </AppShellAsideHeader>
+        )
       }
     >
-      <div className="h-full space-y-5 px-4 pb-36 pt-6 md:pb-24">
+      <div className="h-full space-y-5 px-4 pb-6 pt-6 md:pb-24">
         {loading ? (
           <div className="flex min-h-[40vh] items-center justify-center">
             <PkIconLoader
@@ -665,6 +671,7 @@ export default function Settings() {
                   try {
                     await signOut();
                     toast.success(isFr ? "Déconnecté" : "Signed out");
+                    navigate("/auth", { replace: true });
                   } catch (err) {
                     const message = err instanceof Error ? err.message : "Sign out failed";
                     toast.error(message);
@@ -692,6 +699,7 @@ export default function Settings() {
             try {
               await signOut();
               toast("Contact support to delete your account.");
+              navigate("/auth", { replace: true });
             } catch (err) {
               const message = err instanceof Error ? err.message : "Failed";
               toast.error(message);

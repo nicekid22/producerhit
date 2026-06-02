@@ -88,10 +88,15 @@ export function parseAceChatCompletionsResponse(json: unknown, baseUrl: string):
     ) || null;
 
   const pathCandidate = pickFilePath(firstAudio) || pickFilePath(msg);
+  const directAudioUrl =
+    asTrimmedString(firstAudio?.url) ||
+    (typeof firstAudio?.audio_url === "string" ? asTrimmedString(firstAudio.audio_url) : "");
   const audioUrlRaw =
-    firstAudio && typeof firstAudio.audio_url === "object" && firstAudio.audio_url !== null
-      ? asTrimmedString((firstAudio.audio_url as { url?: unknown }).url)
-      : "";
+    directAudioUrl.startsWith("http") || directAudioUrl.startsWith("data:")
+      ? directAudioUrl
+      : firstAudio && typeof firstAudio.audio_url === "object" && firstAudio.audio_url !== null
+        ? asTrimmedString((firstAudio.audio_url as { url?: unknown }).url)
+        : "";
 
   let httpAudioUrl: string | null = null;
   if (audioUrlRaw.startsWith("http://") || audioUrlRaw.startsWith("https://")) {

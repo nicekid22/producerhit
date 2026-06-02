@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { resolvePlayableAudioUrl } from "@/lib/playableAudio";
+import { isPublicAceStreamEnabled, pickInlineProviderAudioUrl } from "@/lib/publicAcePlayback";
 import { supabase } from "@/lib/supabaseClient";
 import {
   extractAceTaskId as extractAceTaskIdFromStemsUrl,
@@ -7,12 +8,13 @@ import {
   finalizePublicLoopRecord,
   isHttpAudioUrl,
   persistLoopAceAudioRecord,
-  resolveAceAudioUrl,
+  pickHttpAudioUrlForDb,
   uploadPublicLoopAudio,
 } from "@/lib/publicLoops";
 import { removeLoopAudioStorage, SUPABASE_LOOP_AUDIO_UPLOAD } from "@/lib/storageAudio";
 import { warmCoverAndPersist } from "@/lib/coverArt";
 import { buildCoverPromptSnapshot } from "@/lib/utils";
+import { dropStalePreviewDuplicates, isPreviewLoopId } from "@/lib/loopWorkspaceUtils";
 import { useAuthStore } from "@/stores/authStore";
 import { usePlayerStore } from "@/stores/playerStore";
 import type { Loop } from "@/types/loop";
@@ -198,13 +200,11 @@ async function audioCachePut(id: string, blob: Blob, durationSec: number | null)
   }
 }
 
-async function resolveAceAudioUrlWithRetry(taskId: string): Promise<string> {
-  let resolved = await resolveAceAudioUrl(taskId).catch(() => "");
-  if (!isHttpUrl(resolved)) {
-    await new Promise((r) => setTimeout(r, 900));
-    resolved = await resolveAceAudioUrl(taskId).catch(() => "");
+function pickHttpAudioUrl(...candidates: unknown[]): string {
+  for (const c of candidates) {
+    if (isHttpUrl(c)) return (c as string).trim();
   }
-  return isHttpUrl(resolved) ? resolved.trim() : "";
+  return "";
 }
 
 async function cacheLoopAudioFromSrc(id: string, src: string | null | undefined, options?: { force?: boolean }): Promise<void> {
@@ -297,6 +297,10 @@ function toLoop(row: DbLoop): Loop {
           audioFormat: typeof aceObj.audioFormat === "string" ? aceObj.audioFormat : undefined,
           coverPrompt: typeof aceObj.coverPrompt === "string" ? aceObj.coverPrompt : undefined,
           coverUrl: typeof aceObj.coverUrl === "string" ? aceObj.coverUrl : undefined,
+          coverKind:
+            aceObj.coverKind === "video" || aceObj.coverKind === "image"
+              ? (aceObj.coverKind as "video" | "image")
+              : undefined,
         }
       : null;
 
@@ -376,41 +380,9 @@ async function hydrateAudioFromCache(nextLoops: Loop[]) {
   );
 }
 
-async function resolvePublicAudioForLoop(loop: Loop, loopId: string, userId: string): Promise<string | null> {
-  const pickHttp = (v: unknown) => (isHttpUrl(v) ? (v as string).trim() : "");
-  const httpFromLoop = pickHttp(loop.audioUrl);
-  if (httpFromLoop) return httpFromLoop;
-
-  const ensured = await useLoopsStore.getState().ensureAudioReady(loopId).catch(() => "");
-  const httpFromEnsured = pickHttp(ensured);
-  if (httpFromEnsured) return httpFromEnsured;
-
-  for (const candidate of [ensured, loop.audioUrl]) {
-    const raw = typeof candidate === "string" ? candidate.trim() : "";
-    if (raw.startsWith("blob:") || raw.startsWith("data:")) {
-      if (SUPABASE_LOOP_AUDIO_UPLOAD) {
-        const uploaded = await uploadPublicLoopAudio(userId, loopId, raw).catch(() => null);
-        if (uploaded) return uploaded;
-      }
-    }
-  }
-
-  const taskId = extractAceTaskIdFromStemsUrl(loop.stemsUrl);
-  if (taskId) {
-    const resolved = await resolveAceAudioUrlWithRetry(taskId);
-    if (pickHttp(resolved)) return resolved;
-  }
-
-  const finalized = await finalizePublicLoopRecord({
-    loopId,
-    userId,
-    isPublic: true,
-    audioUrlInput: typeof loop.audioUrl === "string" ? loop.audioUrl : "",
-    audioUrlForDb: httpFromLoop || null,
-    stemsUrlForDb: loop.stemsUrl,
-  }).catch(() => ({ audioUrl: null as string | null, stemsUrl: null }));
-
-  return pickHttp(finalized.audioUrl) || null;
+async function resolvePublicAudioForLoop(loop: Loop): Promise<string | null> {
+  const http = pickHttpAudioUrl(loop.audioUrl);
+  return http || null;
 }
 
 async function migrateAudioCache(fromId: string, toId: string): Promise<void> {
@@ -513,29 +485,24 @@ export const useLoopsStore = create<LoopsState>((set) => ({
       return url;
     }
 
-    const currentUrl = typeof fromState?.audioUrl === "string" ? fromState.audioUrl.trim() : "";
-    if (isHttpUrl(currentUrl)) return asPlayableLoopUrl(id, currentUrl);
+    const sessionUrl = typeof fromState?.audioUrl === "string" ? fromState.audioUrl.trim() : "";
+    if (sessionUrl.startsWith("blob:") || sessionUrl.startsWith("data:")) return sessionUrl;
+    if (isHttpUrl(sessionUrl)) return asPlayableLoopUrl(id, sessionUrl);
 
     const user = useAuthStore.getState().user;
-    const taskIdFromState = extractAceTaskIdFromStemsUrl(fromState?.stemsUrl);
-    if (!user) {
-      if (!taskIdFromState) throw new Error("Not authenticated");
-      const resolved = await resolveAceAudioUrlWithRetry(taskIdFromState);
-      if (!isHttpUrl(resolved)) throw new Error("Audio manquant");
-      useLoopsStore.setState((s) => ({
-        loops: s.loops.map((l) => (l.id === id ? { ...l, audioUrl: resolved } : l)),
-      }));
-      return asPlayableLoopUrl(id, resolved);
-    }
+    if (!user) throw new Error("Audio manquant");
 
     const { data, error } = await supabase
       .from("loops")
-      .select("audio_url, stems_url")
+      .select("audio_url")
       .eq("id", id)
       .eq("user_id", user.id)
       .maybeSingle();
     if (error) throw error;
-    const dbUrl = typeof (data as { audio_url?: unknown } | null)?.audio_url === "string" ? ((data as { audio_url: string }).audio_url || "").trim() : "";
+    const dbUrl =
+      typeof (data as { audio_url?: unknown } | null)?.audio_url === "string"
+        ? ((data as { audio_url: string }).audio_url || "").trim()
+        : "";
     if (isHttpUrl(dbUrl)) {
       useLoopsStore.setState((s) => ({
         loops: s.loops.map((l) => (l.id === id ? { ...l, audioUrl: dbUrl } : l)),
@@ -544,20 +511,7 @@ export const useLoopsStore = create<LoopsState>((set) => ({
       return asPlayableLoopUrl(id, dbUrl);
     }
 
-    const taskId = taskIdFromState || extractAceTaskIdFromStemsUrl((data as { stems_url?: unknown } | null)?.stems_url);
-    if (!taskId) throw new Error("Audio manquant");
-    const resolved = await resolveAceAudioUrlWithRetry(taskId);
-    if (!isHttpUrl(resolved)) throw new Error("Audio manquant");
-
-    if (!id.startsWith("local-") && !id.startsWith("preview-")) {
-      await supabase.from("loops").update({ audio_url: resolved }).eq("id", id).eq("user_id", user.id);
-    }
-
-    useLoopsStore.setState((s) => ({
-      loops: s.loops.map((l) => (l.id === id ? { ...l, audioUrl: resolved } : l)),
-    }));
-    void cacheLoopAudioFromSrc(id, resolved);
-    return asPlayableLoopUrl(id, resolved);
+    throw new Error("Audio manquant");
   },
   primeAudioCache: (id, src) => {
     void cacheLoopAudioFromSrc(id, src);
@@ -681,14 +635,21 @@ export const useLoopsStore = create<LoopsState>((set) => ({
         .map((p) => toLocalLoop(user.id, p));
 
       const nextIds = new Set(nextLoops.map((l) => l.id));
+      const persistedNameKeys = new Set(nextLoops.map((l) => l.name.trim().toLowerCase()));
       const preservedPrev = prevLoops.filter((l) => {
         if (nextIds.has(l.id)) return false;
-        if (l.id.startsWith("local-") || l.id.startsWith("preview-")) return true;
+        if (isPreviewLoopId(l.id)) {
+          return !persistedNameKeys.has(l.name.trim().toLowerCase());
+        }
+        if (l.id.startsWith("local-")) return true;
         const createdAtMs = Date.parse(l.createdAt ?? "");
         return Number.isFinite(createdAtMs) && Date.now() - createdAtMs < 5 * 60 * 1000;
       });
 
-      set({ loops: [...pendingLoops, ...preservedPrev, ...nextLoops], lastSyncError: null });
+      set({
+        loops: dropStalePreviewDuplicates([...pendingLoops, ...preservedPrev, ...nextLoops]),
+        lastSyncError: null,
+      });
 
       void hydrateAudioFromCache(useLoopsStore.getState().loops);
       persistMyLoopsCache(userId, useLoopsStore.getState().loops);
@@ -736,10 +697,8 @@ export const useLoopsStore = create<LoopsState>((set) => ({
     const replaceLoopId = options?.replaceLoopId;
 
     const trimmedAudioUrl = typeof input.audioUrl === "string" ? input.audioUrl.trim() : "";
-    const audioUrlForDb =
-      trimmedAudioUrl && (trimmedAudioUrl.startsWith("https://") || trimmedAudioUrl.startsWith("http://")) && !trimmedAudioUrl.startsWith("blob:")
-        ? trimmedAudioUrl
-        : null;
+    const httpFromStemsEarly = pickHttpAudioUrlForDb(null, input.stemsUrl);
+    const audioUrlForDb = pickHttpAudioUrlForDb(trimmedAudioUrl, input.stemsUrl) || httpFromStemsEarly;
 
     const safeCaption = (v: unknown) => (typeof v === "string" ? v.trim().slice(0, 2000) : "");
     const safeLyrics = (v: unknown) => (typeof v === "string" ? v.trim().slice(0, 20000) : "");
@@ -764,6 +723,7 @@ export const useLoopsStore = create<LoopsState>((set) => ({
       audioFormat: safeAudioFormat(input.details?.audioFormat ?? null),
       coverPrompt,
       ...(coverUrl ? { coverUrl } : {}),
+      ...(audioUrlForDb ? { httpAudioUrl: audioUrlForDb } : {}),
     };
 
     const stemsUrlForDb = buildStemsUrlForDb(input.stemsUrl, detailsForDb);
@@ -865,43 +825,71 @@ export const useLoopsStore = create<LoopsState>((set) => ({
     let finalLoop: Loop = {
       ...baseLoop,
       ...(trimmedAudioUrl ? { audioUrl: trimmedAudioUrl } : {}),
+      ...(audioUrlForDb && !trimmedAudioUrl.startsWith("http") ? { audioUrl: audioUrlForDb } : {}),
       isPublic: Boolean(input.isPublic),
     };
 
+    const applyPersistResult = (finalized: { audioUrl: string | null; stemsUrl: Record<string, unknown> | null }) => {
+      if (finalized.audioUrl || finalized.stemsUrl) {
+        finalLoop = {
+          ...finalLoop,
+          audioUrl: finalized.audioUrl ?? finalLoop.audioUrl,
+          stemsUrl: finalized.stemsUrl ?? finalLoop.stemsUrl,
+          isPublic: Boolean(input.isPublic),
+        };
+      }
+    };
+
+    const needsPublicStream =
+      input.isPublic &&
+      isPublicAceStreamEnabled() &&
+      !audioUrlForDb &&
+      !!pickInlineProviderAudioUrl(trimmedAudioUrl, stemsUrlForDb);
+
     if (LOOP_ACE_PERSIST) {
-      void (async () => {
-        try {
-          const finalized = await persistLoopAceAudioRecord({
-            loopId: row.id,
-            userId: user.id,
-            audioUrlInput: trimmedAudioUrl,
-            audioUrlForDb,
-            stemsUrlForDb,
-          });
-
-          if (input.isPublic) {
-            await supabase.from("loops").update({ is_public: true }).eq("id", row.id).eq("user_id", user.id);
-          }
-
-          if (!finalized.audioUrl && !finalized.stemsUrl) return;
-
-          useLoopsStore.setState((s) => ({
-            loops: s.loops.map((l) =>
-              l.id === row.id
-                ? {
-                    ...l,
-                    audioUrl: finalized.audioUrl ?? l.audioUrl,
-                    stemsUrl: finalized.stemsUrl ?? l.stemsUrl,
-                    isPublic: Boolean(input.isPublic),
-                  }
-                : l,
-            ),
-          }));
-          persistMyLoopsCache(user.id, useLoopsStore.getState().loops);
-        } catch {
-          // ignore background persist errors
+      const runPersist = async () => {
+        const finalized = await persistLoopAceAudioRecord({
+          loopId: row.id,
+          userId: user.id,
+          audioUrlInput: trimmedAudioUrl,
+          audioUrlForDb,
+          stemsUrlForDb,
+        });
+        if (input.isPublic) {
+          await supabase.from("loops").update({ is_public: true }).eq("id", row.id).eq("user_id", user.id);
         }
-      })();
+        return finalized;
+      };
+
+      if (needsPublicStream) {
+        try {
+          applyPersistResult(await runPersist());
+        } catch (err) {
+          console.warn("[createLoop] public stream persist failed:", err);
+        }
+      } else {
+        void (async () => {
+          try {
+            const finalized = await runPersist();
+            if (!finalized.audioUrl && !finalized.stemsUrl) return;
+            useLoopsStore.setState((s) => ({
+              loops: s.loops.map((l) =>
+                l.id === row.id
+                  ? {
+                      ...l,
+                      audioUrl: finalized.audioUrl ?? l.audioUrl,
+                      stemsUrl: finalized.stemsUrl ?? l.stemsUrl,
+                      isPublic: Boolean(input.isPublic),
+                    }
+                  : l,
+              ),
+            }));
+            persistMyLoopsCache(user.id, useLoopsStore.getState().loops);
+          } catch {
+            // lecture session OK sans stream_public
+          }
+        })();
+      }
     } else if (input.isPublic) {
       void (async () => {
         try {
@@ -914,7 +902,6 @@ export const useLoopsStore = create<LoopsState>((set) => ({
             stemsUrlForDb,
           });
           if (!finalized.audioUrl && !finalized.stemsUrl) return;
-
           useLoopsStore.setState((s) => ({
             loops: s.loops.map((l) =>
               l.id === row.id
@@ -929,7 +916,7 @@ export const useLoopsStore = create<LoopsState>((set) => ({
           }));
           persistMyLoopsCache(user.id, useLoopsStore.getState().loops);
         } catch {
-          // ignore background finalize errors
+          // ignore
         }
       })();
     }
@@ -962,21 +949,36 @@ export const useLoopsStore = create<LoopsState>((set) => ({
     persistMyLoopsCache(user.id, useLoopsStore.getState().loops);
     void cacheLoopAudioFromSrc(row.id, finalLoop.audioUrl ?? trimmedAudioUrl);
     if (!finalLoop.details?.coverUrl) {
-      warmCoverAndPersist(row.id, user.id, finalLoop, stemsUrlForDb, (coverUrl) => {
-        if (!coverUrl) return;
-        useLoopsStore.setState((s) => ({
-          loops: s.loops.map((l) =>
-            l.id === row.id ? { ...l, details: { ...(l.details ?? {}), coverUrl, coverPrompt: l.details?.coverPrompt } } : l,
-          ),
-        }));
-        persistMyLoopsCache(user.id, useLoopsStore.getState().loops);
-      });
+      warmCoverAndPersist(
+        row.id,
+        user.id,
+        finalLoop,
+        stemsUrlForDb,
+        (result) => {
+          if (!result?.coverUrl) return;
+          useLoopsStore.setState((s) => ({
+            loops: s.loops.map((l) =>
+              l.id === row.id
+                ? {
+                    ...l,
+                    details: {
+                      ...(l.details ?? {}),
+                      coverUrl: result.coverUrl ?? undefined,
+                      coverKind: result.coverKind ?? l.details?.coverKind,
+                      coverPrompt: l.details?.coverPrompt,
+                    },
+                  }
+                : l,
+            ),
+          }));
+          persistMyLoopsCache(user.id, useLoopsStore.getState().loops);
+        },
+      );
     }
 
     const player = usePlayerStore.getState();
-    const current = player.current;
-    if (replaceLoopId && current?.id === replaceLoopId) {
-      player.setCurrent({ ...finalLoop }, player.isPlaying);
+    if (replaceLoopId) {
+      player.promoteLoop(replaceLoopId, finalLoop);
     }
 
     return finalLoop;
@@ -1036,7 +1038,7 @@ export const useLoopsStore = create<LoopsState>((set) => ({
 
       const payload: { is_public: boolean; audio_url?: string | null } = { is_public: next };
       if (next) {
-        const url = await resolvePublicAudioForLoop(local, created.id, user.id);
+        const url = await resolvePublicAudioForLoop(local);
         if (url) payload.audio_url = url;
         if (!payload.audio_url) throw new Error("Audio not ready");
       }
@@ -1061,7 +1063,7 @@ export const useLoopsStore = create<LoopsState>((set) => ({
     const payload: { is_public: boolean; audio_url?: string | null } = { is_public: next };
 
     if (next) {
-      const url = await resolvePublicAudioForLoop(current, id, user.id);
+      const url = await resolvePublicAudioForLoop(current);
       if (url) payload.audio_url = url;
       if (!payload.audio_url) throw new Error("Audio not ready");
     }

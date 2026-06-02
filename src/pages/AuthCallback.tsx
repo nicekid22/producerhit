@@ -32,12 +32,8 @@ export default function AuthCallback() {
       try {
         const session = await resolveAuthCallbackSession(params);
         if (!mounted) return;
-        useAuthStore.setState({
-          session,
-          user: session.user,
-          lastError: null,
-          profileReady: false,
-        });
+        await useAuthStore.getState().completeAuthCallbackSession(session);
+        if (!mounted) return;
         navigate(nextPath, { replace: true });
       } catch (err) {
         if (!mounted) return;
@@ -54,7 +50,7 @@ export default function AuthCallback() {
   }, [locale, navigate, nextPath, params]);
 
   return (
-    <div className="grid min-h-screen place-items-center bg-pk-bg px-6">
+    <div className="grid min-h-[100dvh] place-items-center bg-pk-bg px-6">
       <PkIconLoader
         icon="generator"
         size="md"

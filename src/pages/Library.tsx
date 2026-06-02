@@ -274,7 +274,7 @@ export default function Library() {
               description={locale === "fr" ? "Génère ton premier beat pour démarrer." : "Generate your first beat to get started."}
             />
           ) : (
-            detailsLoop ? (
+            detailsLoop && !mobileUiV2 ? (
               <div className="md:grid md:grid-cols-[minmax(0,1fr)_420px] md:gap-4">
                 <div>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -294,7 +294,7 @@ export default function Library() {
 
                 <div className="hidden md:block">
                   <div className="sticky top-6 max-h-[calc(100vh-32px)] overflow-y-auto">
-                    <div className="relative overflow-hidden rounded-2xl pk-prism-card-soft p-5 backdrop-blur">
+                    <div className="pk-studio-detail-panel relative overflow-hidden rounded-2xl p-5 backdrop-blur">
                       <div className="pk-prism-panel-glow" />
                       <LoopDetailsSheetHeader
                         title={detailsLoop.name}
@@ -337,24 +337,23 @@ export default function Library() {
       
 
       {mobileUiV2 && detailsLoop ? (
-        <LoopDetailsSheet open onClose={() => setDetailsId(null)}>
-          <LoopDetailsSheetHeader
-            title={detailsLoop.name}
-            subtitle={detailsLoop.genre}
-            onClose={() => setDetailsId(null)}
-            closeLabel={isFr ? "Fermer" : "Close"}
+        <LoopDetailsSheet
+          open
+          onClose={() => setDetailsId(null)}
+          title={detailsLoop.name}
+          subtitle={detailsLoop.genre}
+          closeLabel={isFr ? "Fermer" : "Close"}
+        >
+          <LoopDetailsPanel
+            loop={detailsLoop}
+            locale={locale}
+            detailsTitle={detailsTitle}
+            onDetailsTitleChange={setDetailsTitle}
+            savingDetailsTitle={savingDetailsTitle}
+            onSaveTitle={saveDetailsTitle}
+            durationSec={durationsSecById[detailsLoop.id]}
+            compact
           />
-          <div className="px-5 pb-4">
-            <LoopDetailsPanel
-              loop={detailsLoop}
-              locale={locale}
-              detailsTitle={detailsTitle}
-              onDetailsTitleChange={setDetailsTitle}
-              savingDetailsTitle={savingDetailsTitle}
-              onSaveTitle={saveDetailsTitle}
-              durationSec={durationsSecById[detailsLoop.id]}
-            />
-          </div>
         </LoopDetailsSheet>
       ) : null}
 

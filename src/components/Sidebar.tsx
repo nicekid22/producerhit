@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Grid3X3, Settings, LogIn, LogOut, AudioWaveform, Users, BarChart3 } from "lucide-react";
+import { useState } from "react";
+import { Grid3X3, Settings, LogIn, LogOut, AudioWaveform, Users, BarChart3, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 import { useGrowthAdmin } from "@/hooks/useGrowthAdmin";
@@ -16,6 +17,7 @@ export function Sidebar() {
   const locale = useLocaleStore((s) => s.locale);
   const setLocale = useLocaleStore((s) => s.setLocale);
   const isGrowthAdmin = useGrowthAdmin();
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const items: Item[] = [
     { to: "/dashboard", label: locale === "fr" ? "Générateur" : "Generator", icon: <AudioWaveform className="h-5 w-5" /> },
@@ -28,17 +30,23 @@ export function Sidebar() {
   ];
 
   async function onLogout() {
+    if (loggingOut) return;
+    setLoggingOut(true);
     try {
       await signOut();
       toast.success(locale === "fr" ? "Déconnecté" : "Signed out");
       navigate("/auth", { replace: true });
     } catch {
       toast.error(locale === "fr" ? "Impossible de se déconnecter" : "Could not sign out");
+    } finally {
+      setLoggingOut(false);
     }
   }
 
+  const logoutIcon = loggingOut ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogOut className="h-5 w-5" />;
+
   return (
-    <div className="flex h-full items-center justify-between bg-transparent px-3 py-2 md:flex-col md:justify-between md:border-r md:border-pk-border md:px-0 md:py-3">
+    <div className="flex h-full items-center justify-between bg-transparent px-3 py-2 md:flex-col md:justify-between md:border-r-0 md:px-0 md:py-4">
       <div className="flex items-center gap-2 md:flex-col">
         <div className="flex items-center gap-1 md:mt-3 md:flex-col">
           {items.map((it) => {
@@ -48,13 +56,16 @@ export function Sidebar() {
                 key={it.to}
                 to={it.to}
                 className={cn(
-                  "relative flex h-10 w-10 items-center justify-center rounded-xl transition-colors",
-                  active ? "bg-pk-accent/15 text-pk-accent" : "text-pk-muted hover:bg-white/5 hover:text-pk-text",
+                  "pk-studio-nav-link relative flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-xl md:h-10 md:w-10 md:min-h-0 md:min-w-0",
+                  active ? "pk-studio-nav-link--active text-pk-accent" : "text-pk-muted hover:text-pk-text",
                 )}
                 aria-label={it.label}
                 title={it.label}
               >
-                {active ? <span className="absolute -left-1.5 h-5 w-1 rounded-full bg-pk-accent" aria-hidden /> : null}
+                <span className="pk-studio-nav-indicator hidden md:block" aria-hidden />
+                {active ? (
+                  <span className="absolute -left-1.5 h-5 w-1 rounded-full bg-pk-accent md:hidden" aria-hidden />
+                ) : null}
                 {it.icon}
               </Link>
             );
@@ -90,11 +101,12 @@ export function Sidebar() {
             <button
               type="button"
               onClick={onLogout}
-              className="flex h-10 w-10 items-center justify-center rounded-pk text-pk-muted transition-colors hover:bg-white/5 hover:text-pk-text"
+              disabled={loggingOut}
+              className="flex h-10 w-10 items-center justify-center rounded-pk text-pk-muted transition-colors hover:bg-white/5 hover:text-pk-text disabled:opacity-60"
               aria-label={locale === "fr" ? "Déconnexion" : "Logout"}
               title={locale === "fr" ? "Déconnexion" : "Logout"}
             >
-              <LogOut className="h-5 w-5" />
+              {logoutIcon}
             </button>
           ) : (
             <Link
@@ -113,10 +125,10 @@ export function Sidebar() {
         <button
           type="button"
           onClick={() => setLocale("en")}
-          className={cn(
-            "flex h-9 w-9 items-center justify-center rounded-lg text-[10px] font-semibold transition-colors",
-            locale === "en" ? "bg-pk-accent/15 text-pk-accent" : "text-pk-muted hover:bg-white/5 hover:text-pk-text",
-          )}
+            className={cn(
+              "flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-[10px] font-semibold transition-colors",
+              locale === "en" ? "bg-pk-accent/15 text-pk-accent" : "text-pk-muted hover:bg-white/5 hover:text-pk-text",
+            )}
           aria-label="English"
           title="English"
         >
@@ -125,10 +137,10 @@ export function Sidebar() {
         <button
           type="button"
           onClick={() => setLocale("fr")}
-          className={cn(
-            "flex h-9 w-9 items-center justify-center rounded-lg text-[10px] font-semibold transition-colors",
-            locale === "fr" ? "bg-pk-accent/15 text-pk-accent" : "text-pk-muted hover:bg-white/5 hover:text-pk-text",
-          )}
+            className={cn(
+              "flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-[10px] font-semibold transition-colors",
+              locale === "fr" ? "bg-pk-accent/15 text-pk-accent" : "text-pk-muted hover:bg-white/5 hover:text-pk-text",
+            )}
           aria-label="Français"
           title="Français"
         >
@@ -138,16 +150,17 @@ export function Sidebar() {
           <button
             type="button"
             onClick={onLogout}
-            className="flex h-10 w-10 items-center justify-center rounded-pk text-pk-muted transition-colors hover:bg-white/5 hover:text-pk-text"
+            disabled={loggingOut}
+            className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-pk text-pk-muted transition-colors hover:bg-white/5 hover:text-pk-text disabled:opacity-60"
             aria-label={locale === "fr" ? "Déconnexion" : "Logout"}
             title={locale === "fr" ? "Déconnexion" : "Logout"}
           >
-            <LogOut className="h-5 w-5" />
+            {logoutIcon}
           </button>
         ) : (
           <Link
             to="/auth?next=/dashboard"
-            className="flex h-10 w-10 items-center justify-center rounded-pk text-pk-muted transition-colors hover:bg-white/5 hover:text-pk-text"
+            className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-pk text-pk-muted transition-colors hover:bg-white/5 hover:text-pk-text"
             aria-label={locale === "fr" ? "Connexion" : "Login"}
             title={locale === "fr" ? "Connexion" : "Login"}
           >

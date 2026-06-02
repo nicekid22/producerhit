@@ -6,9 +6,11 @@ import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/Button";
 import { fetchGrowthDashboard, type GrowthDashboard } from "@/lib/growthAnalytics";
 import { useAuthStore } from "@/stores/authStore";
+import { useMobileUiV2 } from "@/hooks/useMobileUiV2";
 
 export default function GrowthAdmin() {
   const user = useAuthStore((s) => s.user);
+  const mobileUiV2 = useMobileUiV2();
   const [days, setDays] = useState(30);
   const [data, setData] = useState<GrowthDashboard | null>(null);
   const [loading, setLoading] = useState(true);
@@ -32,8 +34,8 @@ export default function GrowthAdmin() {
   }, [days]);
 
   return (
-    <AppShell>
-      <div className="mx-auto max-w-5xl space-y-6 p-4 md:p-8">
+    <AppShell theme="prism" variant={mobileUiV2 ? "single" : "split"}>
+      <div className="mx-auto max-w-5xl space-y-6 p-4 pb-6 md:p-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-white">Growth dashboard</h1>

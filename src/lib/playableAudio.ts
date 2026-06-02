@@ -9,6 +9,9 @@
  * - VITE_AUDIO_SKIP_WEB_AUDIO=1 → sortie directe <audio>, sans visualizer (secours)
  */
 
+import { isPublicAceStreamUrl } from "@/lib/publicAcePlayback";
+import { isSupabaseLoopAudioUrl } from "@/lib/storageAudio";
+
 export const AUDIO_BLOB_PLAYBACK = import.meta.env.VITE_AUDIO_BLOB_PLAYBACK !== "0";
 
 export const AUDIO_SKIP_WEB_AUDIO = import.meta.env.VITE_AUDIO_SKIP_WEB_AUDIO === "1";
@@ -34,14 +37,32 @@ export function isCrossOriginHttpUrl(url: string): boolean {
   }
 }
 
+/** URLs lourdes / cross-origin — lecture directe <audio>, pas de fetch blob ni Web Audio. */
+export function isAcePartnerAudioUrl(url: unknown): boolean {
+  const s = typeof url === "string" ? url.trim() : "";
+  if (!isHttpAudioUrl(s)) return false;
+  if (isPublicAceStreamUrl(s)) return true;
+  if (isSupabaseLoopAudioUrl(s)) return true;
+  try {
+    const host = new URL(s).hostname.toLowerCase();
+    if (host.includes("acemusic.ai")) return true;
+    if (host.includes("amazonaws.com") && s.includes("ace-music")) return true;
+    return false;
+  } catch {
+    return s.includes("acemusic.ai") || isSupabaseLoopAudioUrl(s);
+  }
+}
+
 export function shouldConvertToBlob(url: string): boolean {
   if (!AUDIO_BLOB_PLAYBACK) return false;
   if (isBlobOrDataUrl(url)) return false;
+  if (isAcePartnerAudioUrl(url)) return false;
   return isHttpAudioUrl(url);
 }
 
 export function shouldUseWebAudioGraph(url: string): boolean {
   if (AUDIO_SKIP_WEB_AUDIO) return false;
+  if (isAcePartnerAudioUrl(url)) return false;
   if (isBlobOrDataUrl(url)) return true;
   if (!isHttpAudioUrl(url)) return false;
   return !isCrossOriginHttpUrl(url);

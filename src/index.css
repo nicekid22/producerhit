@@ -10,6 +10,9 @@
   --pk-bottom-nav: 0px;
   --pk-player-height: 72px;
   --pk-mobile-tabs-height: 52px;
+  --pk-dashboard-generate-footer: 13.75rem;
+  --pk-dashboard-remix-footer: 6.5rem;
+  --pk-player-dock: calc(var(--pk-player-height) + env(safe-area-inset-bottom, 0px));
   --pk-mobile-dock: calc(var(--pk-bottom-nav) + env(safe-area-inset-bottom, 0px));
   --pk-mobile-dock-player: calc(var(--pk-bottom-nav) + var(--pk-player-height) + env(safe-area-inset-bottom, 0px));
 
@@ -21,7 +24,6 @@
 
 @media (max-width: 767px) {
   :root {
-    --pk-bottom-nav: 56px;
     --pk-player-height: 88px;
     --pk-mobile-dock: calc(var(--pk-bottom-nav) + env(safe-area-inset-bottom, 0px));
     --pk-mobile-dock-player: calc(var(--pk-bottom-nav) + var(--pk-player-height) + env(safe-area-inset-bottom, 0px));
@@ -42,6 +44,23 @@ body {
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+  }
+
+  body:has(.pk-mobile-app-shell) {
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+  }
+
+  body:has(.pk-mobile-app-shell) #root {
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+  }
+
+  /* Marketing / auth pages — clear global player dock (no bottom tab bar) */
+  body:has(.pk-prism-player):not(:has(.pk-app-shell)) {
+    padding-bottom: var(--pk-player-dock);
   }
 }
 
@@ -584,6 +603,7 @@ body {
 }
 
 .pk-landing-header {
+  padding-top: env(safe-area-inset-top, 0px);
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
@@ -1569,6 +1589,16 @@ a.pk-pricing-plan-btn {
     0 -12px 48px rgba(0, 0, 0, 0.35);
 }
 
+.pk-prism-player--collapsed.pk-prism-player--dock {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 -6px 24px rgba(0, 0, 0, 0.28);
+}
+
+.pk-prism-player--collapsed .pk-prism-player__expanded {
+  display: none !important;
+}
+
 .pk-chip-scroll {
   display: flex;
   flex-wrap: nowrap;
@@ -1580,6 +1610,49 @@ a.pk-pricing-plan-btn {
 
 .pk-chip-scroll::-webkit-scrollbar {
   display: none;
+}
+
+.pk-pricing-rail {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 1rem;
+  margin-inline: -1rem;
+  padding-inline: 1rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to right, transparent, #000 1rem, #000 calc(100% - 1rem), transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 1rem, #000 calc(100% - 1rem), transparent);
+}
+
+.pk-pricing-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.pk-loop-details-sheet {
+  animation: pk-sheet-up 0.22s ease-out;
+}
+
+@keyframes pk-sheet-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 640px) {
+  .pk-pricing-rail {
+    margin-inline: 0;
+    padding-inline: 0;
+    scroll-snap-type: none;
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
 }
 
 @media (min-width: 768px) {
@@ -1608,22 +1681,41 @@ a.pk-pricing-plan-btn {
 }
 
 .pk-dashboard-mobile-footer {
-  position: fixed;
-  left: 0;
-  right: 0;
-  z-index: 35;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(5, 5, 8, 0.94);
-  backdrop-filter: blur(16px);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  position: static;
+  z-index: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(5, 5, 8, 0.72) 0%, rgba(5, 5, 8, 0.96) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.pk-mobile-create-shell {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.pk-mobile-create-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pk-dashboard-results-scroll {
+  padding-bottom: 0.5rem;
 }
 
 @media (min-width: 768px) {
   .pk-dashboard-mobile-footer {
-    position: static;
-    z-index: auto;
     background: transparent;
     backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: none;
     padding-bottom: 0;
   }
 }
@@ -1777,6 +1869,150 @@ a.pk-pricing-plan-btn {
 
 .pk-prism-dashboard .absolute.rounded-full.bg-pk-accent {
   background: linear-gradient(180deg, var(--prism-cyan), var(--prism-violet));
+}
+
+@media (min-width: 768px) {
+  .pk-prism-dashboard {
+    background:
+      radial-gradient(1200px circle at 12% 6%, rgba(157, 124, 255, 0.12), transparent 48%),
+      radial-gradient(960px circle at 90% 8%, rgba(103, 195, 255, 0.08), transparent 50%),
+      radial-gradient(720px circle at 48% 100%, rgba(148, 163, 184, 0.05), transparent 58%),
+      linear-gradient(180deg, #020108 0%, #05050c 46%, #080812 100%);
+  }
+
+  .pk-studio-rail {
+    box-shadow:
+      inset -1px 0 0 rgba(255, 255, 255, 0.05),
+      0 0 60px rgba(157, 124, 255, 0.07);
+  }
+
+  .pk-studio-nav-link {
+    border: 1px solid transparent;
+    transition:
+      border-color 0.2s ease,
+      background 0.2s ease,
+      box-shadow 0.2s ease,
+      color 0.2s ease;
+  }
+
+  .pk-studio-nav-link:hover {
+    border-color: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .pk-studio-nav-link--active {
+    border-color: rgba(157, 124, 255, 0.35) !important;
+    background: linear-gradient(145deg, rgba(157, 124, 255, 0.16), rgba(103, 195, 255, 0.08)) !important;
+    color: #e8e4ff !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
+      0 0 28px rgba(157, 124, 255, 0.18);
+  }
+
+  .pk-studio-nav-link--active .pk-studio-nav-indicator {
+    opacity: 1;
+    box-shadow: 0 0 12px rgba(103, 195, 255, 0.65);
+  }
+
+  .pk-studio-nav-indicator {
+    position: absolute;
+    left: -2px;
+    height: 1.25rem;
+    width: 3px;
+    border-radius: 9999px;
+    background: linear-gradient(180deg, var(--prism-cyan), var(--prism-violet));
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .pk-studio-console {
+    box-shadow:
+      inset 1px 0 0 rgba(255, 255, 255, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 32px 88px rgba(0, 0, 0, 0.48);
+  }
+
+  .pk-studio-console-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent);
+  }
+
+  .pk-studio-workspace {
+    background:
+      radial-gradient(680px circle at 100% 0%, rgba(103, 195, 255, 0.06), transparent 58%),
+      radial-gradient(520px circle at 0% 100%, rgba(157, 124, 255, 0.04), transparent 52%),
+      linear-gradient(165deg, rgba(255, 255, 255, 0.028), rgba(255, 255, 255, 0.006)) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 28px 72px rgba(0, 0, 0, 0.38);
+  }
+
+  .pk-studio-mode-rail {
+    gap: 0.25rem;
+    padding: 0.3rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: rgba(0, 0, 0, 0.32);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .pk-studio-mode-rail .pk-prism-pill-active {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.32),
+      0 0 24px rgba(157, 124, 255, 0.22);
+  }
+
+  .pk-studio-section {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  .pk-studio-section__title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(103, 195, 255, 0.85);
+  }
+
+  .pk-studio-generate-dock {
+    border-top: 1px solid rgba(255, 255, 255, 0.09);
+    background: linear-gradient(180deg, rgba(5, 5, 8, 0.55) 0%, rgba(5, 5, 8, 0.92) 100%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .pk-studio-workspace-header {
+    margin-bottom: 1.25rem;
+    padding: 1.15rem 1.35rem;
+    border-radius: 1.15rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background:
+      radial-gradient(480px circle at 0% 0%, rgba(157, 124, 255, 0.1), transparent 55%),
+      linear-gradient(135deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  .pk-studio-workspace-header__title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .pk-studio-detail-panel {
+    border: 1px solid rgba(255, 255, 255, 0.11) !important;
+    background:
+      radial-gradient(560px circle at 18% 0%, rgba(157, 124, 255, 0.1), transparent 54%),
+      linear-gradient(165deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015)) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      0 0 0 1px rgba(157, 124, 255, 0.08),
+      0 24px 64px rgba(0, 0, 0, 0.42);
+  }
+
+  .pk-prism-dashboard .pk-prism-grid {
+    opacity: 0.35;
+  }
 }
 
 /* Touch devices — trim GPU-heavy shell FX (iPhone heat / battery) */
@@ -5085,4 +5321,10 @@ a.pk-pricing-plan-btn {
   .pk-loop-cover--playing::after {
     animation: none;
   }
+}
+
+.pk-public-loop__cta {
+  display: block;
+  text-decoration: none;
+  color: inherit;
 }

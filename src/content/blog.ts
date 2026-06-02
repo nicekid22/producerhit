@@ -582,6 +582,49 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
   },
+  {
+    slug: "generateur-type-beat-ia-guide-fr",
+    title: "Générateur type beat IA : prompts trap, drill, R&B et workflow pro (2026)",
+    description: "Guide FR pour générer des type beats avec l’IA : prompts par genre, Versions×2, variations seed et pages dédiées ProducerHit.",
+    keywords: ["générateur type beat IA", "générateur beats IA", "type beat IA", "prompt trap IA", "ProducerHit"],
+    publishedAt: "2026-05-27",
+    updatedAt: "2026-05-27",
+    blocks: [
+      {
+        type: "p",
+        text: "Un générateur type beat IA efficace, ce n’est pas seulement « taper un genre » — c’est un workflow : génération courte, deux versions, seed verrouillé, puis Variation. ProducerHit est pensé comme studio complet (Song Mode, Remix, type beats) avec des pages FR dédiées par genre.",
+      },
+      { type: "h2", text: "Workflow producteur (5 minutes)" },
+      {
+        type: "ul",
+        items: [
+          "Choisis un genre (trap, drill, R&B, afrobeats…)",
+          "Génère 16 mesures avec Versions=2",
+          "Garde le meilleur take et note le seed",
+          "Variation : change une seule contrainte (808 plus dark, hats plus serrés…)",
+          "Export MP3 gratuit ou WAV sur Pro",
+        ],
+      },
+      { type: "h2", text: "Prompts rapides par genre" },
+      {
+        type: "ul",
+        items: [
+          "Trap : dark trap type beat, 140 BPM, sliding 808, tight hats, minimal melody",
+          "Drill : UK drill, 142 BPM, aggressive pocket, sliding bass, dark pads",
+          "R&B : trapsoul, 88 BPM, warm chords, moody drums, space for vocals",
+        ],
+      },
+      {
+        type: "links",
+        items: [
+          { labelEn: "AI beat generator", labelFr: "Générateur beats IA", href: "/generateur-beats-ia" },
+          { labelEn: "Type beat generator", labelFr: "Type beat IA", href: "/generateur-type-beat-ia" },
+          { labelEn: "Trap generator", labelFr: "Générateur trap", href: "/generateur-trap-ia" },
+          { labelEn: "Free beats online", labelFr: "Beats gratuits", href: "/generer-beats-gratuit" },
+        ],
+      },
+    ],
+  },
 ];
 
 export function getBlogPostBySlug(slug: string): BlogPost | null {

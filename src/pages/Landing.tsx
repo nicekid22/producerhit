@@ -725,7 +725,7 @@ export default function Landing() {
       setRepairFixedCount(fixed);
       try {
         window.sessionStorage.removeItem("producerhit_landing_trending_cache_v7");
-        window.sessionStorage.removeItem("producerhit_community_cache_v6");
+        window.sessionStorage.removeItem("producerhit_community_cache_v7");
       } catch {
         void 0;
       }
@@ -1250,8 +1250,11 @@ export default function Landing() {
             <h2 className="pk-landing-section-head__title">
               <span className="pk-prism-holo-text">{locale === "fr" ? "Tarifs" : "Pricing"}</span>
             </h2>
+            <p className="pk-landing-section-head__lead mt-2 sm:hidden">
+              {locale === "fr" ? "Glisse pour comparer les plans →" : "Swipe to compare plans →"}
+            </p>
           </div>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4 xl:items-stretch">
+          <div className="pk-pricing-rail mt-8 flex gap-4 overflow-x-auto pb-2 sm:grid sm:grid-cols-2 sm:overflow-visible xl:grid-cols-4 xl:items-stretch">
             {pricing.map((p) => {
               const tier = p.tier;
               const isCurrent = tier === currentPlan;
@@ -1263,7 +1266,8 @@ export default function Landing() {
               <div
                 key={p.name}
                 className={[
-                  "pk-prism-card flex h-full min-h-[400px] flex-col p-6",
+                  "pk-prism-card flex h-full w-[min(82vw,300px)] flex-shrink-0 snap-center flex-col p-6 sm:w-auto sm:min-w-0 sm:flex-shrink sm:snap-align-none",
+                  "min-h-[380px] sm:min-h-[400px]",
                   recommended ? "border-[#b968ff]/60 shadow-[0_0_70px_rgba(186,104,255,0.18)]" : "",
                   isCurrent ? "ring-1 ring-[#7c3aed]/35" : "",
                 ].join(" ")}

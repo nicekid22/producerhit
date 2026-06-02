@@ -2,6 +2,9 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+/** Padding horizontal du contenu générateur (Style & Vibe, L'idée…) — pas le header ni le footer */
+export const generatorSectionPad = "px-5 py-4 md:px-6 md:py-4";
+
 export function GeneratorSection({
   title,
   collapsible = false,
@@ -19,29 +22,36 @@ export function GeneratorSection({
 
   if (!collapsible) {
     return (
-      <div className={cn("border-b border-pk-border p-4", className)}>
-        <div className="text-sm font-semibold">{title}</div>
-        <div className="mt-4">{children}</div>
+      <div className={cn("pk-studio-section border-b border-pk-border", generatorSectionPad, className)}>
+        <div className="text-sm font-semibold pk-studio-section__title md:text-inherit">{title}</div>
+        <div className="mt-4 md:mt-5">{children}</div>
       </div>
     );
   }
 
   return (
-    <div className={cn("border-b border-pk-border", className)}>
+    <div
+      className={cn(
+        "mx-3 mb-3 overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.025]",
+        "md:pk-studio-section md:mx-0 md:mb-0 md:overflow-visible md:rounded-none md:border-0 md:border-b md:border-pk-border md:bg-transparent",
+        "md:px-6 md:py-4",
+        className,
+      )}
+    >
       <button
         type="button"
-        className="flex w-full items-center justify-between gap-3 p-4 md:pointer-events-none md:cursor-default"
+        className="flex w-full items-center justify-between gap-3 px-3.5 py-3.5 md:pointer-events-none md:cursor-default md:border-0 md:bg-transparent md:p-0"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
       >
-        <span className="text-sm font-semibold text-left">{title}</span>
+        <span className="pk-studio-section__title text-[13px] font-semibold text-left tracking-tight md:text-inherit">{title}</span>
         <ChevronDown
-          className={cn("h-4 w-4 shrink-0 text-pk-muted transition-transform md:hidden", open && "rotate-180")}
+          className={cn("h-4 w-4 shrink-0 text-white/40 transition-transform md:hidden", open && "rotate-180")}
           aria-hidden
         />
       </button>
-      <div className={cn("px-4 pb-4", !open && "hidden md:block")}>
-        <div className="mt-0 md:mt-4">{children}</div>
+      <div className={cn("px-3.5 pb-3.5 md:px-0 md:pb-0", !open && "hidden md:block")}>
+        <div className="md:mt-5">{children}</div>
       </div>
     </div>
   );

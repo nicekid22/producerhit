@@ -36,7 +36,12 @@ export async function resolveAuthCallbackSession(searchParams: URLSearchParams):
   const code = searchParams.get("code");
   if (code) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error && data.session) return data.session;
+    if (!error && data.session) {
+      url.searchParams.delete("code");
+      const cleaned = `${url.pathname}${url.search}${url.hash}`;
+      window.history.replaceState({}, document.title, cleaned);
+      return data.session;
+    }
     if (error && !isPkceExchangeError(error.message)) throw error;
   }
 

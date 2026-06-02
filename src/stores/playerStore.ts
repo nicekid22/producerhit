@@ -1,6 +1,24 @@
 import { create } from "zustand";
 import type { Loop } from "@/types/loop";
 
+const DOCK_COLLAPSED_KEY = "producerhit_player_docked_collapsed";
+
+function readDockCollapsed(): boolean {
+  try {
+    return localStorage.getItem(DOCK_COLLAPSED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function persistDockCollapsed(value: boolean) {
+  try {
+    localStorage.setItem(DOCK_COLLAPSED_KEY, value ? "1" : "0");
+  } catch {
+    /* ignore */
+  }
+}
+
 type PlayerState = {
   current: Loop | null;
   isPlaying: boolean;
@@ -14,6 +32,7 @@ type PlayerState = {
   setCurrent: (loop: Loop, autoPlay: boolean) => void;
   setQueue: (loops: Loop[], startIndex: number, autoPlay: boolean, source?: string) => void;
   mergeQueue: (loops: Loop[], source?: string) => void;
+  promoteLoop: (fromId: string, loop: Loop) => void;
   next: () => void;
   prev: () => void;
   clearQueue: () => void;
@@ -24,6 +43,9 @@ type PlayerState = {
   seekToPct: number | null;
   requestSeek: (pct: number) => void;
   clearSeek: () => void;
+  dockCollapsed: boolean;
+  setDockCollapsed: (collapsed: boolean) => void;
+  toggleDockCollapsed: () => void;
 };
 
 function barsFromLoopLength(loopLength: string) {
@@ -69,6 +91,16 @@ export const usePlayerStore = create<PlayerState>((set) => ({
   queueIndex: 0,
   queueSource: null,
   seekToPct: null,
+  dockCollapsed: readDockCollapsed(),
+  setDockCollapsed: (collapsed) => {
+    persistDockCollapsed(collapsed);
+    set({ dockCollapsed: collapsed });
+  },
+  toggleDockCollapsed: () => {
+    const next = !usePlayerStore.getState().dockCollapsed;
+    persistDockCollapsed(next);
+    set({ dockCollapsed: next });
+  },
   setCurrent: (loop, autoPlay) =>
     set({
       current: loop,
@@ -106,7 +138,11 @@ export const usePlayerStore = create<PlayerState>((set) => ({
       if (!clean.length) return s;
 
       const currentId = s.current?.id;
-      const idx = currentId ? clean.findIndex((l) => l.id === currentId) : Math.min(s.queueIndex, clean.length - 1);
+      const currentUrl = typeof s.current?.audioUrl === "string" ? s.current.audioUrl.trim() : "";
+      let idx = currentId ? clean.findIndex((l) => l.id === currentId) : Math.min(s.queueIndex, clean.length - 1);
+      if (idx < 0 && currentUrl) {
+        idx = clean.findIndex((l) => l.audioUrl?.trim() === currentUrl);
+      }
       const queueIndex = idx >= 0 ? idx : 0;
       const current = clean[queueIndex] ?? s.current;
 
@@ -115,6 +151,21 @@ export const usePlayerStore = create<PlayerState>((set) => ({
         queueIndex,
         queueSource: typeof source === "string" ? source : s.queueSource,
         current: current ?? s.current,
+      };
+    }),
+  promoteLoop: (fromId, loop) =>
+    set((s) => {
+      if (!fromId || fromId === loop.id) return s;
+      const inQueue = s.queue.some((l) => l.id === fromId);
+      const isCurrent = s.current?.id === fromId;
+      if (!inQueue && !isCurrent) return s;
+      const queue = inQueue ? s.queue.map((l) => (l.id === fromId ? loop : l)) : s.queue;
+      const current = isCurrent ? loop : s.current;
+      return {
+        ...s,
+        queue,
+        current,
+        loopEndSec: current ? computeLoopEndSec(current) : s.loopEndSec,
       };
     }),
   next: () =>

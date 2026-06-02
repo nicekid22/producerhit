@@ -12,7 +12,6 @@ import { CommunityRail } from "@/components/community/CommunityRail";
 import { CommunityTrackCard } from "@/components/community/CommunityTrackCard";
 import { publicRowToCoverLoop } from "@/lib/coverArt";
 import {
-  ensurePublicLoopAudioUrl,
   fetchPublicLoops,
   resolvePlayableCommunityAudio,
   sortPublicLoopsByNewest,
@@ -100,7 +99,7 @@ export default function Explore() {
 
   useEffect(() => {
     let cancelled = false;
-    const cacheKey = "producerhit_community_cache_v6";
+    const cacheKey = "producerhit_community_cache_v7";
     let loadedFromCache = false;
     try {
       const raw = window.sessionStorage.getItem(cacheKey);
@@ -122,7 +121,7 @@ export default function Explore() {
     setFetchError(null);
     void (async () => {
       try {
-        const mapped = await fetchPublicLoops({ limit: 36, timeoutMs: 6000, playableOnly: true });
+        const mapped = await fetchPublicLoops({ limit: 36, timeoutMs: 12000, playableOnly: true });
         if (cancelled) return;
         setRows(mapped);
         try {
@@ -301,15 +300,8 @@ export default function Explore() {
       return;
     }
 
-    const withUrls = await Promise.all(
-      list.map(async (r) => {
-        const trimmed = typeof r.audio_url === "string" ? r.audio_url.trim() : "";
-        if (trimmed) return r;
-        const http = await ensurePublicLoopAudioUrl(r).catch(() => "");
-        return http ? { ...r, audio_url: http } : r;
-      }),
-    );
-    const clean = withUrls.filter((r) => typeof r.audio_url === "string" && r.audio_url.trim().length > 0);
+    const withUrls = list.filter((r) => typeof r.audio_url === "string" && r.audio_url.trim().length > 0);
+    const clean = withUrls;
     if (!clean.length) {
       trackClientEvent("community_play", { loop_id: startRow.id, source: "queue_resolve" });
       setQueue([toLoop({ ...startRow, audio_url: startUrl })], 0, true, "community");
@@ -382,7 +374,7 @@ export default function Explore() {
 
   return (
     <AppShell theme="prism" variant="single">
-      <div className="pk-community mx-auto w-full max-w-[1280px] space-y-6 px-4 pb-10 pt-5 md:px-6 md:pt-6">
+      <div className="pk-community mx-auto w-full max-w-[1280px] space-y-6 px-4 pb-4 pt-5 md:px-6 md:pb-10 md:pt-6">
         <header className="pk-community-header">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div className="min-w-0">
@@ -549,8 +541,8 @@ export default function Explore() {
               <div className="mt-2 text-sm text-pk-muted">
                 {fetchError ??
                   (isFr
-                    ? "Génère un track public sur le Dashboard pour qu'il apparaisse ici."
-                    : "Generate a public track on the Dashboard to show up here.")}
+                    ? "Aucune track avec audio public pour l'instant. Les morceaux récents sans URL en base n'apparaissent pas — génère à nouveau ou réessaie."
+                    : "No public tracks with playable audio yet. Recent saves without a stored URL are hidden — generate again or retry.")}
               </div>
               <div className="mt-4 flex justify-center gap-2">
                 <Button variant="secondary" onClick={() => setRefetchToken((x) => x + 1)}>

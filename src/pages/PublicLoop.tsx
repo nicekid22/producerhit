@@ -1,15 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
-import { Loader2, Pause, Play, Share2, Sparkles, Star } from "lucide-react";
+import { ArrowRight, Loader2, Music2, Pause, Play, Share2, Sparkles, Star, Zap } from "lucide-react";
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
 import toast from "react-hot-toast";
 import { Navbar } from "@/components/Navbar";
 import { isPlayablePublicLoop, resolvePlayableCommunityAudio, type PublicLoopRow } from "@/lib/publicLoops";
+import { publicRowToCoverLoop, resolvePublicRowCoverUrl } from "@/lib/coverArt";
 import { fetchPublicProfileCards, type PublicProfileCard } from "@/lib/creatorProfile";
 import { ProfileAuthorChip } from "@/components/profile/ProfileAuthorChip";
 import { savePendingRemix, buildRemixPromptFromMeta } from "@/lib/pendingRemix";
-import { buildOgLoopImageUrl, setLoopOpenGraph } from "@/lib/seoMeta";
+import { setLoopPageSeo } from "@/lib/seoMeta";
+import { getGenreSeoLink } from "@/lib/seoPages";
 import { buildLoopShareUrl } from "@/lib/growthLinks";
+import { coverGradient } from "@/lib/utils";
 import { supabase } from "@/lib/supabaseClient";
 import { useLocaleStore } from "@/stores/localeStore";
 import { useAuthStore } from "@/stores/authStore";
@@ -63,24 +66,30 @@ export default function PublicLoop() {
     [id],
   );
 
+  const coverLoop = useMemo(() => (row ? publicRowToCoverLoop(row) : null), [row]);
+  const coverUrl = useMemo(() => (row ? resolvePublicRowCoverUrl(row, 1024) : ""), [row]);
+  const coverBg = useMemo(() => (coverLoop ? coverGradient(coverLoop) : ""), [coverLoop]);
+  const genreSeo = useMemo(() => getGenreSeoLink(row?.genre, locale), [row?.genre, locale]);
+  const avgRating = ratingCount > 0 ? ratingSum / ratingCount : null;
+
   useEffect(() => {
     if (!row || !id) return;
-    const title = `${row.name} — ${row.genre || "Beat"} | ProducerHit`;
-    const description = [
-      row.genre,
-      row.mood,
-      row.bpm ? `${row.bpm} BPM` : null,
-      isFr ? "Écoute et remixe sur ProducerHit" : "Listen and remix on ProducerHit",
-    ]
-      .filter(Boolean)
-      .join(" · ");
-    setLoopOpenGraph({
-      title,
-      description,
-      url: `https://www.producerhit.com/loop/${id}`,
-      imageUrl: buildOgLoopImageUrl({ id, title: row.name, genre: row.genre, bpm: row.bpm }),
+    setLoopPageSeo({
+      id,
+      name: row.name,
+      genre: row.genre,
+      mood: row.mood,
+      bpm: row.bpm,
+      prompt: row.prompt,
+      createdAt: row.created_at,
+      audioUrl: isPlayablePublicLoop(row.audio_url, row.stems_url) ? row.audio_url : null,
+      coverImageUrl: coverUrl,
+      authorName: author?.username ?? null,
+      ratingValue: avgRating,
+      ratingCount,
+      isFr,
     });
-  }, [id, isFr, row]);
+  }, [author?.username, avgRating, coverUrl, id, isFr, ratingCount, row]);
 
   const toLoop = (r: LoopRow): Loop => {
     return {
@@ -176,6 +185,8 @@ export default function PublicLoop() {
   if (!id) return <Navigate to="/community" replace />;
   if (!loading && (!row || !canView)) return <Navigate to="/community" replace />;
 
+  const playingNow = row && current?.id === row.id && isPlaying;
+
   const togglePlay = () => {
     if (!row) return;
     if (current?.id === row.id) {
@@ -203,7 +214,6 @@ export default function PublicLoop() {
         toast.error(isFr ? "Audio indisponible" : "Audio unavailable");
         return;
       }
-
       setCurrent(toLoop({ ...row, audio_url: url }), true);
     })();
   };
@@ -291,115 +301,263 @@ export default function PublicLoop() {
     })();
   };
 
+  const faqItems = isFr
+    ? [
+        {
+          q: "Puis-je remixer ce beat ?",
+          a: "Oui — clique sur Remix this vibe pour repartir du même style dans le studio ProducerHit.",
+        },
+        {
+          q: "C’est gratuit ?",
+          a: "L’écoute est gratuite. Tu peux créer tes propres beats IA avec le plan free, puis upgrade pour plus de crédits et l’export WAV.",
+        },
+      ]
+    : [
+        {
+          q: "Can I remix this beat?",
+          a: "Yes — click Remix this vibe to start from the same style in the ProducerHit studio.",
+        },
+        {
+          q: "Is it free?",
+          a: "Listening is free. Create your own AI beats on the free plan, then upgrade for more credits and WAV export.",
+        },
+      ];
+
   return (
-    <div className="min-h-screen bg-pk-bg text-pk-text">
+    <div className="pk-public-loop min-h-screen bg-pk-bg text-pk-text">
       <Navbar variant="marketing" />
-      <main className="mx-auto max-w-3xl px-4 py-12">
-        <div className="text-sm text-pk-muted">
+      <main className="mx-auto max-w-5xl px-4 pb-16 pt-8 sm:px-6">
+        <nav className="text-sm text-pk-muted" aria-label="Breadcrumb">
+          <Link className="font-semibold text-pk-accent hover:underline" to="/">
+            ProducerHit
+          </Link>
+          <span className="px-2">/</span>
           <Link className="font-semibold text-pk-accent hover:underline" to="/community">
             {isFr ? "Communauté" : "Community"}
           </Link>
           <span className="px-2">/</span>
-          <span>{row?.name ?? (isFr ? "Chargement…" : "Loading…")}</span>
-        </div>
+          <span className="text-pk-text">{row?.name ?? (isFr ? "Track" : "Track")}</span>
+        </nav>
 
-        <div className="mt-8 rounded-2xl border border-pk-border bg-pk-panel/70 p-6 shadow-[0_24px_70px_rgba(0,0,0,0.55)] backdrop-blur-xl">
-          {loading || !row ? (
-            <div className="flex flex-col items-center py-10 text-center">
-              <PkIconLoader
-                icon="community"
-                size="md"
-                label={isFr ? "Chargement du morceau…" : "Loading track…"}
-              />
-            </div>
-          ) : (
-            <>
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h1 className="text-balance text-2xl font-bold tracking-tight">{row.name}</h1>
-                  <div className="mt-2 text-xs font-semibold text-pk-muted">
-                    {row.genre} · {row.bpm > 0 ? `${row.bpm} BPM` : isFr ? "Auto BPM" : "Auto BPM"} ·{" "}
-                    {row.key ? `${row.key} ${row.scale}` : isFr ? "Auto key" : "Auto key"}
+        {loading || !row ? (
+          <div className="mt-16 flex flex-col items-center py-16 text-center">
+            <PkIconLoader icon="community" size="md" label={isFr ? "Chargement du morceau…" : "Loading track…"} />
+          </div>
+        ) : (
+          <>
+            <article className="mt-8 overflow-hidden rounded-3xl border border-pk-border bg-pk-panel/60 shadow-[0_32px_90px_rgba(0,0,0,0.55)] backdrop-blur-xl">
+              <div className="relative min-h-[280px] sm:min-h-[340px]">
+                <div className="absolute inset-0" style={{ background: coverBg }} />
+                <img
+                  src={coverUrl}
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-cover opacity-90"
+                  loading="eager"
+                  decoding="async"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#050508] via-[#050508]/55 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#050508]/40 to-transparent" />
+
+                <div className="relative flex h-full min-h-[280px] flex-col justify-end p-6 sm:min-h-[340px] sm:p-8">
+                  <div className="flex flex-wrap gap-2">
+                    {row.genre ? (
+                      <span className="rounded-full border border-white/15 bg-black/40 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
+                        {row.genre}
+                      </span>
+                    ) : null}
+                    {row.mood ? (
+                      <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-white/90 backdrop-blur-sm">
+                        {row.mood}
+                      </span>
+                    ) : null}
+                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-white/90 backdrop-blur-sm">
+                      {row.bpm > 0 ? `${row.bpm} BPM` : isFr ? "Auto BPM" : "Auto BPM"}
+                    </span>
                   </div>
+
+                  <h1 className="mt-4 max-w-3xl text-balance text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                    {row.name}
+                  </h1>
+
+                  <p className="mt-3 max-w-2xl text-sm text-white/75 sm:text-base">
+                    {isFr
+                      ? "Beat IA public — écoute, remixe la vibe et crée ton propre type beat en quelques secondes."
+                      : "Public AI beat — listen, remix the vibe, and create your own type beat in seconds."}
+                  </p>
+
                   {author ? (
-                    <div className="mt-3">
-                      <ProfileAuthorChip author={author} isFr={isFr} size="md" hideAvatar />
+                    <div className="mt-4">
+                      <ProfileAuthorChip author={author} isFr={isFr} size="md" />
                     </div>
                   ) : null}
-                </div>
-                <button
-                  type="button"
-                  onClick={togglePlay}
-                  disabled={!canPlay || resolvingAudio}
-                  className={[
-                    "inline-flex h-11 w-11 items-center justify-center rounded-full border",
-                    canPlay && !resolvingAudio
-                      ? "border-pk-border bg-white/5 hover:bg-white/10"
-                      : "cursor-not-allowed border-pk-border bg-white/5 text-pk-muted",
-                  ].join(" ")}
-                  aria-label={current?.id === row.id && isPlaying ? "Pause" : "Play"}
-                >
-                  {current?.id === row.id && isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-                </button>
-              </div>
 
-              <div className="mt-5 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: 5 }).map((_, i) => {
-                    const star = i + 1;
-                    const on = star <= (myRating ?? 0);
-                    return (
-                      <button
-                        key={star}
-                        type="button"
-                        disabled={savingRating}
-                        onClick={() => setRating(star)}
-                        className="inline-flex"
-                        aria-label={isFr ? `Noter ${star} sur 5` : `Rate ${star} of 5`}
-                        title={isFr ? `Noter ${star}/5` : `Rate ${star}/5`}
-                      >
-                        <Star className={on ? "h-5 w-5 fill-yellow-400 text-yellow-400" : "h-5 w-5 text-[#d1d5db]"} />
-                      </button>
-                    );
-                  })}
-                </div>
-                <div className="text-sm font-semibold text-pk-muted">
-                  {ratingCount > 0 ? `${(ratingSum / ratingCount).toFixed(1)} (${ratingCount})` : isFr ? "Pas encore de note" : "No ratings yet"}
+                  <div className="mt-6 flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={togglePlay}
+                      disabled={!canPlay || resolvingAudio}
+                      className="pk-prism-btn inline-flex min-h-[48px] items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold disabled:opacity-60"
+                    >
+                      {resolvingAudio ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : playingNow ? (
+                        <Pause className="h-4 w-4" />
+                      ) : (
+                        <Play className="h-4 w-4" />
+                      )}
+                      {playingNow ? (isFr ? "Pause" : "Pause") : isFr ? "Écouter" : "Listen"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={remixThisVibe}
+                      disabled={remixLoading || !canPlay}
+                      className="pk-glass-btn pk-glass-btn--ghost inline-flex min-h-[48px] items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold disabled:opacity-60"
+                    >
+                      {remixLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                      {isFr ? "Remix this vibe" : "Remix this vibe"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={copyLink}
+                      className="pk-glass-btn pk-glass-btn--ghost inline-flex min-h-[48px] items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold"
+                    >
+                      <Share2 className="h-4 w-4" />
+                      {isFr ? "Partager" : "Share"}
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <div className="mt-6">
-                <div className="text-xs font-semibold text-pk-muted">{isFr ? "Prompt" : "Prompt"}</div>
-                <div className="mt-2 whitespace-pre-wrap text-sm text-pk-text">{row.prompt || "—"}</div>
+              <div className="grid gap-6 border-t border-pk-border p-6 sm:grid-cols-[1fr_auto] sm:p-8">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-pk-muted">
+                    {isFr ? "Prompt producteur" : "Producer prompt"}
+                  </div>
+                  <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-pk-text">{row.prompt || "—"}</p>
+                </div>
+                <div className="flex flex-col items-start gap-2 sm:items-end">
+                  <div className="text-xs font-semibold text-pk-muted">{isFr ? "Note communauté" : "Community rating"}</div>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: 5 }).map((_, i) => {
+                      const star = i + 1;
+                      const on = star <= (myRating ?? 0);
+                      return (
+                        <button
+                          key={star}
+                          type="button"
+                          disabled={savingRating}
+                          onClick={() => setRating(star)}
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:bg-white/5"
+                          aria-label={isFr ? `Noter ${star} sur 5` : `Rate ${star} of 5`}
+                        >
+                          <Star className={on ? "h-5 w-5 fill-yellow-400 text-yellow-400" : "h-5 w-5 text-[#d1d5db]"} />
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="text-sm font-semibold text-pk-muted">
+                    {ratingCount > 0 ? `${avgRating?.toFixed(1)} (${ratingCount})` : isFr ? "Pas encore de note" : "No ratings yet"}
+                  </div>
+                </div>
               </div>
+            </article>
 
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                <button
-                  type="button"
-                  onClick={remixThisVibe}
-                  disabled={remixLoading}
-                  className="pk-prism-btn inline-flex items-center justify-center gap-2 rounded-full px-5 py-2 text-sm font-semibold disabled:opacity-60"
+            <section className="mt-10 grid gap-4 sm:grid-cols-3" aria-label={isFr ? "Actions" : "Actions"}>
+              <Link
+                to={user ? "/dashboard" : "/auth"}
+                className="pk-public-loop__cta group rounded-2xl border border-pk-border bg-pk-panel/50 p-5 transition hover:border-pk-accent/40 hover:bg-pk-panel/80"
+              >
+                <Zap className="h-5 w-5 text-pk-accent" />
+                <h2 className="mt-3 text-lg font-bold">{isFr ? "Crée le tien" : "Create yours"}</h2>
+                <p className="mt-2 text-sm text-pk-muted">
+                  {isFr
+                    ? "Génère 2 versions, choisis la meilleure et exporte en MP3 ou WAV."
+                    : "Generate 2 versions, pick the best, and export MP3 or WAV."}
+                </p>
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-pk-accent">
+                  {isFr ? "Ouvrir le studio" : "Open studio"}
+                  <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+                </span>
+              </Link>
+
+              <Link
+                to="/community"
+                className="pk-public-loop__cta group rounded-2xl border border-pk-border bg-pk-panel/50 p-5 transition hover:border-pk-accent/40 hover:bg-pk-panel/80"
+              >
+                <Music2 className="h-5 w-5 text-pk-accent" />
+                <h2 className="mt-3 text-lg font-bold">{isFr ? "Explorer la communauté" : "Explore community"}</h2>
+                <p className="mt-2 text-sm text-pk-muted">
+                  {isFr ? "Découvre d’autres beats IA publics et trouve l’inspiration." : "Discover more public AI beats and find inspiration."}
+                </p>
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-pk-accent">
+                  {isFr ? "Voir les tracks" : "Browse tracks"}
+                  <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+                </span>
+              </Link>
+
+              {genreSeo ? (
+                <Link
+                  to={genreSeo.path}
+                  className="pk-public-loop__cta group rounded-2xl border border-pk-border bg-pk-panel/50 p-5 transition hover:border-pk-accent/40 hover:bg-pk-panel/80"
                 >
-                  {remixLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                  {isFr ? "Remix this vibe" : "Remix this vibe"}
-                </button>
-                <button
-                  type="button"
-                  onClick={copyLink}
-                  className="pk-glass-btn pk-glass-btn--ghost inline-flex items-center justify-center gap-2 rounded-full px-5 py-2 text-sm font-semibold"
+                  <Sparkles className="h-5 w-5 text-pk-accent" />
+                  <h2 className="mt-3 text-lg font-bold">{genreSeo.label}</h2>
+                  <p className="mt-2 text-sm text-pk-muted">
+                    {isFr ? "Guide SEO + workflow pour ce genre sur ProducerHit." : "SEO guide + workflow for this genre on ProducerHit."}
+                  </p>
+                  <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-pk-accent">
+                    {isFr ? "En savoir plus" : "Learn more"}
+                    <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+                  </span>
+                </Link>
+              ) : (
+                <Link
+                  to="/ai-beat-generator"
+                  className="pk-public-loop__cta group rounded-2xl border border-pk-border bg-pk-panel/50 p-5 transition hover:border-pk-accent/40 hover:bg-pk-panel/80"
                 >
-                  <Share2 className="h-4 w-4" />
-                  {isFr ? "Copier le lien" : "Copy link"}
-                </button>
-              </div>
-            </>
-          )}
-        </div>
+                  <Sparkles className="h-5 w-5 text-pk-accent" />
+                  <h2 className="mt-3 text-lg font-bold">{isFr ? "Générateur beats IA" : "AI beat generator"}</h2>
+                  <p className="mt-2 text-sm text-pk-muted">
+                    {isFr ? "Type beats, Song Mode, remix covers — tout en un." : "Type beats, Song Mode, remix covers — all in one."}
+                  </p>
+                  <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-pk-accent">
+                    {isFr ? "Commencer" : "Get started"}
+                    <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+                  </span>
+                </Link>
+              )}
+            </section>
+
+            <section className="mt-10 rounded-2xl border border-pk-border bg-pk-panel/40 p-6 sm:p-8" aria-labelledby="loop-faq">
+              <h2 id="loop-faq" className="text-xl font-bold">
+                {isFr ? "Questions fréquentes" : "FAQ"}
+              </h2>
+              <dl className="mt-5 space-y-5">
+                {faqItems.map((item) => (
+                  <div key={item.q}>
+                    <dt className="font-semibold text-pk-text">{item.q}</dt>
+                    <dd className="mt-1 text-sm leading-relaxed text-pk-muted">{item.a}</dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+
+            {canPlay && row.audio_url ? (
+              <audio className="sr-only" preload="metadata" src={row.audio_url} aria-label={row.name}>
+                <track kind="captions" />
+              </audio>
+            ) : null}
+          </>
+        )}
 
         <footer className="mt-14 border-t border-pk-border pt-8 text-sm text-pk-muted">
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
             <Link to="/blog" className="hover:text-pk-text">
               {isFr ? "Blog" : "Blog"}
+            </Link>
+            <Link to="/pricing" className="hover:text-pk-text">
+              {isFr ? "Tarifs" : "Pricing"}
             </Link>
             <Link to="/legal#privacy" className="hover:text-pk-text">
               {isFr ? "Confidentialité" : "Privacy"}
@@ -407,12 +565,6 @@ export default function PublicLoop() {
             <Link to="/legal#terms" className="hover:text-pk-text">
               {isFr ? "Conditions" : "Terms"}
             </Link>
-            <Link to="/legal#contact" className="hover:text-pk-text">
-              {isFr ? "Support" : "Support"}
-            </Link>
-            <a className="hover:text-pk-text" href="mailto:info.producermarket@gmail.com">
-              info.producermarket@gmail.com
-            </a>
           </div>
           <div className="mt-4">© 2026 ProducerHit</div>
         </footer>

@@ -43,6 +43,8 @@ import { useLocaleStore } from "@/stores/localeStore";
 import { getRemainingBeats, PLAN_LIMITS, FREE_MASTERING_UPSELL_AT, getTotalGenerationLimit } from "@/lib/planLimits";
 import { RemixStudioPanel } from "@/components/dashboard/RemixStudioPanel";
 import { generateBeat, remixLoopAce } from "@/lib/audioApi";
+import { isPlayablePublicAudioUrl } from "@/lib/publicAcePlayback";
+import { dropStalePreviewDuplicates } from "@/lib/loopWorkspaceUtils";
 import { buildAceCaption, type GenerateParams } from "@/lib/promptBuilder";
 import { buildCoverPromptSnapshot, cn } from "@/lib/utils";
 import { BrandLogo } from "@/components/landing/BrandLogo";
@@ -50,7 +52,7 @@ import { MOBILE_DASHBOARD_V2 } from "@/lib/featureFlags";
 import { useIsDesktop } from "@/hooks/useMediaQuery";
 import { useMobileDashboardTab } from "@/hooks/useMobileDashboardTab";
 import { DashboardMobileTabs } from "@/components/dashboard/DashboardMobileTabs";
-import { GeneratorSection } from "@/components/dashboard/GeneratorSection";
+import { GeneratorSection, generatorSectionPad } from "@/components/dashboard/GeneratorSection";
 import { LoopDetailsPanel } from "@/components/dashboard/LoopDetailsPanel";
 import { LoopDetailsSheet, LoopDetailsSheetHeader } from "@/components/dashboard/LoopDetailsSheet";
 import { MasteringPanel } from "@/components/mastering/MasteringPanel";
@@ -321,6 +323,8 @@ export default function Dashboard() {
     visible: boolean;
     previewReady?: boolean;
     previewLoopId?: string;
+    /** Loop persistée — évite de perdre la carte si la preview a déjà été remplacée. */
+    savedLoopId?: string;
     generationKey?: string;
   };
 
@@ -375,6 +379,8 @@ export default function Dashboard() {
   const [referralCodeForPrompt, setReferralCodeForPrompt] = useState<string | null>(null);
   const pendingReferralAfterShareRef = useRef(false);
   const genAutoplayStartedRef = useRef(false);
+  const generationAutoplayByIdxRef = useRef<Map<1 | 2, Loop>>(new Map());
+  const generateSessionRef = useRef(0);
   const referralPromptTimerRef = useRef<number | null>(null);
   const progressionPanelRef = useRef<DashboardGamingPanelHandle>(null);
   const [externalRemix, setExternalRemix] = useState<PendingRemix | null>(null);
@@ -463,15 +469,18 @@ export default function Dashboard() {
 
   const refreshProfile = useCallback(async () => {
     if (!user) return planRef.current;
+    const userId = user.id;
     setProfileLoading(true);
     try {
       const data = await refreshAuthProfile();
+      if (useAuthStore.getState().user?.id !== userId) return planRef.current;
       if (data) {
         applyProfile(data);
         return data.plan;
       }
       return planRef.current;
     } catch (err) {
+      if (useAuthStore.getState().user?.id !== userId) return planRef.current;
       if (shouldShowProfileLoadToast(err)) {
         toast.error(profileLoadErrorMessage(err, locale), { id: "dashboard-profile-load" });
       }
@@ -639,11 +648,7 @@ export default function Dashboard() {
   }, [authStatus, loops.length, loopsLoading, user]);
 
   useEffect(() => {
-    if (plan === "free") {
-      if (audioFormat !== "mp3") setAudioFormat("mp3");
-      return;
-    }
-    if (!audioFormatTouchedRef.current) setAudioFormat("wav");
+    if (plan === "free" && audioFormat !== "mp3") setAudioFormat("mp3");
   }, [audioFormat, plan]);
 
   useEffect(() => {
@@ -906,48 +911,13 @@ export default function Dashboard() {
       const hay = `${l.name} ${l.genre} ${l.mood} ${l.key} ${l.scale}`.toLowerCase();
       return hay.includes(normalized);
     });
-    return filtered
-      .slice()
-      .sort(compareWorkspaceLoops)
-      .filter((l, i, arr) => arr.findIndex((x) => x.id === l.id) === i)
-      .slice(0, 30);
+    return dropStalePreviewDuplicates(
+      filtered
+        .slice()
+        .sort(compareWorkspaceLoops)
+        .filter((l, i, arr) => arr.findIndex((x) => x.id === l.id) === i),
+    ).slice(0, 30);
   }, [loops, query, savedOnly]);
-  const generationBatchLoopIds = useMemo(() => {
-    if (!generationSlots?.length) return new Set<string>();
-    const ids = new Set<string>();
-    for (const slot of generationSlots) {
-      if (slot.previewLoopId) {
-        const preview = loops.find((l) => l.id === slot.previewLoopId);
-        if (preview) {
-          ids.add(preview.id);
-          continue;
-        }
-      }
-      const saved = loops
-        .filter((l) => l.name === slot.title && !l.id.startsWith("preview-"))
-        .sort((a, b) => Date.parse(b.createdAt ?? "") - Date.parse(a.createdAt ?? ""))[0];
-      if (saved) ids.add(saved.id);
-    }
-    return ids;
-  }, [generationSlots, loops]);
-  const workspaceDisplayedLoops = useMemo(() => {
-    if (!generationBatchLoopIds.size) return displayedLoops;
-    return displayedLoops.filter((l) => !generationBatchLoopIds.has(l.id));
-  }, [displayedLoops, generationBatchLoopIds]);
-  const generationBatchLoops = useMemo(() => {
-    if (!generationSlots?.length) return [];
-    const items: Loop[] = [];
-    for (const slot of generationSlots) {
-      const batchLoop =
-        (slot.previewLoopId ? loops.find((l) => l.id === slot.previewLoopId) : null) ??
-        loops
-          .filter((l) => l.name === slot.title && !l.id.startsWith("preview-"))
-          .sort((a, b) => Date.parse(b.createdAt ?? "") - Date.parse(a.createdAt ?? ""))[0] ??
-        null;
-      if (batchLoop) items.push(batchLoop);
-    }
-    return items.filter((l, i, arr) => arr.findIndex((x) => x.id === l.id) === i);
-  }, [generationSlots, loops]);
   const totalMatches = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     return loops.filter((l) => {
@@ -979,7 +949,9 @@ export default function Dashboard() {
   const isRemix = mode === "remix";
   const effectiveEngine = isSong ? "ace-step" : engine;
   const songIsCustom = isSong && songUiMode === "custom";
-  const effectiveAudioFormat = plan === "free" ? "mp3" : audioFormat;
+  /** MP3 par défaut (stockage DB inline ~3–8 Mo vs WAV ~20 Mo). WAV seulement si choisi explicitement. */
+  const effectiveAudioFormat =
+    audioFormatTouchedRef.current && plan !== "free" && audioFormat === "wav" ? "wav" : "mp3";
 
   const effectiveBpm = isSong 
     ? (songIsCustom && songTempoMode === "manual" ? form.bpm : 0)
@@ -1046,8 +1018,10 @@ export default function Dashboard() {
   const handleGenerate = useCallback(async () => {
     if (remaining < versions) return;
     if (generating) return;
+    const sessionId = ++generateSessionRef.current;
     setGenerating(true);
     genAutoplayStartedRef.current = false;
+    generationAutoplayByIdxRef.current = new Map();
     const titleCase = (s: string) =>
       s
         .toLowerCase()
@@ -1198,6 +1172,8 @@ export default function Dashboard() {
               lyrics: songLyrics,
               vocalLanguage: detectedLang,
               autoMeta: autoMetaEnabled,
+              thinking: true,
+              useFormat: true,
               duration: manualSongDuration,
               timeSignature: manualSongTimeSignature || undefined,
               isSong: true,
@@ -1284,10 +1260,14 @@ export default function Dashboard() {
               (typeof result.meta?.taskId === "string" && result.meta.taskId.trim()) ||
               (typeof result.meta?.task_id === "string" && result.meta.task_id.trim()) ||
               "";
-            if (!taskId && !result.meta) return null;
+            const httpAudioUrl =
+              (typeof result.meta?.httpAudioUrl === "string" && result.meta.httpAudioUrl.trim()) ||
+              (audioUrl.startsWith("http") ? audioUrl.trim() : "");
+            if (!taskId && !result.meta && !httpAudioUrl) return null;
             return {
               ace: {
                 ...(taskId ? { taskId } : {}),
+                ...(httpAudioUrl.startsWith("http") ? { httpAudioUrl } : {}),
                 ...(typeof result.meta?.stemsZipUrl === "string" && result.meta.stemsZipUrl.trim().length > 0
                   ? { stemsZipUrl: result.meta.stemsZipUrl.trim() }
                   : {}),
@@ -1350,19 +1330,42 @@ export default function Dashboard() {
 
       const created: Loop[] = [];
 
-      const maybeAutoplayFirstReady = (loop: Loop) => {
-        if (genAutoplayStartedRef.current) return;
-        if (!loop.audioUrl?.trim()) return;
-        genAutoplayStartedRef.current = true;
-        setQueue([loop], 0, true, "generation");
-        trackClientEvent("growth_autoplay", { loop_id: loop.id, count: 1, early: true });
-        if (mobileV2) goResults();
+      const buildAutoplayQueue = () => {
+        const ordered: Loop[] = [];
+        for (const slotIdx of [1, 2] as const) {
+          const loop = generationAutoplayByIdxRef.current.get(slotIdx);
+          if (loop?.audioUrl?.trim()) ordered.push(loop);
+        }
+        return ordered;
       };
 
+      const maybeAutoplayGenerationReady = (idx: 1 | 2, loop: Loop) => {
+        if (!loop.audioUrl?.trim() || !isActiveSession()) return;
+        generationAutoplayByIdxRef.current.set(idx, loop);
+        const ordered = buildAutoplayQueue();
+        if (!ordered.length) return;
+
+        if (!genAutoplayStartedRef.current) {
+          genAutoplayStartedRef.current = true;
+          setQueue(ordered, 0, true, "generation");
+          trackClientEvent("growth_autoplay", { loop_id: loop.id, count: ordered.length, early: true });
+          if (mobileV2) goResults();
+          return;
+        }
+
+        mergeQueue(ordered, "generation");
+      };
+
+      const isActiveSession = () => generateSessionRef.current === sessionId;
+
       const setSlot = (idx: 1 | 2, next: Partial<GenerationSlot>) => {
+        if (!isActiveSession()) return;
         setGenerationSlots((prev) => {
           if (!prev) return prev;
-          return prev.map((it) => (it.idx === idx ? { ...it, ...next } : it));
+          const updated = prev.map((it) => (it.idx === idx ? { ...it, ...next } : it));
+          const stillGenerating = updated.some((s) => s.visible && s.status === "generating");
+          if (!stillGenerating && isActiveSession()) setGenerating(false);
+          return updated;
         });
       };
 
@@ -1438,19 +1441,23 @@ export default function Dashboard() {
               upsertLoop(previewLoop);
               setSlot(idx, { visible: false, previewLoopId: previewId, previewReady: true });
               primeAudioCache(previewId, audioUrl);
+              maybeAutoplayGenerationReady(idx, previewLoop);
 
               const loop = await persistDraft(draft, audioUrl, value.engine, previewId);
               await migrateAudioCache(previewId, loop.id);
+              if (previewId) removeLoop(previewId);
+              setSlot(idx, { savedLoopId: loop.id, previewLoopId: undefined });
+              generationAutoplayByIdxRef.current.set(idx, loop);
               created.push(loop);
-              if (value.meta?.sessionOnly) {
+              if (genAutoplayStartedRef.current && isActiveSession()) mergeQueue(buildAutoplayQueue(), "generation");
+              if (draft.isPublic && !isPlayablePublicAudioUrl(loop.audioUrl)) {
                 toast(
                   locale === "fr"
-                    ? "Audio non lié au cloud — rejouable sur cet appareil seulement. Réessayez si besoin."
-                    : "Audio not linked to cloud — playable on this device only. Retry if needed.",
-                  { duration: 5000 },
+                    ? "Track jouable ici, invisible en communauté — audio non persistable (migration 039 ou génération Edge requise)."
+                    : "Track plays here but won't appear in community — audio not persistable (migration 039 or Edge generation required).",
+                  { duration: 8000 },
                 );
               }
-              maybeAutoplayFirstReady(loop);
               trackClientEvent("generate_success", { loop_id: loop.id, mode, versions, plan, source: entrySource });
               consumeCredit();
               previewId = null;
@@ -1482,7 +1489,7 @@ export default function Dashboard() {
             removeLoop(previewId);
             previewId = null;
           }
-          setSlot(idx, { status: "error", errorText, visible: true });
+          setSlot(idx, { status: "error", errorText, visible: true, previewLoopId: undefined, savedLoopId: undefined });
         }
       };
 
@@ -1500,16 +1507,13 @@ export default function Dashboard() {
 
       if (!created.length) throw new Error(locale === "fr" ? "Échec de génération — réessaie" : "Generation failed — please try again");
 
-      const playableCreated = created.filter((l) => typeof l.audioUrl === "string" && l.audioUrl.trim().length > 0);
+      const slotOrder = new Map(slots.map((s) => [s.title, s.idx]));
+      const playableCreated = created
+        .filter((l) => typeof l.audioUrl === "string" && l.audioUrl.trim().length > 0)
+        .sort((a, b) => (slotOrder.get(a.name) ?? 99) - (slotOrder.get(b.name) ?? 99));
       if (playableCreated.length) {
         if (genAutoplayStartedRef.current) {
-          if (playableCreated.length > 1) {
-            mergeQueue(playableCreated, "generation");
-            const after = usePlayerStore.getState();
-            if (!after.isPlaying && after.queue.length > 1 && after.queueIndex < after.queue.length - 1) {
-              usePlayerStore.getState().next();
-            }
-          }
+          mergeQueue(playableCreated, "generation");
         } else {
           setQueue(playableCreated, 0, true, "generation");
           trackClientEvent("growth_autoplay", { loop_id: playableCreated[0]?.id, count: playableCreated.length });
@@ -1596,12 +1600,14 @@ export default function Dashboard() {
         toast.error(message);
       }
     } finally {
-      setGenerating(false);
-      setGenerationSlots((prev) => {
-        if (!prev) return null;
-        const remaining = prev.filter((s) => s.visible);
-        return remaining.length > 0 ? remaining : null;
-      });
+      if (generateSessionRef.current === sessionId) {
+        setGenerating(false);
+        setGenerationSlots((prev) => {
+          if (!prev) return null;
+          const remaining = prev.filter((s) => s.visible);
+          return remaining.length > 0 ? remaining : null;
+        });
+      }
       if (didGenerate && user) void refreshProfile();
       if (didGenerate && plan === "free") {
         try {
@@ -1949,6 +1955,17 @@ export default function Dashboard() {
 
   const showMasterWorkspace = mobileV2 ? mobileTab === "master" : workspaceView === "master";
 
+  type RemixMobileDock = {
+    canSubmit: boolean;
+    generating: boolean;
+    submit: () => void;
+    idleLabel: string;
+    generatingLabel: string;
+  };
+  const [remixMobileDock, setRemixMobileDock] = useState<RemixMobileDock | null>(null);
+
+  const mobileResultsScrollClass = mobileV2 ? "pk-dashboard-results-scroll" : "";
+
   return (
     <AppShell
       theme="prism"
@@ -1971,64 +1988,92 @@ export default function Dashboard() {
         ) : undefined
       }
       left={
-        <div className="flex flex-col overflow-visible md:h-full md:overflow-hidden">
+        <div
+          className={cn(
+            "flex flex-col md:h-full md:overflow-hidden",
+            mobileV2 && mobileTab === "create" && "pk-mobile-create-shell",
+          )}
+        >
           {!mobileV2 ? (
             <div className="border-b border-white/10 px-4 pb-3 pt-4">
               <BrandLogo />
             </div>
           ) : null}
-          <div className="border-b border-pk-border p-4">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
+          <div
+            className={cn(
+              "flex-shrink-0",
+              mobileV2 ? "px-3 pb-2 pt-2" : "border-b border-pk-border p-4 md:border-white/10",
+            )}
+          >
+            <div
+              className={cn(
+                "flex items-center justify-between gap-2",
+                mobileV2 && "flex-col items-stretch gap-2.5",
+              )}
+            >
+              <div
+                className={cn(
+                  "flex items-center gap-1",
+                  mobileV2 && "w-full rounded-2xl bg-black/20 p-1 ring-1 ring-white/[0.06]",
+                  !mobileV2 && "pk-studio-mode-rail",
+                )}
+              >
                 <button
                   type="button"
                   onClick={() => setMode("song")}
-                  className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
-                    mode === "song" ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
-                  }`}
+                  className={cn(
+                    "rounded-xl px-3 py-2 text-xs font-semibold transition-all",
+                    mobileV2 && "flex-1 text-center",
+                    mode === "song" ? "pk-prism-pill-active" : "text-white/50 hover:text-white",
+                  )}
                 >
                   {locale === "fr" ? "Chanson" : "Song"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setMode("beat")}
-                  className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
-                    mode === "beat" ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
-                  }`}
+                  className={cn(
+                    "rounded-xl px-3 py-2 text-xs font-semibold transition-all",
+                    mobileV2 && "flex-1 text-center",
+                    mode === "beat" ? "pk-prism-pill-active" : "text-white/50 hover:text-white",
+                  )}
                 >
                   Beat
                 </button>
                 <button
                   type="button"
                   onClick={() => setMode("remix")}
-                  className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
-                    mode === "remix" ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
-                  }`}
+                  className={cn(
+                    "rounded-xl px-3 py-2 text-xs font-semibold transition-all",
+                    mobileV2 && "flex-1 text-center",
+                    mode === "remix" ? "pk-prism-pill-active" : "text-white/50 hover:text-white",
+                  )}
                 >
                   Remix
                 </button>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  if (mode === "song") {
-                    setSongUiMode((m) => (m === "simple" ? "custom" : "simple"));
-                    return;
-                  }
-                  setAdvancedOpen((v) => !v);
-                }}
-                className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
-                  (mode === "song" ? songUiMode === "custom" : advancedOpen)
-                    ? "bg-white/10 text-pk-text"
-                    : "bg-white/5 text-pk-muted hover:text-pk-text"
-                }`}
-              >
-                {locale === "fr" ? "Avancé" : "Advanced"}
-              </button>
+              {(mode === "song" || mode === "beat") && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (mode === "song") setSongUiMode((v) => (v === "custom" ? "simple" : "custom"));
+                    else setAdvancedOpen((v) => !v);
+                  }}
+                  className={cn(
+                    "rounded-full px-3 py-1.5 text-[11px] font-semibold transition-colors",
+                    mobileV2 && "self-end",
+                    (mode === "song" ? songUiMode === "custom" : advancedOpen)
+                      ? "bg-white/10 text-pk-text"
+                      : "bg-white/5 text-pk-muted hover:text-pk-text",
+                  )}
+                >
+                  {locale === "fr" ? "Avancé" : "Advanced"}
+                </button>
+              )}
             </div>
           </div>
 
-          <div className={cn("flex-1 overflow-visible md:min-h-0 md:overflow-y-auto", isRemix && mobileV2 && "pb-36")}>
+          <div className={cn("md:overflow-y-auto", mobileV2 ? "pk-mobile-create-scroll" : "flex-1 min-h-0 overflow-y-auto")}>
             {mode === "remix" ? (
               <RemixStudioPanel
                 locale={locale}
@@ -2038,6 +2083,8 @@ export default function Dashboard() {
                 plan={plan}
                 externalRemix={externalRemix}
                 onExternalRemixConsumed={() => setExternalRemix(null)}
+                mobileDock={mobileV2}
+                onMobileDockChange={mobileV2 ? setRemixMobileDock : undefined}
                 onGenerate={(input) => void handleRemixGenerate(input)}
               />
             ) : mode === "beat" ? (
@@ -2149,7 +2196,7 @@ export default function Dashboard() {
                 </GeneratorSection>
 
                 {advancedOpen && debugEnabled ? (
-                  <div className="border-b border-pk-border p-4">
+                  <div className={cn("border-b border-pk-border bg-pk-bg/30", generatorSectionPad)}>
                     <div className="flex items-center justify-between gap-2">
                       <div className="text-sm font-semibold">ACE Debug</div>
                       <Button
@@ -2206,7 +2253,7 @@ export default function Dashboard() {
                 ) : null}
 
                 {advancedOpen && (
-                  <div className="border-b border-pk-border p-4">
+                  <div className={cn("border-b border-pk-border", generatorSectionPad)}>
                     <div className="text-sm font-semibold">{locale === "fr" ? "Tempo & Tonalité" : "Tempo & Key"}</div>
 
                     <div className="mt-4 grid gap-4">
@@ -2326,7 +2373,7 @@ export default function Dashboard() {
                 )}
 
                 {advancedOpen && (
-                  <div className="border-b border-pk-border p-4 bg-pk-bg/30">
+                  <div className={cn("pk-studio-section border-b border-pk-border bg-pk-bg/30", generatorSectionPad)}>
                     <div className="text-sm font-semibold">{locale === "fr" ? "Avancé" : "Advanced"}</div>
                     <div className="mt-4 grid gap-4">
                       <div>
@@ -2446,7 +2493,7 @@ export default function Dashboard() {
             {mode === "song" ? (
               <>
                 <GeneratorSection
-                  title={locale === "fr" ? "Style & Vibe" : "Style & Vibe"}
+                  title={locale === "fr" ? "The Style" : "The Style"}
                   collapsible={mobileV2}
                   defaultOpen
                 >
@@ -2476,6 +2523,29 @@ export default function Dashboard() {
                       }}
                       options={[vocalLanguageAutoOption(locale), ...vocalLanguageDropdownOptions(locale)]}
                     />
+
+                    <div>
+                      <div className="text-xs text-pk-muted">{locale === "fr" ? "Style vocal" : "Vocal Style"}</div>
+                      <div className={chipRowClass}>
+                        {vocalStyleOptions.map((v) => {
+                          const active = songVocalStyle === v.value;
+                          return (
+                            <button
+                              key={v.value}
+                              type="button"
+                              onClick={() => setSongVocalStyle(v.value)}
+                              className={
+                                active
+                                  ? "rounded-full border border-pk-accent/40 bg-pk-accent/15 px-3.5 py-2 text-xs font-semibold text-pk-accent"
+                                  : "rounded-full border border-pk-border bg-pk-bg px-3.5 py-2 text-xs text-pk-muted hover:bg-white/5 hover:text-pk-text"
+                              }
+                            >
+                              {v.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </GeneratorSection>
 
@@ -2594,32 +2664,9 @@ export default function Dashboard() {
                 </GeneratorSection>
 
                 {songIsCustom && (
-                  <div className="border-b border-pk-border p-4 bg-pk-bg/30">
+                  <div className={cn("pk-studio-section border-b border-pk-border bg-pk-bg/30", generatorSectionPad)}>
                     <div className="text-sm font-semibold">{locale === "fr" ? "Réglages chanson" : "Song Customization"}</div>
                     <div className="mt-4 grid gap-4">
-                      <div>
-                        <div className="text-xs text-pk-muted">{locale === "fr" ? "Style vocal" : "Vocal Style"}</div>
-                        <div className={chipRowClass}>
-                          {vocalStyleOptions.map((v) => {
-                            const active = songVocalStyle === v.value;
-                            return (
-                              <button
-                                key={v.value}
-                                type="button"
-                                onClick={() => setSongVocalStyle(v.value)}
-                                className={
-                                  active
-                                    ? "rounded-full border border-pk-accent/40 bg-pk-accent/15 px-3.5 py-2 text-xs font-semibold text-pk-accent"
-                                    : "rounded-full border border-pk-border bg-pk-bg px-3.5 py-2 text-xs text-pk-muted hover:bg-white/5 hover:text-pk-text"
-                                }
-                              >
-                                {v.label}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-
                       <Dropdown
                         label={locale === "fr" ? "Influence" : "Influence"}
                         value={form.influence}
@@ -2843,7 +2890,7 @@ export default function Dashboard() {
                         </div>
                         {songKeyMode === "manual" ? (
                           <div className="grid gap-2">
-                            <div className="grid grid-cols-6 gap-1">
+                            <div className="grid grid-cols-4 gap-1 sm:grid-cols-6">
                               {keyOptions.map((k) => {
                                 const active = form.key === k;
                                 return (
@@ -2853,8 +2900,8 @@ export default function Dashboard() {
                                     onClick={() => setField("key", k)}
                                     className={
                                       active
-                                        ? "rounded-pk border border-pk-accent/40 bg-pk-accent/15 py-1 text-[10px] font-semibold text-pk-accent"
-                                        : "rounded-pk border border-pk-border bg-pk-bg py-1 text-[10px] text-pk-muted hover:bg-white/5 hover:text-pk-text"
+                                        ? "min-h-9 rounded-pk border border-pk-accent/40 bg-pk-accent/15 py-1.5 text-[10px] font-semibold text-pk-accent sm:py-1"
+                                        : "min-h-9 rounded-pk border border-pk-border bg-pk-bg py-1.5 text-[10px] text-pk-muted hover:bg-white/5 hover:text-pk-text sm:py-1"
                                     }
                                   >
                                     {k}
@@ -2901,13 +2948,13 @@ export default function Dashboard() {
                           </div>
                         </div>
                         {songTimeSignatureMode === "manual" ? (
-                          <div className="grid grid-cols-4 gap-1.5">
+                          <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4">
                             {timeSignatureOptions.map((sig) => (
                               <button
                                 key={sig}
                                 type="button"
                                 onClick={() => setSongTimeSignature(sig)}
-                                className={`rounded-pk border py-1 text-[10px] transition-colors ${
+                                className={`min-h-9 rounded-pk border py-1.5 text-[10px] transition-colors sm:py-1 ${
                                   songTimeSignature === sig 
                                     ? "border-pk-accent/40 bg-pk-accent/15 text-pk-accent" 
                                     : "border-pk-border bg-pk-bg text-pk-muted hover:text-pk-text"
@@ -2943,17 +2990,23 @@ export default function Dashboard() {
           </div>
 
           <div
-            className={cn("border-t border-pk-border p-4 flex-shrink-0", mobileV2 && "pk-dashboard-mobile-footer")}
-            style={
-              mobileV2
-                ? { bottom: hasPlayer ? "var(--pk-mobile-dock-player)" : "var(--pk-mobile-dock)" }
-                : undefined
-            }
+            className={cn(
+              "flex-shrink-0 border-t p-4",
+              mobileV2 ? "pk-dashboard-mobile-footer px-3 py-3" : "pk-studio-generate-dock border-t border-pk-border p-4",
+            )}
           >
-            {!isRemix ? (
+            {isRemix && mobileV2 && remixMobileDock ? (
+              <DashboardGenerateButton
+                generating={remixMobileDock.generating}
+                disabled={!remixMobileDock.canSubmit}
+                idleLabel={remixMobileDock.idleLabel}
+                generatingLabel={remixMobileDock.generatingLabel}
+                onClick={() => remixMobileDock.submit()}
+              />
+            ) : !isRemix ? (
               <>
-                <div className="mb-3 flex items-center justify-between text-xs">
-                  <span className="text-gray-500">{locale === "fr" ? "Versions" : "Versions"}</span>
+                <div className={cn("mb-3 flex items-center justify-between text-xs", mobileV2 && "mb-2")}>
+                  <span className={mobileV2 ? "text-white/45" : "text-gray-500"}>{locale === "fr" ? "Versions" : "Versions"}</span>
                   <div className="flex items-center gap-1 rounded-full bg-white/5 p-1">
                     <button
                       type="button"
@@ -3015,8 +3068,8 @@ export default function Dashboard() {
                 />
               </>
             ) : null}
-            <div className="mt-3 flex items-center justify-between text-xs">
-              <span className="text-gray-500">
+            <div className={cn("mt-3 flex items-center justify-between text-xs", mobileV2 && "mt-2.5")}>
+              <span className={mobileV2 ? "text-white/45" : "text-gray-500"}>
                 {profileBusy
                   ? locale === "fr"
                     ? "Chargement du quota…"
@@ -3078,7 +3131,7 @@ export default function Dashboard() {
         </div>
       }
     >
-      <div className="mx-auto w-full max-w-[1120px] px-4 pt-4 md:px-6 md:pt-5">
+      <div className={cn("mx-auto w-full max-w-[1120px] px-4 pt-4 md:px-6 md:pt-5", mobileResultsScrollClass)}>
         <DashboardPromoBillboard
           locale={locale}
           plan={plan}
@@ -3133,9 +3186,9 @@ export default function Dashboard() {
           />
         ) : (
           <>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="pk-studio-workspace-header flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="text-lg font-semibold">{locale === "fr" ? "Mon espace" : "My Workspace"}</div>
+            <div className="pk-studio-workspace-header__title text-lg font-semibold">{locale === "fr" ? "Mon espace" : "My Workspace"}</div>
             <div className="mt-1 text-sm text-pk-muted">
               {locale === "fr"
                 ? `Affichage ${Math.min(30, totalMatches)} sur ${totalMatches}`
@@ -3236,30 +3289,11 @@ export default function Dashboard() {
                       </div>
                     );
                   }
-                  const batchLoop =
-                    (slot.previewLoopId ? loops.find((l) => l.id === slot.previewLoopId) : null) ??
-                    loops
-                      .filter((l) => l.name === slot.title && !l.id.startsWith("preview-"))
-                      .sort((a, b) => Date.parse(b.createdAt ?? "") - Date.parse(a.createdAt ?? ""))[0] ??
-                    null;
-                  if (!batchLoop) return null;
-                  return (
-                    <div key={slot.idx}>
-                      <LoopCardItem
-                        loop={batchLoop}
-                        queueLoops={generationBatchLoops}
-                        queueSource="generation"
-                        onOpenDetails={(loop) => setDetailsId((prev) => (prev === loop.id ? null : loop.id))}
-                        onGenerationUsed={consumeCredit}
-                        onStartWorkspaceJob={(title, sub) => startWorkspaceJob(title, sub)}
-                        onOpenMaster={openMaster}
-                      />
-                    </div>
-                  );
+                  return null;
                 })}
             </div>
           ) : null}
-          {workspaceDisplayedLoops.length === 0 && loopsLoading ? (
+          {displayedLoops.length === 0 && loopsLoading ? (
             <div className="space-y-2">
               {Array.from({ length: 8 }).map((_, i) => (
                 <LoopCardSkeleton
@@ -3269,7 +3303,7 @@ export default function Dashboard() {
                 />
               ))}
             </div>
-          ) : workspaceDisplayedLoops.length === 0 ? (
+          ) : displayedLoops.length === 0 ? (
             loopsSyncError ? (
               <div className="rounded-pk bg-gradient-to-br from-[rgba(157,124,255,0.22)] via-transparent to-[rgba(103,195,255,0.08)] p-[1px] shadow-[0_0_0_1px_rgba(157,124,255,0.08),0_0_24px_rgba(157,124,255,0.10)]">
                 <div className="flex flex-col items-center justify-center rounded-pk border border-dashed border-pk-border bg-pk-panel p-10 text-center">
@@ -3312,58 +3346,16 @@ export default function Dashboard() {
                 accent
               />
             )
-          ) : (
-            detailsLoop ? (
-              <div className="md:grid md:grid-cols-[minmax(0,1fr)_420px] md:gap-4">
-                <div className="space-y-4">
-                  {workspaceDisplayedLoops.map((l) => (
-                    <div key={l.id}>
-                      <LoopCardItem
-                        loop={l}
-                        compact={mobileV2}
-                        queueLoops={workspaceDisplayedLoops}
-                        onOpenDetails={(loop) => setDetailsId((prev) => (prev === loop.id ? null : loop.id))}
-                        onGenerationUsed={consumeCredit}
-                        onStartWorkspaceJob={(title, sub) => startWorkspaceJob(title, sub)}
-                        onOpenMaster={openMaster}
-                      />
-                    </div>
-                  ))}
-                </div>
-
-                <div className="hidden md:block">
-                  <div className="sticky top-6 max-h-[calc(100vh-32px)] overflow-y-auto">
-                    <div className="relative overflow-hidden rounded-2xl border border-pk-border bg-pk-panel/70 p-5 backdrop-blur md:border-pk-border/70">
-                      <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[rgba(157,124,255,0.16)] to-transparent" />
-                      <LoopDetailsSheetHeader
-                        title={detailsLoop.name}
-                        subtitle={detailsLoop.genre}
-                        onClose={() => setDetailsId(null)}
-                        closeLabel={locale === "fr" ? "Fermer" : "Close"}
-                      />
-                      <LoopDetailsPanel
-                        loop={detailsLoop}
-                        locale={locale}
-                        detailsTitle={detailsTitle}
-                        onDetailsTitleChange={setDetailsTitle}
-                        savingDetailsTitle={savingDetailsTitle}
-                        onSaveTitle={saveDetailsTitle}
-                        durationSec={durationsSecById[detailsLoop.id]}
-                        className="px-0"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
+          ) : detailsLoop && !mobileV2 ? (
+            <div className="md:grid md:grid-cols-[minmax(0,1fr)_420px] md:gap-4">
               <div className="space-y-4">
-                {workspaceDisplayedLoops.map((l) => (
+                {displayedLoops.map((l) => (
                   <div key={l.id}>
                     <LoopCardItem
                       loop={l}
                       compact={mobileV2}
-                      queueLoops={workspaceDisplayedLoops}
-                      onOpenDetails={(loop) => setDetailsId(loop.id)}
+                      queueLoops={displayedLoops}
+                      onOpenDetails={(loop) => setDetailsId((prev) => (prev === loop.id ? null : loop.id))}
                       onGenerationUsed={consumeCredit}
                       onStartWorkspaceJob={(title, sub) => startWorkspaceJob(title, sub)}
                       onOpenMaster={openMaster}
@@ -3371,7 +3363,47 @@ export default function Dashboard() {
                   </div>
                 ))}
               </div>
-            )
+
+              <div className="hidden md:block">
+                <div className="sticky top-6 max-h-[calc(100vh-32px)] overflow-y-auto">
+                  <div className="pk-studio-detail-panel relative overflow-hidden rounded-2xl p-5 backdrop-blur">
+                    <div className="pk-prism-panel-glow" />
+                    <LoopDetailsSheetHeader
+                      title={detailsLoop.name}
+                      subtitle={detailsLoop.genre}
+                      onClose={() => setDetailsId(null)}
+                      closeLabel={locale === "fr" ? "Fermer" : "Close"}
+                    />
+                    <LoopDetailsPanel
+                      loop={detailsLoop}
+                      locale={locale}
+                      detailsTitle={detailsTitle}
+                      onDetailsTitleChange={setDetailsTitle}
+                      savingDetailsTitle={savingDetailsTitle}
+                      onSaveTitle={saveDetailsTitle}
+                      durationSec={durationsSecById[detailsLoop.id]}
+                      className="px-0"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {displayedLoops.map((l) => (
+                <div key={l.id}>
+                  <LoopCardItem
+                    loop={l}
+                    compact={mobileV2}
+                    queueLoops={displayedLoops}
+                    onOpenDetails={(loop) => setDetailsId(loop.id)}
+                    onGenerationUsed={consumeCredit}
+                    onStartWorkspaceJob={(title, sub) => startWorkspaceJob(title, sub)}
+                    onOpenMaster={openMaster}
+                  />
+                </div>
+              ))}
+            </div>
           )}
         </div>
           </>
@@ -3397,24 +3429,24 @@ export default function Dashboard() {
         }}
       />
       {mobileV2 && detailsLoop ? (
-        <LoopDetailsSheet open onClose={() => setDetailsId(null)}>
-          <LoopDetailsSheetHeader
-            title={detailsLoop.name}
-            subtitle={detailsLoop.genre}
-            onClose={() => setDetailsId(null)}
-            closeLabel={locale === "fr" ? "Fermer" : "Close"}
+        <LoopDetailsSheet
+          open
+          onClose={() => setDetailsId(null)}
+          title={detailsLoop.name}
+          subtitle={detailsLoop.genre}
+          closeLabel={locale === "fr" ? "Fermer" : "Close"}
+        >
+          <LoopDetailsPanel
+            loop={detailsLoop}
+            locale={locale}
+            detailsTitle={detailsTitle}
+            onDetailsTitleChange={setDetailsTitle}
+            savingDetailsTitle={savingDetailsTitle}
+            onSaveTitle={saveDetailsTitle}
+            durationSec={durationsSecById[detailsLoop.id]}
+            className="px-0"
+            compact
           />
-          <div className="px-5 pb-4">
-            <LoopDetailsPanel
-              loop={detailsLoop}
-              locale={locale}
-              detailsTitle={detailsTitle}
-              onDetailsTitleChange={setDetailsTitle}
-              savingDetailsTitle={savingDetailsTitle}
-              onSaveTitle={saveDetailsTitle}
-              durationSec={durationsSecById[detailsLoop.id]}
-            />
-          </div>
         </LoopDetailsSheet>
       ) : null}
       <ShareMomentModal

@@ -12,6 +12,8 @@ export type LoopDetails = {
   coverPrompt?: string;
   /** URL canonique enregistrée une fois (Pollinations ou storage) — évite de régénérer à chaque visite. */
   coverUrl?: string;
+  /** video = cover animée (nouvelles générations). image = cover statique. */
+  coverKind?: "video" | "image";
 };
 
 export type Loop = {

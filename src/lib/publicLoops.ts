@@ -1,4 +1,11 @@
 import { clearPlayableAudioBlobCache, resolvePlayableAudioUrl } from "@/lib/playableAudio";
+import { CURATED_COMMUNITY_LOOPS, CURATED_COMMUNITY_MIN_COUNT } from "@/lib/communityCurated";
+import {
+  buildPublicAceStreamUrl,
+  isPlayablePublicAudioUrl,
+  isPublicAceStreamEnabled,
+  pickInlineProviderAudioUrl,
+} from "@/lib/publicAcePlayback";
 import { fetchPublicProfileCards, type PublicProfileCard } from "@/lib/creatorProfile";
 import { SUPABASE_LOOP_AUDIO_UPLOAD } from "@/lib/storageAudio";
 import { supabase } from "@/lib/supabaseClient";
@@ -19,8 +26,13 @@ export type PublicLoopRow = {
   author?: PublicProfileCard | null;
 };
 
-const PUBLIC_LOOP_SELECT =
-  "id, user_id, name, genre, influence, mood, bpm, prompt, audio_url, stems_url, created_at, seed";
+const PUBLIC_LOOP_LIST_SELECT =
+  "id, user_id, name, genre, influence, mood, bpm, prompt, audio_url, created_at, seed";
+
+/** Détail loop (page publique) — inclut stems_url pour taskId / cover. */
+export const PUBLIC_LOOP_DETAIL_SELECT = `${PUBLIC_LOOP_LIST_SELECT}, stems_url`;
+
+const PUBLIC_LOOP_SELECT = PUBLIC_LOOP_DETAIL_SELECT;
 /** stems_url.ace.coverUrl + coverPrompt — pas de régénération Pollinations côté landing. */
 
 export function parseStemsUrl(stemsUrl: unknown): Record<string, unknown> | null {
@@ -58,8 +70,26 @@ export function isHttpAudioUrl(url: unknown): url is string {
 }
 
 export function isPlayablePublicLoop(audioUrl: unknown, stemsUrl?: unknown): boolean {
-  if (isHttpAudioUrl(audioUrl)) return true;
+  if (isPlayablePublicAudioUrl(audioUrl)) return true;
   return extractAceTaskId(stemsUrl).length > 0;
+}
+
+/** URL HTTP à écrire en DB — depuis audioUrl direct ou stems.ace.httpAudioUrl */
+export function pickHttpAudioUrlForDb(audioUrlInput: unknown, stemsUrl?: unknown): string | null {
+  const direct = typeof audioUrlInput === "string" ? audioUrlInput.trim() : "";
+  if (isHttpAudioUrl(direct) && !direct.startsWith("blob:")) return direct;
+
+  const obj = parseStemsUrl(stemsUrl);
+  const ace = obj?.ace && typeof obj.ace === "object" ? (obj.ace as Record<string, unknown>) : null;
+  const fromAce = typeof ace?.httpAudioUrl === "string" ? ace.httpAudioUrl.trim() : "";
+  if (isHttpAudioUrl(fromAce)) return fromAce;
+
+  return null;
+}
+
+function isReleaseTaskId(taskId: string): boolean {
+  const t = taskId.trim();
+  return !!t && !t.startsWith("chatcmpl-");
 }
 
 export async function resolveAceAudioUrl(taskId: string): Promise<string> {
@@ -106,40 +136,80 @@ export function sortPublicLoopsByNewest(rows: PublicLoopRow[]): PublicLoopRow[] 
   );
 }
 
+function mergeWithCuratedCommunityLoops(rows: PublicLoopRow[], options?: { playableOnly?: boolean; minCount?: number }) {
+  const playableOnly = options?.playableOnly ?? false;
+  const minCount = options?.minCount ?? CURATED_COMMUNITY_MIN_COUNT;
+
+  const dbFiltered = playableOnly ? rows.filter((r) => isPlayablePublicLoop(r.audio_url, r.stems_url)) : rows;
+  const curatedFiltered = playableOnly
+    ? CURATED_COMMUNITY_LOOPS.filter((r) => isPlayablePublicLoop(r.audio_url, r.stems_url))
+    : CURATED_COMMUNITY_LOOPS;
+
+  const byId = new Map<string, PublicLoopRow>();
+  for (const row of dbFiltered) byId.set(row.id, row);
+  for (const row of curatedFiltered) {
+    if (!byId.has(row.id)) byId.set(row.id, row);
+  }
+
+  const merged = sortPublicLoopsByNewest([...byId.values()]);
+  if (merged.length >= minCount) return merged;
+
+  for (const row of curatedFiltered) {
+    if (merged.length >= minCount) break;
+    if (!byId.has(row.id)) merged.push(row);
+  }
+
+  return sortPublicLoopsByNewest(merged);
+}
+
 export async function fetchPublicLoops(options?: {
   limit?: number;
   timeoutMs?: number;
-  /** Exclut les loops sans audio_url ni taskId ACE — requis pour la lecture publique. */
+  /** Exclut les loops sans audio jouable (HTTP, stream_public ou taskId ACE). */
   playableOnly?: boolean;
 }): Promise<PublicLoopRow[]> {
   const limit = options?.limit ?? 36;
-  const timeoutMs = options?.timeoutMs ?? 8000;
+  const timeoutMs = options?.timeoutMs ?? 12000;
   const playableOnly = options?.playableOnly ?? false;
 
-  let query = supabase
-    .from("loops")
-    .select(PUBLIC_LOOP_SELECT)
-    .eq("is_public", true)
-    .order("created_at", { ascending: false });
+  const loadFromDb = async (): Promise<PublicLoopRow[]> => {
+    let query = supabase
+      .from("loops")
+      .select(PUBLIC_LOOP_LIST_SELECT)
+      .eq("is_public", true)
+      .order("created_at", { ascending: false });
 
-  if (playableOnly) {
-    query = query.not("audio_url", "is", null);
+    if (playableOnly) {
+      query = query.not("audio_url", "is", null);
+    }
+
+    query = query.limit(limit);
+
+    const result = (await Promise.race([
+      query,
+      new Promise<never>((_, reject) => window.setTimeout(() => reject(new Error("timeout")), timeoutMs)),
+    ])) as Awaited<typeof query>;
+
+    if (result.error) throw result.error;
+
+    let rows = ((result.data ?? []) as PublicLoopRow[]).map(normalizePublicLoopRow);
+    if (playableOnly) {
+      rows = rows.filter((row) => isPlayablePublicLoop(row.audio_url));
+    }
+    try {
+      rows = await attachAuthorsToPublicLoops(rows);
+    } catch {
+      // feed OK sans auteurs
+    }
+    return rows;
+  };
+
+  try {
+    const rows = await loadFromDb();
+    return mergeWithCuratedCommunityLoops(rows, { playableOnly }).slice(0, limit);
+  } catch {
+    return mergeWithCuratedCommunityLoops([], { playableOnly }).slice(0, limit);
   }
-
-  query = query.limit(limit);
-
-  const result = (await Promise.race([
-    query,
-    new Promise<never>((_, reject) => window.setTimeout(() => reject(new Error("timeout")), timeoutMs)),
-  ])) as Awaited<typeof query>;
-
-  if (result.error) throw result.error;
-
-  let rows = ((result.data ?? []) as PublicLoopRow[]).map(normalizePublicLoopRow);
-  if (playableOnly) {
-    rows = rows.filter((row) => isPlayablePublicLoop(row.audio_url, row.stems_url));
-  }
-  return attachAuthorsToPublicLoops(rows);
 }
 
 export async function attachAuthorsToPublicLoops(rows: PublicLoopRow[]): Promise<PublicLoopRow[]> {
@@ -153,27 +223,13 @@ export async function attachAuthorsToPublicLoops(rows: PublicLoopRow[]): Promise
   });
 }
 
-export async function ensurePublicLoopAudioUrl(row: PublicLoopRow): Promise<string> {
-  const existing = typeof row.audio_url === "string" ? row.audio_url.trim() : "";
-  if (existing) return existing;
-  const taskId = extractAceTaskId(row.stems_url);
-  if (!taskId) return "";
-  return resolveAceAudioUrlWithRetry(taskId);
-}
-
-/** Résout l’URL HTTP (DB ou ACE) puis tente blob: ; retombe sur l’URL directe si CORS bloque le fetch. */
+/** URL jouable en communauté — HTTP ou stream public Edge. */
 export async function resolvePlayableCommunityAudio(row: PublicLoopRow): Promise<string> {
-  const cacheKey = `community:${row.id}`;
   const existing = typeof row.audio_url === "string" ? row.audio_url.trim() : "";
-  if (existing) {
-    const playable = await resolvePlayableAudioUrl(existing, cacheKey);
-    return playable || existing;
-  }
-
-  const httpUrl = await ensurePublicLoopAudioUrl(row);
-  if (!httpUrl) return "";
-  const playable = await resolvePlayableAudioUrl(httpUrl, cacheKey);
-  return playable || httpUrl;
+  if (!existing) return "";
+  const cacheKey = `community:${row.id}`;
+  const playable = await resolvePlayableAudioUrl(existing, cacheKey);
+  return playable || existing;
 }
 
 export function clearCommunityAudioBlobCache(loopId?: string) {
@@ -233,6 +289,7 @@ export function buildStemsUrlForDb(
     audioFormat?: string | null;
     coverPrompt?: string;
     coverUrl?: string;
+    httpAudioUrl?: string;
   } | null,
 ): Record<string, unknown> | null {
   const taskIdFromInput = extractAceTaskId(inputStemsUrl);
@@ -245,6 +302,9 @@ export function buildStemsUrlForDb(
   }
 
   const ace: Record<string, unknown> = { ...existingAce, ...(details ?? {}) };
+  const httpFromDetails = typeof details?.httpAudioUrl === "string" ? details.httpAudioUrl.trim() : "";
+  if (isHttpAudioUrl(httpFromDetails)) ace.httpAudioUrl = httpFromDetails;
+  delete ace.providerDataUrl;
   const taskId =
     (typeof existingAce.taskId === "string" && existingAce.taskId.trim()) ||
     (typeof existingAce.task_id === "string" && existingAce.task_id.trim()) ||
@@ -257,7 +317,7 @@ export function buildStemsUrlForDb(
   return { ...base, ace };
 }
 
-/** Persiste URL HTTP ACE + taskId en DB — sans Supabase Storage. */
+/** Écrit l’URL HTTP ACE déjà connue + métadonnées stems — sans re-résolution ACE. */
 export async function persistLoopAceAudioRecord(args: {
   loopId: string;
   userId: string;
@@ -267,28 +327,70 @@ export async function persistLoopAceAudioRecord(args: {
 }): Promise<{ audioUrl: string | null; stemsUrl: Record<string, unknown> | null }> {
   const stemsRecord =
     args.stemsUrlForDb && typeof args.stemsUrlForDb === "object" ? (args.stemsUrlForDb as Record<string, unknown>) : null;
+
   const taskId = extractAceTaskId(stemsRecord);
 
-  const audioUrl =
+  let audioUrl =
     args.audioUrlForDb ||
-    (isHttpAudioUrl(args.audioUrlInput) ? args.audioUrlInput.trim() : null) ||
-    (taskId ? await resolveAceAudioUrl(taskId).catch(() => "") : "") ||
+    pickHttpAudioUrlForDb(args.audioUrlInput, stemsRecord) ||
     null;
 
-  const updatePayload: { audio_url?: string; stems_url?: Record<string, unknown> } = {};
-  if (audioUrl) updatePayload.audio_url = audioUrl;
-  if (stemsRecord) updatePayload.stems_url = stemsRecord;
+  if (!audioUrl && taskId) {
+    const resolved = isReleaseTaskId(taskId)
+      ? await resolveAceAudioUrlWithRetry(taskId)
+      : await resolveAceAudioUrl(taskId).catch(() => "");
+    if (isHttpAudioUrl(resolved)) audioUrl = resolved.trim();
+  }
+
+  const inlineData =
+    !audioUrl && isPublicAceStreamEnabled() ? pickInlineProviderAudioUrl(args.audioUrlInput, stemsRecord) : null;
+  let streamUrl = inlineData ? buildPublicAceStreamUrl(args.loopId) : "";
+
+  const updatePayload: {
+    audio_url?: string;
+    stems_url?: Record<string, unknown>;
+    provider_audio_inline?: string;
+  } = {};
+  if (audioUrl) {
+    updatePayload.audio_url = audioUrl;
+  } else if (streamUrl && inlineData) {
+    updatePayload.audio_url = streamUrl;
+    updatePayload.provider_audio_inline = inlineData;
+    if (stemsRecord) {
+      const ace =
+        stemsRecord.ace && typeof stemsRecord.ace === "object"
+          ? ({ ...(stemsRecord.ace as Record<string, unknown>) } as Record<string, unknown>)
+          : {};
+      delete ace.providerDataUrl;
+      ace.publicPlayback = "edge-stream";
+      updatePayload.stems_url = { ...stemsRecord, ace };
+    }
+  } else if (stemsRecord) {
+    updatePayload.stems_url = stemsRecord;
+  }
 
   if (!Object.keys(updatePayload).length) {
     return { audioUrl: args.audioUrlForDb, stemsUrl: stemsRecord };
   }
 
   const { error } = await supabase.from("loops").update(updatePayload).eq("id", args.loopId).eq("user_id", args.userId);
-  if (error) {
+  if (error && updatePayload.provider_audio_inline) {
+    const fallbackPayload = { ...updatePayload };
+    delete fallbackPayload.provider_audio_inline;
+    if (Object.keys(fallbackPayload).length) {
+      const retry = await supabase.from("loops").update(fallbackPayload).eq("id", args.loopId).eq("user_id", args.userId);
+      if (retry.error) {
+        return { audioUrl: args.audioUrlForDb, stemsUrl: stemsRecord };
+      }
+    } else {
+      return { audioUrl: args.audioUrlForDb, stemsUrl: stemsRecord };
+    }
+  } else if (error) {
     return { audioUrl: args.audioUrlForDb, stemsUrl: stemsRecord };
   }
 
-  return { audioUrl, stemsUrl: stemsRecord };
+  const resolvedAudioUrl = audioUrl || (streamUrl && inlineData ? streamUrl : null);
+  return { audioUrl: resolvedAudioUrl, stemsUrl: (updatePayload.stems_url as Record<string, unknown> | undefined) ?? stemsRecord };
 }
 
 export async function finalizePublicLoopRecord(args: {

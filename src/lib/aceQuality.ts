@@ -12,6 +12,21 @@ export const ACE_QUALITY_DEFAULTS = {
   inferenceSteps: 8,
 } as const;
 
+/**
+ * Legacy ACE release_task + query_result (404 sur api.acemusic.ai depuis 2026).
+ * Défaut : chat/completions uniquement. Rollback : VITE_ACE_RELEASE_TASK=1
+ */
+export function isAceReleaseTaskEnabled(): boolean {
+  return import.meta.env.VITE_ACE_RELEASE_TASK === "1";
+}
+
+/** @deprecated Alias — préférer isAceReleaseTaskEnabled */
+export function isAceSongQualityV2Enabled(): boolean {
+  return isAceReleaseTaskEnabled();
+}
+
+export const ACE_RELEASE_MODEL = "acestep-v15-xl-turbo" as const;
+
 export type AceQualityFlags = {
   thinking: boolean;
   useFormat: boolean;
@@ -35,5 +50,6 @@ export function resolveAceQualityFlags(input: {
 
 export function appendAceQualityToParamObj(paramObj: Record<string, unknown>, shift = ACE_QUALITY_DEFAULTS.shift): Record<string, unknown> {
   if (typeof paramObj.shift !== "number") paramObj.shift = shift;
+  if (typeof paramObj.inference_steps !== "number") paramObj.inference_steps = ACE_QUALITY_DEFAULTS.inferenceSteps;
   return paramObj;
 }

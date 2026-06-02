@@ -137,9 +137,9 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen bg-pk-bg text-pk-text">
+    <div className="min-h-[100dvh] bg-pk-bg text-pk-text">
       <Navbar variant="auth" />
-      <div className="mx-auto flex min-h-[calc(100vh-56px)] max-w-md flex-col justify-center px-6 py-10">
+      <div className="mx-auto flex min-h-[calc(100dvh-3.5rem)] max-w-md flex-col justify-center px-6 py-10">
         <div className="rounded-2xl border border-pk-border bg-pk-panel/70 p-8 shadow-[0_24px_70px_rgba(0,0,0,0.55)] backdrop-blur-xl">
           <div className="text-center">
             <div className="text-2xl font-semibold tracking-tight">

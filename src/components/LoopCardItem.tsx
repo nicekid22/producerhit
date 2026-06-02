@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { persistCoverUrlForLoop, resolveCoverImageUrl, coverImageKeyFromLoop } from "@/lib/coverArt";
+import { CoverMedia } from "@/components/CoverMedia";
 import { buildCoverPromptSnapshot, cn, coverGradient } from "@/lib/utils";
 import { loopCardClass, loopCoverClass, loopPlayButtonClass, loopPublicButtonClass, loopToggleButtonClass } from "@/lib/loopCardUi";
 import { useAuthStore } from "@/stores/authStore";
@@ -95,11 +96,11 @@ export function LoopCardItem({
   const user = useAuthStore((s) => s.user);
   const coverUrl = useMemo(
     () => resolveCoverImageUrl(loop),
-    [loop.details?.coverPrompt, loop.details?.coverUrl, loop.genre, loop.id, loop.influence, loop.mood, loop.seed],
+    [loop.details?.coverPrompt, loop.details?.coverUrl, loop.details?.coverKind, loop.genre, loop.id, loop.influence, loop.mood, loop.seed],
   );
   const coverKey = useMemo(
     () => coverImageKeyFromLoop(loop),
-    [loop.details?.coverPrompt, loop.details?.coverUrl, loop.genre, loop.id, loop.influence, loop.mood, loop.seed],
+    [loop.details?.coverPrompt, loop.details?.coverUrl, loop.details?.coverKind, loop.genre, loop.id, loop.influence, loop.mood, loop.seed],
   );
   const persistCoverOnLoad = () => {
     if (loop.details?.coverUrl?.trim() || !user?.id || loop.id.startsWith("local-") || loop.id.startsWith("preview-")) return;
@@ -107,7 +108,17 @@ export function LoopCardItem({
       if (!saved) return;
       useLoopsStore.setState((s) => ({
         loops: s.loops.map((l) =>
-          l.id === loop.id ? { ...l, details: { ...(l.details ?? {}), coverUrl: saved, coverPrompt: l.details?.coverPrompt } } : l,
+          l.id === loop.id
+            ? {
+                ...l,
+                details: {
+                  ...(l.details ?? {}),
+                  coverUrl: saved,
+                  coverKind: "image",
+                  coverPrompt: l.details?.coverPrompt,
+                },
+              }
+            : l,
         ),
       }));
     });
@@ -420,39 +431,29 @@ export function LoopCardItem({
           style={{ background: coverGradient(loop) }}
         >
           <div className="relative h-full w-full overflow-hidden rounded-[6px] bg-[#050508]">
-          <img
-            key={coverKey}
-            src={coverUrl}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover"
-            loading="lazy"
-            decoding="async"
-            referrerPolicy="no-referrer"
-            style={{ display: "block", opacity: 0 }}
-            onLoad={(e) => {
-              e.currentTarget.style.display = "block";
-              e.currentTarget.style.opacity = "1";
-              e.currentTarget.dataset.retry = "0";
-              persistCoverOnLoad();
-            }}
-            onError={(e) => {
-              const img = e.currentTarget;
-              img.style.opacity = "0";
-              const retry = Number(img.dataset.retry ?? "0");
-              if (retry < 4) {
-                img.dataset.retry = String(retry + 1);
-                const url = coverUrl;
-                window.setTimeout(() => {
-                  img.style.display = "block";
-                  img.style.opacity = "0";
-                  img.src = "";
-                  img.src = url;
-                }, 800 * (retry + 1));
-                return;
-              }
-              img.style.display = "none";
-            }}
-          />
+            <CoverMedia
+              loop={loop}
+              coverUrl={coverUrl}
+              coverKey={coverKey}
+              onImageLoad={persistCoverOnLoad}
+              onImageError={(e) => {
+                const img = e.currentTarget;
+                img.style.opacity = "0";
+                const retry = Number(img.dataset.retry ?? "0");
+                if (retry < 4) {
+                  img.dataset.retry = String(retry + 1);
+                  const url = coverUrl;
+                  window.setTimeout(() => {
+                    img.style.display = "block";
+                    img.style.opacity = "0";
+                    img.src = "";
+                    img.src = url;
+                  }, 800 * (retry + 1));
+                  return;
+                }
+                img.style.display = "none";
+              }}
+            />
           </div>
         </div>
         <div className="min-w-0">
