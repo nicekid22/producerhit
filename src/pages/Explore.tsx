@@ -1,28 +1,40 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Play, Search, Shuffle, Sparkles, Trophy, Zap } from "lucide-react";
+import { Flame, Sparkles, Trophy, Waves } from "lucide-react";
 import toast from "react-hot-toast";
 import { AppShell } from "@/components/AppShell";
-import { PrismFilterPill } from "@/components/prism/PrismFilterPill";
-import { PkIconLoader } from "@/components/ui/PkIconLoader";
-import { Dropdown } from "@/components/ui/Dropdown";
 import { Button } from "@/components/ui/Button";
-import { CommunityFeatured } from "@/components/community/CommunityFeatured";
+import { PkIconLoader } from "@/components/ui/PkIconLoader";
+import { CommunityHubHero } from "@/components/community/CommunityHubHero";
 import { CommunityRail } from "@/components/community/CommunityRail";
 import { CommunityTrackCard } from "@/components/community/CommunityTrackCard";
+import { CommunityVibeNav } from "@/components/community/CommunityVibeNav";
 import { publicRowToCoverLoop } from "@/lib/coverArt";
+import {
+  categoriesWithTracks,
+  COMMUNITY_VIBE_CATEGORIES,
+  pickSpotlight,
+  sortByRating,
+  tracksForCategory,
+} from "@/lib/communityHub";
 import {
   fetchPublicLoops,
   resolvePlayableCommunityAudio,
   sortPublicLoopsByNewest,
   type PublicLoopRow,
 } from "@/lib/publicLoops";
-import { savePendingRemix, buildRemixPromptFromMeta } from "@/lib/pendingRemix";
+import { savePendingRemix } from "@/lib/pendingRemix";
+import { isRemixVibeRecreateEnabled } from "@/lib/remixVibeFallback";
+import { fetchRemixSourceLoop } from "@/lib/remixSourceLoop";
+import { COMMUNITY_PINTEREST_FOREGROUND } from "@/lib/featureFlags";
+import { fetchPinterestCoversForStyles } from "@/lib/pinterestCoverFetch";
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
 import { useLocaleStore } from "@/stores/localeStore";
 import { useAuthStore } from "@/stores/authStore";
 import { usePlayerStore } from "@/stores/playerStore";
 import type { Loop } from "@/types/loop";
+
+type RatingStats = { sum: number; count: number; myRating: number | null };
 
 export default function Explore() {
   const navigate = useNavigate();
@@ -32,8 +44,7 @@ export default function Explore() {
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<PublicLoopRow[]>([]);
   const [refetchToken, setRefetchToken] = useState(0);
-  const [genre, setGenre] = useState<string>("All");
-  const [mood, setMood] = useState<string>("All");
+  const [activeVibeId, setActiveVibeId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<"new" | "top" | "random">("new");
   const [resolvingId, setResolvingId] = useState<string | null>(null);
@@ -44,22 +55,10 @@ export default function Explore() {
   const setCurrent = usePlayerStore((s) => s.setCurrent);
   const setPlaying = usePlayerStore((s) => s.setPlaying);
   const setQueue = usePlayerStore((s) => s.setQueue);
-
-  type RatingStats = { sum: number; count: number; myRating: number | null };
   const [ratingsById, setRatingsById] = useState<Record<string, RatingStats>>({});
-
-  const genres = useMemo(() => {
-    const set = new Set(rows.map((r) => r.genre ?? "").filter(Boolean));
-    return ["All", ...Array.from(set).sort((a, b) => a.localeCompare(b))];
-  }, [rows]);
-
-  const moods = useMemo(() => {
-    const set = new Set(rows.map((r) => r.mood ?? "").filter(Boolean));
-    return ["All", ...Array.from(set).sort((a, b) => a.localeCompare(b))];
-  }, [rows]);
+  const [pinterestCovers, setPinterestCovers] = useState<Record<string, string>>({});
 
   const toLoop = (r: PublicLoopRow): Loop => publicRowToCoverLoop(r);
-
   const isNew = (createdAt: string) => Date.now() - new Date(createdAt).getTime() < 24 * 60 * 60 * 1000;
 
   const remixFrom = (r: PublicLoopRow) => {
@@ -67,22 +66,24 @@ export default function Explore() {
     setResolvingId(r.id);
     void (async () => {
       try {
-        const audioUrl = await resolvePlayableCommunityAudio(r);
-        const promptValue = buildRemixPromptFromMeta({
-          prompt: r.prompt || "",
-          genre: r.genre || "",
-          mood: r.mood || "",
-          locale,
-        });
+        let audioUrl = "";
+        if (!isRemixVibeRecreateEnabled()) {
+          audioUrl = await resolvePlayableCommunityAudio(r);
+        }
+        const sourceLoop = await fetchRemixSourceLoop(r.id);
+        if (!sourceLoop && isRemixVibeRecreateEnabled()) {
+          throw new Error("metadata");
+        }
         savePendingRemix({
           sourceLoopId: r.id,
           sourceLoopName: (r.name || "Track").trim() || "Track",
           audioUrl,
-          prompt: promptValue,
-          genre: r.genre || undefined,
-          mood: r.mood || undefined,
-          bpm: typeof r.bpm === "number" ? r.bpm : undefined,
+          prompt: sourceLoop?.prompt || (r.prompt || "").trim(),
+          genre: sourceLoop?.genre || r.genre || undefined,
+          mood: sourceLoop?.mood || r.mood || undefined,
+          bpm: sourceLoop?.bpm && sourceLoop.bpm > 0 ? sourceLoop.bpm : typeof r.bpm === "number" ? r.bpm : undefined,
           source: "community",
+          sourceLoop: sourceLoop ?? undefined,
         });
         if (!user) {
           navigate("/auth", { state: { from: "/dashboard?remix=1" } });
@@ -99,16 +100,16 @@ export default function Explore() {
 
   useEffect(() => {
     let cancelled = false;
-    const cacheKey = "producerhit_community_cache_v8";
+    const cacheKey = "producerhit_community_cache_v9";
     let loadedFromCache = false;
     try {
       const raw = window.sessionStorage.getItem(cacheKey);
       if (raw) {
         const parsed = JSON.parse(raw) as { ts?: unknown; rows?: unknown };
         const ts = typeof parsed?.ts === "number" ? parsed.ts : 0;
-        const rows = Array.isArray(parsed?.rows) ? (parsed.rows as unknown[]) : [];
-        if (Date.now() - ts < 10 * 60 * 1000 && rows.length) {
-          setRows(rows as PublicLoopRow[]);
+        const cached = Array.isArray(parsed?.rows) ? (parsed.rows as unknown[]) : [];
+        if (Date.now() - ts < 10 * 60 * 1000 && cached.length) {
+          setRows(cached as PublicLoopRow[]);
           setLoading(false);
           loadedFromCache = true;
         }
@@ -121,7 +122,7 @@ export default function Explore() {
     setFetchError(null);
     void (async () => {
       try {
-        const mapped = await fetchPublicLoops({ limit: 36, timeoutMs: 12000, playableOnly: true });
+        const mapped = await fetchPublicLoops({ limit: 48, timeoutMs: 12000, playableOnly: true });
         if (cancelled) return;
         setRows(mapped);
         try {
@@ -138,8 +139,8 @@ export default function Explore() {
                 ? "Chargement trop long. Réessaie."
                 : "Loading is taking too long. Try again."
               : isFr
-                ? "Impossible de charger la communauté."
-                : "Failed to load community.";
+                ? "Impossible de charger le flux."
+                : "Failed to load the feed.";
           setFetchError(msg);
           if (err instanceof Error && err.message === "timeout") toast.error(msg);
         }
@@ -154,7 +155,7 @@ export default function Explore() {
 
   useEffect(() => {
     let cancelled = false;
-    const ids = rows.slice(0, 30).map((r) => r.id).filter(Boolean);
+    const ids = rows.slice(0, 40).map((r) => r.id).filter(Boolean);
     if (!ids.length) {
       setRatingsById({});
       return;
@@ -191,15 +192,26 @@ export default function Explore() {
     };
   }, [rows, user]);
 
+  const vibeNavItems = useMemo(() => {
+    return COMMUNITY_VIBE_CATEGORIES.map((category) => ({
+      category,
+      count: tracksForCategory(rows, category).length,
+    })).filter((x) => x.count > 0);
+  }, [rows]);
+
+  const activeCategory = useMemo(
+    () => COMMUNITY_VIBE_CATEGORIES.find((c) => c.id === activeVibeId) ?? null,
+    [activeVibeId],
+  );
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const base = rows.filter((r) => {
-      const g = r.genre ?? "";
-      const m = r.mood ?? "";
-      if (genre !== "All" && g !== genre) return false;
-      if (mood !== "All" && m !== mood) return false;
+    let base = rows;
+    if (activeCategory) base = tracksForCategory(base, activeCategory);
+
+    base = base.filter((r) => {
       if (!q) return true;
-      const hay = `${r.name ?? ""} ${g} ${m} ${r.prompt ?? ""}`.toLowerCase();
+      const hay = `${r.name ?? ""} ${r.genre ?? ""} ${r.mood ?? ""} ${r.prompt ?? ""} ${r.author?.username ?? ""}`.toLowerCase();
       return hay.includes(q);
     });
 
@@ -212,53 +224,29 @@ export default function Explore() {
       return copy;
     }
 
-    if (sort === "top") {
-      return base
-        .slice()
-        .sort((a, b) => {
-          const ra = ratingsById[a.id];
-          const rb = ratingsById[b.id];
-          const avgA = ra && ra.count > 0 ? ra.sum / ra.count : 0;
-          const avgB = rb && rb.count > 0 ? rb.sum / rb.count : 0;
-          if (avgB !== avgA) return avgB - avgA;
-          const countA = ra?.count ?? 0;
-          const countB = rb?.count ?? 0;
-          if (countB !== countA) return countB - countA;
-          return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
-        });
-    }
-
+    if (sort === "top") return sortByRating(base, ratingsById);
     return sortPublicLoopsByNewest(base);
-  }, [genre, mood, query, ratingsById, rows, sort]);
+  }, [activeCategory, query, ratingsById, rows, sort]);
 
   const newestRail = useMemo(() => sortPublicLoopsByNewest(rows).slice(0, 12), [rows]);
+  const topRail = useMemo(() => sortByRating(rows, ratingsById).slice(0, 12), [ratingsById, rows]);
+  const myTracks = useMemo(() => {
+    if (!user?.id) return [];
+    return sortPublicLoopsByNewest(rows.filter((r) => r.user_id === user.id));
+  }, [rows, user?.id]);
 
-  const topRail = useMemo(() => {
-    return rows
-      .slice()
-      .sort((a, b) => {
-        const ra = ratingsById[a.id];
-        const rb = ratingsById[b.id];
-        const avgA = ra && ra.count > 0 ? ra.sum / ra.count : 0;
-        const avgB = rb && rb.count > 0 ? rb.sum / rb.count : 0;
-        if (avgB !== avgA) return avgB - avgA;
-        const countA = ra?.count ?? 0;
-        const countB = rb?.count ?? 0;
-        if (countB !== countA) return countB - countA;
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      })
-      .slice(0, 12);
-  }, [ratingsById, rows]);
+  const spotlight = useMemo(() => pickSpotlight(rows, ratingsById), [ratingsById, rows]);
+  const categorySections = useMemo(() => categoriesWithTracks(rows), [rows]);
 
-
-  const spotlight = topRail[0] ?? newestRail[0] ?? null;
-  const genreVariety = Math.max(0, genres.length - 1);
-  const hasActiveFilters = query.trim().length > 0 || genre !== "All" || mood !== "All" || sort !== "new";
-  const catalogTitle =
-    sort === "top"
+  const hasActiveFilters = query.trim().length > 0 || activeVibeId !== null || sort !== "new";
+  const catalogTitle = activeCategory
+    ? isFr
+      ? activeCategory.title.fr
+      : activeCategory.title.en
+    : sort === "top"
       ? isFr
-        ? "Top communauté"
-        : "Community top picks"
+        ? "Top du flux"
+        : "Feed top picks"
       : sort === "random"
         ? isFr
           ? "Sélection aléatoire"
@@ -268,8 +256,8 @@ export default function Explore() {
             ? `${filtered.length} résultat${filtered.length > 1 ? "s" : ""}`
             : `${filtered.length} result${filtered.length === 1 ? "" : "s"}`
           : isFr
-            ? "Toute la communauté"
-            : "All community tracks";
+            ? "Tout le catalogue"
+            : "Full catalog";
 
   const ensurePlayableUrl = async (r: PublicLoopRow) => {
     setResolvingId(r.id);
@@ -372,177 +360,137 @@ export default function Explore() {
     })();
   };
 
+  const shufflePlay = () => {
+    const pool = filtered.length ? filtered : rows;
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+    if (!pick) return;
+    const idx = pool.findIndex((x) => x.id === pick.id);
+    void playQueue(pool, idx >= 0 ? idx : 0);
+  };
+
+  const isMineRow = (r: PublicLoopRow) => Boolean(user?.id && r.user_id === user.id);
+
+  const railProps = {
+    isFr,
+    currentId: current?.id ?? null,
+    isPlaying,
+    resolvingId,
+    ratingsById,
+    isNew,
+    isMineRow,
+    onRemix: remixFrom,
+    onRate: setRating,
+    pinterestCovers,
+  };
+
   return (
     <AppShell theme="prism" variant="single">
-      <div className="pk-community mx-auto w-full max-w-[1280px] space-y-6 px-4 pb-4 pt-5 md:px-6 md:pb-10 md:pt-6">
-        <header className="pk-community-header">
-          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="pk-prism-live-badge">
-                  <span className="pk-prism-live-badge__dot" />
-                  {loading ? "…" : `${rows.length} live`}
-                </span>
-                <span className="text-xs font-medium text-white/40">
-                  {genreVariety} {isFr ? "genres" : "genres"}
-                </span>
-              </div>
-              <h1 className="mt-3 text-2xl font-bold tracking-tight md:text-3xl">
-                <span className="pk-prism-holo-text">{isFr ? "Communauté" : "Community"}</span>
-              </h1>
-              <p className="mt-2 max-w-xl text-sm text-white/55">
-                {isFr
-                  ? "Écoute, filtre et remixe les créations publiques — comme un mini-catalogue streaming."
-                  : "Listen, filter, and remix public tracks — a simple streaming-style catalog."}
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={loading || filtered.length === 0}
-                onClick={() => {
-                  const first = filtered[0];
-                  if (first) void playQueue(filtered, 0);
-                }}
-              >
-                <Play className="h-4 w-4" />
-                {isFr ? "Tout lire" : "Play all"}
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={loading || filtered.length === 0}
-                onClick={() => {
-                  const pick = filtered[Math.floor(Math.random() * filtered.length)];
-                  if (!pick) return;
-                  const idx = filtered.findIndex((x) => x.id === pick.id);
-                  void playQueue(filtered, idx >= 0 ? idx : 0);
-                }}
-              >
-                <Shuffle className="h-4 w-4" />
-                Shuffle
-              </Button>
-              <Link to="/dashboard">
-                <Button variant="primary" size="sm">
-                  <Zap className="h-4 w-4" />
-                  {isFr ? "Créer" : "Create"}
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </header>
+      <div className="pk-community pk-hub mx-auto w-full max-w-[1320px] space-y-6 px-4 pb-4 pt-4 md:px-6 md:pb-10 md:pt-5">
+        <CommunityHubHero
+          isFr={isFr}
+          liveCount={rows.length}
+          loading={loading}
+          spotlight={spotlight}
+          topCategories={vibeNavItems}
+          isActive={spotlight ? current?.id === spotlight.id : false}
+          isPlaying={isPlaying}
+          resolving={spotlight ? resolvingId === spotlight.id : false}
+          onPlay={() => spotlight && void togglePlay(spotlight)}
+          onShuffle={shufflePlay}
+          onRemix={() => spotlight && remixFrom(spotlight)}
+          onCreate={() => navigate("/dashboard")}
+        />
 
-        {spotlight && !loading ? (
-          <CommunityFeatured
-            row={spotlight}
-            isFr={isFr}
-            isActive={current?.id === spotlight.id}
-            isPlaying={isPlaying}
-            resolving={resolvingId === spotlight.id}
-            onPlay={() => void togglePlay(spotlight)}
-            onShuffle={() => {
-              const pick = filtered[Math.floor(Math.random() * Math.max(1, filtered.length))];
-              if (pick) {
-                const idx = filtered.findIndex((x) => x.id === pick.id);
-                void playQueue(filtered, idx >= 0 ? idx : 0);
-              }
-            }}
-            onRemix={() => remixFrom(spotlight)}
-          />
-        ) : null}
-
-        <div className="pk-community-toolbar sticky top-0 z-20 rounded-2xl border border-white/10 bg-[#06060c]/88 px-4 py-3 backdrop-blur-xl">
-          <div className="grid gap-3 md:grid-cols-12 md:items-end">
-            <div className="pk-prism-input-shell md:col-span-5">
-              <Search />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={isFr ? "Rechercher titre, style, mood…" : "Search title, style, mood…"}
-              />
-            </div>
-            <div className="md:col-span-3">
-              <Dropdown label={isFr ? "Genre" : "Genre"} value={genre} onChange={setGenre} options={genres.map((g) => ({ value: g, label: g }))} />
-            </div>
-            <div className="md:col-span-4">
-              <Dropdown label="Mood" value={mood} onChange={setMood} options={moods.map((m) => ({ value: m, label: m }))} />
-            </div>
-          </div>
-          <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-2">
-            <span className="mr-1 shrink-0 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/35">
-              {isFr ? "Tri" : "Sort"}
-            </span>
-            <PrismFilterPill active={sort === "new"} onClick={() => setSort("new")}>
-              {isFr ? "Nouveaux" : "Newest"}
-            </PrismFilterPill>
-            <PrismFilterPill active={sort === "top"} onClick={() => setSort("top")}>
-              Top
-            </PrismFilterPill>
-            <PrismFilterPill active={sort === "random"} onClick={() => setSort("random")}>
-              {isFr ? "Aléatoire" : "Random"}
-            </PrismFilterPill>
-            <Link to="/library" className="ml-auto text-xs font-semibold text-white/45 transition-colors hover:text-white/70">
-              {isFr ? "Ma bibliothèque →" : "My library →"}
-            </Link>
-          </div>
-        </div>
+        <CommunityVibeNav
+          isFr={isFr}
+          categories={vibeNavItems}
+          activeVibeId={activeVibeId}
+          query={query}
+          sort={sort}
+          onVibeChange={setActiveVibeId}
+          onQueryChange={setQuery}
+          onSortChange={setSort}
+        />
 
         {!loading && !hasActiveFilters ? (
-          <div className="space-y-8">
+          <div className="space-y-9">
+            {myTracks.length > 0 ? (
+              <CommunityRail
+                title={isFr ? "Tes créations sur le flux" : "Your tracks on the feed"}
+                icon={<Flame className="h-4 w-4 text-orange-400" />}
+                items={myTracks.slice(0, 10)}
+                {...railProps}
+                onPlay={(_row, idx) => void playQueue(myTracks, idx)}
+              />
+            ) : null}
+
             <CommunityRail
-              title={isFr ? "Nouveautés" : "New releases"}
+              title={isFr ? "Fraîchement sortis" : "Fresh drops"}
               icon={<Sparkles className="h-4 w-4 text-cyan-300" />}
               items={newestRail.slice(0, 10)}
-              isFr={isFr}
-              currentId={current?.id ?? null}
-              isPlaying={isPlaying}
-              resolvingId={resolvingId}
-              ratingsById={ratingsById}
-              isNew={isNew}
+              {...railProps}
               onPlay={(_row, idx) => void playQueue(newestRail, idx)}
-              onRemix={remixFrom}
-              onRate={setRating}
               onSeeAll={() => {
                 setSort("new");
-                window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+                setActiveVibeId(null);
+                document.getElementById("hub-catalog")?.scrollIntoView({ behavior: "smooth" });
               }}
             />
+
             <CommunityRail
-              title={isFr ? "Les mieux notés" : "Top rated"}
+              title={isFr ? "Les plus kiffés" : "Most loved"}
               icon={<Trophy className="h-4 w-4 text-yellow-400" />}
               items={topRail.slice(0, 10)}
-              isFr={isFr}
-              currentId={current?.id ?? null}
-              isPlaying={isPlaying}
-              resolvingId={resolvingId}
-              ratingsById={ratingsById}
-              isNew={isNew}
+              {...railProps}
               onPlay={(_row, idx) => void playQueue(topRail, idx)}
-              onRemix={remixFrom}
-              onRate={setRating}
               onSeeAll={() => {
                 setSort("top");
-                window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+                setActiveVibeId(null);
+                document.getElementById("hub-catalog")?.scrollIntoView({ behavior: "smooth" });
               }}
             />
+
+            {categorySections.map(({ category, tracks }) => {
+              const rail = sortByRating(tracks, ratingsById).slice(0, 10);
+              if (!rail.length) return null;
+              return (
+                <CommunityRail
+                  key={category.id}
+                  title={isFr ? category.title.fr : category.title.en}
+                  icon={<Waves className="h-4 w-4 text-violet-300" />}
+                  items={rail}
+                  {...railProps}
+                  onPlay={(_row, idx) => void playQueue(tracks, idx)}
+                  onSeeAll={() => {
+                    setActiveVibeId(category.id);
+                    setSort("top");
+                    document.getElementById("hub-catalog")?.scrollIntoView({ behavior: "smooth" });
+                  }}
+                />
+              );
+            })}
           </div>
         ) : null}
 
-        <section>
+        <section id="hub-catalog">
           <div className="mb-4 flex items-end justify-between gap-3">
-            <h2 className="text-lg font-semibold text-white">{catalogTitle}</h2>
+            <div>
+              <h2 className="text-lg font-semibold text-white">{catalogTitle}</h2>
+              {activeCategory ? (
+                <p className="mt-1 text-xs text-white/45">{isFr ? activeCategory.subtitle.fr : activeCategory.subtitle.en}</p>
+              ) : null}
+            </div>
             {!loading ? <span className="text-xs font-medium text-white/40">{filtered.length}</span> : null}
           </div>
 
           {!loading && filtered.length === 0 ? (
             <div className="rounded-2xl pk-prism-card-soft p-8 text-center">
-              <div className="text-sm font-semibold">{isFr ? "Aucune track à afficher" : "No tracks to show"}</div>
+              <div className="text-sm font-semibold">{isFr ? "Rien ici pour l’instant" : "Nothing here yet"}</div>
               <div className="mt-2 text-sm text-pk-muted">
                 {fetchError ??
                   (isFr
-                    ? "Aucune track avec audio public pour l'instant. Les morceaux récents sans URL en base n'apparaissent pas — génère à nouveau ou réessaie."
-                    : "No public tracks with playable audio yet. Recent saves without a stored URL are hidden — generate again or retry.")}
+                    ? "Aucune track avec audio public dans cette vibe. Essaie une autre catégorie ou crée le premier son."
+                    : "No public playable tracks in this vibe. Try another category or create the first one.")}
               </div>
               <div className="mt-4 flex justify-center gap-2">
                 <Button variant="secondary" onClick={() => setRefetchToken((x) => x + 1)}>
@@ -579,14 +527,22 @@ export default function Explore() {
                   resolving={resolvingId === r.id}
                   rating={ratingsById[r.id]}
                   isNew={r.created_at ? isNew(r.created_at) : false}
+                  isMine={isMineRow(r)}
                   onPlay={() => void togglePlayFromFiltered(r)}
                   onRemix={() => remixFrom(r)}
                   onRate={(stars) => setRating(r.id, stars)}
+                  pinterestCoverUrl={pinterestCovers[r.id]}
                 />
               ))
             )}
           </div>
         </section>
+
+        <div className="flex justify-center pb-2">
+          <Link to="/library" className="text-xs font-semibold text-white/40 transition-colors hover:text-cyan-300/90">
+            {isFr ? "Ma bibliothèque privée →" : "My private library →"}
+          </Link>
+        </div>
       </div>
     </AppShell>
   );

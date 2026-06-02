@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Pause, Play, Radio, Shuffle, Sparkles } from "lucide-react";
 import type { Loop } from "@/types/loop";
 import type { PublicProfileCard } from "@/lib/creatorProfile";
+import { CoverPeekStack } from "@/components/cover/CoverPeekStack";
 import { resolveCoverImageUrl } from "@/lib/coverArt";
 import { coverGradient } from "@/lib/utils";
 import { isPlayablePublicLoop } from "@/lib/publicLoops";
@@ -23,8 +24,10 @@ export type LandingCommunityTrack = {
   tags: string[];
   prompt: string;
   author?: PublicProfileCard | null;
-  /** URL persistée en DB — pas de Pollinations à la volée sur la landing */
+  /** Cover Pollinations / DB (couche visible par défaut) */
   coverUrl?: string | null;
+  /** Cover Pinterest — révélée au survol */
+  pinterestCoverUrl?: string | null;
 };
 
 type Props = {
@@ -114,6 +117,45 @@ export function LandingCommunityRail({
       ro?.disconnect();
     };
   }, [syncEdges, tracks.length, loading]);
+
+  useEffect(() => {
+    if (loading || tracks.length < 2) return;
+    if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const el = railRef.current;
+    if (!el) return;
+
+    let paused = false;
+    let raf = 0;
+    const speed = 0.45;
+
+    const pause = () => {
+      paused = true;
+    };
+    const resume = () => {
+      paused = false;
+    };
+
+    el.addEventListener("pointerenter", pause);
+    el.addEventListener("pointerleave", resume);
+    el.addEventListener("touchstart", pause, { passive: true });
+
+    const tick = () => {
+      const max = el.scrollWidth - el.clientWidth;
+      if (!paused && max > 4) {
+        el.scrollLeft += speed;
+        if (el.scrollLeft >= max - 1) el.scrollLeft = 0;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      el.removeEventListener("pointerenter", pause);
+      el.removeEventListener("pointerleave", resume);
+      el.removeEventListener("touchstart", pause);
+    };
+  }, [loading, tracks.length]);
 
   const scrollBy = (dir: -1 | 1) => {
     const el = railRef.current;
@@ -220,7 +262,9 @@ export function LandingCommunityRail({
               ? tracks.map((t, idx) => {
                   const loopForCover = toCoverLoop(t);
                   const bg = coverGradient(loopForCover);
-                  const url = t.coverUrl?.trim() || resolveCoverImageUrl(loopForCover);
+                  const pollinationsUrl = t.coverUrl?.trim() || resolveCoverImageUrl(loopForCover);
+                  const pinterestUrl = t.pinterestCoverUrl?.trim() || "";
+                  const hasPinterestPeek = pinterestUrl.startsWith("http");
                   const active = activeTrackId === t.id;
                   const playingNow = active && isPlaying;
                   const playable = isPlayablePublicLoop(t.audioUrl, t.stemsUrl, t.createdAt);
@@ -241,25 +285,20 @@ export function LandingCommunityRail({
                         className="pk-landing-community__cover-btn w-full text-left"
                         aria-label={playingNow ? (isFr ? `Pause ${t.name}` : `Pause ${t.name}`) : isFr ? `Écouter ${t.name}` : `Play ${t.name}`}
                       >
-                        <div className="pk-landing-community__cover relative h-44 overflow-hidden rounded-2xl" style={{ background: bg }}>
-                          {url ? (
-                            <img
-                              key={`${t.id}:${url}`}
-                              src={url}
-                              alt=""
-                              loading={idx < 4 ? "eager" : "lazy"}
-                              decoding="async"
-                              referrerPolicy="no-referrer"
-                              className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-500 group-hover:scale-[1.03]"
-                              onLoad={(e) => {
-                                e.currentTarget.style.opacity = "1";
-                              }}
-                              onError={(e) => {
-                                e.currentTarget.style.display = "none";
-                              }}
-                            />
-                          ) : null}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
+                        <div
+                          className={[
+                            "pk-landing-community__cover relative h-44 overflow-hidden rounded-2xl",
+                            hasPinterestPeek ? "pk-landing-community__cover--peek" : "",
+                          ].join(" ")}
+                          style={{ background: bg }}
+                        >
+                          <CoverPeekStack
+                            baseUrl={pollinationsUrl}
+                            revealUrl={hasPinterestPeek ? pinterestUrl : null}
+                            className="absolute inset-0"
+                            loading={idx < 4 ? "eager" : "lazy"}
+                          />
+                          <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
                           <div className="absolute left-3 top-3 rounded-full border border-white/15 bg-black/45 px-3 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
                             {t.badge}
                           </div>
@@ -271,7 +310,7 @@ export function LandingCommunityRail({
                           ) : null}
                           <div
                             className={[
-                              "absolute inset-0 flex items-center justify-center transition-opacity duration-300",
+                              "pointer-events-none absolute inset-0 z-[2] flex items-center justify-center transition-opacity duration-300",
                               playingNow ? "opacity-100" : "opacity-0 group-hover:opacity-100",
                             ].join(" ")}
                           >

@@ -13,6 +13,7 @@ const MIGRATIONS = [
   "039_public_ace_inline_audio",
   "040_performance_indexes",
   "041_loop_audio_retention",
+  "042_plus_permanent_audio",
 ];
 
 const token = (process.env.SUPABASE_ACCESS_TOKEN ?? "").trim();

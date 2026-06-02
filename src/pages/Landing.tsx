@@ -4,10 +4,21 @@ import toast from "react-hot-toast";
 import { useAuthStore } from "@/stores/authStore";
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
 import { useLocaleStore } from "@/stores/localeStore";
-import { FolderOpen, Keyboard, Mic2, Sparkles, Video, Zap } from "lucide-react";
+import { FolderOpen, Keyboard, Menu, Mic2, Sparkles, Video, X, Zap } from "lucide-react";
 import { usePlayerStore } from "@/stores/playerStore";
 import type { Loop } from "@/types/loop";
 import { publicRowToCoverLoop, resolvePublicRowCoverUrl } from "@/lib/coverArt";
+import { LANDING_PINTEREST_COVERS } from "@/lib/featureFlags";
+import {
+  enrichTracksWithPinterestCovers,
+  isPinterestSideCard,
+  resolveSideCardsWithPinterest,
+  warmLandingPinterestCovers,
+} from "@/lib/pinterestCoverFetch";
+import {
+  consumeJustAuthenticated,
+  hasOAuthCallbackParams,
+} from "@/lib/postAuthRedirect";
 import { coverGradient, hashString } from "@/lib/utils";
 import {
   extractAceTaskId,
@@ -24,7 +35,6 @@ import { LogoMarquee } from "@/components/landing/LogoMarquee";
 import { SocialProofStats } from "@/components/landing/SocialProofStats";
 import { TestimonialsStrip } from "@/components/landing/TestimonialsStrip";
 import { VisualCarousel } from "@/components/landing/VisualCarousel";
-import { LoopAudioRetentionNotice } from "@/components/LoopAudioRetentionNotice";
 import { LandingCommunityRail } from "@/components/landing/LandingCommunityRail";
 import { LandingGenerator, type GeneratorSideCard } from "@/components/landing/LandingGenerator";
 import { LandingWorkflow } from "@/components/landing/LandingWorkflow";
@@ -35,6 +45,7 @@ import { LandingPitchSections } from "@/components/landing/LandingPitchSections"
 import { landingCopy, landingFeatureCards, landingFlowSectionClass, landingSectionClass } from "@/lib/landingContent";
 import { PLAN_LIMITS } from "@/lib/planLimits";
 import { isRecommendedPlan, normalizePlan, pricingCtaHref, pricingCtaMeta } from "@/lib/billing";
+import { plusPermanentAudioBenefit } from "@/lib/loopAudioRetention";
 import { PricingPlanButton } from "@/components/pricing/PricingPlanButton";
 import type { PublicProfileCard } from "@/lib/creatorProfile";
 
@@ -129,6 +140,7 @@ export default function Landing() {
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
+  const authStatus = useAuthStore((s) => s.status);
   const profile = useAuthStore((s) => s.profile);
   const refreshProfile = useAuthStore((s) => s.refreshProfile);
   const locale = useLocaleStore((s) => s.locale);
@@ -458,6 +470,7 @@ export default function Landing() {
     color: string;
     prompt: string;
     coverUrl?: string | null;
+    pinterestCoverUrl?: string | null;
     author?: PublicProfileCard | null;
   };
 
@@ -485,28 +498,54 @@ export default function Landing() {
 
   useEffect(() => {
     let cancelled = false;
-    const cacheKey = "producerhit_landing_gen_cards_v4";
+    const cacheKey = LANDING_PINTEREST_COVERS
+      ? "producerhit_landing_gen_cards_v5_pin"
+      : "producerhit_landing_gen_cards_v4";
     const seedKey = "producerhit_landing_gen_cards_seed";
 
     const hasValidCoverUrl = (cards: GeneratorSideCard[]) =>
       cards.length >= 2 && cards.every((c) => typeof c.coverUrl === "string" && c.coverUrl.startsWith("http"));
 
-    try {
-      const raw = window.sessionStorage.getItem(cacheKey);
-      if (raw) {
-        const parsed = JSON.parse(raw) as { ts?: unknown; cards?: unknown };
-        const ts = typeof parsed?.ts === "number" ? parsed.ts : 0;
-        const cards = Array.isArray(parsed?.cards) ? (parsed.cards as GeneratorSideCard[]) : [];
-        if (Date.now() - ts < 15 * 60 * 1000 && hasValidCoverUrl(cards)) {
-          setGeneratorSideCards(cards.slice(0, 2));
-          syncSideCardPool(cards);
-        }
+    const persistSideCards = (cards: GeneratorSideCard[]) => {
+      try {
+        window.sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), cards: cards.slice(0, 2) }));
+      } catch {
+        // ignore
       }
-    } catch {
-      // ignore
-    }
+    };
+
+    const commitSideCards = (cards: GeneratorSideCard[]) => {
+      if (cancelled || cards.length < 2) return;
+      setGeneratorSideCards(cards.slice(0, 2));
+      persistSideCards(cards);
+    };
 
     void (async () => {
+      if (LANDING_PINTEREST_COVERS) {
+        void warmLandingPinterestCovers();
+      }
+
+      try {
+        const raw = window.sessionStorage.getItem(cacheKey);
+        if (raw) {
+          const parsed = JSON.parse(raw) as { ts?: unknown; cards?: unknown };
+          const ts = typeof parsed?.ts === "number" ? parsed.ts : 0;
+          const cached = Array.isArray(parsed?.cards) ? (parsed.cards as GeneratorSideCard[]) : [];
+          const ok =
+            Date.now() - ts < 15 * 60 * 1000 &&
+            hasValidCoverUrl(cached) &&
+            (!LANDING_PINTEREST_COVERS || cached.every(isPinterestSideCard));
+          if (ok) {
+            commitSideCards(cached);
+            syncSideCardPool(cached);
+          }
+        }
+      } catch {
+        // ignore
+      }
+
+      if (cancelled) return;
+
       try {
         const rows = await fetchPublicLoops({ limit: 48, timeoutMs: 8000, playableOnly: true });
         if (cancelled) return;
@@ -519,28 +558,24 @@ export default function Landing() {
 
         syncSideCardPool(pool);
 
-        setGeneratorSideCards((prev) => {
-          if (prev.length >= 2 && hasValidCoverUrl(prev)) return prev;
-
-          let seed = "";
-          try {
-            seed = window.sessionStorage.getItem(seedKey) ?? "";
-            if (!seed) {
-              seed = `${Date.now()}-${hashString(pool.map((p) => p.id).join(":"))}`;
-              window.sessionStorage.setItem(seedKey, seed);
-            }
-          } catch {
-            seed = `${Date.now()}`;
+        let seed = "";
+        try {
+          seed = window.sessionStorage.getItem(seedKey) ?? "";
+          if (!seed) {
+            seed = `${Date.now()}-${hashString(pool.map((p) => p.id).join(":"))}`;
+            window.sessionStorage.setItem(seedKey, seed);
           }
+        } catch {
+          seed = `${Date.now()}`;
+        }
 
-          const picked = pickRandomSideCards(pool, 2, seed);
-          try {
-            window.sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), cards: picked }));
-          } catch {
-            // ignore
-          }
-          return picked;
-        });
+        const picked = pickRandomSideCards(pool, 2, seed);
+        const finalCards = LANDING_PINTEREST_COVERS
+          ? await resolveSideCardsWithPinterest(picked)
+          : picked;
+
+        if (cancelled) return;
+        commitSideCards(finalCards);
       } catch {
         // ignore — cards stay hidden if fetch fails
       }
@@ -600,6 +635,30 @@ export default function Landing() {
 
         const next = pickNextSideCard(pool, prev);
         if (!next) return prev;
+
+        if (LANDING_PINTEREST_COVERS) {
+          const slotAtSchedule = slot;
+          void resolveSideCardsWithPinterest([next]).then((enriched) => {
+            if (cancelled || !enriched[0]) return;
+            setGeneratorSideCards((cur) => {
+              if (cur.length < 2) return cur;
+              const updated: GeneratorSideCard[] = [...cur];
+              if (updated[slotAtSchedule]?.id !== next.id) return cur;
+              updated[slotAtSchedule] = enriched[0]!;
+              try {
+                const key = "producerhit_landing_gen_cards_v5_pin";
+                window.sessionStorage.setItem(
+                  key,
+                  JSON.stringify({ ts: Date.now(), cards: updated.slice(0, 2) }),
+                );
+              } catch {
+                // ignore
+              }
+              return updated;
+            });
+          });
+          return prev;
+        }
 
         const updated: GeneratorSideCard[] = [...prev];
         updated[slot] = next;
@@ -769,9 +828,15 @@ export default function Landing() {
         const ts = typeof parsed?.ts === "number" ? parsed.ts : 0;
         const items = Array.isArray(parsed?.items) ? (parsed.items as unknown[]) : [];
         if (Date.now() - ts < 10 * 60 * 1000 && items.length) {
-          setTrending(items as PublicTrack[]);
+          const cached = items as PublicTrack[];
+          setTrending(cached);
           setTrendingLoading(false);
           loadedFromCache = true;
+          if (LANDING_PINTEREST_COVERS && cached.some((t) => !t.pinterestCoverUrl?.trim())) {
+            void enrichTracksWithPinterestCovers(cached).then((enriched) => {
+              if (!cancelled) setTrending(enriched);
+            });
+          }
         }
       }
     } catch {
@@ -841,12 +906,16 @@ export default function Landing() {
 
         const next = mapped.slice(0, 12);
         setTrending(next);
-        try {
-          window.sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), items: next }));
-        } catch {
-          void 0;
-        }
         setTrendingLoading(false);
+        void enrichTracksWithPinterestCovers(next).then((enriched) => {
+          if (cancelled) return;
+          setTrending(enriched);
+          try {
+            window.sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), items: enriched }));
+          } catch {
+            void 0;
+          }
+        });
       } catch {
         if (!cancelled) {
           window.clearTimeout(slowTimer);
@@ -879,7 +948,7 @@ export default function Landing() {
           name: "Pro",
           price: "10€/mo",
           meta: "75 générations / mois",
-          bullets: ["✓ Export WAV + MP3", "✓ Mastering complet", "✓ Usage commercial", "✓ 75 gen / mois"],
+          bullets: ["✓ Export WAV + MP3", "✓ Cover art + partage pro", "✓ Usage commercial", "✓ 75 gen / mois"],
           featured: true,
         },
         {
@@ -887,7 +956,7 @@ export default function Landing() {
           name: "Studio",
           price: "30€/mo",
           meta: "250 générations / mois",
-          bullets: ["✓ Tout Pro inclus", "✓ 250 gen / mois", "✓ Remix ACE + seeds", "✓ Marge max releases"],
+          bullets: ["✓ Tout Pro inclus", "✓ Mastering Studio complet", "✓ Remix ACE + seeds", "✓ 250 gen / mois"],
           featured: false,
         },
         {
@@ -914,7 +983,7 @@ export default function Landing() {
         name: "Pro",
         price: "$10/mo",
         meta: "75 generations / month",
-        bullets: ["✓ WAV + MP3 export", "✓ Full mastering", "✓ Stems + commercial use", "✓ 75 gen / month"],
+        bullets: ["✓ WAV + MP3 export", "✓ Cover art + pro share", "✓ Commercial use", "✓ 75 gen / month"],
         featured: true,
       },
       {
@@ -922,7 +991,7 @@ export default function Landing() {
         name: "Studio",
         price: "$30/mo",
         meta: "250 generations / month",
-        bullets: ["✓ Everything in Pro", "✓ 250 gen / month", "✓ Remix ACE + seeds", "✓ Max release headroom"],
+        bullets: ["✓ Everything in Pro", "✓ Full Mastering Studio", "✓ Remix ACE + seeds", "✓ 250 gen / month"],
         featured: false,
       },
       {
@@ -930,7 +999,13 @@ export default function Landing() {
         name: "Plus",
         price: "$89/mo",
         meta: `${PLAN_LIMITS.plus} generations / month`,
-        bullets: [`✓ ${PLAN_LIMITS.plus} gen / month`, "✓ Priority & speed", "✓ Separate stems ZIP", "✓ Everything in Studio"],
+        bullets: [
+          `✓ ${PLAN_LIMITS.plus} gen / month`,
+          `✓ ${plusPermanentAudioBenefit("en")}`,
+          "✓ Priority & speed",
+          "✓ Separate stems ZIP",
+          "✓ Everything in Studio",
+        ],
         featured: false,
       },
     ];
@@ -942,6 +1017,14 @@ export default function Landing() {
     if (!user?.id || profile) return;
     void refreshProfile();
   }, [user?.id, profile, refreshProfile]);
+
+  useEffect(() => {
+    if (authStatus !== "ready" || !user) return;
+    const stayHome = new URLSearchParams(location.search).get("home") === "1";
+    if (stayHome) return;
+    if (!consumeJustAuthenticated() && !hasOAuthCallbackParams()) return;
+    navigate("/dashboard", { replace: true });
+  }, [authStatus, location.search, navigate, user]);
 
   const faqs = useMemo(() => {
     if (locale === "fr") {
@@ -991,16 +1074,21 @@ export default function Landing() {
           <BrandLogo />
 
           <nav className="hidden items-center gap-3 sm:flex">
+            <Link to="/community" className="text-sm font-semibold text-white/70 transition-colors hover:text-white">
+              {locale === "fr" ? "Communauté" : "Community"}
+            </Link>
             <Link to="/pricing" className="text-sm font-semibold text-white/70 transition-colors hover:text-white">
               {locale === "fr" ? "Tarifs" : "Pricing"}
             </Link>
             {user ? (
-              <Link
-                to="/dashboard"
-                className="pk-prism-btn inline-flex h-10 items-center justify-center rounded-full px-6 text-sm font-semibold"
-              >
-                {locale === "fr" ? "Dashboard" : "Dashboard"}
-              </Link>
+              <>
+                <Link
+                  to="/dashboard"
+                  className="pk-prism-btn inline-flex h-10 items-center justify-center rounded-full px-6 text-sm font-semibold"
+                >
+                  {locale === "fr" ? "Studio" : "Studio"}
+                </Link>
+              </>
             ) : (
               <>
                 <Link
@@ -1040,50 +1128,82 @@ export default function Landing() {
 
           <button
             type="button"
-            className="inline-flex h-10 items-center justify-center rounded-full border border-[#2d2d3d] px-4 text-sm font-semibold text-white sm:hidden"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white sm:hidden"
             onClick={() => setMobileOpen((v) => !v)}
-            aria-label="Menu"
+            aria-expanded={mobileOpen}
+            aria-label={locale === "fr" ? "Menu navigation" : "Navigation menu"}
           >
-            {mobileOpen ? "Close" : "Menu"}
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
 
         {mobileOpen ? (
-          <div className="border-t border-[#2d2d3d] bg-[rgba(10,10,15,0.92)] backdrop-blur-[12px] sm:hidden">
-            <div className="mx-auto grid max-w-6xl gap-2 px-4 py-4">
-              <Link to="/pricing" className="rounded-2xl border border-[#2d2d3d] bg-transparent px-4 py-3 text-sm font-semibold text-white" onClick={() => setMobileOpen(false)}>
+          <div className="border-t border-white/10 bg-[rgba(6,6,12,0.96)] backdrop-blur-xl sm:hidden">
+            <nav className="mx-auto flex max-w-6xl flex-col gap-1.5 px-4 py-4" aria-label={locale === "fr" ? "Menu mobile" : "Mobile menu"}>
+              {user ? (
+                <Link
+                  to="/dashboard"
+                  className="pk-prism-btn inline-flex h-11 items-center justify-center rounded-xl text-sm font-semibold"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  {locale === "fr" ? "Ouvrir le studio" : "Open studio"}
+                </Link>
+              ) : null}
+              <Link
+                to="/community"
+                className="pk-glass-btn pk-glass-btn--ghost inline-flex h-11 items-center justify-center rounded-xl text-sm font-semibold text-white"
+                onClick={() => setMobileOpen(false)}
+              >
+                {locale === "fr" ? "Communauté" : "Community"}
+              </Link>
+              <Link
+                to="/pricing"
+                className="pk-glass-btn pk-glass-btn--ghost inline-flex h-11 items-center justify-center rounded-xl text-sm font-semibold text-white"
+                onClick={() => setMobileOpen(false)}
+              >
                 {locale === "fr" ? "Tarifs" : "Pricing"}
               </Link>
-              {user ? (
-                <Link to="/dashboard" className="pk-prism-btn inline-flex items-center justify-center rounded-2xl px-4 py-3 text-sm font-semibold" onClick={() => setMobileOpen(false)}>
-                  {locale === "fr" ? "Dashboard" : "Dashboard"}
-                </Link>
-              ) : (
+              {!user ? (
                 <>
-                  <Link to="/auth" className="rounded-2xl border border-[#2d2d3d] bg-transparent px-4 py-3 text-sm font-semibold text-white" onClick={() => setMobileOpen(false)}>
+                  <Link
+                    to="/auth"
+                    className="pk-glass-btn pk-glass-btn--ghost inline-flex h-11 items-center justify-center rounded-xl text-sm font-semibold text-white"
+                    onClick={() => setMobileOpen(false)}
+                  >
                     {locale === "fr" ? "Connexion" : "Login"}
                   </Link>
                   <HeroCtaButton
                     to="/auth"
                     variant="spark"
                     size="nav"
-                    className="w-full rounded-2xl"
+                    className="w-full rounded-xl"
                     onClick={() => setMobileOpen(false)}
                   >
-                    {locale === "fr" ? "Essayer gratuit" : "Start Free"}
+                    {locale === "fr" ? "Essayer gratuit" : "Start free"}
                   </HeroCtaButton>
                 </>
+              ) : (
+                <Link
+                  to="/?home=1"
+                  className="pk-glass-btn pk-glass-btn--ghost inline-flex h-11 items-center justify-center rounded-xl text-sm font-semibold text-white/80"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  {locale === "fr" ? "Rester sur l’accueil" : "Stay on home"}
+                </Link>
               )}
-              <div className="flex items-center gap-2">
+              <div className="mt-1 flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] p-1">
                 <button
                   type="button"
                   onClick={() => {
                     setLocale("en");
                     setMobileOpen(false);
                   }}
-                  className={`flex-1 rounded-2xl border border-[#2d2d3d] px-4 py-3 text-sm font-semibold ${locale === "en" ? "bg-[#7c3aed] text-white" : "bg-transparent text-white"}`}
+                  className={[
+                    "flex-1 rounded-full px-3 py-2 text-xs font-semibold transition-colors",
+                    locale === "en" ? "pk-prism-pill-active" : "text-white/45",
+                  ].join(" ")}
                 >
-                  English
+                  EN
                 </button>
                 <button
                   type="button"
@@ -1091,12 +1211,15 @@ export default function Landing() {
                     setLocale("fr");
                     setMobileOpen(false);
                   }}
-                  className={`flex-1 rounded-2xl border border-[#2d2d3d] px-4 py-3 text-sm font-semibold ${locale === "fr" ? "bg-[#7c3aed] text-white" : "bg-transparent text-white"}`}
+                  className={[
+                    "flex-1 rounded-full px-3 py-2 text-xs font-semibold transition-colors",
+                    locale === "fr" ? "pk-prism-pill-active" : "text-white/45",
+                  ].join(" ")}
                 >
-                  Français
+                  FR
                 </button>
               </div>
-            </div>
+            </nav>
           </div>
         ) : null}
       </header>
@@ -1167,9 +1290,7 @@ export default function Landing() {
             onRemix={(t) => applyTrackPrompt(t.prompt, t.kind)}
             onRefresh={() => setTrendingRefreshKey((k) => k + 1)}
             footer={
-              <>
-              <LoopAudioRetentionNotice locale={locale} compact className="mt-4 border-[#2d2d3d] bg-[#0a0a0f]/80" />
-              {!trendingLoading && (trendingError || trendingTimedOut || typeof repairFixedCount === "number") ? (
+              !trendingLoading && (trendingError || trendingTimedOut || typeof repairFixedCount === "number") ? (
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#2d2d3d] bg-[#0a0a0f] px-4 py-3">
                   <div className="text-sm font-semibold text-white/80">
                     {typeof repairFixedCount === "number"
@@ -1207,8 +1328,7 @@ export default function Landing() {
                     ) : null}
                   </div>
                 </div>
-              ) : null}
-              </>
+              ) : null
             }
           />
         </RevealSection>

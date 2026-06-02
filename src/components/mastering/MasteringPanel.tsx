@@ -229,7 +229,7 @@ export function MasteringPanel({ locale, loops, selectedLoopId, onSelectLoop, on
       trackClientEvent("mastering_preview_done", { loop_id: selected.id, preset: presetId, plan, preview_only: previewOnly });
       notifyGamificationMasteringPreview(locale);
       if (previewOnly) {
-        toast.success(isFr ? "Aperçu CLEAN — export réservé Pro / Studio 🔒" : "CLEAN preview — export on Pro / Studio 🔒", {
+        toast.success(isFr ? "Aperçu CLEAN — export réservé Studio / Plus 🔒" : "CLEAN preview — export on Studio / Plus 🔒", {
           duration: 4000,
           icon: "✨",
         });
@@ -246,7 +246,7 @@ export function MasteringPanel({ locale, loops, selectedLoopId, onSelectLoop, on
   const applyMaster = async () => {
     if (!selected || !masteredBlob) return;
     if (!canApply) {
-      toast(isFr ? "Application réservée Pro / Studio" : "Apply is Pro / Studio only", { icon: "🔒" });
+      toast(isFr ? "Application réservée Studio / Plus" : "Apply is Studio / Plus only", { icon: "🔒" });
       onUpgrade?.();
       return;
     }
@@ -452,8 +452,8 @@ export function MasteringPanel({ locale, loops, selectedLoopId, onSelectLoop, on
                 {previewOnly && masteredUrl ? (
                   <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100/90">
                     {isFr
-                      ? "Aperçu gratuit — passe Pro ou Studio pour exporter le WAV et appliquer le master à ta track."
-                      : "Free preview — upgrade to Pro or Studio to export WAV and apply the master to your track."}
+                      ? "Aperçu gratuit — passe Studio ou Plus pour exporter le WAV masterisé et appliquer le master à ta track."
+                      : "Free preview — upgrade to Studio or Plus to export mastered WAV and apply the master to your track."}
                     {onUpgrade ? (
                       <button type="button" className="ml-1 underline hover:text-white" onClick={onUpgrade}>
                         {isFr ? "Voir les plans" : "See plans"}
@@ -485,7 +485,7 @@ export function MasteringPanel({ locale, loops, selectedLoopId, onSelectLoop, on
                   size="sm"
                   disabled={!masteredBlob || applying}
                   onClick={() => void applyMaster()}
-                  title={!canApply ? (isFr ? "Réservé Pro / Studio" : "Pro / Studio only") : undefined}
+                  title={!canApply ? (isFr ? "Réservé Studio / Plus" : "Studio / Plus only") : undefined}
                 >
                   {applying ? <Loader2 className="h-4 w-4 animate-spin" /> : !canApply ? <Lock className="h-4 w-4" /> : null}
                   {isFr ? "Appliquer à la track" : "Apply to track"}
@@ -495,7 +495,7 @@ export function MasteringPanel({ locale, loops, selectedLoopId, onSelectLoop, on
                   size="sm"
                   disabled={!masteredBlob}
                   onClick={downloadMaster}
-                  title={!canExport ? (isFr ? "Réservé Pro / Studio" : "Pro / Studio only") : undefined}
+                  title={!canExport ? (isFr ? "Réservé Studio / Plus" : "Studio / Plus only") : undefined}
                 >
                   {!canExport ? <Lock className="h-4 w-4" /> : null}
                   {isFr ? "Exporter WAV" : "Export WAV"}

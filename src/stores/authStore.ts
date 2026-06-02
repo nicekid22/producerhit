@@ -10,6 +10,7 @@ import {
 import { clearReferralBonusTracking, notifyReferrerReferralBonusIfIncreased } from "@/lib/referralReferrerLoot";
 import { resetClientSessionStores } from "@/lib/resetClientSession";
 import { useLocaleStore } from "@/stores/localeStore";
+import { sanitizePostAuthPath } from "@/lib/postAuthRedirect";
 
 type AuthStatus = "idle" | "loading" | "ready";
 
@@ -73,7 +74,7 @@ async function loadProfileWithTimeout(session: Session): Promise<UserProfileRow>
 }
 
 function authCallbackUrl(nextPath = "/dashboard"): string {
-  return `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`;
+  return `${window.location.origin}/auth/callback?next=${encodeURIComponent(sanitizePostAuthPath(nextPath))}`;
 }
 
 /** Never call supabase.auth.* synchronously inside onAuthStateChange — defer to avoid deadlocks. */

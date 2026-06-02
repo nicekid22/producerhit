@@ -16,7 +16,7 @@ export type GenerationBonusCredits = {
   dailyBonusMonth?: number;
 };
 
-import { isPaidPlan } from "@/lib/planEntitlements";
+import { hasFullMastering, isPaidPlan } from "@/lib/planEntitlements";
 
 export function getPlanBaseLimit(plan: string): number {
   return PLAN_LIMITS[plan as PlanLimitKey] ?? PLAN_LIMITS.free;
@@ -53,11 +53,11 @@ export function canGenerate(
 }
 
 export function canExportMastering(plan: string): boolean {
-  return isPaidPlan(plan);
+  return hasFullMastering(plan);
 }
 
 export function canApplyMastering(plan: string): boolean {
-  return isPaidPlan(plan);
+  return hasFullMastering(plan);
 }
 
 export function isFreePlan(plan: string): boolean {

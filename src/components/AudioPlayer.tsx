@@ -5,7 +5,18 @@ import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import { usePlayerStore } from "@/stores/playerStore";
 import { Button } from "@/components/ui/Button";
 import { coverGradient, coverImageKey, coverImageUrl } from "@/lib/utils";
-import { AUDIO_SKIP_WEB_AUDIO, resolvePlayableAudioUrl, shouldUseWebAudioGraph } from "@/lib/playableAudio";
+import {
+  getCachedPlaybackMakeup,
+  measurePlaybackMakeupLinear,
+  PLAYBACK_DEFAULT_MAKEUP_LINEAR,
+  PLAYBACK_LOUDNESS,
+} from "@/lib/playbackLoudness";
+import {
+  AUDIO_SKIP_WEB_AUDIO,
+  resolvePlayableAudioUrl,
+  shouldUsePlaybackOutputGraph,
+  shouldUseWebAudioGraph,
+} from "@/lib/playableAudio";
 
 function formatTime(sec: number): string {
   if (!sec || !isFinite(sec) || sec < 0) return "0:00";
@@ -22,6 +33,8 @@ export function AudioPlayer() {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const mediaSourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
+  const gainRef = useRef<GainNode | null>(null);
+  const makeupGainRef = useRef(PLAYBACK_DEFAULT_MAKEUP_LINEAR);
   const freqDataRef = useRef<Uint8Array | null>(null);
   const rafRef = useRef<number | null>(null);
   const lastBarsRef = useRef<Float32Array>(new Float32Array(64));
@@ -45,7 +58,7 @@ export function AudioPlayer() {
   const [durationSec, setDurationSec] = useState(0);
   const [progress, setProgress] = useState(0);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [volume, setVolume] = useState(0.8);
+  const [volume, setVolume] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
   const coarsePointer = useCoarsePointer();
@@ -70,7 +83,7 @@ export function AudioPlayer() {
   const applyAudioCrossOrigin = useCallback((url: string) => {
     const audio = audioRef.current;
     if (!audio) return;
-    const needsCors = url.startsWith("blob:") || url.startsWith("data:") || shouldUseWebAudioGraph(url);
+    const needsCors = url.startsWith("blob:") || url.startsWith("data:") || shouldUsePlaybackOutputGraph(url);
     if (needsCors) {
       audio.crossOrigin = "anonymous";
     } else {
@@ -86,6 +99,11 @@ export function AudioPlayer() {
       /* ignore */
     }
     try {
+      gainRef.current?.disconnect();
+    } catch {
+      /* ignore */
+    }
+    try {
       mediaSourceRef.current?.disconnect();
     } catch {
       /* ignore */
@@ -93,6 +111,7 @@ export function AudioPlayer() {
     const ctx = audioCtxRef.current;
     audioCtxRef.current = null;
     analyserRef.current = null;
+    gainRef.current = null;
     mediaSourceRef.current = null;
     freqDataRef.current = null;
     graphAttachedRef.current = false;
@@ -100,7 +119,7 @@ export function AudioPlayer() {
     if (ctx && typeof ctx.close === "function") void ctx.close().catch(() => undefined);
   }, [stopRaf]);
 
-  const needsWebAudioGraph = useCallback(
+  const needsVisualizerGraph = useCallback(
     (url: string) => {
       const trimmed = url.trim();
       if (!trimmed || skipVisualizer || AUDIO_SKIP_WEB_AUDIO) return false;
@@ -109,37 +128,70 @@ export function AudioPlayer() {
     [skipVisualizer],
   );
 
+  const needsOutputGraph = useCallback((url: string) => {
+    const trimmed = url.trim();
+    if (!trimmed || AUDIO_SKIP_WEB_AUDIO) return false;
+    return shouldUsePlaybackOutputGraph(trimmed);
+  }, []);
+
+  const applyOutputVolume = useCallback((userVolume: number) => {
+    const audio = audioRef.current;
+    const gain = gainRef.current;
+    const makeup = makeupGainRef.current;
+    if (gain && graphAttachedRef.current) {
+      if (audio) audio.volume = 1;
+      gain.gain.value = makeup * userVolume;
+      return;
+    }
+    if (audio) audio.volume = userVolume;
+  }, []);
+
   const ensureAudioGraph = useCallback(
     (sourceUrl?: string) => {
       const audio = audioRef.current;
       if (!audio) return;
 
       const src = (sourceUrl ?? audio.currentSrc ?? audio.src).trim();
-      if (!src || !needsWebAudioGraph(src)) return;
+      if (!src || !needsOutputGraph(src)) return;
       if (audioGraphFailedRef.current) return;
-      if (audioCtxRef.current && analyserRef.current && mediaSourceRef.current) return;
+      if (audioCtxRef.current && mediaSourceRef.current && gainRef.current) return;
 
       try {
         const w = window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
         const Ctor = w.AudioContext ?? w.webkitAudioContext ?? AudioContext;
         const ctx = new Ctor();
         const source = ctx.createMediaElementSource(audio);
-        const analyser = ctx.createAnalyser();
-        analyser.fftSize = 256;
-        analyser.smoothingTimeConstant = 0.85;
-        source.connect(analyser);
-        analyser.connect(ctx.destination);
+        const gain = ctx.createGain();
+        gain.gain.value = makeupGainRef.current * volume;
+        audio.volume = 1;
+
+        const useVisualizer = needsVisualizerGraph(src);
+        if (useVisualizer) {
+          const analyser = ctx.createAnalyser();
+          analyser.fftSize = 256;
+          analyser.smoothingTimeConstant = 0.85;
+          source.connect(gain);
+          gain.connect(analyser);
+          analyser.connect(ctx.destination);
+          analyserRef.current = analyser;
+          freqDataRef.current = new Uint8Array(analyser.frequencyBinCount);
+        } else {
+          source.connect(gain);
+          gain.connect(ctx.destination);
+          analyserRef.current = null;
+          freqDataRef.current = null;
+        }
+
         audioCtxRef.current = ctx;
         mediaSourceRef.current = source;
-        analyserRef.current = analyser;
-        freqDataRef.current = new Uint8Array(analyser.frequencyBinCount);
+        gainRef.current = gain;
         graphAttachedRef.current = true;
       } catch {
         audioGraphFailedRef.current = true;
         teardownAudioContext();
       }
     },
-    [needsWebAudioGraph, teardownAudioContext],
+    [needsOutputGraph, needsVisualizerGraph, teardownAudioContext, volume],
   );
 
   const drawVisualizer = useCallback(() => {
@@ -233,7 +285,7 @@ export function AudioPlayer() {
 
   const tryPlayAudio = useCallback(() => {
     const audio = audioRef.current;
-    if (!audio || !audio.src || audio.readyState < 2) return false;
+    if (!audio || !audio.src) return false;
     ensureAudioGraph(audio.currentSrc || audio.src);
     const ctx = audioCtxRef.current;
     if (ctx && ctx.state === "suspended") void ctx.resume().catch(() => undefined);
@@ -244,6 +296,26 @@ export function AudioPlayer() {
     return true;
   }, [ensureAudioGraph, setPlaying]);
 
+  const scheduleEarlyPlay = useCallback(
+    (audio: HTMLAudioElement, gen: number) => {
+      const playNow = () => {
+        if (gen !== loadGenRef.current) return;
+        tryPlayAudio();
+      };
+      if (audio.readyState >= 2) {
+        playNow();
+        return;
+      }
+      const onLoadedData = () => {
+        audio.removeEventListener("loadeddata", onLoadedData);
+        playNow();
+      };
+      audio.addEventListener("loadeddata", onLoadedData);
+      if (audio.readyState >= 2) onLoadedData();
+    },
+    [tryPlayAudio],
+  );
+
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -251,19 +323,15 @@ export function AudioPlayer() {
     if (storeIsPlaying === true) {
       if (tryPlayAudio()) return;
       if (!audio.src) return;
-
-      const onCanPlayOnce = () => {
-        audio.removeEventListener("canplay", onCanPlayOnce);
-        tryPlayAudio();
-      };
-      audio.addEventListener("canplay", onCanPlayOnce);
-      return () => audio.removeEventListener("canplay", onCanPlayOnce);
+      const gen = loadGenRef.current;
+      scheduleEarlyPlay(audio, gen);
+      return;
     }
 
     if (storeIsPlaying === false) {
       if (!audio.paused) audio.pause();
     }
-  }, [currentBeat?.audioUrl, storeIsPlaying, tryPlayAudio]);
+  }, [currentBeat?.audioUrl, scheduleEarlyPlay, storeIsPlaying, tryPlayAudio]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -394,10 +462,21 @@ export function AudioPlayer() {
   }, [decayVisualizerToZero, ensureAudioGraph, setPlaying, startVisualizer, stopRaf]);
 
   useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    audio.volume = volume;
-  }, [volume]);
+    applyOutputVolume(volume);
+  }, [applyOutputVolume, volume]);
+
+  useEffect(() => {
+    if (!PLAYBACK_LOUDNESS || !currentBeat?.audioUrl) return;
+    const rawUrl = currentBeat.audioUrl.trim();
+    const loopId = currentBeat.id;
+    const cached = getCachedPlaybackMakeup(loopId) ?? getCachedPlaybackMakeup(rawUrl);
+    if (cached != null) makeupGainRef.current = cached;
+
+    void measurePlaybackMakeupLinear(rawUrl, loopId).then((makeup) => {
+      makeupGainRef.current = makeup;
+      applyOutputVolume(volume);
+    });
+  }, [applyOutputVolume, currentBeat?.audioUrl, currentBeat?.id, volume]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -426,7 +505,7 @@ export function AudioPlayer() {
 
       if (gen !== loadGenRef.current) return;
 
-      const useGraph = needsWebAudioGraph(playableUrl);
+      const useGraph = needsOutputGraph(playableUrl);
       if (graphAttachedRef.current && !useGraph) {
         teardownAudioContext();
         setAudioMountKey((k) => k + 1);
@@ -447,7 +526,7 @@ export function AudioPlayer() {
       audio.src = playableUrl;
       audio.load();
       audio.muted = false;
-      audio.volume = volume;
+      applyOutputVolume(volume);
       setIsLoading(true);
       setProgress(0);
       setProgressStore(0);
@@ -457,21 +536,7 @@ export function AudioPlayer() {
       setDurationStore(0);
 
       if (storeIsPlaying) {
-        const playNow = () => {
-          if (gen !== loadGenRef.current) return;
-          tryPlayAudio();
-        };
-
-        if (audio.readyState >= 3) {
-          playNow();
-          return;
-        }
-
-        const onCanPlayOnce = () => {
-          audio.removeEventListener("canplay", onCanPlayOnce);
-          playNow();
-        };
-        audio.addEventListener("canplay", onCanPlayOnce);
+        scheduleEarlyPlay(audio, gen);
       }
     })();
   }, [
@@ -480,11 +545,13 @@ export function AudioPlayer() {
     currentBeat?.id,
     currentBeat?.audioUrl,
     ensureAudioGraph,
-    needsWebAudioGraph,
+    applyOutputVolume,
+    needsOutputGraph,
     setCurrentTimeStore,
     setDurationStore,
     setPlaying,
     setProgressStore,
+    scheduleEarlyPlay,
     storeIsPlaying,
     teardownAudioContext,
     tryPlayAudio,
@@ -575,7 +642,7 @@ export function AudioPlayer() {
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = parseFloat(e.target.value);
     setVolume(v);
-    if (audioRef.current) audioRef.current.volume = v;
+    applyOutputVolume(v);
   };
 
   useEffect(() => {
@@ -805,7 +872,7 @@ export function AudioPlayer() {
       </div>
     </div>
       ) : null}
-      <audio key={audioMountKey} ref={audioRef} id="pk-audio" preload="metadata" playsInline className="hidden" aria-hidden />
+      <audio key={audioMountKey} ref={audioRef} id="pk-audio" preload="auto" playsInline className="hidden" aria-hidden />
     </>
   );
 }

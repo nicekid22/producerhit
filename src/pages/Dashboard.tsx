@@ -19,11 +19,19 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { EmptyState } from "@/components/EmptyState";
 import { useGeneratorStore } from "@/stores/generatorStore";
-import { useLoopsStore } from "@/stores/loopsStore";
+import { aceKeyIndexForGenerationSlot, browserAceKeyCount } from "@/lib/aceBrowserKeys";
+import { canParallelizeDualGeneration } from "@/lib/generationConcurrency";
+import {
+  formatGenerationErrorMessage,
+  generationRetryDelayMs,
+  isRetryableGenerationError,
+  normalizeGenerationRawError,
+} from "@/lib/generationErrors";
+import { resolvePlaybackUrlForLoop, useLoopsStore } from "@/stores/loopsStore";
 import type { Loop, LoopLength } from "@/types/loop";
 import { usePlayerStore } from "@/stores/playerStore";
-import { LoopAudioRetentionNotice } from "@/components/LoopAudioRetentionNotice";
 import { LoopCardItem } from "@/components/LoopCardItem";
+import type { LoopAudioRetentionContext } from "@/lib/loopAudioRetention";
 import { LoopCardSkeleton } from "@/components/LoopCardSkeleton";
 import { AlertTriangle, Copy, Search, X } from "lucide-react";
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
@@ -38,13 +46,16 @@ import { pickLoopForSharePrompt, shouldShowSharePromptAfterGeneration } from "@/
 import { markReferralInvitePromptShown, shouldShowReferralInvitePrompt } from "@/lib/referralPrompt";
 import { ensureReferralCode } from "@/lib/referral";
 import { loadPendingRemix, clearPendingRemix, type PendingRemix } from "@/lib/pendingRemix";
+import { isRemixVibeRecreateEnabled, REMIX_VIBE_FALLBACK_COPY } from "@/lib/remixVibeFallback";
+import { prepareLoopVariantGeneration, variantResultTitle } from "@/lib/loopVariantGeneration";
+import { loopToRemixSource } from "@/lib/remixSourceLoop";
 import { MobileOnboardingSheet, hasSeenMobileOnboarding } from "@/components/dashboard/MobileOnboardingSheet";
 import { useAuthStore } from "@/stores/authStore";
 import { useLocaleStore } from "@/stores/localeStore";
 import { getRemainingBeats, PLAN_LIMITS, FREE_MASTERING_UPSELL_AT, getTotalGenerationLimit } from "@/lib/planLimits";
 import { RemixStudioPanel } from "@/components/dashboard/RemixStudioPanel";
 import { generateBeat, remixLoopAce } from "@/lib/audioApi";
-import { isPlayablePublicAudioUrl } from "@/lib/publicAcePlayback";
+import { ACE_REMIX_UNAVAILABLE_COPY, AceRemixUnavailableError } from "@/lib/aceRemix";
 import { dropStalePreviewDuplicates } from "@/lib/loopWorkspaceUtils";
 import { buildAceCaption, type GenerateParams } from "@/lib/promptBuilder";
 import { buildCoverPromptSnapshot, cn } from "@/lib/utils";
@@ -53,6 +64,7 @@ import { MOBILE_DASHBOARD_V2 } from "@/lib/featureFlags";
 import { useIsDesktop } from "@/hooks/useMediaQuery";
 import { useMobileDashboardTab } from "@/hooks/useMobileDashboardTab";
 import { DashboardMobileTabs } from "@/components/dashboard/DashboardMobileTabs";
+import { MobileResultsToolbar } from "@/components/dashboard/MobileResultsToolbar";
 import { GeneratorSection, generatorSectionPad } from "@/components/dashboard/GeneratorSection";
 import { LoopDetailsPanel } from "@/components/dashboard/LoopDetailsPanel";
 import { LoopDetailsSheet, LoopDetailsSheetHeader } from "@/components/dashboard/LoopDetailsSheet";
@@ -358,7 +370,7 @@ export default function Dashboard() {
   const locale = useLocaleStore((s) => s.locale);
   const isDesktop = useIsDesktop();
   const mobileV2 = MOBILE_DASHBOARD_V2 && !isDesktop;
-  const { tab: mobileTab, setTab: setMobileTab, goResults, goMaster } = useMobileDashboardTab("create");
+  const { tab: mobileTab, setTab: setMobileTab, goResults, goMaster, goCreate } = useMobileDashboardTab("create");
   const hasPlayer = usePlayerStore((s) => !!s.current);
   const [generating, setGenerating] = useState(false);
   const [generationSlots, setGenerationSlots] = useState<GenerationSlot[] | null>(null);
@@ -574,10 +586,10 @@ export default function Dashboard() {
   }, [navigate]);
 
   const openBillboardCreate = useCallback(() => {
-    if (mobileV2) setMobileTab("create");
+    if (mobileV2) goCreate();
     else window.scrollTo({ top: 0, behavior: "smooth" });
     trackClientEvent("dashboard_billboard_create", { source: "spotlight" });
-  }, [mobileV2, setMobileTab]);
+  }, [goCreate, mobileV2]);
 
   useEffect(() => {
     return () => {
@@ -700,6 +712,12 @@ export default function Dashboard() {
         setExternalRemix(pendingRemix);
         clearPendingRemix();
         setEntrySource(pendingRemix.source === "public_loop" ? "public_loop_remix" : "community_remix");
+        if (pendingRemix.genre?.trim()) {
+          setGenrePickMode("custom");
+          setField("genre", pendingRemix.genre.trim());
+        }
+        if (pendingRemix.mood?.trim()) setField("mood", pendingRemix.mood.trim());
+        if (typeof pendingRemix.bpm === "number" && pendingRemix.bpm > 0) setField("bpm", pendingRemix.bpm);
       }
       if (remixParam) window.history.replaceState({}, "", "/dashboard");
     }
@@ -841,7 +859,7 @@ export default function Dashboard() {
 
   const openMasteringUpgrade = useCallback(() => {
     trackClientEvent("mastering_upgrade_click", { plan, source: "dashboard" });
-    navigate("/pricing?plan=pro&checkout=1");
+    navigate("/pricing?plan=studio&checkout=1");
   }, [navigate, plan]);
   const inferGenreFromPrompt = useCallback((p: string) => {
     const s = p.toLowerCase();
@@ -934,6 +952,18 @@ export default function Dashboard() {
     const slots = generationSlots?.filter((s) => s.visible).length ?? 0;
     return jobs + slots;
   }, [generationSlots, workspaceJobs]);
+
+  const mobileGenActive = generating || mobileResultsBadge > 0;
+  const mobileGenerationsAnchorRef = useRef<HTMLDivElement>(null);
+  const hasMobilePlayer = usePlayerStore((s) => !!s.current);
+
+  const audioRetentionCtx = useMemo(
+    (): LoopAudioRetentionContext => ({
+      plan: authProfile?.plan ?? plan,
+      hostedAudioExpiresAt: authProfile?.hosted_audio_expires_at ?? null,
+    }),
+    [authProfile?.hosted_audio_expires_at, authProfile?.plan, plan],
+  );
 
   const startWorkspaceJob = useCallback(
     (title: string, sub: string) => {
@@ -1150,6 +1180,11 @@ export default function Dashboard() {
     let didGenerate = false;
     try {
       trackClientEvent("generate_start", { mode, versions, plan, source: entrySource });
+      if (import.meta.env.DEV && versions === 2 && browserAceKeyCount() < 2) {
+        console.warn(
+          "[generate] 1 seule clé VITE ACE — ajoute VITE_ACE_STEP_API_KEYS (comme ACE_STEP_API_KEYS) pour v1/v2 en parallèle sans 429.",
+        );
+      }
       const prompt = isSong ? uiPrompt : [form.prompt?.trim() ?? "", chipExtra].filter((s) => s.length > 0).join(", ");
 
       const inputParams = {
@@ -1166,8 +1201,10 @@ export default function Dashboard() {
         prompt: uiPrompt,
       };
 
-      const buildOptions = (seed?: number) =>
-        isSong
+      const buildOptions = (seed?: number, slotIdx?: 1 | 2) => {
+        const aceKeyPreferIndex =
+          versions === 2 && slotIdx ? aceKeyIndexForGenerationSlot(slotIdx) : undefined;
+        const base = isSong
           ? {
               instrumental: false,
               lyrics: songLyrics,
@@ -1190,6 +1227,8 @@ export default function Dashboard() {
               audioFormat: effectiveAudioFormat,
               seed,
             };
+        return aceKeyPreferIndex !== undefined ? { ...base, aceKeyPreferIndex } : base;
+      };
 
       if (debugEnabled) {
         try {
@@ -1272,6 +1311,8 @@ export default function Dashboard() {
                 ...(typeof result.meta?.stemsZipUrl === "string" && result.meta.stemsZipUrl.trim().length > 0
                   ? { stemsZipUrl: result.meta.stemsZipUrl.trim() }
                   : {}),
+                isSong,
+                ...(isSong ? { vocalLanguage: detectedLang } : {}),
               },
             } as Record<string, unknown>;
           })(),
@@ -1347,9 +1388,11 @@ export default function Dashboard() {
         if (!ordered.length) return;
 
         if (!genAutoplayStartedRef.current) {
+          const v1Ready = Boolean(generationAutoplayByIdxRef.current.get(1)?.audioUrl?.trim());
+          if (versions === 2 && idx === 2 && !v1Ready) return;
           genAutoplayStartedRef.current = true;
           setQueue(ordered, 0, true, "generation");
-          trackClientEvent("growth_autoplay", { loop_id: loop.id, count: ordered.length, early: true });
+          trackClientEvent("growth_autoplay", { loop_id: ordered[0]?.id ?? loop.id, count: ordered.length, early: true });
           if (mobileV2) goResults();
           return;
         }
@@ -1383,31 +1426,13 @@ export default function Dashboard() {
           generationKey,
         });
 
-        const userNetworkErrorText =
-          locale === "fr"
-            ? "Réseau chargé — réessaie dans quelques secondes. Upgrade pour avoir la priorité."
-            : "Network busy — try again in a few seconds. Upgrade to get priority.";
-
         try {
-          const isRetryable = (msg: string) => {
-            const s = msg.toLowerCase();
-            return (
-              s.includes("too many requests") ||
-              s.includes("429") ||
-              s.includes("failed to fetch") ||
-              s.includes("network") ||
-              s.includes("timeout") ||
-              s.includes("timed out") ||
-              s.includes("502") ||
-              s.includes("503") ||
-              s.includes("504") ||
-              s.includes("cors")
-            );
-          };
-
           for (let attempt = 0; attempt < 2; attempt++) {
             try {
-              const value = await generateBeat(inputParams, effectiveEngine, { ...buildOptions(seed), generationKey });
+              const value = await generateBeat(inputParams, effectiveEngine, {
+                ...buildOptions(seed, idx),
+                generationKey,
+              });
               const audioUrl = value.audioUrl;
               if (!audioUrl) throw new Error(locale === "fr" ? "Audio manquant" : "Missing audio");
               didGenerate = true;
@@ -1415,8 +1440,8 @@ export default function Dashboard() {
               draft.name = title;
 
               previewId = `preview-${generationKey}`;
-              const previewLoop: Loop = {
-                id: previewId,
+              const buildPreviewLoop = (playbackUrl: string): Loop => ({
+                id: previewId!,
                 userId: user?.id,
                 createdAt: new Date().toISOString(),
                 engine: draft.engine,
@@ -1432,60 +1457,69 @@ export default function Dashboard() {
                 energyLevel: draft.energyLevel,
                 reverb: draft.reverb,
                 prompt: draft.prompt,
-                audioUrl,
+                audioUrl: playbackUrl,
                 seed: draft.seed ?? null,
                 details: draft.details ?? null,
                 stemsUrl: draft.stemsUrl ?? null,
                 isSaved: false,
                 isPublic: draft.isPublic,
-              };
-              upsertLoop(previewLoop);
-              setSlot(idx, { visible: false, previewLoopId: previewId, previewReady: true });
-              primeAudioCache(previewId, audioUrl);
-              maybeAutoplayGenerationReady(idx, previewLoop);
+              });
+
+              const quickUrl = audioUrl.trim();
+              if (quickUrl) {
+                if (audioUrl.startsWith("http")) void primeAudioCache(previewId, audioUrl);
+                const previewLoop = buildPreviewLoop(quickUrl);
+                upsertLoop(previewLoop);
+                setSlot(idx, { visible: false, previewLoopId: previewId, previewReady: true });
+                maybeAutoplayGenerationReady(idx, previewLoop);
+              }
+
+              void resolvePlaybackUrlForLoop(previewId, audioUrl).then((resolvedUrl) => {
+                if (!isActiveSession() || !previewId) return;
+                const upgraded = (resolvedUrl || quickUrl).trim();
+                if (!upgraded || upgraded === quickUrl) return;
+                const previewLoop = buildPreviewLoop(upgraded);
+                upsertLoop(previewLoop);
+                generationAutoplayByIdxRef.current.set(idx, previewLoop);
+                if (!genAutoplayStartedRef.current) return;
+                const player = usePlayerStore.getState();
+                player.promoteLoop(previewId, previewLoop);
+                if (isActiveSession()) mergeQueue(buildAutoplayQueue(), "generation");
+              });
 
               const loop = await persistDraft(draft, audioUrl, value.engine, previewId);
               await migrateAudioCache(previewId, loop.id);
+              const player = usePlayerStore.getState();
+              if (
+                previewId &&
+                (player.current?.id === previewId || player.queue.some((l) => l.id === previewId))
+              ) {
+                player.promoteLoop(previewId, loop);
+              }
               if (previewId) removeLoop(previewId);
               setSlot(idx, { savedLoopId: loop.id, previewLoopId: undefined });
               generationAutoplayByIdxRef.current.set(idx, loop);
               created.push(loop);
               if (genAutoplayStartedRef.current && isActiveSession()) mergeQueue(buildAutoplayQueue(), "generation");
-              if (draft.isPublic && !isPlayablePublicAudioUrl(loop.audioUrl)) {
-                toast(
-                  locale === "fr"
-                    ? "Track jouable ici, invisible en communauté — audio non persistable (migration 039 ou génération Edge requise)."
-                    : "Track plays here but won't appear in community — audio not persistable (migration 039 or Edge generation required).",
-                  { duration: 8000 },
-                );
-              }
               trackClientEvent("generate_success", { loop_id: loop.id, mode, versions, plan, source: entrySource });
               consumeCredit();
               previewId = null;
               break;
             } catch (e) {
               const msg = e instanceof Error ? e.message : String(e);
-              if (!isRetryable(msg) || attempt === 1) throw e;
+              if (!isRetryableGenerationError(msg) || attempt === 1) throw e;
               await new Promise((r) => setTimeout(r, 1600));
             }
           }
         } catch (err) {
-          const rawMessage = err instanceof Error ? err.message : String(err);
-          const lower = rawMessage.toLowerCase();
-          const isTemporaryNetwork =
-            lower.includes("failed to fetch") ||
-            lower.includes("networkerror") ||
-            lower.includes("load resource") ||
-            lower.includes("net::err_failed") ||
-            lower.includes("cors") ||
-            lower.includes("timeout") ||
-            lower.includes("timed out") ||
-            lower.includes("502") ||
-            lower.includes("503") ||
-            lower.includes("504") ||
-            lower.includes("429") ||
-            lower.includes("too many requests");
-          const errorText = isTemporaryNetwork ? userNetworkErrorText : rawMessage || (locale === "fr" ? "Erreur" : "Error");
+          const anyErr = err as { limitReached?: boolean };
+          const rawMessage = normalizeGenerationRawError(err instanceof Error ? err.message : String(err));
+          if (import.meta.env.DEV) console.warn("[generate] slot failed", { idx, rawMessage, err });
+          const errorText = anyErr?.limitReached
+            ? locale === "fr"
+              ? "Limite mensuelle atteinte"
+              : "Monthly limit reached"
+            : formatGenerationErrorMessage(rawMessage, locale);
           if (previewId) {
             removeLoop(previewId);
             previewId = null;
@@ -1494,27 +1528,44 @@ export default function Dashboard() {
         }
       };
 
+      const PARALLEL_V2_STAGGER_MS = 1200;
+
       if (versions !== 2) {
         await startOne(1, seed1, makeTitle(1));
+      } else if (canParallelizeDualGeneration()) {
+        await Promise.all([
+          startOne(1, seed1, makeTitle(1)),
+          (async () => {
+            await new Promise((r) => setTimeout(r, PARALLEL_V2_STAGGER_MS));
+            if (!isActiveSession()) return;
+            await startOne(2, seed2, makeTitle(2));
+          })(),
+        ]);
       } else {
-        // Séquentiel : évite 429 ACE + double écriture provider_audio_inline (charge Postgres).
         await startOne(1, seed1, makeTitle(1));
-        await startOne(2, seed2, makeTitle(2));
+        if (isActiveSession()) await startOne(2, seed2, makeTitle(2));
       }
 
-      if (!created.length) throw new Error(locale === "fr" ? "Échec de génération — réessaie" : "Generation failed — please try again");
+      if (!created.length) {
+        const allFailed = new Error(
+          locale === "fr" ? "Échec de génération — réessaie" : "Generation failed — please try again",
+        ) as Error & { allSlotsFailed?: boolean };
+        allFailed.allSlotsFailed = true;
+        throw allFailed;
+      }
 
       const slotOrder = new Map(slots.map((s) => [s.title, s.idx]));
       const playableCreated = created
         .filter((l) => typeof l.audioUrl === "string" && l.audioUrl.trim().length > 0)
         .sort((a, b) => (slotOrder.get(a.name) ?? 99) - (slotOrder.get(b.name) ?? 99));
+      if (playableCreated.length && !genAutoplayStartedRef.current) {
+        setQueue(playableCreated, 0, true, "generation");
+        trackClientEvent("growth_autoplay", { loop_id: playableCreated[0]?.id, count: playableCreated.length });
+      } else if (playableCreated.length && genAutoplayStartedRef.current) {
+        mergeQueue(playableCreated, "generation");
+      }
+
       if (playableCreated.length) {
-        if (genAutoplayStartedRef.current) {
-          mergeQueue(playableCreated, "generation");
-        } else {
-          setQueue(playableCreated, 0, true, "generation");
-          trackClientEvent("growth_autoplay", { loop_id: playableCreated[0]?.id, count: playableCreated.length });
-        }
 
         const queueIdx = playableCreated.findIndex((l) => l.id === usePlayerStore.getState().current?.id);
         const first = playableCreated[queueIdx >= 0 ? queueIdx : 0] ?? playableCreated[0];
@@ -1566,36 +1617,15 @@ export default function Dashboard() {
         );
       }
     } catch (err) {
-      const anyErr = err as unknown as { limitReached?: boolean };
+      const anyErr = err as unknown as { limitReached?: boolean; allSlotsFailed?: boolean };
       if (anyErr?.limitReached) {
         toast.error(locale === "fr" ? "Limite mensuelle atteinte — upgrade ton plan" : "Monthly limit reached — upgrade your plan");
         navigate(user ? "/pricing?plan=pro&checkout=1" : "/pricing");
         return;
       }
+      if (anyErr?.allSlotsFailed) return;
       const rawMessage = err instanceof Error ? err.message : "";
-      const lower = rawMessage.toLowerCase();
-      const isTemporaryNetwork =
-        lower.includes("failed to fetch") ||
-        lower.includes("networkerror") ||
-        lower.includes("load resource") ||
-        lower.includes("net::err_failed") ||
-        lower.includes("cors") ||
-        lower.includes("timeout") ||
-        lower.includes("timed out") ||
-        lower.includes("502") ||
-        lower.includes("503") ||
-        lower.includes("504");
-
-      if (isTemporaryNetwork) {
-        toast.error(
-          locale === "fr"
-            ? "Réseau chargé — réessaie dans quelques secondes. Upgrade pour avoir la priorité."
-            : "Network busy — try again in a few seconds. Upgrade to get priority.",
-        );
-      } else {
-        const message = rawMessage || (locale === "fr" ? "Échec de génération — réessaie" : "Generation failed — please try again");
-        toast.error(message);
-      }
+      toast.error(formatGenerationErrorMessage(rawMessage, locale));
     } finally {
       if (generateSessionRef.current === sessionId) {
         setGenerating(false);
@@ -1770,6 +1800,10 @@ export default function Dashboard() {
         if (anyErr?.limitReached) {
           toast.error(locale === "fr" ? "Limite mensuelle atteinte" : "Monthly limit reached");
           navigate("/pricing?plan=pro&checkout=1");
+        } else if (err instanceof AceRemixUnavailableError) {
+          toast.error(locale === "fr" ? ACE_REMIX_UNAVAILABLE_COPY.fr : ACE_REMIX_UNAVAILABLE_COPY.en, {
+            duration: 10_000,
+          });
         } else {
           toast.error(err instanceof Error ? err.message : locale === "fr" ? "Remix échoué" : "Remix failed");
         }
@@ -1800,6 +1834,204 @@ export default function Dashboard() {
       refreshProfile,
       remaining,
       setQueue,
+      user,
+    ],
+  );
+
+  const handleRecreateVibe = useCallback(
+    async (input: { sourceLoop: Loop; styleTouch: string; instrumental: boolean }) => {
+      if (remaining < 1 || generating) return;
+      setGenerating(true);
+      const generationKey =
+        typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `vibe-${Date.now()}`;
+      const title = variantResultTitle(input.sourceLoop, "remix");
+      setGenerationSlots([{ idx: 1, status: "generating", title, seed: 0, visible: true, previewReady: false }]);
+
+      const { inputParams, generateOptions, variantPrompt, nextSeed, engine, isSongLike } = prepareLoopVariantGeneration(
+        input.sourceLoop,
+        "remix",
+        { styleTouch: input.styleTouch, forceInstrumental: input.instrumental },
+      );
+
+      try {
+        trackClientEvent("remix_vibe_start", {
+          instrumental: !isSongLike,
+          plan,
+          source: entrySource,
+          source_loop_id: input.sourceLoop.id,
+        });
+        const result = await generateBeat(inputParams, engine, {
+          ...generateOptions,
+          audioFormat: input.sourceLoop.details?.audioFormat || effectiveAudioFormat,
+          generationKey,
+        });
+        const rawAudioUrl = result.audioUrl;
+        if (!rawAudioUrl) throw new Error(locale === "fr" ? "Audio manquant" : "Missing audio");
+        const previewId = `preview-${generationKey}`;
+        const playbackUrl = await resolvePlaybackUrlForLoop(previewId, rawAudioUrl);
+        const previewLoop: Loop = {
+          id: previewId,
+          userId: user?.id,
+          createdAt: new Date().toISOString(),
+          engine: result.engine,
+          name: title,
+          genre: input.sourceLoop.genre,
+          influence: input.sourceLoop.influence,
+          key: input.sourceLoop.key,
+          scale: input.sourceLoop.scale,
+          bpm: result.meta?.bpm && result.meta.bpm > 0 ? result.meta.bpm : input.sourceLoop.bpm,
+          loopLength: input.sourceLoop.loopLength,
+          swing: input.sourceLoop.swing,
+          mood: input.sourceLoop.mood,
+          energyLevel: input.sourceLoop.energyLevel,
+          reverb: input.sourceLoop.reverb,
+          prompt: variantPrompt,
+          audioUrl: playbackUrl,
+          seed: typeof result.meta?.seed === "number" && Number.isFinite(result.meta.seed) ? result.meta.seed : nextSeed,
+          details: result.meta
+            ? {
+                caption: result.meta.prompt ?? variantPrompt,
+                lyrics: result.meta.lyrics ?? input.sourceLoop.details?.lyrics ?? "",
+                bpm: result.meta.bpm ?? null,
+                duration: result.meta.duration ?? input.sourceLoop.details?.duration ?? null,
+                keyScale: result.meta.keyScale ?? "",
+                timeSignature: result.meta.timeSignature ?? input.sourceLoop.details?.timeSignature ?? "",
+                audioFormat: result.meta.audioFormat ?? input.sourceLoop.details?.audioFormat ?? effectiveAudioFormat,
+                coverPrompt: buildCoverPromptSnapshot({
+                  prompt: variantPrompt,
+                  genre: input.sourceLoop.genre,
+                  mood: input.sourceLoop.mood,
+                  influence: input.sourceLoop.influence,
+                }),
+              }
+            : input.sourceLoop.details
+              ? { ...input.sourceLoop.details }
+              : null,
+          stemsUrl: null,
+          isSaved: false,
+          isPublic: true,
+        };
+        upsertLoop(previewLoop);
+        if (rawAudioUrl.startsWith("http")) primeAudioCache(previewId, rawAudioUrl);
+        setQueue([previewLoop], 0, true, "generation");
+
+        const draft: Omit<Loop, "id" | "createdAt" | "userId"> = {
+          engine: result.engine,
+          name: title,
+          genre: input.sourceLoop.genre,
+          influence: input.sourceLoop.influence,
+          key: input.sourceLoop.key,
+          scale: input.sourceLoop.scale,
+          bpm: result.meta?.bpm && result.meta.bpm > 0 ? result.meta.bpm : input.sourceLoop.bpm,
+          loopLength: input.sourceLoop.loopLength,
+          swing: input.sourceLoop.swing,
+          mood: input.sourceLoop.mood,
+          energyLevel: input.sourceLoop.energyLevel,
+          reverb: input.sourceLoop.reverb,
+          prompt: variantPrompt,
+          audioUrl: rawAudioUrl,
+          seed: typeof result.meta?.seed === "number" && Number.isFinite(result.meta.seed) ? result.meta.seed : nextSeed,
+          details: result.meta
+            ? {
+                caption: result.meta.prompt ?? variantPrompt,
+                lyrics: result.meta.lyrics ?? input.sourceLoop.details?.lyrics ?? "",
+                bpm: result.meta.bpm ?? null,
+                duration: result.meta.duration ?? input.sourceLoop.details?.duration ?? null,
+                keyScale: result.meta.keyScale ?? "",
+                timeSignature: result.meta.timeSignature ?? input.sourceLoop.details?.timeSignature ?? "",
+                audioFormat: result.meta.audioFormat ?? input.sourceLoop.details?.audioFormat ?? effectiveAudioFormat,
+                coverPrompt: buildCoverPromptSnapshot({
+                  prompt: variantPrompt,
+                  genre: input.sourceLoop.genre,
+                  mood: input.sourceLoop.mood,
+                  influence: input.sourceLoop.influence,
+                }),
+              }
+            : input.sourceLoop.details
+              ? { ...input.sourceLoop.details }
+              : null,
+          stemsUrl: (() => {
+            const taskId =
+              (typeof result.meta?.taskId === "string" && result.meta.taskId.trim()) ||
+              (typeof result.meta?.task_id === "string" && result.meta.task_id.trim()) ||
+              "";
+            const httpAudioUrl =
+              (typeof result.meta?.httpAudioUrl === "string" && result.meta.httpAudioUrl.trim()) ||
+              (result.audioUrl.startsWith("http") ? result.audioUrl.trim() : "");
+            if (!taskId && !httpAudioUrl) return null;
+            return {
+              ace: {
+                ...(taskId ? { taskId } : {}),
+                ...(httpAudioUrl.startsWith("http") ? { httpAudioUrl } : {}),
+                isSong: isSongLike,
+                vibeRecreate: true,
+                inspiredByLoopId: input.sourceLoop.id,
+                inspiredFrom: loopToRemixSource(input.sourceLoop).id,
+              },
+            };
+          })(),
+          isSaved: false,
+          isPublic: true,
+        };
+        const loop = await createLoop({ ...draft, name: title });
+        await migrateAudioCache(previewId, loop.id);
+        removeLoop(previewId);
+        setGenerationSlots(null);
+        setQueue([loop], 0, true, "generation");
+        trackClientEvent("generate_success", {
+          loop_id: loop.id,
+          mode: isSongLike ? "song" : "beat",
+          versions: 1,
+          plan,
+          source: entrySource,
+          vibe_recreate: true,
+        });
+        consumeCredit();
+        triggerBeatReady(locale, loop.id, { isFirst: false, versionCount: 1 });
+        toast.success(locale === "fr" ? REMIX_VIBE_FALLBACK_COPY.fr.successToast : REMIX_VIBE_FALLBACK_COPY.en.successToast);
+        if (shouldShowSharePromptAfterGeneration()) {
+          const shareLoop =
+            pickLoopForSharePrompt(useLoopsStore.getState().loops, [loop.id], loop.id) ?? loop;
+          trackClientEvent("growth_share_prompt", {
+            loop_id: shareLoop.id,
+            source: "post_vibe_recreate",
+            suggested: shareLoop.id !== loop.id,
+          });
+          setShareMomentLoop(shareLoop);
+        }
+        if (mobileV2) goResults();
+        if (user) void refreshProfile();
+      } catch (err) {
+        const anyErr = err as { limitReached?: boolean };
+        if (anyErr?.limitReached) {
+          toast.error(locale === "fr" ? "Limite mensuelle atteinte" : "Monthly limit reached");
+          navigate("/pricing?plan=pro&checkout=1");
+        } else {
+          toast.error(err instanceof Error ? err.message : locale === "fr" ? "Remix échoué" : "Remix failed");
+        }
+        setGenerationSlots(null);
+      } finally {
+        setGenerating(false);
+      }
+    },
+    [
+      consumeCredit,
+      createLoop,
+      effectiveAudioFormat,
+      entrySource,
+      generating,
+      goResults,
+      locale,
+      migrateAudioCache,
+      mobileV2,
+      navigate,
+      plan,
+      primeAudioCache,
+      refreshProfile,
+      remaining,
+      removeLoop,
+      setQueue,
+      upsertLoop,
       user,
     ],
   );
@@ -1920,6 +2152,14 @@ export default function Dashboard() {
     if (generating) goResults();
   }, [generating, goResults, mobileV2]);
 
+  useEffect(() => {
+    if (!mobileV2 || mobileTab !== "results" || !mobileGenActive) return;
+    const timer = window.setTimeout(() => {
+      mobileGenerationsAnchorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+    return () => window.clearTimeout(timer);
+  }, [mobileGenActive, mobileTab, mobileV2]);
+
   const saveDetailsTitle = useCallback(() => {
     if (!detailsLoop) return;
     const next = detailsTitle.trim();
@@ -1961,7 +2201,50 @@ export default function Dashboard() {
   };
   const [remixMobileDock, setRemixMobileDock] = useState<RemixMobileDock | null>(null);
 
-  const mobileResultsScrollClass = mobileV2 ? "pk-dashboard-results-scroll" : "";
+  const mobileResultsScrollClass = mobileV2
+    ? cn(
+        "pk-dashboard-results-scroll",
+        hasMobilePlayer ? "pk-shell-dock-pb--player" : "pk-shell-dock-pb",
+      )
+    : "";
+
+  const dashboardPromoAndGaming = (
+    <>
+      <DashboardPromoBillboard
+        locale={locale}
+        plan={plan}
+        onShare={openBillboardShare}
+        onReferral={() => void openBillboardReferral()}
+        onCommunity={openBillboardCommunity}
+        onMastering={openBillboardMastering}
+        onProgress={openBillboardProgress}
+        onPricing={openBillboardPricing}
+        onProfile={openBillboardProfile}
+        onCreate={openBillboardCreate}
+      />
+      <div className="mb-5">
+        <DashboardGamingPanelShell
+          ref={progressionPanelRef}
+          id="pk-dashboard-progression"
+          locale={locale}
+          title={locale === "fr" ? "Progression" : "Progress"}
+          subtitle={locale === "fr" ? "Niveau · série · bonus" : "Level · streak · bonus"}
+          storageKey="producerhit_dashboard_gaming_collapsed_v1"
+          collapsedPreview={<GamificationCollapsedPreview locale={locale} />}
+        >
+          <GamificationStrip
+            locale={locale}
+            refreshKey={gamificationRefreshKey}
+            syncRewards={!!user}
+            onBonusCreditsChange={(credits) => {
+              setLevelBonus(credits.levelBonus);
+              setDailyBonusMonth(credits.dailyBonusMonth);
+            }}
+          />
+        </DashboardGamingPanelShell>
+      </div>
+    </>
+  );
 
   return (
     <AppShell
@@ -1975,7 +2258,7 @@ export default function Dashboard() {
             onChange={(next) => {
               setMobileTab(next);
               if (next === "master") setWorkspaceView("master");
-              if (next === "results") setWorkspaceView("tracks");
+              else if (next === "results") setWorkspaceView("tracks");
             }}
             createLabel={locale === "fr" ? "Créer" : "Create"}
             resultsLabel={locale === "fr" ? "Résultats" : "Results"}
@@ -2046,7 +2329,7 @@ export default function Dashboard() {
                     mode === "remix" ? "pk-prism-pill-active" : "text-white/50 hover:text-white",
                   )}
                 >
-                  Remix
+                  {isRemixVibeRecreateEnabled() ? (locale === "fr" ? "Recréer" : "Recreate") : "Remix"}
                 </button>
               </div>
               {(mode === "song" || mode === "beat") && (
@@ -2078,11 +2361,13 @@ export default function Dashboard() {
                 generating={generating}
                 remaining={remaining}
                 plan={plan}
+                vibeRecreateMode={isRemixVibeRecreateEnabled()}
                 externalRemix={externalRemix}
                 onExternalRemixConsumed={() => setExternalRemix(null)}
                 mobileDock={mobileV2}
                 onMobileDockChange={mobileV2 ? setRemixMobileDock : undefined}
                 onGenerate={(input) => void handleRemixGenerate(input)}
+                onRecreateVibe={(input) => void handleRecreateVibe(input)}
               />
             ) : mode === "beat" ? (
               <>
@@ -3128,43 +3413,14 @@ export default function Dashboard() {
         </div>
       }
     >
-      <div className={cn("mx-auto w-full max-w-[1120px] px-4 pt-4 md:px-6 md:pt-5", mobileResultsScrollClass)}>
-        <DashboardPromoBillboard
-          locale={locale}
-          plan={plan}
-          onShare={openBillboardShare}
-          onReferral={() => void openBillboardReferral()}
-          onCommunity={openBillboardCommunity}
-          onMastering={openBillboardMastering}
-          onProgress={openBillboardProgress}
-          onPricing={openBillboardPricing}
-          onProfile={openBillboardProfile}
-          onCreate={openBillboardCreate}
-        />
-
-        <LoopAudioRetentionNotice locale={locale} className="mb-4" />
-
-        <div className="mb-5">
-          <DashboardGamingPanelShell
-            ref={progressionPanelRef}
-            id="pk-dashboard-progression"
-            locale={locale}
-            title={locale === "fr" ? "Progression" : "Progress"}
-            subtitle={locale === "fr" ? "Niveau · série · bonus" : "Level · streak · bonus"}
-            storageKey="producerhit_dashboard_gaming_collapsed_v1"
-            collapsedPreview={<GamificationCollapsedPreview locale={locale} />}
-          >
-            <GamificationStrip
-              locale={locale}
-              refreshKey={gamificationRefreshKey}
-              syncRewards={!!user}
-              onBonusCreditsChange={(credits) => {
-                setLevelBonus(credits.levelBonus);
-                setDailyBonusMonth(credits.dailyBonusMonth);
-              }}
-            />
-          </DashboardGamingPanelShell>
-        </div>
+      <div
+        className={cn(
+          "mx-auto w-full max-w-[1120px] px-4 md:px-6",
+          mobileV2 && mobileTab === "results" ? "pt-2" : "pt-4 md:pt-5",
+          mobileResultsScrollClass,
+        )}
+      >
+        {!mobileV2 ? dashboardPromoAndGaming : null}
         {showMasterWorkspace ? (
           <MasteringPanel
             locale={locale}
@@ -3185,39 +3441,57 @@ export default function Dashboard() {
           />
         ) : (
           <>
+        {mobileV2 && mobileTab === "results" ? (
+          <MobileResultsToolbar
+            locale={locale}
+            generating={generating}
+            activeCount={mobileResultsBadge}
+            onCreate={goCreate}
+          />
+        ) : null}
         <div className="pk-studio-workspace-header flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="pk-studio-workspace-header__title text-lg font-semibold">{locale === "fr" ? "Mon espace" : "My Workspace"}</div>
-            <div className="mt-1 text-sm text-pk-muted">
+          {!mobileV2 ? (
+            <div>
+              <div className="pk-studio-workspace-header__title text-lg font-semibold">{locale === "fr" ? "Mon espace" : "My Workspace"}</div>
+              <div className="mt-1 text-sm text-pk-muted">
+                {locale === "fr"
+                  ? `Affichage ${Math.min(30, totalMatches)} sur ${totalMatches}`
+                  : `Showing ${Math.min(30, totalMatches)} of ${totalMatches}`}
+              </div>
+            </div>
+          ) : (
+            <div className="text-xs text-white/45">
               {locale === "fr"
-                ? `Affichage ${Math.min(30, totalMatches)} sur ${totalMatches}`
-                : `Showing ${Math.min(30, totalMatches)} of ${totalMatches}`}
+                ? `${Math.min(30, totalMatches)} / ${totalMatches} tracks`
+                : `${Math.min(30, totalMatches)} / ${totalMatches} tracks`}
             </div>
-          </div>
+          )}
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setWorkspaceView("tracks")}
-                className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-                  workspaceView === "tracks" ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
-                }`}
-              >
-                {locale === "fr" ? "Tracks" : "Tracks"}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setWorkspaceView("master");
-                  if (mobileV2) goMaster();
-                }}
-                className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-                  workspaceView === "master" ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
-                }`}
-              >
-                {locale === "fr" ? "Mastering Studio" : "Mastering Studio"}
-              </button>
-            </div>
+            {!mobileV2 ? (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setWorkspaceView("tracks")}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                    workspaceView === "tracks" ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
+                  }`}
+                >
+                  {locale === "fr" ? "Tracks" : "Tracks"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setWorkspaceView("master");
+                    goMaster();
+                  }}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                    workspaceView === "master" ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
+                  }`}
+                >
+                  {locale === "fr" ? "Mastering Studio" : "Mastering Studio"}
+                </button>
+              </div>
+            ) : null}
             <div className="relative w-full sm:w-80">
               <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-pk-muted" />
               <input
@@ -3250,7 +3524,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="mt-5 space-y-4">
+        <div ref={mobileGenerationsAnchorRef} className="mt-5 space-y-4 scroll-mt-3">
           {workspaceJobs.length ? (
             <div className="space-y-2">
               {workspaceJobs.map((j) => (
@@ -3335,25 +3609,41 @@ export default function Dashboard() {
                 </div>
               </div>
             ) : (
-              <EmptyState
-                title={locale === "fr" ? "Tes créations apparaîtront ici" : "Your creations will appear here"}
-                description={
-                  locale === "fr"
-                    ? `Configure ton son et clique sur ${mode === "song" ? "Générer une chanson" : "Générer un beat"}.`
-                    : `Configure your sound and hit ${mode === "song" ? "Generate Song" : "Generate Beat"}.`
-                }
-                accent
-              />
+              <div className="space-y-4">
+                <EmptyState
+                  title={locale === "fr" ? "Tes créations apparaîtront ici" : "Your creations will appear here"}
+                  description={
+                    mobileV2
+                      ? locale === "fr"
+                        ? "Onglet Créer : choisis ton style, puis lance la génération."
+                        : "Create tab: pick your style, then hit generate."
+                      : locale === "fr"
+                        ? `Configure ton son et clique sur ${mode === "song" ? "Générer une chanson" : "Générer un beat"}.`
+                        : `Configure your sound and hit ${mode === "song" ? "Generate Song" : "Generate Beat"}.`
+                  }
+                  accent
+                />
+                {mobileV2 ? (
+                  <div className="flex justify-center">
+                    <Button variant="primary" onClick={goCreate}>
+                      {locale === "fr" ? "Aller à Créer" : "Go to Create"}
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
             )
           ) : detailsLoop && !mobileV2 ? (
             <div className="md:grid md:grid-cols-[minmax(0,1fr)_420px] md:gap-4">
               <div className="space-y-4">
-                {displayedLoops.map((l) => (
+                {displayedLoops.map((l, loopIdx) => (
                   <div key={l.id}>
                     <LoopCardItem
                       loop={l}
+                      slotIndex={loopIdx}
                       compact={mobileV2}
                       queueLoops={displayedLoops}
+                      showRetentionCountdown
+                      audioRetention={audioRetentionCtx}
                       onOpenDetails={(loop) => setDetailsId((prev) => (prev === loop.id ? null : loop.id))}
                       onGenerationUsed={consumeCredit}
                       onStartWorkspaceJob={(title, sub) => startWorkspaceJob(title, sub)}
@@ -3389,12 +3679,15 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="space-y-4">
-              {displayedLoops.map((l) => (
+              {displayedLoops.map((l, loopIdx) => (
                 <div key={l.id}>
                   <LoopCardItem
                     loop={l}
+                    slotIndex={loopIdx}
                     compact={mobileV2}
                     queueLoops={displayedLoops}
+                    showRetentionCountdown
+                    audioRetention={audioRetentionCtx}
                     onOpenDetails={(loop) => setDetailsId(loop.id)}
                     onGenerationUsed={consumeCredit}
                     onStartWorkspaceJob={(title, sub) => startWorkspaceJob(title, sub)}

@@ -255,8 +255,8 @@ export function landingCopy(locale: Locale) {
 
     ctaTitle: isFr ? "Prêt à lancer ta prochaine release ?" : "Ready to ship your next release?",
     ctaLead: isFr
-      ? "Commence gratuitement — 10 générations par mois, exports MP3 royalty-free. Passe Pro pour le WAV, le mastering complet et plus de crédits."
-      : "Start free — 10 generations per month, royalty-free MP3 exports. Go Pro for WAV, full mastering, and more credits.",
+      ? "Commence gratuitement — 10 générations par mois, exports MP3 royalty-free. Passe Pro pour le WAV, Studio pour le mastering complet."
+      : "Start free — 10 generations per month, royalty-free MP3 exports. Go Pro for WAV, Studio for full mastering.",
     ctaButton: isFr ? "Essayer ProducerHit gratuitement →" : "Try ProducerHit free →",
 
     freeSpotlightTitle: isFr

@@ -1,10 +1,11 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { Grid3X3, Settings, LogIn, LogOut, AudioWaveform, Users, BarChart3, Loader2 } from "lucide-react";
+import { Grid3X3, Settings, LogIn, LogOut, AudioWaveform, Users, BarChart3, Loader2, Home } from "lucide-react";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 import { useGrowthAdmin } from "@/hooks/useGrowthAdmin";
 import { useAuthStore } from "@/stores/authStore";
+import { COMMUNITY_HUB_NAV } from "@/lib/communityHub";
 import { useLocaleStore } from "@/stores/localeStore";
 
 type Item = { to: string; label: string; icon: React.ReactNode };
@@ -20,9 +21,10 @@ export function Sidebar() {
   const [loggingOut, setLoggingOut] = useState(false);
 
   const items: Item[] = [
+    { to: "/?home=1", label: locale === "fr" ? "Accueil" : "Home", icon: <Home className="h-5 w-5" /> },
     { to: "/dashboard", label: locale === "fr" ? "Générateur" : "Generator", icon: <AudioWaveform className="h-5 w-5" /> },
     { to: "/library", label: locale === "fr" ? "Bibliothèque" : "Library", icon: <Grid3X3 className="h-5 w-5" /> },
-    { to: "/community", label: locale === "fr" ? "Communauté" : "Community", icon: <Users className="h-5 w-5" /> },
+    { to: "/community", label: locale === "fr" ? COMMUNITY_HUB_NAV.fr : COMMUNITY_HUB_NAV.en, icon: <Users className="h-5 w-5" /> },
     { to: "/settings", label: locale === "fr" ? "Paramètres" : "Settings", icon: <Settings className="h-5 w-5" /> },
     ...(isGrowthAdmin
       ? [{ to: "/admin/growth", label: "Growth", icon: <BarChart3 className="h-5 w-5" /> } satisfies Item]
@@ -50,7 +52,10 @@ export function Sidebar() {
       <div className="flex items-center gap-2 md:flex-col">
         <div className="flex items-center gap-1 md:mt-3 md:flex-col">
           {items.map((it) => {
-            const active = location.pathname === it.to || (it.to !== "/" && location.pathname.startsWith(it.to + "/"));
+            const active =
+              it.to === "/?home=1"
+                ? location.pathname === "/" || location.pathname === "/home"
+                : location.pathname === it.to || (it.to !== "/" && location.pathname.startsWith(it.to + "/"));
             return (
               <Link
                 key={it.to}

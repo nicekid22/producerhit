@@ -8,7 +8,7 @@
 4. **Persist** → upload **bucket `loop-audio`** (`{userId}/{loopId}.mp3`) si `VITE_SUPABASE_LOOP_AUDIO_UPLOAD` ≠ `0` (défaut **activé**)
 5. **DB** → `audio_url` = URL Storage publique ; `provider_audio_inline` = **null** (pas de Mo en Postgres)
 6. **Fallback** → si upload échoue : `stream_public` + `provider_audio_inline` (legacy)
-7. **Rétention** → purge automatique après **7 jours** (Edge `purge-loop-audio` + cron)
+7. **Rétention** → **7 jours** (Free/Pro/Studio) ; **Plus** = liens permanents ; downgrade Plus → **7 jours** globaux (`hosted_audio_expires_at`)
 8. **Communauté** → lecture `<audio>` directe sur URL Storage (pas Edge blob)
 
 ## Variables
@@ -40,6 +40,15 @@ supabase functions deploy purge-loop-audio --project-ref pmfnzenqemnonpglmjqx
 
 **Cron Supabase** (Dashboard → Edge Functions → purge-loop-audio) : `0 4 * * *`  
 Headers : `x-cron-secret: <CRON_SECRET>`
+
+## Remix (cover / repaint)
+
+- **Par défaut (2026)** : recréation de vibe via **Song / Beat** + même prompt (`remixVibeFallback.ts`) — pas d’upload source.
+- **Rollback upload ACE** : `VITE_REMIX_UPLOAD_ENABLED=1` sur Vercel → onglet Remix Studio redevient upload + `remixLoopAce`.
+- Le remix upload envoie un fichier source vers ACE (`src_audio`).
+- Sur **api.acemusic.ai** (2026), `/release_task` et `/v1/music/generate` renvoient **404** — seul **text2music** via `/v1/chat/completions` fonctionne.
+- Le code tente d’abord `music/generate` + `jobs`, puis `release_task` (serveur self-hosted).
+- Message utilisateur : `ACE_REMIX_UNAVAILABLE` si les deux échouent (mode upload uniquement).
 
 ## Rollback rapide
 

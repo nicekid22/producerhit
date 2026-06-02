@@ -6,6 +6,7 @@ import { Navbar } from "@/components/Navbar";
 import { useAuthStore } from "@/stores/authStore";
 import { useLocaleStore } from "@/stores/localeStore";
 import { PLAN_LIMITS, getPlanBaseLimit } from "@/lib/planLimits";
+import { LOOP_AUDIO_RETENTION_DAYS, plusPermanentAudioBenefit, standardAudioRetentionNote } from "@/lib/loopAudioRetention";
 import {
   isRecommendedPlan,
   normalizePlan,
@@ -49,6 +50,7 @@ export default function Pricing() {
           meta: `${PLAN_LIMITS.free} générations / mois`,
           bullets: [
             `${PLAN_LIMITS.free} générations Song + Beat`,
+            standardAudioRetentionNote("fr"),
             "Export MP3 royalty-free",
             "Bibliothèque cloud + player",
             "Preview mastering (après 4 gen)",
@@ -61,9 +63,11 @@ export default function Pricing() {
           meta: "75 générations / mois",
           bullets: [
             "75 générations / mois",
-            "Export WAV + MP3 Spotify Ready",
-            "Mastering complet",
-            "Usage commercial royalty-free",
+            "Export MP3",
+            "Mode Song + Type Beat",
+            "Mode Remix & Cover",
+            
+            standardAudioRetentionNote("fr"),
           ],
         },
         {
@@ -74,8 +78,10 @@ export default function Pricing() {
           bullets: [
             "250 générations / mois",
             "Tout Pro inclus",
-            "Remix/Cover + seed",
-            "Marge max pour releases & clients",
+            "Mastering Studio complet",
+            "Remix & Cover",
+            "Export MP3 + WAV",
+            "Utilisation commerciale autorisée",
           ],
         },
         {
@@ -85,9 +91,10 @@ export default function Pricing() {
           meta: `${PLAN_LIMITS.plus} générations / mois`,
           bullets: [
             `${PLAN_LIMITS.plus} générations / mois`,
-            "Génération prioritaire (file rapide)",
-            "Export stems séparés ZIP",
-            "Tout Studio + sans watermark share",
+            plusPermanentAudioBenefit("fr"),
+            "Génération prioritaire",
+            "Export fichiers séparés ZIP",
+            "Libre de droits pour un usage commercial.",
           ],
         },
       ];
@@ -100,6 +107,7 @@ export default function Pricing() {
         meta: `${PLAN_LIMITS.free} generations / month`,
         bullets: [
           `${PLAN_LIMITS.free} Song + Beat generations`,
+          standardAudioRetentionNote("en"),
           "Royalty-free MP3 export",
           "Cloud library + player",
           "Mastering preview (after 4 gens)",
@@ -113,8 +121,10 @@ export default function Pricing() {
         bullets: [
           "75 generations / month",
           "WAV + MP3 Spotify Ready export",
-          "Full mastering",
+          "Song Mode + Type Beat workflows",
+          "Auto cover art + watermark-free share",
           "Royalty-free commercial use",
+          standardAudioRetentionNote("en"),
         ],
       },
       {
@@ -125,8 +135,10 @@ export default function Pricing() {
         bullets: [
           "250 generations / month",
           "Everything in Pro",
-          "Remix ACE + seed iterations",
-          "Maximum headroom for releases",
+          "Full Mastering Studio (apply + export)",
+          "ACE Remix / Cover + seed iterations",
+          "Vertical video export + promo clips",
+          "Maximum headroom for releases & clients",
         ],
       },
       {
@@ -136,6 +148,7 @@ export default function Pricing() {
         meta: `${PLAN_LIMITS.plus} generations / month`,
         bullets: [
           `${PLAN_LIMITS.plus} generations / month`,
+          plusPermanentAudioBenefit("en"),
           "Priority queue (faster generation)",
           "Separate stems ZIP export (ACE)",
           "Everything in Studio + no share watermark",
@@ -175,6 +188,12 @@ export default function Pricing() {
         a: isFr
           ? "Plus passe en tête de file côté génération (rate limits plus élevés) pour des sessions plus fluides quand tu enchaînes beaucoup de takes."
           : "Plus gets priority in the generation queue (higher rate limits) for smoother sessions when you chain many takes.",
+      },
+      {
+        q: isFr ? "Les liens audio expirent-ils ?" : "Do hosted audio links expire?",
+        a: isFr
+          ? `Sur Free, Pro et Studio, l’audio hébergé est conservé ${LOOP_AUDIO_RETENTION_DAYS} jours. Sur Plus, tes liens restent actifs tant que tu es abonné. Si tu rétrogrades depuis Plus, tu gardes ${LOOP_AUDIO_RETENTION_DAYS} jours pour récupérer ta bibliothèque.`
+          : `On Free, Pro, and Studio, hosted audio is kept for ${LOOP_AUDIO_RETENTION_DAYS} days. On Plus, your links stay active while subscribed. If you downgrade from Plus, you get a ${LOOP_AUDIO_RETENTION_DAYS}-day grace period to save your library.`,
       },
     ],
     [isFr],

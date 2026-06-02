@@ -1,12 +1,17 @@
+import type { RemixSourceLoop } from "@/lib/remixSourceLoop";
+
 export type PendingRemix = {
   sourceLoopId: string;
   sourceLoopName: string;
+  /** Vide si recréation vibe (pas d’upload source). */
   audioUrl: string;
   prompt: string;
   genre?: string;
   mood?: string;
   bpm?: number;
   source: "community" | "public_loop";
+  /** Métadonnées complètes (BPM, tonalité, paroles…) — même logique que Remix sur carte. */
+  sourceLoop?: RemixSourceLoop;
 };
 
 const STORAGE_KEY = "producerhit_pending_remix";
@@ -24,16 +29,19 @@ export function loadPendingRemix(): PendingRemix | null {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<PendingRemix>;
-    if (!parsed.audioUrl || !parsed.sourceLoopId) return null;
+    if (!parsed.sourceLoopId) return null;
+    const sourceLoop =
+      parsed.sourceLoop && typeof parsed.sourceLoop === "object" ? (parsed.sourceLoop as RemixSourceLoop) : undefined;
     return {
       sourceLoopId: String(parsed.sourceLoopId),
       sourceLoopName: String(parsed.sourceLoopName || "Track"),
-      audioUrl: String(parsed.audioUrl),
+      audioUrl: typeof parsed.audioUrl === "string" ? parsed.audioUrl : "",
       prompt: String(parsed.prompt || ""),
       genre: parsed.genre ? String(parsed.genre) : undefined,
       mood: parsed.mood ? String(parsed.mood) : undefined,
       bpm: typeof parsed.bpm === "number" ? parsed.bpm : undefined,
       source: parsed.source === "public_loop" ? "public_loop" : "community",
+      sourceLoop,
     };
   } catch {
     return null;

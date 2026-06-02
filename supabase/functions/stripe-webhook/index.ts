@@ -33,6 +33,23 @@ async function hmacSha256(secret: string, message: string) {
   return new Uint8Array(sig);
 }
 
+const HOSTED_AUDIO_GRACE_DAYS = 7;
+
+function hostedAudioExpiresAtIso(days = HOSTED_AUDIO_GRACE_DAYS): string {
+  return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+}
+
+/** Plus = pas d’expiration ; downgrade depuis Plus = fenêtre 7j globale. */
+function profilePlanPatch(prevPlan: string, nextPlan: string): Record<string, unknown> {
+  const patch: Record<string, unknown> = { plan: nextPlan };
+  if (nextPlan === "plus") {
+    patch.hosted_audio_expires_at = null;
+  } else if (prevPlan === "plus") {
+    patch.hosted_audio_expires_at = hostedAudioExpiresAtIso();
+  }
+  return patch;
+}
+
 async function planFromPriceId(supabase: ReturnType<typeof createClient>, priceId: string) {
   const pro = Deno.env.get("STRIPE_PRICE_ID_PRO") ?? "";
   const studio = Deno.env.get("STRIPE_PRICE_ID_STUDIO") ?? "";
@@ -132,10 +149,12 @@ serve(async (req) => {
       if (plan === "free" && priceId) {
         console.error("checkout.session.completed: unknown price id", priceId);
       }
+      const { data: prevProfile } = await supabase.from("profiles").select("plan").eq("id", userId).maybeSingle();
+      const prevPlan = typeof prevProfile?.plan === "string" ? prevProfile.plan : "free";
       const { error: checkoutUpdateError } = await supabase
         .from("profiles")
         .update({
-          plan,
+          ...profilePlanPatch(prevPlan, plan),
           stripe_customer_id: customerId || null,
           stripe_subscription_id: subscriptionId,
           stripe_price_id: priceId || null,
@@ -180,10 +199,12 @@ serve(async (req) => {
         console.error("subscription event: unknown price id", priceId, type);
       }
 
+      const { data: prevProfile } = await supabase.from("profiles").select("plan").eq("id", userId).maybeSingle();
+      const prevPlan = typeof prevProfile?.plan === "string" ? prevProfile.plan : "free";
       const { error: subscriptionUpdateError } = await supabase
         .from("profiles")
         .update({
-          plan,
+          ...profilePlanPatch(prevPlan, plan),
           stripe_customer_id: customerId || null,
           stripe_subscription_id: active ? subscriptionId : null,
           stripe_price_id: active ? priceId || null : null,

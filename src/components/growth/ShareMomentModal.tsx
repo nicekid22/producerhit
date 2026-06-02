@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { Copy, Film, Loader2, Share2, Sparkles, Video, Volume2, VolumeX, Wand2, X } from "lucide-react";
+import { Copy, Film, ImageIcon, Loader2, Share2, Sparkles, Video, Volume2, VolumeX, X } from "lucide-react";
 import type { Loop } from "@/types/loop";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
@@ -18,17 +18,16 @@ import { buildShareMomentSubtitle, buildShareMomentTitle, buildTikTokCaption } f
 import { canShareWithoutWatermark } from "@/lib/planEntitlements";
 import { downloadShareVideoBlob, exportShareVideo } from "@/lib/shareVideo";
 import {
-  defaultSocialVideoPrompt,
-  downloadSocialVideoBlob,
-  exportSocialVideoWithAudio,
-  fetchSocialVideoCredits,
-  generateSocialAiVideo,
-  newSocialVideoIdempotencyKey,
-  SOCIAL_VIDEO_CREDIT_COST,
-  SOCIAL_VIDEO_EXPORT_MAX_SEC,
-  SOCIAL_VIDEO_POLLINATIONS_SEC,
-  type SocialVideoCredits,
-} from "@/lib/socialVideo";
+  buildMoodBoardSearchQuery,
+  downloadMoodBoardVideoBlob,
+  exportMoodBoardVideo,
+  fetchMoodBoardCredits,
+  fetchMoodBoardImage,
+  MOOD_VIDEO_CREDIT_COST,
+  MOOD_VIDEO_EXPORT_MAX_SEC,
+  newMoodBoardIdempotencyKey,
+  type MoodBoardCredits,
+} from "@/lib/moodBoardVideo";
 import type { VisualizerLayout } from "@/lib/visualizer/types";
 import { trackClientEvent } from "@/lib/supabaseClient";
 import { useAuthStore } from "@/stores/authStore";
@@ -43,7 +42,7 @@ type Props = {
   onMakePublic?: () => void;
 };
 
-type ShareExportMode = "local" | "ai";
+type ShareExportMode = "local" | "mood";
 
 const SHARE_PRESET = "void" as const;
 
@@ -53,22 +52,23 @@ export function ShareMomentModal({ open, onClose, loop, locale, plan = "free", o
   const [caption, setCaption] = useState("");
   const [exportMode, setExportMode] = useState<ShareExportMode>("local");
   const [exporting, setExporting] = useState(false);
-  const [aiGenerating, setAiGenerating] = useState(false);
+  const [moodFetching, setMoodFetching] = useState(false);
   const [layout, setLayout] = useState<VisualizerLayout>("story");
   const [previewMuted, setPreviewMuted] = useState(true);
-  const [aiVideoUrl, setAiVideoUrl] = useState<string | null>(null);
-  const [aiVideoPrompt, setAiVideoPrompt] = useState("");
-  const [aiCredits, setAiCredits] = useState<SocialVideoCredits | null>(null);
-  const aiIdempotencyRef = useRef<string>("");
+  const [moodImageUrl, setMoodImageUrl] = useState<string | null>(null);
+  const [moodImageSource, setMoodImageSource] = useState<string | null>(null);
+  const [moodSearchQuery, setMoodSearchQuery] = useState("");
+  const [moodCredits, setMoodCredits] = useState<MoodBoardCredits | null>(null);
+  const moodIdempotencyRef = useRef<string>("");
   const showWatermark = !canShareWithoutWatermark(plan);
 
   const refreshCredits = useCallback(async () => {
     if (!user?.id) {
-      setAiCredits(null);
+      setMoodCredits(null);
       return;
     }
-    const credits = await fetchSocialVideoCredits(user.id);
-    setAiCredits(credits);
+    const credits = await fetchMoodBoardCredits(user.id);
+    setMoodCredits(credits);
   }, [user?.id]);
 
   useEffect(() => {
@@ -77,10 +77,11 @@ export function ShareMomentModal({ open, onClose, loop, locale, plan = "free", o
     setExportMode("local");
     setLayout("story");
     setPreviewMuted(true);
-    setAiVideoUrl(null);
-    setAiVideoPrompt(defaultSocialVideoPrompt(loop));
-    setAiGenerating(false);
-    aiIdempotencyRef.current = newSocialVideoIdempotencyKey(loop.id);
+    setMoodImageUrl(null);
+    setMoodImageSource(null);
+    setMoodSearchQuery(buildMoodBoardSearchQuery(loop));
+    setMoodFetching(false);
+    moodIdempotencyRef.current = newMoodBoardIdempotencyKey(loop.id);
     floatEmojis(["✨", "🎵", "📱"], 8);
     trackClientEvent("share_moment_open", { loop_id: loop.id, public: loop.isPublic, preset: SHARE_PRESET });
     void refreshCredits();
@@ -88,16 +89,17 @@ export function ShareMomentModal({ open, onClose, loop, locale, plan = "free", o
 
   useEffect(() => {
     if (!open) return;
-    setAiVideoUrl(null);
-    aiIdempotencyRef.current = loop ? newSocialVideoIdempotencyKey(loop.id) : "";
+    setMoodImageUrl(null);
+    setMoodImageSource(null);
+    moodIdempotencyRef.current = loop ? newMoodBoardIdempotencyKey(loop.id) : "";
   }, [layout, loop?.id, open]);
 
   if (!loop) return null;
 
   const shareUrl = loop.isPublic ? buildLoopShareUrl(loop.id, "tiktok") : buildSignupUrl("tiktok");
   const text = buildShareMessage(loop.name, locale, loop.isPublic);
-  const creditsRemaining = aiCredits?.remaining ?? null;
-  const canAffordAi = creditsRemaining === null || creditsRemaining >= SOCIAL_VIDEO_CREDIT_COST;
+  const creditsRemaining = moodCredits?.remaining ?? null;
+  const canAffordMood = creditsRemaining === null || creditsRemaining >= MOOD_VIDEO_CREDIT_COST;
 
   const trackShare = (channel: string) => {
     trackClientEvent("growth_share_click", { channel, loop_id: loop.id, public: loop.isPublic, source: "share_moment" });
@@ -154,30 +156,31 @@ export function ShareMomentModal({ open, onClose, loop, locale, plan = "free", o
     }
   };
 
-  const generateAiVideo = async () => {
+  const fetchMoodPhoto = async () => {
     if (!user?.id) {
-      toast.error(isFr ? "Connecte-toi pour générer une vidéo IA" : "Sign in to generate an AI video");
+      toast.error(isFr ? "Connecte-toi pour créer une vidéo mood" : "Sign in to create a mood video");
       return;
     }
-    const trimmedPrompt = aiVideoPrompt.trim();
-    if (trimmedPrompt.length < 3) {
-      toast.error(isFr ? "Décris ta vidéo (3 caractères min.)" : "Describe your video (3 chars min.)");
+    const trimmedQuery = moodSearchQuery.trim();
+    if (trimmedQuery.length < 2) {
+      toast.error(isFr ? "Précise ta recherche (2 caractères min.)" : "Refine your search (2 chars min.)");
       return;
     }
-    if (!canAffordAi) {
+    if (!canAffordMood) {
       toast.error(isFr ? "Plus de crédits ce mois-ci" : "No credits left this month");
       return;
     }
-    setAiGenerating(true);
-    trackClientEvent("share_moment_ai_generate", { loop_id: loop.id, layout });
+    setMoodFetching(true);
+    trackClientEvent("share_moment_mood_fetch", { loop_id: loop.id, layout });
     try {
-      const result = await generateSocialAiVideo(loop, layout, {
-        idempotencyKey: aiIdempotencyRef.current,
-        videoPrompt: trimmedPrompt,
+      const result = await fetchMoodBoardImage(loop, layout, {
+        idempotencyKey: moodIdempotencyRef.current,
+        searchQuery: trimmedQuery,
       });
-      setAiVideoUrl(result.videoUrl);
+      setMoodImageUrl(result.imageUrl);
+      setMoodImageSource(result.source);
       if (typeof result.used === "number" && typeof result.limit === "number") {
-        setAiCredits((prev) =>
+        setMoodCredits((prev) =>
           prev
             ? { ...prev, used: result.used!, remaining: Math.max(0, result.limit! - result.used!) }
             : {
@@ -190,50 +193,34 @@ export function ShareMomentModal({ open, onClose, loop, locale, plan = "free", o
       } else {
         void refreshCredits();
       }
-      aiIdempotencyRef.current = newSocialVideoIdempotencyKey(loop.id);
-      toast.success(
-        isFr
-          ? `Vidéo IA prête (${SOCIAL_VIDEO_POLLINATIONS_SEC}s, boucle seamless)`
-          : `AI video ready (${SOCIAL_VIDEO_POLLINATIONS_SEC}s seamless loop)`,
-      );
+      moodIdempotencyRef.current = newMoodBoardIdempotencyKey(loop.id);
+      const sourceLabel =
+        result.source === "pexels"
+          ? isFr
+            ? "photo mood (Pexels)"
+            : "mood photo (Pexels)"
+          : isFr
+            ? "photo de secours"
+            : "fallback photo";
+      toast.success(isFr ? `Image trouvée — ${sourceLabel}` : `Image found — ${sourceLabel}`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       if (msg.includes("no_credits")) {
         toast.error(isFr ? "Plus de crédits ce mois-ci" : "No credits left this month");
         void refreshCredits();
-      } else if (msg.includes("prompt_too_short")) {
-        toast.error(isFr ? "Prompt trop court" : "Prompt too short");
-      } else if (msg.includes("upload_failed")) {
-        toast.error(
-          isFr
-            ? "Stockage vidéo indisponible — contacte le support (aucun crédit débité)"
-            : "Video storage unavailable — contact support (no credit charged)",
-        );
-      } else if (msg.includes("pollinations_timeout") || msg.includes("timeout")) {
-        toast.error(
-          isFr
-            ? "Pollinations trop lent — réessaie dans 1 min (aucun crédit débité)"
-            : "Pollinations timed out — retry in 1 min (no credit charged)",
-        );
-      } else if (msg.includes("video_generation_failed")) {
-        toast.error(
-          isFr
-            ? "Génération vidéo échouée — modifie le prompt et réessaie (aucun crédit débité)"
-            : "Video generation failed — tweak prompt and retry (no credit charged)",
-        );
-      } else if (msg.includes("server_misconfigured")) {
-        toast.error(isFr ? "Service vidéo non configuré côté serveur" : "Video service not configured on server");
+      } else if (msg.includes("query_too_short")) {
+        toast.error(isFr ? "Recherche trop courte" : "Search query too short");
       } else {
-        toast.error(isFr ? `Génération échouée — ${msg}` : `Generation failed — ${msg}`);
+        toast.error(isFr ? `Recherche échouée — ${msg}` : `Search failed — ${msg}`);
       }
     } finally {
-      setAiGenerating(false);
+      setMoodFetching(false);
     }
   };
 
-  const exportAiVideo = async () => {
-    if (!aiVideoUrl) {
-      toast.error(isFr ? "Génère d'abord une vidéo IA" : "Generate an AI video first");
+  const exportMoodVideo = async () => {
+    if (!moodImageUrl) {
+      toast.error(isFr ? "Trouve d'abord une photo mood" : "Find a mood photo first");
       return;
     }
     if (!loop.audioUrl) {
@@ -241,23 +228,25 @@ export function ShareMomentModal({ open, onClose, loop, locale, plan = "free", o
       return;
     }
     setExporting(true);
-    trackClientEvent("share_moment_export_video", { loop_id: loop.id, layout, mode: "ai" });
+    trackClientEvent("share_moment_export_video", { loop_id: loop.id, layout, mode: "mood" });
     try {
-      const blob = await exportSocialVideoWithAudio(loop, aiVideoUrl, layout, {
-        durationSec: SOCIAL_VIDEO_EXPORT_MAX_SEC,
+      const blob = await exportMoodBoardVideo(loop, moodImageUrl, layout, {
+        durationSec: MOOD_VIDEO_EXPORT_MAX_SEC,
         showWatermark,
-        watermarkText: "made with ProducerHit",
+        locale,
       });
-      downloadSocialVideoBlob(loop, blob, layout);
+      downloadMoodBoardVideoBlob(loop, blob, layout);
       toast.success(
         isFr
-          ? "Vidéo sociale prête — audio + grain VHS"
-          : "Social video ready — audio + VHS grain",
+          ? `Vidéo prête (${MOOD_VIDEO_EXPORT_MAX_SEC}s) — logo + ton beat`
+          : `Video ready (${MOOD_VIDEO_EXPORT_MAX_SEC}s) — logo + your beat`,
       );
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       if (msg === "unsupported") {
         toast.error(isFr ? "Export vidéo non supporté ici" : "Video export not supported here");
+      } else if (msg.includes("image_load_failed")) {
+        toast.error(isFr ? "Image inaccessible — relance la recherche" : "Image blocked — search again");
       } else {
         toast.error(isFr ? "Export échoué — réessaie" : "Export failed — try again");
       }
@@ -309,16 +298,16 @@ export function ShareMomentModal({ open, onClose, loop, locale, plan = "free", o
           </button>
           <button
             type="button"
-            onClick={() => setExportMode("ai")}
+            onClick={() => setExportMode("mood")}
             className={cn(
               "flex flex-1 items-center justify-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold",
-              exportMode === "ai"
+              exportMode === "mood"
                 ? "border-violet-400/35 bg-violet-500/10 text-violet-100"
                 : "border-white/10 bg-white/[0.02] text-white/45",
             )}
           >
-            <Wand2 className="h-3.5 w-3.5" />
-            {isFr ? "Vidéo IA" : "AI video"}
+            <ImageIcon className="h-3.5 w-3.5" />
+            {isFr ? "Vidéo mood" : "Mood video"}
           </button>
         </div>
 
@@ -334,24 +323,20 @@ export function ShareMomentModal({ open, onClose, loop, locale, plan = "free", o
                 showWatermark={showWatermark}
                 className="absolute inset-0"
               />
-            ) : aiVideoUrl ? (
-              <video
-                key={aiVideoUrl}
-                src={aiVideoUrl}
+            ) : moodImageUrl ? (
+              <img
+                key={moodImageUrl}
+                src={moodImageUrl}
+                alt=""
                 className="absolute inset-0 h-full w-full object-cover"
-                autoPlay
-                loop
-                muted={previewMuted}
-                playsInline
-                preload="auto"
               />
             ) : (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[#050508] px-4 text-center">
-                <Sparkles className="h-6 w-6 text-violet-300/70" />
+                <ImageIcon className="h-6 w-6 text-violet-300/70" />
                 <p className="text-[11px] leading-relaxed text-white/45">
                   {isFr
-                    ? "Écris ton prompt ci-dessous puis génère la boucle VHS"
-                    : "Write your prompt below, then generate the VHS loop"}
+                    ? "Ajuste la recherche mood puis trouve une photo"
+                    : "Tune your mood search, then find a photo"}
                 </p>
               </div>
             )}
@@ -400,69 +385,84 @@ export function ShareMomentModal({ open, onClose, loop, locale, plan = "free", o
           </button>
         </div>
 
-        {exportMode === "ai" ? (
+        {exportMode === "mood" ? (
           <>
             <div>
               <div className="mb-1 flex items-center justify-between">
                 <label className="text-xs font-semibold text-violet-200/80">
-                  {isFr ? "Prompt vidéo IA" : "AI video prompt"}
+                  {isFr ? "Recherche visuelle" : "Visual search"}
                 </label>
                 <button
                   type="button"
                   className="text-[10px] text-white/45 hover:text-white/70"
-                  onClick={() => setAiVideoPrompt(defaultSocialVideoPrompt(loop))}
+                  onClick={() => {
+                    setMoodSearchQuery(buildMoodBoardSearchQuery(loop));
+                    setMoodImageUrl(null);
+                    setMoodImageSource(null);
+                  }}
                 >
                   {isFr ? "Réinitialiser" : "Reset"}
                 </button>
               </div>
               <textarea
-                value={aiVideoPrompt}
+                value={moodSearchQuery}
                 onChange={(e) => {
-                  setAiVideoPrompt(e.target.value.slice(0, 160));
-                  setAiVideoUrl(null);
+                  setMoodSearchQuery(e.target.value.slice(0, 100));
+                  setMoodImageUrl(null);
+                  setMoodImageSource(null);
                 }}
                 rows={3}
                 placeholder={
                   isFr
-                    ? "Ex. glass prism floating in neon fog, cyberpunk violet…"
-                    : "E.g. glass prism floating in neon fog, cyberpunk violet…"
+                    ? "Ex. lo-fi portrait ambiance nuit chambre cozy…"
+                    : "E.g. lo-fi portrait ambiance cozy bedroom night…"
                 }
                 className="w-full rounded-xl border border-violet-400/20 bg-violet-500/[0.04] px-3 py-2 text-xs leading-relaxed text-white/85 outline-none placeholder:text-white/25 focus:border-violet-300/35"
               />
               <p className="mt-1 text-[10px] text-white/35">
                 {isFr
-                  ? "Décris l'ambiance visuelle — grain VHS et boucle seamless ajoutés automatiquement."
-                  : "Describe the visual mood — VHS grain and seamless loop added automatically."}
+                  ? "Basé sur ton genre / mood — photos Pexels (style Pinterest), logo centré + ton beat à l'export."
+                  : "Based on your genre / mood — Pexels photos (Pinterest-style), centered logo + your beat on export."}
               </p>
             </div>
 
             <div className="rounded-xl border border-violet-400/20 bg-violet-500/[0.06] px-3 py-2 text-[10px] leading-relaxed text-violet-100/75">
-            {isFr ? (
-              <>
-                <strong className="font-semibold text-violet-100">{SOCIAL_VIDEO_CREDIT_COST} crédit</strong> par
-                génération · {SOCIAL_VIDEO_POLLINATIONS_SEC}s boucle seamless · export jusqu&apos;à{" "}
-                {SOCIAL_VIDEO_EXPORT_MAX_SEC}s avec audio + grain VHS
-                {creditsRemaining !== null ? (
-                  <>
-                    {" "}
-                    · <span className="text-white/55">{creditsRemaining} crédit(s) restant(s)</span>
-                  </>
-                ) : null}
-              </>
-            ) : (
-              <>
-                <strong className="font-semibold text-violet-100">{SOCIAL_VIDEO_CREDIT_COST} credit</strong> per
-                generation · {SOCIAL_VIDEO_POLLINATIONS_SEC}s seamless loop · export up to {SOCIAL_VIDEO_EXPORT_MAX_SEC}s
-                with audio + VHS grain
-                {creditsRemaining !== null ? (
-                  <>
-                    {" "}
-                    · <span className="text-white/55">{creditsRemaining} credit(s) left</span>
-                  </>
-                ) : null}
-              </>
-            )}
-          </div>
+              {isFr ? (
+                <>
+                  <strong className="font-semibold text-violet-100">{MOOD_VIDEO_CREDIT_COST} crédit</strong> par photo
+                  · export {MOOD_VIDEO_EXPORT_MAX_SEC}s avec logo + audio
+                  {moodImageSource ? (
+                    <>
+                      {" "}
+                      · <span className="text-white/55">source : {moodImageSource}</span>
+                    </>
+                  ) : null}
+                  {creditsRemaining !== null ? (
+                    <>
+                      {" "}
+                      · <span className="text-white/55">{creditsRemaining} crédit(s) restant(s)</span>
+                    </>
+                  ) : null}
+                </>
+              ) : (
+                <>
+                  <strong className="font-semibold text-violet-100">{MOOD_VIDEO_CREDIT_COST} credit</strong> per photo ·{" "}
+                  {MOOD_VIDEO_EXPORT_MAX_SEC}s export with logo + audio
+                  {moodImageSource ? (
+                    <>
+                      {" "}
+                      · <span className="text-white/55">source: {moodImageSource}</span>
+                    </>
+                  ) : null}
+                  {creditsRemaining !== null ? (
+                    <>
+                      {" "}
+                      · <span className="text-white/55">{creditsRemaining} credit(s) left</span>
+                    </>
+                  ) : null}
+                </>
+              )}
+            </div>
           </>
         ) : null}
 
@@ -504,37 +504,37 @@ export function ShareMomentModal({ open, onClose, loop, locale, plan = "free", o
             <Button
               variant="primary"
               className="w-full"
-              disabled={aiGenerating || !canAffordAi}
-              onClick={() => void generateAiVideo()}
+              disabled={moodFetching || !canAffordMood}
+              onClick={() => void fetchMoodPhoto()}
             >
-              {aiGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-              {aiGenerating
+              {moodFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
+              {moodFetching
                 ? isFr
-                  ? "Génération IA (30s–2 min)…"
-                  : "AI generation (30s–2 min)…"
+                  ? "Recherche photo…"
+                  : "Finding photo…"
                 : isFr
-                  ? `Générer vidéo IA (${SOCIAL_VIDEO_CREDIT_COST} crédit)`
-                  : `Generate AI video (${SOCIAL_VIDEO_CREDIT_COST} credit)`}
+                  ? `Trouver une photo (${MOOD_VIDEO_CREDIT_COST} crédit)`
+                  : `Find a photo (${MOOD_VIDEO_CREDIT_COST} credit)`}
             </Button>
             <Button
               variant="secondary"
               className="w-full"
-              disabled={exporting || !aiVideoUrl}
-              onClick={() => void exportAiVideo()}
+              disabled={exporting || !moodImageUrl}
+              onClick={() => void exportMoodVideo()}
             >
               {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Video className="h-4 w-4" />}
               {exporting
                 ? isFr
-                  ? "Export audio + VHS…"
-                  : "Exporting audio + VHS…"
+                  ? "Rendu logo + beat…"
+                  : "Rendering logo + beat…"
                 : isFr
-                  ? `Télécharger avec audio (${SOCIAL_VIDEO_EXPORT_MAX_SEC}s max)`
-                  : `Download with audio (${SOCIAL_VIDEO_EXPORT_MAX_SEC}s max)`}
+                  ? `Télécharger vidéo (${MOOD_VIDEO_EXPORT_MAX_SEC}s, ${layout === "square" ? "1:1" : "9:16"})`
+                  : `Download video (${MOOD_VIDEO_EXPORT_MAX_SEC}s, ${layout === "square" ? "1:1" : "9:16"})`}
             </Button>
             <p className="text-center text-[10px] leading-relaxed text-white/35">
               {isFr
-                ? "Vidéo Pollinations bouclée + ton beat + grain VHS rétro. Crédit débité uniquement si la génération réussit."
-                : "Seamless Pollinations loop + your beat + retro VHS grain. Credit charged only when generation succeeds."}
+                ? "Photo mood + logo ProducerHit au centre + ton morceau — prêt pour TikTok / Reels. L'export est gratuit après la photo."
+                : "Mood photo + centered ProducerHit logo + your track — ready for TikTok / Reels. Export is free after the photo."}
             </p>
           </>
         )}

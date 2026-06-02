@@ -15,10 +15,12 @@ type Props = {
   resolvingId: string | null;
   ratingsById: Record<string, RatingStats>;
   isNew: (createdAt: string) => boolean;
+  isMineRow?: (row: PublicLoopRow) => boolean;
   onPlay: (row: PublicLoopRow, index: number) => void;
   onRemix: (row: PublicLoopRow) => void;
   onRate: (loopId: string, stars: number) => void;
   onSeeAll?: () => void;
+  pinterestCovers?: Record<string, string>;
 };
 
 export function CommunityRail({
@@ -31,10 +33,12 @@ export function CommunityRail({
   resolvingId,
   ratingsById,
   isNew,
+  isMineRow,
   onPlay,
   onRemix,
   onRate,
   onSeeAll,
+  pinterestCovers,
 }: Props) {
   if (!items.length) return null;
 
@@ -68,9 +72,11 @@ export function CommunityRail({
             resolving={resolvingId === row.id}
             rating={ratingsById[row.id]}
             isNew={row.created_at ? isNew(row.created_at) : false}
+            isMine={isMineRow?.(row)}
             onPlay={() => onPlay(row, idx)}
             onRemix={() => onRemix(row)}
             onRate={(stars) => onRate(row.id, stars)}
+            pinterestCoverUrl={pinterestCovers?.[row.id]}
           />
         ))}
       </div>

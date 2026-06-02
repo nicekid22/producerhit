@@ -1,4 +1,5 @@
 import { useEffect, useState, type RefObject } from "react";
+import { isPinterestCoverPreloaded } from "@/lib/pinterestCoverFetch";
 import { Music2, Pause, Play, SlidersHorizontal, Sparkles } from "lucide-react";
 import { PLAN_LIMITS } from "@/lib/planLimits";
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
@@ -10,6 +11,10 @@ export type GeneratorSideCard = {
   title: string;
   subtitle: string;
   coverUrl: string;
+  /** Cover d’origine si test Pinterest actif. */
+  coverUrlFallback?: string;
+  /** Requête Pinterest affichée au survol (test). */
+  coverPinterestQuery?: string;
   coverBg: string;
   audioUrl: string | null;
   stemsUrl?: Record<string, unknown> | null;
@@ -65,11 +70,19 @@ function FloatingCard({
 }) {
   const isFr = locale === "fr";
   const playingNow = isActive && isPlaying;
-  const [coverReady, setCoverReady] = useState(false);
+  const [coverReady, setCoverReady] = useState(() =>
+    Boolean(card.coverPinterestQuery && isPinterestCoverPreloaded(card.coverUrl)),
+  );
+  const [coverSrc, setCoverSrc] = useState(card.coverUrl);
 
   useEffect(() => {
+    setCoverSrc(card.coverUrl);
+    if (card.coverPinterestQuery && isPinterestCoverPreloaded(card.coverUrl)) {
+      setCoverReady(true);
+      return;
+    }
     setCoverReady(false);
-  }, [card.id, card.coverUrl]);
+  }, [card.id, card.coverUrl, card.coverPinterestQuery]);
 
   return (
     <div
@@ -101,21 +114,28 @@ function FloatingCard({
             ].join(" ")}
           >
             <div className="absolute inset-0" style={{ background: card.coverBg }} aria-hidden />
-            {card.coverUrl ? (
+            {coverSrc ? (
               <img
-                src={card.coverUrl}
+                key={coverSrc}
+                src={coverSrc}
                 alt=""
+                title={card.coverPinterestQuery ?? undefined}
                 loading="eager"
                 decoding="async"
                 fetchPriority="high"
                 referrerPolicy="no-referrer"
                 className={[
-                  "pk-landing-gen-card__cover absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-500",
-                  coverReady ? "opacity-100" : "opacity-0",
+                  "pk-landing-gen-card__cover absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-300",
+                  coverReady ? "opacity-100" : card.coverPinterestQuery ? "opacity-90" : "opacity-0",
                 ].join(" ")}
                 onLoad={() => setCoverReady(true)}
-                onError={(e) => {
-                  e.currentTarget.style.display = "none";
+                onError={() => {
+                  if (card.coverUrlFallback && coverSrc !== card.coverUrlFallback) {
+                    setCoverSrc(card.coverUrlFallback);
+                    setCoverReady(false);
+                    return;
+                  }
+                  setCoverReady(false);
                 }}
               />
             ) : null}

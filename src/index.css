@@ -1707,7 +1707,8 @@ a.pk-pricing-plan-btn {
 }
 
 .pk-dashboard-results-scroll {
-  padding-bottom: 0.5rem;
+  padding-bottom: 0.75rem;
+  scroll-padding-top: 0.5rem;
 }
 
 @media (min-width: 768px) {
@@ -4186,6 +4187,58 @@ a.pk-pricing-plan-btn {
   }
 }
 
+/* Remix Studio — sélection track (style chips genre) */
+.pk-remix-library-rail {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: 0.25rem;
+  padding: 0.15rem 0.25rem 0.5rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(103, 195, 255, 0.28) transparent;
+}
+
+.pk-remix-library-rail::-webkit-scrollbar {
+  height: 5px;
+}
+
+.pk-remix-library-rail::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(103, 195, 255, 0.28);
+}
+
+.pk-remix-library-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: min(72vw, 12.5rem);
+  max-width: 14rem;
+  scroll-snap-align: start;
+  border: 1px solid var(--pk-border, rgba(255, 255, 255, 0.1));
+  border-radius: 999px;
+  padding: 0.35rem 0.65rem 0.35rem 0.35rem;
+  background: var(--pk-bg, rgba(255, 255, 255, 0.03));
+  color: inherit;
+}
+
+.pk-remix-library-pill:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.pk-remix-library-pill--selected {
+  border-color: rgba(103, 195, 255, 0.4);
+  background: rgba(103, 195, 255, 0.12);
+  box-shadow: 0 0 0 1px rgba(103, 195, 255, 0.1);
+}
+
+.pk-remix-library-pill__thumb {
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
 .pk-landing-community__stage {
   position: relative;
 }
@@ -4195,11 +4248,12 @@ a.pk-pricing-plan-btn {
   gap: 1rem;
   overflow-x: auto;
   overflow-y: hidden;
-  scroll-snap-type: x mandatory;
+  scroll-snap-type: x proximity;
   scroll-padding-inline: 0.5rem;
   padding: 0.35rem 0.5rem 1rem;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  scroll-behavior: auto;
 }
 
 .pk-landing-community__rail::-webkit-scrollbar {
@@ -4242,6 +4296,69 @@ a.pk-pricing-plan-btn {
   background: transparent;
   padding: 0;
   cursor: pointer;
+}
+
+/* Cover double couche (Pollinations + Pinterest au survol) — landing, workspace, etc. */
+.pk-cover-peek__stack {
+  isolation: isolate;
+}
+
+.pk-cover-peek__layer {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition:
+    opacity 380ms ease,
+    transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.pk-cover-peek__layer--base {
+  z-index: 0;
+}
+
+.pk-cover-peek__layer--reveal {
+  z-index: 1;
+  opacity: 0;
+  transform: scale(1.04);
+}
+
+.pk-cover-peek--active:hover .pk-cover-peek__layer--base,
+.pk-cover-peek--active:focus-within .pk-cover-peek__layer--base {
+  transform: scale(1.02);
+}
+
+@media (hover: hover) {
+  .pk-cover-peek--active:hover .pk-cover-peek__layer--reveal,
+  .pk-cover-peek--active:focus-within .pk-cover-peek__layer--reveal,
+  .pk-landing-community__card.group:hover .pk-landing-community__cover--peek .pk-cover-peek__layer--reveal,
+  .pk-landing-community__card.group:focus-within .pk-landing-community__cover--peek .pk-cover-peek__layer--reveal {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .pk-landing-community__card.group:hover .pk-landing-community__cover--peek .pk-cover-peek__layer--base,
+  .pk-landing-community__card.group:focus-within .pk-landing-community__cover--peek .pk-cover-peek__layer--base {
+    transform: scale(1.02);
+  }
+}
+
+@media (hover: none) {
+  .pk-cover-peek--active:active .pk-cover-peek__layer--reveal,
+  .pk-landing-community__card:active .pk-landing-community__cover--peek .pk-cover-peek__layer--reveal {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.group:hover .pk-cover-peek__layer--base {
+  transform: scale(1.03);
+}
+
+.pk-cover-peek--workspace {
+  min-height: 7.5rem;
 }
 
 .pk-landing-community__fade {
@@ -4354,6 +4471,10 @@ a.pk-pricing-plan-btn {
     opacity: 1;
     transform: none;
     filter: none;
+  }
+
+  .pk-landing-community__rail {
+    scroll-behavior: auto !important;
   }
 
   .pk-landing-community__card,
@@ -4954,6 +5075,414 @@ a.pk-pricing-plan-btn {
   background: transparent;
   padding: 0;
   cursor: pointer;
+}
+
+/* —— Community hub (Le Flux) —— */
+.pk-hub-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #06060c;
+  padding: 1rem 1.1rem 1.1rem;
+}
+
+@media (min-width: 768px) {
+  .pk-hub-hero {
+    padding: 1.1rem 1.35rem 1.15rem;
+  }
+}
+
+.pk-hub-hero__mesh {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(680px circle at 8% -10%, rgba(103, 195, 255, 0.18), transparent 55%),
+    radial-gradient(520px circle at 92% 110%, rgba(157, 124, 255, 0.2), transparent 52%),
+    radial-gradient(400px circle at 50% 50%, rgba(236, 72, 153, 0.06), transparent 60%);
+}
+
+.pk-hub-hero__orb {
+  pointer-events: none;
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(48px);
+  opacity: 0.32;
+  animation: pkHubOrb 12s ease-in-out infinite;
+}
+
+.pk-hub-hero__orb--a {
+  top: -20%;
+  left: 10%;
+  width: 220px;
+  height: 220px;
+  background: rgba(103, 195, 255, 0.35);
+}
+
+.pk-hub-hero__orb--b {
+  bottom: -30%;
+  right: 5%;
+  width: 260px;
+  height: 260px;
+  background: rgba(157, 124, 255, 0.32);
+  animation-delay: -4s;
+}
+
+.pk-hub-hero__copy {
+  position: relative;
+  min-width: 0;
+}
+
+.pk-hub-hero__copy-content {
+  position: relative;
+}
+
+.pk-hub-hero__inner {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+@media (min-width: 900px) {
+  .pk-hub-hero__inner {
+    grid-template-columns: minmax(0, 1fr) minmax(11rem, 13.5rem) minmax(11.5rem, 13.75rem);
+    gap: 0.5rem 0.85rem;
+  }
+}
+
+/* Colonne centrale — starz dans l’espace vide */
+.pk-hub-hero__starz-col {
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  order: 2;
+  min-height: 9.5rem;
+  overflow: visible;
+}
+
+@media (min-width: 900px) {
+  .pk-hub-hero__starz-col {
+    order: unset;
+    min-height: 0;
+  }
+}
+
+.pk-hub-hero__copy {
+  order: 1;
+}
+
+@media (min-width: 900px) {
+  .pk-hub-hero__copy {
+    order: unset;
+  }
+}
+
+.pk-hub-hero__spotlight {
+  order: 3;
+  min-width: 0;
+}
+
+@media (min-width: 900px) {
+  .pk-hub-hero__spotlight {
+    order: unset;
+  }
+}
+
+.pk-hub-hero__starz-stage {
+  position: relative;
+  width: min(260px, 72vw);
+  aspect-ratio: 1;
+  max-height: 280px;
+}
+
+@media (min-width: 900px) {
+  .pk-hub-hero__starz-stage {
+    width: 100%;
+    max-width: 13.5rem;
+    transform: scale(1.12);
+  }
+}
+
+.pk-hub-hero__starz-aura {
+  position: absolute;
+  inset: -12%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 45% 40%, rgba(255, 255, 255, 0.12) 0%, transparent 28%),
+    radial-gradient(circle at 50% 55%, rgba(157, 124, 255, 0.5) 0%, rgba(103, 195, 255, 0.22) 42%, transparent 70%);
+  filter: blur(14px);
+  animation: pkHubStarzAura 5s ease-in-out infinite;
+}
+
+.pk-hub-hero__starz-shine {
+  position: absolute;
+  inset: -8%;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 200deg,
+    transparent 0deg,
+    rgba(255, 255, 255, 0.14) 40deg,
+    transparent 80deg,
+    rgba(103, 195, 255, 0.2) 140deg,
+    transparent 200deg,
+    rgba(236, 72, 153, 0.15) 260deg,
+    transparent 320deg
+  );
+  mix-blend-mode: screen;
+  opacity: 0.85;
+  animation: pkHubStarzShine 14s linear infinite;
+}
+
+.pk-hub-hero__starz-sheen {
+  position: absolute;
+  inset: 5%;
+  border-radius: 50%;
+  overflow: hidden;
+  z-index: 3;
+  pointer-events: none;
+  mask-image: radial-gradient(ellipse 70% 65% at 50% 50%, #000 30%, transparent 72%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 65% at 50% 50%, #000 30%, transparent 72%);
+}
+
+.pk-hub-hero__starz-sheen::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -120%;
+  width: 55%;
+  height: 200%;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.05) 35%,
+    rgba(255, 255, 255, 0.55) 50%,
+    rgba(255, 255, 255, 0.08) 65%,
+    transparent 100%
+  );
+  transform: skewX(-12deg);
+  animation: pkHubStarzSheen 4.5s ease-in-out infinite;
+}
+
+.pk-hub-hero__starz-img {
+  position: relative;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter:
+    saturate(1.2)
+    contrast(1.06)
+    brightness(1.05)
+    drop-shadow(0 0 40px rgba(157, 124, 255, 0.65))
+    drop-shadow(0 0 18px rgba(103, 195, 255, 0.45))
+    drop-shadow(0 8px 24px rgba(0, 0, 0, 0.55));
+  animation: pkHubStarzFloat 6s ease-in-out infinite;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.pk-hub-hero__title {
+  font-size: clamp(1.55rem, 3.8vw, 2.15rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.pk-hub-hero__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 9999px;
+  padding: 0.35rem 0.65rem;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.pk-hub-hero__chip-count {
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 0 0.35rem;
+  font-size: 9px;
+}
+
+.pk-hub-hero__card {
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.55rem 0.65rem 0.65rem;
+  backdrop-filter: blur(12px);
+}
+
+.pk-hub-hero__card-body {
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+  margin-top: 0.35rem;
+}
+
+.pk-hub-hero__card-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.pk-hub-nav__vibes {
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pk-hub-vibe-tile {
+  position: relative;
+  flex: 0 0 auto;
+  min-width: 8.5rem;
+  max-width: 10.5rem;
+  scroll-snap-align: start;
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  transition:
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.pk-hub-vibe-tile:hover {
+  border-color: rgba(103, 195, 255, 0.35);
+  transform: translateY(-2px);
+}
+
+.pk-hub-vibe-tile--active {
+  border-color: rgba(157, 124, 255, 0.55);
+  box-shadow: 0 0 32px rgba(157, 124, 255, 0.18);
+}
+
+.pk-hub-vibe-tile__glow {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  opacity: 0.22;
+  background: var(--pk-vibe-accent, linear-gradient(135deg, #67c3ff, #9d7cff));
+}
+
+.pk-hub-vibe-tile--active .pk-hub-vibe-tile__glow {
+  opacity: 0.38;
+}
+
+.pk-hub-vibe-tile__title {
+  position: relative;
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.pk-hub-vibe-tile__sub {
+  position: relative;
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 10px;
+  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.pk-hub-vibe-tile__count {
+  position: relative;
+  display: inline-block;
+  margin-top: 0.35rem;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 0.1rem 0.45rem;
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+@keyframes pkHubOrb {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(12px, -8px) scale(1.08);
+  }
+}
+
+@keyframes pkHubStarzFloat {
+  0%,
+  100% {
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) scale(1.05) rotate(2deg);
+  }
+}
+
+@keyframes pkHubStarzAura {
+  0%,
+  100% {
+    transform: scale(0.94);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+
+@keyframes pkHubStarzShine {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pkHubStarzSheen {
+  0%,
+  100% {
+    left: -120%;
+    opacity: 0;
+  }
+  12% {
+    opacity: 0;
+  }
+  28% {
+    opacity: 1;
+  }
+  45% {
+    left: 130%;
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pk-hub-hero__orb,
+  .pk-hub-hero__starz-img,
+  .pk-hub-hero__starz-aura,
+  .pk-hub-hero__starz-shine,
+  .pk-hub-hero__starz-sheen::after {
+    animation: none !important;
+  }
+  .pk-hub-hero__starz-stage {
+    transform: none !important;
+  }
+  .pk-hub-vibe-tile:hover {
+    transform: none;
+  }
 }
 
 .pk-gen-quip {

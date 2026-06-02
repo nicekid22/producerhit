@@ -9,6 +9,7 @@
  * - VITE_AUDIO_SKIP_WEB_AUDIO=1 → sortie directe <audio>, sans visualizer (secours)
  */
 
+import { PLAYBACK_LOUDNESS } from "@/lib/playbackLoudness";
 import { isPublicAceStreamUrl } from "@/lib/publicAcePlayback";
 import { isSupabaseLoopAudioUrl } from "@/lib/storageAudio";
 
@@ -69,6 +70,16 @@ export function shouldUseWebAudioGraph(url: string): boolean {
   if (isBlobOrDataUrl(url)) return true;
   if (!isHttpAudioUrl(url)) return false;
   return !isCrossOriginHttpUrl(url);
+}
+
+/**
+ * Chaîne Web Audio pour la sortie (gain makeup + visualizer optionnel).
+ * Inclut loop-audio Supabase quand PLAYBACK_LOUDNESS est actif (CORS bucket public).
+ */
+export function shouldUsePlaybackOutputGraph(url: string): boolean {
+  if (AUDIO_SKIP_WEB_AUDIO) return false;
+  if (PLAYBACK_LOUDNESS && isSupabaseLoopAudioUrl(url)) return true;
+  return shouldUseWebAudioGraph(url);
 }
 
 export function clearPlayableAudioBlobCache(key?: string) {

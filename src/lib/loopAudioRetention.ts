@@ -1,5 +1,6 @@
-/** Rétention audio hébergé (Supabase Storage loop-audio). Rollback : VITE_LOOP_AUDIO_RETENTION_DAYS=0 masque badges. */
+/** Rétention audio hébergé (Supabase Storage). Plus = permanent. Rollback : VITE_LOOP_AUDIO_RETENTION_DAYS=0. */
 
+import { hasPermanentHostedAudio } from "@/lib/planEntitlements";
 import { isPublicAceStreamUrl } from "@/lib/publicAcePlayback";
 import { isSupabaseLoopAudioUrl } from "@/lib/storageAudio";
 
@@ -9,10 +10,35 @@ export const LOOP_AUDIO_RETENTION_DAYS =
 
 export const LOOP_AUDIO_RETENTION_MS = LOOP_AUDIO_RETENTION_DAYS * 24 * 60 * 60 * 1000;
 
+export type LoopAudioRetentionContext = {
+  plan?: string | null;
+  /** Défini après downgrade Plus — date limite globale pour l’audio hébergé. */
+  hostedAudioExpiresAt?: string | null;
+};
+
 export type LoopAudioRetentionState = "active" | "expiring" | "expired";
 
-export function getLoopAudioRetentionState(createdAt: string, nowMs = Date.now()): LoopAudioRetentionState {
+function parseMs(iso: string | null | undefined): number | null {
+  if (!iso) return null;
+  const ms = Date.parse(iso);
+  return Number.isFinite(ms) ? ms : null;
+}
+
+export function getLoopAudioRetentionState(
+  createdAt: string,
+  ctx?: LoopAudioRetentionContext,
+  nowMs = Date.now(),
+): LoopAudioRetentionState {
   if (LOOP_AUDIO_RETENTION_DAYS <= 0) return "active";
+  if (hasPermanentHostedAudio(ctx?.plan)) return "active";
+
+  const downgradeDeadline = parseMs(ctx?.hostedAudioExpiresAt);
+  if (downgradeDeadline !== null) {
+    if (nowMs >= downgradeDeadline) return "expired";
+    if (downgradeDeadline - nowMs <= 2 * 24 * 60 * 60 * 1000) return "expiring";
+    return "active";
+  }
+
   const createdMs = Date.parse(createdAt);
   if (!Number.isFinite(createdMs)) return "active";
   const ageMs = nowMs - createdMs;
@@ -21,38 +47,69 @@ export function getLoopAudioRetentionState(createdAt: string, nowMs = Date.now()
   return "active";
 }
 
-/** Audio hébergé chez nous (Storage ou flux Edge inline) — soumis à la rétention 7j. */
 export function isHostedLoopAudioUrl(audioUrl: unknown): boolean {
   return isSupabaseLoopAudioUrl(audioUrl) || isPublicAceStreamUrl(audioUrl);
 }
 
-export function isLoopAudioPlayableByAge(createdAt: string | null | undefined, audioUrl: unknown): boolean {
+export function isLoopAudioPlayableByAge(
+  createdAt: string | null | undefined,
+  audioUrl: unknown,
+  ctx?: LoopAudioRetentionContext,
+): boolean {
   if (!createdAt || LOOP_AUDIO_RETENTION_DAYS <= 0) return true;
   if (!isHostedLoopAudioUrl(audioUrl)) return true;
-  return getLoopAudioRetentionState(createdAt) !== "expired";
+  if (hasPermanentHostedAudio(ctx?.plan)) return true;
+  return getLoopAudioRetentionState(createdAt, ctx) !== "expired";
 }
 
-export function getLoopAudioRetentionBadge(createdAt: string, locale: "fr" | "en"): string | null {
-  const state = getLoopAudioRetentionState(createdAt);
-  if (state === "expired") {
-    return locale === "fr" ? "Audio expiré (7j)" : "Audio expired (7d)";
+/** Jours restants avant suppression (0 = expiré). */
+export function getDaysUntilAudioExpiry(
+  createdAt: string,
+  ctx?: LoopAudioRetentionContext,
+  nowMs = Date.now(),
+): number {
+  if (LOOP_AUDIO_RETENTION_DAYS <= 0) return LOOP_AUDIO_RETENTION_DAYS;
+  if (hasPermanentHostedAudio(ctx?.plan)) return LOOP_AUDIO_RETENTION_DAYS;
+
+  const downgradeDeadline = parseMs(ctx?.hostedAudioExpiresAt);
+  if (downgradeDeadline !== null) {
+    const leftMs = downgradeDeadline - nowMs;
+    if (leftMs <= 0) return 0;
+    return Math.ceil(leftMs / (24 * 60 * 60 * 1000));
   }
-  if (state === "expiring") {
-    return locale === "fr" ? "Expire bientôt" : "Expiring soon";
-  }
-  return null;
+
+  const createdMs = Date.parse(createdAt);
+  if (!Number.isFinite(createdMs)) return LOOP_AUDIO_RETENTION_DAYS;
+  const leftMs = createdMs + LOOP_AUDIO_RETENTION_MS - nowMs;
+  if (leftMs <= 0) return 0;
+  return Math.ceil(leftMs / (24 * 60 * 60 * 1000));
 }
 
-export function loopAudioRetentionHint(locale: "fr" | "en"): string {
+/** Libellé discret pour cartes Dashboard. */
+export function getLoopAudioRetentionCardLabel(
+  createdAt: string,
+  locale: "fr" | "en",
+  ctx?: LoopAudioRetentionContext,
+): string | null {
+  if (LOOP_AUDIO_RETENTION_DAYS <= 0) return null;
+  if (hasPermanentHostedAudio(ctx?.plan)) return null;
+
+  const days = getDaysUntilAudioExpiry(createdAt, ctx);
+  if (days === 0) return locale === "fr" ? "Expiré" : "Expired";
+  if (locale === "fr") return days === 1 ? "Expire dans 1 jour" : `Expire dans ${days} jours`;
+  return days === 1 ? "Expires in 1 day" : `Expires in ${days} days`;
+}
+
+/** Texte tarifs / aide. */
+export function plusPermanentAudioBenefit(locale: "fr" | "en"): string {
+  return locale === "fr"
+    ? "Audio hébergés sans expiration"
+    : "Hosted audio links never expire";
+}
+
+export function standardAudioRetentionNote(locale: "fr" | "en"): string {
   const days = LOOP_AUDIO_RETENTION_DAYS;
   return locale === "fr"
-    ? `Tes exports audio sont hébergés ${days} jours sur nos serveurs, puis supprimés automatiquement pour libérer l’espace. Régénère une variation pour réécouter.`
-    : `Your audio exports are hosted for ${days} days on our servers, then removed automatically to free space. Regenerate a variation to listen again.`;
-}
-
-export function loopAudioRetentionShortHint(locale: "fr" | "en"): string {
-  const days = LOOP_AUDIO_RETENTION_DAYS;
-  return locale === "fr"
-    ? `Audio disponible ${days} jours — suppression automatique ensuite.`
-    : `Audio available for ${days} days — then removed automatically.`;
+    ? `Audio hébergé ${days} jours`
+    : `Hosted audio for ${days} days`;
 }

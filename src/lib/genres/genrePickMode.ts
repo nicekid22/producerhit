@@ -39,7 +39,7 @@ export function normalizeGenrePickMode(value: string | null | undefined): GenreP
 
 export function precisionGenreOptions(locale: "en" | "fr"): DropdownOption[] {
   const randomLabel =
-    locale === "fr" ? "Aléatoire — nouveau genre à chaque gen" : "Random — new genre every generation";
+    locale === "fr" ? "Aléatoire — new genre à chaque génération" : "Random — new genre every generation";
   return [{ value: RANDOM_GENRE_VALUE, label: randomLabel }, ...CUSTOM_GENRE_OPTIONS];
 }
 

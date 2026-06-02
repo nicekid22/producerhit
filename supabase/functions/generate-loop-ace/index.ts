@@ -336,6 +336,87 @@ async function handleAceRemixMultipart(req: Request, corsHeaders: Record<string,
   try {
     const startedAt = Date.now();
     const attemptOnce = async (apiKey: string, baseUrl: string) => {
+      const tryMusicGenerate = async () => {
+        const musicForm = new FormData();
+        musicForm.append("caption", prompt);
+        musicForm.append("prompt", prompt);
+        musicForm.append("lyrics", instrumental ? "[Instrumental]" : effectiveLyrics || "[Instrumental]");
+        musicForm.append("task_type", taskType);
+        musicForm.append("src_audio", src, src.name || "source.mp3");
+        musicForm.append("audio_cover_strength", String(coverStrength));
+        musicForm.append("audio_format", audioFormat);
+        musicForm.append("thinking", "false");
+        musicForm.append("model", "acestep-v15-xl-turbo");
+        if (duration && duration > 0) musicForm.append("duration", String(clampNumber(duration, 10, 240)));
+        if (bpm && bpm > 0) musicForm.append("bpm", String(clampNumber(Math.round(bpm), 30, 200)));
+
+        const genRes = await fetch(`${baseUrl}/v1/music/generate`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${apiKey}`, Accept: "application/json" },
+          body: musicForm,
+          signal: controller.signal,
+        });
+        const genText = await readTextSafe(genRes);
+        if (!genRes.ok) {
+          if (isAceHtml404(genRes.status, genText)) throw new Error("ACE_REMIX_ENDPOINT_404");
+          throw new Error(`ACE music/generate failed (${genRes.status}): ${genText}`);
+        }
+        const genJson = JSON.parse(genText) as unknown;
+        const jobId = asString(unwrapAceJobPayload(genJson).job_id);
+        if (!jobId) throw new Error("ACE music/generate did not return job_id");
+
+        while (Date.now() - startedAt < 140_000) {
+          const jobRes = await fetch(`${baseUrl}/v1/jobs/${encodeURIComponent(jobId)}`, {
+            method: "GET",
+            headers: { Authorization: `Bearer ${apiKey}`, Accept: "application/json" },
+            signal: controller.signal,
+          });
+          const jobText = await readTextSafe(jobRes);
+          if (!jobRes.ok) {
+            if (isAceHtml404(jobRes.status, jobText)) throw new Error("ACE_REMIX_ENDPOINT_404");
+            throw new Error(`ACE job poll failed (${jobRes.status}): ${jobText}`);
+          }
+          const jobData = unwrapAceJobPayload(JSON.parse(jobText) as unknown);
+          const status = asString(jobData.status).toLowerCase();
+          if (status === "succeeded") {
+            const result =
+              jobData.result && typeof jobData.result === "object" && jobData.result !== null
+                ? (jobData.result as Record<string, unknown>)
+                : null;
+            const file =
+              (result && asString(result.first_audio_path)) ||
+              (result && Array.isArray(result.audio_paths) ? asString(result.audio_paths[0]) : "");
+            audioUrl = buildAceAudioUrlFromPath(baseUrl, file);
+            if (!audioUrl) throw new Error("remix returned no audio file");
+            meta = {
+              taskId: jobId,
+              task_id: jobId,
+              prompt,
+              lyrics: effectiveLyrics,
+              bpm,
+              duration,
+              audioFormat,
+              remixTaskType: taskType,
+              coverStrength,
+              engine: "ace-music-generate",
+            };
+            if (result) meta.result = result;
+            return;
+          }
+          if (status === "failed") throw new Error("remix task failed");
+          await sleep(2000);
+        }
+        throw new Error("remix timed out");
+      };
+
+      try {
+        await tryMusicGenerate();
+        return;
+      } catch (musicErr) {
+        const m = musicErr instanceof Error ? musicErr.message : String(musicErr);
+        if (!m.includes("ACE_REMIX_ENDPOINT_404") && !m.includes("404")) throw musicErr;
+      }
+
       const paramObj: Record<string, unknown> = {
         task_type: taskType,
         audio_cover_strength: coverStrength,
@@ -362,7 +443,10 @@ async function handleAceRemixMultipart(req: Request, corsHeaders: Record<string,
         signal: controller.signal,
       });
       const createText = await readTextSafe(createRes);
-      if (!createRes.ok) throw new Error(`remix release_task failed (${createRes.status}): ${createText}`);
+      if (!createRes.ok) {
+        if (isAceHtml404(createRes.status, createText)) throw new Error("ACE_REMIX_ENDPOINT_404");
+        throw new Error(`remix release_task failed (${createRes.status}): ${createText}`);
+      }
       const createJson = JSON.parse(createText) as unknown;
       const taskId = asString(
         (createJson as { data?: unknown } | null)?.data && typeof (createJson as { data?: unknown }).data === "object"
@@ -427,6 +511,15 @@ async function handleAceRemixMultipart(req: Request, corsHeaders: Record<string,
     }
     if (!audioUrl) {
       const msg = lastErr instanceof Error ? lastErr.message : "remix failed";
+      if (msg.includes("ACE_REMIX_ENDPOINT_404") || msg.includes("release_task failed (404)")) {
+        return new Response(
+          JSON.stringify({
+            error: ACE_REMIX_UNAVAILABLE_MSG,
+            code: "ACE_REMIX_UNAVAILABLE",
+          }),
+          { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
       throw new Error(msg);
     }
   } finally {
@@ -455,6 +548,22 @@ function isRetryableAceHttpStatus(status: number) {
   if (status >= 500 && status <= 599) return true;
   return false;
 }
+
+function isAceHtml404(status: number, body: string) {
+  return status === 404 || status === 405 || /<title>404 Not Found<\/title>/i.test(body);
+}
+
+function unwrapAceJobPayload(json: unknown): Record<string, unknown> {
+  if (!json || typeof json !== "object") return {};
+  const root = json as Record<string, unknown>;
+  if (root.data && typeof root.data === "object" && root.data !== null) {
+    return root.data as Record<string, unknown>;
+  }
+  return root;
+}
+
+const ACE_REMIX_UNAVAILABLE_MSG =
+  "Hosted ACE (api.acemusic.ai) does not expose audio-upload remix yet. Use Song/Beat generation, or a self-hosted ACE server with /v1/music/generate or /release_task.";
 
 function buildAceAudioUrlFromPath(baseUrl: string, filePath: string) {
   const t = filePath.trim();

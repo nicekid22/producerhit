@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { persistCoverUrlForLoop, resolveCoverImageUrl, coverImageKeyFromLoop } from "@/lib/coverArt";
+import { CoverPeekStack } from "@/components/cover/CoverPeekStack";
 import { CoverMedia } from "@/components/CoverMedia";
+import { LANDING_PINTEREST_COVERS } from "@/lib/featureFlags";
+import { fetchPinterestCoverForLoop } from "@/lib/pinterestCoverFetch";
 import { buildCoverPromptSnapshot, cn, coverGradient } from "@/lib/utils";
 import { loopCardClass, loopCoverClass, loopPlayButtonClass, loopPublicButtonClass, loopToggleButtonClass } from "@/lib/loopCardUi";
 import { useAuthStore } from "@/stores/authStore";
@@ -14,20 +17,34 @@ import { playLoopInContext, usePlayerStore } from "@/stores/playerStore";
 import { useLocaleStore } from "@/stores/localeStore";
 import type { Loop } from "@/types/loop";
 import { generateBeat } from "@/lib/audioApi";
-import { getLoopAudioRetentionBadge } from "@/lib/loopAudioRetention";
+import { prepareLoopVariantGeneration, variantResultTitle } from "@/lib/loopVariantGeneration";
+import { getLoopAudioRetentionCardLabel, type LoopAudioRetentionContext } from "@/lib/loopAudioRetention";
+import { extractLoopVocalLanguage, formatVocalLanguageLabel, isSongLoop } from "@/lib/vocalLanguages";
 import { canDownloadStems } from "@/lib/planEntitlements";
-import { Bookmark, Check, Download, Globe, Info, Layers, Loader2, MoreHorizontal, Pause, Pencil, Play, RefreshCcw, Share2, Sparkles, X } from "lucide-react";
+import {
+  Bookmark,
+  Check,
+  Download,
+  Globe,
+  Info,
+  Languages,
+  Layers,
+  Loader2,
+  MoreHorizontal,
+  Pause,
+  Pencil,
+  Play,
+  RefreshCcw,
+  Share2,
+  Sparkles,
+  X,
+} from "lucide-react";
 
 function formatTime(sec: number) {
   const s = Math.max(0, Math.floor(sec));
   const m = Math.floor(s / 60);
   const r = s % 60;
   return `${m}:${String(r).padStart(2, "0")}`;
-}
-
-function barsFromLoopLength(loopLength: string) {
-  const n = Number(loopLength.split(" ")[0]);
-  return Number.isFinite(n) && n > 0 ? n : 4;
 }
 
 export function LoopCardItem({
@@ -37,9 +54,12 @@ export function LoopCardItem({
   onGenerationUsed,
   onStartWorkspaceJob,
   compact = false,
+  slotIndex = 0,
   queueLoops,
   queueSource = "workspace",
   onOpenMaster,
+  showRetentionCountdown = false,
+  audioRetention,
 }: {
   loop: Loop;
   onDelete?: () => void;
@@ -47,15 +67,18 @@ export function LoopCardItem({
   onGenerationUsed?: () => void;
   onStartWorkspaceJob?: (title: string, sub: string) => (() => void) | void;
   compact?: boolean;
+  slotIndex?: number;
   queueLoops?: Loop[];
   queueSource?: string;
   onOpenMaster?: (loop: Loop) => void;
+  showRetentionCountdown?: boolean;
+  audioRetention?: LoopAudioRetentionContext;
 }) {
   const locale = useLocaleStore((s) => s.locale);
   const plan = (() => {
     try {
       const raw = window.localStorage.getItem("producerhit_plan");
-      return raw === "pro" || raw === "studio" || raw === "free" ? raw : "free";
+      return raw === "pro" || raw === "studio" || raw === "plus" || raw === "free" ? raw : "free";
     } catch {
       return "free";
     }
@@ -102,6 +125,23 @@ export function LoopCardItem({
     () => coverImageKeyFromLoop(loop),
     [loop.details?.coverPrompt, loop.details?.coverUrl, loop.details?.coverKind, loop.genre, loop.id, loop.influence, loop.mood, loop.seed],
   );
+
+  const [pinterestCoverUrl, setPinterestCoverUrl] = useState<string | null>(null);
+  const showWorkspaceCoverPeek = !compact && LANDING_PINTEREST_COVERS;
+
+  useEffect(() => {
+    if (!showWorkspaceCoverPeek) {
+      setPinterestCoverUrl(null);
+      return;
+    }
+    let cancelled = false;
+    void fetchPinterestCoverForLoop(loop, slotIndex).then((url) => {
+      if (!cancelled) setPinterestCoverUrl(url);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [loop.genre, loop.id, loop.mood, loop.name, loop.prompt, showWorkspaceCoverPeek, slotIndex]);
   const persistCoverOnLoad = () => {
     if (loop.details?.coverUrl?.trim() || !user?.id || loop.id.startsWith("local-") || loop.id.startsWith("preview-")) return;
     void persistCoverUrlForLoop(loop.id, user.id, loop, loop.stemsUrl).then((saved) => {
@@ -204,80 +244,16 @@ export function LoopCardItem({
       );
       let audioUrl: string | null = null;
       try {
-        const isSongLike =
-          (typeof loop.details?.lyrics === "string" && loop.details.lyrics.trim().length > 0) || /\bsong\b/i.test(loop.name);
-        const barsCount = barsFromLoopLength(loop.loopLength);
-        const now = Date.now();
-        const baseSeed = typeof loop.seed === "number" && Number.isFinite(loop.seed) ? loop.seed : 0;
-        const nextSeed = baseSeed + Math.floor(Math.random() * 100) + 1;
         const generationKey =
           typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `var-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-
-        const tag = kind === "remix" ? "remix" : "variation";
-        const direction =
-          kind === "remix"
-            ? isSongLike
-              ? "same song idea and vibe, new drums and arrangement, keep the hook feeling"
-              : "remix: new drums and sound selection, keep the same genre and bounce"
-            : isSongLike
-              ? "same song idea and vibe, new arrangement and instrumentation"
-              : "fresh melody and drum details while keeping the same style and groove";
-
-        const variantPrompt = isSongLike
-          ? [loop.prompt?.trim() || "", tag, `seed:${now}`, direction, "keep the exact same lyrics provided (do not rewrite lyrics)"]
-              .filter(Boolean)
-              .join(", ")
-          : [loop.prompt?.trim() || "", tag, `seed:${now}`, direction].filter(Boolean).join(", ");
-
-        const engine = loop.engine?.startsWith("sonauto") ? ("sonauto" as const) : ("ace-step" as const);
-        const hasManualMeta = Boolean(loop.bpm > 0 && loop.key && loop.scale);
-        const autoMeta = !hasManualMeta;
-        const result = await generateBeat(
-          {
-            genre: loop.genre,
-            influence: loop.influence,
-            key: loop.key,
-            scale: loop.scale,
-            bpm: loop.bpm,
-            loopLengthBars: barsCount,
-            swing: loop.swing,
-            mood: loop.mood,
-            energyLevel: loop.energyLevel,
-            reverb: loop.reverb,
-            prompt: variantPrompt,
-          },
-          engine,
-          isSongLike
-            ? {
-                instrumental: false,
-                lyrics: loop.details?.lyrics || "",
-                vocalLanguage: "en",
-                isSong: true,
-                autoMeta,
-                duration: typeof loop.details?.duration === "number" ? loop.details.duration : undefined,
-                timeSignature: loop.details?.timeSignature || undefined,
-                audioFormat: loop.details?.audioFormat || "mp3",
-                seed: nextSeed,
-                generationKey,
-              }
-            : {
-                instrumental: true,
-                lyrics: "",
-                vocalLanguage: "en",
-                isSong: false,
-                autoMeta,
-                audioFormat: loop.details?.audioFormat || "mp3",
-                seed: nextSeed,
-                generationKey,
-              },
-        );
+        const { inputParams, generateOptions, variantPrompt, nextSeed, engine, isSongLike } = prepareLoopVariantGeneration(loop, kind);
+        const parentVocalLang = extractLoopVocalLanguage(loop) ?? "en";
+        const result = await generateBeat(inputParams, engine, { ...generateOptions, generationKey });
 
         audioUrl = result.audioUrl;
         const draft: Omit<Loop, "id" | "createdAt" | "userId"> = {
           engine: result.engine,
-          name: `${loop.genre} ${kind === "remix" ? "Remix" : "Variation"} — ${loop.key || "Auto"} ${
-            loop.scale || ""
-          }`.trim(),
+          name: variantResultTitle(loop, kind),
           genre: loop.genre,
           influence: loop.influence,
           key: loop.key,
@@ -314,7 +290,11 @@ export function LoopCardItem({
             ? ({
                 ace: {
                   taskId: result.meta.taskId,
-                  ...(typeof result.meta.stemsZipUrl === "string" && result.meta.stemsZipUrl.trim().length > 0 ? { stemsZipUrl: result.meta.stemsZipUrl.trim() } : {}),
+                  ...(typeof result.meta.stemsZipUrl === "string" && result.meta.stemsZipUrl.trim().length > 0
+                    ? { stemsZipUrl: result.meta.stemsZipUrl.trim() }
+                    : {}),
+                  isSong: isSongLike,
+                  ...(isSongLike ? { vocalLanguage: parentVocalLang } : {}),
                 },
               } as Record<string, unknown>)
             : null,
@@ -404,11 +384,19 @@ export function LoopCardItem({
     return Math.max(12, Math.min(maxTop, Math.floor(rawTop)));
   }, []);
 
+  const songCard = isSongLoop(loop);
+  const vocalLangCode = songCard ? extractLoopVocalLanguage(loop) : null;
+  const vocalLangLabel = vocalLangCode ? formatVocalLanguageLabel(vocalLangCode, locale) : null;
+
   return (
     <div
       data-loop-card
       ref={cardRef}
-      className={cn("rounded-pk border border-pk-border bg-pk-panel p-4", loopCardClass(active, activePlaying))}
+      className={cn(
+        "relative rounded-pk border border-pk-border bg-pk-panel p-4",
+        onOpenDetails ? "pr-14" : "",
+        loopCardClass(active, activePlaying),
+      )}
       onClick={() => {
         if (!onOpenDetails) return;
         onOpenDetails(loop, computeAnchorTop());
@@ -422,42 +410,70 @@ export function LoopCardItem({
         onOpenDetails(loop, computeAnchorTop());
       }}
     >
-      <div className="flex gap-3">
+      {onOpenDetails ? (
+        <button
+          type="button"
+          className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-pk text-pk-muted transition-colors hover:bg-white/5 hover:text-pk-text"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenDetails(loop, computeAnchorTop());
+          }}
+          aria-label={locale === "fr" ? "Infos" : "Details"}
+          title={locale === "fr" ? "Infos" : "Details"}
+        >
+          <Info className="h-3.5 w-3.5" />
+        </button>
+      ) : null}
+      {showWorkspaceCoverPeek ? (
         <div
-          className={cn(
-            "relative h-12 w-12 shrink-0 rounded-pk p-[2px]",
-            loopCoverClass(active, activePlaying),
-          )}
+          className={cn("mb-3 rounded-xl p-[2px]", loopCoverClass(active, activePlaying))}
           style={{ background: coverGradient(loop) }}
         >
-          <div className="relative h-full w-full overflow-hidden rounded-[6px] bg-[#050508]">
-            <CoverMedia
-              loop={loop}
-              coverUrl={coverUrl}
-              coverKey={coverKey}
-              onImageLoad={persistCoverOnLoad}
-              onImageError={(e) => {
-                const img = e.currentTarget;
-                img.style.opacity = "0";
-                const retry = Number(img.dataset.retry ?? "0");
-                if (retry < 4) {
-                  img.dataset.retry = String(retry + 1);
-                  const url = coverUrl;
-                  window.setTimeout(() => {
-                    img.style.display = "block";
-                    img.style.opacity = "0";
-                    img.src = "";
-                    img.src = url;
-                  }, 800 * (retry + 1));
-                  return;
-                }
-                img.style.display = "none";
-              }}
-            />
-          </div>
+          <CoverPeekStack
+            baseUrl={coverUrl}
+            revealUrl={pinterestCoverUrl}
+            className="pk-cover-peek--workspace h-32 w-full overflow-hidden rounded-[10px] bg-[#050508]"
+          />
         </div>
-        <div className="min-w-0">
-          <div className="flex items-start justify-between gap-2">
+      ) : null}
+      <div className="flex gap-3">
+        {!showWorkspaceCoverPeek ? (
+          <div
+            className={cn(
+              "relative h-12 w-12 shrink-0 rounded-pk p-[2px]",
+              loopCoverClass(active, activePlaying),
+            )}
+            style={{ background: coverGradient(loop) }}
+          >
+            <div className="relative h-full w-full overflow-hidden rounded-[6px] bg-[#050508]">
+              <CoverMedia
+                loop={loop}
+                coverUrl={coverUrl}
+                coverKey={coverKey}
+                onImageLoad={persistCoverOnLoad}
+                onImageError={(e) => {
+                  const img = e.currentTarget;
+                  img.style.opacity = "0";
+                  const retry = Number(img.dataset.retry ?? "0");
+                  if (retry < 4) {
+                    img.dataset.retry = String(retry + 1);
+                    const url = coverUrl;
+                    window.setTimeout(() => {
+                      img.style.display = "block";
+                      img.style.opacity = "0";
+                      img.src = "";
+                      img.src = url;
+                    }, 800 * (retry + 1));
+                    return;
+                  }
+                  img.style.display = "none";
+                }}
+              />
+            </div>
+          </div>
+        ) : null}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start gap-2">
             <div className="min-w-0 flex flex-1 items-center gap-2">
               {isEditingTitle ? (
                 <>
@@ -516,15 +532,6 @@ export function LoopCardItem({
               ) : (
                 <>
                   <div className="truncate text-sm font-semibold">{loop.name}</div>
-                  {(() => {
-                    const badge = getLoopAudioRetentionBadge(loop.createdAt, locale);
-                    if (!badge) return null;
-                    return (
-                      <span className="shrink-0 rounded-pk bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-300/90">
-                        {badge}
-                      </span>
-                    );
-                  })()}
                   <Button
                     variant="ghost"
                     size="sm"
@@ -541,26 +548,16 @@ export function LoopCardItem({
                 </>
               )}
             </div>
-            {onOpenDetails ? (
-              <Button
-                variant="secondary"
-                size="sm"
-                className="px-2 py-1 text-[11px]"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOpenDetails(loop, computeAnchorTop());
-                }}
-                aria-label="Infos"
-                title="Infos"
-              >
-                <Info className="h-4 w-4" />
-                Infos
-              </Button>
-            ) : null}
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
             <Badge>{loop.genre}</Badge>
-            <Badge variant="muted">{loop.mood}</Badge>
+            {songCard && vocalLangLabel ? (
+              <Badge variant="muted" className="gap-1">
+                <Languages className="h-3 w-3 shrink-0 opacity-80" aria-hidden />
+                {vocalLangLabel}
+              </Badge>
+            ) : null}
+            {!songCard && loop.mood ? <Badge variant="muted">{loop.mood}</Badge> : null}
             {loop.bpm && loop.bpm > 0 ? (
               <Badge variant="muted">{loop.bpm} BPM</Badge>
             ) : (
@@ -591,9 +588,33 @@ export function LoopCardItem({
         />
       </div>
 
-      <div className="mt-2 flex items-center justify-between text-xs text-pk-muted">
+      <div className="mt-2 flex items-center justify-between gap-2 text-xs text-pk-muted">
         <div>{loop.loopLength}</div>
-        <div>{durationLabel}</div>
+        <div className="flex shrink-0 items-center gap-2">
+          {showRetentionCountdown && loop.createdAt ? (
+            (() => {
+              const retentionLabel = getLoopAudioRetentionCardLabel(loop.createdAt, locale, audioRetention);
+              if (!retentionLabel) return null;
+              const expired = retentionLabel === "Expiré" || retentionLabel === "Expired";
+              return (
+                <span
+                  className={cn(
+                    "text-[10px] font-medium tabular-nums",
+                    expired ? "text-pk-muted/60" : "text-amber-200/75",
+                  )}
+                  title={
+                    locale === "fr"
+                      ? "Audio hébergé 7 jours puis supprimé automatiquement"
+                      : "Audio hosted 7 days, then removed automatically"
+                  }
+                >
+                  {retentionLabel}
+                </span>
+              );
+            })()
+          ) : null}
+          <div>{durationLabel}</div>
+        </div>
       </div>
 
       {compact ? (
@@ -673,20 +694,6 @@ export function LoopCardItem({
             </Button>
             {menuOpen ? (
               <div className="absolute bottom-full right-0 z-30 mb-2 w-44 overflow-hidden rounded-xl border border-pk-border bg-pk-panel py-1 shadow-xl">
-                {onOpenDetails ? (
-                  <button
-                    type="button"
-                    className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs font-semibold text-pk-text hover:bg-white/5"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setMenuOpen(false);
-                      onOpenDetails(loop, computeAnchorTop());
-                    }}
-                  >
-                    <Info className="h-3.5 w-3.5" />
-                    Infos
-                  </button>
-                ) : null}
                 <button
                   type="button"
                   className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs font-semibold text-pk-text hover:bg-white/5 disabled:opacity-40"

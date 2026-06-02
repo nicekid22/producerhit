@@ -22,12 +22,22 @@ export function hasPriorityGeneration(plan: string | null | undefined): boolean 
   return normalizePlanId(plan) === "plus";
 }
 
+/** Plus : liens audio hébergés sans expiration 7j (tant que l’abonnement Plus est actif). */
+export function hasPermanentHostedAudio(plan: string | null | undefined): boolean {
+  return normalizePlanId(plan) === "plus";
+}
+
 export function canExportWav(plan: string | null | undefined): boolean {
   return isPaidPlan(plan);
 }
 
+/** Mastering complet (aperçu apply + export master) — Studio et Plus. */
+export function hasFullMastering(plan: string | null | undefined): boolean {
+  return PLAN_RANK[normalizePlanId(plan)] >= PLAN_RANK.studio;
+}
+
 export function canExportMastering(plan: string | null | undefined): boolean {
-  return isPaidPlan(plan);
+  return hasFullMastering(plan);
 }
 
 export function canDownloadStems(plan: string | null | undefined): boolean {

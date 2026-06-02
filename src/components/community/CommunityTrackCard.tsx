@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import { Loader2, Pause, Play, Sparkles, Star } from "lucide-react";
 import { ProfileAuthorChip } from "@/components/profile/ProfileAuthorChip";
+import { CoverForegroundFirst } from "@/components/cover/CoverPeekStack";
 import { publicRowToCoverLoop, resolveCoverImageUrl } from "@/lib/coverArt";
+import { COMMUNITY_PINTEREST_FOREGROUND } from "@/lib/featureFlags";
 import { coverGradient } from "@/lib/utils";
 import type { PublicLoopRow } from "@/lib/publicLoops";
 
@@ -16,9 +18,11 @@ type Props = {
   resolving: boolean;
   rating?: RatingStats;
   isNew?: boolean;
+  isMine?: boolean;
   onPlay: () => void;
   onRemix: () => void;
   onRate: (stars: number) => void;
+  pinterestCoverUrl?: string | null;
 };
 
 export function CommunityTrackCard({
@@ -30,13 +34,17 @@ export function CommunityTrackCard({
   resolving,
   rating,
   isNew,
+  isMine,
   onPlay,
   onRemix,
   onRate,
+  pinterestCoverUrl,
 }: Props) {
   const loop = publicRowToCoverLoop(row);
   const bg = coverGradient(loop);
-  const coverUrl = resolveCoverImageUrl(loop);
+  const pollinationsUrl = resolveCoverImageUrl(loop);
+  const pinUrl = pinterestCoverUrl?.trim() ?? "";
+  const usePinterestFirst = COMMUNITY_PINTEREST_FOREGROUND && pinUrl.startsWith("http");
   const playingNow = isActive && isPlaying;
   const avg = rating && rating.count > 0 ? (rating.sum / rating.count).toFixed(1) : null;
   const compact = variant === "rail";
@@ -56,25 +64,38 @@ export function CommunityTrackCard({
         aria-label={playingNow ? (isFr ? `Pause ${row.name}` : `Pause ${row.name}`) : isFr ? `Écouter ${row.name}` : `Play ${row.name}`}
       >
         <div className="pk-community-card__cover relative overflow-hidden rounded-2xl" style={{ background: bg }}>
-          <img
-            src={coverUrl}
-            alt=""
-            loading="lazy"
-            decoding="async"
-            referrerPolicy="no-referrer"
-            className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-300 group-hover:scale-[1.03]"
-            onLoad={(e) => {
-              e.currentTarget.style.opacity = "1";
-            }}
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
-            }}
-          />
+          {usePinterestFirst ? (
+            <CoverForegroundFirst
+              primaryUrl={pinUrl}
+              fallbackUrl={pollinationsUrl}
+              className="absolute inset-0 h-full w-full"
+            />
+          ) : (
+            <img
+              src={pollinationsUrl}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              referrerPolicy="no-referrer"
+              className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-300 group-hover:scale-[1.03]"
+              onLoad={(e) => {
+                e.currentTarget.style.opacity = "1";
+              }}
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
+            />
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
           <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
             {row.genre ? (
               <span className="rounded-full border border-white/15 bg-black/45 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
                 {row.genre}
+              </span>
+            ) : null}
+            {isMine ? (
+              <span className="rounded-full border border-cyan-400/35 bg-cyan-500/20 px-2 py-0.5 text-[10px] font-semibold text-cyan-100 backdrop-blur-sm">
+                {isFr ? "Ton son" : "Yours"}
               </span>
             ) : null}
             {isNew ? (

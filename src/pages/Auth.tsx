@@ -7,6 +7,7 @@ import { trackClientEvent } from "@/lib/supabaseClient";
 import { getAttributionProps } from "@/lib/attribution";
 import { useLocaleStore } from "@/stores/localeStore";
 import { mapAuthError } from "@/lib/authProviders";
+import { markJustAuthenticated, sanitizePostAuthPath } from "@/lib/postAuthRedirect";
 
 type Mode = "login" | "signup";
 
@@ -40,7 +41,7 @@ export default function Auth() {
   const redirectTo = useMemo(() => {
     const state = location.state as { from?: string; authError?: string } | null;
     const next = new URLSearchParams(location.search).get("next");
-    return next || state?.from || "/dashboard";
+    return sanitizePostAuthPath(next || state?.from || "/dashboard");
   }, [location.search, location.state]);
 
   const getPostAuthRedirect = useCallback(() => {
@@ -52,6 +53,11 @@ export default function Auth() {
     return redirectTo;
   }, [redirectTo]);
 
+  const finishAuthRedirect = useCallback(() => {
+    markJustAuthenticated();
+    navigate(getPostAuthRedirect(), { replace: true });
+  }, [getPostAuthRedirect, navigate]);
+
   useEffect(() => {
     const state = location.state as { authError?: string } | null;
     if (state?.authError) {
@@ -61,8 +67,8 @@ export default function Auth() {
 
   useEffect(() => {
     if (!user) return;
-    navigate(getPostAuthRedirect(), { replace: true });
-  }, [getPostAuthRedirect, navigate, user]);
+    finishAuthRedirect();
+  }, [finishAuthRedirect, user]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -72,7 +78,7 @@ export default function Auth() {
       if (mode === "login") {
         await signInWithPassword(email.trim(), password);
         toast.success(isFr ? "T'es connecté — let's cook 🔥" : "You're in — let's cook 🔥");
-        navigate(getPostAuthRedirect(), { replace: true });
+        finishAuthRedirect();
       } else {
         const { needsEmailConfirm } = await signUp(email.trim(), password);
         trackClientEvent("signup_completed", { method: "email", needs_email_confirm: needsEmailConfirm, ...getAttributionProps() });
@@ -88,7 +94,7 @@ export default function Auth() {
           } catch {
             void 0;
           }
-          navigate(getPostAuthRedirect(), { replace: true });
+          finishAuthRedirect();
         }
       }
     } catch (err) {

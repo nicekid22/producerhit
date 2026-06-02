@@ -20,6 +20,7 @@ export type UserProfileRow = {
   bio: string | null;
   creator_type: string | null;
   social: Record<string, string>;
+  hosted_audio_expires_at: string | null;
 };
 
 export type ProfileBootstrapResult = {
@@ -31,7 +32,7 @@ export type ProfileBootstrapResult = {
 };
 
 const PROFILE_SELECT_FULL =
-  "username, plan, loops_used_this_month, referral_bonus, referral_code, level_bonus, daily_bonus_month, avatar_id, bio, creator_type, social";
+  "username, plan, loops_used_this_month, referral_bonus, referral_code, level_bonus, daily_bonus_month, avatar_id, bio, creator_type, social, hosted_audio_expires_at";
 
 const PROFILE_SELECT_CREATOR =
   "username, plan, loops_used_this_month, level_bonus, daily_bonus_month, avatar_id, bio, creator_type, social";
@@ -121,6 +122,8 @@ function normalizeProfileRow(data: Record<string, unknown> | null): UserProfileR
     bio: typeof data.bio === "string" ? data.bio : null,
     creator_type: typeof data.creator_type === "string" ? data.creator_type : null,
     social: parseSocialField(data.social),
+    hosted_audio_expires_at:
+      typeof data.hosted_audio_expires_at === "string" ? data.hosted_audio_expires_at : null,
   };
 }
 

@@ -5,6 +5,7 @@ import { mapAuthError } from "@/lib/authProviders";
 import { useAuthStore } from "@/stores/authStore";
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
 import { useLocaleStore } from "@/stores/localeStore";
+import { markJustAuthenticated, sanitizePostAuthPath } from "@/lib/postAuthRedirect";
 import toast from "react-hot-toast";
 
 export default function AuthCallback() {
@@ -34,6 +35,7 @@ export default function AuthCallback() {
         if (!mounted) return;
         await useAuthStore.getState().completeAuthCallbackSession(session);
         if (!mounted) return;
+        markJustAuthenticated();
         navigate(nextPath, { replace: true });
       } catch (err) {
         if (!mounted) return;

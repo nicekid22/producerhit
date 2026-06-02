@@ -22,8 +22,8 @@ export function MasteringUpsellModal({ open, loop, locale, onClose, onTryMasteri
       title={isFr ? "Plot twist : t'as débloqué le Mastering 🎚️" : "Plot twist: you unlocked Mastering 🎚️"}
       description={
         isFr
-          ? `4 tracks — ton son mérite le fini studio. Écoute « ${loop.name} » masterisée en aperçu. Export = Pro / Studio.`
-          : `4 tracks — your sound deserves the studio finish. Preview « ${loop.name} » mastered. Export = Pro / Studio.`
+          ? `4 tracks — ton son mérite le fini studio. Écoute « ${loop.name} » masterisée en aperçu. Export = Studio / Plus.`
+          : `4 tracks — your sound deserves the studio finish. Preview « ${loop.name} » mastered. Export = Studio / Plus.`
       }
       onClose={onClose}
       confirmText={isFr ? "Fermer" : "Close"}
@@ -47,7 +47,7 @@ export function MasteringUpsellModal({ open, loop, locale, onClose, onTryMasteri
           <ul className="relative mt-3 space-y-1 text-xs text-white/60">
             <li>{isFr ? "✓ Aperçu mastering gratuit (écoute A/B)" : "✓ Free mastering preview (A/B listen)"}</li>
             <li>{isFr ? "✓ Presets studio pro" : "✓ Pro studio presets"}</li>
-            <li>{isFr ? "🔒 Export WAV & application — Pro / Studio" : "🔒 WAV export & apply — Pro / Studio"}</li>
+            <li>{isFr ? "🔒 Export WAV & application — Studio / Plus" : "🔒 WAV export & apply — Studio / Plus"}</li>
           </ul>
         </div>
 
@@ -57,7 +57,7 @@ export function MasteringUpsellModal({ open, loop, locale, onClose, onTryMasteri
             {isFr ? "Essayer Mastering Studio" : "Try Mastering Studio"}
           </Button>
           <Button variant="secondary" size="sm" onClick={onUpgrade}>
-            {isFr ? "Devenir Pro (goat mode)" : "Go Pro (goat mode)"}
+            {isFr ? "Passer Studio" : "Go Studio"}
           </Button>
         </div>
 

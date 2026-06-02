@@ -1,4 +1,12 @@
 import type { AceMeta } from "@/lib/audioApi";
+import {
+  AceRemixUnavailableError,
+  ACE_REMIX_UNAVAILABLE_COPY,
+  isAceHtml404,
+  runAceRemixViaMusicGenerate,
+} from "@/lib/aceRemixApi";
+
+export { AceRemixUnavailableError, ACE_REMIX_UNAVAILABLE_COPY } from "@/lib/aceRemixApi";
 
 export type AceRemixTaskType = "cover" | "repaint";
 
@@ -208,7 +216,12 @@ export async function releaseAceRemixTask(args: {
     body: form,
   });
   const createText = await createRes.text().catch(() => "");
-  if (!createRes.ok) throw new Error(`remix release_task failed (${createRes.status}): ${createText}`);
+  if (!createRes.ok) {
+    if (isAceHtml404(createRes.status, createText)) {
+      throw new AceRemixUnavailableError("release_task 404");
+    }
+    throw new Error(`remix release_task failed (${createRes.status}): ${createText.slice(0, 400)}`);
+  }
 
   const createJson = JSON.parse(createText) as unknown;
   const taskId =
@@ -219,7 +232,7 @@ export async function releaseAceRemixTask(args: {
   return { taskId };
 }
 
-export async function runAceRemix(args: {
+async function runAceRemixViaReleaseTask(args: {
   baseUrl: string;
   apiKey: string;
   input: AceRemixInput;
@@ -247,6 +260,53 @@ export async function runAceRemix(args: {
       fallbackDuration: args.input.durationSec ?? null,
     }),
   };
+}
+
+/** Essaye music/generate puis release_task (legacy self-hosted). */
+export async function runAceRemix(args: {
+  baseUrl: string;
+  apiKey: string;
+  input: AceRemixInput;
+  onProgress?: (elapsedMs: number) => void;
+}): Promise<AceRemixResult> {
+  const errors: string[] = [];
+
+  try {
+    const viaMusic = await runAceRemixViaMusicGenerate(args);
+    const audioFormat = (args.input.audioFormat || "mp3").toLowerCase();
+    const metas = viaMusic.metas;
+    return {
+      audioUrl: viaMusic.audioUrl,
+      meta: {
+        taskId: viaMusic.jobId,
+        prompt: args.input.prompt.trim(),
+        lyrics: args.input.instrumental !== false ? "" : (args.input.lyrics ?? ""),
+        audioFormat,
+        bpm: typeof metas?.bpm === "number" ? metas.bpm : (args.input.bpm ?? null),
+        duration: typeof metas?.duration === "number" ? metas.duration : (args.input.durationSec ?? null),
+        keyScale:
+          typeof metas?.keyscale === "string"
+            ? metas.keyscale
+            : typeof metas?.key_scale === "string"
+              ? metas.key_scale
+              : undefined,
+      },
+    };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    errors.push(msg);
+    if (!(e instanceof AceRemixUnavailableError) && !msg.includes("404")) throw e;
+  }
+
+  try {
+    return await runAceRemixViaReleaseTask(args);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    errors.push(msg);
+    if (!(e instanceof AceRemixUnavailableError) && !msg.includes("404")) throw e;
+  }
+
+  throw new AceRemixUnavailableError(ACE_REMIX_UNAVAILABLE_COPY.en);
 }
 
 export async function fileFromAudioUrl(url: string, fallbackName = "source.mp3"): Promise<File> {

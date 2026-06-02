@@ -13,6 +13,7 @@ import {
 } from "@/lib/publicLoops";
 import { removeLoopAudioStorage, SUPABASE_LOOP_AUDIO_UPLOAD } from "@/lib/storageAudio";
 import { warmCoverAndPersist } from "@/lib/coverArt";
+import { previewPinterestDiscoveryIfEnabled } from "@/lib/pinterestDiscovery";
 import { buildCoverPromptSnapshot } from "@/lib/utils";
 import { dropStalePreviewDuplicates, isPreviewLoopId } from "@/lib/loopWorkspaceUtils";
 import { useAuthStore } from "@/stores/authStore";
@@ -202,6 +203,71 @@ function pickHttpAudioUrl(...candidates: unknown[]): string {
     if (isHttpUrl(c)) return (c as string).trim();
   }
   return "";
+}
+
+function patchLoopPlaybackUrl(id: string, playbackUrl: string, durationSec?: number | null) {
+  useLoopsStore.setState((s) => {
+    const loops = s.loops.map((l) => {
+      if (l.id !== id) return l;
+      if (l.audioUrl?.startsWith("blob:") && l.audioUrl !== playbackUrl) URL.revokeObjectURL(l.audioUrl);
+      return { ...l, audioUrl: playbackUrl };
+    });
+    const durationsSecById = { ...s.durationsSecById };
+    if (durationSec && isFinite(durationSec)) durationsSecById[id] = durationSec;
+    return { loops, durationsSecById };
+  });
+  const player = usePlayerStore.getState();
+  const updated = useLoopsStore.getState().loops.find((l) => l.id === id);
+  if (updated && player.current?.id === id) {
+    player.promoteLoop(id, updated);
+  }
+}
+
+/**
+ * URL prête pour lecture immédiate après génération.
+ * - data: → blob local (démarre plus vite qu’un gros data: sur <audio>)
+ * - http(s) ACE / Storage → lecture en stream tout de suite, cache en arrière-plan
+ */
+export async function resolvePlaybackUrlForLoop(id: string, src: string): Promise<string> {
+  const raw = typeof src === "string" ? src.trim() : "";
+  if (!raw) return "";
+
+  if (raw.startsWith("data:")) {
+    const cached = await audioCacheGet(id).catch(() => null);
+    if (cached?.blob?.size) {
+      const blobUrl = URL.createObjectURL(cached.blob);
+      patchLoopPlaybackUrl(id, blobUrl, cached.durationSec ?? null);
+      return blobUrl;
+    }
+    try {
+      const res = await fetch(raw);
+      const blob = await res.blob();
+      if (!blob.size) return raw;
+      const probeUrl = URL.createObjectURL(blob);
+      const durationSec = await probeDurationSec(probeUrl);
+      URL.revokeObjectURL(probeUrl);
+      await audioCachePut(id, blob, durationSec);
+      const blobUrl = URL.createObjectURL(blob);
+      patchLoopPlaybackUrl(id, blobUrl, durationSec);
+      try {
+        window.dispatchEvent(new CustomEvent("producerhit-audio-cached", { detail: { id } }));
+      } catch {
+        void 0;
+      }
+      return blobUrl;
+    } catch {
+      return raw;
+    }
+  }
+
+  if (raw.startsWith("blob:")) {
+    patchLoopPlaybackUrl(id, raw);
+    return raw;
+  }
+
+  void cacheLoopAudioFromSrc(id, raw);
+  patchLoopPlaybackUrl(id, raw);
+  return raw;
 }
 
 async function cacheLoopAudioFromSrc(id: string, src: string | null | undefined, options?: { force?: boolean }): Promise<void> {
@@ -938,6 +1004,7 @@ export const useLoopsStore = create<LoopsState>((set) => ({
     });
     persistMyLoopsCache(user.id, useLoopsStore.getState().loops);
     void cacheLoopAudioFromSrc(row.id, finalLoop.audioUrl ?? trimmedAudioUrl);
+    previewPinterestDiscoveryIfEnabled(finalLoop);
     if (!finalLoop.details?.coverUrl) {
       warmCoverAndPersist(
         row.id,
@@ -1166,7 +1233,7 @@ export const useLoopsStore = create<LoopsState>((set) => ({
 }));
 
 export async function fetchCachedLoopAudioBlob(loopId: string): Promise<Blob | null> {
-  if (!loopId || loopId.startsWith("preview-") || loopId.startsWith("local-")) return null;
+  if (!loopId || loopId.startsWith("local-")) return null;
   const rec = await audioCacheGet(loopId).catch(() => null);
   if (!rec?.blob || rec.blob.size <= 0) return null;
   return rec.blob;

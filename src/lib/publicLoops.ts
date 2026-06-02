@@ -371,6 +371,12 @@ export async function persistLoopAceAudioRecord(args: {
     if (storageUrl) audioUrl = storageUrl;
   }
 
+  // Sortie ACE HTTP (Song / Remix) → mirror loop-audio, évite URLs temporaires + gros inline Postgres.
+  if (audioUrl && !isSupabaseLoopAudioUrl(audioUrl) && SUPABASE_LOOP_AUDIO_UPLOAD && isHttpAudioUrl(audioUrl)) {
+    const storageUrl = await uploadPublicLoopAudio(args.userId, args.loopId, audioUrl);
+    if (storageUrl) audioUrl = storageUrl;
+  }
+
   const inlineData = !audioUrl && isPublicAceStreamEnabled() ? inlineSource : null;
   const streamUrl = inlineData ? buildPublicAceStreamUrl(args.loopId) : "";
 

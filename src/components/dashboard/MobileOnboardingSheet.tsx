@@ -41,29 +41,29 @@ export function MobileOnboardingSheet({ locale, open, onClose }: Props) {
     ? [
         {
           title: "Crée ton son",
-          body: "Type Beat, Song Mode ou Remix ACE — prompt, génération, résultat pro.",
+          body: "Onglet Créer : Type Beat, Song ou Remix — configure, puis Générer. Tu passes sur Résultats automatiquement.",
         },
         {
           title: "Écoute & peaufine",
-          body: "Onglet Résultats : variations seed, mastering, export MP3/WAV.",
+          body: "Onglet Résultats : écoute, variations, détails. Studio = mastering et export WAV.",
         },
         {
           title: "Partage & export",
-          body: "Export vidéo, caption auto, MP3/WAV royalty-free — prêt à publier.",
+          body: "Paramètres : progression, parrainage et promos. Export MP3/WAV depuis tes tracks.",
         },
       ]
     : [
         {
           title: "Create your track",
-          body: "Type Beat, Song Mode, or Remix — prompt, generate, pro output.",
+          body: "Create tab: Type Beat, Song, or Remix — configure, then Generate. You switch to Results automatically.",
         },
         {
           title: "Listen & polish",
-          body: "Results tab: seed variations, mastering, MP3/WAV export.",
+          body: "Results tab: listen, variations, details. Studio tab = mastering and WAV export.",
         },
         {
           title: "Share & export",
-          body: "Video export, auto caption, royalty-free MP3/WAV — ready to release.",
+          body: "Settings: progress, referrals, and promos. Export MP3/WAV from your tracks.",
         },
       ];
 

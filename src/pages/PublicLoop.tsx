@@ -8,7 +8,9 @@ import { isPlayablePublicLoop, resolvePlayableCommunityAudio, type PublicLoopRow
 import { publicRowToCoverLoop, resolvePublicRowCoverUrl } from "@/lib/coverArt";
 import { fetchPublicProfileCards, type PublicProfileCard } from "@/lib/creatorProfile";
 import { ProfileAuthorChip } from "@/components/profile/ProfileAuthorChip";
-import { savePendingRemix, buildRemixPromptFromMeta } from "@/lib/pendingRemix";
+import { savePendingRemix } from "@/lib/pendingRemix";
+import { isRemixVibeRecreateEnabled } from "@/lib/remixVibeFallback";
+import { loopToRemixSource } from "@/lib/remixSourceLoop";
 import { setLoopPageSeo } from "@/lib/seoMeta";
 import { getGenreSeoLink } from "@/lib/seoPages";
 import { buildLoopShareUrl } from "@/lib/growthLinks";
@@ -245,21 +247,21 @@ export default function PublicLoop() {
           created_at: row.created_at,
           seed: row.seed,
         };
-        const audioUrl = await resolvePlayableCommunityAudio(publicRow);
+        let audioUrl = "";
+        if (!isRemixVibeRecreateEnabled()) {
+          audioUrl = await resolvePlayableCommunityAudio(publicRow);
+        }
+        const sourceLoop = loopToRemixSource(toLoop(row));
         savePendingRemix({
           sourceLoopId: id,
           sourceLoopName: row.name,
           audioUrl,
-          prompt: buildRemixPromptFromMeta({
-            prompt: row.prompt,
-            genre: row.genre,
-            mood: row.mood,
-            locale,
-          }),
+          prompt: sourceLoop.prompt,
           genre: row.genre || undefined,
           mood: row.mood || undefined,
           bpm: row.bpm > 0 ? row.bpm : undefined,
           source: "public_loop",
+          sourceLoop,
         });
         if (!user) {
           navigate("/auth", { state: { from: "/dashboard?remix=1" } });

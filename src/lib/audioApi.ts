@@ -1,3 +1,4 @@
+import { loadBrowserAceApiKeys, pickBrowserAceApiKey, usesDirectAceFromBrowser } from "@/lib/aceBrowserKeys";
 import { nextAceKeyPreferIndex } from "@/lib/aceKeyRotation";
 import { supabase } from "@/lib/supabaseClient";
 import { buildAceCaption, buildRichPrompt, buildSonautoTags, type GenerateParams } from "@/lib/promptBuilder";
@@ -67,7 +68,7 @@ async function invokeSupabaseFunction<T>(args: {
   name: string;
   body: unknown;
   accessToken?: string;
-}): Promise<{ data: T | null; errorText: string | null }> {
+}): Promise<{ data: T | null; errorText: string | null; limitReached?: boolean }> {
   const forcedRegion = import.meta.env.VITE_SUPABASE_FUNCTION_REGION as string | undefined;
   if (!forcedRegion) {
     const { data, error } = await supabase.functions.invoke(args.name, {
@@ -76,7 +77,7 @@ async function invokeSupabaseFunction<T>(args: {
     });
     if (error) {
       const extracted = await extractInvokeError(error);
-      return { data: null, errorText: extracted.message };
+      return { data: null, errorText: extracted.message, limitReached: extracted.limitReached };
     }
     return { data: (data as T | null) ?? null, errorText: null };
   }
@@ -175,6 +176,8 @@ type GenerateLoopAceOptions = {
   audioFormat?: string;
   seed?: number;
   generationKey?: string;
+  /** Index de clé ACE (navigateur : VITE_ACE_STEP_API_KEYS ; Edge : rotation serveur). */
+  aceKeyPreferIndex?: number;
   /** Passe par l’Edge Function (release_task serveur) pour une URL HTTP en DB — requis pour is_public. */
   requirePersistableUrl?: boolean;
 };
@@ -247,10 +250,16 @@ async function generateLoopAceDirect(
   params: GenerateParams,
   options?: GenerateLoopAceOptions,
 ): Promise<{ audioUrl: string; meta?: AceMeta | null }> {
-  const aceApiKey = import.meta.env.VITE_ACE_STEP_API_KEY as string | undefined;
+  const aceKeys = loadBrowserAceApiKeys();
+  const keyCount = aceKeys.length;
+  const preferStart =
+    typeof options?.aceKeyPreferIndex === "number" && Number.isFinite(options.aceKeyPreferIndex)
+      ? Math.abs(Math.floor(options.aceKeyPreferIndex)) % Math.max(keyCount, 1)
+      : nextAceKeyPreferIndex() % Math.max(keyCount, 1);
   const baseUrlRaw = (import.meta.env.VITE_ACE_STEP_BASE_URL as string | undefined) ?? "https://api.acemusic.ai";
   const baseUrl = normalizeAceBaseUrl(baseUrlRaw);
-  if (!aceApiKey) throw new Error("Missing VITE_ACE_STEP_API_KEY");
+  if (!keyCount) throw new Error("Missing VITE_ACE_STEP_API_KEY");
+  const aceApiKey = aceKeys[preferStart]!;
 
   const pickOne = <T,>(items: T[]): T => {
     if (items.length <= 1) return items[0];
@@ -427,6 +436,8 @@ async function generateLoopAceDirect(
       keyScale: (parsed.keyScale || fallbackKeyScale || undefined) ?? undefined,
       timeSignature: (parsed.timeSignature || options?.timeSignature || undefined) ?? undefined,
       audioFormat,
+      aceKeyIndex: preferStart,
+      aceKeyCount: keyCount,
       ...(parsedAudio.taskId ? { taskId: parsedAudio.taskId } : {}),
       ...(parsedAudio.httpAudioUrl ? { httpAudioUrl: parsedAudio.httpAudioUrl } : {}),
       sessionOnly: parsedAudio.sessionOnly && !parsedAudio.httpAudioUrl,
@@ -640,8 +651,7 @@ export async function generateLoopAce(
   params: GenerateParams,
   options?: GenerateLoopAceOptions,
 ): Promise<{ audioUrl: string; meta?: AceMeta | null }> {
-  const directKey = import.meta.env.VITE_ACE_STEP_API_KEY as string | undefined;
-  if (directKey) return await generateLoopAceDirect(params, options);
+  if (usesDirectAceFromBrowser()) return await generateLoopAceDirect(params, options);
 
   const isSong = options?.isSong ?? !options?.instrumental;
   const promptParams = options?.autoMeta ? { ...params, bpm: 0, key: "", scale: "" } : params;
@@ -711,14 +721,21 @@ export async function generateLoopAce(
   body.aceKeyPreferIndex = nextAceKeyPreferIndex();
   if (options?.requirePersistableUrl) body.requirePersistableUrl = true;
 
-  const { data, errorText } = await invokeSupabaseFunction<{ audioUrl?: string; meta?: AceMeta | null; error?: string; limitReached?: boolean }>(
-    {
-      name: "generate-loop-ace",
-      body,
-      accessToken: session?.access_token,
-    },
-  );
-  if (errorText) throw new Error(errorText);
+  const { data, errorText, limitReached } = await invokeSupabaseFunction<{
+    audioUrl?: string;
+    meta?: AceMeta | null;
+    error?: string;
+    limitReached?: boolean;
+  }>({
+    name: "generate-loop-ace",
+    body,
+    accessToken: session?.access_token,
+  });
+  if (errorText) {
+    const e = new Error(errorText) as Error & { limitReached?: boolean };
+    if (limitReached) e.limitReached = true;
+    throw e;
+  }
 
   if ((data as { error?: string; limitReached?: boolean } | null)?.error) {
     const d = data as { error: string; limitReached?: boolean };
@@ -771,6 +788,7 @@ export async function generateBeat(
     audioFormat?: string;
     seed?: number;
     generationKey?: string;
+    aceKeyPreferIndex?: number;
   },
 ): Promise<{ audioUrl: string; engine: string; meta?: AceMeta | null }> {
   try {
@@ -806,10 +824,9 @@ export async function remixLoopAce(input: import("@/lib/aceRemix").AceRemixInput
   if (fileErr === "file_too_large") throw new Error("Fichier trop lourd (max 12 Mo) / File too large (max 12 MB)");
   if (fileErr) throw new Error("Fichier audio invalide / Invalid audio file");
 
-  const directKey = import.meta.env.VITE_ACE_STEP_API_KEY as string | undefined;
-  if (directKey) {
+  if (usesDirectAceFromBrowser()) {
     const baseUrl = normalizeRemixBase((import.meta.env.VITE_ACE_STEP_BASE_URL as string | undefined) ?? "https://api.acemusic.ai");
-    const result = await runAceRemix({ baseUrl, apiKey: directKey, input });
+    const result = await runAceRemix({ baseUrl, apiKey: pickBrowserAceApiKey(), input });
     try {
       const {
         data: { session },
@@ -863,14 +880,22 @@ export async function remixLoopAce(input: import("@/lib/aceRemix").AceRemixInput
   const text = await res.text().catch(() => "");
   if (!res.ok) {
     try {
-      const parsed = JSON.parse(text) as { error?: string; limitReached?: boolean };
+      const parsed = JSON.parse(text) as { error?: string; code?: string; limitReached?: boolean };
+      if (parsed.code === "ACE_REMIX_UNAVAILABLE" || res.status === 503) {
+        const { AceRemixUnavailableError, ACE_REMIX_UNAVAILABLE_COPY } = await import("@/lib/aceRemix");
+        throw new AceRemixUnavailableError(parsed.error || ACE_REMIX_UNAVAILABLE_COPY.en);
+      }
       if (parsed.error) {
+        if (parsed.error.includes("release_task failed (404)") || parsed.error.includes("ACE_REMIX")) {
+          const { AceRemixUnavailableError, ACE_REMIX_UNAVAILABLE_COPY } = await import("@/lib/aceRemix");
+          throw new AceRemixUnavailableError(ACE_REMIX_UNAVAILABLE_COPY.en);
+        }
         const e = new Error(parsed.error) as Error & { limitReached?: boolean };
         e.limitReached = parsed.limitReached;
         throw e;
       }
     } catch (err) {
-      if (err instanceof Error && "limitReached" in err) throw err;
+      if (err instanceof Error && ("limitReached" in err || err.name === "AceRemixUnavailableError")) throw err;
     }
     throw new Error(text || `Remix failed (${res.status})`);
   }

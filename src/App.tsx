@@ -147,7 +147,7 @@ function SeoBootstrap() {
         );
       if (slugKey === "blog") return t("Blog — ProducerHit", "Blog — ProducerHit");
       if (slugKey === "blog-post") return t("Blog — ProducerHit", "Blog — ProducerHit");
-      if (slugKey === "explore") return t("Explore — ProducerHit", "Explorer — ProducerHit");
+      if (slugKey === "explore") return t("Discover — ProducerHit", "Découvrir — ProducerHit");
       if (slugKey === "loop") return t("Track — ProducerHit", "Track — ProducerHit");
       if (slugKey === "pricing") return t("Pricing — ProducerHit", "Tarifs — ProducerHit");
       if (slugKey === "auth") return t("Sign Up Free — ProducerHit", "Inscription gratuite — ProducerHit");

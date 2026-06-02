@@ -33,6 +33,7 @@ import { CreditCard, Shield, Sparkles, UserRound, Zap } from "lucide-react";
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
 import { hasEmailPassword, hasGoogleAuth, mapAuthError } from "@/lib/authProviders";
 import { useMobileUiV2 } from "@/hooks/useMobileUiV2";
+import { SettingsGrowthExtras } from "@/components/settings/SettingsGrowthExtras";
 
 function tierClass(plan: string) {
   if (plan === "plus") return "pk-prism-tier-badge--plus";
@@ -226,8 +227,10 @@ export default function Settings() {
           </div>
         </PrismPageHero>
 
+        <SettingsGrowthExtras locale={locale} plan={plan} />
+
         <div className="grid gap-4 lg:grid-cols-2">
-          <div className="pk-prism-section-card">
+          <div id="pk-settings-profile" className="pk-prism-section-card">
             <div className="pk-prism-section-head">
               <div className="pk-prism-section-head__icon">
                 <UserRound className="h-4 w-4" />
@@ -390,7 +393,7 @@ export default function Settings() {
             </div>
           </div>
 
-          <div className="pk-prism-section-card lg:col-span-2">
+          <div id="pk-settings-referral" className="pk-prism-section-card lg:col-span-2">
             <div className="pk-prism-section-head">
               <div className="pk-prism-section-head__icon">
                 <Sparkles className="h-4 w-4" />
