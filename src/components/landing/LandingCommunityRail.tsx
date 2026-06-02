@@ -223,7 +223,7 @@ export function LandingCommunityRail({
                   const url = t.coverUrl?.trim() || resolveCoverImageUrl(loopForCover);
                   const active = activeTrackId === t.id;
                   const playingNow = active && isPlaying;
-                  const playable = isPlayablePublicLoop(t.audioUrl, t.stemsUrl);
+                  const playable = isPlayablePublicLoop(t.audioUrl, t.stemsUrl, t.createdAt);
 
                   return (
                     <article

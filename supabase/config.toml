@@ -7,3 +7,7 @@ verify_jwt = false
 # stream_public : lecture <audio> sans Bearer (communauté publique)
 [functions.generate-loop-ace]
 verify_jwt = false
+
+# Purge loop-audio > 7j (cron : header x-cron-secret ou service role)
+[functions.purge-loop-audio]
+verify_jwt = false

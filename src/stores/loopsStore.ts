@@ -857,7 +857,7 @@ export const useLoopsStore = create<LoopsState>((set) => ({
         return finalized;
       };
 
-      // Persist en arrière-plan (surtout provider_audio_inline ~Mo) — évite de bloquer la 2e génération en parallèle.
+      // Persist en arrière-plan (upload Storage loop-audio, évite inline Postgres ~Mo).
       void (async () => {
         try {
           const finalized = await runPersist();

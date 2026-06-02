@@ -9,7 +9,8 @@ import {
   withSupabaseFunctionAuth,
 } from "@/lib/publicAcePlayback";
 import { fetchPublicProfileCards, type PublicProfileCard } from "@/lib/creatorProfile";
-import { SUPABASE_LOOP_AUDIO_UPLOAD } from "@/lib/storageAudio";
+import { isLoopAudioPlayableByAge } from "@/lib/loopAudioRetention";
+import { isSupabaseLoopAudioUrl, SUPABASE_LOOP_AUDIO_UPLOAD, uploadPublicLoopAudio } from "@/lib/storageAudio";
 import { supabase } from "@/lib/supabaseClient";
 
 export type PublicLoopRow = {
@@ -71,7 +72,12 @@ export function isHttpAudioUrl(url: unknown): url is string {
   return !!s && (s.startsWith("https://") || s.startsWith("http://"));
 }
 
-export function isPlayablePublicLoop(audioUrl: unknown, stemsUrl?: unknown): boolean {
+export function isPlayablePublicLoop(
+  audioUrl: unknown,
+  stemsUrl?: unknown,
+  createdAt?: string | null,
+): boolean {
+  if (createdAt && !isLoopAudioPlayableByAge(createdAt, audioUrl)) return false;
   if (isPlayablePublicAudioUrl(audioUrl)) return true;
   return extractAceTaskId(stemsUrl).length > 0;
 }
@@ -142,9 +148,11 @@ function mergeWithCuratedCommunityLoops(rows: PublicLoopRow[], options?: { playa
   const playableOnly = options?.playableOnly ?? false;
   const minCount = options?.minCount ?? CURATED_COMMUNITY_MIN_COUNT;
 
-  const dbFiltered = playableOnly ? rows.filter((r) => isPlayablePublicLoop(r.audio_url, r.stems_url)) : rows;
+  const dbFiltered = playableOnly
+    ? rows.filter((r) => isPlayablePublicLoop(r.audio_url, r.stems_url, r.created_at))
+    : rows;
   const curatedFiltered = playableOnly
-    ? CURATED_COMMUNITY_LOOPS.filter((r) => isPlayablePublicLoop(r.audio_url, r.stems_url))
+    ? CURATED_COMMUNITY_LOOPS.filter((r) => isPlayablePublicLoop(r.audio_url, r.stems_url, r.created_at))
     : CURATED_COMMUNITY_LOOPS;
 
   const byId = new Map<string, PublicLoopRow>();
@@ -210,7 +218,7 @@ export async function fetchPublicLoops(options?: {
 
     let rows = ((result.data ?? []) as PublicLoopRow[]).map(normalizePublicLoopRow);
     if (playableOnly) {
-      rows = rows.filter((row) => isPlayablePublicLoop(row.audio_url));
+      rows = rows.filter((row) => isPlayablePublicLoop(row.audio_url, row.stems_url, row.created_at));
     }
     try {
       rows = await attachAuthorsToPublicLoops(rows);
@@ -244,6 +252,8 @@ export async function attachAuthorsToPublicLoops(rows: PublicLoopRow[]): Promise
  * stream_public → lecture <audio> native (comme ACE), pas de fetch blob ~25 Mo.
  */
 export async function resolvePlayableCommunityAudio(row: PublicLoopRow): Promise<string> {
+  if (row.created_at && !isLoopAudioPlayableByAge(row.created_at, row.audio_url)) return "";
+
   let playableRow = row;
   const existingEarly = typeof row.audio_url === "string" ? row.audio_url.trim() : "";
   if (!parseStemsUrl(row.stems_url) && (!existingEarly || isPublicAceStreamUrl(existingEarly))) {
@@ -287,38 +297,7 @@ export async function persistPublicLoopAudioUrl(loopId: string, userId: string, 
   return url;
 }
 
-function guessAudioExtension(sourceUrl: string, mimeType: string): string {
-  const mime = mimeType.toLowerCase();
-  if (mime.includes("wav")) return "wav";
-  if (mime.includes("ogg")) return "ogg";
-  if (mime.includes("webm")) return "webm";
-  if (mime.includes("aac") || mime.includes("mp4")) return "m4a";
-  if (sourceUrl.startsWith("data:audio/wav")) return "wav";
-  if (sourceUrl.startsWith("data:audio/ogg")) return "ogg";
-  return "mp3";
-}
-
-export async function uploadPublicLoopAudio(userId: string, loopId: string, sourceUrl: string): Promise<string | null> {
-  if (!SUPABASE_LOOP_AUDIO_UPLOAD) return null;
-  const trimmed = sourceUrl.trim();
-  if (!trimmed || (!trimmed.startsWith("data:") && !trimmed.startsWith("blob:"))) return null;
-  try {
-    const res = await fetch(trimmed);
-    const blob = await res.blob();
-    if (!blob.size) return null;
-    const ext = guessAudioExtension(trimmed, blob.type || "audio/mpeg");
-    const path = `${userId}/${loopId}.${ext}`;
-    const { error } = await supabase.storage.from("loop-audio").upload(path, blob, {
-      upsert: true,
-      contentType: blob.type || "audio/mpeg",
-    });
-    if (error) return null;
-    const { data } = supabase.storage.from("loop-audio").getPublicUrl(path);
-    return data.publicUrl?.trim() || null;
-  } catch {
-    return null;
-  }
-}
+export { uploadPublicLoopAudio } from "@/lib/storageAudio";
 
 export function buildStemsUrlForDb(
   inputStemsUrl: unknown,
@@ -385,17 +364,35 @@ export async function persistLoopAceAudioRecord(args: {
     if (isHttpAudioUrl(resolved)) audioUrl = resolved.trim();
   }
 
-  const inlineData =
-    !audioUrl && isPublicAceStreamEnabled() ? pickInlineProviderAudioUrl(args.audioUrlInput, stemsRecord) : null;
-  let streamUrl = inlineData ? buildPublicAceStreamUrl(args.loopId) : "";
+  const inlineSource = pickInlineProviderAudioUrl(args.audioUrlInput, stemsRecord);
+
+  if (!audioUrl && inlineSource && SUPABASE_LOOP_AUDIO_UPLOAD) {
+    const storageUrl = await uploadPublicLoopAudio(args.userId, args.loopId, inlineSource);
+    if (storageUrl) audioUrl = storageUrl;
+  }
+
+  const inlineData = !audioUrl && isPublicAceStreamEnabled() ? inlineSource : null;
+  const streamUrl = inlineData ? buildPublicAceStreamUrl(args.loopId) : "";
 
   const updatePayload: {
     audio_url?: string;
     stems_url?: Record<string, unknown>;
-    provider_audio_inline?: string;
+    provider_audio_inline?: string | null;
   } = {};
   if (audioUrl) {
     updatePayload.audio_url = audioUrl;
+    if (isSupabaseLoopAudioUrl(audioUrl)) {
+      updatePayload.provider_audio_inline = null;
+      if (stemsRecord) {
+        const ace =
+          stemsRecord.ace && typeof stemsRecord.ace === "object"
+            ? ({ ...(stemsRecord.ace as Record<string, unknown>) } as Record<string, unknown>)
+            : {};
+        delete ace.providerDataUrl;
+        ace.publicPlayback = "supabase-storage";
+        updatePayload.stems_url = { ...stemsRecord, ace };
+      }
+    }
   } else if (streamUrl && inlineData) {
     updatePayload.audio_url = streamUrl;
     updatePayload.provider_audio_inline = inlineData;

@@ -22,6 +22,7 @@ import { useGeneratorStore } from "@/stores/generatorStore";
 import { useLoopsStore } from "@/stores/loopsStore";
 import type { Loop, LoopLength } from "@/types/loop";
 import { usePlayerStore } from "@/stores/playerStore";
+import { LoopAudioRetentionNotice } from "@/components/LoopAudioRetentionNotice";
 import { LoopCardItem } from "@/components/LoopCardItem";
 import { LoopCardSkeleton } from "@/components/LoopCardSkeleton";
 import { AlertTriangle, Copy, Search, X } from "lucide-react";
@@ -3140,6 +3141,8 @@ export default function Dashboard() {
           onProfile={openBillboardProfile}
           onCreate={openBillboardCreate}
         />
+
+        <LoopAudioRetentionNotice locale={locale} className="mb-4" />
 
         <div className="mb-5">
           <DashboardGamingPanelShell

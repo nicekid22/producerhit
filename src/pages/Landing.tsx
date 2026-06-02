@@ -24,6 +24,7 @@ import { LogoMarquee } from "@/components/landing/LogoMarquee";
 import { SocialProofStats } from "@/components/landing/SocialProofStats";
 import { TestimonialsStrip } from "@/components/landing/TestimonialsStrip";
 import { VisualCarousel } from "@/components/landing/VisualCarousel";
+import { LoopAudioRetentionNotice } from "@/components/LoopAudioRetentionNotice";
 import { LandingCommunityRail } from "@/components/landing/LandingCommunityRail";
 import { LandingGenerator, type GeneratorSideCard } from "@/components/landing/LandingGenerator";
 import { LandingWorkflow } from "@/components/landing/LandingWorkflow";
@@ -265,7 +266,7 @@ export default function Landing() {
 
   const mapRowToSideCard = useCallback((r: PublicLoopRow): GeneratorSideCard | null => {
     if (typeof r.id !== "string") return null;
-    if (!isPlayablePublicLoop(r.audio_url, r.stems_url)) return null;
+    if (!isPlayablePublicLoop(r.audio_url, r.stems_url, r.created_at)) return null;
 
     const name = (r.name ?? "Untitled").trim() || "Untitled";
     const genre = (r.genre ?? "").trim();
@@ -1166,7 +1167,9 @@ export default function Landing() {
             onRemix={(t) => applyTrackPrompt(t.prompt, t.kind)}
             onRefresh={() => setTrendingRefreshKey((k) => k + 1)}
             footer={
-              !trendingLoading && (trendingError || trendingTimedOut || typeof repairFixedCount === "number") ? (
+              <>
+              <LoopAudioRetentionNotice locale={locale} compact className="mt-4 border-[#2d2d3d] bg-[#0a0a0f]/80" />
+              {!trendingLoading && (trendingError || trendingTimedOut || typeof repairFixedCount === "number") ? (
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#2d2d3d] bg-[#0a0a0f] px-4 py-3">
                   <div className="text-sm font-semibold text-white/80">
                     {typeof repairFixedCount === "number"
@@ -1204,7 +1207,8 @@ export default function Landing() {
                     ) : null}
                   </div>
                 </div>
-              ) : null
+              ) : null}
+              </>
             }
           />
         </RevealSection>

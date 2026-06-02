@@ -15,7 +15,9 @@
     "growth:sync": "node scripts/growth-sync.mjs",
     "growth:social": "node scripts/auto-social.mjs",
     "icons:generate": "node scripts/generate-brand-icons.mjs",
-    "db:migrate:039": "node scripts/apply-migration-039.mjs"
+    "db:migrate:039": "node scripts/apply-migration-039.mjs",
+    "storage:purge": "node scripts/purge-expired-loop-audio.mjs",
+    "storage:migrate-inline": "node scripts/migrate-inline-to-storage.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",

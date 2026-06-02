@@ -1,56 +1,55 @@
-# Rollback — audio ACE simplifié (~7 jours, sans Storage)
+# Rollback — audio ACE + Supabase Storage (7 jours)
 
-## Comportement (2026 — sans bucket loop-audio)
+## Comportement (2026)
 
 1. **Génération** → ACE `/v1/chat/completions` (navigateur direct si `VITE_ACE_STEP_API_KEY`, sinon Edge)
-2. **`release_task` / `query_result`** → **404** sur `api.acemusic.ai` — **désactivé par défaut**
-3. Réponse chat → audio **base64 MP3** (`data:audio/mpeg;...`) — pas d’URL HTTP ACE
-4. **Tracks publiques** → `createLoop` attend l’écriture `stream_public` + `provider_audio_inline` (migration 039)
-5. **Communauté** → `audio_url` = flux Edge `?action=stream_public&loopId=...` (lecture `<audio>` native, pas blob 25 Mo)
-6. **Pas d’upload bucket `loop-audio`** — économise Storage (100 Go) ; inline en Postgres (~3–8 Mo/track MP3)
+2. **`release_task`** → désactivé par défaut (404 ACE)
+3. Réponse chat → MP3 base64 (`data:audio/mpeg;...`)
+4. **Persist** → upload **bucket `loop-audio`** (`{userId}/{loopId}.mp3`) si `VITE_SUPABASE_LOOP_AUDIO_UPLOAD` ≠ `0` (défaut **activé**)
+5. **DB** → `audio_url` = URL Storage publique ; `provider_audio_inline` = **null** (pas de Mo en Postgres)
+6. **Fallback** → si upload échoue : `stream_public` + `provider_audio_inline` (legacy)
+7. **Rétention** → purge automatique après **7 jours** (Edge `purge-loop-audio` + cron)
+8. **Communauté** → lecture `<audio>` directe sur URL Storage (pas Edge blob)
 
-## Multi-clés ACE
-
-- `.env` : **`ACE_STEP_API_KEYS=key1,key2,...`** (une ligne)
-- Supabase secrets : `ACE_STEP_API_KEYS`
-- Rotation Edge uniquement (front direct = une clé `VITE_ACE_STEP_API_KEY`)
-
-## Stream communauté (migration 039)
-
-- `provider_audio_inline` : data URL MP3 — lu par `GET generate-loop-ace?action=stream_public&loopId=...`
-- `audio_url` en DB = URL de ce flux (pas le base64 dans les listings publics)
-
-## Rollback rapide (sans git)
+## Variables
 
 | Variable | Où | Effet |
 |----------|-----|--------|
-| `VITE_ACE_RELEASE_TASK=1` | Front `.env` | Réactive `release_task` + polling (legacy, 404 probable) |
-| `ACE_RELEASE_TASK=1` | Supabase secret Edge | Idem côté `generate-loop-ace` (beats) |
-| `VITE_PUBLIC_ACE_STREAM=0` | Front | Pas de `stream_public` ni `provider_audio_inline` |
-| `VITE_LOOP_ACE_PERSIST=0` | Front | Skip tout update post-insert |
-| `VITE_SUPABASE_LOOP_AUDIO_UPLOAD=0` | Front | Pas d’upload client Storage (défaut) |
-| `VITE_AUDIO_BLOB_PLAYBACK=0` | Front | Pas de conversion blob |
-| `VITE_AUDIO_SKIP_WEB_AUDIO=1` | Front | Sortie `<audio>` sans visualizer |
+| `VITE_SUPABASE_LOOP_AUDIO_UPLOAD=0` | Front | Pas d’upload Storage → fallback inline |
+| `VITE_PUBLIC_ACE_STREAM=0` | Front | Pas de stream_public ni inline |
+| `VITE_LOOP_AUDIO_RETENTION_DAYS=7` | Front | Badges + filtres communauté (0 = masquer) |
+| `LOOP_AUDIO_RETENTION_DAYS` | Secret Edge purge | Idem côté purge |
+| `CRON_SECRET` | Secret Edge purge | Header `x-cron-secret` pour cron Supabase |
+| `VITE_LOOP_ACE_PERSIST=0` | Front | Skip persist post-insert |
 
-Redéployer le front Vercel + Edge `generate-loop-ace` après changement d’env secrets.
+## Ops
 
-## Rollback code (git)
+```bash
+# Migration 041 (list_expired + policy delete)
+npm run db:migrate:039
 
-Fichiers sensibles :
+# Migrer inline Postgres → Storage
+npm run storage:migrate-inline
 
-- `src/lib/aceQuality.ts` — `isAceReleaseTaskEnabled()`
-- `src/lib/audioApi.ts` — chemin chat vs release_task
-- `src/stores/loopsStore.ts` — `createLoop` (persist public synchrone)
-- `src/lib/publicLoops.ts` — `persistLoopAceAudioRecord`
-- `src/lib/publicAcePlayback.ts` — `isPublicAceStreamEnabled`
-- `src/lib/loopWorkspaceUtils.ts` — dédoublonnage previews Dashboard
-- `src/pages/Dashboard.tsx` — MP3 par défaut, nettoyage preview post-save
-- `supabase/functions/generate-loop-ace/index.ts` — chat-only beats, `stream_public` GET
+# Purge manuelle (> 7j)
+npm run storage:purge
+
+# Déploiement
+supabase functions deploy purge-loop-audio --project-ref pmfnzenqemnonpglmjqx
+```
+
+**Cron Supabase** (Dashboard → Edge Functions → purge-loop-audio) : `0 4 * * *`  
+Headers : `x-cron-secret: <CRON_SECRET>`
+
+## Rollback rapide
+
+1. `VITE_SUPABASE_LOOP_AUDIO_UPLOAD=0` + redeploy Vercel  
+2. Réactiver inline si besoin (`VITE_PUBLIC_ACE_STREAM` laissé à 1)
 
 ## Vérification
 
-1. Générer une track publique → **une seule** carte dans le Dashboard (pas de doublon preview + sauvegardée)
-2. Écoute OK dans le Dashboard
-3. Supabase `loops` : `is_public=true`, `audio_url` contient `stream_public`, `provider_audio_inline` commence par `data:audio/mpeg`
-4. Explore / Landing → track visible avec `playableOnly: true`
-5. Aucun nouveau fichier dans bucket `loop-audio`
+1. Générer une track → `loops.audio_url` contient `/loop-audio/`  
+2. `provider_audio_inline` vide en DB  
+3. Dashboard : bandeau info 7 jours visible  
+4. Communauté : play OK via URL Storage  
+5. Après purge : badge « Audio expiré », plus de play
