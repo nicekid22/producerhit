@@ -14,7 +14,8 @@
     "blog:auto": "node scripts/auto-blog.mjs",
     "growth:sync": "node scripts/growth-sync.mjs",
     "growth:social": "node scripts/auto-social.mjs",
-    "icons:generate": "node scripts/generate-brand-icons.mjs"
+    "icons:generate": "node scripts/generate-brand-icons.mjs",
+    "db:migrate:039": "node scripts/apply-migration-039.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",

@@ -23,8 +23,47 @@ export async function fetchGrowthDashboard(days = 30): Promise<GrowthDashboard |
   return data as GrowthDashboard;
 }
 
+const GROWTH_ADMIN_CACHE_KEY = "producerhit_growth_admin_v1";
+
 export async function fetchIsGrowthAdmin(userId: string): Promise<boolean> {
+  if (!userId) return false;
+  try {
+    const raw = window.sessionStorage.getItem(GROWTH_ADMIN_CACHE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as { userId?: string; ok?: boolean; ts?: number };
+      if (
+        parsed.userId === userId &&
+        typeof parsed.ts === "number" &&
+        Date.now() - parsed.ts < 6 * 60 * 60 * 1000 &&
+        typeof parsed.ok === "boolean"
+      ) {
+        return parsed.ok;
+      }
+    }
+  } catch {
+    // ignore
+  }
+
   const { data, error } = await supabase.from("profiles").select("is_growth_admin").eq("id", userId).maybeSingle();
-  if (error) return false;
-  return Boolean(data?.is_growth_admin);
+  if (error) {
+    const msg = (error.message ?? "").toLowerCase();
+    if (msg.includes("is_growth_admin") || msg.includes("column")) {
+      try {
+        window.sessionStorage.setItem(
+          GROWTH_ADMIN_CACHE_KEY,
+          JSON.stringify({ userId, ok: false, ts: Date.now() }),
+        );
+      } catch {
+        // ignore
+      }
+    }
+    return false;
+  }
+  const ok = Boolean(data?.is_growth_admin);
+  try {
+    window.sessionStorage.setItem(GROWTH_ADMIN_CACHE_KEY, JSON.stringify({ userId, ok, ts: Date.now() }));
+  } catch {
+    // ignore
+  }
+  return ok;
 }

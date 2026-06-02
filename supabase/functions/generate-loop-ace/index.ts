@@ -880,7 +880,7 @@ async function handleStreamPublic(reqUrl: URL, corsHeaders: Record<string, strin
   const sb = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
   const { data, error } = await sb
     .from("loops")
-    .select("id, is_public, audio_url, provider_audio_inline, stems_url")
+    .select("id, is_public, audio_url, stems_url")
     .eq("id", loopId)
     .eq("is_public", true)
     .maybeSingle();
@@ -891,10 +891,36 @@ async function handleStreamPublic(reqUrl: URL, corsHeaders: Record<string, strin
 
   const row = data as {
     audio_url?: string | null;
-    provider_audio_inline?: string | null;
     stems_url?: unknown;
   };
-  const inline = typeof row.provider_audio_inline === "string" ? row.provider_audio_inline.trim() : "";
+
+  const httpFromStems = pickHttpAudioFromStems(row.stems_url);
+  if (httpFromStems) {
+    return Response.redirect(httpFromStems, 302);
+  }
+
+  const audioUrl = typeof row.audio_url === "string" ? row.audio_url.trim() : "";
+  if (audioUrl.startsWith("http://") || audioUrl.startsWith("https://")) {
+    if (!isStreamPublicAudioUrl(audioUrl)) {
+      return Response.redirect(audioUrl, 302);
+    }
+  }
+
+  const { data: inlineRow, error: inlineErr } = await sb
+    .from("loops")
+    .select("provider_audio_inline")
+    .eq("id", loopId)
+    .eq("is_public", true)
+    .maybeSingle();
+
+  if (inlineErr) {
+    return new Response("Not found", { status: 404, headers: corsHeaders });
+  }
+
+  const inline =
+    typeof (inlineRow as { provider_audio_inline?: string | null } | null)?.provider_audio_inline === "string"
+      ? (inlineRow as { provider_audio_inline: string }).provider_audio_inline.trim()
+      : "";
   if (inline) {
     const decoded = decodeDataUrl(inline);
     if (decoded?.bytes.byteLength) {
@@ -906,19 +932,6 @@ async function handleStreamPublic(reqUrl: URL, corsHeaders: Record<string, strin
         },
       });
     }
-  }
-
-  const httpFromStems = pickHttpAudioFromStems(row.stems_url);
-  if (httpFromStems) {
-    return Response.redirect(httpFromStems, 302);
-  }
-
-  const audioUrl = typeof row.audio_url === "string" ? row.audio_url.trim() : "";
-  if (audioUrl.startsWith("http://") || audioUrl.startsWith("https://")) {
-    if (isStreamPublicAudioUrl(audioUrl)) {
-      return new Response("No audio payload", { status: 404, headers: corsHeaders });
-    }
-    return Response.redirect(audioUrl, 302);
   }
 
   return new Response("No audio", { status: 404, headers: corsHeaders });

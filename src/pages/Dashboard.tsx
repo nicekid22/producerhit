@@ -1496,13 +1496,9 @@ export default function Dashboard() {
       if (versions !== 2) {
         await startOne(1, seed1, makeTitle(1));
       } else {
-        await Promise.all([
-          startOne(1, seed1, makeTitle(1)),
-          (async () => {
-            await new Promise((r) => setTimeout(r, 700));
-            await startOne(2, seed2, makeTitle(2));
-          })(),
-        ]);
+        // Séquentiel : évite 429 ACE + double écriture provider_audio_inline (charge Postgres).
+        await startOne(1, seed1, makeTitle(1));
+        await startOne(2, seed2, makeTitle(2));
       }
 
       if (!created.length) throw new Error(locale === "fr" ? "Échec de génération — réessaie" : "Generation failed — please try again");
@@ -2493,7 +2489,7 @@ export default function Dashboard() {
             {mode === "song" ? (
               <>
                 <GeneratorSection
-                  title={locale === "fr" ? "The Style" : "The Style"}
+                  title={locale === "fr" ? "Le Style" : "The Style"}
                   collapsible={mobileV2}
                   defaultOpen
                 >

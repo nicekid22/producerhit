@@ -62,15 +62,12 @@ function isHttpUrl(v: unknown): v is string {
 }
 
 async function fetchMyLoopsRows(userId: string): Promise<DbLoop[]> {
+  // Schéma actuel : energy_level (pas engine / vocal_type) — évite 4–6 requêtes Postgres en échec par chargement.
   const listSelect =
-    "id, user_id, engine, name, genre, influence, key, scale, bpm, loop_length, swing, mood, energy_level, reverb, audio_url, stems_url, is_saved, is_public, seed, created_at";
+    "id, user_id, name, genre, influence, key, scale, bpm, loop_length, swing, mood, energy_level, reverb, audio_url, stems_url, is_saved, is_public, seed, created_at";
   const attempts: string[] = [
     listSelect,
-    "id, user_id, name, genre, influence, key, scale, bpm, loop_length, swing, mood, energy_level, reverb, audio_url, stems_url, is_saved, is_public, seed, created_at",
-    "id, user_id, engine, name, genre, influence, key, scale, bpm, loop_length, swing, mood, vocal_type, reverb, audio_url, stems_url, is_saved, is_public, seed, created_at",
-    "id, user_id, name, genre, influence, key, scale, bpm, loop_length, swing, mood, vocal_type, reverb, audio_url, stems_url, is_saved, is_public, seed, created_at",
     "id, user_id, name, genre, influence, key, scale, bpm, loop_length, swing, mood, energy_level, reverb, audio_url, stems_url, is_saved, created_at",
-    "id, user_id, name, genre, influence, key, scale, bpm, loop_length, swing, mood, vocal_type, reverb, audio_url, stems_url, is_saved, created_at",
   ];
 
   let lastError: unknown = null;
@@ -730,7 +727,6 @@ export const useLoopsStore = create<LoopsState>((set) => ({
 
     const payload = {
       user_id: user.id,
-      engine: input.engine ?? null,
       name: input.name,
       genre: input.genre,
       influence: input.influence,
@@ -861,35 +857,29 @@ export const useLoopsStore = create<LoopsState>((set) => ({
         return finalized;
       };
 
-      if (needsPublicStream) {
+      // Persist en arrière-plan (surtout provider_audio_inline ~Mo) — évite de bloquer la 2e génération en parallèle.
+      void (async () => {
         try {
-          applyPersistResult(await runPersist());
-        } catch (err) {
-          console.warn("[createLoop] public stream persist failed:", err);
-        }
-      } else {
-        void (async () => {
-          try {
-            const finalized = await runPersist();
-            if (!finalized.audioUrl && !finalized.stemsUrl) return;
-            useLoopsStore.setState((s) => ({
-              loops: s.loops.map((l) =>
-                l.id === row.id
-                  ? {
-                      ...l,
-                      audioUrl: finalized.audioUrl ?? l.audioUrl,
-                      stemsUrl: finalized.stemsUrl ?? l.stemsUrl,
-                      isPublic: Boolean(input.isPublic),
-                    }
-                  : l,
-              ),
-            }));
-            persistMyLoopsCache(user.id, useLoopsStore.getState().loops);
-          } catch {
-            // lecture session OK sans stream_public
+          const finalized = await runPersist();
+          if (!finalized.audioUrl && !finalized.stemsUrl) return;
+          const patchLoop = (l: Loop): Loop => ({
+            ...l,
+            audioUrl: finalized.audioUrl ?? l.audioUrl,
+            stemsUrl: finalized.stemsUrl ?? l.stemsUrl,
+            isPublic: Boolean(input.isPublic),
+          });
+          applyPersistResult(finalized);
+          useLoopsStore.setState((s) => ({
+            loops: s.loops.map((l) => (l.id === row.id ? patchLoop(l) : l)),
+          }));
+          persistMyLoopsCache(user.id, useLoopsStore.getState().loops);
+          if (needsPublicStream) {
+            usePlayerStore.getState().promoteLoop(row.id, patchLoop(finalLoop));
           }
-        })();
-      }
+        } catch (err) {
+          console.warn("[createLoop] ACE persist failed:", err);
+        }
+      })();
     } else if (input.isPublic) {
       void (async () => {
         try {

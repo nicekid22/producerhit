@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useAuthStore } from "@/stores/authStore";
 
-const POLL_MS = 60_000;
+const POLL_MS = 300_000;
 
 /** Refreshes profile when tab becomes visible and periodically — catches referrer bonus while app is open. */
 export function ReferralReferrerWatcher() {

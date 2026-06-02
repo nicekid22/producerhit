@@ -35,10 +35,17 @@ export function GrowthBootstrap() {
   }, [pathname, search]);
 
   useEffect(() => {
-    const timer = window.setInterval(() => {
+    const flushIfVisible = () => {
+      if (document.visibilityState !== "visible") return;
       void flushEventQueue();
-    }, 60_000);
-    return () => window.clearInterval(timer);
+    };
+    flushIfVisible();
+    const timer = window.setInterval(flushIfVisible, 180_000);
+    document.addEventListener("visibilitychange", flushIfVisible);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", flushIfVisible);
+    };
   }, []);
 
   useEffect(() => {

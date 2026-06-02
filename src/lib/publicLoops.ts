@@ -29,7 +29,7 @@ export type PublicLoopRow = {
 };
 
 const PUBLIC_LOOP_LIST_SELECT =
-  "id, user_id, name, genre, influence, mood, bpm, prompt, audio_url, stems_url, created_at, seed";
+  "id, user_id, name, genre, influence, mood, bpm, prompt, audio_url, created_at, seed";
 
 /** Détail loop (page publique) — inclut stems_url pour taskId / cover. */
 export const PUBLIC_LOOP_DETAIL_SELECT = `${PUBLIC_LOOP_LIST_SELECT}, stems_url`;
@@ -164,6 +164,20 @@ function mergeWithCuratedCommunityLoops(rows: PublicLoopRow[], options?: { playa
   return sortPublicLoopsByNewest(merged);
 }
 
+/** Détail loop (play / remix) — stems_url chargé à la demande, pas dans le listing. */
+export async function fetchPublicLoopById(loopId: string): Promise<PublicLoopRow | null> {
+  const id = loopId.trim();
+  if (!id) return null;
+  const { data, error } = await supabase
+    .from("loops")
+    .select(PUBLIC_LOOP_DETAIL_SELECT)
+    .eq("id", id)
+    .eq("is_public", true)
+    .maybeSingle();
+  if (error || !data) return null;
+  return normalizePublicLoopRow(data as PublicLoopRow);
+}
+
 export async function fetchPublicLoops(options?: {
   limit?: number;
   timeoutMs?: number;
@@ -230,11 +244,18 @@ export async function attachAuthorsToPublicLoops(rows: PublicLoopRow[]): Promise
  * stream_public → lecture <audio> native (comme ACE), pas de fetch blob ~25 Mo.
  */
 export async function resolvePlayableCommunityAudio(row: PublicLoopRow): Promise<string> {
-  const cacheKey = `community:${row.id}`;
-  const stems = parseStemsUrl(row.stems_url);
+  let playableRow = row;
+  const existingEarly = typeof row.audio_url === "string" ? row.audio_url.trim() : "";
+  if (!parseStemsUrl(row.stems_url) && (!existingEarly || isPublicAceStreamUrl(existingEarly))) {
+    const detail = await fetchPublicLoopById(row.id).catch(() => null);
+    if (detail) playableRow = detail;
+  }
+
+  const cacheKey = `community:${playableRow.id}`;
+  const stems = parseStemsUrl(playableRow.stems_url);
   const httpFromStems = pickHttpAudioUrlForDb(null, stems);
 
-  const existing = typeof row.audio_url === "string" ? row.audio_url.trim() : "";
+  const existing = typeof playableRow.audio_url === "string" ? playableRow.audio_url.trim() : "";
 
   if (existing && isPublicAceStreamUrl(existing) && isPublicAceStreamEnabled()) {
     return withSupabaseFunctionAuth(existing);

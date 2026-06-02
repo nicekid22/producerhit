@@ -27,7 +27,9 @@ type ClientEventPayload = {
 };
 
 const EVENT_QUEUE_KEY = "producerhit_event_queue_v1";
-const FLUSH_BATCH_SIZE = 25;
+const FLUSH_BATCH_SIZE = 8;
+const FLUSH_MIN_INTERVAL_MS = 120_000;
+let lastFlushAt = 0;
 
 function safeJsonParse(raw: string): unknown {
   try {
@@ -73,9 +75,14 @@ export function trackClientEvent(name: string, props?: Record<string, unknown>) 
 
 /** Vide la file d'events vers growth_events (anonyme ou connecté). */
 export async function flushEventQueue(): Promise<void> {
+  if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+  const now = Date.now();
+  if (now - lastFlushAt < FLUSH_MIN_INTERVAL_MS) return;
+
   const q = readQueue();
   if (!q.length) return;
 
+  lastFlushAt = now;
   const batch = q.slice(0, FLUSH_BATCH_SIZE);
   let sent = 0;
   for (const event of batch) {
