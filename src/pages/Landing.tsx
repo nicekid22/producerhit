@@ -14,6 +14,7 @@ import {
   fetchPublicLoops,
   isPlayablePublicLoop,
   resolveAceAudioUrl,
+  resolvePlayableCommunityAudio,
   type PublicLoopRow,
 } from "@/lib/publicLoops";
 import { LandingPrismScene } from "@/components/landing/LandingPrismScene";
@@ -625,8 +626,6 @@ export default function Landing() {
     }
     trackClientEvent("landing_trending_play", { loop_id: track.id });
     void (async () => {
-      const taskId = extractAceTaskId(track.stemsUrl);
-
       const buildLoop = (url: string): Loop => ({
         id: track.id,
         name: track.name,
@@ -649,26 +648,28 @@ export default function Landing() {
         createdAt: new Date().toISOString(),
       });
 
-      const firstUrl = typeof track.audioUrl === "string" ? track.audioUrl.trim() : "";
-      if (firstUrl) {
-        setCurrent(buildLoop(firstUrl), true);
-        return;
-      }
+      const row: PublicLoopRow = {
+        id: track.id,
+        name: track.name,
+        genre: track.genre,
+        mood: track.mood,
+        bpm: track.bpm,
+        prompt: track.prompt,
+        audio_url: track.audioUrl,
+        stems_url: track.stemsUrl ?? null,
+        created_at: null,
+      };
 
-      if (taskId) {
-        let resolved = await resolveAceAudioUrl(taskId).catch(() => "");
-        if (!resolved) {
-          await new Promise((r) => setTimeout(r, 900));
-          resolved = await resolveAceAudioUrl(taskId).catch(() => "");
-        }
-        if (resolved) {
+      const resolved = await resolvePlayableCommunityAudio(row).catch(() => "");
+      if (resolved) {
+        if (!resolved.startsWith("blob:") && resolved !== track.audioUrl?.trim()) {
           setTrending((prev) => prev.map((t) => (t.id === track.id ? { ...t, audioUrl: resolved } : t)));
           setGeneratorSideCards((prev) =>
             prev.map((c) => (c.id === track.id ? { ...c, audioUrl: resolved } : c)),
           );
-          setCurrent(buildLoop(resolved), true);
-          return;
         }
+        setCurrent(buildLoop(resolved), true);
+        return;
       }
 
       toast.error(locale === "fr" ? "Audio indisponible" : "Audio unavailable");
@@ -758,7 +759,7 @@ export default function Landing() {
   useEffect(() => {
     if (!shouldLoadTrending) return;
     let cancelled = false;
-    const cacheKey = "producerhit_landing_trending_cache_v7";
+    const cacheKey = "producerhit_landing_trending_cache_v8";
     let loadedFromCache = false;
     try {
       const raw = window.sessionStorage.getItem(cacheKey);

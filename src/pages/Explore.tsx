@@ -99,7 +99,7 @@ export default function Explore() {
 
   useEffect(() => {
     let cancelled = false;
-    const cacheKey = "producerhit_community_cache_v7";
+    const cacheKey = "producerhit_community_cache_v8";
     let loadedFromCache = false;
     try {
       const raw = window.sessionStorage.getItem(cacheKey);

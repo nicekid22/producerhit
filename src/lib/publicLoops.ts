@@ -4,7 +4,9 @@ import {
   buildPublicAceStreamUrl,
   isPlayablePublicAudioUrl,
   isPublicAceStreamEnabled,
+  isPublicAceStreamUrl,
   pickInlineProviderAudioUrl,
+  withSupabaseFunctionAuth,
 } from "@/lib/publicAcePlayback";
 import { fetchPublicProfileCards, type PublicProfileCard } from "@/lib/creatorProfile";
 import { SUPABASE_LOOP_AUDIO_UPLOAD } from "@/lib/storageAudio";
@@ -27,7 +29,7 @@ export type PublicLoopRow = {
 };
 
 const PUBLIC_LOOP_LIST_SELECT =
-  "id, user_id, name, genre, influence, mood, bpm, prompt, audio_url, created_at, seed";
+  "id, user_id, name, genre, influence, mood, bpm, prompt, audio_url, stems_url, created_at, seed";
 
 /** Détail loop (page publique) — inclut stems_url pour taskId / cover. */
 export const PUBLIC_LOOP_DETAIL_SELECT = `${PUBLIC_LOOP_LIST_SELECT}, stems_url`;
@@ -223,11 +225,31 @@ export async function attachAuthorsToPublicLoops(rows: PublicLoopRow[]): Promise
   });
 }
 
-/** URL jouable en communauté — HTTP ou stream public Edge. */
+/**
+ * URL jouable en communauté.
+ * stream_public → lecture <audio> native (comme ACE), pas de fetch blob ~25 Mo.
+ */
 export async function resolvePlayableCommunityAudio(row: PublicLoopRow): Promise<string> {
-  const existing = typeof row.audio_url === "string" ? row.audio_url.trim() : "";
-  if (!existing) return "";
   const cacheKey = `community:${row.id}`;
+  const stems = parseStemsUrl(row.stems_url);
+  const httpFromStems = pickHttpAudioUrlForDb(null, stems);
+
+  const existing = typeof row.audio_url === "string" ? row.audio_url.trim() : "";
+
+  if (existing && isPublicAceStreamUrl(existing) && isPublicAceStreamEnabled()) {
+    return withSupabaseFunctionAuth(existing);
+  }
+
+  if (!existing) {
+    if (httpFromStems) return resolvePlayableAudioUrl(httpFromStems, cacheKey);
+    const taskId = extractAceTaskId(stems);
+    if (taskId) {
+      const resolved = await resolveAceAudioUrlWithRetry(taskId);
+      if (resolved) return resolvePlayableAudioUrl(resolved, cacheKey);
+    }
+    return "";
+  }
+
   const playable = await resolvePlayableAudioUrl(existing, cacheKey);
   return playable || existing;
 }

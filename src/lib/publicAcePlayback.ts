@@ -24,11 +24,27 @@ export function pickInlineProviderAudioUrl(audioUrlInput: unknown, stemsUrl?: un
   return null;
 }
 
+/** Ajoute apikey pour les appels fetch (le tag <audio> ne peut pas envoyer de headers). */
+export function withSupabaseFunctionAuth(url: string): string {
+  const trimmed = url.trim();
+  const anon = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim();
+  if (!trimmed || !anon || !trimmed.includes("/functions/v1/")) return trimmed;
+  try {
+    const u = new URL(trimmed);
+    if (!u.searchParams.has("apikey")) u.searchParams.set("apikey", anon);
+    return u.toString();
+  } catch {
+    return trimmed;
+  }
+}
+
 export function buildPublicAceStreamUrl(loopId: string): string {
   const id = loopId.trim();
   const base = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.replace(/\/$/, "") ?? "";
   if (!base || !id) return "";
-  return `${base}/functions/v1/generate-loop-ace?action=${STREAM_ACTION}&loopId=${encodeURIComponent(id)}`;
+  return withSupabaseFunctionAuth(
+    `${base}/functions/v1/generate-loop-ace?action=${STREAM_ACTION}&loopId=${encodeURIComponent(id)}`,
+  );
 }
 
 export function isPublicAceStreamUrl(url: unknown): boolean {

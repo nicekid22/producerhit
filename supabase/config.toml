@@ -3,3 +3,7 @@
 
 [functions.stripe-webhook]
 verify_jwt = false
+
+# stream_public : lecture <audio> sans Bearer (communauté publique)
+[functions.generate-loop-ace]
+verify_jwt = false

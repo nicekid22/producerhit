@@ -37,7 +37,10 @@ export function isCrossOriginHttpUrl(url: string): boolean {
   }
 }
 
-/** URLs lourdes / cross-origin — lecture directe <audio>, pas de fetch blob ni Web Audio. */
+/**
+ * URLs partenaires / flux public — lecture directe <audio>, pas de fetch blob ni Web Audio.
+ * Inclut ?action=stream_public (Edge) : le player ne télécharge pas ~25 Mo avant lecture.
+ */
 export function isAcePartnerAudioUrl(url: unknown): boolean {
   const s = typeof url === "string" ? url.trim() : "";
   if (!isHttpAudioUrl(s)) return false;
@@ -81,14 +84,18 @@ export function clearPlayableAudioBlobCache(key?: string) {
   blobCache.clear();
 }
 
-export async function fetchAudioAsBlobUrl(sourceUrl: string, cacheKey: string): Promise<string> {
+export async function fetchAudioAsBlobUrl(
+  sourceUrl: string,
+  cacheKey: string,
+  extraHeaders?: Record<string, string>,
+): Promise<string> {
   const trimmed = sourceUrl.trim();
   if (!trimmed) throw new Error("empty url");
 
   const cached = blobCache.get(cacheKey);
   if (cached) return cached;
 
-  if (cacheKey && !cacheKey.includes(":")) {
+  if (cacheKey && !cacheKey.includes(":") && !extraHeaders) {
     try {
       const { fetchCachedLoopAudioBlob } = await import("@/stores/loopsStore");
       const blob = await fetchCachedLoopAudioBlob(cacheKey);
@@ -107,7 +114,12 @@ export async function fetchAudioAsBlobUrl(sourceUrl: string, cacheKey: string): 
     return trimmed;
   }
 
-  const res = await fetch(trimmed, { mode: "cors", credentials: "omit", referrerPolicy: "no-referrer" });
+  const res = await fetch(trimmed, {
+    mode: "cors",
+    credentials: "omit",
+    referrerPolicy: "no-referrer",
+    headers: extraHeaders,
+  });
   if (!res.ok) throw new Error(`fetch ${res.status}`);
   const blob = await res.blob();
   if (!blob.size) throw new Error("empty blob");

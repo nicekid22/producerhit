@@ -827,6 +827,44 @@ function decodeDataUrl(dataUrl: string): { bytes: Uint8Array; mime: string } | n
   }
 }
 
+function isStreamPublicAudioUrl(url: string): boolean {
+  const s = url.trim();
+  if (!s) return false;
+  try {
+    const u = new URL(s);
+    return u.pathname.includes("/functions/v1/generate-loop-ace") && u.searchParams.get("action") === "stream_public";
+  } catch {
+    return s.includes("generate-loop-ace") && s.includes("action=stream_public");
+  }
+}
+
+function parseStemsRecord(stemsUrl: unknown): Record<string, unknown> | null {
+  if (!stemsUrl) return null;
+  if (typeof stemsUrl === "object" && stemsUrl !== null) return stemsUrl as Record<string, unknown>;
+  if (typeof stemsUrl === "string") {
+    const raw = stemsUrl.trim();
+    if (!raw) return null;
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function pickHttpAudioFromStems(stemsUrl: unknown): string {
+  const obj = parseStemsRecord(stemsUrl);
+  if (!obj) return "";
+  const ace = obj.ace && typeof obj.ace === "object" ? (obj.ace as Record<string, unknown>) : null;
+  const fromAce = typeof ace?.httpAudioUrl === "string" ? ace.httpAudioUrl.trim() : "";
+  if (isHttpUrl(fromAce) && !isStreamPublicAudioUrl(fromAce)) return fromAce;
+  const direct = typeof obj.httpAudioUrl === "string" ? obj.httpAudioUrl.trim() : "";
+  if (isHttpUrl(direct) && !isStreamPublicAudioUrl(direct)) return direct;
+  return "";
+}
+
 async function handleStreamPublic(reqUrl: URL, corsHeaders: Record<string, string>) {
   const loopId = (reqUrl.searchParams.get("loopId") ?? reqUrl.searchParams.get("loop_id") ?? "").trim();
   if (!loopId) {
@@ -842,7 +880,7 @@ async function handleStreamPublic(reqUrl: URL, corsHeaders: Record<string, strin
   const sb = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
   const { data, error } = await sb
     .from("loops")
-    .select("id, is_public, audio_url, provider_audio_inline")
+    .select("id, is_public, audio_url, provider_audio_inline, stems_url")
     .eq("id", loopId)
     .eq("is_public", true)
     .maybeSingle();
@@ -851,7 +889,11 @@ async function handleStreamPublic(reqUrl: URL, corsHeaders: Record<string, strin
     return new Response("Not found", { status: 404, headers: corsHeaders });
   }
 
-  const row = data as { audio_url?: string | null; provider_audio_inline?: string | null };
+  const row = data as {
+    audio_url?: string | null;
+    provider_audio_inline?: string | null;
+    stems_url?: unknown;
+  };
   const inline = typeof row.provider_audio_inline === "string" ? row.provider_audio_inline.trim() : "";
   if (inline) {
     const decoded = decodeDataUrl(inline);
@@ -866,9 +908,14 @@ async function handleStreamPublic(reqUrl: URL, corsHeaders: Record<string, strin
     }
   }
 
+  const httpFromStems = pickHttpAudioFromStems(row.stems_url);
+  if (httpFromStems) {
+    return Response.redirect(httpFromStems, 302);
+  }
+
   const audioUrl = typeof row.audio_url === "string" ? row.audio_url.trim() : "";
   if (audioUrl.startsWith("http://") || audioUrl.startsWith("https://")) {
-    if (audioUrl.includes("action=stream_public")) {
+    if (isStreamPublicAudioUrl(audioUrl)) {
       return new Response("No audio payload", { status: 404, headers: corsHeaders });
     }
     return Response.redirect(audioUrl, 302);
