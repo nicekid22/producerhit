@@ -240,13 +240,16 @@ export function landingCopy(locale: Locale) {
       ? "Tracks publics royalty-free, covers uniques et remix communautaire — découvre, note et relance une vibe en Remix Studio."
       : "Royalty-free public tracks, unique covers, and community remix — discover, rate, and relaunch a vibe in Remix Studio.",
 
-    galleryEyebrow: isFr ? "Créateurs en action" : "Creators in action",
-    galleryTitle: isFr ? "Du studio au feed, partout." : "From studio to feed, anywhere.",
-    galleryLead: isFr
-      ? "Beatmakers, artistes et créateurs de contenu s’appuient sur ProducerHit pour des type beats, des songs complètes et des exports prêts à publier."
-      : "Beatmakers, artists, and content creators rely on ProducerHit for type beats, full songs, and release-ready exports.",
-
     partnersLabel: isFr ? "Compatible avec tes plateformes" : "Works with your platforms",
+
+    socialEyebrow: isFr ? "Réseaux sociaux" : "Social",
+    socialTitle: isFr ? "Suis ProducerHit sur Instagram & TikTok" : "Follow ProducerHit on Instagram & TikTok",
+    socialLead: isFr
+      ? "Workflows producteur, extraits de morceaux, tutos Versions×2 et coulisses du studio — le feed défile, les liens sont en bio."
+      : "Producer workflows, track snippets, Versions×2 tips, and studio BTS — scroll the feed, links in bio.",
+
+    footerSocialLabel: isFr ? "Réseaux" : "Social",
+
     testimonialsTitle: isFr ? "Ils produisent avec ProducerHit" : "They produce with ProducerHit",
     testimonialsHeadline: isFr ? "Retours de producteurs et artistes" : "Feedback from producers and artists",
     testimonialsLead: isFr

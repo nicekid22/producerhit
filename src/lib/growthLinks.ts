@@ -12,7 +12,8 @@ export type GrowthChannel =
   | "whatsapp"
   | "telegram"
   | "email"
-  | "referral";
+  | "referral"
+  | "blog";
 
 const CHANNEL_UTM: Record<GrowthChannel, { utm_source: string; utm_medium: string }> = {
   organic: { utm_source: "google", utm_medium: "organic" },
@@ -27,6 +28,7 @@ const CHANNEL_UTM: Record<GrowthChannel, { utm_source: string; utm_medium: strin
   telegram: { utm_source: "telegram", utm_medium: "social" },
   email: { utm_source: "newsletter", utm_medium: "email" },
   referral: { utm_source: "referral", utm_medium: "referral" },
+  blog: { utm_source: "blog", utm_medium: "content" },
 };
 
 export function buildGrowthUrl(

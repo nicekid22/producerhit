@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import type { User } from "@supabase/supabase-js";
 import { BrandLogo } from "@/components/landing/BrandLogo";
+import { SocialIconLinks } from "@/components/landing/SocialIconLinks";
+import { landingCopy } from "@/lib/landingContent";
 
 type Props = {
   locale: "en" | "fr";
@@ -9,6 +11,7 @@ type Props = {
 
 export function LandingFooter({ locale, user }: Props) {
   const isFr = locale === "fr";
+  const copy = landingCopy(locale);
 
   const productLinks = [
     { to: "/dashboard", label: isFr ? "Générateur" : "Generator" },
@@ -20,12 +23,15 @@ export function LandingFooter({ locale, user }: Props) {
   const seoLinks = [
     { to: isFr ? "/generateur-music-ai" : "/music-ai-generator", label: "Music AI Generator" },
     { to: isFr ? "/generateur-musique-ia-gratuit" : "/free-music-ai-generator", label: isFr ? "Musique IA gratuit" : "Free Music AI" },
-    { to: isFr ? "/musique-sommeil-ia" : "/ai-sleep-music-generator", label: isFr ? "Musique sommeil" : "Sleep Music AI" },
-    { to: isFr ? "/musique-etude-ia" : "/ai-study-music-generator", label: isFr ? "Musique étude" : "Study Music AI" },
+    { to: isFr ? "/texte-en-musique-ia" : "/text-to-music-ai-generator", label: isFr ? "Texte → musique" : "Text to Music AI" },
+    { to: isFr ? "/musique-sommeil-ia" : "/ai-sleep-music-generator", label: isFr ? "Sommeil" : "Sleep AI" },
+    { to: isFr ? "/musique-etude-ia" : "/ai-study-music-generator", label: isFr ? "Étude" : "Study AI" },
+    { to: isFr ? "/musique-concentration-ia" : "/ai-focus-music-generator", label: isFr ? "Focus" : "Focus AI" },
+    { to: isFr ? "/musique-meditation-ia" : "/ai-meditation-music-generator", label: isFr ? "Méditation" : "Meditation AI" },
     { to: "/ai-beat-generator", label: "AI Beat Generator" },
     { to: "/ai-trap-beat-generator", label: "Trap AI" },
     { to: "/ai-lofi-beat-generator", label: "Lo-Fi AI" },
-    { to: "/ai-music-generator", label: "AI Music Generator" },
+    { to: "/ai-phonk-beat-generator", label: "Phonk AI" },
   ];
 
   const compareLinks = [
@@ -60,6 +66,10 @@ export function LandingFooter({ locale, user }: Props) {
                 : "AI song & type beat generator — studio quality, release-ready output."}
             </p>
             <p className="mt-4 text-xs font-semibold text-white/35">Powered by ACE-Step</p>
+            <div className="mt-6">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/40">{copy.footerSocialLabel}</p>
+              <SocialIconLinks locale={locale} variant="footer" className="mt-3" />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-2 md:grid-cols-4 md:col-span-8">
@@ -115,7 +125,7 @@ export function LandingFooter({ locale, user }: Props) {
         </div>
 
         <div className="mt-10 flex flex-col gap-4 border-t border-white/[0.06] pt-8 sm:flex-row sm:items-center sm:justify-between">
-          <span className="text-sm text-white/50">© 2026 ProducerHit</span>
+          <span className="text-sm text-white/50">Made with 💜 © 2026 ProducerHit</span>
           <div className="flex flex-wrap gap-x-5 gap-y-2">
             <Link to={user ? "/dashboard" : "/auth"} className="text-sm font-semibold text-[var(--prism-cyan)] hover:text-white">
               {user ? "Dashboard" : isFr ? "Commencer gratuitement" : "Start free"}

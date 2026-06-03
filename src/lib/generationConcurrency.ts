@@ -3,8 +3,8 @@ import { browserAceKeyCount, usesDirectAceFromBrowser } from "@/lib/aceBrowserKe
 export { usesDirectAceFromBrowser };
 
 /**
- * Parallèle v1+v2 seulement si chaque appel peut utiliser une clé ACE distincte
- * (Edge multi-clés, ou navigateur avec VITE_ACE_STEP_API_KEYS ≥ 2).
+ * Parallèle v1+v2 : clés ACE distinctes côté navigateur (≥2) ou Edge (rotation serveur).
+ * La v2 attend que la v1 ait un preview (voir Dashboard) + délai — pas de double release_task immédiat.
  */
 export function canParallelizeDualGeneration(): boolean {
   if (!usesDirectAceFromBrowser()) return true;

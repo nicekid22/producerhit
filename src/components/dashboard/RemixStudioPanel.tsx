@@ -11,6 +11,7 @@ import { fetchRemixSourceLoop, loopToRemixSource, remixSourceSummary, remixSourc
 import { isSongLoop } from "@/lib/vocalLanguages";
 import { resolveCoverImageUrl } from "@/lib/coverArt";
 import { cn, coverGradient } from "@/lib/utils";
+import { useGrowthUpsellStore } from "@/stores/growthUpsellStore";
 
 function loopLibrarySubtitle(loop: Loop, isFr: boolean): string {
   const parts: string[] = [];
@@ -619,7 +620,14 @@ export function RemixStudioPanel({
         <div className="space-y-2 border-t border-white/10 pt-4">
           {remaining <= 0 ? (
             <p className="text-xs text-amber-200/90">
-              {isFr ? "Plus de crédits ce mois-ci — upgrade ton plan pour remixer." : "No credits left this month — upgrade to remix."}
+              {isFr ? "Plus de crédits ce mois-ci — " : "No credits left this month — "}
+              <button
+                type="button"
+                className="font-semibold text-cyan-200 underline-offset-2 hover:text-white hover:underline"
+                onClick={() => useGrowthUpsellStore.getState().openUpsell("credits_exhausted", { source: "remix_studio" })}
+              >
+                {isFr ? "voir les plans" : "view plans"}
+              </button>
             </p>
           ) : !vibeRecreateMode && !audioFile ? (
             <p className="text-xs text-white/45">{isFr ? "Ajoute un audio pour activer le remix." : "Add audio to enable remix."}</p>

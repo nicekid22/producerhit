@@ -31,6 +31,7 @@ import {
 import type { VisualizerLayout } from "@/lib/visualizer/types";
 import { trackClientEvent } from "@/lib/supabaseClient";
 import { useAuthStore } from "@/stores/authStore";
+import { useGrowthUpsellStore } from "@/stores/growthUpsellStore";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -206,7 +207,7 @@ export function ShareMomentModal({ open, onClose, loop, locale, plan = "free", o
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       if (msg.includes("no_credits")) {
-        toast.error(isFr ? "Plus de crédits ce mois-ci" : "No credits left this month");
+        useGrowthUpsellStore.getState().openUpsell("credits_exhausted", { source: "share_moment_mood" });
         void refreshCredits();
       } else if (msg.includes("query_too_short")) {
         toast.error(isFr ? "Recherche trop courte" : "Search query too short");

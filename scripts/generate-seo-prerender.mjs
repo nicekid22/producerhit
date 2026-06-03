@@ -20,15 +20,19 @@ buildSync({
 });
 
 const mod = await import(pathToFileURL(outFile).href);
-const pages = mod.COMPARISON_PAGES ?? [];
+const comparisons = mod.COMPARISON_PAGES ?? [];
+const seoPages = mod.SEO_PAGES ?? [];
 
 const record = {};
-for (const page of pages) {
+const updatedAt = "2026-05-27";
+
+for (const page of comparisons) {
   for (const [p, locale] of [
     [page.path, "en"],
     [page.pathFr, "fr"],
   ]) {
     record[p] = {
+      kind: "comparison",
       locale,
       pair: locale === "en" ? page.pathFr : page.path,
       slugKey: page.slugKey,
@@ -46,6 +50,28 @@ for (const page of pages) {
           highlight: Boolean(col.highlight),
         })),
       })),
+      faq: (locale === "fr" ? page.faqFr : page.faqEn).map((f) => ({ q: f.q, a: f.a })),
+    };
+  }
+}
+
+for (const page of seoPages) {
+  for (const [p, locale] of [
+    [page.path, "en"],
+    [page.pathFr, "fr"],
+  ]) {
+    record[p] = {
+      kind: "landing",
+      locale,
+      pair: locale === "en" ? page.pathFr : page.path,
+      slugKey: page.slugKey,
+      title: locale === "fr" ? page.titleFr : page.titleEn,
+      description: locale === "fr" ? page.descriptionFr : page.descriptionEn,
+      h1: locale === "fr" ? page.h1Fr : page.h1En,
+      lead: locale === "fr" ? page.leadFr : page.leadEn,
+      bullets: locale === "fr" ? page.bulletsFr : page.bulletsEn,
+      updatedAt,
+      keywords: page.keywords,
       faq: (locale === "fr" ? page.faqFr : page.faqEn).map((f) => ({ q: f.q, a: f.a })),
     };
   }

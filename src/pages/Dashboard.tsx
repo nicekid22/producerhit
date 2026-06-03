@@ -16,7 +16,6 @@ import {
 import { vocalLanguageAutoOption, vocalLanguageDropdownOptions } from "@/lib/vocalLanguages";
 import { Slider } from "@/components/ui/Slider";
 import { Button } from "@/components/ui/Button";
-import { Modal } from "@/components/ui/Modal";
 import { EmptyState } from "@/components/EmptyState";
 import { useGeneratorStore } from "@/stores/generatorStore";
 import { aceKeyIndexForGenerationSlot, browserAceKeyCount } from "@/lib/aceBrowserKeys";
@@ -53,6 +52,13 @@ import { MobileOnboardingSheet, hasSeenMobileOnboarding } from "@/components/das
 import { useAuthStore } from "@/stores/authStore";
 import { useLocaleStore } from "@/stores/localeStore";
 import { getRemainingBeats, PLAN_LIMITS, FREE_MASTERING_UPSELL_AT, getTotalGenerationLimit } from "@/lib/planLimits";
+import {
+  markLowCreditsPromptShown,
+  shouldShowLowCreditsPrompt,
+  shouldShowPostGenerationPrompt,
+  type UpsellReason,
+} from "@/lib/growthUpsell";
+import { useGrowthUpsellStore } from "@/stores/growthUpsellStore";
 import { RemixStudioPanel } from "@/components/dashboard/RemixStudioPanel";
 import { generateBeat, remixLoopAce } from "@/lib/audioApi";
 import { ACE_REMIX_UNAVAILABLE_COPY, AceRemixUnavailableError } from "@/lib/aceRemix";
@@ -386,7 +392,7 @@ export default function Dashboard() {
   const [levelBonus, setLevelBonus] = useState(0);
   const [dailyBonusMonth, setDailyBonusMonth] = useState(0);
   const [profileLoading, setProfileLoading] = useState(false);
-  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const openUpsell = useGrowthUpsellStore((s) => s.openUpsell);
   const [shareMomentLoop, setShareMomentLoop] = useState<Loop | null>(null);
   const [referralPromptOpen, setReferralPromptOpen] = useState(false);
   const [referralCodeForPrompt, setReferralCodeForPrompt] = useState<string | null>(null);
@@ -836,6 +842,27 @@ export default function Dashboard() {
   useEffect(() => {
     if (versions === 2 && remaining < 2) setVersions(1);
   }, [remaining, versions]);
+
+  const promptPlanUpsell = useCallback(
+    (reason: UpsellReason) => {
+      openUpsell(reason, {
+        source: entrySource,
+        remaining,
+        totalLimit,
+        usedThisMonth,
+      });
+      trackClientEvent("upgrade_prompt_shown", { source: entrySource, reason, plan });
+    },
+    [entrySource, openUpsell, plan, remaining, totalLimit, usedThisMonth],
+  );
+
+  useEffect(() => {
+    if (profileBusy || !user) return;
+    if (!shouldShowLowCreditsPrompt(plan, remaining)) return;
+    markLowCreditsPromptShown();
+    promptPlanUpsell("credits_low");
+  }, [plan, profileBusy, promptPlanUpsell, remaining, user]);
+
   const consumeCredit = useCallback(() => {
     setUsedThisMonth((v) => {
       const next = v + 1;
@@ -859,8 +886,8 @@ export default function Dashboard() {
 
   const openMasteringUpgrade = useCallback(() => {
     trackClientEvent("mastering_upgrade_click", { plan, source: "dashboard" });
-    navigate("/pricing?plan=studio&checkout=1");
-  }, [navigate, plan]);
+    promptPlanUpsell("wav_export");
+  }, [plan, promptPlanUpsell]);
   const inferGenreFromPrompt = useCallback((p: string) => {
     const s = p.toLowerCase();
     if (s.includes("pluggnb") || s.includes("pluggn")) return "PluggnB";
@@ -1047,7 +1074,10 @@ export default function Dashboard() {
   ]);
 
   const handleGenerate = useCallback(async () => {
-    if (remaining < versions) return;
+    if (remaining < versions) {
+      promptPlanUpsell(remaining < 1 ? "credits_exhausted" : "credits_low");
+      return;
+    }
     if (generating) return;
     const sessionId = ++generateSessionRef.current;
     setGenerating(true);
@@ -1413,10 +1443,21 @@ export default function Dashboard() {
         });
       };
 
+      let releaseSlot1Gate: (() => void) | null = null;
+      const slot1ReleasedPromise = new Promise<void>((resolve) => {
+        releaseSlot1Gate = resolve;
+      });
+
       const startOne = async (idx: 1 | 2, seed: number, title: string) => {
         const generationKey =
           typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `gen-${Date.now()}-${Math.random().toString(16).slice(2)}`;
         let previewId: string | null = null;
+        let slot1GateReleased = false;
+        const releaseSlot1 = () => {
+          if (idx !== 1 || slot1GateReleased) return;
+          slot1GateReleased = true;
+          releaseSlot1Gate?.();
+        };
         setSlot(idx, {
           status: "generating",
           seed,
@@ -1471,6 +1512,7 @@ export default function Dashboard() {
                 const previewLoop = buildPreviewLoop(quickUrl);
                 upsertLoop(previewLoop);
                 setSlot(idx, { visible: false, previewLoopId: previewId, previewReady: true });
+                releaseSlot1();
                 maybeAutoplayGenerationReady(idx, previewLoop);
               }
 
@@ -1508,7 +1550,7 @@ export default function Dashboard() {
             } catch (e) {
               const msg = e instanceof Error ? e.message : String(e);
               if (!isRetryableGenerationError(msg) || attempt === 1) throw e;
-              await new Promise((r) => setTimeout(r, 1600));
+              await new Promise((r) => setTimeout(r, generationRetryDelayMs(msg, attempt)));
             }
           }
         } catch (err) {
@@ -1525,10 +1567,13 @@ export default function Dashboard() {
             previewId = null;
           }
           setSlot(idx, { status: "error", errorText, visible: true, previewLoopId: undefined, savedLoopId: undefined });
+        } finally {
+          releaseSlot1();
         }
       };
 
-      const PARALLEL_V2_STAGGER_MS = 1200;
+      /** Délai après la v1 « release » (preview ou erreur) avant de lancer la v2 — évite 429 ACE. */
+      const PARALLEL_V2_AFTER_V1_MS = 2800;
 
       if (versions !== 2) {
         await startOne(1, seed1, makeTitle(1));
@@ -1536,7 +1581,12 @@ export default function Dashboard() {
         await Promise.all([
           startOne(1, seed1, makeTitle(1)),
           (async () => {
-            await new Promise((r) => setTimeout(r, PARALLEL_V2_STAGGER_MS));
+            await Promise.race([
+              slot1ReleasedPromise,
+              new Promise<void>((r) => setTimeout(r, 90_000)),
+            ]);
+            if (!isActiveSession()) return;
+            await new Promise((r) => setTimeout(r, PARALLEL_V2_AFTER_V1_MS));
             if (!isActiveSession()) return;
             await startOne(2, seed2, makeTitle(2));
           })(),
@@ -1619,8 +1669,7 @@ export default function Dashboard() {
     } catch (err) {
       const anyErr = err as unknown as { limitReached?: boolean; allSlotsFailed?: boolean };
       if (anyErr?.limitReached) {
-        toast.error(locale === "fr" ? "Limite mensuelle atteinte — upgrade ton plan" : "Monthly limit reached — upgrade your plan");
-        navigate(user ? "/pricing?plan=pro&checkout=1" : "/pricing");
+        promptPlanUpsell("limit_reached");
         return;
       }
       if (anyErr?.allSlotsFailed) return;
@@ -1636,20 +1685,8 @@ export default function Dashboard() {
         });
       }
       if (didGenerate && user) void refreshProfile();
-      if (didGenerate && plan === "free") {
-        try {
-          const key = "producerhit_upgrade_prompt_ts";
-          const lastRaw = window.localStorage.getItem(key);
-          const last = lastRaw ? Number(lastRaw) : 0;
-          const now = Date.now();
-          if (!Number.isFinite(last) || now - last > 6 * 60 * 60 * 1000) {
-            window.localStorage.setItem(key, String(now));
-            setUpgradeOpen(true);
-            trackClientEvent("upgrade_prompt_shown", { source: entrySource });
-          }
-        } catch {
-          void 0;
-        }
+      if (didGenerate && plan === "free" && shouldShowPostGenerationPrompt()) {
+        promptPlanUpsell("post_generation");
       }
     }
   }, [
@@ -1694,6 +1731,7 @@ export default function Dashboard() {
     mode,
     songUiMode,
     navigate,
+    promptPlanUpsell,
     remaining,
     versions,
     setQueue,
@@ -2042,8 +2080,7 @@ export default function Dashboard() {
     if (profileBusy) return;
 
     if (remaining === 0) {
-      toast.error(locale === "fr" ? "Plus de crédits — upgrade ton plan" : "No credits remaining — upgrade your plan");
-      navigate("/pricing");
+      promptPlanUpsell("credits_exhausted");
       setPendingLandingPrompt(null);
       return;
     }
@@ -2068,16 +2105,16 @@ export default function Dashboard() {
     form.genre,
     handleGenerate,
     inferGenreFromPrompt,
-    locale,
-    navigate,
     pendingLandingPrompt,
     profileBusy,
+    promptPlanUpsell,
     remaining,
     setField,
     setLyricsMode,
     setMode,
     setSongDescription,
     setSongUiMode,
+    setPendingLandingPrompt,
   ]);
 
   useEffect(() => {
@@ -3325,7 +3362,10 @@ export default function Dashboard() {
                   }
                   generatingLabel={locale === "fr" ? "Génération…" : "Generating..."}
                   onClick={async () => {
-                    if (remaining < versions) return;
+                    if (remaining < versions) {
+                      promptPlanUpsell(remaining < 1 ? "credits_exhausted" : "credits_low");
+                      return;
+                    }
                     if (generating) return;
                     if (!user) {
                       window.localStorage.setItem(
@@ -3701,25 +3741,6 @@ export default function Dashboard() {
           </>
         )}
       </div>
-      <Modal
-        open={upgradeOpen}
-        title={locale === "fr" ? "Upgrade pour générer sans limite" : "Upgrade to generate more"}
-        description={
-          locale === "fr"
-            ? `Tu es sur Free (${PLAN_LIMITS.free} générations/mois). Passe Pro pour plus de crédits, la priorité génération, et l’export WAV.`
-            : `You're on Free (${PLAN_LIMITS.free} generations/month). Go Pro for more credits, priority generation, and WAV export.`
-        }
-        confirmText={locale === "fr" ? "Passer Pro" : "Go Pro"}
-        onClose={() => {
-          setUpgradeOpen(false);
-          trackClientEvent("upgrade_prompt_dismissed", { source: entrySource });
-        }}
-        onConfirm={() => {
-          setUpgradeOpen(false);
-          trackClientEvent("upgrade_click", { source: entrySource, location: "dashboard_modal", plan: "pro" });
-          navigate("/pricing?plan=pro&checkout=1");
-        }}
-      />
       {mobileV2 && detailsLoop ? (
         <LoopDetailsSheet
           open

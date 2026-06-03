@@ -3,6 +3,7 @@ export type BlogBlock =
   | { type: "h2"; text: string }
   | { type: "h3"; text: string }
   | { type: "ul"; items: string[] }
+  | { type: "callout"; variant: "tip" | "cta" | "note"; title?: string; text: string }
   | { type: "links"; items: { labelEn: string; labelFr: string; href: string }[] };
 
 export type BlogPost = {
@@ -621,6 +622,167 @@ export const BLOG_POSTS: BlogPost[] = [
           { labelEn: "Type beat generator", labelFr: "Type beat IA", href: "/generateur-type-beat-ia" },
           { labelEn: "Trap generator", labelFr: "Générateur trap", href: "/generateur-trap-ia" },
           { labelEn: "Free beats online", labelFr: "Beats gratuits", href: "/generer-beats-gratuit" },
+        ],
+      },
+    ],
+  },
+  {
+    slug: "music-ai-generator-prompt-guide-2026",
+    title: "Music AI generator: prompts that actually work in 2026 (beats + songs)",
+    description:
+      "The exact prompt structure for music AI generator searches: genre, BPM, mood, mix target, and a producer iteration loop with Versions×2 and seed variations.",
+    keywords: ["music ai generator", "text to music AI", "AI music generator", "free music ai generator", "prompt template"],
+    publishedAt: "2026-05-27",
+    updatedAt: "2026-05-27",
+    blocks: [
+      {
+        type: "p",
+        text: "People searching “music AI generator” usually want one of two outcomes: a finished song with vocals, or a clean instrumental they can release. The difference is not the button you click — it’s how you write the prompt and how you iterate afterward.",
+      },
+      {
+        type: "callout",
+        variant: "tip",
+        title: "Producer rule",
+        text: "Never rewrite the whole prompt after a miss. Change one line (drums, melody, or mix) and run a seed variation on the best take.",
+      },
+      { type: "h2", text: "The 5-line prompt frame (copy/paste)" },
+      {
+        type: "ul",
+        items: [
+          "Genre + subgenre (trap / melodic trap / lofi study / ambient sleep)",
+          "Tempo (BPM) + feel (swing, straight, laid-back)",
+          "Mood + energy (dark, uplifting, minimal, cinematic)",
+          "Sound palette (808, hats, rhodes, pads, guitar, vocals space)",
+          "Mix note (clean sub, punchy drums, wide stereo, dry vs spacious)",
+        ],
+      },
+      { type: "h2", text: "Music AI generator vs type beat workflow" },
+      {
+        type: "p",
+        text: "If you need hooks and structure, lean Song Mode. If you need loops for TikTok, YouTube, or a rapper session, stay in Beat Mode with short 16-bar generations and Versions=2 to A/B the pocket immediately.",
+      },
+      { type: "h2", text: "Free tier workflow (no wasted credits)" },
+      {
+        type: "ul",
+        items: [
+          "Generate short (16 bars)",
+          "Enable Versions=2",
+          "Pick the cleaner take",
+          "Variation: same seed vibe, tweak one constraint",
+          "Export MP3, upgrade to WAV when releasing",
+        ],
+      },
+      {
+        type: "links",
+        items: [
+          { labelEn: "Music AI generator", labelFr: "Music AI generator", href: "/music-ai-generator" },
+          { labelEn: "Free music AI", labelFr: "Musique IA gratuit", href: "/free-music-ai-generator" },
+          { labelEn: "Text to music", labelFr: "Texte en musique", href: "/text-to-music-ai-generator" },
+        ],
+      },
+    ],
+  },
+  {
+    slug: "ai-sleep-study-music-generator-guide",
+    title: "Sleep & study music with AI: ambient prompts + loop-friendly mixes",
+    description:
+      "How to generate sleep music, study lofi, and focus ambient tracks with AI — tempo, instrumentation, and iteration tips for seamless background listening.",
+    keywords: ["sleep music", "study music", "focus music", "lofi music", "AI music generator", "ambient music"],
+    publishedAt: "2026-05-27",
+    updatedAt: "2026-05-27",
+    blocks: [
+      {
+        type: "p",
+        text: "Sleep, study, and focus searches on Google Trends outperform many genre keywords because the intent is clear: people want calm, loopable audio — not experimental chaos. AI can deliver that if you constrain tempo, density, and mix.",
+      },
+      {
+        type: "callout",
+        variant: "note",
+        title: "Why these prompts work",
+        text: "Low BPM, sparse drums, soft transients, and ‘no vocals’ reduce artifacts. Long renders fail more often — start short, then extend by variation.",
+      },
+      { type: "h2", text: "Sleep music prompt" },
+      {
+        type: "ul",
+        items: [
+          "Deep sleep ambient, 62 BPM, very slow, warm pads, soft piano, no drums, no vocals",
+          "Seamless loopable 16 bars, minimal movement, gentle low-pass, no harsh highs",
+          "Brown noise texture optional, ultra-clean master",
+        ],
+      },
+      { type: "h2", text: "Study / lofi prompt" },
+      {
+        type: "ul",
+        items: [
+          "Study lofi, 72 BPM, dusty drums very quiet, rhodes chords, vinyl crackle subtle",
+          "Relaxed swing, no vocals, loopable, warm tape saturation, clear but soft mix",
+        ],
+      },
+      { type: "h2", text: "Focus ambient prompt" },
+      {
+        type: "ul",
+        items: [
+          "Focus ambient, 75 BPM, steady pulse, minimal melody, evolving pads, no vocals",
+          "Clean stereo field, no sharp transients, background-friendly dynamics",
+        ],
+      },
+      { type: "h2", text: "Listen before you publish" },
+      {
+        type: "p",
+        text: "Use public community previews below the article fold on ProducerHit to hear how other creators handle calm textures — then generate your own pack with the same discipline.",
+      },
+      {
+        type: "links",
+        items: [
+          { labelEn: "Sleep music AI", labelFr: "Musique sommeil IA", href: "/ai-sleep-music-generator" },
+          { labelEn: "Study music AI", labelFr: "Musique étude IA", href: "/ai-study-music-generator" },
+          { labelEn: "Focus music AI", labelFr: "Musique concentration", href: "/ai-focus-music-generator" },
+        ],
+      },
+    ],
+  },
+  {
+    slug: "generateur-musique-ia-sommeil-etude-fr",
+    title: "Générateur musique IA : musique de sommeil, étude et focus (guide FR)",
+    description:
+      "Prompts FR pour musique de sommeil, lofi étude et ambient concentration — BPM, textures, boucles propres et workflow Versions×2.",
+    keywords: ["générateur musique IA", "musique sommeil", "musique étude", "musique concentration", "lofi IA"],
+    publishedAt: "2026-05-27",
+    updatedAt: "2026-05-27",
+    blocks: [
+      {
+        type: "p",
+        text: "Les recherches « musique sommeil », « musique étude » et « musique concentration » ont souvent plus de volume que des genres niche. Avec un générateur musique IA, la clé est de limiter la densité sonore et de viser une boucle fluide.",
+      },
+      {
+        type: "callout",
+        variant: "cta",
+        title: "Workflow rapide",
+        text: "16 mesures → Versions=2 → garde le meilleur take → Variation sur une seule ligne du prompt → export MP3.",
+      },
+      { type: "h2", text: "Prompt sommeil" },
+      {
+        type: "ul",
+        items: [
+          "Ambient sommeil profond, 60 BPM, pads chauds, piano doux, sans batterie, sans voix",
+          "Boucle 16 mesures seamless, mouvement minimal, highs très doux",
+        ],
+      },
+      { type: "h2", text: "Prompt étude / lofi" },
+      {
+        type: "ul",
+        items: [
+          "Lofi étude, 70 BPM, drums très légers, rhodes, texture vinyle discrète, sans voix",
+          "Swing relax, mix chaud, dynamique de fond",
+        ],
+      },
+      { type: "h2", text: "Liens utiles" },
+      {
+        type: "links",
+        items: [
+          { labelEn: "Sleep AI", labelFr: "Sommeil IA", href: "/musique-sommeil-ia" },
+          { labelEn: "Study AI", labelFr: "Étude IA", href: "/musique-etude-ia" },
+          { labelEn: "Free AI music", labelFr: "IA gratuit", href: "/generateur-musique-ia-gratuit" },
         ],
       },
     ],

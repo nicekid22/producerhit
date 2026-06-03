@@ -1,7 +1,8 @@
 {
-  "generatedAt": "2026-06-02T21:12:34.466Z",
+  "generatedAt": "2026-06-03T08:10:36.084Z",
   "pages": {
     "/suno-alternatives": {
+      "kind": "comparison",
       "locale": "en",
       "pair": "/alternatives-suno",
       "slugKey": "suno-alternatives",
@@ -236,6 +237,7 @@
       ]
     },
     "/alternatives-suno": {
+      "kind": "comparison",
       "locale": "fr",
       "pair": "/suno-alternatives",
       "slugKey": "suno-alternatives",
@@ -470,6 +472,7 @@
       ]
     },
     "/udio-alternatives": {
+      "kind": "comparison",
       "locale": "en",
       "pair": "/alternatives-udio",
       "slugKey": "udio-alternatives",
@@ -699,6 +702,7 @@
       ]
     },
     "/alternatives-udio": {
+      "kind": "comparison",
       "locale": "fr",
       "pair": "/udio-alternatives",
       "slugKey": "udio-alternatives",
@@ -928,6 +932,7 @@
       ]
     },
     "/producerhit-vs-suno": {
+      "kind": "comparison",
       "locale": "en",
       "pair": "/producteurhit-vs-suno",
       "slugKey": "producerhit-vs-suno",
@@ -1092,6 +1097,7 @@
       ]
     },
     "/producteurhit-vs-suno": {
+      "kind": "comparison",
       "locale": "fr",
       "pair": "/producerhit-vs-suno",
       "slugKey": "producerhit-vs-suno",
@@ -1256,6 +1262,7 @@
       ]
     },
     "/producerhit-vs-udio": {
+      "kind": "comparison",
       "locale": "en",
       "pair": "/producteurhit-vs-udio",
       "slugKey": "producerhit-vs-udio",
@@ -1371,6 +1378,7 @@
       ]
     },
     "/producteurhit-vs-udio": {
+      "kind": "comparison",
       "locale": "fr",
       "pair": "/producerhit-vs-udio",
       "slugKey": "producerhit-vs-udio",
@@ -1486,6 +1494,7 @@
       ]
     },
     "/ai-music-generator-comparison-2026": {
+      "kind": "comparison",
       "locale": "en",
       "pair": "/comparatif-generateur-musique-ia-2026",
       "slugKey": "ai-music-generator-comparison-2026",
@@ -1630,6 +1639,7 @@
       ]
     },
     "/comparatif-generateur-musique-ia-2026": {
+      "kind": "comparison",
       "locale": "fr",
       "pair": "/ai-music-generator-comparison-2026",
       "slugKey": "ai-music-generator-comparison-2026",
@@ -1774,6 +1784,7 @@
       ]
     },
     "/suno-vs-udio": {
+      "kind": "comparison",
       "locale": "en",
       "pair": "/comparatif-suno-udio",
       "slugKey": "suno-vs-udio",
@@ -1903,6 +1914,7 @@
       ]
     },
     "/comparatif-suno-udio": {
+      "kind": "comparison",
       "locale": "fr",
       "pair": "/suno-vs-udio",
       "slugKey": "suno-vs-udio",
@@ -2032,6 +2044,7 @@
       ]
     },
     "/beatoven-alternatives": {
+      "kind": "comparison",
       "locale": "en",
       "pair": "/alternatives-beatoven",
       "slugKey": "beatoven-alternatives",
@@ -2182,6 +2195,7 @@
       ]
     },
     "/alternatives-beatoven": {
+      "kind": "comparison",
       "locale": "fr",
       "pair": "/beatoven-alternatives",
       "slugKey": "beatoven-alternatives",
@@ -2332,6 +2346,7 @@
       ]
     },
     "/best-ai-beat-generator-for-producers": {
+      "kind": "comparison",
       "locale": "en",
       "pair": "/meilleur-generateur-beats-ia-producteurs",
       "slugKey": "best-ai-beat-generator-for-producers",
@@ -2561,6 +2576,7 @@
       ]
     },
     "/meilleur-generateur-beats-ia-producteurs": {
+      "kind": "comparison",
       "locale": "fr",
       "pair": "/best-ai-beat-generator-for-producers",
       "slugKey": "best-ai-beat-generator-for-producers",
@@ -2790,6 +2806,7 @@
       ]
     },
     "/ai-song-generator-alternatives": {
+      "kind": "comparison",
       "locale": "en",
       "pair": "/alternatives-generateur-chanson-ia",
       "slugKey": "ai-song-generator-alternatives",
@@ -2915,6 +2932,7 @@
       ]
     },
     "/alternatives-generateur-chanson-ia": {
+      "kind": "comparison",
       "locale": "fr",
       "pair": "/ai-song-generator-alternatives",
       "slugKey": "ai-song-generator-alternatives",
@@ -3040,6 +3058,7 @@
       ]
     },
     "/remix-cover-ai": {
+      "kind": "comparison",
       "locale": "en",
       "pair": "/remix-cover-ia",
       "slugKey": "remix-cover-ai",
@@ -3169,6 +3188,7 @@
       ]
     },
     "/remix-cover-ia": {
+      "kind": "comparison",
       "locale": "fr",
       "pair": "/remix-cover-ai",
       "slugKey": "remix-cover-ai",
@@ -3298,6 +3318,7 @@
       ]
     },
     "/soundraw-alternatives": {
+      "kind": "comparison",
       "locale": "en",
       "pair": "/alternatives-soundraw",
       "slugKey": "soundraw-alternatives",
@@ -3423,6 +3444,7 @@
       ]
     },
     "/alternatives-soundraw": {
+      "kind": "comparison",
       "locale": "fr",
       "pair": "/soundraw-alternatives",
       "slugKey": "soundraw-alternatives",
@@ -3548,6 +3570,7 @@
       ]
     },
     "/mubert-alternatives": {
+      "kind": "comparison",
       "locale": "en",
       "pair": "/alternatives-mubert",
       "slugKey": "mubert-alternatives",
@@ -3653,6 +3676,7 @@
       ]
     },
     "/alternatives-mubert": {
+      "kind": "comparison",
       "locale": "fr",
       "pair": "/mubert-alternatives",
       "slugKey": "mubert-alternatives",
@@ -3758,6 +3782,7 @@
       ]
     },
     "/loudly-alternatives": {
+      "kind": "comparison",
       "locale": "en",
       "pair": "/alternatives-loudly",
       "slugKey": "loudly-alternatives",
@@ -3883,6 +3908,7 @@
       ]
     },
     "/alternatives-loudly": {
+      "kind": "comparison",
       "locale": "fr",
       "pair": "/loudly-alternatives",
       "slugKey": "loudly-alternatives",
@@ -4008,6 +4034,7 @@
       ]
     },
     "/ai-cover-song-generator": {
+      "kind": "comparison",
       "locale": "en",
       "pair": "/generateur-cover-chanson-ia",
       "slugKey": "ai-cover-song-generator",
@@ -4113,6 +4140,7 @@
       ]
     },
     "/generateur-cover-chanson-ia": {
+      "kind": "comparison",
       "locale": "fr",
       "pair": "/ai-cover-song-generator",
       "slugKey": "ai-cover-song-generator",
@@ -4218,6 +4246,7 @@
       ]
     },
     "/spotify-ready-ai-music": {
+      "kind": "comparison",
       "locale": "en",
       "pair": "/musique-ia-spotify-ready",
       "slugKey": "spotify-ready-ai-music",
@@ -4343,6 +4372,7 @@
       ]
     },
     "/musique-ia-spotify-ready": {
+      "kind": "comparison",
       "locale": "fr",
       "pair": "/spotify-ready-ai-music",
       "slugKey": "spotify-ready-ai-music",
@@ -4464,6 +4494,1576 @@
         {
           "q": "La musique IA est-elle autorisée sur Spotify ?",
           "a": "Les règles varient — vérifie toujours les policies distributeur Spotify et les conditions de ton fournisseur IA avant une sortie commerciale."
+        }
+      ]
+    },
+    "/ai-beat-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-beats-ia",
+      "slugKey": "ai-beat-generator",
+      "title": "AI Beat Generator — Create Type Beats Online | ProducerHit",
+      "description": "Use ProducerHit as your AI beat generator: generate type beats fast, try 2 versions, and refine with seed-based variations.",
+      "h1": "AI Beat Generator",
+      "lead": "Generate producer-ready type beats from a text prompt. Start with short clips, generate two candidates, then lock in a vibe with seed-based variations.",
+      "bullets": [
+        "Modern genres: trap, drill, afrobeats, UK garage, house, and more",
+        "Short generation defaults",
+        "Seed saved per result",
+        "MP3/WAV export depending on plan"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI beat generator",
+        "type beat generator",
+        "generate beats online"
+      ],
+      "faq": [
+        {
+          "q": "What is an AI beat generator?",
+          "a": "An AI beat generator creates instrumental music from a text description (genre, mood, tempo)."
+        }
+      ]
+    },
+    "/generateur-beats-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-beat-generator",
+      "slugKey": "ai-beat-generator",
+      "title": "Générateur de beats IA — Type beats en ligne | ProducerHit",
+      "description": "Utilise ProducerHit comme générateur de beats IA : crée des type beats rapidement, génère 2 versions, et fais des variations via seed.",
+      "h1": "Générateur de beats IA",
+      "lead": "Génère des type beats niveau pro à partir d’un prompt. Commence avec des clips courts, génère deux versions, puis garde la vibe avec des variations via seed.",
+      "bullets": [
+        "Genres modernes : trap, drill, afrobeats, UK garage, house, etc.",
+        "Générations courtes par défaut",
+        "Seed sauvegardé par résultat",
+        "Export MP3/WAV selon plan"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI beat generator",
+        "type beat generator",
+        "generate beats online"
+      ],
+      "faq": [
+        {
+          "q": "C’est quoi un générateur de beats IA ?",
+          "a": "Un générateur de beats IA crée des instrumentaux à partir d’une description (genre, mood, tempo)."
+        }
+      ]
+    },
+    "/ai-music-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-musique-ia",
+      "slugKey": "ai-music-generator",
+      "title": "AI Music Generator — Generate Songs & Beats | ProducerHit",
+      "description": "AI music generator for songs and type beats. Describe a vibe, generate, iterate with variations, and export your track.",
+      "h1": "AI Music Generator",
+      "lead": "Create beats and full songs online with an AI music generator built for producers.",
+      "bullets": [
+        "Generate songs with vocals or producer-grade type beats",
+        "Pick the best take with Versions=2",
+        "Reproducible seeds",
+        "Built for speed"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI music generator",
+        "AI song generator",
+        "generate music online"
+      ],
+      "faq": [
+        {
+          "q": "Can I generate both songs and beats?",
+          "a": "Yes. ProducerHit supports full songs and type beats depending on your mode."
+        }
+      ]
+    },
+    "/generateur-musique-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-music-generator",
+      "slugKey": "ai-music-generator",
+      "title": "Générateur de musique IA — Songs & beats | ProducerHit",
+      "description": "Générateur de musique IA pour chansons et type beats. Décris une vibe, génère, itère avec des variations, et exporte ton track.",
+      "h1": "Générateur de musique IA",
+      "lead": "Crée des beats et des chansons en ligne avec un générateur de musique IA pensé pour les producteurs.",
+      "bullets": [
+        "Génère des chansons avec voix ou des type beats niveau pro",
+        "Choisis le meilleur avec Versions=2",
+        "Seeds reproductibles",
+        "Pensé pour aller vite"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI music generator",
+        "AI song generator",
+        "generate music online"
+      ],
+      "faq": [
+        {
+          "q": "Je peux générer des chansons et des beats ?",
+          "a": "Oui. ProducerHit supporte chansons complètes et type beats selon le mode."
+        }
+      ]
+    },
+    "/type-beat-generator-ai": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-type-beat-ia",
+      "slugKey": "type-beat-generator-ai",
+      "title": "Type Beat Generator AI — Producer-Ready Beats | ProducerHit",
+      "description": "Type beat generator AI built for producers: modern genres, clean mix, quick iterations, and reproducible seeds.",
+      "h1": "Type Beat Generator AI",
+      "lead": "Generate type beats with AI using producer-first controls: genre, mood, BPM, and prompt-driven iteration.",
+      "bullets": [
+        "Prompt-driven workflow",
+        "Versions x2",
+        "Seed variations",
+        "Export MP3/WAV"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "type beat generator AI",
+        "AI type beat maker",
+        "producer beats online"
+      ],
+      "faq": [
+        {
+          "q": "What makes a good type beat prompt?",
+          "a": "Include genre, mood, BPM, and 1–2 reference vibes. Keep generations short first."
+        }
+      ]
+    },
+    "/generateur-type-beat-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/type-beat-generator-ai",
+      "slugKey": "type-beat-generator-ai",
+      "title": "Type beat generator IA — Beats pro | ProducerHit",
+      "description": "Type beat generator IA pensé pour les producteurs : genres modernes, mix clean, itérations rapides, seeds reproductibles.",
+      "h1": "Type beat generator IA",
+      "lead": "Génère des type beats avec l’IA via des contrôles producteur : genre, mood, BPM et itération par prompt.",
+      "bullets": [
+        "Workflow piloté par prompt",
+        "Versions x2",
+        "Variations seed",
+        "Export MP3/WAV"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "type beat generator AI",
+        "AI type beat maker",
+        "producer beats online"
+      ],
+      "faq": [
+        {
+          "q": "Qu’est-ce qu’un bon prompt type beat ?",
+          "a": "Inclus genre, mood, BPM et 1–2 vibes de référence. Commence par des générations courtes."
+        }
+      ]
+    },
+    "/generate-beats-online-free": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generer-beats-gratuit",
+      "slugKey": "generate-beats-online-free",
+      "title": "Generate Beats Online Free — AI Beat Generator | ProducerHit",
+      "description": "Generate beats online free with ProducerHit. Start with short clips, pick the best version, then iterate with variations.",
+      "h1": "Generate Beats Online Free",
+      "lead": "Generate beats online for free with ProducerHit. Start with a short clip, pick the best version, then iterate with variations and export.",
+      "bullets": [
+        "Free MP3 downloads on the free plan",
+        "WAV export on paid plans",
+        "Generate two versions at once",
+        "Seed-based Variation"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "generate beats online free",
+        "free beat maker AI",
+        "free AI beat generator"
+      ],
+      "faq": [
+        {
+          "q": "Is it really free to generate beats?",
+          "a": "Yes. You can generate beats on the free plan. Upgrade for more credits and WAV exports."
+        }
+      ]
+    },
+    "/generer-beats-gratuit": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/generate-beats-online-free",
+      "slugKey": "generate-beats-online-free",
+      "title": "Générer des beats en ligne gratuit — IA | ProducerHit",
+      "description": "Génère des beats en ligne gratuitement avec ProducerHit. Commence par des clips courts, choisis la meilleure version, puis itère.",
+      "h1": "Générer des beats en ligne gratuit",
+      "lead": "Génère des beats en ligne gratuitement avec ProducerHit. Commence par un clip court, choisis la meilleure version, puis itère avec des variations et exporte.",
+      "bullets": [
+        "Téléchargements MP3 gratuits sur le plan free",
+        "Export WAV sur les plans payants",
+        "Génère deux versions d’un coup",
+        "Variation via seed"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "generate beats online free",
+        "free beat maker AI",
+        "free AI beat generator"
+      ],
+      "faq": [
+        {
+          "q": "C’est vraiment gratuit de générer des beats ?",
+          "a": "Oui. Tu peux générer des beats sur le plan gratuit. Upgrade pour plus de crédits et l’export WAV."
+        }
+      ]
+    },
+    "/music-ai-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-music-ai",
+      "slugKey": "music-ai-generator",
+      "title": "Music AI Generator — Create Songs & Beats Online | ProducerHit",
+      "description": "Music AI generator for beats and full songs. Text-to-music workflow, free tier, MP3/WAV export. Built for producers and creators.",
+      "h1": "Music AI Generator",
+      "lead": "ProducerHit is a music AI generator built for real output: type beats, songs with vocals, and ambient beds from one prompt. Generate two versions, autoplay results, export when ready.",
+      "bullets": [
+        "Exact keyword: music ai generator",
+        "Beats + Song Mode",
+        "Free plan to start",
+        "Producer workflow (seed, variations)"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "music ai generator",
+        "music AI generator free",
+        "AI music maker",
+        "generate music with AI"
+      ],
+      "faq": [
+        {
+          "q": "Music AI generator vs Suno?",
+          "a": "ProducerHit focuses on producer workflows: type beats, stems mindset, variations, and fast iteration—not only full songs."
+        }
+      ]
+    },
+    "/generateur-music-ai": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/music-ai-generator",
+      "slugKey": "music-ai-generator",
+      "title": "Music AI Generator — Musique IA en ligne | ProducerHit",
+      "description": "Music AI generator pour beats et chansons. Texte vers musique, offre gratuite, export MP3/WAV. Pensé producteurs et créateurs.",
+      "h1": "Music AI Generator",
+      "lead": "ProducerHit est un music AI generator orienté résultat : type beats, chansons avec voix et ambiances depuis un prompt. Deux versions, lecture auto, export quand c'est prêt.",
+      "bullets": [
+        "Mot-clé cible : music ai generator",
+        "Beats + Song Mode",
+        "Plan gratuit pour démarrer",
+        "Workflow producteur (seed, variations)"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "music ai generator",
+        "music AI generator free",
+        "AI music maker",
+        "generate music with AI"
+      ],
+      "faq": [
+        {
+          "q": "Music AI generator vs Suno ?",
+          "a": "ProducerHit vise le workflow producteur : type beats, variations, itération rapide — pas seulement des chansons complètes."
+        }
+      ]
+    },
+    "/free-music-ai-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-musique-ia-gratuit",
+      "slugKey": "free-music-ai-generator",
+      "title": "Free Music AI Generator — Start Creating Online | ProducerHit",
+      "description": "Free music AI generator: create beats and songs online. Monthly free credits, MP3 download, upgrade for WAV and more generations.",
+      "h1": "Free Music AI Generator",
+      "lead": "Use ProducerHit as a free music AI generator. Test prompts, generate two takes, download MP3 on the free plan, then upgrade when you need WAV or higher volume.",
+      "bullets": [
+        "Free monthly generations",
+        "MP3 export on Free",
+        "No credit card to start",
+        "Same studio as paid plans"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "free music ai generator",
+        "music ai generator free",
+        "free AI music maker"
+      ],
+      "faq": [
+        {
+          "q": "Is music ai generator free forever?",
+          "a": "The free tier stays available with monthly limits. Paid plans add credits, priority, and WAV."
+        }
+      ]
+    },
+    "/generateur-musique-ia-gratuit": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/free-music-ai-generator",
+      "slugKey": "free-music-ai-generator",
+      "title": "Générateur musique IA gratuit — Commencer en ligne | ProducerHit",
+      "description": "Générateur musique IA gratuit : crée beats et chansons en ligne. Crédits mensuels, MP3 gratuit, upgrade pour WAV et plus de générations.",
+      "h1": "Générateur musique IA gratuit",
+      "lead": "Utilise ProducerHit comme générateur musique IA gratuit. Teste des prompts, génère deux versions, télécharge en MP3 sur le plan free, puis upgrade pour le WAV ou plus de volume.",
+      "bullets": [
+        "Générations mensuelles gratuites",
+        "Export MP3 sur Free",
+        "Sans carte bancaire pour démarrer",
+        "Même studio que les plans payants"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "free music ai generator",
+        "music ai generator free",
+        "free AI music maker"
+      ],
+      "faq": [
+        {
+          "q": "Le générateur musique IA reste gratuit ?",
+          "a": "Le plan free reste disponible avec des limites mensuelles. Les plans payants ajoutent crédits, priorité et WAV."
+        }
+      ]
+    },
+    "/text-to-music-ai-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/texte-en-musique-ia",
+      "slugKey": "text-to-music-ai-generator",
+      "title": "Text to Music AI Generator — Prompt to Track | ProducerHit",
+      "description": "Text to music AI generator: turn descriptions into beats or songs. Best for producers, content creators, and background music.",
+      "h1": "Text to Music AI Generator",
+      "lead": "The fastest text to music AI generator workflow: write mood + genre + tempo, generate, compare two versions, iterate with seed variations.",
+      "bullets": [
+        "Natural-language prompts",
+        "Beats or full songs",
+        "Reproducible seeds",
+        "Export-ready audio"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "text to music ai generator",
+        "text to music AI",
+        "prompt to music generator"
+      ],
+      "faq": [
+        {
+          "q": "Do I need lyrics?",
+          "a": "No for instrumentals. Switch to Song Mode when you want vocals and structure."
+        }
+      ]
+    },
+    "/texte-en-musique-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/text-to-music-ai-generator",
+      "slugKey": "text-to-music-ai-generator",
+      "title": "Texte en musique IA — Prompt vers morceau | ProducerHit",
+      "description": "Texte en musique IA : transforme une description en beat ou chanson. Idéal producteurs, créateurs et musique de fond.",
+      "h1": "Générateur texte vers musique IA",
+      "lead": "Workflow texte vers musique IA : écris mood + genre + tempo, génère, compare deux versions, itère avec les variations seed.",
+      "bullets": [
+        "Prompts en langage naturel",
+        "Beats ou chansons complètes",
+        "Seeds reproductibles",
+        "Audio prêt export"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "text to music ai generator",
+        "text to music AI",
+        "prompt to music generator"
+      ],
+      "faq": [
+        {
+          "q": "Il faut des paroles ?",
+          "a": "Non pour l'instrumental. Passe en Song Mode pour voix et structure."
+        }
+      ]
+    },
+    "/best-music-ai-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/meilleur-generateur-musique-ai",
+      "slugKey": "best-music-ai-generator",
+      "title": "Best Music AI Generator for Producers (2026) | ProducerHit",
+      "description": "Looking for the best music AI generator? Compare workflow speed, beat quality, variations, and export options with ProducerHit.",
+      "h1": "Best Music AI Generator",
+      "lead": "The best music AI generator for producers prioritizes iteration: Versions×2, seed locking, type beats, and WAV export—not just one-shot songs.",
+      "bullets": [
+        "Built for beatmakers",
+        "Comparison pages vs Suno/Udio",
+        "Community + remix",
+        "Transparent pricing"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "best music ai generator",
+        "best free music ai generator",
+        "best AI music generator for producers"
+      ],
+      "faq": [
+        {
+          "q": "Best for beats or songs?",
+          "a": "Both — Beat mode for type beats, Song Mode for vocals and hooks."
+        }
+      ]
+    },
+    "/meilleur-generateur-musique-ai": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/best-music-ai-generator",
+      "slugKey": "best-music-ai-generator",
+      "title": "Meilleur générateur musique IA pour producteurs (2026) | ProducerHit",
+      "description": "Tu cherches le meilleur générateur musique IA ? Compare vitesse, qualité des beats, variations et exports avec ProducerHit.",
+      "h1": "Meilleur générateur musique IA",
+      "lead": "Le meilleur générateur musique IA pour producteurs priorise l'itération : Versions×2, seed, type beats et export WAV — pas seulement un one-shot.",
+      "bullets": [
+        "Pensé beatmakers",
+        "Pages comparatif vs Suno/Udio",
+        "Communauté + remix",
+        "Tarifs transparents"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "best music ai generator",
+        "best free music ai generator",
+        "best AI music generator for producers"
+      ],
+      "faq": [
+        {
+          "q": "Mieux pour beats ou chansons ?",
+          "a": "Les deux — mode Beat pour type beats, Song Mode pour voix et hooks."
+        }
+      ]
+    },
+    "/ai-sleep-music-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/musique-sommeil-ia",
+      "slugKey": "ai-sleep-music-generator",
+      "title": "Sleep AI Generator — Create sleep music Online | ProducerHit",
+      "description": "Generate sleep music with AI. Calm, royalty-free backgrounds for sleep. Free to start — MP3 export.",
+      "h1": "Sleep AI Music Generator",
+      "lead": "ProducerHit turns text into sleep music for sleep. Describe the mood (warm pads, soft piano, rain texture), generate two versions, and export MP3 for YouTube, podcasts, or apps.",
+      "bullets": [
+        "Built for sleep & background listening",
+        "Instrumental-first Song Mode workflow",
+        "Versions ×2 to pick the best take",
+        "Community inspiration & fast iteration"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "sleep music AI generator",
+        "AI sleep music",
+        "generate sleep music online",
+        "free sleep music AI"
+      ],
+      "faq": [
+        {
+          "q": "Can I make long sleep music tracks?",
+          "a": "Start with shorter generations, then chain variations with the same seed mood until you lock a seamless vibe."
+        },
+        {
+          "q": "Is it free?",
+          "a": "Yes — the free plan includes monthly generations and MP3 download. Upgrade for more credits and WAV export."
+        }
+      ]
+    },
+    "/musique-sommeil-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-sleep-music-generator",
+      "slugKey": "ai-sleep-music-generator",
+      "title": "Générateur sommeil IA — musique sommeil en ligne | ProducerHit",
+      "description": "Génère de la musique sommeil avec l'IA. Fonds calmes, royalty-free pour sommeil. Gratuit pour commencer — export MP3.",
+      "h1": "Générateur musique sommeil IA",
+      "lead": "ProducerHit transforme du texte en musique sommeil pour sommeil. Décris l'ambiance (pads chauds, piano doux, texture pluie), génère deux versions, exporte en MP3 pour YouTube, podcasts ou apps.",
+      "bullets": [
+        "Pensé pour sommeil & écoute en fond",
+        "Workflow Song Mode instrumental",
+        "Versions ×2 pour choisir le meilleur take",
+        "Inspiration communauté & itération rapide"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "sleep music AI generator",
+        "AI sleep music",
+        "generate sleep music online",
+        "free sleep music AI"
+      ],
+      "faq": [
+        {
+          "q": "Je peux faire de longs morceaux musique sommeil ?",
+          "a": "Commence par des générations courtes, puis enchaîne des variations avec la même ambiance jusqu'à une vibe fluide."
+        },
+        {
+          "q": "C'est gratuit ?",
+          "a": "Oui — le plan gratuit inclut des générations mensuelles et le téléchargement MP3. Upgrade pour plus de crédits et le WAV."
+        }
+      ]
+    },
+    "/ai-deep-sleep-music-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/musique-sommeil-profond-ia",
+      "slugKey": "ai-deep-sleep-music-generator",
+      "title": "Deep Sleep AI Generator — Create deep sleep music Online | ProducerHit",
+      "description": "Generate deep sleep music with AI. Calm, royalty-free backgrounds for deep sleep. Free to start — MP3 export.",
+      "h1": "Deep Sleep AI Music Generator",
+      "lead": "ProducerHit turns text into deep sleep music for deep sleep. Describe the mood (warm pads, soft piano, rain texture), generate two versions, and export MP3 for YouTube, podcasts, or apps.",
+      "bullets": [
+        "Built for deep sleep & background listening",
+        "Instrumental-first Song Mode workflow",
+        "Versions ×2 to pick the best take",
+        "Community inspiration & fast iteration"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "deep sleep music AI generator",
+        "AI deep sleep music",
+        "generate deep sleep music online",
+        "free deep sleep music AI"
+      ],
+      "faq": [
+        {
+          "q": "Can I make long deep sleep music tracks?",
+          "a": "Start with shorter generations, then chain variations with the same seed mood until you lock a seamless vibe."
+        },
+        {
+          "q": "Is it free?",
+          "a": "Yes — the free plan includes monthly generations and MP3 download. Upgrade for more credits and WAV export."
+        }
+      ]
+    },
+    "/musique-sommeil-profond-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-deep-sleep-music-generator",
+      "slugKey": "ai-deep-sleep-music-generator",
+      "title": "Générateur sommeil profond IA — musique sommeil profond en ligne | ProducerHit",
+      "description": "Génère de la musique sommeil profond avec l'IA. Fonds calmes, royalty-free pour sommeil profond. Gratuit pour commencer — export MP3.",
+      "h1": "Générateur musique sommeil profond IA",
+      "lead": "ProducerHit transforme du texte en musique sommeil profond pour sommeil profond. Décris l'ambiance (pads chauds, piano doux, texture pluie), génère deux versions, exporte en MP3 pour YouTube, podcasts ou apps.",
+      "bullets": [
+        "Pensé pour sommeil profond & écoute en fond",
+        "Workflow Song Mode instrumental",
+        "Versions ×2 pour choisir le meilleur take",
+        "Inspiration communauté & itération rapide"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "deep sleep music AI generator",
+        "AI deep sleep music",
+        "generate deep sleep music online",
+        "free deep sleep music AI"
+      ],
+      "faq": [
+        {
+          "q": "Je peux faire de longs morceaux musique sommeil profond ?",
+          "a": "Commence par des générations courtes, puis enchaîne des variations avec la même ambiance jusqu'à une vibe fluide."
+        },
+        {
+          "q": "C'est gratuit ?",
+          "a": "Oui — le plan gratuit inclut des générations mensuelles et le téléchargement MP3. Upgrade pour plus de crédits et le WAV."
+        }
+      ]
+    },
+    "/ai-meditation-music-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/musique-meditation-ia",
+      "slugKey": "ai-meditation-music-generator",
+      "title": "Meditation AI Generator — Create meditation music Online | ProducerHit",
+      "description": "Generate meditation music with AI. Calm, royalty-free backgrounds for meditation. Free to start — MP3 export.",
+      "h1": "Meditation AI Music Generator",
+      "lead": "ProducerHit turns text into meditation music for meditation. Describe the mood (warm pads, soft piano, rain texture), generate two versions, and export MP3 for YouTube, podcasts, or apps.",
+      "bullets": [
+        "Built for meditation & background listening",
+        "Instrumental-first Song Mode workflow",
+        "Versions ×2 to pick the best take",
+        "Community inspiration & fast iteration"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "meditation music AI generator",
+        "AI meditation music",
+        "generate meditation music online",
+        "free meditation music AI"
+      ],
+      "faq": [
+        {
+          "q": "Can I make long meditation music tracks?",
+          "a": "Start with shorter generations, then chain variations with the same seed mood until you lock a seamless vibe."
+        },
+        {
+          "q": "Is it free?",
+          "a": "Yes — the free plan includes monthly generations and MP3 download. Upgrade for more credits and WAV export."
+        }
+      ]
+    },
+    "/musique-meditation-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-meditation-music-generator",
+      "slugKey": "ai-meditation-music-generator",
+      "title": "Générateur méditation IA — musique méditation en ligne | ProducerHit",
+      "description": "Génère de la musique méditation avec l'IA. Fonds calmes, royalty-free pour méditation. Gratuit pour commencer — export MP3.",
+      "h1": "Générateur musique méditation IA",
+      "lead": "ProducerHit transforme du texte en musique méditation pour méditation. Décris l'ambiance (pads chauds, piano doux, texture pluie), génère deux versions, exporte en MP3 pour YouTube, podcasts ou apps.",
+      "bullets": [
+        "Pensé pour méditation & écoute en fond",
+        "Workflow Song Mode instrumental",
+        "Versions ×2 pour choisir le meilleur take",
+        "Inspiration communauté & itération rapide"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "meditation music AI generator",
+        "AI meditation music",
+        "generate meditation music online",
+        "free meditation music AI"
+      ],
+      "faq": [
+        {
+          "q": "Je peux faire de longs morceaux musique méditation ?",
+          "a": "Commence par des générations courtes, puis enchaîne des variations avec la même ambiance jusqu'à une vibe fluide."
+        },
+        {
+          "q": "C'est gratuit ?",
+          "a": "Oui — le plan gratuit inclut des générations mensuelles et le téléchargement MP3. Upgrade pour plus de crédits et le WAV."
+        }
+      ]
+    },
+    "/ai-study-music-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/musique-etude-ia",
+      "slugKey": "ai-study-music-generator",
+      "title": "Study AI Generator — Create study music Online | ProducerHit",
+      "description": "Generate study music with AI. Calm, royalty-free backgrounds for study. Free to start — MP3 export.",
+      "h1": "Study AI Music Generator",
+      "lead": "ProducerHit turns text into study music for study. Describe the mood (warm pads, soft piano, rain texture), generate two versions, and export MP3 for YouTube, podcasts, or apps.",
+      "bullets": [
+        "Built for study & background listening",
+        "Instrumental-first Song Mode workflow",
+        "Versions ×2 to pick the best take",
+        "Community inspiration & fast iteration"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "study music AI generator",
+        "AI study music",
+        "generate study music online",
+        "free study music AI"
+      ],
+      "faq": [
+        {
+          "q": "Can I make long study music tracks?",
+          "a": "Start with shorter generations, then chain variations with the same seed mood until you lock a seamless vibe."
+        },
+        {
+          "q": "Is it free?",
+          "a": "Yes — the free plan includes monthly generations and MP3 download. Upgrade for more credits and WAV export."
+        }
+      ]
+    },
+    "/musique-etude-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-study-music-generator",
+      "slugKey": "ai-study-music-generator",
+      "title": "Générateur étude IA — musique étude en ligne | ProducerHit",
+      "description": "Génère de la musique étude avec l'IA. Fonds calmes, royalty-free pour étude. Gratuit pour commencer — export MP3.",
+      "h1": "Générateur musique étude IA",
+      "lead": "ProducerHit transforme du texte en musique étude pour étude. Décris l'ambiance (pads chauds, piano doux, texture pluie), génère deux versions, exporte en MP3 pour YouTube, podcasts ou apps.",
+      "bullets": [
+        "Pensé pour étude & écoute en fond",
+        "Workflow Song Mode instrumental",
+        "Versions ×2 pour choisir le meilleur take",
+        "Inspiration communauté & itération rapide"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "study music AI generator",
+        "AI study music",
+        "generate study music online",
+        "free study music AI"
+      ],
+      "faq": [
+        {
+          "q": "Je peux faire de longs morceaux musique étude ?",
+          "a": "Commence par des générations courtes, puis enchaîne des variations avec la même ambiance jusqu'à une vibe fluide."
+        },
+        {
+          "q": "C'est gratuit ?",
+          "a": "Oui — le plan gratuit inclut des générations mensuelles et le téléchargement MP3. Upgrade pour plus de crédits et le WAV."
+        }
+      ]
+    },
+    "/ai-focus-music-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/musique-concentration-ia",
+      "slugKey": "ai-focus-music-generator",
+      "title": "Focus AI Generator — Create focus music Online | ProducerHit",
+      "description": "Generate focus music with AI. Calm, royalty-free backgrounds for focus. Free to start — MP3 export.",
+      "h1": "Focus AI Music Generator",
+      "lead": "ProducerHit turns text into focus music for focus. Describe the mood (warm pads, soft piano, rain texture), generate two versions, and export MP3 for YouTube, podcasts, or apps.",
+      "bullets": [
+        "Built for focus & background listening",
+        "Instrumental-first Song Mode workflow",
+        "Versions ×2 to pick the best take",
+        "Community inspiration & fast iteration"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "focus music AI generator",
+        "AI focus music",
+        "generate focus music online",
+        "free focus music AI"
+      ],
+      "faq": [
+        {
+          "q": "Can I make long focus music tracks?",
+          "a": "Start with shorter generations, then chain variations with the same seed mood until you lock a seamless vibe."
+        },
+        {
+          "q": "Is it free?",
+          "a": "Yes — the free plan includes monthly generations and MP3 download. Upgrade for more credits and WAV export."
+        }
+      ]
+    },
+    "/musique-concentration-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-focus-music-generator",
+      "slugKey": "ai-focus-music-generator",
+      "title": "Générateur concentration IA — musique concentration en ligne | ProducerHit",
+      "description": "Génère de la musique concentration avec l'IA. Fonds calmes, royalty-free pour concentration. Gratuit pour commencer — export MP3.",
+      "h1": "Générateur musique concentration IA",
+      "lead": "ProducerHit transforme du texte en musique concentration pour concentration. Décris l'ambiance (pads chauds, piano doux, texture pluie), génère deux versions, exporte en MP3 pour YouTube, podcasts ou apps.",
+      "bullets": [
+        "Pensé pour concentration & écoute en fond",
+        "Workflow Song Mode instrumental",
+        "Versions ×2 pour choisir le meilleur take",
+        "Inspiration communauté & itération rapide"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "focus music AI generator",
+        "AI focus music",
+        "generate focus music online",
+        "free focus music AI"
+      ],
+      "faq": [
+        {
+          "q": "Je peux faire de longs morceaux musique concentration ?",
+          "a": "Commence par des générations courtes, puis enchaîne des variations avec la même ambiance jusqu'à une vibe fluide."
+        },
+        {
+          "q": "C'est gratuit ?",
+          "a": "Oui — le plan gratuit inclut des générations mensuelles et le téléchargement MP3. Upgrade pour plus de crédits et le WAV."
+        }
+      ]
+    },
+    "/ai-relaxing-music-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/musique-relaxation-ia",
+      "slugKey": "ai-relaxing-music-generator",
+      "title": "Relaxing AI Generator — Create relaxing music Online | ProducerHit",
+      "description": "Generate relaxing music with AI. Calm, royalty-free backgrounds for relaxing. Free to start — MP3 export.",
+      "h1": "Relaxing AI Music Generator",
+      "lead": "ProducerHit turns text into relaxing music for relaxing. Describe the mood (warm pads, soft piano, rain texture), generate two versions, and export MP3 for YouTube, podcasts, or apps.",
+      "bullets": [
+        "Built for relaxing & background listening",
+        "Instrumental-first Song Mode workflow",
+        "Versions ×2 to pick the best take",
+        "Community inspiration & fast iteration"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "relaxing music AI generator",
+        "AI relaxing music",
+        "generate relaxing music online",
+        "free relaxing music AI"
+      ],
+      "faq": [
+        {
+          "q": "Can I make long relaxing music tracks?",
+          "a": "Start with shorter generations, then chain variations with the same seed mood until you lock a seamless vibe."
+        },
+        {
+          "q": "Is it free?",
+          "a": "Yes — the free plan includes monthly generations and MP3 download. Upgrade for more credits and WAV export."
+        }
+      ]
+    },
+    "/musique-relaxation-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-relaxing-music-generator",
+      "slugKey": "ai-relaxing-music-generator",
+      "title": "Générateur relaxation IA — musique relaxation en ligne | ProducerHit",
+      "description": "Génère de la musique relaxation avec l'IA. Fonds calmes, royalty-free pour relaxation. Gratuit pour commencer — export MP3.",
+      "h1": "Générateur musique relaxation IA",
+      "lead": "ProducerHit transforme du texte en musique relaxation pour relaxation. Décris l'ambiance (pads chauds, piano doux, texture pluie), génère deux versions, exporte en MP3 pour YouTube, podcasts ou apps.",
+      "bullets": [
+        "Pensé pour relaxation & écoute en fond",
+        "Workflow Song Mode instrumental",
+        "Versions ×2 pour choisir le meilleur take",
+        "Inspiration communauté & itération rapide"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "relaxing music AI generator",
+        "AI relaxing music",
+        "generate relaxing music online",
+        "free relaxing music AI"
+      ],
+      "faq": [
+        {
+          "q": "Je peux faire de longs morceaux musique relaxation ?",
+          "a": "Commence par des générations courtes, puis enchaîne des variations avec la même ambiance jusqu'à une vibe fluide."
+        },
+        {
+          "q": "C'est gratuit ?",
+          "a": "Oui — le plan gratuit inclut des générations mensuelles et le téléchargement MP3. Upgrade pour plus de crédits et le WAV."
+        }
+      ]
+    },
+    "/ai-lofi-music-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/musique-lofi-ia",
+      "slugKey": "ai-lofi-music-generator",
+      "title": "Lo-Fi AI Generator — Create lo-fi music Online | ProducerHit",
+      "description": "Generate lo-fi music with AI. Calm, royalty-free backgrounds for lo-fi. Free to start — MP3 export.",
+      "h1": "Lo-Fi AI Music Generator",
+      "lead": "ProducerHit turns text into lo-fi music for lo-fi. Describe the mood (warm pads, soft piano, rain texture), generate two versions, and export MP3 for YouTube, podcasts, or apps.",
+      "bullets": [
+        "Built for lo-fi & background listening",
+        "Instrumental-first Song Mode workflow",
+        "Versions ×2 to pick the best take",
+        "Community inspiration & fast iteration"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "lo-fi music AI generator",
+        "AI lo-fi music",
+        "generate lo-fi music online",
+        "free lo-fi music AI"
+      ],
+      "faq": [
+        {
+          "q": "Can I make long lo-fi music tracks?",
+          "a": "Start with shorter generations, then chain variations with the same seed mood until you lock a seamless vibe."
+        },
+        {
+          "q": "Is it free?",
+          "a": "Yes — the free plan includes monthly generations and MP3 download. Upgrade for more credits and WAV export."
+        }
+      ]
+    },
+    "/musique-lofi-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-lofi-music-generator",
+      "slugKey": "ai-lofi-music-generator",
+      "title": "Générateur lofi IA — musique lofi en ligne | ProducerHit",
+      "description": "Génère de la musique lofi avec l'IA. Fonds calmes, royalty-free pour lofi. Gratuit pour commencer — export MP3.",
+      "h1": "Générateur musique lofi IA",
+      "lead": "ProducerHit transforme du texte en musique lofi pour lofi. Décris l'ambiance (pads chauds, piano doux, texture pluie), génère deux versions, exporte en MP3 pour YouTube, podcasts ou apps.",
+      "bullets": [
+        "Pensé pour lofi & écoute en fond",
+        "Workflow Song Mode instrumental",
+        "Versions ×2 pour choisir le meilleur take",
+        "Inspiration communauté & itération rapide"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "lo-fi music AI generator",
+        "AI lo-fi music",
+        "generate lo-fi music online",
+        "free lo-fi music AI"
+      ],
+      "faq": [
+        {
+          "q": "Je peux faire de longs morceaux musique lofi ?",
+          "a": "Commence par des générations courtes, puis enchaîne des variations avec la même ambiance jusqu'à une vibe fluide."
+        },
+        {
+          "q": "C'est gratuit ?",
+          "a": "Oui — le plan gratuit inclut des générations mensuelles et le téléchargement MP3. Upgrade pour plus de crédits et le WAV."
+        }
+      ]
+    },
+    "/ai-ambient-music-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/musique-ambient-ia",
+      "slugKey": "ai-ambient-music-generator",
+      "title": "Ambient AI Generator — Create ambient music Online | ProducerHit",
+      "description": "Generate ambient music with AI. Calm, royalty-free backgrounds for ambient. Free to start — MP3 export.",
+      "h1": "Ambient AI Music Generator",
+      "lead": "ProducerHit turns text into ambient music for ambient. Describe the mood (warm pads, soft piano, rain texture), generate two versions, and export MP3 for YouTube, podcasts, or apps.",
+      "bullets": [
+        "Built for ambient & background listening",
+        "Instrumental-first Song Mode workflow",
+        "Versions ×2 to pick the best take",
+        "Community inspiration & fast iteration"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "ambient music AI generator",
+        "AI ambient music",
+        "generate ambient music online",
+        "free ambient music AI"
+      ],
+      "faq": [
+        {
+          "q": "Can I make long ambient music tracks?",
+          "a": "Start with shorter generations, then chain variations with the same seed mood until you lock a seamless vibe."
+        },
+        {
+          "q": "Is it free?",
+          "a": "Yes — the free plan includes monthly generations and MP3 download. Upgrade for more credits and WAV export."
+        }
+      ]
+    },
+    "/musique-ambient-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-ambient-music-generator",
+      "slugKey": "ai-ambient-music-generator",
+      "title": "Générateur ambient IA — musique ambient en ligne | ProducerHit",
+      "description": "Génère de la musique ambient avec l'IA. Fonds calmes, royalty-free pour ambient. Gratuit pour commencer — export MP3.",
+      "h1": "Générateur musique ambient IA",
+      "lead": "ProducerHit transforme du texte en musique ambient pour ambient. Décris l'ambiance (pads chauds, piano doux, texture pluie), génère deux versions, exporte en MP3 pour YouTube, podcasts ou apps.",
+      "bullets": [
+        "Pensé pour ambient & écoute en fond",
+        "Workflow Song Mode instrumental",
+        "Versions ×2 pour choisir le meilleur take",
+        "Inspiration communauté & itération rapide"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "ambient music AI generator",
+        "AI ambient music",
+        "generate ambient music online",
+        "free ambient music AI"
+      ],
+      "faq": [
+        {
+          "q": "Je peux faire de longs morceaux musique ambient ?",
+          "a": "Commence par des générations courtes, puis enchaîne des variations avec la même ambiance jusqu'à une vibe fluide."
+        },
+        {
+          "q": "C'est gratuit ?",
+          "a": "Oui — le plan gratuit inclut des générations mensuelles et le téléchargement MP3. Upgrade pour plus de crédits et le WAV."
+        }
+      ]
+    },
+    "/ai-yoga-music-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/musique-yoga-ia",
+      "slugKey": "ai-yoga-music-generator",
+      "title": "Yoga AI Generator — Create yoga music Online | ProducerHit",
+      "description": "Generate yoga music with AI. Calm, royalty-free backgrounds for yoga. Free to start — MP3 export.",
+      "h1": "Yoga AI Music Generator",
+      "lead": "ProducerHit turns text into yoga music for yoga. Describe the mood (warm pads, soft piano, rain texture), generate two versions, and export MP3 for YouTube, podcasts, or apps.",
+      "bullets": [
+        "Built for yoga & background listening",
+        "Instrumental-first Song Mode workflow",
+        "Versions ×2 to pick the best take",
+        "Community inspiration & fast iteration"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "yoga music AI generator",
+        "AI yoga music",
+        "generate yoga music online",
+        "free yoga music AI"
+      ],
+      "faq": [
+        {
+          "q": "Can I make long yoga music tracks?",
+          "a": "Start with shorter generations, then chain variations with the same seed mood until you lock a seamless vibe."
+        },
+        {
+          "q": "Is it free?",
+          "a": "Yes — the free plan includes monthly generations and MP3 download. Upgrade for more credits and WAV export."
+        }
+      ]
+    },
+    "/musique-yoga-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-yoga-music-generator",
+      "slugKey": "ai-yoga-music-generator",
+      "title": "Générateur yoga IA — musique yoga en ligne | ProducerHit",
+      "description": "Génère de la musique yoga avec l'IA. Fonds calmes, royalty-free pour yoga. Gratuit pour commencer — export MP3.",
+      "h1": "Générateur musique yoga IA",
+      "lead": "ProducerHit transforme du texte en musique yoga pour yoga. Décris l'ambiance (pads chauds, piano doux, texture pluie), génère deux versions, exporte en MP3 pour YouTube, podcasts ou apps.",
+      "bullets": [
+        "Pensé pour yoga & écoute en fond",
+        "Workflow Song Mode instrumental",
+        "Versions ×2 pour choisir le meilleur take",
+        "Inspiration communauté & itération rapide"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "yoga music AI generator",
+        "AI yoga music",
+        "generate yoga music online",
+        "free yoga music AI"
+      ],
+      "faq": [
+        {
+          "q": "Je peux faire de longs morceaux musique yoga ?",
+          "a": "Commence par des générations courtes, puis enchaîne des variations avec la même ambiance jusqu'à une vibe fluide."
+        },
+        {
+          "q": "C'est gratuit ?",
+          "a": "Oui — le plan gratuit inclut des générations mensuelles et le téléchargement MP3. Upgrade pour plus de crédits et le WAV."
+        }
+      ]
+    },
+    "/ai-chill-music-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/musique-chill-ia",
+      "slugKey": "ai-chill-music-generator",
+      "title": "Chill AI Generator — Create chill music Online | ProducerHit",
+      "description": "Generate chill music with AI. Calm, royalty-free backgrounds for chill. Free to start — MP3 export.",
+      "h1": "Chill AI Music Generator",
+      "lead": "ProducerHit turns text into chill music for chill. Describe the mood (warm pads, soft piano, rain texture), generate two versions, and export MP3 for YouTube, podcasts, or apps.",
+      "bullets": [
+        "Built for chill & background listening",
+        "Instrumental-first Song Mode workflow",
+        "Versions ×2 to pick the best take",
+        "Community inspiration & fast iteration"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "chill music AI generator",
+        "AI chill music",
+        "generate chill music online",
+        "free chill music AI"
+      ],
+      "faq": [
+        {
+          "q": "Can I make long chill music tracks?",
+          "a": "Start with shorter generations, then chain variations with the same seed mood until you lock a seamless vibe."
+        },
+        {
+          "q": "Is it free?",
+          "a": "Yes — the free plan includes monthly generations and MP3 download. Upgrade for more credits and WAV export."
+        }
+      ]
+    },
+    "/musique-chill-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-chill-music-generator",
+      "slugKey": "ai-chill-music-generator",
+      "title": "Générateur chill IA — musique chill en ligne | ProducerHit",
+      "description": "Génère de la musique chill avec l'IA. Fonds calmes, royalty-free pour chill. Gratuit pour commencer — export MP3.",
+      "h1": "Générateur musique chill IA",
+      "lead": "ProducerHit transforme du texte en musique chill pour chill. Décris l'ambiance (pads chauds, piano doux, texture pluie), génère deux versions, exporte en MP3 pour YouTube, podcasts ou apps.",
+      "bullets": [
+        "Pensé pour chill & écoute en fond",
+        "Workflow Song Mode instrumental",
+        "Versions ×2 pour choisir le meilleur take",
+        "Inspiration communauté & itération rapide"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "chill music AI generator",
+        "AI chill music",
+        "generate chill music online",
+        "free chill music AI"
+      ],
+      "faq": [
+        {
+          "q": "Je peux faire de longs morceaux musique chill ?",
+          "a": "Commence par des générations courtes, puis enchaîne des variations avec la même ambiance jusqu'à une vibe fluide."
+        },
+        {
+          "q": "C'est gratuit ?",
+          "a": "Oui — le plan gratuit inclut des générations mensuelles et le téléchargement MP3. Upgrade pour plus de crédits et le WAV."
+        }
+      ]
+    },
+    "/ai-trap-beat-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-trap-ia",
+      "slugKey": "ai-trap-beat-generator",
+      "title": "AI Trap Beat Generator — Dark 808 Type Beats Online | ProducerHit",
+      "description": "Generate trap beats with AI: dark 808s, sliding bass, tight hats. Free to start. Export MP3/WAV.",
+      "h1": "AI Trap Beat Generator",
+      "lead": "Create dark trap and type beats from a text prompt. Generate two versions, pick the best bounce, iterate with seed variations.",
+      "bullets": [
+        "Dark trap & drill-ready bounce",
+        "808-focused prompts",
+        "Versions x2 for faster hits",
+        "MP3 free · WAV on Pro"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI trap beat generator",
+        "trap type beat AI",
+        "808 beat generator",
+        "dark trap beats online"
+      ],
+      "faq": [
+        {
+          "q": "Can I make Metro-style trap beats?",
+          "a": "Yes — describe the vibe (dark, minimal, sliding 808s) and iterate with Variation to lock the pocket."
+        }
+      ]
+    },
+    "/generateur-trap-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-trap-beat-generator",
+      "slugKey": "ai-trap-beat-generator",
+      "title": "Générateur trap IA — Type beats 808 en ligne | ProducerHit",
+      "description": "Génère des beats trap avec l’IA : 808 dark, bass qui slide, hats serrés. Gratuit pour commencer.",
+      "h1": "Générateur de beats trap IA",
+      "lead": "Crée des beats trap dark et des type beats à partir d’un prompt. Génère deux versions, choisis le meilleur bounce, itère avec des variations seed.",
+      "bullets": [
+        "Bounce trap dark & drill-ready",
+        "Prompts orientés 808",
+        "Versions x2 pour trouver plus vite",
+        "MP3 gratuit · WAV sur Pro"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI trap beat generator",
+        "trap type beat AI",
+        "808 beat generator",
+        "dark trap beats online"
+      ],
+      "faq": [
+        {
+          "q": "Je peux faire des beats style Metro ?",
+          "a": "Oui — décris la vibe (dark, minimal, 808 qui slide) et itère avec Variation pour verrouiller le pocket."
+        }
+      ]
+    },
+    "/ai-drill-beat-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-drill-ia",
+      "slugKey": "ai-drill-beat-generator",
+      "title": "AI Drill Beat Generator — UK & NY Drill Online | ProducerHit",
+      "description": "AI drill beat generator for aggressive pockets, sliding bass and tight hats. Generate online free.",
+      "h1": "AI Drill Beat Generator",
+      "lead": "Generate drill type beats with AI — sliding 808s, aggressive drums, dark melodies. Built for quick iteration.",
+      "bullets": [
+        "UK & NY drill vibes",
+        "140+ BPM friendly",
+        "Seed variations",
+        "Community remix inspiration"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI drill beat generator",
+        "UK drill AI",
+        "NY drill type beat",
+        "drill beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "How do I get a harder drill pocket?",
+          "a": "Generate short, try Versions=2, then use Variation on the best take with a tighter prompt."
+        }
+      ]
+    },
+    "/generateur-drill-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-drill-beat-generator",
+      "slugKey": "ai-drill-beat-generator",
+      "title": "Générateur drill IA — UK & NY drill en ligne | ProducerHit",
+      "description": "Générateur de beats drill IA : pocket agressif, bass qui slide, hats serrés. Génère en ligne gratuitement.",
+      "h1": "Générateur de beats drill IA",
+      "lead": "Génère des type beats drill avec l’IA — 808 qui slide, drums agressifs, mélodies dark. Pensé pour itérer vite.",
+      "bullets": [
+        "Vibes UK & NY drill",
+        "Compatible 140+ BPM",
+        "Variations seed",
+        "Inspiration remix communauté"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI drill beat generator",
+        "UK drill AI",
+        "NY drill type beat",
+        "drill beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Comment avoir un pocket drill plus hard ?",
+          "a": "Génère court, active Versions=2, puis Variation sur le meilleur take avec un prompt plus serré."
+        }
+      ]
+    },
+    "/ai-rnb-beat-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-rnb-ia",
+      "slugKey": "ai-rnb-beat-generator",
+      "title": "AI R&B Beat Generator — Trapsoul & 90s R&B Online | ProducerHit",
+      "description": "Create R&B and trapsoul beats with AI. Warm chords, moody drums, song-ready structure.",
+      "h1": "AI R&B Beat Generator",
+      "lead": "Generate R&B, trapsoul and neo-soul instrumentals from prompts. Perfect for hooks and toplines.",
+      "bullets": [
+        "Warm chords & moody drums",
+        "Song Mode with vocals",
+        "Type beat workflow",
+        "Free MP3 export"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI R&B beat generator",
+        "trapsoul AI",
+        "90s R&B beats online",
+        "R&B type beat generator"
+      ],
+      "faq": [
+        {
+          "q": "Can I generate full R&B songs?",
+          "a": "Yes — switch to Song Mode for vocals, structure and hooks."
+        }
+      ]
+    },
+    "/generateur-rnb-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-rnb-beat-generator",
+      "slugKey": "ai-rnb-beat-generator",
+      "title": "Générateur R&B IA — Trapsoul & 90s R&B en ligne | ProducerHit",
+      "description": "Crée des beats R&B et trapsoul avec l’IA. Accords chauds, drums moody, structure prête chanson.",
+      "h1": "Générateur de beats R&B IA",
+      "lead": "Génère des instrumentaux R&B, trapsoul et neo-soul à partir de prompts. Parfait pour hooks et toplines.",
+      "bullets": [
+        "Accords chauds & drums moody",
+        "Song Mode avec voix",
+        "Workflow type beat",
+        "Export MP3 gratuit"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI R&B beat generator",
+        "trapsoul AI",
+        "90s R&B beats online",
+        "R&B type beat generator"
+      ],
+      "faq": [
+        {
+          "q": "Je peux générer des chansons R&B complètes ?",
+          "a": "Oui — passe en Song Mode pour voix, structure et hooks."
+        }
+      ]
+    },
+    "/ai-afrobeats-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-afrobeats-ia",
+      "slugKey": "ai-afrobeats-generator",
+      "title": "AI Afrobeats Generator — Summer Hits & Grooves Online | ProducerHit",
+      "description": "Generate Afrobeats and amapiano-inspired grooves with AI. Bright chords, percussive grooves, export-ready.",
+      "h1": "AI Afrobeats Generator",
+      "lead": "Create Afrobeats instrumentals and songs with AI — percussive grooves, bright energy, release-ready mixes.",
+      "bullets": [
+        "Afrobeats & amapiano vibes",
+        "Song Mode for vocals",
+        "Fast iteration",
+        "Public community previews"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI afrobeats generator",
+        "afrobeats beat maker",
+        "amapiano AI beats",
+        "afrobeat type beat online"
+      ],
+      "faq": [
+        {
+          "q": "Is Afrobeats good for TikTok clips?",
+          "a": "Yes — generate short clips first, then export MP3 for social content."
+        }
+      ]
+    },
+    "/generateur-afrobeats-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-afrobeats-generator",
+      "slugKey": "ai-afrobeats-generator",
+      "title": "Générateur Afrobeats IA — Hits d’été en ligne | ProducerHit",
+      "description": "Génère des grooves Afrobeats et amapiano avec l’IA. Accords lumineux, grooves percussifs, prêt export.",
+      "h1": "Générateur Afrobeats IA",
+      "lead": "Crée des instrumentaux et chansons Afrobeats avec l’IA — grooves percussifs, énergie lumineuse, mix release-ready.",
+      "bullets": [
+        "Vibes Afrobeats & amapiano",
+        "Song Mode pour voix",
+        "Itération rapide",
+        "Aperçus communauté publique"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI afrobeats generator",
+        "afrobeats beat maker",
+        "amapiano AI beats",
+        "afrobeat type beat online"
+      ],
+      "faq": [
+        {
+          "q": "L’Afrobeats marche pour TikTok ?",
+          "a": "Oui — génère d’abord des clips courts, puis exporte MP3 pour le social."
+        }
+      ]
+    },
+    "/ai-hip-hop-beat-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-hip-hop-ia",
+      "slugKey": "ai-hip-hop-beat-generator",
+      "title": "AI Hip Hop Beat Generator — Boom Bap & Modern Beats | ProducerHit",
+      "description": "AI hip hop beat generator for boom bap, trap and modern rap production. Free online beat maker.",
+      "h1": "AI Hip Hop Beat Generator",
+      "lead": "From boom bap samples to modern trap — generate hip hop beats online with producer-first controls.",
+      "bullets": [
+        "Multiple hip-hop subgenres",
+        "BPM & key control",
+        "Versions x2",
+        "Library & remix workflow"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI hip hop beat generator",
+        "boom bap AI",
+        "rap beat maker online",
+        "hip hop type beat AI"
+      ],
+      "faq": [
+        {
+          "q": "Old school or new school?",
+          "a": "Both — describe the era and influence in your prompt for targeted results."
+        }
+      ]
+    },
+    "/generateur-hip-hop-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-hip-hop-beat-generator",
+      "slugKey": "ai-hip-hop-beat-generator",
+      "title": "Générateur hip-hop IA — Boom bap & beats modernes | ProducerHit",
+      "description": "Générateur hip-hop IA pour boom bap, trap et prod rap moderne. Beat maker en ligne gratuit.",
+      "h1": "Générateur de beats hip-hop IA",
+      "lead": "Du boom bap au trap moderne — génère des beats hip-hop en ligne avec des contrôles producteur.",
+      "bullets": [
+        "Plusieurs sous-genres hip-hop",
+        "Contrôle BPM & key",
+        "Versions x2",
+        "Bibliothèque & remix"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI hip hop beat generator",
+        "boom bap AI",
+        "rap beat maker online",
+        "hip hop type beat AI"
+      ],
+      "faq": [
+        {
+          "q": "Old school ou new school ?",
+          "a": "Les deux — décris l’ère et l’influence dans ton prompt pour des résultats ciblés."
+        }
+      ]
+    },
+    "/ai-pop-beat-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-pop-ia",
+      "slugKey": "ai-pop-beat-generator",
+      "title": "AI Pop Beat Generator — Catchy Hooks & Radio-Ready | ProducerHit",
+      "description": "Generate pop beats and full pop songs with AI. Catchy hooks, clean mixes, fast iteration.",
+      "h1": "AI Pop Beat Generator",
+      "lead": "Create pop instrumentals and full songs with vocals. Built for hooks, choruses and release-ready energy.",
+      "bullets": [
+        "Song Mode with vocals",
+        "Hook-focused prompts",
+        "Seed variations",
+        "WAV export on Pro"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI pop beat generator",
+        "pop song AI generator",
+        "catchy pop beats online",
+        "pop music maker AI"
+      ],
+      "faq": [
+        {
+          "q": "Can I export for streaming?",
+          "a": "Download MP3 (Free) or WAV (Pro) and check platform rules for AI content."
+        }
+      ]
+    },
+    "/generateur-pop-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-pop-beat-generator",
+      "slugKey": "ai-pop-beat-generator",
+      "title": "Générateur pop IA — Hooks catchy & radio-ready | ProducerHit",
+      "description": "Génère des beats pop et des chansons pop complètes avec l’IA. Hooks catchy, mix clean, itération rapide.",
+      "h1": "Générateur de beats pop IA",
+      "lead": "Crée des instrumentaux pop et des chansons complètes avec voix. Pensé pour hooks, refrains et énergie release-ready.",
+      "bullets": [
+        "Song Mode avec voix",
+        "Prompts orientés hook",
+        "Variations seed",
+        "Export WAV sur Pro"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI pop beat generator",
+        "pop song AI generator",
+        "catchy pop beats online",
+        "pop music maker AI"
+      ],
+      "faq": [
+        {
+          "q": "Je peux exporter pour le streaming ?",
+          "a": "Télécharge MP3 (Free) ou WAV (Pro) et vérifie les règles plateformes pour le contenu IA."
+        }
+      ]
+    },
+    "/ai-lofi-beat-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-lofi-ia",
+      "slugKey": "ai-lofi-beat-generator",
+      "title": "AI Lo-Fi Beat Generator — Chill Hip Hop Online | ProducerHit",
+      "description": "AI lo-fi beat generator: dusty drums, warm chords, study & chill vibes. Generate online free.",
+      "h1": "AI Lo-Fi Beat Generator",
+      "lead": "Create lo-fi beats with AI — swing hats, vinyl texture, mellow keys. Perfect for study streams and chill content.",
+      "bullets": [
+        "Study & chill presets via prompt",
+        "Versions ×2",
+        "Seed variations",
+        "MP3 free · WAV Pro"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI lofi beat generator",
+        "lofi type beat AI",
+        "chill beat maker"
+      ],
+      "faq": [
+        {
+          "q": "Lo-fi beat or lo-fi song?",
+          "a": "Start in Beat mode for instrumentals; use Song Mode if you want vocals on top."
+        }
+      ]
+    },
+    "/generateur-lofi-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-lofi-beat-generator",
+      "slugKey": "ai-lofi-beat-generator",
+      "title": "Générateur beat lofi IA — Chill hip hop en ligne | ProducerHit",
+      "description": "Générateur beat lofi IA : drums dusty, accords chauds, vibes étude & chill. Génère en ligne gratuitement.",
+      "h1": "Générateur beat lofi IA",
+      "lead": "Crée des beats lofi avec l'IA — hats swing, texture vinyle, keys mellow. Parfait streams étude et contenu chill.",
+      "bullets": [
+        "Presets étude & chill via prompt",
+        "Versions ×2",
+        "Variations seed",
+        "MP3 gratuit · WAV Pro"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI lofi beat generator",
+        "lofi type beat AI",
+        "chill beat maker"
+      ],
+      "faq": [
+        {
+          "q": "Beat lofi ou chanson lofi ?",
+          "a": "Commence en mode Beat pour l'instrumental ; Song Mode si tu veux des voix."
+        }
+      ]
+    },
+    "/ai-phonk-beat-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-phonk-ia",
+      "slugKey": "ai-phonk-beat-generator",
+      "title": "AI Phonk Beat Generator — Drift & Memphis Online | ProducerHit",
+      "description": "AI phonk beat generator: distorted 808s, cowbells, dark Memphis energy. Generate phonk type beats fast.",
+      "h1": "AI Phonk Beat Generator",
+      "lead": "Generate phonk and drift beats with AI. Describe distorted bass, aggressive hats, and dark samples — iterate with seed variations.",
+      "bullets": [
+        "Phonk & drift-ready prompts",
+        "140+ BPM friendly",
+        "Dark trap crossover",
+        "Fast type beat workflow"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI phonk beat generator",
+        "phonk type beat AI",
+        "drift phonk beats"
+      ],
+      "faq": [
+        {
+          "q": "How to get harder phonk 808?",
+          "a": "Mention distorted 808, cowbell melody, and minimal melody in your prompt."
+        }
+      ]
+    },
+    "/generateur-phonk-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-phonk-beat-generator",
+      "slugKey": "ai-phonk-beat-generator",
+      "title": "Générateur beat phonk IA — Drift & Memphis en ligne | ProducerHit",
+      "description": "Générateur beat phonk IA : 808 disto, cowbells, énergie Memphis dark. Génère des type beats phonk vite.",
+      "h1": "Générateur beat phonk IA",
+      "lead": "Génère des beats phonk et drift avec l'IA. Décris bass disto, hats agressifs et samples dark — itère avec les seeds.",
+      "bullets": [
+        "Prompts phonk & drift",
+        "Compatible 140+ BPM",
+        "Crossover trap dark",
+        "Workflow type beat rapide"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI phonk beat generator",
+        "phonk type beat AI",
+        "drift phonk beats"
+      ],
+      "faq": [
+        {
+          "q": "Comment avoir un 808 phonk plus hard ?",
+          "a": "Mentionne 808 disto, mélodie cowbell et mélodie minimale dans ton prompt."
         }
       ]
     }

@@ -21,6 +21,7 @@ import { prepareLoopVariantGeneration, variantResultTitle } from "@/lib/loopVari
 import { getLoopAudioRetentionCardLabel, type LoopAudioRetentionContext } from "@/lib/loopAudioRetention";
 import { extractLoopVocalLanguage, formatVocalLanguageLabel, isSongLoop } from "@/lib/vocalLanguages";
 import { canDownloadStems } from "@/lib/planEntitlements";
+import { useGrowthUpsellStore } from "@/stores/growthUpsellStore";
 import {
   Bookmark,
   Check,
@@ -347,7 +348,7 @@ export function LoopCardItem({
       } catch (err) {
         const anyErr = err as unknown as { limitReached?: boolean };
         if (anyErr?.limitReached) {
-          toast.error(locale === "fr" ? "Limite mensuelle atteinte — upgrade ton plan" : "Monthly limit reached — upgrade your plan");
+          useGrowthUpsellStore.getState().openUpsell("limit_reached", { source: "loop_card_variation" });
         } else {
           const rawMessage = err instanceof Error ? err.message : "";
           const lower = rawMessage.toLowerCase();

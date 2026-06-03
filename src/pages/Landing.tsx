@@ -34,7 +34,7 @@ import { LandingFooter } from "@/components/landing/LandingFooter";
 import { LogoMarquee } from "@/components/landing/LogoMarquee";
 import { SocialProofStats } from "@/components/landing/SocialProofStats";
 import { TestimonialsStrip } from "@/components/landing/TestimonialsStrip";
-import { VisualCarousel } from "@/components/landing/VisualCarousel";
+import { LandingSocialFeed } from "@/components/landing/LandingSocialFeed";
 import { LandingCommunityRail } from "@/components/landing/LandingCommunityRail";
 import { LandingGenerator, type GeneratorSideCard } from "@/components/landing/LandingGenerator";
 import { LandingWorkflow } from "@/components/landing/LandingWorkflow";
@@ -1367,10 +1367,6 @@ export default function Landing() {
         </RevealSection>
 
         <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
-          <VisualCarousel locale={locale} />
-        </RevealSection>
-
-        <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
           <div className="pk-landing-section-head">
             <h2 className="pk-landing-section-head__title">
               <span className="pk-prism-holo-text">{locale === "fr" ? "Tarifs" : "Pricing"}</span>
@@ -1450,6 +1446,10 @@ export default function Landing() {
               </>
             )}
           </p>
+        </RevealSection>
+
+        <RevealSection id="social" className={`${landingSectionClass()} pk-landing-below-fold`}>
+          <LandingSocialFeed locale={locale} />
         </RevealSection>
 
         <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>

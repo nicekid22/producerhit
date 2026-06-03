@@ -2,14 +2,19 @@ import fs from "node:fs";
 import path from "node:path";
 
 type PrerenderPage = {
+  kind?: "landing" | "comparison";
+  slugKey?: string;
   locale: string;
   pair: string;
   title: string;
   description: string;
   h1: string;
-  verdict: string;
+  verdict?: string;
+  lead?: string;
+  bullets?: string[];
   updatedAt: string;
-  matrix: Array<{ label: string; values: Array<{ name: string; value: string; highlight?: boolean }> }>;
+  keywords?: string[];
+  matrix?: Array<{ label: string; values: Array<{ name: string; value: string; highlight?: boolean }> }>;
   faq: Array<{ q: string; a: string }>;
 };
 
@@ -29,35 +34,23 @@ function loadManifest(): Manifest {
   return JSON.parse(raw) as Manifest;
 }
 
-function renderPage(origin: string, pagePath: string, page: PrerenderPage) {
-  const canonical = `${origin}${pagePath}`;
-  const enUrl = page.locale === "en" ? canonical : `${origin}${page.pair}`;
-  const frUrl = page.locale === "fr" ? canonical : `${origin}${page.pair}`;
-
-  const matrixRows = page.matrix
-    .map((row) => {
-      const cells = row.values
-        .map((c) => `<td${c.highlight ? ' style="font-weight:600"' : ""}>${escapeHtml(c.value)}</td>`)
-        .join("");
-      return `<tr><th scope="row">${escapeHtml(row.label)}</th>${cells}</tr>`;
-    })
-    .join("");
-
-  const headerCells = page.matrix[0]?.values.map((c) => `<th scope="col">${escapeHtml(c.name)}</th>`).join("") ?? "";
-
-  const faqHtml = page.faq
-    .map((f) => `<details><summary>${escapeHtml(f.q)}</summary><p>${escapeHtml(f.a)}</p></details>`)
-    .join("");
-
-  const faqJsonLd = JSON.stringify({
+function faqJsonLd(faq: PrerenderPage["faq"]) {
+  return JSON.stringify({
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: page.faq.map((f) => ({
+    mainEntity: faq.map((f) => ({
       "@type": "Question",
       name: f.q,
       acceptedAnswer: { "@type": "Answer", text: f.a },
     })),
   });
+}
+
+function headBlock(origin: string, pagePath: string, page: PrerenderPage) {
+  const canonical = `${origin}${pagePath}`;
+  const enUrl = page.locale === "en" ? canonical : `${origin}${page.pair}`;
+  const frUrl = page.locale === "fr" ? canonical : `${origin}${page.pair}`;
+  const faqLd = page.faq.length ? `<script type="application/ld+json">${faqJsonLd(page.faq)}</script>` : "";
 
   return `<!doctype html>
 <html lang="${page.locale}">
@@ -76,33 +69,85 @@ function renderPage(origin: string, pagePath: string, page: PrerenderPage) {
   <meta property="og:description" content="${escapeHtml(page.description)}"/>
   <meta property="og:url" content="${canonical}"/>
   <meta property="og:image" content="${origin}/og-image.svg"/>
-  <script type="application/ld+json">${faqJsonLd}</script>
+  ${faqLd}
   <style>
     body{font-family:system-ui,sans-serif;max-width:960px;margin:0 auto;padding:24px;line-height:1.5;color:#111}
     table{border-collapse:collapse;width:100%;margin:24px 0}
     th,td{border:1px solid #ddd;padding:8px;text-align:left;vertical-align:top}
     th{background:#f5f5f5}
+    ul.bullets{margin:16px 0;padding-left:20px}
     details{margin:12px 0;padding:12px;border:1px solid #eee;border-radius:8px}
     .cta{display:inline-block;margin-top:16px;padding:12px 20px;background:#7c3aed;color:#fff;text-decoration:none;border-radius:999px;font-weight:600}
-    .verdict{background:#f3e8ff;border:1px solid #ddd6fe;border-radius:12px;padding:16px;margin:16px 0}
+    .verdict,.lead{background:#f3e8ff;border:1px solid #ddd6fe;border-radius:12px;padding:16px;margin:16px 0}
+    ol.steps{margin:16px 0;padding-left:20px}
+    ol.steps li{margin:8px 0}
   </style>
-</head>
+</head>`;
+}
+
+function renderLanding(origin: string, pagePath: string, page: PrerenderPage) {
+  const bullets = (page.bullets ?? []).map((b) => `<li>${escapeHtml(b)}</li>`).join("");
+  const faqHtml = page.faq
+    .map((f) => `<details><summary>${escapeHtml(f.q)}</summary><p>${escapeHtml(f.a)}</p></details>`)
+    .join("");
+  const ctaLabel = page.locale === "fr" ? "Commencer gratuitement" : "Start free";
+  const interactive = page.locale === "fr" ? "Version interactive" : "Open interactive version";
+
+  return `${headBlock(origin, pagePath, page)}
+<body>
+  <header>
+    <p><a href="${origin}/">ProducerHit</a> · <a href="${origin}/blog">Blog</a></p>
+    <h1>${escapeHtml(page.h1)}</h1>
+    <p><small>Updated ${escapeHtml(page.updatedAt)}</small></p>
+  </header>
+  <section class="lead"><p>${escapeHtml(page.lead ?? page.description)}</p></section>
+  <section><h2>${page.locale === "fr" ? "Points clés" : "Highlights"}</h2><ul class="bullets">${bullets}</ul></section>
+  <section><h2>FAQ</h2>${faqHtml}</section>
+  <p><a class="cta" href="${origin}/auth?utm_source=google&utm_medium=organic&utm_campaign=${encodeURIComponent(page.slugKey ?? "seo")}">${ctaLabel}</a></p>
+  <p><a href="${origin}${pagePath}">${interactive}</a></p>
+</body>
+</html>`;
+}
+
+function renderComparison(origin: string, pagePath: string, page: PrerenderPage) {
+  const matrix = page.matrix ?? [];
+  const matrixRows = matrix
+    .map((row) => {
+      const cells = row.values
+        .map((c) => `<td${c.highlight ? ' style="font-weight:600"' : ""}>${escapeHtml(c.value)}</td>`)
+        .join("");
+      return `<tr><th scope="row">${escapeHtml(row.label)}</th>${cells}</tr>`;
+    })
+    .join("");
+
+  const headerCells = matrix[0]?.values.map((c) => `<th scope="col">${escapeHtml(c.name)}</th>`).join("") ?? "";
+  const faqHtml = page.faq
+    .map((f) => `<details><summary>${escapeHtml(f.q)}</summary><p>${escapeHtml(f.a)}</p></details>`)
+    .join("");
+  const ctaLabel = page.locale === "fr" ? "Commencer gratuitement" : "Start free";
+
+  return `${headBlock(origin, pagePath, page)}
 <body>
   <header>
     <p><a href="${origin}/">ProducerHit</a></p>
     <h1>${escapeHtml(page.h1)}</h1>
     <p><small>Updated ${escapeHtml(page.updatedAt)}</small></p>
   </header>
-  <section class="verdict"><strong>${page.locale === "fr" ? "Réponse rapide" : "Quick answer"}</strong><p>${escapeHtml(page.verdict)}</p></section>
+  <section class="verdict"><strong>${page.locale === "fr" ? "Réponse rapide" : "Quick answer"}</strong><p>${escapeHtml(page.verdict ?? "")}</p></section>
   <table>
     <thead><tr><th scope="col">${page.locale === "fr" ? "Critère" : "Feature"}</th>${headerCells}</tr></thead>
     <tbody>${matrixRows}</tbody>
   </table>
   <section><h2>FAQ</h2>${faqHtml}</section>
-  <p><a class="cta" href="${origin}/auth">${page.locale === "fr" ? "Commencer gratuitement" : "Start free"}</a></p>
+  <p><a class="cta" href="${origin}/auth">${ctaLabel}</a></p>
   <p><a href="${origin}${pagePath}">Open interactive version</a></p>
 </body>
 </html>`;
+}
+
+function renderPage(origin: string, pagePath: string, page: PrerenderPage) {
+  if (page.kind === "landing") return renderLanding(origin, pagePath, page);
+  return renderComparison(origin, pagePath, page);
 }
 
 export default async function handler(

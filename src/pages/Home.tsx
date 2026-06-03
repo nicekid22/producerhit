@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useEffect, useMemo } from "react";
 import { Navbar } from "@/components/Navbar";
 import { LandingFooter } from "@/components/landing/LandingFooter";
+import { SeoLandingExtras } from "@/components/seo/SeoLandingExtras";
 import { useLocaleStore } from "@/stores/localeStore";
 import { useAuthStore } from "@/stores/authStore";
 import {
@@ -11,7 +12,8 @@ import {
   getSeoPageLocaleForPath,
   SEO_PAGES,
 } from "@/lib/seoPages";
-import { buildSignupUrl } from "@/lib/growthLinks";
+import { getSeoLandingExtras } from "@/lib/seoLandingExtras";
+import { buildGrowthUrl } from "@/lib/growthLinks";
 
 export default function Home() {
   const { pathname } = useLocation();
@@ -28,35 +30,45 @@ export default function Home() {
     if (pathLocale !== locale) setLocale(pathLocale);
   }, [pathname, locale, seo, setLocale]);
 
-  const t = (en: string, fr: string) => (isFr ? fr : en);
-
   const page = useMemo(() => {
     if (!seo) {
       return {
-        h1: t("AI Beat Generator", "Générateur de beats IA"),
-        lead: t(
-          "Generate type beats and songs online with ProducerHit.",
-          "Génère des type beats et des chansons en ligne avec ProducerHit.",
-        ),
-        bullets: [t("Fast AI music generation", "Génération IA rapide")],
+        h1: isFr ? "Générateur de beats IA" : "AI Beat Generator",
+        lead: isFr
+          ? "Génère des type beats et des chansons en ligne avec ProducerHit."
+          : "Generate type beats and songs online with ProducerHit.",
+        bullets: [isFr ? "Génération IA rapide" : "Fast AI music generation"],
         faq: [] as { q: string; a: string }[],
         promptHint: null as string | null,
       };
     }
     return {
-      h1: t(seo.h1En, seo.h1Fr),
-      lead: t(seo.leadEn, seo.leadFr),
+      h1: isFr ? seo.h1Fr : seo.h1En,
+      lead: isFr ? seo.leadFr : seo.leadEn,
       bullets: isFr ? seo.bulletsFr : seo.bulletsEn,
       faq: isFr ? seo.faqFr : seo.faqEn,
+      promptHint: isFr ? (seo.promptHintFr ?? null) : (seo.promptHintEn ?? null),
     };
-  }, [isFr, seo, t]);
+  }, [isFr, seo]);
 
   const relatedPages = useMemo(() => {
     if (!seo) return SEO_PAGES.filter((p) => p.path !== pathname && p.pathFr !== pathname).slice(0, 6);
-    return SEO_PAGES.filter((p) => p.slugKey !== seo.slugKey).slice(0, 6);
+    const keys = seo.relatedSlugKeys?.length
+      ? seo.relatedSlugKeys
+      : SEO_PAGES.filter((p) => p.category === seo.category && p.slugKey !== seo.slugKey)
+          .slice(0, 6)
+          .map((p) => p.slugKey);
+    return keys
+      .map((key) => getSeoPageBySlugKey(key))
+      .filter((p): p is NonNullable<typeof p> => Boolean(p))
+      .slice(0, 6);
   }, [pathname, seo]);
 
-  const ctaHref = user ? "/dashboard" : buildSignupUrl("organic");
+  const extras = useMemo(() => (seo?.category ? getSeoLandingExtras(seo.category, isFr) : null), [seo, isFr]);
+
+  const ctaHref = user
+    ? "/dashboard"
+    : buildGrowthUrl("/auth", "organic", { campaign: seo?.slugKey ?? "seo-landing", content: pathname.replace(/^\//, "") });
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
@@ -127,6 +139,8 @@ export default function Home() {
             </Link>
           </div>
         </div>
+
+        {extras ? <SeoLandingExtras extras={extras} isFr={isFr} ctaHref={ctaHref} /> : null}
 
         {page.faq.length ? (
           <div className="mt-14">

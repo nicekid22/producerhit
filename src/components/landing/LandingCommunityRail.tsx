@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Pause, Play, Radio, Shuffle, Sparkles } from "lucide-react";
 import type { Loop } from "@/types/loop";
 import type { PublicProfileCard } from "@/lib/creatorProfile";
-import { CoverPeekStack } from "@/components/cover/CoverPeekStack";
+import { LandingCommunityCoverStack } from "@/components/cover/LandingCommunityCoverStack";
 import { resolveCoverImageUrl } from "@/lib/coverArt";
 import { coverGradient } from "@/lib/utils";
 import { isPlayablePublicLoop } from "@/lib/publicLoops";
@@ -292,13 +292,13 @@ export function LandingCommunityRail({
                           ].join(" ")}
                           style={{ background: bg }}
                         >
-                          <CoverPeekStack
-                            baseUrl={pollinationsUrl}
-                            revealUrl={hasPinterestPeek ? pinterestUrl : null}
+                          <LandingCommunityCoverStack
+                            pollinationsUrl={pollinationsUrl}
+                            pinterestUrl={hasPinterestPeek ? pinterestUrl : null}
                             className="absolute inset-0"
                             loading={idx < 4 ? "eager" : "lazy"}
                           />
-                          <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
+                          <div className="pointer-events-none absolute inset-0 z-[3] bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
                           <div className="absolute left-3 top-3 rounded-full border border-white/15 bg-black/45 px-3 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
                             {t.badge}
                           </div>
@@ -310,7 +310,7 @@ export function LandingCommunityRail({
                           ) : null}
                           <div
                             className={[
-                              "pointer-events-none absolute inset-0 z-[2] flex items-center justify-center transition-opacity duration-300",
+                              "pointer-events-none absolute inset-0 z-[4] flex items-center justify-center transition-opacity duration-300",
                               playingNow ? "opacity-100" : "opacity-0 group-hover:opacity-100",
                             ].join(" ")}
                           >

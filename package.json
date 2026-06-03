@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "npm run generate:seo && tsc -b && vite build",
-    "generate:seo": "node scripts/generate-seo-prerender.mjs && node scripts/sync-seo-sitemap.mjs",
+    "generate:seo": "node scripts/generate-seo-prerender.mjs && node scripts/sync-seo-sitemap.mjs && node scripts/sync-rss.mjs && node scripts/sync-vercel-seo-prerender.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "check": "tsc -b --noEmit",

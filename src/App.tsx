@@ -7,6 +7,7 @@ import { LoopsBootstrap } from "@/components/LoopsBootstrap";
 import { ThemeBootstrap } from "@/components/ThemeBootstrap";
 import { AppToaster } from "@/components/AppToaster";
 import { LootRevealModal } from "@/components/growth/LootRevealModal";
+import { GrowthUpsellHost } from "@/components/growth/GrowthUpsellHost";
 import { ReferralReferrerWatcher } from "@/components/growth/ReferralReferrerWatcher";
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
 import { loaderIconFromPath } from "@/lib/loaderIcons";
@@ -310,31 +311,20 @@ function SeoBootstrap() {
       },
     ];
 
-    if (slugKey === "ai-beat-generator") {
+    if (seoPage) {
+      const faqItems = contentLocale === "fr" ? seoPage.faqFr : seoPage.faqEn;
       setJsonLd([
         ...baseJsonLd,
-        faq([
-          {
-            q: "What is an AI beat generator?",
-            a: "An AI beat generator creates instrumental beats from a text description (genre, mood, tempo). ProducerHit generates short clips by default so you can pick the best idea and iterate with variations.",
-          },
-          {
-            q: "How do I get better results?",
-            a: "Start with shorter generations, generate 2 versions, then use seed-based variations to keep the vibe while exploring new details.",
-          },
-          { q: "Can I export my beat?", a: "Yes. Export MP3 for free plans and WAV on paid plans." },
-        ]),
-      ]);
-      return;
-    }
-
-    if (slugKey === "generate-beats-online-free") {
-      setJsonLd([
-        ...baseJsonLd,
-        faq([
-          { q: "Can I generate beats online for free?", a: "Yes. ProducerHit includes a free tier so you can generate beats online and download MP3." },
-          { q: "Do I get two versions at once?", a: "You can switch Versions to 2 to generate two candidates and choose the best one." },
-        ]),
+        ...(faqItems.length ? [faq(faqItems)] : []),
+        {
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          name: contentLocale === "fr" ? seoPage.h1Fr : seoPage.h1En,
+          description: contentLocale === "fr" ? seoPage.descriptionFr : seoPage.descriptionEn,
+          url: `${origin}${getSeoPageCanonicalPath(seoPage, seoPageLocale)}`,
+          inLanguage: seoPageLocale,
+          isPartOf: { "@type": "WebSite", name: "ProducerHit", url: origin },
+        },
       ]);
       return;
     }
@@ -514,6 +504,7 @@ export default function App() {
               </Suspense>
             </RouteFade>
             <AudioPlayer />
+            <GrowthUpsellHost />
           </LoopsBootstrap>
         </ThemeBootstrap>
       </AuthBootstrap>

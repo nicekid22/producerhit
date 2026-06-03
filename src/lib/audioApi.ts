@@ -718,7 +718,10 @@ export async function generateLoopAce(
   if (!options?.autoMeta && params.key) body.key = params.key;
   if (!options?.autoMeta && params.scale) body.scale = params.scale;
   body.isSong = isSong;
-  body.aceKeyPreferIndex = nextAceKeyPreferIndex();
+  body.aceKeyPreferIndex =
+    typeof options?.aceKeyPreferIndex === "number" && Number.isFinite(options.aceKeyPreferIndex)
+      ? Math.abs(Math.floor(options.aceKeyPreferIndex))
+      : nextAceKeyPreferIndex();
   if (options?.requirePersistableUrl) body.requirePersistableUrl = true;
 
   const { data, errorText, limitReached } = await invokeSupabaseFunction<{

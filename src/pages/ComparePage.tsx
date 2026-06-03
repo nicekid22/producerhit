@@ -24,9 +24,9 @@ export default function ComparePage() {
   const page = useMemo(() => getComparisonByPath(pathname), [pathname]);
 
   const relatedPages = useMemo(() => {
-    if (!page) return COMPARISON_PAGES.filter((p) => p.path !== pathname).slice(0, 4);
+    if (!page) return COMPARISON_PAGES.filter((p) => p.path !== pathname && p.pathFr !== pathname).slice(0, 4);
     return page.relatedPaths
-      .map((path) => COMPARISON_PAGES.find((p) => p.path === path))
+      .map((relPath) => COMPARISON_PAGES.find((p) => p.path === relPath || p.pathFr === relPath))
       .filter(Boolean)
       .slice(0, 4) as typeof COMPARISON_PAGES;
   }, [page, pathname]);
@@ -227,8 +227,8 @@ export default function ComparePage() {
             <div className="mt-4 flex flex-wrap gap-2">
               {relatedPages.map((p) => (
                 <Link
-                  key={p.path}
-                  to={p.path}
+                  key={p.slugKey}
+                  to={getComparisonCanonicalPath(p, isFr ? "fr" : "en")}
                   className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-semibold text-white/70 hover:border-white/20 hover:text-white"
                 >
                   {isFr ? p.h1Fr : p.h1En}

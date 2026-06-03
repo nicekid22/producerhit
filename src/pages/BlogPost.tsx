@@ -1,13 +1,25 @@
 import { useMemo } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
+import { Calendar, Clock } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
+import { LandingFooter } from "@/components/landing/LandingFooter";
+import { BlogBlockRenderer } from "@/components/blog/BlogBlockRenderer";
+import { BlogListenSampler } from "@/components/blog/BlogListenSampler";
+import { BlogPostCard } from "@/components/blog/BlogPostCard";
 import { BLOG_POSTS, getBlogPostBySlug } from "@/content/blog";
+import { getBlogVisual } from "@/lib/blogMeta";
 import { useLocaleStore } from "@/stores/localeStore";
+import { useAuthStore } from "@/stores/authStore";
+import { buildSignupUrl } from "@/lib/growthLinks";
 
 export default function BlogPost() {
   const { slug } = useParams();
   const locale = useLocaleStore((s) => s.locale);
+  const user = useAuthStore((s) => s.user);
   const post = slug ? getBlogPostBySlug(slug) : null;
+  const isFr = locale === "fr";
+
+  const visual = useMemo(() => (post ? getBlogVisual(post.slug) : null), [post]);
 
   const related = useMemo(() => {
     if (!post) return [];
@@ -23,127 +35,129 @@ export default function BlogPost() {
       .map((x) => x.p);
   }, [post]);
 
-  if (!post) return <Navigate to="/blog" replace />;
+  if (!post || !visual) return <Navigate to="/blog" replace />;
+
+  const Icon = visual.icon;
+  const ctaHref = user ? "/dashboard" : buildSignupUrl("blog");
 
   return (
-    <div className="min-h-screen bg-pk-bg text-pk-text">
+    <div className="min-h-screen bg-[#0a0a0f] text-white">
       <Navbar variant="marketing" />
-      <main className="mx-auto max-w-3xl px-4 py-12">
-        <div className="text-sm text-pk-muted">
-          <Link className="font-semibold text-pk-accent hover:underline" to="/blog">
-            {locale === "fr" ? "Blog" : "Blog"}
+      <main className="mx-auto max-w-4xl px-4 pb-16 pt-6">
+        <nav className="text-sm text-white/50">
+          <Link className="font-semibold text-violet-300 hover:underline" to="/blog">
+            Blog
           </Link>
           <span className="px-2">/</span>
-          <span>{post.title}</span>
-        </div>
+          <span className="text-white/70">{post.title}</span>
+        </nav>
 
-        <article className="mt-8 rounded-2xl border border-pk-border bg-pk-panel/70 p-6 shadow-[0_24px_70px_rgba(0,0,0,0.55)] backdrop-blur-xl sm:p-8">
-          <header>
-            <div className="text-xs font-semibold text-pk-muted">{post.publishedAt}</div>
-            <h1 className="mt-2 text-balance text-3xl font-bold tracking-tight">{post.title}</h1>
-            <p className="mt-3 text-balance text-sm text-pk-muted">{post.description}</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {post.keywords.map((k) => (
-                <span key={k} className="rounded-full border border-pk-border bg-white/5 px-3 py-1 text-xs font-semibold text-pk-muted">
-                  {k}
-                </span>
-              ))}
+        <header className="relative mt-6 overflow-hidden rounded-3xl border border-white/10">
+          <img src={visual.heroImage} alt="" className="h-56 w-full object-cover sm:h-72" />
+          <div className={`absolute inset-0 bg-gradient-to-t ${visual.accent} via-black/40 to-black/20`} />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-transparent to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-black/45 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white/80 ring-1 ring-white/15">
+                <Icon className="h-3.5 w-3.5" />
+                {visual.category}
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-black/40 px-2.5 py-1 text-[10px] text-white/70">
+                <Calendar className="h-3 w-3" />
+                {post.publishedAt}
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-black/40 px-2.5 py-1 text-[10px] text-white/70">
+                <Clock className="h-3 w-3" />
+                {visual.readingMinutes} min
+              </span>
             </div>
-          </header>
+            <h1 className="mt-4 text-balance text-3xl font-extrabold tracking-tight sm:text-4xl">{post.title}</h1>
+            <p className="mt-3 max-w-2xl text-balance text-base leading-relaxed text-white/75">{post.description}</p>
+          </div>
+        </header>
 
-          <div className="prose prose-invert prose-sm mt-10 max-w-none">
-            {post.blocks.map((b, idx) => {
-              if (b.type === "p") return <p key={idx}>{b.text}</p>;
-              if (b.type === "h2") return <h2 key={idx}>{b.text}</h2>;
-              if (b.type === "h3") return <h3 key={idx}>{b.text}</h3>;
-              if (b.type === "ul")
-                return (
-                  <ul key={idx}>
-                    {b.items.map((it) => (
-                      <li key={it}>{it}</li>
-                    ))}
-                  </ul>
-                );
-              if (b.type === "links")
-                return (
-                  <div key={idx} className="not-prose mt-4 flex flex-wrap gap-2">
-                    {b.items.map((link) => (
-                      <Link
-                        key={link.href}
-                        to={link.href}
-                        className="rounded-full border border-pk-border bg-white/5 px-4 py-2 text-xs font-semibold text-pk-accent hover:bg-white/10"
-                      >
-                        {locale === "fr" ? link.labelFr : link.labelEn}
-                      </Link>
-                    ))}
-                  </div>
-                );
-              return null;
-            })}
+        <article className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6 sm:p-8">
+          <div className="flex flex-wrap gap-2">
+            {post.keywords.map((k) => (
+              <span
+                key={k}
+                className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-semibold text-white/55"
+              >
+                {k}
+              </span>
+            ))}
+          </div>
+
+          <BlogListenSampler locale={locale} genreMatchers={visual.genreMatchers} className="mt-8" />
+
+          <BlogBlockRenderer blocks={post.blocks} locale={locale} />
+
+          <div className="mt-12 rounded-2xl border border-violet-400/25 bg-gradient-to-br from-violet-500/15 to-transparent p-6">
+            <h2 className="text-lg font-bold">{isFr ? "Essaie sur ProducerHit" : "Try on ProducerHit"}</h2>
+            <p className="mt-2 text-sm leading-relaxed text-white/70">
+              {isFr
+                ? "Applique les prompts de l’article — génération courte, Versions=2, export MP3."
+                : "Apply the prompts from this article — short generations, Versions=2, MP3 export."}
+            </p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link
+                to={ctaHref}
+                className="inline-flex rounded-full bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-500"
+              >
+                {user ? (isFr ? "Ouvrir le studio" : "Open studio") : isFr ? "Commencer gratuitement" : "Start free"}
+              </Link>
+              <Link
+                to="/community"
+                className="inline-flex rounded-full border border-white/15 px-5 py-2.5 text-sm font-semibold text-white/85 hover:bg-white/5"
+              >
+                {isFr ? "Écouter la communauté" : "Listen to community"}
+              </Link>
+            </div>
           </div>
         </article>
 
-        <section className="mt-8 rounded-2xl border border-pk-border bg-pk-panel/60 p-6 backdrop-blur-xl">
-          <div className="text-sm font-semibold">{locale === "fr" ? "Aller plus loin" : "Next steps"}</div>
+        <section className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+          <div className="text-sm font-semibold text-white/90">{isFr ? "Pages liées" : "Related pages"}</div>
           <div className="mt-3 flex flex-wrap gap-2">
-            <Link to={locale === "fr" ? "/alternatives-generateur-chanson-ia" : "/ai-song-generator-alternatives"} className="rounded-full border border-pk-border bg-white/5 px-4 py-2 text-xs font-semibold text-pk-accent hover:bg-white/10">
-              {locale === "fr" ? "Générateur chanson IA" : "AI Song Generator"}
+            <Link
+              to={isFr ? "/generateur-music-ai" : "/music-ai-generator"}
+              className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-semibold text-violet-200 hover:bg-white/[0.08]"
+            >
+              Music AI Generator
             </Link>
-            <Link to={locale === "fr" ? "/remix-cover-ia" : "/remix-cover-ai"} className="rounded-full border border-pk-border bg-white/5 px-4 py-2 text-xs font-semibold text-pk-accent hover:bg-white/10">
-              {locale === "fr" ? "Remix & Cover IA" : "AI Remix & Cover"}
+            <Link
+              to="/ai-beat-generator"
+              className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-semibold text-violet-200 hover:bg-white/[0.08]"
+            >
+              {isFr ? "Générateur beats IA" : "AI Beat Generator"}
             </Link>
-            <Link to={locale === "fr" ? "/alternatives-suno" : "/suno-alternatives"} className="rounded-full border border-pk-border bg-white/5 px-4 py-2 text-xs font-semibold text-pk-accent hover:bg-white/10">
-              {locale === "fr" ? "Alternatives Suno" : "Suno Alternatives"}
+            <Link
+              to={isFr ? "/alternatives-suno" : "/suno-alternatives"}
+              className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-semibold text-violet-200 hover:bg-white/[0.08]"
+            >
+              {isFr ? "Alternatives Suno" : "Suno Alternatives"}
             </Link>
-            <Link to="/ai-beat-generator" className="rounded-full border border-pk-border bg-white/5 px-4 py-2 text-xs font-semibold text-pk-accent hover:bg-white/10">
-              {locale === "fr" ? "Générateur de beats IA" : "AI Beat Generator"}
-            </Link>
-            <Link to="/community" className="rounded-full border border-pk-border bg-white/5 px-4 py-2 text-xs font-semibold text-pk-accent hover:bg-white/10">
-              {locale === "fr" ? "Communauté & remix" : "Community & remix"}
+            <Link
+              to="/community"
+              className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-semibold text-violet-200 hover:bg-white/[0.08]"
+            >
+              {isFr ? "Communauté" : "Community"}
             </Link>
           </div>
         </section>
 
         {related.length ? (
-          <section className="mt-8">
-            <div className="text-sm font-semibold">{locale === "fr" ? "Articles liés" : "Related articles"}</div>
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
+          <section className="mt-10">
+            <h2 className="text-lg font-semibold text-white/90">{isFr ? "Articles liés" : "Related articles"}</h2>
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
               {related.map((p) => (
-                <Link
-                  key={p.slug}
-                  to={`/blog/${p.slug}`}
-                  className="rounded-2xl border border-pk-border bg-pk-panel/60 p-5 backdrop-blur-xl hover:border-pk-accent/30"
-                >
-                  <div className="text-xs font-semibold text-pk-muted">{p.publishedAt}</div>
-                  <div className="mt-2 text-sm font-semibold">{p.title}</div>
-                  <div className="mt-2 text-sm text-pk-muted">{p.description}</div>
-                </Link>
+                <BlogPostCard key={p.slug} post={p} locale={locale} />
               ))}
             </div>
           </section>
         ) : null}
-
-        <footer className="mt-14 border-t border-pk-border pt-8 text-sm text-pk-muted">
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-            <Link to="/pricing" className="hover:text-pk-text">
-              {locale === "fr" ? "Tarifs" : "Pricing"}
-            </Link>
-            <Link to="/legal#privacy" className="hover:text-pk-text">
-              {locale === "fr" ? "Confidentialité" : "Privacy"}
-            </Link>
-            <Link to="/legal#terms" className="hover:text-pk-text">
-              {locale === "fr" ? "Conditions" : "Terms"}
-            </Link>
-            <Link to="/legal#contact" className="hover:text-pk-text">
-              {locale === "fr" ? "Support" : "Support"}
-            </Link>
-            <a className="hover:text-pk-text" href="mailto:info.producermarket@gmail.com">
-              info.producermarket@gmail.com
-            </a>
-          </div>
-          <div className="mt-4">© 2026 ProducerHit</div>
-        </footer>
       </main>
+      <LandingFooter locale={locale} user={user} />
     </div>
   );
 }
