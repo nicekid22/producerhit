@@ -333,6 +333,28 @@ export function AudioPlayer() {
     }
   }, [currentBeat?.audioUrl, scheduleEarlyPlay, storeIsPlaying, tryPlayAudio]);
 
+  /** Enchaînement playlist — relance la lecture quand la piste ou l’index file change (mobile inclus). */
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !storeIsPlaying || !currentBeat?.audioUrl?.trim()) return;
+
+    const gen = loadGenRef.current;
+    const playWhenReady = () => {
+      if (gen !== loadGenRef.current) return;
+      const { isPlaying } = usePlayerStore.getState();
+      if (!isPlaying || !audio.paused || !audio.src) return;
+      tryPlayAudio();
+    };
+
+    playWhenReady();
+    audio.addEventListener("canplay", playWhenReady);
+    audio.addEventListener("loadeddata", playWhenReady);
+    return () => {
+      audio.removeEventListener("canplay", playWhenReady);
+      audio.removeEventListener("loadeddata", playWhenReady);
+    };
+  }, [currentBeat?.id, currentBeat?.audioUrl, queueIndex, storeIsPlaying, tryPlayAudio]);
+
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || seekToPct == null) return;

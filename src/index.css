@@ -2032,10 +2032,47 @@ a.pk-pricing-plan-btn {
   .pk-prism-dashboard .pk-prism-btn {
     animation: none !important;
   }
+}
 
-  .pk-waveform-loader--active .pk-waveform-loader__scan,
-  .pk-waveform-loader--active .pk-waveform-loader__segment {
-    animation: none !important;
+/* Cartes génération — animation visible sur mobile (touch) */
+.pk-gen-loading-card .pk-waveform-loader--active .pk-waveform-loader__scan,
+.pk-gen-loading-card .pk-waveform-loader--active .pk-waveform-loader__segment {
+  animation-play-state: running !important;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .pk-gen-loading-card .pk-waveform-loader--active .pk-waveform-loader__scan {
+    animation: pkWaveformScan 1.65s linear infinite !important;
+  }
+
+  .pk-gen-loading-card .pk-waveform-loader--active .pk-waveform-loader__segment {
+    animation: pkWaveformSegment 1.65s ease-in-out infinite !important;
+  }
+
+  .pk-gen-loading-card .pk-icon-loader__icon {
+    animation: pkIconLoaderColor 2.4s ease-in-out infinite !important;
+  }
+
+  .pk-gen-loading-card .pk-icon-loader__ring {
+    animation: pkIconLoaderGlow 2.1s ease-in-out infinite !important;
+  }
+
+  .pk-gen-loading-card .pk-gen-loading-shimmer {
+    animation: pkGenLoadingShimmer 2.2s ease-in-out infinite !important;
+  }
+}
+
+@keyframes pkGenLoadingShimmer {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0.35;
   }
 }
 

@@ -145,12 +145,15 @@ export const usePlayerStore = create<PlayerState>((set) => ({
       }
       const queueIndex = idx >= 0 ? idx : 0;
       const current = clean[queueIndex] ?? s.current;
+      const keepPlaying = s.isPlaying && Boolean(current);
 
       return {
         queue: clean,
         queueIndex,
         queueSource: typeof source === "string" ? source : s.queueSource,
         current: current ?? s.current,
+        isPlaying: keepPlaying,
+        loopEndSec: current ? computeLoopEndSec(current) : s.loopEndSec,
       };
     }),
   promoteLoop: (fromId, loop) =>
