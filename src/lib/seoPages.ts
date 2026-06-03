@@ -1,7 +1,17 @@
+import { EXTRA_BEAT_PAGES, INTENT_MUSIC_PAGES, MUSIC_AI_PAGES } from "@/lib/seoPagesExtended";
+
+export type SeoPageCategory = "core" | "genre" | "music-ai" | "intent" | "beat";
+
 export type SeoPageConfig = {
   path: string;
   pathFr: string;
   slugKey: string;
+  category?: SeoPageCategory;
+  /** Pages liées affichées en bas de page (sinon même catégorie). */
+  relatedSlugKeys?: string[];
+  /** Exemple de prompt affiché sur la landing SEO. */
+  promptHintEn?: string;
+  promptHintFr?: string;
   titleEn: string;
   titleFr: string;
   descriptionEn: string;
@@ -22,6 +32,7 @@ const GENRE_PAGES: SeoPageConfig[] = [
     path: "/ai-trap-beat-generator",
     pathFr: "/generateur-trap-ia",
     slugKey: "ai-trap-beat-generator",
+    category: "genre",
     titleEn: "AI Trap Beat Generator — Dark 808 Type Beats Online | ProducerHit",
     titleFr: "Générateur trap IA — Type beats 808 en ligne | ProducerHit",
     descriptionEn: "Generate trap beats with AI: dark 808s, sliding bass, tight hats. Free to start. Export MP3/WAV.",
@@ -133,6 +144,7 @@ const CORE_PAGES: SeoPageConfig[] = [
     path: "/ai-beat-generator",
     pathFr: "/generateur-beats-ia",
     slugKey: "ai-beat-generator",
+    category: "core",
     titleEn: "AI Beat Generator — Create Type Beats Online | ProducerHit",
     titleFr: "Générateur de beats IA — Type beats en ligne | ProducerHit",
     descriptionEn: "Use ProducerHit as your AI beat generator: generate type beats fast, try 2 versions, and refine with seed-based variations.",
@@ -203,7 +215,13 @@ const CORE_PAGES: SeoPageConfig[] = [
   },
 ];
 
-export const SEO_PAGES: SeoPageConfig[] = [...CORE_PAGES, ...GENRE_PAGES];
+export const SEO_PAGES: SeoPageConfig[] = [
+  ...CORE_PAGES,
+  ...MUSIC_AI_PAGES,
+  ...INTENT_MUSIC_PAGES,
+  ...GENRE_PAGES,
+  ...EXTRA_BEAT_PAGES,
+];
 
 export const SEO_PAGE_PATHS = SEO_PAGES.flatMap((p) => [p.path, p.pathFr]);
 
@@ -232,6 +250,12 @@ const GENRE_SEO_HINTS: Array<{ match: RegExp; slugKey: string }> = [
   { match: /afro|amapiano|afrobeats/i, slugKey: "ai-afrobeats-generator" },
   { match: /hip[\s-]?hop|rap|boom bap/i, slugKey: "ai-hip-hop-beat-generator" },
   { match: /pop|hyperpop|synth pop/i, slugKey: "ai-pop-beat-generator" },
+  { match: /phonk|drift/i, slugKey: "ai-phonk-beat-generator" },
+  { match: /lo[\s-]?fi|lofi/i, slugKey: "ai-lofi-beat-generator" },
+  { match: /sleep|sommeil/i, slugKey: "ai-sleep-music-generator" },
+  { match: /meditation|méditation/i, slugKey: "ai-meditation-music-generator" },
+  { match: /study|étude|focus|concentration/i, slugKey: "ai-study-music-generator" },
+  { match: /ambient/i, slugKey: "ai-ambient-music-generator" },
 ];
 
 /** Lien SEO genre depuis le libellé genre d’un track public. */

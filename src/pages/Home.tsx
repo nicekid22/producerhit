@@ -6,6 +6,7 @@ import { useLocaleStore } from "@/stores/localeStore";
 import { useAuthStore } from "@/stores/authStore";
 import {
   getSeoPageByPath,
+  getSeoPageBySlugKey,
   getSeoPageCanonicalPath,
   getSeoPageLocaleForPath,
   SEO_PAGES,
@@ -39,6 +40,7 @@ export default function Home() {
         ),
         bullets: [t("Fast AI music generation", "Génération IA rapide")],
         faq: [] as { q: string; a: string }[],
+        promptHint: null as string | null,
       };
     }
     return {
@@ -87,6 +89,15 @@ export default function Home() {
             </div>
           ))}
         </div>
+
+        {page.promptHint ? (
+          <div className="mt-8 rounded-2xl border border-cyan-400/20 bg-cyan-500/[0.06] p-5">
+            <div className="text-xs font-bold uppercase tracking-widest text-cyan-200/70">
+              {isFr ? "Prompt recommandé" : "Suggested prompt"}
+            </div>
+            <p className="mt-2 font-mono text-sm leading-relaxed text-white/85">{page.promptHint}</p>
+          </div>
+        ) : null}
 
         <div className="mt-12 rounded-2xl border border-white/10 bg-white/5 p-6">
           <div className="text-lg font-semibold">{isFr ? "Essaye maintenant — gratuit" : "Try it now — free"}</div>

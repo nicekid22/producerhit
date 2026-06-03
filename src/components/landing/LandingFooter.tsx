@@ -18,14 +18,14 @@ export function LandingFooter({ locale, user }: Props) {
   ];
 
   const seoLinks = [
+    { to: isFr ? "/generateur-music-ai" : "/music-ai-generator", label: "Music AI Generator" },
+    { to: isFr ? "/generateur-musique-ia-gratuit" : "/free-music-ai-generator", label: isFr ? "Musique IA gratuit" : "Free Music AI" },
+    { to: isFr ? "/musique-sommeil-ia" : "/ai-sleep-music-generator", label: isFr ? "Musique sommeil" : "Sleep Music AI" },
+    { to: isFr ? "/musique-etude-ia" : "/ai-study-music-generator", label: isFr ? "Musique étude" : "Study Music AI" },
     { to: "/ai-beat-generator", label: "AI Beat Generator" },
     { to: "/ai-trap-beat-generator", label: "Trap AI" },
-    { to: "/ai-drill-beat-generator", label: "Drill AI" },
-    { to: "/ai-rnb-beat-generator", label: "R&B AI" },
-    { to: "/ai-afrobeats-generator", label: "Afrobeats AI" },
+    { to: "/ai-lofi-beat-generator", label: "Lo-Fi AI" },
     { to: "/ai-music-generator", label: "AI Music Generator" },
-    { to: "/type-beat-generator-ai", label: "Type Beat AI" },
-    { to: "/generate-beats-online-free", label: isFr ? "Beats gratuits" : "Free Beats" },
   ];
 
   const compareLinks = [
