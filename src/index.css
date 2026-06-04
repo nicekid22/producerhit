@@ -1656,6 +1656,41 @@ a.pk-pricing-plan-btn {
   scrollbar-width: none;
 }
 
+/* Dashboard — chips inspiration (une ligne, rotation douce) */
+.pk-inspiration-chip-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+  overflow: hidden;
+  min-height: 1.75rem;
+  mask-image: linear-gradient(to right, #000 0%, #000 calc(100% - 1.25rem), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, #000 0%, #000 calc(100% - 1.25rem), transparent 100%);
+}
+
+.pk-inspiration-chip-slot {
+  animation: pk-inspiration-chip-in 0.72s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes pk-inspiration-chip-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px) scale(0.94);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pk-inspiration-chip-slot {
+    animation: none;
+  }
+}
+
 .pk-chip-scroll::-webkit-scrollbar {
   display: none;
 }

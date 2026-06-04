@@ -97,6 +97,7 @@ import {
   VOCAL_STYLE_OPTIONS,
   type VocalStyleValue,
 } from "@/components/dashboard/GeneratorAdvancedOutputControls";
+import { InspirationChipRow } from "@/components/dashboard/InspirationChipRow";
 import { GenerationCreditAmount, GenerationCreditIcon } from "@/components/GenerationCreditIcon";
 import { triggerBeatReady } from "@/lib/delight/moments";
 import { loadGamification } from "@/lib/gamification";
@@ -2798,35 +2799,21 @@ export default function Dashboard() {
                   <div className="text-xs text-pk-muted">
                     {locale === "fr" ? "Décris le son, ou utilise les chips." : "Describe the sound or use chips."}
                   </div>
-                  
+
+                  <InspirationChipRow
+                    chips={getInspirationChipsForGenre(chipGenre)}
+                    isActive={(chip) => activeChips.includes(chip)}
+                    onChipClick={(chip) => {
+                      setActiveChips((prev) => (prev.includes(chip) ? prev.filter((c) => c !== chip) : [...prev, chip]));
+                    }}
+                  />
+
                   <input
                     value={form.prompt}
                     onChange={(e) => setField("prompt", e.target.value)}
                     className="mt-3 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2 text-sm outline-none placeholder:text-pk-muted focus:border-pk-accent"
                     placeholder={locale === "fr" ? "ex: dark melodic, smooth 808s" : "e.g. dark melodic, smooth 808s"}
                   />
-                  
-                  <div className={cn(mobileV2 ? "pk-chip-scroll mt-3" : "mt-3 flex flex-wrap gap-2")}>
-                    {getInspirationChipsForGenre(chipGenre).map((chip) => {
-                      const on = activeChips.includes(chip);
-                      return (
-                        <button
-                          key={chip}
-                          type="button"
-                          onClick={() => {
-                            setActiveChips((prev) => (prev.includes(chip) ? prev.filter((c) => c !== chip) : [...prev, chip]));
-                          }}
-                          className={
-                            on
-                              ? "rounded-full border border-pk-accent/40 bg-pk-accent/15 px-3 py-1 text-[11px] font-semibold text-pk-accent"
-                              : "rounded-full border border-pk-border bg-pk-bg px-3 py-1 text-[11px] text-pk-muted hover:bg-white/5 hover:text-pk-text"
-                          }
-                        >
-                          {chip}
-                        </button>
-                      );
-                    })}
-                  </div>
                 </GeneratorSection>
 
                 <GeneratorSection
@@ -3189,9 +3176,31 @@ export default function Dashboard() {
                   defaultOpen
                 >
                   <div className="text-xs text-pk-muted">
-                    {locale === "fr" ? "Décris ton idée de chanson, ou utilise les chips." : "Describe your song idea or use chips."}
+                    {locale === "fr"
+                      ? "Laisse parler ta créativité et écris ton idée de chanson ici"
+                      : "Describe your song idea or use chips."}
                   </div>
-                  
+
+                  <InspirationChipRow
+                    chips={getInspirationChipsForGenre(chipGenre)}
+                    isActive={(chip) => songDescription.includes(chip)}
+                    onChipClick={(chip) => {
+                      const current = songDescription.trim();
+                      const on = current.includes(chip);
+                      if (on) {
+                        setSongDescription(
+                          current
+                            .split(",")
+                            .map((s) => s.trim())
+                            .filter((s) => s !== chip)
+                            .join(", "),
+                        );
+                      } else {
+                        setSongDescription(current ? `${current}, ${chip}` : chip);
+                      }
+                    }}
+                  />
+
                   <input
                     value={songDescription}
                     onChange={(e) => setSongDescription(e.target.value)}
@@ -3202,33 +3211,6 @@ export default function Dashboard() {
                         : "ex: A melancholic R&B song about late nights in the city…"
                     }
                   />
-                  
-                  <div className={cn(mobileV2 ? "pk-chip-scroll mt-3" : "mt-3 flex flex-wrap gap-2")}>
-                    {getInspirationChipsForGenre(chipGenre).map((chip) => {
-                      const on = songDescription.includes(chip);
-                      return (
-                        <button
-                          key={chip}
-                          type="button"
-                          onClick={() => {
-                            const current = songDescription.trim();
-                            if (on) {
-                              setSongDescription(current.split(",").map(s => s.trim()).filter(s => s !== chip).join(", "));
-                            } else {
-                              setSongDescription(current ? `${current}, ${chip}` : chip);
-                            }
-                          }}
-                          className={
-                            on
-                              ? "rounded-full border border-pk-accent/40 bg-pk-accent/15 px-3 py-1 text-[11px] font-semibold text-pk-accent"
-                              : "rounded-full border border-pk-border bg-pk-bg px-3 py-1 text-[11px] text-pk-muted hover:bg-white/5 hover:text-pk-text"
-                          }
-                        >
-                          {chip}
-                        </button>
-                      );
-                    })}
-                  </div>
                 </GeneratorSection>
 
                 <GeneratorSection
@@ -3274,7 +3256,7 @@ export default function Dashboard() {
                     <div className="mt-3 rounded-pk border border-pk-border bg-pk-bg p-4 text-center">
                       <p className="text-[11px] italic text-pk-muted leading-relaxed">
                         {locale === "fr"
-                          ? "✨ L’IA écrira des paroles originales selon ton genre et ton idée — tu les entendras dans la chanson générée."
+                          ? "✨ L’IA écrira des paroles originales selon ton genre et ton idée."
                           : "✨ AI will write original lyrics based on your genre and idea — you'll hear them in the generated song."}
                       </p>
                     </div>
@@ -3480,32 +3462,26 @@ export default function Dashboard() {
                         <div className="text-xs text-pk-muted mb-2">
                           {locale === "fr" ? "Contexte & inspiration (chips)" : "Context & Inspiration (Chips)"}
                         </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {getInspirationChipsForGenre(chipGenre).map((chip) => {
-                            const on = songDescription.includes(chip);
-                            return (
-                              <button
-                                key={chip}
-                                type="button"
-                                onClick={() => {
-                                  const current = songDescription.trim();
-                                  if (on) {
-                                    setSongDescription(current.split(",").map(s => s.trim()).filter(s => s !== chip).join(", "));
-                                  } else {
-                                    setSongDescription(current ? `${current}, ${chip}` : chip);
-                                  }
-                                }}
-                                className={
-                                  on
-                                    ? "rounded-full border border-pk-accent/40 bg-pk-accent/15 px-2 py-0.5 text-[10px] font-semibold text-pk-accent"
-                                    : "rounded-full border border-pk-border bg-pk-bg px-2 py-0.5 text-[10px] text-pk-muted hover:bg-white/5 hover:text-pk-text"
-                                }
-                              >
-                                {chip}
-                              </button>
-                            );
-                          })}
-                        </div>
+                        <InspirationChipRow
+                          className="mt-0"
+                          chips={getInspirationChipsForGenre(chipGenre)}
+                          isActive={(chip) => songDescription.includes(chip)}
+                          onChipClick={(chip) => {
+                            const current = songDescription.trim();
+                            const on = current.includes(chip);
+                            if (on) {
+                              setSongDescription(
+                                current
+                                  .split(",")
+                                  .map((s) => s.trim())
+                                  .filter((s) => s !== chip)
+                                  .join(", "),
+                              );
+                            } else {
+                              setSongDescription(current ? `${current}, ${chip}` : chip);
+                            }
+                          }}
+                        />
                       </div>
 
                       <div>
