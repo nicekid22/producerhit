@@ -188,14 +188,12 @@ export function AppShell({
 
       <div
         className={cn(
-          "pk-app-shell-mobile-nav fixed bottom-0 left-0 right-0 z-40 pb-[env(safe-area-inset-bottom)] md:hidden",
+          "pk-app-shell-mobile-nav fixed bottom-0 left-0 right-0 z-40 max-w-[100vw] overflow-hidden pb-[env(safe-area-inset-bottom)] md:hidden",
           isPrism ? "border-t border-white/10 bg-[rgba(4,3,10,0.88)] backdrop-blur-xl" : "border-t border-pk-border bg-pk-panel",
         )}
       >
-        <div className="mx-auto max-w-[1440px]">
-          <div className="h-14">
-            <Sidebar />
-          </div>
+        <div className="mx-auto h-14 w-full max-w-[100vw] min-w-0 overflow-hidden">
+          <Sidebar />
         </div>
       </div>
     </div>

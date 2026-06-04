@@ -3611,8 +3611,8 @@ export default function Dashboard() {
 
           <div
             className={cn(
-              "flex-shrink-0 border-t p-4",
-              mobileV2 ? "pk-dashboard-mobile-footer px-3 py-3" : "pk-studio-generate-dock border-t border-pk-border p-4",
+              "flex-shrink-0 border-t border-pk-border/80 p-4",
+              mobileV2 ? "pk-dashboard-mobile-footer border-t-white/10 px-3 py-3" : "pk-studio-generate-dock",
             )}
           >
             {isRemix && mobileV2 && remixMobileDock ? (

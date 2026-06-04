@@ -72,10 +72,14 @@ export function PlayerDockBootstrap() {
     const ro = new ResizeObserver(() => schedulePlayerHeightSync(measure));
     ro.observe(el);
     window.addEventListener("resize", measure);
+    window.visualViewport?.addEventListener("resize", measure);
+    window.visualViewport?.addEventListener("scroll", measure);
 
     return () => {
       ro.disconnect();
       window.removeEventListener("resize", measure);
+      window.visualViewport?.removeEventListener("resize", measure);
+      window.visualViewport?.removeEventListener("scroll", measure);
       clear();
     };
   }, [dockCollapsed, hasPlayer]);

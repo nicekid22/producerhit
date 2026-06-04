@@ -58,10 +58,13 @@ export function Sidebar() {
 
   const logoutIcon = loggingOut ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogOut className="h-5 w-5" />;
 
+  const mobileNavIconClass =
+    "relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl md:h-10 md:w-10";
+
   return (
-    <div className="flex h-full items-center justify-between bg-transparent px-3 py-2 md:h-auto md:flex-col md:justify-between md:border-r-0 md:px-2 md:py-3">
-      <div className="flex items-center gap-2 md:flex-col">
-        <div className="flex items-center gap-1 md:mt-1 md:flex-col md:gap-0.5">
+    <div className="pk-sidebar-root flex h-full w-full min-w-0 items-center bg-transparent md:h-auto md:w-auto md:flex-col md:justify-between md:px-2 md:py-3">
+      <div className="flex min-w-0 flex-1 items-center md:flex-col md:gap-0">
+        <div className="pk-mobile-bottom-nav__routes flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto overscroll-x-contain px-1.5 py-1 [-webkit-overflow-scrolling:touch] md:mt-1 md:flex-col md:gap-0.5 md:overflow-visible md:px-0 md:py-0">
           {items.map((it) => {
             const active =
               it.to === "/?home=1"
@@ -72,7 +75,8 @@ export function Sidebar() {
                 key={it.to}
                 to={it.to}
                 className={cn(
-                  "pk-studio-nav-link relative flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-xl md:h-10 md:w-10 md:min-h-0 md:min-w-0",
+                  "pk-studio-nav-link",
+                  mobileNavIconClass,
                   active ? "pk-studio-nav-link--active text-pk-accent" : "text-pk-muted hover:text-pk-text",
                 )}
                 aria-label={it.label}
@@ -80,7 +84,10 @@ export function Sidebar() {
               >
                 <span className="pk-studio-nav-indicator hidden md:block" aria-hidden />
                 {active ? (
-                  <span className="absolute -left-1.5 h-5 w-1 rounded-full bg-pk-accent md:hidden" aria-hidden />
+                  <span
+                    className="absolute bottom-0 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-pk-accent md:hidden"
+                    aria-hidden
+                  />
                 ) : null}
                 {it.icon}
               </Link>
@@ -138,15 +145,15 @@ export function Sidebar() {
         </div>
       </div>
 
-      <div className="flex items-center gap-2 md:hidden">
-        <ThemeToggleButton variant="icon" className="rounded-lg" />
+      <div className="pk-mobile-bottom-nav__actions flex shrink-0 items-center gap-0.5 border-l border-white/10 py-1 pl-1 pr-2 md:hidden">
+        <ThemeToggleButton variant="icon" className="!h-10 !w-10 shrink-0 rounded-lg" />
         <button
           type="button"
           onClick={() => setLocale("en")}
-            className={cn(
-              "flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-[10px] font-semibold transition-colors",
-              locale === "en" ? "bg-pk-accent/15 text-pk-accent" : "text-pk-muted hover:bg-white/5 hover:text-pk-text",
-            )}
+          className={cn(
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-[10px] font-semibold transition-colors",
+            locale === "en" ? "bg-pk-accent/15 text-pk-accent" : "text-pk-muted hover:bg-white/5 hover:text-pk-text",
+          )}
           aria-label="English"
           title="English"
         >
@@ -155,10 +162,10 @@ export function Sidebar() {
         <button
           type="button"
           onClick={() => setLocale("fr")}
-            className={cn(
-              "flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-[10px] font-semibold transition-colors",
-              locale === "fr" ? "bg-pk-accent/15 text-pk-accent" : "text-pk-muted hover:bg-white/5 hover:text-pk-text",
-            )}
+          className={cn(
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-[10px] font-semibold transition-colors",
+            locale === "fr" ? "bg-pk-accent/15 text-pk-accent" : "text-pk-muted hover:bg-white/5 hover:text-pk-text",
+          )}
           aria-label="Français"
           title="Français"
         >
@@ -169,7 +176,7 @@ export function Sidebar() {
             type="button"
             onClick={onLogout}
             disabled={loggingOut}
-            className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-pk text-pk-muted transition-colors hover:bg-white/5 hover:text-pk-text disabled:opacity-60"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-pk-muted transition-colors hover:bg-white/5 hover:text-pk-text disabled:opacity-60"
             aria-label={locale === "fr" ? "Déconnexion" : "Logout"}
             title={locale === "fr" ? "Déconnexion" : "Logout"}
           >
@@ -178,7 +185,7 @@ export function Sidebar() {
         ) : (
           <Link
             to="/auth?next=/dashboard"
-            className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-pk text-pk-muted transition-colors hover:bg-white/5 hover:text-pk-text"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-pk-muted transition-colors hover:bg-white/5 hover:text-pk-text"
             aria-label={locale === "fr" ? "Connexion" : "Login"}
             title={locale === "fr" ? "Connexion" : "Login"}
           >
