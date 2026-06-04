@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { BookOpen, Sparkles } from "lucide-react";
+import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";
 import { Navbar } from "@/components/Navbar";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { BlogPostCard } from "@/components/blog/BlogPostCard";
@@ -15,7 +16,7 @@ export default function Blog() {
   const sorted = BLOG_POSTS.slice().sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1));
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white">
+    <MarketingPageShell>
       <Navbar variant="marketing" />
       <main className="mx-auto max-w-6xl px-4 py-12">
         <header className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-violet-600/20 via-transparent to-cyan-500/10 p-8 sm:p-10">
@@ -85,6 +86,6 @@ export default function Blog() {
         </footer>
       </main>
       <LandingFooter locale={locale} user={user} />
-    </div>
+    </MarketingPageShell>
   );
 }

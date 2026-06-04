@@ -8,6 +8,7 @@ const corsHeaders = {
 };
 
 const BUCKET = "loop-audio";
+const COVERS_BUCKET = "loop-covers";
 const DEFAULT_RETENTION_DAYS = 7;
 const DEFAULT_BATCH = 80;
 
@@ -39,6 +40,10 @@ function parseStoragePath(audioUrl: string): string | null {
 
 function storagePathsForLoop(userId: string, loopId: string): string[] {
   return ["mp3", "wav", "m4a", "ogg", "webm"].map((ext) => `${userId}/${loopId}.${ext}`);
+}
+
+function coverPathsForLoop(userId: string, loopId: string): string[] {
+  return ["jpg", "jpeg", "webp", "png", "mp4"].map((ext) => `${userId}/covers/${loopId}.${ext}`);
 }
 
 serve(async (req) => {
@@ -96,22 +101,34 @@ serve(async (req) => {
     for (const p of storagePathsForLoop(row.user_id, row.loop_id)) {
       pathsToRemove.add(p);
     }
+    for (const p of coverPathsForLoop(row.user_id, row.loop_id)) {
+      pathsToRemove.add(p);
+    }
   }
 
   let storageRemoved = 0;
-  const pathList = [...pathsToRemove];
-  if (pathList.length) {
+  let coversRemoved = 0;
+  const audioPaths = [...pathsToRemove].filter((p) => !p.includes("/covers/"));
+  const coverPaths = [...pathsToRemove].filter((p) => p.includes("/covers/"));
+
+  const removeChunked = async (bucket: string, paths: string[]) => {
+    if (!paths.length) return 0;
+    let n = 0;
     const chunkSize = 50;
-    for (let i = 0; i < pathList.length; i += chunkSize) {
-      const chunk = pathList.slice(i, i + chunkSize);
-      const { data, error } = await sb.storage.from(BUCKET).remove(chunk);
+    for (let i = 0; i < paths.length; i += chunkSize) {
+      const chunk = paths.slice(i, i + chunkSize);
+      const { data, error } = await sb.storage.from(bucket).remove(chunk);
       if (error) {
-        console.warn("[purge-loop-audio] storage remove:", error.message);
+        console.warn(`[purge-loop-audio] ${bucket} remove:`, error.message);
       } else {
-        storageRemoved += data?.length ?? chunk.length;
+        n += data?.length ?? chunk.length;
       }
     }
-  }
+    return n;
+  };
+
+  storageRemoved = await removeChunked(BUCKET, audioPaths);
+  coversRemoved = await removeChunked(COVERS_BUCKET, coverPaths);
 
   let dbUpdated = 0;
   if (loopIds.length) {
@@ -133,12 +150,17 @@ serve(async (req) => {
     dbUpdated = data?.length ?? 0;
   }
 
+  if (loopIds.length) {
+    await sb.from("used_pinterest_covers").delete().in("loop_id", loopIds);
+  }
+
   return new Response(
     JSON.stringify({
       ok: true,
       retentionDays: days,
       scanned: expired.length,
       storagePathsRemoved: storageRemoved,
+      coverPathsRemoved: coversRemoved,
       loopsUpdated: dbUpdated,
     }),
     { headers: { ...corsHeaders, "Content-Type": "application/json" } },

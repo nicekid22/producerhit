@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/Button";
 import {
   ACHIEVEMENTS,
   canClaimDailyBonus,
-  claimDailyBonus,
   getLevel,
   getLevelProgress,
   getLevelRewardCredits,
@@ -18,7 +17,8 @@ import {
   recordVisit,
   type GamificationState,
 } from "@/lib/gamification";
-import { getNextLevelRewardCredits, syncDailyGenerationBonus, syncLevelRewards } from "@/lib/gamificationRewards";
+import { performDailyBonusClaim } from "@/lib/dailyBonusClaim";
+import { getNextLevelRewardCredits, syncLevelRewards } from "@/lib/gamificationRewards";
 import { useLootRevealStore } from "@/stores/lootRevealStore";
 import { cn } from "@/lib/utils";
 
@@ -143,7 +143,6 @@ export function GamificationStrip({
 }: Props) {
   const isFr = locale === "fr";
   const [state, setState] = useState<GamificationState>(() => loadGamification());
-  const showLoot = useLootRevealStore((s) => s.showLoot);
 
   const reload = useCallback(() => setState(loadGamification()), []);
 
@@ -191,52 +190,9 @@ export function GamificationStrip({
   );
 
   const onClaimDaily = () => {
-    const beforeXp = state.xp;
-    const result = claimDailyBonus();
-    setState(result.state);
-    if (result.alreadyClaimed) {
-      toast(isFr ? "Bonus déjà récupéré — reviens demain" : "Bonus already claimed — see you tomorrow", {
-        duration: 2500,
-      });
-      return;
-    }
-
-    void (async () => {
-      let credits = 1;
-      if (syncRewards) {
-        const daily = await syncDailyGenerationBonus(locale, { silent: true });
-        const levelResult = await syncLevelRewards(locale, { silent: true });
-        if (daily?.creditsGranted) credits = daily.creditsGranted;
-        if (onBonusCreditsChange && (daily?.ok || levelResult?.ok)) {
-          onBonusCreditsChange({
-            levelBonus: levelResult?.levelBonus ?? 0,
-            dailyBonusMonth: daily?.dailyBonusMonth ?? 0,
-          });
-        }
-
-        const beforeLevel = getLevel(beforeXp);
-        const afterLevel = getLevel(result.state.xp);
-        showLoot({
-          kind: "daily",
-          credits,
-          xp: result.xpGained,
-        });
-        if (levelResult?.ok && levelResult.creditsGranted > 0 && afterLevel > beforeLevel) {
-          showLoot({
-            kind: "level",
-            credits: levelResult.creditsGranted,
-            level: afterLevel,
-          });
-        }
-        return;
-      }
-
-      showLoot({
-        kind: "daily",
-        credits,
-        xp: result.xpGained,
-      });
-    })();
+    void performDailyBonusClaim(locale, { syncRewards, onCreditsChange: onBonusCreditsChange }).then(() => {
+      setState(loadGamification());
+    });
   };
 
   return (

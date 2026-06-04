@@ -296,7 +296,7 @@ export function Dropdown({
               maxHeight: panelRect.maxHeight,
               zIndex: 200,
             }}
-            className="flex flex-col overflow-hidden rounded-pk border border-pk-border bg-pk-bg/95 shadow-[0_24px_70px_rgba(0,0,0,0.55)] backdrop-blur-xl"
+            className="pk-dropdown-panel flex flex-col overflow-hidden rounded-pk border border-pk-border bg-pk-bg/95 shadow-[0_24px_70px_rgba(0,0,0,0.55)] backdrop-blur-xl"
           >
             {showSearch ? (
               <div className="shrink-0 border-b border-pk-border/60 bg-white/3 p-2">
@@ -357,7 +357,7 @@ export function Dropdown({
                 aria-label="Fermer"
                 onClick={() => setOpen(false)}
               />
-              <div className="relative z-[1] flex max-h-[min(78vh,560px)] flex-col overflow-hidden rounded-t-2xl border border-pk-border bg-pk-bg shadow-[0_-24px_80px_rgba(0,0,0,0.55)]">
+              <div className="pk-dropdown-panel relative z-[1] flex max-h-[min(78vh,560px)] flex-col overflow-hidden rounded-t-2xl border border-pk-border bg-pk-bg shadow-[0_-24px_80px_rgba(0,0,0,0.55)]">
                 <div className="flex items-center justify-between gap-3 border-b border-pk-border/70 px-4 py-3">
                   <div className="min-w-0">
                     <div className="text-[11px] font-semibold uppercase tracking-wide text-pk-muted">{label}</div>

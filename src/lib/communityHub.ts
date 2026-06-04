@@ -93,12 +93,37 @@ export function sortByRating(
   rows: PublicLoopRow[],
   ratingsById: Record<string, { sum: number; count: number }>,
 ): PublicLoopRow[] {
+  return sortByCommunityLove(rows, ratingsById);
+}
+
+/** Notes d'abord (moyenne puis nb de votes), sinon écoutes communauté, sinon récence. */
+export function sortByCommunityLove(
+  rows: PublicLoopRow[],
+  ratingsById: Record<string, { sum: number; count: number }>,
+  playsById: Record<string, number> = {},
+): PublicLoopRow[] {
+  const score = (id: string) => {
+    const r = ratingsById[id];
+    const count = r?.count ?? 0;
+    const avg = count > 0 ? r!.sum / count : 0;
+    const plays = playsById[id] ?? 0;
+    return { count, avg, plays };
+  };
+
   return rows.slice().sort((a, b) => {
-    const ra = ratingsById[a.id];
-    const rb = ratingsById[b.id];
-    const avgA = ra && ra.count > 0 ? ra.sum / ra.count : 0;
-    const avgB = rb && rb.count > 0 ? rb.sum / rb.count : 0;
-    if (avgB !== avgA) return avgB - avgA;
+    const sa = score(a.id);
+    const sb = score(b.id);
+    const ratedA = sa.count > 0;
+    const ratedB = sb.count > 0;
+
+    if (ratedA && ratedB) {
+      if (sb.avg !== sa.avg) return sb.avg - sa.avg;
+      if (sb.count !== sa.count) return sb.count - sa.count;
+    } else if (ratedA !== ratedB) {
+      return ratedB ? 1 : -1;
+    }
+
+    if (sb.plays !== sa.plays) return sb.plays - sa.plays;
     return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
   });
 }
@@ -106,13 +131,12 @@ export function sortByRating(
 export function pickSpotlight(
   rows: PublicLoopRow[],
   ratingsById: Record<string, { sum: number; count: number }>,
+  playsById: Record<string, number> = {},
 ): PublicLoopRow | null {
-  const rated = sortByRating(rows, ratingsById).filter((r) => {
-    const c = ratingsById[r.id]?.count ?? 0;
-    return c >= 1;
-  });
-  if (rated[0]) return rated[0];
-  return rows[0] ?? null;
+  const sorted = sortByCommunityLove(rows, ratingsById, playsById);
+  const rated = sorted.find((r) => (ratingsById[r.id]?.count ?? 0) >= 1);
+  if (rated) return rated;
+  return sorted[0] ?? null;
 }
 
 export function categoriesWithTracks(

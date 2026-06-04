@@ -15,7 +15,7 @@ export function isRemixVibeRecreateEnabled(): boolean {
 
 export const REMIX_VIBE_FALLBACK_COPY = {
   fr: {
-    panelTitle: "Remix ton Hit",
+    panelTitle: "Remix ton coup de coeur",
     panelBadge: "Song / Beat",
     panelHint:
       "Même BPM, tonalité, paroles et prompt du track — Ajoute ta touche perso (optionnel).",
@@ -26,7 +26,7 @@ export const REMIX_VIBE_FALLBACK_COPY = {
     ctaIdle: "Lancer le remix",
     ctaGenerating: "Génération…",
     needPrompt: "Décris le style (4+ caractères).",
-    creditHint: "1 crédit · nouvelle piste dans ta bibliothèque",
+    creditHintSuffix: " · nouvelle piste dans ta bibliothèque",
     successToast: "Remix ready — écoute le résultat 🎧",
     inspiredBy: (name: string) => `Inspiré de « ${name} »`,
   },
@@ -42,7 +42,7 @@ export const REMIX_VIBE_FALLBACK_COPY = {
     ctaIdle: "Run remix",
     ctaGenerating: "Generating…",
     needPrompt: "Describe the style (4+ chars).",
-    creditHint: "1 credit · new track in your library",
+    creditHintSuffix: " · new track in your library",
     successToast: "New vibe ready — listen to the result 🎧",
     inspiredBy: (name: string) => `Inspired by “${name}”`,
   },

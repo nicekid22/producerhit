@@ -66,18 +66,21 @@ function playableLoops(loops: Loop[]) {
   );
 }
 
-/** Play one loop, optionally within a list so prev/next and auto-advance work. */
+/** Play one loop within a list — queue keeps list order so « ended » advances to the next card. */
 export function playLoopInContext(loop: Loop, context: Loop[] | undefined, autoPlay: boolean, source = "context") {
   const store = usePlayerStore.getState();
-  const base = context ?? [];
-  const merged = [loop, ...base.filter((l) => l.id !== loop.id)];
-  const clean = playableLoops(merged);
-  if (clean.length <= 1) {
+  const clean = playableLoops(context ?? []);
+  if (!clean.length) {
     store.setCurrent(loop, autoPlay);
     return;
   }
   const idx = clean.findIndex((l) => l.id === loop.id);
-  store.setQueue(clean, idx >= 0 ? idx : 0, autoPlay, source);
+  if (idx >= 0) {
+    store.setQueue(clean, idx, autoPlay, source);
+    return;
+  }
+  const withExtra = playableLoops([loop, ...clean]);
+  store.setQueue(withExtra, 0, autoPlay, source);
 }
 
 export const usePlayerStore = create<PlayerState>((set) => ({
@@ -112,7 +115,7 @@ export const usePlayerStore = create<PlayerState>((set) => ({
       queue: [],
       queueIndex: 0,
       queueSource: null,
-      seekToPct: 0,
+      seekToPct: null,
     }),
   setQueue: (loops, startIndex, autoPlay, source) =>
     set(() => {
@@ -129,7 +132,7 @@ export const usePlayerStore = create<PlayerState>((set) => ({
         queue: clean,
         queueIndex: idx,
         queueSource: typeof source === "string" ? source : null,
-        seekToPct: 0,
+        seekToPct: null,
       };
     }),
   mergeQueue: (loops, source) =>
@@ -186,7 +189,7 @@ export const usePlayerStore = create<PlayerState>((set) => ({
         durationSec: 0,
         loopEndSec: computeLoopEndSec(next),
         queueIndex: idx,
-        seekToPct: 0,
+        seekToPct: null,
       };
     }),
   prev: () =>
@@ -204,7 +207,7 @@ export const usePlayerStore = create<PlayerState>((set) => ({
         durationSec: 0,
         loopEndSec: computeLoopEndSec(prev),
         queueIndex: idx,
-        seekToPct: 0,
+        seekToPct: null,
       };
     }),
   clearQueue: () => set({ queue: [], queueIndex: 0, queueSource: null }),

@@ -7,6 +7,8 @@ type Props = {
   disabled?: boolean;
   idleLabel: string;
   generatingLabel: string;
+  /** 0–100 — estimation affichée dans le libellé (optionnel). */
+  progressPct?: number;
   onClick: () => void | Promise<void>;
   className?: string;
 };
@@ -17,9 +19,14 @@ export function DashboardGenerateButton({
   disabled,
   idleLabel,
   generatingLabel,
+  progressPct,
   onClick,
   className,
 }: Props) {
+  const pctLabel =
+    generating && typeof progressPct === "number"
+      ? `${generatingLabel.replace(/…$/, "").trim()}… ${Math.round(progressPct)} %`
+      : generatingLabel;
   return (
     <div className={cn("pk-landing-gen__cta-shell pk-dashboard-gen__cta-shell relative w-full", className)}>
       <span className="pk-landing-gen__cta-field" aria-hidden />
@@ -27,6 +34,7 @@ export function DashboardGenerateButton({
         type="button"
         disabled={disabled}
         aria-busy={generating}
+        aria-valuetext={generating && typeof progressPct === "number" ? `${progressPct}%` : undefined}
         onClick={() => void onClick()}
         className={cn(
           "pk-landing-gen__cta pk-dashboard-gen__cta group inline-flex h-12 w-full items-center justify-center rounded-full px-6",
@@ -49,7 +57,7 @@ export function DashboardGenerateButton({
         ) : null}
         <span className="pk-landing-gen__cta-inner inline-flex items-center justify-center gap-2 text-sm font-bold">
           {generating ? <GenElectricMark /> : <AudioWaveform className="h-4 w-4" aria-hidden />}
-          {generating ? generatingLabel : idleLabel}
+          {generating ? pctLabel : idleLabel}
         </span>
       </button>
     </div>

@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Pause, Play, Radio, Shuffle, Sparkles } from "lucide-react";
 import type { Loop } from "@/types/loop";
 import type { PublicProfileCard } from "@/lib/creatorProfile";
-import { LandingCommunityCoverStack } from "@/components/cover/LandingCommunityCoverStack";
-import { resolveCoverImageUrl } from "@/lib/coverArt";
-import { coverGradient } from "@/lib/utils";
+import { StoredLoopCover } from "@/components/cover/StoredLoopCover";
+import { publicRowToCoverLoop, resolveLoopDisplayCoverUrl } from "@/lib/coverArt";
+import { COVER_SURFACE_CLASS, cn } from "@/lib/utils";
 import { isPlayablePublicLoop } from "@/lib/publicLoops";
 import { ProfileAuthorChip } from "@/components/profile/ProfileAuthorChip";
 
@@ -24,10 +24,7 @@ export type LandingCommunityTrack = {
   tags: string[];
   prompt: string;
   author?: PublicProfileCard | null;
-  /** Cover Pollinations / DB (couche visible par défaut) */
   coverUrl?: string | null;
-  /** Cover Pinterest — révélée au survol */
-  pinterestCoverUrl?: string | null;
 };
 
 type Props = {
@@ -44,33 +41,229 @@ type Props = {
   footer?: React.ReactNode;
 };
 
+const INITIAL_VISIBLE = 4;
+const LOAD_BATCH = 3;
+
 function isNew(createdAt: string | null) {
   if (!createdAt) return false;
   return Date.now() - new Date(createdAt).getTime() < 24 * 60 * 60 * 1000;
 }
 
 function toCoverLoop(track: LandingCommunityTrack): Loop {
-  return {
+  return publicRowToCoverLoop({
     id: track.id,
     name: track.name,
-    genre: track.genre ?? "",
-    influence: "No Influence",
-    key: "",
-    scale: "",
-    bpm: track.bpm ?? 0,
-    loopLength: "8 bars",
-    swing: 0,
-    mood: track.mood ?? "",
-    energyLevel: "",
-    reverb: "",
+    genre: track.genre,
+    mood: track.mood,
+    bpm: track.bpm,
     prompt: track.prompt,
-    audioUrl: track.audioUrl,
+    stems_url: track.stemsUrl ?? null,
     seed: track.seed ?? null,
-    details: null,
-    stemsUrl: track.stemsUrl ?? null,
-    isSaved: false,
-    isPublic: true,
-    createdAt: track.createdAt ?? new Date().toISOString(),
+    created_at: track.createdAt,
+  });
+}
+
+function LandingCommunityCardCover({
+  track,
+  coverPriority,
+  playingNow,
+  isFr,
+  onPlay,
+}: {
+  track: LandingCommunityTrack;
+  coverPriority: boolean;
+  playingNow: boolean;
+  isFr: boolean;
+  onPlay: () => void;
+}) {
+  const loopForCover = toCoverLoop(track);
+  const coverUrl = track.coverUrl?.trim() || resolveLoopDisplayCoverUrl(loopForCover);
+  return (
+    <button
+      type="button"
+      onClick={onPlay}
+      className="pk-landing-community__cover-btn w-full text-left"
+      aria-label={
+        playingNow
+          ? isFr
+            ? `Pause ${track.name}`
+            : `Pause ${track.name}`
+          : isFr
+            ? `Écouter ${track.name}`
+            : `Play ${track.name}`
+      }
+    >
+      <div
+        className={cn(
+          "pk-landing-community__cover relative h-44 overflow-hidden rounded-2xl sm:h-48",
+          COVER_SURFACE_CLASS,
+          playingNow && "is-playing",
+        )}
+      >
+        <div className="pk-landing-community__cover-media">
+          <StoredLoopCover
+            coverUrl={coverUrl}
+            className="absolute inset-0"
+            imageClassName="pk-landing-community__cover-img"
+            loading={coverPriority ? "eager" : "lazy"}
+          />
+        </div>
+        <div className="pk-landing-community__cover-shine" aria-hidden />
+        <div className="pointer-events-none absolute inset-0 z-[3] bg-gradient-to-t from-black/70 via-black/12 to-transparent" />
+        <div className="absolute left-3 top-3 rounded-full border border-white/15 bg-black/45 px-3 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
+          {track.badge}
+        </div>
+        {track.createdAt && isNew(track.createdAt) ? (
+          <div className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/45 px-2.5 py-1 text-[10px] font-semibold text-white backdrop-blur-sm">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            {isFr ? "Nouveau" : "New"}
+          </div>
+        ) : null}
+        {playingNow ? (
+          <div className="pk-landing-community__eq pointer-events-none absolute bottom-3 left-3 right-3 z-[4] flex items-end justify-center gap-[3px]" aria-hidden>
+            {Array.from({ length: 18 }).map((_, i) => (
+              <span key={i} className="pk-landing-community__eq-bar" style={{ animationDelay: `${(i % 9) * 72}ms` }} />
+            ))}
+          </div>
+        ) : null}
+        <div
+          className={cn(
+            "pointer-events-none absolute inset-0 z-[4] flex items-center justify-center transition-opacity duration-300",
+            playingNow ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+          )}
+        >
+          <span className="pk-landing-community__play-fab flex h-12 w-12 items-center justify-center rounded-full border border-white/30 bg-black/50 text-white backdrop-blur-md">
+            {playingNow ? <Pause className="h-5 w-5" fill="currentColor" /> : <Play className="ml-0.5 h-5 w-5" fill="currentColor" />}
+          </span>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function useReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync = () => setReduced(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+  return reduced;
+}
+
+/** Reveal + léger tilt souris sur la première carte (section communauté). */
+function useCommunityHeroCard(reduceMotion: boolean, enabled: boolean, loading: boolean) {
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  const [heroLive, setHeroLive] = useState(reduceMotion);
+  const [heroEntered, setHeroEntered] = useState(reduceMotion);
+  const [pointerTilt, setPointerTilt] = useState({ rx: 0, ry: 0, tx: 0, ty: 0 });
+  const [pointerOn, setPointerOn] = useState(false);
+
+  useEffect(() => {
+    if (loading) {
+      setHeroLive(reduceMotion);
+      setHeroEntered(reduceMotion);
+      return;
+    }
+  }, [loading, reduceMotion]);
+
+  useEffect(() => {
+    if (!heroLive) return;
+    if (reduceMotion) {
+      setHeroEntered(true);
+      return;
+    }
+    const t = window.setTimeout(() => setHeroEntered(true), 1180);
+    return () => window.clearTimeout(t);
+  }, [heroLive, reduceMotion]);
+
+  useEffect(() => {
+    if (reduceMotion) {
+      setHeroLive(true);
+      setHeroEntered(true);
+      return;
+    }
+    if (!enabled || loading) return;
+    const el = stageRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setHeroLive(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "0px 0px -8% 0px", threshold: 0.22 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [reduceMotion, enabled, loading]);
+
+  useEffect(() => {
+    if (reduceMotion || !heroLive || !enabled) return;
+    const stage = stageRef.current;
+    if (!stage) return;
+    const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    if (!finePointer) return;
+
+    const onMove = (e: PointerEvent) => {
+      const card = stage.querySelector<HTMLElement>(".pk-landing-community__card--hero");
+      if (!card) return;
+      const rect = card.getBoundingClientRect();
+      const nx = (e.clientX - (rect.left + rect.width / 2)) / (rect.width / 2);
+      const ny = (e.clientY - (rect.top + rect.height / 2)) / (rect.height / 2);
+      const clamp = (v: number) => Math.max(-1, Math.min(1, v));
+      const cx = clamp(nx);
+      const cy = clamp(ny);
+      setPointerOn(true);
+      setPointerTilt({
+        rx: cy * -2.8,
+        ry: cx * 3.2,
+        tx: cx * 5,
+        ty: cy * 4,
+      });
+    };
+
+    const onLeave = () => {
+      setPointerOn(false);
+      setPointerTilt({ rx: 0, ry: 0, tx: 0, ty: 0 });
+    };
+
+    stage.addEventListener("pointermove", onMove);
+    stage.addEventListener("pointerleave", onLeave);
+    return () => {
+      stage.removeEventListener("pointermove", onMove);
+      stage.removeEventListener("pointerleave", onLeave);
+    };
+  }, [reduceMotion, heroLive, enabled]);
+
+  const stageClass = cn(
+    !heroLive && enabled && "pk-landing-community__stage--hero-pending",
+    heroLive && "pk-landing-community__stage--hero-live",
+    heroEntered && "pk-landing-community__stage--hero-entered",
+  );
+
+  const heroInnerStyle =
+    pointerOn && heroEntered
+      ? {
+          transform: `perspective(900px) rotateX(${pointerTilt.rx}deg) rotateY(${pointerTilt.ry}deg) translate3d(${pointerTilt.tx}px, ${pointerTilt.ty}px, 0)`,
+        }
+      : undefined;
+
+  return {
+    stageRef,
+    stageClass,
+    heroLive,
+    heroEntered,
+    heroInnerClass: cn(
+      "pk-landing-community__hero-inner",
+      heroEntered && !pointerOn && "pk-landing-community__hero-inner--float",
+      pointerOn && "pk-landing-community__hero-inner--tilt",
+    ),
+    heroInnerStyle,
   };
 }
 
@@ -88,89 +281,104 @@ export function LandingCommunityRail({
   footer,
 }: Props) {
   const isFr = locale === "fr";
+  const reduceMotion = useReducedMotion();
   const railRef = useRef<HTMLDivElement | null>(null);
-  const [edgeLeft, setEdgeLeft] = useState(false);
-  const [edgeRight, setEdgeRight] = useState(true);
-  const [scrollHint, setScrollHint] = useState(true);
+  const loadSentinelRef = useRef<HTMLDivElement | null>(null);
+  const [focusedIndex, setFocusedIndex] = useState(0);
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
 
-  const syncEdges = useCallback(() => {
-    const el = railRef.current;
-    if (!el) return;
-    const max = Math.max(0, el.scrollWidth - el.clientWidth - 2);
-    setEdgeLeft(el.scrollLeft > 8);
-    setEdgeRight(el.scrollLeft < max);
+  const visibleTracks = useMemo(() => tracks.slice(0, visibleCount), [tracks, visibleCount]);
+  const hero = useCommunityHeroCard(reduceMotion, !loading && visibleTracks.length > 0, loading);
+
+  useEffect(() => {
+    if (loading) return;
+    setVisibleCount(Math.min(INITIAL_VISIBLE, tracks.length || INITIAL_VISIBLE));
+    setFocusedIndex(0);
+  }, [loading, tracks.length]);
+
+  const syncFocus = useCallback(() => {
+    const rail = railRef.current;
+    if (!rail) return;
+    const cards = rail.querySelectorAll<HTMLElement>("[data-community-idx]");
+    if (!cards.length) return;
+    const railRect = rail.getBoundingClientRect();
+    const railCenter = railRect.left + railRect.width / 2;
+    let best = 0;
+    let bestDist = Infinity;
+    cards.forEach((card, i) => {
+      const rect = card.getBoundingClientRect();
+      const dist = Math.abs(rect.left + rect.width / 2 - railCenter);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = i;
+      }
+    });
+    setFocusedIndex(best);
   }, []);
 
   useEffect(() => {
-    syncEdges();
-    const el = railRef.current;
-    if (!el) return;
+    const rail = railRef.current;
+    if (!rail || loading) return;
+    syncFocus();
+    let raf = 0;
     const onScroll = () => {
-      syncEdges();
-      if (el.scrollLeft > 12) setScrollHint(false);
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(syncFocus);
     };
-    el.addEventListener("scroll", onScroll, { passive: true });
-    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(syncEdges) : null;
-    ro?.observe(el);
+    rail.addEventListener("scroll", onScroll, { passive: true });
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(syncFocus) : null;
+    ro?.observe(rail);
     return () => {
-      el.removeEventListener("scroll", onScroll);
+      rail.removeEventListener("scroll", onScroll);
       ro?.disconnect();
+      cancelAnimationFrame(raf);
     };
-  }, [syncEdges, tracks.length, loading]);
+  }, [loading, visibleTracks.length, syncFocus]);
 
   useEffect(() => {
-    if (loading || tracks.length < 2) return;
-    if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const el = railRef.current;
-    if (!el) return;
+    if (loading || visibleCount >= tracks.length) return;
+    const sentinel = loadSentinelRef.current;
+    const rail = railRef.current;
+    if (!sentinel || !rail) return;
 
-    let paused = false;
-    let raf = 0;
-    const speed = 0.45;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setVisibleCount((c) => Math.min(c + LOAD_BATCH, tracks.length));
+        }
+      },
+      { root: rail, rootMargin: "0px 120px 0px 0px", threshold: 0.01 },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [loading, visibleCount, tracks.length]);
 
-    const pause = () => {
-      paused = true;
-    };
-    const resume = () => {
-      paused = false;
-    };
+  const scrollToIndex = useCallback(
+    (index: number) => {
+      const rail = railRef.current;
+      if (!rail) return;
+      const card = rail.querySelector<HTMLElement>(`[data-community-idx="${index}"]`);
+      card?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", inline: "center", block: "nearest" });
+    },
+    [reduceMotion],
+  );
 
-    el.addEventListener("pointerenter", pause);
-    el.addEventListener("pointerleave", resume);
-    el.addEventListener("touchstart", pause, { passive: true });
-
-    const tick = () => {
-      const max = el.scrollWidth - el.clientWidth;
-      if (!paused && max > 4) {
-        el.scrollLeft += speed;
-        if (el.scrollLeft >= max - 1) el.scrollLeft = 0;
-      }
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-
-    return () => {
-      cancelAnimationFrame(raf);
-      el.removeEventListener("pointerenter", pause);
-      el.removeEventListener("pointerleave", resume);
-      el.removeEventListener("touchstart", pause);
-    };
-  }, [loading, tracks.length]);
-
-  const scrollBy = (dir: -1 | 1) => {
-    const el = railRef.current;
-    if (!el) return;
-    setScrollHint(false);
-    el.scrollBy({ left: dir * Math.min(360, el.clientWidth * 0.82), behavior: "smooth" });
+  const scrollByStep = (dir: -1 | 1) => {
+    const next = Math.max(0, Math.min(visibleTracks.length - 1, focusedIndex + dir));
+    scrollToIndex(next);
   };
 
   const shufflePlay = () => {
-    if (!tracks.length) return;
-    const pick = tracks[Math.floor(Math.random() * tracks.length)]!;
+    if (!visibleTracks.length) return;
+    const pick = visibleTracks[Math.floor(Math.random() * visibleTracks.length)]!;
     onPlay(pick);
-    const card = railRef.current?.querySelector(`[data-track-id="${pick.id}"]`);
-    card?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    const idx = visibleTracks.findIndex((t) => t.id === pick.id);
+    if (idx >= 0) scrollToIndex(idx);
   };
+
+  const canScrollLeft = focusedIndex > 0;
+  const canScrollRight = focusedIndex < visibleTracks.length - 1 || visibleCount < tracks.length;
+  const totalLabel = tracks.length;
 
   return (
     <div id="trending" className="pk-landing-community">
@@ -181,9 +389,9 @@ export function LandingCommunityRail({
               <span className="pk-prism-live-badge__dot" aria-hidden />
               {isFr ? "Live" : "Live"}
             </span>
-            {!loading && tracks.length ? (
+            {!loading && totalLabel ? (
               <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white/45">
-                {tracks.length} {isFr ? "tracks" : "tracks"}
+                {totalLabel} {isFr ? "tracks" : "tracks"}
               </span>
             ) : null}
           </div>
@@ -212,45 +420,44 @@ export function LandingCommunityRail({
         </div>
       </div>
 
-      <div className="pk-landing-community__stage mt-6 sm:mt-8">
-        <div className={["pk-landing-community__fade pk-landing-community__fade--left", edgeLeft ? "is-visible" : ""].join(" ")} aria-hidden />
-        <div className={["pk-landing-community__fade pk-landing-community__fade--right", edgeRight ? "is-visible" : ""].join(" ")} aria-hidden />
-
-        {scrollHint && !loading && tracks.length > 3 ? (
-          <div className="pk-landing-community__nudge" aria-hidden>
-            <span>{isFr ? "Glisse pour explorer" : "Swipe to explore"}</span>
-            <ChevronRight className="h-4 w-4 pk-landing-community__nudge-icon" />
-          </div>
-        ) : null}
+      <div
+        ref={hero.stageRef}
+        className={cn(
+          "pk-landing-community__stage pk-landing-community__stage--cinema mt-6 sm:mt-8",
+          hero.stageClass,
+        )}
+      >
+        <div className="pk-landing-community__aurora" aria-hidden />
+        <div className="pk-landing-community__spotlight" aria-hidden />
 
         <button
           type="button"
-          onClick={() => scrollBy(-1)}
-          className={[
-            "pk-landing-community__nav pk-landing-community__nav--left",
-            edgeLeft ? "is-visible" : "",
-          ].join(" ")}
+          onClick={() => scrollByStep(-1)}
+          disabled={!canScrollLeft}
+          className={cn("pk-landing-community__nav pk-landing-community__nav--left", canScrollLeft && "is-visible")}
           aria-label={isFr ? "Précédent" : "Previous"}
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
         <button
           type="button"
-          onClick={() => scrollBy(1)}
-          className={[
-            "pk-landing-community__nav pk-landing-community__nav--right",
-            edgeRight ? "is-visible" : "",
-          ].join(" ")}
+          onClick={() => scrollByStep(1)}
+          disabled={!canScrollRight}
+          className={cn("pk-landing-community__nav pk-landing-community__nav--right", canScrollRight && "is-visible")}
           aria-label={isFr ? "Suivant" : "Next"}
         >
           <ChevronRight className="h-5 w-5" />
         </button>
 
-        <div ref={railRef} className="pk-landing-community__rail">
+        <div ref={railRef} className="pk-landing-community__rail pk-landing-community__rail--cinema" role="list">
           {loading
-            ? Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="pk-landing-community__card pk-landing-community__card--skeleton animate-pulse">
-                  <div className="h-44 rounded-2xl bg-white/5" />
+            ? Array.from({ length: 3 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="pk-landing-community__card pk-landing-community__card--skeleton pk-landing-community__card--focus animate-pulse"
+                  role="listitem"
+                >
+                  <div className="h-44 rounded-2xl bg-white/5 sm:h-48" />
                   <div className="mt-4 h-4 w-2/3 rounded bg-white/5" />
                   <div className="mt-3 flex gap-2">
                     <div className="h-9 flex-1 rounded-full bg-white/5" />
@@ -258,68 +465,28 @@ export function LandingCommunityRail({
                   </div>
                 </div>
               ))
-            : tracks.length
-              ? tracks.map((t, idx) => {
-                  const loopForCover = toCoverLoop(t);
-                  const bg = coverGradient(loopForCover);
-                  const pollinationsUrl = t.coverUrl?.trim() || resolveCoverImageUrl(loopForCover);
-                  const pinterestUrl = t.pinterestCoverUrl?.trim() || "";
-                  const hasPinterestPeek = pinterestUrl.startsWith("http");
+            : visibleTracks.length
+              ? visibleTracks.map((t, idx) => {
                   const active = activeTrackId === t.id;
                   const playingNow = active && isPlaying;
                   const playable = isPlayablePublicLoop(t.audioUrl, t.stemsUrl, t.createdAt);
+                  const dist = Math.abs(idx - focusedIndex);
+                  const focusClass =
+                    dist === 0
+                      ? "pk-landing-community__card--focus"
+                      : dist === 1
+                        ? "pk-landing-community__card--adjacent"
+                        : "pk-landing-community__card--far";
 
-                  return (
-                    <article
-                      key={t.id}
-                      data-track-id={t.id}
-                      className={[
-                        "pk-landing-community__card group",
-                        playingNow ? "pk-landing-community__card--playing" : "",
-                      ].join(" ")}
-                      style={{ animationDelay: `${Math.min(idx, 8) * 70}ms` }}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => onPlay(t)}
-                        className="pk-landing-community__cover-btn w-full text-left"
-                        aria-label={playingNow ? (isFr ? `Pause ${t.name}` : `Pause ${t.name}`) : isFr ? `Écouter ${t.name}` : `Play ${t.name}`}
-                      >
-                        <div
-                          className={[
-                            "pk-landing-community__cover relative h-44 overflow-hidden rounded-2xl",
-                            hasPinterestPeek ? "pk-landing-community__cover--peek" : "",
-                          ].join(" ")}
-                          style={{ background: bg }}
-                        >
-                          <LandingCommunityCoverStack
-                            pollinationsUrl={pollinationsUrl}
-                            pinterestUrl={hasPinterestPeek ? pinterestUrl : null}
-                            className="absolute inset-0"
-                            loading={idx < 4 ? "eager" : "lazy"}
-                          />
-                          <div className="pointer-events-none absolute inset-0 z-[3] bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
-                          <div className="absolute left-3 top-3 rounded-full border border-white/15 bg-black/45 px-3 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
-                            {t.badge}
-                          </div>
-                          {t.createdAt && isNew(t.createdAt) ? (
-                            <div className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/45 px-2.5 py-1 text-[10px] font-semibold text-white backdrop-blur-sm">
-                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                              {isFr ? "Nouveau" : "New"}
-                            </div>
-                          ) : null}
-                          <div
-                            className={[
-                              "pointer-events-none absolute inset-0 z-[4] flex items-center justify-center transition-opacity duration-300",
-                              playingNow ? "opacity-100" : "opacity-0 group-hover:opacity-100",
-                            ].join(" ")}
-                          >
-                            <span className="flex h-12 w-12 items-center justify-center rounded-full border border-white/30 bg-black/50 text-white shadow-[0_0_40px_rgba(103,195,255,0.35)] backdrop-blur-md">
-                              {playingNow ? <Pause className="h-5 w-5" fill="currentColor" /> : <Play className="ml-0.5 h-5 w-5" fill="currentColor" />}
-                            </span>
-                          </div>
-                        </div>
-                      </button>
+                  const cardBody = (
+                    <>
+                      <LandingCommunityCardCover
+                        track={t}
+                        coverPriority={dist <= 1 || idx === 0}
+                        playingNow={playingNow}
+                        isFr={isFr}
+                        onPlay={() => onPlay(t)}
+                      />
 
                       <div className="mt-4 min-w-0">
                         <div className="truncate text-sm font-semibold text-white">{t.name}</div>
@@ -330,7 +497,10 @@ export function LandingCommunityRail({
                         ) : null}
                         <div className="mt-2 flex flex-wrap gap-1.5">
                           {t.tags.slice(0, 3).map((x) => (
-                            <span key={x} className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-0.5 text-[10px] font-semibold text-white/55">
+                            <span
+                              key={x}
+                              className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-0.5 text-[10px] font-semibold text-white/55"
+                            >
                               {x}
                             </span>
                           ))}
@@ -340,10 +510,12 @@ export function LandingCommunityRail({
                             type="button"
                             onClick={() => onPlay(t)}
                             disabled={!playable}
-                            className={[
+                            className={cn(
                               "inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-full text-xs font-semibold transition-all",
-                              playable ? "pk-prism-btn rounded-full px-3 py-1.5 text-[11px] font-semibold" : "border border-white/10 bg-white/5 text-white/40",
-                            ].join(" ")}
+                              playable
+                                ? "pk-prism-btn rounded-full px-3 py-1.5 text-[11px] font-semibold"
+                                : "border border-white/10 bg-white/5 text-white/40",
+                            )}
                           >
                             {playingNow ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
                             {playingNow ? (isFr ? "Pause" : "Pause") : isFr ? "Écouter" : "Listen"}
@@ -358,16 +530,45 @@ export function LandingCommunityRail({
                           </button>
                         </div>
                       </div>
+                    </>
+                  );
+
+                  const isHero = idx === 0;
+
+                  return (
+                    <article
+                      key={t.id}
+                      data-track-id={t.id}
+                      data-community-idx={idx}
+                      role="listitem"
+                      className={cn(
+                        "pk-landing-community__card group",
+                        focusClass,
+                        playingNow && "pk-landing-community__card--playing",
+                        isHero && "pk-landing-community__card--hero",
+                        !isHero && !reduceMotion && "pk-landing-community__card--reveal",
+                      )}
+                      style={!isHero && !reduceMotion ? { animationDelay: `${Math.min(idx, 6) * 90}ms` } : undefined}
+                    >
+                      {isHero ? (
+                        <div className={hero.heroInnerClass} style={hero.heroInnerStyle}>
+                          {cardBody}
+                        </div>
+                      ) : (
+                        cardBody
+                      )}
                     </article>
                   );
                 })
               : (
-                <div className="pk-landing-community__empty pk-prism-card p-6">
+                <div className="pk-landing-community__empty pk-prism-card p-6" role="listitem">
                   <div className="text-sm font-semibold text-white">
                     {isFr ? "Aucun aperçu audio pour le moment" : "No audio previews right now"}
                   </div>
                   <div className="mt-2 text-sm text-white/55">
-                    {isFr ? "Les tracks publiques apparaissent ici dès qu’elles sont prêtes." : "Public tracks show up here as soon as they’re ready."}
+                    {isFr
+                      ? "Les tracks publiques apparaissent ici dès qu’elles sont prêtes."
+                      : "Public tracks show up here as soon as they’re ready."}
                   </div>
                   {onRefresh ? (
                     <button
@@ -380,7 +581,47 @@ export function LandingCommunityRail({
                   ) : null}
                 </div>
               )}
+
+          {!loading && visibleCount < tracks.length ? (
+            <div ref={loadSentinelRef} className="pk-landing-community__sentinel" aria-hidden />
+          ) : null}
         </div>
+
+        {!loading && tracks.length > 1 ? (
+          <div className="pk-landing-community__filmstrip" role="tablist" aria-label={isFr ? "Navigation des tracks" : "Track navigation"}>
+            {tracks.map((t, i) => {
+              const mounted = i < visibleCount;
+              const isActive = i === focusedIndex && mounted;
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  aria-label={t.name}
+                  disabled={!mounted}
+                  onClick={() => mounted && scrollToIndex(i)}
+                  className={cn(
+                    "pk-landing-community__filmstrip-dot",
+                    isActive && "is-active",
+                    mounted && !isActive && "is-ready",
+                  )}
+                />
+              );
+            })}
+            {visibleCount < tracks.length ? (
+              <span className="pk-landing-community__filmstrip-more" aria-hidden>
+                +
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+
+        {!loading && visibleTracks.length > 3 && visibleCount < tracks.length ? (
+          <p className="pk-landing-community__scroll-hint">
+            {isFr ? "Continue à défiler — d’autres tracks arrivent" : "Keep scrolling — more tracks loading"}
+          </p>
+        ) : null}
       </div>
 
       {footer}

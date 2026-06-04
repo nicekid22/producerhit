@@ -46,8 +46,8 @@ export function LoopDetailsSheet({
       <button type="button" className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} aria-label={closeLabel} />
       <div
         className={cn(
-          "absolute inset-x-0 flex flex-col overflow-hidden rounded-t-[1.25rem] border border-white/10 bg-[#050508]",
-          "shadow-[0_-24px_80px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.06)] pk-loop-details-sheet",
+          "pk-loop-details-sheet absolute inset-x-0 flex flex-col overflow-hidden rounded-t-[1.25rem] border border-white/10",
+          "shadow-[0_-24px_80px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.06)]",
         )}
         style={{
           bottom: dockBottom,
@@ -55,7 +55,7 @@ export function LoopDetailsSheet({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="relative flex shrink-0 items-center border-b border-white/10 bg-[#050508]/98 px-4 pb-3 pt-2 backdrop-blur-md">
+        <div className="pk-loop-details-sheet-header relative flex shrink-0 items-center border-b border-white/10 px-4 pb-3 pt-2 backdrop-blur-md">
           <div className="flex w-full flex-col items-center gap-1.5 pr-11">
             <div className="h-1 w-10 rounded-full bg-white/25" aria-hidden />
             {title ? (

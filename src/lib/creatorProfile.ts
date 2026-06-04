@@ -280,6 +280,9 @@ async function saveCreatorProfileDirect(
 }
 
 export async function saveCreatorProfile(draft: CreatorProfileDraft): Promise<{ ok: true } | { ok: false; error: string }> {
+  await supabase.rpc("repair_missing_profile").then(() => undefined, () => undefined);
+  await supabase.rpc("ensure_profile").then(() => undefined, () => undefined);
+
   const payload = {
     username: draft.username.trim() || null,
     avatar_id: draft.avatar_id,

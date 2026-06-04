@@ -1,7 +1,9 @@
 import type { CSSProperties } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { BrandLogo } from "@/components/landing/BrandLogo";
+import { WarmGlassBackdrop } from "@/components/WarmGlassBackdrop";
 import { usePlayerStore } from "@/stores/playerStore";
+import { useVisualThemeStore, isWarmGlassTheme } from "@/stores/visualThemeStore";
 import { cn } from "@/lib/utils";
 
 export function AppShell({
@@ -24,17 +26,23 @@ export function AppShell({
 }) {
   const hasPlayer = usePlayerStore((s) => !!s.current);
   const isPrism = theme === "prism";
+  const visualTheme = useVisualThemeStore((s) => s.theme);
+  const warmGlass = isPrism && isWarmGlassTheme(visualTheme);
   const dockPb = hasPlayer ? "pk-shell-dock-pb--player" : "pk-shell-dock-pb";
+  /** Padding scroll zones — pas sur la colonne création desktop (évite trou sous Versions). */
+  /** Scroll workspace : padding géré par margin-bottom colonnes + --pk-player-reserve */
+  const dockPbScrollOnly = "md:pk-shell-dock-pb";
   const hideLeftOnMobile = mobileLayoutV2 && (mobilePanel === "results" || mobilePanel === "master");
   const hideChildrenOnMobile = mobileLayoutV2 && mobilePanel === "create";
 
   return (
     <div
-      className={[
+      className={cn(
         "pk-app-shell relative text-pk-text md:h-screen md:overflow-hidden",
         mobileLayoutV2 && "pk-mobile-app-shell",
         isPrism ? "pk-prism-stage pk-prism-dashboard bg-[#050508]" : "bg-pk-bg",
-      ].join(" ")}
+        warmGlass && "pk-warm-glass-stage",
+      )}
       style={
         {
           "--pk-bottom-nav": "56px",
@@ -44,13 +52,26 @@ export function AppShell({
     >
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {isPrism ? (
-          <>
-            <div className="pk-prism-fx-grain pk-prism-grain opacity-[0.035]" aria-hidden />
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_42%,rgba(0,0,0,0.42)_100%)]" aria-hidden />
-            <div className="pk-prism-fx-orb absolute -top-48 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-[rgba(157,124,255,0.10)] blur-3xl" aria-hidden />
-            <div className="pk-prism-fx-orb absolute -bottom-56 left-12 h-[520px] w-[520px] rounded-full bg-[rgba(103,195,255,0.06)] blur-3xl" aria-hidden />
-            <div className="pk-prism-grid hidden md:block" aria-hidden />
-          </>
+          warmGlass ? (
+            <WarmGlassBackdrop />
+          ) : (
+            <>
+              <div className="pk-prism-fx-grain pk-prism-grain opacity-[0.035]" aria-hidden />
+              <div
+                className="pk-prism-fx-vignette absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_42%,rgba(0,0,0,0.42)_100%)]"
+                aria-hidden
+              />
+              <div
+                className="pk-prism-fx-orb absolute -top-48 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-[rgba(157,124,255,0.10)] blur-3xl"
+                aria-hidden
+              />
+              <div
+                className="pk-prism-fx-orb absolute -bottom-56 left-12 h-[520px] w-[520px] rounded-full bg-[rgba(103,195,255,0.06)] blur-3xl"
+                aria-hidden
+              />
+              <div className="pk-prism-grid hidden md:block" aria-hidden />
+            </>
+          )
         ) : (
           <>
             <div className="pk-prism-fx-orb absolute -top-48 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-[#7c3aed]/15 blur-3xl" aria-hidden />
@@ -71,15 +92,16 @@ export function AppShell({
         <div
           className={cn(
             "flex flex-col px-3 py-3 md:h-screen md:min-h-0 md:flex-row md:gap-3 md:overflow-hidden",
+            hasPlayer && "pb-0",
             mobileLayoutV2 ? "min-h-0 flex-1 overflow-hidden" : "min-h-screen min-h-[100svh]",
           )}
         >
-          <div className="relative z-10 hidden w-[68px] md:flex md:flex-col md:overflow-hidden">
+          <div className="pk-studio-rail-wrap relative z-10 hidden min-h-0 w-[64px] md:flex md:flex-col md:justify-center">
             <div
-              className={[
-                "pk-studio-rail h-full overflow-hidden rounded-2xl backdrop-blur",
+              className={cn(
+                "pk-studio-rail w-full shrink-0 overflow-hidden rounded-[1.25rem] backdrop-blur",
                 isPrism ? "pk-prism-glass border border-white/10" : "border border-pk-border/70 bg-pk-panel/70",
-              ].join(" ")}
+              )}
             >
               <Sidebar />
             </div>
@@ -89,7 +111,7 @@ export function AppShell({
             <div
               className={cn(
                 "flex flex-1 flex-col gap-3 md:min-h-0 md:flex-row md:overflow-hidden",
-                mobileLayoutV2 && cn("min-h-0 overflow-hidden", dockPb),
+                mobileLayoutV2 && "min-h-0 overflow-hidden",
               )}
             >
               {mobileLayoutV2 && mobileTabs ? (
@@ -110,7 +132,9 @@ export function AppShell({
                 className={cn(
                   "w-full overflow-visible rounded-2xl backdrop-blur md:w-[440px] md:min-h-0 md:overflow-hidden",
                   isPrism ? "pk-prism-glass pk-studio-console border border-white/10" : "border border-pk-border/70 bg-pk-panel/70",
-                  mobileLayoutV2 ? "flex min-h-0 flex-1 flex-col overflow-hidden" : dockPb,
+                  mobileLayoutV2
+                    ? "flex min-h-0 flex-1 flex-col overflow-hidden"
+                    : "md:flex md:h-full md:min-h-0 md:flex-col",
                   hideLeftOnMobile && "hidden md:flex md:flex-col",
                 )}
               >
@@ -139,7 +163,7 @@ export function AppShell({
                   isPrism
                     ? "pk-prism-glass pk-studio-workspace border border-white/10 bg-white/[0.02]"
                     : "border border-pk-border/70 bg-pk-panel/30",
-                  mobileLayoutV2 ? "min-h-0 overflow-y-auto overscroll-contain" : dockPb,
+                  mobileLayoutV2 ? cn("min-h-0 overflow-y-auto overscroll-contain", dockPb) : dockPbScrollOnly,
                   hideChildrenOnMobile && "hidden md:block",
                 )}
               >
@@ -163,10 +187,10 @@ export function AppShell({
       </div>
 
       <div
-        className={[
-          "fixed bottom-0 left-0 right-0 z-40 pb-[env(safe-area-inset-bottom)] md:hidden",
+        className={cn(
+          "pk-app-shell-mobile-nav fixed bottom-0 left-0 right-0 z-40 pb-[env(safe-area-inset-bottom)] md:hidden",
           isPrism ? "border-t border-white/10 bg-[rgba(4,3,10,0.88)] backdrop-blur-xl" : "border-t border-pk-border bg-pk-panel",
-        ].join(" ")}
+        )}
       >
         <div className="mx-auto max-w-[1440px]">
           <div className="h-14">

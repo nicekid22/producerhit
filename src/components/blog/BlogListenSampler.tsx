@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Loader2, Play, Shuffle, Square } from "lucide-react";
-import { publicRowToCoverLoop, resolveCoverImageUrl } from "@/lib/coverArt";
+import { publicRowToCoverLoop, resolveLoopDisplayCoverUrl } from "@/lib/coverArt";
 import { fetchPublicLoops, resolvePlayableCommunityAudio, type PublicLoopRow } from "@/lib/publicLoops";
 import { usePlayerStore } from "@/stores/playerStore";
 import { cn } from "@/lib/utils";
@@ -149,7 +149,7 @@ export function BlogListenSampler({ locale, genreMatchers, className }: Props) {
         <ul className="mt-4 space-y-2">
           {rows.map((row) => {
             const loop = publicRowToCoverLoop(row);
-            const cover = resolveCoverImageUrl(loop, 96);
+            const cover = resolveLoopDisplayCoverUrl(loop, 96);
             const active = current?.id === loop.id;
             const busy = resolvingId === row.id;
             return (

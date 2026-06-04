@@ -1,9 +1,10 @@
+import { useEffect } from "react";
 import { Sparkles, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { buildPricingUrl } from "@/lib/billing";
-import { getUpsellCopy, type UpsellReason } from "@/lib/growthUpsell";
+import { getUpsellCopy, shouldShowPlanUpsell, type UpsellReason } from "@/lib/growthUpsell";
 import { trackClientEvent } from "@/lib/supabaseClient";
 import type { PaidPlanId } from "@/lib/planEntitlements";
 
@@ -33,12 +34,16 @@ export function PlanUpsellModal({
   const navigate = useNavigate();
   if (!reason) return null;
 
-  const copy = getUpsellCopy(reason, locale, plan, {
-    source,
-    remaining,
-    totalLimit,
-    usedThisMonth,
-  });
+  const ctx = { source, plan, remaining, totalLimit, usedThisMonth };
+  const visible = shouldShowPlanUpsell(plan, reason, ctx);
+
+  useEffect(() => {
+    if (open && !visible) onClose();
+  }, [open, visible, onClose]);
+
+  if (!visible) return null;
+
+  const copy = getUpsellCopy(reason, locale, plan, ctx);
 
   const trackDismiss = () => {
     trackClientEvent("upgrade_prompt_dismissed", { source, reason, plan });

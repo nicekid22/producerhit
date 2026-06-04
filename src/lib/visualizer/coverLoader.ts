@@ -1,5 +1,5 @@
 import type { Loop } from "@/types/loop";
-import { resolveCoverImageUrl } from "@/lib/coverArt";
+import { resolveLoopDisplayCoverUrl } from "@/lib/coverArt";
 
 const LOAD_TIMEOUT_MS = 45_000;
 const MAX_RETRIES = 4;
@@ -70,7 +70,7 @@ async function loadOnce(url: string, timeoutMs: number): Promise<ImageBitmap | n
 
 /** Loads Pollinations (or persisted) cover for canvas — retries + no-referrer like LoopCardItem. */
 export async function loadCoverBitmap(loop: Loop, size = 1024): Promise<ImageBitmap | null> {
-  const url = resolveCoverImageUrl(loop, size);
+  const url = resolveLoopDisplayCoverUrl(loop, size);
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     if (attempt > 0) await wait(800 * attempt);

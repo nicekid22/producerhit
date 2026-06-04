@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { GenerationCreditAmount } from "@/components/GenerationCreditIcon";
 import { Gift, Sparkles } from "lucide-react";
 import { burstConfetti } from "@/lib/delight/confetti";
 import { playLootOpen, playLootSpinTick, playLootTeaser, playLootWin } from "@/lib/delight/lootSfx";
@@ -313,8 +314,13 @@ export function LootRevealModal() {
 
               {phase === "won" ? (
                 <div className="pk-loot-win mt-6 text-center">
-                  <div className="text-4xl font-black tabular-nums bg-gradient-to-r from-cyan-200 via-violet-200 to-fuchsia-300 bg-clip-text text-transparent sm:text-5xl">
-                    +{payload.credits}
+                  <div className="flex items-center justify-center gap-2">
+                    <GenerationCreditAmount
+                      amount={payload.credits}
+                      showPlus
+                      className="text-4xl font-black sm:text-5xl"
+                      iconClassName="h-7 w-7 sm:h-8 sm:w-8"
+                    />
                   </div>
                   <div className="mt-1 text-sm font-semibold text-white/85">
                     {isFr ? "générations free ce mois-ci" : "free gens this month"}

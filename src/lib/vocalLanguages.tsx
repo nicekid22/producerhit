@@ -25,7 +25,7 @@ export function vocalLanguageAutoOption(locale: "en" | "fr"): DropdownOption {
   return {
     value: "auto",
     label: locale === "fr" ? "Auto (détection)" : "Auto (detect)",
-    icon: <Globe className="h-4 w-4 text-cyan-400" aria-hidden />,
+    icon: <Globe className="pk-menu-icon-accent h-4 w-4" aria-hidden />,
   };
 }
 

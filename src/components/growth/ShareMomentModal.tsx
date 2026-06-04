@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import { Copy, Film, ImageIcon, Loader2, Share2, Sparkles, Video, Volume2, VolumeX, X } from "lucide-react";
 import type { Loop } from "@/types/loop";
 import { Modal } from "@/components/ui/Modal";
+import { GenerationCreditAmount, GenerationCreditIcon } from "@/components/GenerationCreditIcon";
 import { Button } from "@/components/ui/Button";
 import { MusicVisualizerPreview } from "@/components/growth/MusicVisualizerPreview";
 import { floatEmojis } from "@/lib/delight/confetti";
@@ -427,42 +428,31 @@ export function ShareMomentModal({ open, onClose, loop, locale, plan = "free", o
               </p>
             </div>
 
-            <div className="rounded-xl border border-violet-400/20 bg-violet-500/[0.06] px-3 py-2 text-[10px] leading-relaxed text-violet-100/75">
-              {isFr ? (
+            <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 rounded-xl border border-violet-400/20 bg-violet-500/[0.06] px-3 py-2 text-[10px] leading-relaxed text-violet-100/75">
+              <GenerationCreditAmount amount={MOOD_VIDEO_CREDIT_COST} iconClassName="h-2.5 w-2.5 text-violet-200/90" />
+              <span>{isFr ? "par photo" : "per photo"}</span>
+              <span className="text-white/40">·</span>
+              <span>
+                {isFr
+                  ? `export ${MOOD_VIDEO_EXPORT_MAX_SEC}s avec logo + audio`
+                  : `${MOOD_VIDEO_EXPORT_MAX_SEC}s export with logo + audio`}
+              </span>
+              {moodImageSource ? (
                 <>
-                  <strong className="font-semibold text-violet-100">{MOOD_VIDEO_CREDIT_COST} crédit</strong> par photo
-                  · export {MOOD_VIDEO_EXPORT_MAX_SEC}s avec logo + audio
-                  {moodImageSource ? (
-                    <>
-                      {" "}
-                      · <span className="text-white/55">source : {moodImageSource}</span>
-                    </>
-                  ) : null}
-                  {creditsRemaining !== null ? (
-                    <>
-                      {" "}
-                      · <span className="text-white/55">{creditsRemaining} crédit(s) restant(s)</span>
-                    </>
-                  ) : null}
+                  <span className="text-white/40">·</span>
+                  <span className="text-white/55">{isFr ? `source : ${moodImageSource}` : `source: ${moodImageSource}`}</span>
                 </>
-              ) : (
+              ) : null}
+              {creditsRemaining !== null ? (
                 <>
-                  <strong className="font-semibold text-violet-100">{MOOD_VIDEO_CREDIT_COST} credit</strong> per photo ·{" "}
-                  {MOOD_VIDEO_EXPORT_MAX_SEC}s export with logo + audio
-                  {moodImageSource ? (
-                    <>
-                      {" "}
-                      · <span className="text-white/55">source: {moodImageSource}</span>
-                    </>
-                  ) : null}
-                  {creditsRemaining !== null ? (
-                    <>
-                      {" "}
-                      · <span className="text-white/55">{creditsRemaining} credit(s) left</span>
-                    </>
-                  ) : null}
+                  <span className="text-white/40">·</span>
+                  <span className="inline-flex items-center gap-0.5 text-white/55">
+                    <span className="tabular-nums">{creditsRemaining}</span>
+                    <GenerationCreditIcon className="h-2.5 w-2.5 text-violet-200/80" />
+                    <span>{isFr ? "restants" : "left"}</span>
+                  </span>
                 </>
-              )}
+              ) : null}
             </div>
           </>
         ) : null}
@@ -513,9 +503,14 @@ export function ShareMomentModal({ open, onClose, loop, locale, plan = "free", o
                 ? isFr
                   ? "Recherche photo…"
                   : "Finding photo…"
-                : isFr
-                  ? `Trouver une photo (${MOOD_VIDEO_CREDIT_COST} crédit)`
-                  : `Find a photo (${MOOD_VIDEO_CREDIT_COST} credit)`}
+                : (
+                  <span className="inline-flex items-center gap-1.5">
+                    {isFr ? "Trouver une photo" : "Find a photo"}
+                    <span className="inline-flex items-center gap-0.5 opacity-90">
+                      (<GenerationCreditAmount amount={MOOD_VIDEO_CREDIT_COST} iconClassName="h-3 w-3" />)
+                    </span>
+                  </span>
+                )}
             </Button>
             <Button
               variant="secondary"

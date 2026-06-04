@@ -1,4 +1,5 @@
 import { ALL_GENRE_OPTIONS } from "@/lib/genres";
+import { buildPrecisionGenreOptions } from "@/lib/genres/genreMenuOrder";
 import type { DropdownOption } from "@/components/ui/Dropdown";
 
 /** Sentinel: random genre pick inside Custom mode (Genre précis dropdown). */
@@ -38,9 +39,7 @@ export function normalizeGenrePickMode(value: string | null | undefined): GenreP
 }
 
 export function precisionGenreOptions(locale: "en" | "fr"): DropdownOption[] {
-  const randomLabel =
-    locale === "fr" ? "Aléatoire — new genre à chaque génération" : "Random — new genre every generation";
-  return [{ value: RANDOM_GENRE_VALUE, label: randomLabel }, ...CUSTOM_GENRE_OPTIONS];
+  return buildPrecisionGenreOptions(locale);
 }
 
 export function resolveGenreForGeneration(
@@ -72,6 +71,6 @@ export function genrePickModeHint(mode: GenrePickMode, locale: "en" | "fr", last
       : `Last random pick: ${lastRandom}. Pick an exact genre or keep Random.`;
   }
   return isFr
-    ? "Genre précis ou Aléatoire dans la liste — Random tire un style du catalogue à chaque gen."
-    : "Exact genre or Random in the list — Random picks from the catalog every generation.";
+    ? "Sélectionne un genre précis du catalogue ou choisit - Aléatoire."
+    : "Exact genre or Random in the list every generation.";
 }

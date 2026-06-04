@@ -14,7 +14,7 @@ export function BlogPostCard({ post, locale }: Props) {
   const Icon = visual.icon;
 
   return (
-    <article className="group overflow-hidden rounded-2xl border border-pk-border bg-pk-panel/60 backdrop-blur-xl transition-colors hover:border-violet-400/30">
+    <article className="pk-blog-card group overflow-hidden rounded-2xl border border-pk-border bg-pk-panel/60 backdrop-blur-xl transition-colors hover:border-violet-400/30">
       <Link to={`/blog/${post.slug}`} className="block">
         <div className="relative aspect-[2/1] overflow-hidden">
           <img

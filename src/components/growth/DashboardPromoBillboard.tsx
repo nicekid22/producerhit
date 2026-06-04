@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   AudioWaveform,
   ChevronRight,
@@ -36,6 +36,8 @@ type Props = {
   onPricing?: () => void;
   onProfile?: () => void;
   onCreate?: () => void;
+  /** Bouton bonus fixe (dashboard) — hors carousel. */
+  bonusAction?: ReactNode;
 };
 
 type SlideId =
@@ -128,6 +130,7 @@ export function DashboardPromoBillboard({
   onPricing,
   onProfile,
   onCreate,
+  bonusAction,
 }: Props) {
   const isFr = locale === "fr";
   const [activeIndex, setActiveIndex] = useState(0);
@@ -159,8 +162,8 @@ export function DashboardPromoBillboard({
 
     const streakSlideLine = dailyReady
       ? isFr
-        ? "Bonus du jour prêt — +1 gen dans Progression."
-        : "Daily bonus ready — +1 gen in Progress."
+        ? "Bonus du jour prêt — bouton Bonus à droite."
+        : "Daily bonus ready — use the Bonus button."
       : streak > 0
         ? isFr
           ? `Série ${streak}j — reviens demain pour la garder.`
@@ -206,8 +209,8 @@ export function DashboardPromoBillboard({
         id: "mastering",
         accent: "rose",
         tag: isFr ? "Mastering" : "Mastering",
-        headline: isFr ? "Ship en WAV" : "Ship in WAV",
-        subline: isFr ? "Export pro, loudness prête release." : "Pro export, release-ready loudness.",
+        headline: isFr ? "Haute qualité Audio" : "High Quality/WAV",
+        subline: isFr ? "Export pro, ready pour la release." : "Pro export, release-ready.",
         cta: isFr ? "Studio" : "Studio",
         icon: AudioWaveform,
         onClick: onMastering,
@@ -218,7 +221,7 @@ export function DashboardPromoBillboard({
         tag: isFr ? "Série" : "Streak",
         headline: dailyReady ? (isFr ? "Bonus du jour" : "Daily bonus") : isFr ? "Garde la série" : "Keep streak",
         subline: streakSlideLine,
-        cta: isFr ? "Progression" : "Progress",
+        cta: isFr ? "Paramètres" : "Settings",
         icon: Flame,
         onClick: onProgress,
       },
@@ -376,6 +379,10 @@ export function DashboardPromoBillboard({
             );
           })}
         </div>
+
+        {bonusAction ? (
+          <div className="flex shrink-0 items-center border-l border-white/[0.06] pl-1.5 sm:pl-2">{bonusAction}</div>
+        ) : null}
 
         <div
           className="flex shrink-0 items-center gap-1 border-l border-white/[0.06] pl-1.5 sm:pl-2"

@@ -4,7 +4,7 @@ export { usesDirectAceFromBrowser };
 
 /**
  * Parallèle v1+v2 : clés ACE distinctes côté navigateur (≥2) ou Edge (rotation serveur).
- * La v2 attend que la v1 ait un preview (voir Dashboard) + délai — pas de double release_task immédiat.
+ * Les deux versions partent en même temps (voir Dashboard) — plusieurs clés ACE côté Edge.
  */
 export function canParallelizeDualGeneration(): boolean {
   if (!usesDirectAceFromBrowser()) return true;

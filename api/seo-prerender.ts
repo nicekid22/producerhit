@@ -1,6 +1,19 @@
 import fs from "node:fs";
 import path from "node:path";
 
+const GA_MEASUREMENT_ID = "G-GF8RTQ0E5J";
+
+function googleAnalyticsHeadSnippet() {
+  return `<!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', '${GA_MEASUREMENT_ID}', { send_page_view: true });
+  </script>`;
+}
+
 type PrerenderPage = {
   kind?: "landing" | "comparison";
   slugKey?: string;
@@ -55,6 +68,7 @@ function headBlock(origin: string, pagePath: string, page: PrerenderPage) {
   return `<!doctype html>
 <html lang="${page.locale}">
 <head>
+  ${googleAnalyticsHeadSnippet()}
   <meta charset="utf-8"/>
   <title>${escapeHtml(page.title)}</title>
   <meta name="description" content="${escapeHtml(page.description)}"/>

@@ -1,5 +1,17 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  aceAsyncJobsEnabled,
+  aceAsyncTryReleaseTask,
+  createAceReleaseTask,
+  createServiceSupabase,
+  internalJobSecret,
+  jobResponsePayload,
+  loadGenerationJob,
+  pollAceTaskOnce,
+  scheduleRunJob,
+  updateGenerationJob,
+} from "../_shared/generationJobUtils.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -55,19 +67,38 @@ function clampNumber(v: number, min: number, max: number) {
 function computeRequestedDurationSec(input: {
   instrumental: boolean;
   durationRaw: number | null;
-  bpm: number | null;
   bars: number | null;
 }): number | null {
-  if (!input.instrumental) {
-    const base = input.durationRaw ?? 90;
-    return clampNumber(base, 10, 120);
+  const clampNumber = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
+  const fallbackRaw = Deno.env.get("ACE_SONG_AUTO_DURATION_SEC");
+  const fallback =
+    fallbackRaw === "" || fallbackRaw == null || fallbackRaw === "0" || fallbackRaw.toLowerCase() === "off"
+      ? null
+      : (() => {
+          const n = Number(fallbackRaw);
+          return Number.isFinite(n) && n >= 10 ? clampNumber(n, 10, 120) : null;
+        })();
+
+  if (input.durationRaw != null && input.durationRaw > 0) {
+    return clampNumber(input.durationRaw, 10, 120);
   }
-  if (input.durationRaw != null) return clampNumber(input.durationRaw, 10, 120);
+  if (!input.instrumental) {
+    return fallback;
+  }
   return null;
 }
 
 /** ACE quality defaults — keep in sync with src/lib/aceQuality.ts */
 const ACE_SHIFT = 3;
+
+/** Playground ACE « negative step » — sync src/lib/aceMelodyComposition.ts */
+const MELODY_COMPOSITION_LM_NEGATIVE_PROMPT =
+  "drums, drum kit, drum loop, kick drum, snare, clap, hi-hat, hi hats, percussion, 808 bass, trap drums, beat programming, rhythm section, boom bap drums, four on the floor";
+
+function aceMelodyCompositionAceFields(): Record<string, unknown> {
+  const neg = MELODY_COMPOSITION_LM_NEGATIVE_PROMPT;
+  return { lm_negative_prompt: neg, negative_prompt: neg, lm_cfg_scale: 2.8 };
+}
 const ACE_INFERENCE_STEPS = 8;
 const ACE_RELEASE_MODEL = "acestep-v15-xl-turbo";
 
@@ -675,6 +706,53 @@ function parseAceChatCompletionsJson(json: unknown, baseUrl: string) {
   };
 }
 
+function parseAllAceChatCompletionsJson(json: unknown, baseUrl: string) {
+  const root = json && typeof json === "object" ? (json as Record<string, unknown>) : {};
+  const choices = root.choices;
+  const firstChoice = Array.isArray(choices) ? choices[0] : null;
+  const choiceObj =
+    firstChoice && typeof firstChoice === "object" && firstChoice !== null ? (firstChoice as Record<string, unknown>) : null;
+  const msg =
+    choiceObj?.message && typeof choiceObj.message === "object" && choiceObj.message !== null
+      ? (choiceObj.message as Record<string, unknown>)
+      : null;
+  const audioArr = msg && Array.isArray(msg.audio) ? (msg.audio as unknown[]) : [];
+  const out: ReturnType<typeof parseAceChatCompletionsJson>[] = [];
+  for (const item of audioArr) {
+    if (!item || typeof item !== "object") continue;
+    const firstAudio = item as Record<string, unknown>;
+    const pathCandidate = pickAceFilePath(firstAudio) || pickAceFilePath(msg);
+    const audioUrlRaw =
+      firstAudio && typeof firstAudio.audio_url === "object" && firstAudio.audio_url !== null
+        ? asString((firstAudio.audio_url as { url?: unknown }).url).trim()
+        : "";
+    let httpAudioUrl = "";
+    if (audioUrlRaw.startsWith("http://") || audioUrlRaw.startsWith("https://")) {
+      httpAudioUrl = audioUrlRaw;
+    } else if (pathCandidate) {
+      httpAudioUrl = buildAceAudioUrlFromPath(baseUrl, pathCandidate);
+    } else if (audioUrlRaw && !audioUrlRaw.startsWith("data:")) {
+      httpAudioUrl = buildAceAudioUrlFromPath(baseUrl, audioUrlRaw);
+    }
+    const dataUrl = audioUrlRaw.startsWith("data:") ? audioUrlRaw : "";
+    const audioUrl =
+      httpAudioUrl ||
+      dataUrl ||
+      (pathCandidate ? buildAceAudioUrlFromPath(baseUrl, pathCandidate) : "") ||
+      "";
+    if (!audioUrl.trim()) continue;
+    out.push({
+      audioUrl,
+      httpAudioUrl: isHttpUrl(httpAudioUrl) ? httpAudioUrl : "",
+      taskId: pickAceTaskIdFromJson(json),
+      sessionOnly: !isHttpUrl(httpAudioUrl) && !pickAceTaskIdFromJson(json),
+    });
+  }
+  if (out.length) return out;
+  const single = parseAceChatCompletionsJson(json, baseUrl);
+  return single.audioUrl.trim() ? [single] : [];
+}
+
 function pickOneBySeed<T>(items: T[], seed: string): T {
   if (items.length <= 1) return items[0]!;
   return items[hashToIndex(seed, items.length)]!;
@@ -718,12 +796,22 @@ function parseAceChatContent(content: string) {
   };
 }
 
+/** Règles ACE pour compositions sample (sans drums) — ne pas préfixer par « beat with drums ». */
+const MELODY_COMPOSITION_ACE_RULES = [
+  "TASK: Melody-only sample pack composition for beatmakers (ProducerGrind / Beatstars style).",
+  "CRITICAL — generate ZERO drums: no kick, snare, clap, hi-hat, percussion loop, trap drums, 808 bass, or beat programming.",
+  "Only melodic/harmonic layers: keys, guitar, synth, pads, optional musical bass line (not 808), optional pitched vocal chops.",
+  "This is NOT a beat and NOT a full song with vocals — it is an instrumental composition the producer will chop and add drums to in their DAW.",
+  "Do not output any lyrics text. Omit the '## Lyrics' section entirely.",
+].join(" ");
+
 function buildAceChatCompletionsParts(input: {
   seedKey: string;
   baseCaption: string;
   prompt: string;
   lyrics: string;
   instrumental: boolean;
+  melodyComposition?: boolean;
   genre: string;
   mood: string;
   energyLevel: string;
@@ -735,6 +823,21 @@ function buildAceChatCompletionsParts(input: {
 }): string[] {
   const parts: string[] = [];
   const baseCaption = input.baseCaption.trim() || input.prompt.trim();
+
+  if (input.melodyComposition) {
+    parts.push(baseCaption);
+    parts.push(MELODY_COMPOSITION_ACE_RULES);
+    if (input.mood) parts.push(`Mood: ${input.mood}.`);
+    if (input.energyLevel) parts.push(`Energy: ${input.energyLevel}.`);
+    if (!input.autoMeta && input.bpm && input.bpm > 0) parts.push(`BPM: ${input.bpm}.`);
+    if (!input.autoMeta && input.key && input.scale) parts.push(`Key: ${input.key} ${input.scale}.`);
+    if (input.timeSignature.trim()) parts.push(`Time signature: ${input.timeSignature.trim()}.`);
+    if (input.genre) {
+      parts.push(`In the generated Metadata caption, explicitly include the genre: "${input.genre}".`);
+    }
+    return parts;
+  }
+
   if (input.instrumental) {
     const beatTemplate =
       input.genre === "Old School Hip-Hop"
@@ -796,6 +899,7 @@ async function generateViaChatCompletionsAce(input: {
   baseCaption: string;
   lyrics: string;
   instrumental: boolean;
+  melodyComposition?: boolean;
   genre: string;
   mood: string;
   energyLevel: string;
@@ -811,6 +915,8 @@ async function generateViaChatCompletionsAce(input: {
   thinking: boolean;
   useFormat: boolean;
   signal?: AbortSignal;
+  batchSize?: number;
+  seeds?: number[];
 }): Promise<{ audioUrl: string; meta: Record<string, unknown> }> {
   const effectiveLyrics = input.instrumental ? "[Instrumental]" : input.lyrics.trim();
   const aceLyricsField = input.instrumental ? "[instrumental]" : effectiveLyrics;
@@ -820,6 +926,7 @@ async function generateViaChatCompletionsAce(input: {
     prompt: input.prompt,
     lyrics: input.lyrics,
     instrumental: input.instrumental,
+    melodyComposition: input.melodyComposition,
     genre: input.genre,
     mood: input.mood,
     energyLevel: input.energyLevel,
@@ -841,6 +948,8 @@ async function generateViaChatCompletionsAce(input: {
       model: ACE_RELEASE_MODEL,
       thinking: input.thinking,
       use_format: input.useFormat,
+      ...(input.melodyComposition ? aceMelodyCompositionAceFields() : {}),
+      ...(input.batchSize && input.batchSize > 1 ? { batch_size: input.batchSize } : {}),
       messages: [{ role: "user", content: parts.join("\n\n") }],
       lyrics: aceLyricsField,
       task_type: "text2music",
@@ -858,6 +967,9 @@ async function generateViaChatCompletionsAce(input: {
         audio_format: input.audioFormat,
         shift: ACE_SHIFT,
         inference_steps: ACE_INFERENCE_STEPS,
+        ...(input.seeds?.length
+          ? { seed: input.seeds[0], seeds: input.seeds, use_random_seed: false }
+          : {}),
       },
       stream: false,
     }),
@@ -1125,9 +1237,234 @@ serve(async (req) => {
       isSong?: unknown;
       requirePersistableUrl?: unknown;
       aceKeyPreferIndex?: unknown;
+      dualBatch?: unknown;
+      dualSeeds?: unknown;
+      generationKeys?: unknown;
     };
 
     const action = String(body?.action ?? "generate");
+
+    if (action === "run_job") {
+      const jobSecret = req.headers.get("x-ace-job-secret") ?? "";
+      const expectedSecret = internalJobSecret();
+      if (!expectedSecret || jobSecret !== expectedSecret) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const jobId = asString(body?.jobId) || asString(body?.job_id);
+      if (!jobId) {
+        return new Response(JSON.stringify({ error: "Missing jobId" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const svc = createServiceSupabase();
+      if (!svc) {
+        return new Response(JSON.stringify({ error: "Server not configured" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const job = await loadGenerationJob(svc, jobId);
+      if (!job) {
+        return new Response(JSON.stringify({ error: "Job not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (job.status === "completed" || job.status === "failed") {
+        return new Response(JSON.stringify(jobResponsePayload(job)), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const p = job.payload && typeof job.payload === "object" ? job.payload : {};
+      const caption = asString(p.caption);
+      const sampleQuery =
+        asString(p.sampleQuery) || asString(p.sample_query) || asString(p.description) || "";
+      const lyricsRaw = asString(p.lyrics);
+      const bpm = asNumber(p.bpm);
+      const keyScale = asString(p.keyScale);
+      const duration = asNumber(p.duration);
+      const loopLengthBars = asNumber(p.loopLengthBars);
+      const timeSignature = asString(p.timeSignature);
+      const thinking = typeof p.thinking === "boolean" ? Boolean(p.thinking) : null;
+      const useFormat = typeof p.useFormat === "boolean" ? Boolean(p.useFormat) : null;
+      const sampleMode = typeof p.sampleMode === "boolean" ? Boolean(p.sampleMode) : false;
+      const instrumental = p.instrumental !== false;
+      const melodyComposition =
+        p.melodyComposition === true ||
+        asString(p.melodyComposition) === "true" ||
+        (caption.includes("ProducerHit") && /NO drums|no drums|sans drums/i.test(caption));
+      const seed = asNumber(p.seed);
+      const vocalLanguage = asString(p.vocalLanguage) || "en";
+      const audioFormatRaw = (asString(p.audioFormat) || asString(p.audio_format)).trim().toLowerCase();
+      const audioFormat =
+        audioFormatRaw === "wav" || audioFormatRaw === "wav32" || audioFormatRaw === "flac" || audioFormatRaw === "mp3"
+          ? audioFormatRaw
+          : "mp3";
+      const effectiveLyrics = instrumental ? "[Instrumental]" : (lyricsRaw ? lyricsRaw.trim() : "");
+      const baseCaption = caption.trim() || sampleQuery.trim();
+      const effectivePrompt = (sampleMode ? (sampleQuery.trim() || caption) : caption).trim();
+      if (!effectivePrompt) {
+        await updateGenerationJob(svc, jobId, { status: "failed", error: "Missing caption" });
+        const failed = await loadGenerationJob(svc, jobId);
+        return new Response(JSON.stringify(jobResponsePayload(failed!)), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const generationKey = job.generation_key ?? "";
+      const aceKeyPreferIndex = asNumber(p.aceKeyPreferIndex);
+      const seedKey = generationKey || requestId;
+      const aceTargets = getAceTargets(seedKey, aceKeyPreferIndex ?? undefined);
+      if (!aceTargets.length) {
+        await updateGenerationJob(svc, jobId, { status: "failed", error: "ACE_STEP_API_KEY not set" });
+        const failed = await loadGenerationJob(svc, jobId);
+        return new Response(JSON.stringify(jobResponsePayload(failed!)), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const quality = resolveAceQualityFlags({ thinking, useFormat, sampleMode });
+      const requestedDuration = computeRequestedDurationSec({
+        instrumental,
+        durationRaw: duration && duration > 0 ? duration : null,
+        bpm,
+        bars: loopLengthBars,
+      });
+      const keyValue = keyScale.trim().length > 0 ? keyScale.trim() : "";
+      const paramObj: Record<string, unknown> = {};
+      if (requestedDuration != null) paramObj.duration = requestedDuration;
+      if (bpm && bpm > 0) paramObj.bpm = bpm;
+      if (timeSignature.trim().length > 0) paramObj.time_signature = timeSignature.trim();
+      if (audioFormat) paramObj.audio_format = audioFormat;
+      if (seed && seed > 0) paramObj.seed = seed;
+      paramObj.shift = quality.shift;
+      paramObj.inference_steps = ACE_INFERENCE_STEPS;
+
+      await updateGenerationJob(svc, jobId, { status: "running" });
+
+      if (!job.ace_task_id && aceAsyncTryReleaseTask()) {
+        let releaseTaskId: string | null = null;
+        let releaseBase = "";
+        let releaseKeyIndex = 0;
+        for (const t of aceTargets) {
+          try {
+            const created = await createAceReleaseTask({
+              baseUrl: t.baseUrl,
+              apiKey: t.apiKey,
+              effectivePrompt,
+              effectiveLyrics,
+              instrumental,
+              sampleMode,
+              sampleQuery,
+              vocalLanguage,
+              audioFormat,
+              paramObj,
+              thinking: quality.thinking,
+              useFormat: quality.useFormat,
+              modelName: ACE_RELEASE_MODEL,
+              shift: quality.shift,
+              inferenceSteps: ACE_INFERENCE_STEPS,
+            });
+            if (created?.taskId) {
+              releaseTaskId = created.taskId;
+              releaseBase = t.baseUrl;
+              releaseKeyIndex = t.keyIndex;
+              break;
+            }
+          } catch (e) {
+            console.warn("run_job release_task attempt failed", e);
+          }
+        }
+        if (releaseTaskId) {
+          await updateGenerationJob(svc, jobId, {
+            status: "running",
+            ace_task_id: releaseTaskId,
+            ace_base_url: releaseBase,
+            ace_key_index: releaseKeyIndex,
+          });
+          const updated = await loadGenerationJob(svc, jobId);
+          return new Response(JSON.stringify(jobResponsePayload(updated!)), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+
+      const controller = new AbortController();
+      const requestTimeoutMs = 150_000;
+      const timer = setTimeout(() => controller.abort(), requestTimeoutMs);
+      try {
+        let audioUrl = "";
+        let meta: Record<string, unknown> | null = null;
+        let lastErr: unknown = null;
+        const chatAceArgs = {
+          seedKey,
+          prompt: effectivePrompt,
+          baseCaption: baseCaption || effectivePrompt,
+          lyrics: effectiveLyrics,
+          instrumental,
+          melodyComposition,
+          genre: asString(p.genre),
+          mood: asString(p.mood),
+          energyLevel: asString(p.energyLevel),
+          autoMeta: p.autoMeta === true,
+          key: asString(p.key),
+          scale: asString(p.scale),
+          requestedDuration,
+          bpm,
+          keyScale: keyScale.trim().length > 0 ? keyScale.trim() : "",
+          timeSignature,
+          vocalLanguage,
+          audioFormat,
+          thinking: quality.thinking,
+          useFormat: quality.useFormat,
+        };
+        for (const t of aceTargets) {
+          try {
+            const out = await generateViaChatCompletionsAce({
+              ...chatAceArgs,
+              apiKey: t.apiKey,
+              baseUrl: t.baseUrl,
+              signal: controller.signal,
+            });
+            audioUrl = out.audioUrl;
+            meta = { ...(out.meta ?? {}), aceKeyIndex: t.keyIndex, asyncJob: true, chatPath: true };
+            lastErr = null;
+            break;
+          } catch (e) {
+            lastErr = e;
+          }
+        }
+        if (!audioUrl) {
+          const msg = lastErr instanceof Error ? lastErr.message : "ACE chat/completions failed";
+          throw new Error(msg);
+        }
+        await updateGenerationJob(svc, jobId, {
+          status: "completed",
+          audio_url: audioUrl,
+          meta,
+        });
+        if (generationKey) {
+          await svc.rpc("bump_loops_usage_idempotent", { p_key: generationKey });
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Job failed";
+        await updateGenerationJob(svc, jobId, { status: "failed", error: msg.slice(0, 500) });
+      } finally {
+        clearTimeout(timer);
+      }
+      const finalJob = await loadGenerationJob(svc, jobId);
+      return new Response(JSON.stringify(jobResponsePayload(finalJob!)), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const requirePersistableUrl = body?.requirePersistableUrl === true;
     const aceKeyPreferIndex = asNumber(body?.aceKeyPreferIndex);
     const generationKey = asString(body?.generationKey) || asString(body?.generation_key);
@@ -1247,6 +1584,129 @@ serve(async (req) => {
       });
     }
 
+    if (action === "start_job") {
+      if (!aceAsyncJobsEnabled()) {
+        return new Response(JSON.stringify({ error: "Async jobs disabled" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (!generationKey) {
+        return new Response(JSON.stringify({ error: "Missing generationKey" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: reserveData, error: reserveError } = await authedSupabase.rpc("check_loops_usage_idempotent", {
+        p_key: generationKey,
+      });
+      if (reserveError) throw new Error(reserveError.message);
+      type UsageReserveRow = { ok?: unknown };
+      const row: UsageReserveRow | null = Array.isArray(reserveData)
+        ? ((reserveData[0] as UsageReserveRow | undefined) ?? null)
+        : ((reserveData as UsageReserveRow | null) ?? null);
+      if (!row?.ok) {
+        return new Response(
+          JSON.stringify({ error: "Monthly limit reached", limitReached: true }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+      const instrumentalJob = body?.instrumental !== false;
+      const mode = body?.isSong === true || instrumentalJob === false ? "song" : "beat";
+      const payload = { ...(body as Record<string, unknown>) };
+      const { data: inserted, error: insertErr } = await authedSupabase
+        .from("generation_jobs")
+        .insert({
+          user_id: authedUserId,
+          generation_key: generationKey,
+          status: "pending",
+          mode,
+          payload,
+        })
+        .select("id, status")
+        .single();
+      if (insertErr || !inserted?.id) {
+        throw new Error(insertErr?.message ?? "Failed to create generation job");
+      }
+      scheduleRunJob(inserted.id as string);
+      return new Response(
+        JSON.stringify({ jobId: inserted.id, status: inserted.status, generationKey }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    if (action === "poll_job") {
+      const jobId = asString(body?.jobId) || asString(body?.job_id);
+      if (!jobId) {
+        return new Response(JSON.stringify({ error: "Missing jobId" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      let job = await loadGenerationJob(authedSupabase, jobId);
+      if (!job || job.user_id !== authedUserId) {
+        return new Response(JSON.stringify({ error: "Job not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (job.status === "running" && job.ace_task_id && job.ace_base_url) {
+        const p = job.payload && typeof job.payload === "object" ? job.payload : {};
+        const aceTargets = getAceTargets(job.generation_key ?? requestId, asNumber(p.aceKeyPreferIndex) ?? undefined);
+        const keyIndex = typeof job.ace_key_index === "number" ? job.ace_key_index : 0;
+        const target = aceTargets.find((t) => t.keyIndex === keyIndex) ?? aceTargets[0];
+        if (target) {
+          const caption = asString(p.caption);
+          const sampleQuery = asString(p.sampleQuery) || asString(p.sample_query) || "";
+          const lyricsRaw = asString(p.lyrics);
+          const instrumental = p.instrumental !== false;
+          const effectiveLyrics = instrumental ? "[Instrumental]" : (lyricsRaw ? lyricsRaw.trim() : "");
+          const effectivePrompt = (asString(p.sampleMode) === "true" || p.sampleMode === true
+            ? sampleQuery.trim() || caption
+            : caption
+          ).trim();
+          const poll = await pollAceTaskOnce({
+            baseUrl: job.ace_base_url,
+            apiKey: target.apiKey,
+            taskId: job.ace_task_id,
+            effectivePrompt,
+            effectiveLyrics,
+            audioFormat: "mp3",
+            requestedDuration: asNumber(p.duration),
+            bpm: asNumber(p.bpm),
+            keyScale: asString(p.keyScale),
+            timeSignature: asString(p.timeSignature),
+            seed: asNumber(p.seed),
+          });
+          if (poll.status === "ready") {
+            const svc = createServiceSupabase();
+            const db = svc ?? authedSupabase;
+            await updateGenerationJob(db, jobId, {
+              status: "completed",
+              audio_url: poll.audioUrl,
+              meta: poll.meta,
+            });
+            if (job.generation_key) {
+              await db.rpc("bump_loops_usage_idempotent", { p_key: job.generation_key });
+            }
+            job = (await loadGenerationJob(authedSupabase, jobId))!;
+          } else if (poll.status === "failed") {
+            await updateGenerationJob(authedSupabase, jobId, { status: "failed", error: poll.error });
+            job = (await loadGenerationJob(authedSupabase, jobId))!;
+          }
+        }
+      }
+
+      if (job.status === "pending") {
+        scheduleRunJob(jobId);
+      }
+
+      return new Response(JSON.stringify(jobResponsePayload(job)), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const caption = asString(body?.caption);
     const sampleQuery =
       asString(body?.sampleQuery) || asString(body?.sample_query) || asString(body?.description) || asString(body?.desc);
@@ -1260,6 +1720,10 @@ serve(async (req) => {
     const useFormat = typeof body?.useFormat === "boolean" ? Boolean(body.useFormat) : null;
     const sampleMode = action === "format" ? false : (typeof body?.sampleMode === "boolean" ? Boolean(body.sampleMode) : false);
     const instrumental = body?.instrumental !== false;
+    const melodyComposition =
+      body?.melodyComposition === true ||
+      asString(body?.melodyComposition) === "true" ||
+      (caption.includes("ProducerHit") && /NO drums|no drums|sans drums/i.test(caption));
     const seed = asNumber(body?.seed);
     const audioFormatRaw = (asString(body?.audioFormat) || asString(body?.audio_format)).trim().toLowerCase();
     const requestedAudioFormat =
@@ -1276,6 +1740,7 @@ serve(async (req) => {
       bpm,
       keyScale,
       instrumental,
+      melodyComposition,
       sampleMode,
       thinking,
       useFormat,
@@ -1388,6 +1853,200 @@ serve(async (req) => {
     const baseCaption = caption.trim() || sampleQuery.trim();
     const effectivePrompt = (sampleMode ? (sampleQuery.trim() || caption) : caption).trim();
     if (!effectivePrompt) throw new Error("Missing caption");
+
+    const dualBatch = body?.dualBatch === true;
+    const dualSeedsParsed = (() => {
+      const raw = body?.dualSeeds;
+      if (!Array.isArray(raw) || raw.length < 2) return null;
+      const a = asNumber(raw[0]);
+      const b = asNumber(raw[1]);
+      if (a == null || b == null) return null;
+      return [Math.floor(a), Math.floor(b)] as [number, number];
+    })();
+    const generationKeysList = (() => {
+      const raw = body?.generationKeys;
+      if (!Array.isArray(raw)) return [] as string[];
+      return raw.map((k) => asString(k).trim()).filter((k) => k.length > 0).slice(0, 2);
+    })();
+
+    if (dualBatch && dualSeedsParsed) {
+      if (authedSupabase && authedUserId) {
+        for (const gk of generationKeysList) {
+          const { data: reserveData, error: reserveError } = await authedSupabase.rpc("check_loops_usage_idempotent", {
+            p_key: gk,
+          });
+          if (reserveError) console.error("dual batch reserve error:", reserveError.message);
+          else {
+            type UsageReserveRow = { ok?: unknown; plan?: unknown; used?: unknown; limit?: unknown };
+            const row: UsageReserveRow | null = Array.isArray(reserveData)
+              ? ((reserveData[0] as UsageReserveRow | undefined) ?? null)
+              : ((reserveData as UsageReserveRow | null) ?? null);
+            if (!row?.ok) {
+              return new Response(
+                JSON.stringify({
+                  error: `Monthly limit reached for dual batch.`,
+                  limitReached: true,
+                }),
+                { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+              );
+            }
+          }
+        }
+      }
+
+      const chatAceArgs = {
+        seedKey: generationKeysList[0] || generationKey || requestId,
+        prompt: effectivePrompt,
+        baseCaption: baseCaption || effectivePrompt,
+        lyrics: effectiveLyrics,
+        instrumental,
+        melodyComposition,
+        genre: asString(body?.genre),
+        mood: asString(body?.mood),
+        energyLevel: asString(body?.energyLevel),
+        autoMeta: body?.autoMeta === true,
+        key: asString(body?.key),
+        scale: asString(body?.scale),
+        requestedDuration: computeRequestedDurationSec({
+          instrumental,
+          durationRaw: duration && duration > 0 ? duration : null,
+          bpm,
+          bars: loopLengthBars,
+        }),
+        bpm,
+        keyScale: keyScale.trim().length > 0 ? keyScale.trim() : key && scale ? `${key} ${scale}` : keyScale.trim(),
+        timeSignature,
+        vocalLanguage: asString(body?.vocalLanguage) || "en",
+        audioFormat,
+        thinking: resolveAceQualityFlags({ thinking, useFormat, sampleMode }).thinking,
+        useFormat: resolveAceQualityFlags({ thinking, useFormat, sampleMode }).useFormat,
+      };
+
+      const controller = new AbortController();
+      const requestTimeoutMs = 150_000;
+      const timer = setTimeout(() => controller.abort(), requestTimeoutMs);
+
+      try {
+        let lastErr: unknown = null;
+        for (const t of aceTargets) {
+          try {
+            const batchParts = buildAceChatCompletionsParts({
+              seedKey: chatAceArgs.seedKey,
+              baseCaption: chatAceArgs.baseCaption,
+              prompt: chatAceArgs.prompt,
+              lyrics: effectiveLyrics,
+              instrumental,
+              melodyComposition,
+              genre: chatAceArgs.genre,
+              mood: chatAceArgs.mood,
+              energyLevel: chatAceArgs.energyLevel,
+              autoMeta: chatAceArgs.autoMeta,
+              bpm: chatAceArgs.bpm,
+              key: chatAceArgs.key,
+              scale: chatAceArgs.scale,
+              timeSignature: chatAceArgs.timeSignature,
+            });
+            const res = await fetch(`${t.baseUrl}/v1/chat/completions`, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${t.apiKey}`,
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+              body: JSON.stringify({
+                model: ACE_RELEASE_MODEL,
+                thinking: chatAceArgs.thinking,
+                use_format: chatAceArgs.useFormat,
+                ...(melodyComposition ? aceMelodyCompositionAceFields() : {}),
+                batch_size: 2,
+                messages: [{ role: "user", content: batchParts.join("\n\n") }],
+                lyrics: instrumental ? "[instrumental]" : effectiveLyrics,
+                task_type: "text2music",
+                audio_config: {
+                  instrumental,
+                  ...(chatAceArgs.requestedDuration != null ? { duration: chatAceArgs.requestedDuration } : {}),
+                  bpm: chatAceArgs.bpm && chatAceArgs.bpm > 0 ? chatAceArgs.bpm : null,
+                  key_scale: chatAceArgs.keyScale || null,
+                  time_signature: chatAceArgs.timeSignature.trim() || null,
+                  vocal_language: chatAceArgs.vocalLanguage || "en",
+                  format: audioFormat,
+                  audio_format: audioFormat,
+                  shift: ACE_SHIFT,
+                  inference_steps: ACE_INFERENCE_STEPS,
+                  seed: dualSeedsParsed[0],
+                  seeds: dualSeedsParsed,
+                  use_random_seed: false,
+                },
+                stream: false,
+              }),
+              signal: controller.signal,
+            });
+            const text = await readTextSafe(res);
+            if (!res.ok) throw new Error(`ACE dual batch failed (${res.status}): ${text.slice(0, 400)}`);
+            const json = JSON.parse(text) as unknown;
+            const audios = parseAllAceChatCompletionsJson(json, t.baseUrl);
+            if (!audios.length) throw new Error("ACE dual batch returned no audio");
+
+            const choices = (json as { choices?: unknown } | null)?.choices;
+            const firstChoice = Array.isArray(choices) ? choices[0] : null;
+            const messageObj =
+              firstChoice && typeof firstChoice === "object" && firstChoice !== null
+                ? (firstChoice as { message?: unknown }).message
+                : null;
+            const content =
+              messageObj &&
+              typeof messageObj === "object" &&
+              messageObj !== null &&
+              typeof (messageObj as { content?: unknown }).content === "string"
+                ? ((messageObj as { content: string }).content as string)
+                : "";
+            const parsedContent = content ? parseAceChatContent(content) : {};
+
+            const results = audios.slice(0, 2).map((parsed, i) => ({
+              audioUrl: parsed.httpAudioUrl || parsed.audioUrl,
+              seed: dualSeedsParsed[i],
+              meta: {
+                prompt: parsedContent.prompt || baseCaption,
+                lyrics: instrumental ? "" : parsedContent.lyrics || effectiveLyrics,
+                bpm: parsedContent.bpm ?? (bpm && bpm > 0 ? bpm : null),
+                duration: parsedContent.duration ?? chatAceArgs.requestedDuration,
+                keyScale: parsedContent.keyScale || chatAceArgs.keyScale || null,
+                timeSignature: parsedContent.timeSignature || timeSignature || null,
+                audioFormat,
+                engine: "chat-completions-dual-batch",
+                aceKeyIndex: t.keyIndex,
+                aceKeyCount,
+                ...(parsed.taskId ? { taskId: parsed.taskId, task_id: parsed.taskId } : {}),
+                ...(parsed.httpAudioUrl ? { httpAudioUrl: parsed.httpAudioUrl } : {}),
+                sessionOnly: parsed.sessionOnly,
+              },
+            }));
+
+            if (authedSupabase && authedUserId) {
+              for (const gk of generationKeysList) {
+                const { error: bumpErr } = await authedSupabase.rpc("bump_loops_usage_idempotent", { p_key: gk });
+                if (bumpErr) console.error("dual batch bump error:", bumpErr.message);
+              }
+            }
+
+            console.log("ACE dual batch success", { requestId, audioCount: results.length });
+            return new Response(
+              JSON.stringify({
+                results,
+                partial: results.length < 2,
+              }),
+              { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+            );
+          } catch (e) {
+            lastErr = e;
+          }
+        }
+        const msg = lastErr instanceof Error ? lastErr.message : "ACE dual batch failed";
+        throw new Error(msg);
+      } finally {
+        clearTimeout(timer);
+      }
+    }
     const genre = asString(body?.genre);
     const mood = asString(body?.mood);
     const energyLevel = asString(body?.energyLevel);
@@ -1411,6 +2070,7 @@ serve(async (req) => {
       baseCaption: baseCaption || effectivePrompt,
       lyrics: effectiveLyrics,
       instrumental,
+      melodyComposition,
       genre,
       mood,
       energyLevel,

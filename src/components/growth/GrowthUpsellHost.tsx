@@ -10,8 +10,9 @@ import { normalizePlan } from "@/lib/billing";
 export function GrowthUpsellHost() {
   const locale = useLocaleStore((s) => s.locale);
   const profile = useAuthStore((s) => s.profile);
-  const plan = normalizePlan(profile?.plan);
   const { open, reason, ctx, openUpsell, closeUpsell } = useGrowthUpsellStore();
+  const authPlan = normalizePlan(profile?.plan);
+  const plan = normalizePlan(ctx?.plan ?? authPlan);
   const location = useLocation();
   const navigate = useNavigate();
 

@@ -12,10 +12,18 @@ import {
   uploadPublicLoopAudio,
 } from "@/lib/publicLoops";
 import { removeLoopAudioStorage, SUPABASE_LOOP_AUDIO_UPLOAD } from "@/lib/storageAudio";
-import { warmCoverAndPersist } from "@/lib/coverArt";
+import { mergeCoverIntoStems, needsPinterestCover, preloadCoverImage } from "@/lib/coverArt";
+import { coverDetailsPatch, coverUrlFromLoop, loopWithCoverFallback, persistLoopCover } from "@/lib/loopCoverUrl";
+import { readAceCoverFromStems } from "@/lib/stemsAceMerge";
+import { assignLoopCoverOnce } from "@/lib/assignLoopCover";
+import { rememberPinterestCoverUrl } from "@/lib/pinterestCoverDedup";
 import { previewPinterestDiscoveryIfEnabled } from "@/lib/pinterestDiscovery";
+import {
+  scheduleMissingCoverRepair,
+  schedulePinterestCoverBackfill,
+} from "@/lib/pinterestCoverBackfill";
 import { buildCoverPromptSnapshot } from "@/lib/utils";
-import { dropStalePreviewDuplicates, isPreviewLoopId } from "@/lib/loopWorkspaceUtils";
+import { dedupeLoopsById, dropStalePreviewDuplicates, isPreviewLoopId } from "@/lib/loopWorkspaceUtils";
 import { useAuthStore } from "@/stores/authStore";
 import { usePlayerStore } from "@/stores/playerStore";
 import type { Loop } from "@/types/loop";
@@ -42,6 +50,7 @@ type DbLoop = {
   prompt: string;
   audio_url: string | null;
   stems_url: unknown;
+  cover_url?: string | null;
   is_saved: boolean;
   is_public?: boolean | null;
   seed?: number | string | null;
@@ -57,6 +66,7 @@ type PendingLoopSave = {
 };
 
 let myLoopsLoadEpoch = 0;
+let myLoopsHasSyncedOnce = false;
 
 function isHttpUrl(v: unknown): v is string {
   return isHttpAudioUrl(v);
@@ -64,10 +74,13 @@ function isHttpUrl(v: unknown): v is string {
 
 async function fetchMyLoopsRows(userId: string): Promise<DbLoop[]> {
   // Schéma actuel : energy_level (pas engine / vocal_type) — évite 4–6 requêtes Postgres en échec par chargement.
+  const listSelectWithCover =
+    "id, user_id, name, genre, influence, key, scale, bpm, loop_length, swing, mood, energy_level, reverb, audio_url, stems_url, cover_url, is_saved, is_public, seed, created_at";
   const listSelect =
     "id, user_id, name, genre, influence, key, scale, bpm, loop_length, swing, mood, energy_level, reverb, audio_url, stems_url, is_saved, is_public, seed, created_at";
   const attempts: string[] = [
     listSelect,
+    listSelectWithCover,
     "id, user_id, name, genre, influence, key, scale, bpm, loop_length, swing, mood, energy_level, reverb, audio_url, stems_url, is_saved, created_at",
   ];
 
@@ -89,23 +102,81 @@ async function fetchMyLoopsRows(userId: string): Promise<DbLoop[]> {
   throw lastError ?? new Error("Failed to fetch loops");
 }
 
-function persistMyLoopsCache(userId: string, loops: Loop[]) {
+async function fetchMyLoopsTotalCount(userId: string): Promise<number | null> {
+  const { count, error } = await supabase
+    .from("loops")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId);
+  if (error) return null;
+  return typeof count === "number" ? count : 0;
+}
+
+function stemsUrlForLoopsCache(loop: Loop): Record<string, unknown> | null {
+  const taskId = extractAceTaskIdFromStemsUrl(loop.stemsUrl);
+  const coverUrl = loop.details?.coverUrl?.trim() ?? "";
+  const coverKind = loop.details?.coverKind;
+  const coverPrompt = loop.details?.coverPrompt?.trim();
+  if (!taskId && !coverUrl.startsWith("http")) return null;
+  const ace: Record<string, unknown> = {};
+  if (taskId) ace.taskId = taskId;
+  if (coverUrl.startsWith("http")) {
+    ace.coverUrl = coverUrl;
+    if (coverKind === "video" || coverKind === "image") ace.coverKind = coverKind;
+  }
+  if (coverPrompt) ace.coverPrompt = coverPrompt;
+  return { ace };
+}
+
+function readMyLoopsCache(userId: string): { loops: Loop[]; totalCount: number | null } | null {
+  const cacheKey = `producerhit_my_loops_cache_v1:${userId}`;
+  try {
+    const raw = window.localStorage.getItem(cacheKey);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { ts?: unknown; loops?: unknown; totalCount?: unknown };
+    const ts = typeof parsed?.ts === "number" ? parsed.ts : 0;
+    const cachedLoops = Array.isArray(parsed?.loops) ? (parsed.loops as Loop[]) : [];
+    const totalCount = typeof parsed?.totalCount === "number" ? parsed.totalCount : null;
+    if (Date.now() - ts >= 7 * 24 * 60 * 60 * 1000 || !cachedLoops.length) return null;
+    return { loops: dedupeLoopsById(cachedLoops), totalCount };
+  } catch {
+    return null;
+  }
+}
+
+function persistMyLoopsCache(userId: string, loops: Loop[], totalCount?: number | null) {
   const cacheKey = `producerhit_my_loops_cache_v1:${userId}`;
   try {
     const safe = loops.map((l) => {
       const url = typeof l.audioUrl === "string" ? l.audioUrl.trim() : "";
       const keep = url.startsWith("https://") || url.startsWith("http://");
-      const taskId = extractAceTaskIdFromStemsUrl(l.stemsUrl);
       return {
         ...l,
         audioUrl: keep ? url : null,
-        stemsUrl: taskId ? { ace: { taskId } } : null,
+        stemsUrl: stemsUrlForLoopsCache(l),
       };
     });
-    window.localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), loops: safe }));
+    const count = totalCount ?? useLoopsStore.getState().loopsTotalCount ?? safe.length;
+    window.localStorage.setItem(
+      cacheKey,
+      JSON.stringify({ ts: Date.now(), loops: safe, totalCount: count }),
+    );
   } catch {
     return;
   }
+}
+
+function remoteLoopScore(loops: Loop[]) {
+  const remote = loops.filter((l) => !l.id.startsWith("local-") && !l.id.startsWith("preview-")).length;
+  return remote * 1000 + loops.length;
+}
+
+/** Ne jamais remplacer une grande bibliothèque en mémoire par un petit cache local. */
+function pickBestLoopsSnapshot(candidates: Loop[][]) {
+  let best = candidates[0] ?? [];
+  for (const c of candidates.slice(1)) {
+    if (remoteLoopScore(c) > remoteLoopScore(best)) best = c;
+  }
+  return best;
 }
 
 function pendingSavesKey(userId: string) {
@@ -348,22 +419,28 @@ function toLoop(row: DbLoop): Loop {
   const audioUrl = rawAudio && (rawAudio.startsWith("https://") || rawAudio.startsWith("http://")) ? rawAudio : null;
   const stemsObj = row.stems_url && typeof row.stems_url === "object" ? (row.stems_url as Record<string, unknown>) : null;
   const aceObj = stemsObj && stemsObj.ace && typeof stemsObj.ace === "object" ? (stemsObj.ace as Record<string, unknown>) : null;
+  const coverCol = typeof row.cover_url === "string" ? row.cover_url.trim() : "";
+  const coverAce = typeof aceObj?.coverUrl === "string" ? aceObj.coverUrl.trim() : "";
+  const resolvedCover =
+    coverCol.startsWith("http") ? coverCol : coverAce.startsWith("http") ? coverAce : undefined;
   const details =
-    aceObj
+    aceObj || resolvedCover
       ? {
-          caption: typeof aceObj.caption === "string" ? aceObj.caption : undefined,
-          lyrics: typeof aceObj.lyrics === "string" ? aceObj.lyrics : undefined,
-          bpm: typeof aceObj.bpm === "number" ? aceObj.bpm : null,
-          duration: typeof aceObj.duration === "number" ? aceObj.duration : null,
-          keyScale: typeof aceObj.keyScale === "string" ? aceObj.keyScale : undefined,
-          timeSignature: typeof aceObj.timeSignature === "string" ? aceObj.timeSignature : undefined,
-          audioFormat: typeof aceObj.audioFormat === "string" ? aceObj.audioFormat : undefined,
-          coverPrompt: typeof aceObj.coverPrompt === "string" ? aceObj.coverPrompt : undefined,
-          coverUrl: typeof aceObj.coverUrl === "string" ? aceObj.coverUrl : undefined,
+          caption: typeof aceObj?.caption === "string" ? aceObj.caption : undefined,
+          lyrics: typeof aceObj?.lyrics === "string" ? aceObj.lyrics : undefined,
+          bpm: typeof aceObj?.bpm === "number" ? aceObj.bpm : null,
+          duration: typeof aceObj?.duration === "number" ? aceObj.duration : null,
+          keyScale: typeof aceObj?.keyScale === "string" ? aceObj.keyScale : undefined,
+          timeSignature: typeof aceObj?.timeSignature === "string" ? aceObj.timeSignature : undefined,
+          audioFormat: typeof aceObj?.audioFormat === "string" ? aceObj.audioFormat : undefined,
+          coverPrompt: typeof aceObj?.coverPrompt === "string" ? aceObj.coverPrompt : undefined,
+          coverUrl: resolvedCover,
           coverKind:
-            aceObj.coverKind === "video" || aceObj.coverKind === "image"
+            aceObj?.coverKind === "video" || aceObj?.coverKind === "image"
               ? (aceObj.coverKind as "video" | "image")
-              : undefined,
+              : resolvedCover
+                ? "image"
+                : undefined,
         }
       : null;
 
@@ -461,7 +538,11 @@ async function migrateAudioCache(fromId: string, toId: string): Promise<void> {
 
 type LoopsState = {
   loops: Loop[];
+  /** Total en base (peut dépasser les 200 loops chargées en mémoire). */
+  loopsTotalCount: number | null;
   loading: boolean;
+  /** false jusqu'à la 1re sync terminée — évite le flash skeleton à chaque reload. */
+  loopsHydrated: boolean;
   lastSyncError: string | null;
   durationsSecById: Record<string, number>;
   setLoops: (loops: Loop[]) => void;
@@ -484,6 +565,12 @@ type LoopsState = {
   renameLoopRemote: (id: string, name: string) => Promise<void>;
   deleteLoopRemote: (id: string) => Promise<void>;
   replaceLoopAudioRemote: (id: string, blob: Blob) => Promise<Loop>;
+  applyLoopCoverUrl: (
+    loopId: string,
+    coverUrl: string,
+    coverKind?: "image" | "video",
+    options?: { bumpRevision?: boolean },
+  ) => void;
 };
 
 async function asPlayableLoopUrl(loopId: string, url: string): Promise<string> {
@@ -492,19 +579,49 @@ async function asPlayableLoopUrl(loopId: string, url: string): Promise<string> {
   return resolvePlayableAudioUrl(trimmed, loopId).catch(() => trimmed);
 }
 
-export const useLoopsStore = create<LoopsState>((set) => ({
+export const useLoopsStore = create<LoopsState>((set, get) => ({
+  loopsTotalCount: null,
+  applyLoopCoverUrl: (loopId, coverUrl, coverKind = "image", options) => {
+    const trimmed = coverUrl.trim();
+    if (!trimmed.startsWith("http")) return;
+    const userId = useAuthStore.getState().user?.id;
+    set((s) => ({
+      loops: s.loops.map((l) => {
+        if (l.id !== loopId) return l;
+        const prevUrl = l.details?.coverUrl?.trim() ?? "";
+        const bumpRevision = options?.bumpRevision ?? prevUrl !== trimmed;
+        const nextStems = mergeCoverIntoStems(l.stemsUrl, trimmed, coverKind);
+        return {
+          ...l,
+          stemsUrl: nextStems ?? l.stemsUrl,
+          details: coverDetailsPatch(trimmed, coverKind, l.details ?? undefined, { bumpRevision }),
+        };
+      }),
+    }));
+    preloadCoverImage(trimmed);
+    rememberPinterestCoverUrl(trimmed);
+    if (userId) {
+      const loop = get().loops.find((l) => l.id === loopId);
+      persistMyLoopsCache(userId, get().loops);
+      void (async () => {
+        await persistLoopCover(loopId, userId, trimmed, loop?.stemsUrl ?? null, coverKind);
+        persistMyLoopsCache(userId, get().loops);
+      })();
+    }
+  },
   loops: [],
   loading: false,
+  loopsHydrated: false,
   lastSyncError: null,
   durationsSecById: {},
-  setLoops: (loops) => set({ loops }),
+  setLoops: (loops) => set({ loops: dedupeLoopsById(loops).slice(0, 200) }),
   upsertLoop: (loop) =>
     set((s) => {
       const next = s.loops.slice();
       const i = next.findIndex((l) => l.id === loop.id);
       if (i >= 0) next[i] = loop;
       else next.unshift(loop);
-      return { loops: next.slice(0, 200) };
+      return { loops: dedupeLoopsById(next).slice(0, 200) };
     }),
   removeLoop: (id) =>
     set((s) => {
@@ -585,10 +702,11 @@ export const useLoopsStore = create<LoopsState>((set) => ({
   clear: () =>
     set((s) => {
       myLoopsLoadEpoch += 1;
+      myLoopsHasSyncedOnce = false;
       s.loops.forEach((l) => {
         if (l.audioUrl?.startsWith("blob:")) URL.revokeObjectURL(l.audioUrl);
       });
-      return { loops: [] };
+      return { loops: [], loopsTotalCount: null, loopsHydrated: false, loading: false };
     }),
   loadMyLoops: async () => {
     const epoch = (myLoopsLoadEpoch += 1);
@@ -599,36 +717,41 @@ export const useLoopsStore = create<LoopsState>((set) => ({
     }
     const userId = user.id;
 
-    const cacheKey = `producerhit_my_loops_cache_v1:${userId}`;
     const hasAny = useLoopsStore.getState().loops.length > 0;
-    let cachedLoopsForFallback: Loop[] | null = null;
-    if (!hasAny) {
-      try {
-        const raw = window.localStorage.getItem(cacheKey);
-        if (raw) {
-          const parsed = JSON.parse(raw) as { ts?: unknown; loops?: unknown };
-          const ts = typeof parsed?.ts === "number" ? parsed.ts : 0;
-          const cachedLoops = Array.isArray(parsed?.loops) ? (parsed.loops as unknown[]) : [];
-          if (Date.now() - ts < 7 * 24 * 60 * 60 * 1000 && cachedLoops.length) {
-            cachedLoopsForFallback = cachedLoops as Loop[];
-            if (epoch === myLoopsLoadEpoch && useAuthStore.getState().user?.id === userId) set({ loops: cachedLoopsForFallback });
-          }
-        }
-      } catch {
-        // ignore
-      }
+    const cachedPayload = !hasAny ? readMyLoopsCache(userId) : null;
+    const cachedLoopsForFallback = cachedPayload?.loops ?? null;
+    if (
+      !hasAny &&
+      cachedLoopsForFallback?.length &&
+      epoch === myLoopsLoadEpoch &&
+      useAuthStore.getState().user?.id === userId
+    ) {
+      set({
+        loops: dedupeLoopsById(cachedLoopsForFallback),
+        loopsHydrated: true,
+        loopsTotalCount: cachedPayload?.totalCount ?? cachedLoopsForFallback.length,
+      });
     }
 
-    if (epoch === myLoopsLoadEpoch && useAuthStore.getState().user?.id === userId) set({ loading: true });
+    const showBlockingLoader = !myLoopsHasSyncedOnce && !hasAny && !cachedLoopsForFallback?.length;
+    if (epoch === myLoopsLoadEpoch && useAuthStore.getState().user?.id === userId) {
+      set({ loading: showBlockingLoader });
+    }
     try {
       const prevLoops = useLoopsStore.getState().loops;
       const prevById = new Map<string, Loop>();
       prevLoops.forEach((l) => prevById.set(l.id, l));
       let rows: DbLoop[] = [];
       let lastError: unknown = null;
+      let totalCount: number | null = null;
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
-          rows = await fetchMyLoopsRows(userId);
+          const [fetchedRows, fetchedCount] = await Promise.all([
+            fetchMyLoopsRows(userId),
+            fetchMyLoopsTotalCount(userId),
+          ]);
+          rows = fetchedRows;
+          totalCount = fetchedCount;
           lastError = null;
           break;
         } catch (e) {
@@ -637,7 +760,14 @@ export const useLoopsStore = create<LoopsState>((set) => ({
         }
       }
       if (lastError) {
-        if (epoch === myLoopsLoadEpoch && useAuthStore.getState().user?.id === userId) set({ lastSyncError: "sync_failed" });
+        if (epoch === myLoopsLoadEpoch && useAuthStore.getState().user?.id === userId) {
+          const current = useLoopsStore.getState().loops;
+          const kept = pickBestLoopsSnapshot([current, prevLoops, cachedLoopsForFallback ?? []]);
+          set({
+            lastSyncError: "sync_failed",
+            ...(kept.length ? { loops: kept, loopsHydrated: true } : {}),
+          });
+        }
         void hydrateAudioFromCache(useLoopsStore.getState().loops);
         return;
       }
@@ -658,26 +788,43 @@ export const useLoopsStore = create<LoopsState>((set) => ({
         }
       }
 
+      const coverFallbackById = new Map<string, Loop>();
+      prevLoops.forEach((l) => coverFallbackById.set(l.id, l));
+      cachedLoopsForFallback?.forEach((l) => {
+        const prev = coverFallbackById.get(l.id);
+        const prevCover = prev ? coverUrlFromLoop(prev) : "";
+        const nextCover = coverUrlFromLoop(l);
+        if (!prev || (nextCover.startsWith("http") && !prevCover.startsWith("http"))) {
+          coverFallbackById.set(l.id, l);
+        }
+      });
+
       const rowsById = new Map<string, DbLoop>();
       rows.forEach((r) => rowsById.set(r.id, r));
       const nextLoops = rows.map((row) => {
-        if (row.audio_url) return toLoop(row);
-        const prev = prevById.get(row.id);
-        if (prev?.audioUrl) return toLoop({ ...row, audio_url: prev.audioUrl });
-        return toLoop(row);
+        let loop = row.audio_url
+          ? toLoop(row)
+          : (() => {
+              const prev = prevById.get(row.id);
+              if (prev?.audioUrl) return toLoop({ ...row, audio_url: prev.audioUrl });
+              return toLoop(row);
+            })();
+        loop = loopWithCoverFallback(coverFallbackById.get(row.id), loop);
+        return loop;
       });
 
-      if (nextLoops.length === 0 && cachedLoopsForFallback && cachedLoopsForFallback.length > 0) {
-        set({ loops: cachedLoopsForFallback, lastSyncError: "sync_failed" });
-        void hydrateAudioFromCache(useLoopsStore.getState().loops);
-        return;
-      }
-
       if (nextLoops.length === 0) {
+        const current = useLoopsStore.getState().loops;
         const fallbackPrev = prevLoops.filter((l) => l.userId === userId);
-        const hadRemoteBefore = fallbackPrev.some((l) => !l.id.startsWith("local-") && !l.id.startsWith("preview-"));
-        if (hadRemoteBefore) {
-          set({ loops: fallbackPrev, lastSyncError: "sync_failed" });
+        const kept = pickBestLoopsSnapshot([current, fallbackPrev, cachedLoopsForFallback ?? []]);
+        const hadRemoteBefore = kept.some((l) => !l.id.startsWith("local-") && !l.id.startsWith("preview-"));
+        if (hadRemoteBefore || kept.length > 0) {
+          if (epoch !== myLoopsLoadEpoch || useAuthStore.getState().user?.id !== userId) return;
+          set({
+            loops: kept,
+            lastSyncError: "sync_failed",
+            loopsTotalCount: totalCount ?? useLoopsStore.getState().loopsTotalCount ?? kept.length,
+          });
           void hydrateAudioFromCache(useLoopsStore.getState().loops);
           return;
         }
@@ -697,9 +844,17 @@ export const useLoopsStore = create<LoopsState>((set) => ({
         })
         .map((p) => toLocalLoop(user.id, p));
 
+      if (epoch !== myLoopsLoadEpoch || useAuthStore.getState().user?.id !== userId) return;
+
+      const loopsAtMerge = useLoopsStore.getState().loops;
+      const mergeSource = remoteLoopScore(loopsAtMerge) >= remoteLoopScore(prevLoops) ? loopsAtMerge : prevLoops;
+      loopsAtMerge.forEach((l) => {
+        if (!prevById.has(l.id)) prevById.set(l.id, l);
+      });
+
       const nextIds = new Set(nextLoops.map((l) => l.id));
       const persistedNameKeys = new Set(nextLoops.map((l) => l.name.trim().toLowerCase()));
-      const preservedPrev = prevLoops.filter((l) => {
+      const preservedPrev = mergeSource.filter((l) => {
         if (nextIds.has(l.id)) return false;
         if (isPreviewLoopId(l.id)) {
           return !persistedNameKeys.has(l.name.trim().toLowerCase());
@@ -709,13 +864,23 @@ export const useLoopsStore = create<LoopsState>((set) => ({
         return Number.isFinite(createdAtMs) && Date.now() - createdAtMs < 5 * 60 * 1000;
       });
 
+      const merged = dedupeLoopsById(
+        dropStalePreviewDuplicates([...pendingLoops, ...preservedPrev, ...nextLoops]),
+      );
+      const currentBeforeSet = dedupeLoopsById(useLoopsStore.getState().loops);
+      const finalLoops =
+        remoteLoopScore(merged) >= remoteLoopScore(currentBeforeSet) ? merged : currentBeforeSet;
+
       set({
-        loops: dropStalePreviewDuplicates([...pendingLoops, ...preservedPrev, ...nextLoops]),
+        loops: dedupeLoopsById(finalLoops),
+        loopsTotalCount: totalCount ?? nextLoops.length,
         lastSyncError: null,
       });
 
       void hydrateAudioFromCache(useLoopsStore.getState().loops);
-      persistMyLoopsCache(userId, useLoopsStore.getState().loops);
+      persistMyLoopsCache(userId, useLoopsStore.getState().loops, totalCount);
+      scheduleMissingCoverRepair(useLoopsStore.getState().loops);
+      schedulePinterestCoverBackfill(useLoopsStore.getState().loops);
 
       void (async () => {
         if (epoch !== myLoopsLoadEpoch || useAuthStore.getState().user?.id !== userId) return;
@@ -750,7 +915,10 @@ export const useLoopsStore = create<LoopsState>((set) => ({
         if (remaining.length !== pendingNow.length) savePendingSaves(userId, remaining);
       })();
     } finally {
-      if (epoch === myLoopsLoadEpoch && useAuthStore.getState().user?.id === userId) set({ loading: false });
+      myLoopsHasSyncedOnce = true;
+      if (epoch === myLoopsLoadEpoch && useAuthStore.getState().user?.id === userId) {
+        set({ loading: false, loopsHydrated: true });
+      }
     }
   },
   createLoop: async (input, options) => {
@@ -908,32 +1076,61 @@ export const useLoopsStore = create<LoopsState>((set) => ({
       !audioUrlForDb &&
       !!pickInlineProviderAudioUrl(trimmedAudioUrl, stemsUrlForDb);
 
-    if (LOOP_ACE_PERSIST) {
-      const runPersist = async () => {
-        const finalized = await persistLoopAceAudioRecord({
-          loopId: row.id,
-          userId: user.id,
-          audioUrlInput: trimmedAudioUrl,
-          audioUrlForDb,
-          stemsUrlForDb,
-        });
-        if (input.isPublic) {
-          await supabase.from("loops").update({ is_public: true }).eq("id", row.id).eq("user_id", user.id);
-        }
-        return finalized;
-      };
+    const coverUrlHint = finalLoop.details?.coverUrl?.trim() ?? "";
+    const needsCoverAssign = needsPinterestCover(finalLoop) || coverUrlHint.includes("pinimg.com");
 
-      // Persist en arrière-plan (upload Storage loop-audio, évite inline Postgres ~Mo).
-      void (async () => {
-        try {
-          const finalized = await runPersist();
-          if (!finalized.audioUrl && !finalized.stemsUrl) return;
-          const patchLoop = (l: Loop): Loop => ({
-            ...l,
-            audioUrl: finalized.audioUrl ?? l.audioUrl,
-            stemsUrl: finalized.stemsUrl ?? l.stemsUrl,
-            isPublic: Boolean(input.isPublic),
+    const applyCoverToLoop = (coverUrl: string | null | undefined, coverKind?: "image" | "video") => {
+      if (!coverUrl?.trim()) return;
+      useLoopsStore.getState().applyLoopCoverUrl(row.id, coverUrl.trim(), coverKind ?? "image");
+    };
+
+    // Pinterest puis ACE en série — évite qu’un update ACE efface la cover avant persistance DB.
+    void (async () => {
+      try {
+        if (needsCoverAssign) {
+          const pin = await assignLoopCoverOnce(row.id, { ...finalLoop, stemsUrl: stemsUrlForDb }, {
+            stemsUrl: stemsUrlForDb,
+            onLateCover: (late) => applyCoverToLoop(late.coverUrl, late.coverKind ?? "image"),
           });
+          if (pin?.coverUrl) applyCoverToLoop(pin.coverUrl, pin.coverKind ?? "image");
+        }
+
+        if (LOOP_ACE_PERSIST) {
+          const latestLoop = useLoopsStore.getState().loops.find((l) => l.id === row.id);
+          const stemsForAce = latestLoop?.stemsUrl ?? stemsUrlForDb;
+          const finalized = await persistLoopAceAudioRecord({
+            loopId: row.id,
+            userId: user.id,
+            audioUrlInput: trimmedAudioUrl,
+            audioUrlForDb,
+            stemsUrlForDb: stemsForAce,
+          });
+          if (input.isPublic) {
+            await supabase.from("loops").update({ is_public: true }).eq("id", row.id).eq("user_id", user.id);
+          }
+          if (!finalized.audioUrl && !finalized.stemsUrl) return;
+          const patchLoop = (l: Loop): Loop => {
+            const keptCover =
+              l.details?.coverUrl?.trim() ||
+              readAceCoverFromStems(l.stemsUrl).coverUrl?.trim() ||
+              readAceCoverFromStems(finalized.stemsUrl).coverUrl?.trim() ||
+              "";
+            const nextStems =
+              keptCover.startsWith("http") && finalized.stemsUrl
+                ? (mergeCoverIntoStems(finalized.stemsUrl, keptCover, l.details?.coverKind ?? "image") ??
+                  finalized.stemsUrl)
+                : (finalized.stemsUrl ?? l.stemsUrl);
+            return {
+              ...l,
+              audioUrl: finalized.audioUrl ?? l.audioUrl,
+              stemsUrl: nextStems,
+              details:
+                keptCover.startsWith("http")
+                  ? coverDetailsPatch(keptCover, l.details?.coverKind ?? "image", l.details ?? undefined)
+                  : l.details,
+              isPublic: Boolean(input.isPublic),
+            };
+          };
           applyPersistResult(finalized);
           useLoopsStore.setState((s) => ({
             loops: s.loops.map((l) => (l.id === row.id ? patchLoop(l) : l)),
@@ -942,11 +1139,13 @@ export const useLoopsStore = create<LoopsState>((set) => ({
           if (needsPublicStream) {
             usePlayerStore.getState().promoteLoop(row.id, patchLoop(finalLoop));
           }
-        } catch (err) {
-          console.warn("[createLoop] ACE persist failed:", err);
         }
-      })();
-    } else if (input.isPublic) {
+      } catch (err) {
+        console.warn("[createLoop] cover/ACE persist failed:", err);
+      }
+    })();
+
+    if (!LOOP_ACE_PERSIST && input.isPublic) {
       void (async () => {
         try {
           const finalized = await finalizePublicLoopRecord({
@@ -1000,37 +1199,22 @@ export const useLoopsStore = create<LoopsState>((set) => ({
       const withoutDup = s.loops.filter(
         (l) => l.id !== finalLoop.id && !(l.id.startsWith("preview-") && l.name === finalLoop.name),
       );
-      return { loops: [finalLoop, ...withoutDup].slice(0, 200) };
+      return {
+        loops: [finalLoop, ...withoutDup].slice(0, 200),
+        loopsTotalCount: s.loopsTotalCount != null ? s.loopsTotalCount + 1 : s.loopsTotalCount,
+      };
     });
     persistMyLoopsCache(user.id, useLoopsStore.getState().loops);
     void cacheLoopAudioFromSrc(row.id, finalLoop.audioUrl ?? trimmedAudioUrl);
     previewPinterestDiscoveryIfEnabled(finalLoop);
-    if (!finalLoop.details?.coverUrl) {
-      warmCoverAndPersist(
-        row.id,
-        user.id,
-        finalLoop,
-        stemsUrlForDb,
-        (result) => {
-          if (!result?.coverUrl) return;
-          useLoopsStore.setState((s) => ({
-            loops: s.loops.map((l) =>
-              l.id === row.id
-                ? {
-                    ...l,
-                    details: {
-                      ...(l.details ?? {}),
-                      coverUrl: result.coverUrl ?? undefined,
-                      coverKind: result.coverKind ?? l.details?.coverKind,
-                      coverPrompt: l.details?.coverPrompt,
-                    },
-                  }
-                : l,
-            ),
-          }));
-          persistMyLoopsCache(user.id, useLoopsStore.getState().loops);
-        },
-      );
+
+    if (!LOOP_ACE_PERSIST && needsCoverAssign) {
+      void assignLoopCoverOnce(row.id, { ...finalLoop, stemsUrl: stemsUrlForDb }, {
+        stemsUrl: stemsUrlForDb,
+        onLateCover: (late) => applyCoverToLoop(late.coverUrl, late.coverKind ?? "image"),
+      }).then((pin) => {
+        if (pin?.coverUrl) applyCoverToLoop(pin.coverUrl, pin.coverKind ?? "image");
+      });
     }
 
     const player = usePlayerStore.getState();
@@ -1163,6 +1347,11 @@ export const useLoopsStore = create<LoopsState>((set) => ({
     void removeLoopAudioStorage(user.id, id);
     if (loop?.audioUrl?.startsWith("blob:")) URL.revokeObjectURL(loop.audioUrl);
     useLoopsStore.getState().removeLoop(id);
+    if (!id.startsWith("local-") && !id.startsWith("preview-")) {
+      set((s) => ({
+        loopsTotalCount: s.loopsTotalCount != null ? Math.max(0, s.loopsTotalCount - 1) : s.loopsTotalCount,
+      }));
+    }
   },
   replaceLoopAudioRemote: async (id, blob) => {
     const user = useAuthStore.getState().user;

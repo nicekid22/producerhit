@@ -1,20 +1,24 @@
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
+import { GenerationProgressBar } from "@/components/ui/GenerationProgressBar";
 import { WaveformLoader } from "@/components/WaveformVisualizer";
 
-export function LoopCardSkeleton({ title, sub }: { title: string; sub?: string }) {
+export function LoopCardSkeleton({
+  title,
+  sub,
+  progressPct,
+  progressLabel,
+}: {
+  title: string;
+  sub?: string;
+  /** Estimation locale (ACE ne renvoie pas de % réel). */
+  progressPct?: number;
+  progressLabel?: string;
+}) {
   return (
     <div className="pk-gen-loading-card relative overflow-hidden rounded-pk border border-pk-accent/30 bg-pk-panel p-4 shadow-[0_0_24px_rgba(124,58,237,0.14)]">
-      <div
-        className="pk-gen-loading-shimmer pointer-events-none absolute inset-0 z-[1] opacity-40"
-        aria-hidden
-        style={{
-          background:
-            "linear-gradient(105deg, transparent 0%, rgba(103,195,255,0.12) 42%, rgba(157,124,255,0.22) 50%, rgba(103,195,255,0.12) 58%, transparent 100%)",
-        }}
-      />
+      <div className="pk-gen-loading-shimmer pointer-events-none absolute inset-0 z-[1] opacity-40" aria-hidden />
       <div className="relative z-[2] flex gap-3">
-        <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-pk border border-pk-accent/25 bg-pk-accent/10">
-          <div className="absolute inset-0 opacity-60" style={{ backgroundImage: "radial-gradient(circle at 30% 30%, rgba(124,58,237,0.45), transparent 55%)" }} />
+        <div className="pk-gen-loading-icon-box relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-pk">
           <PkIconLoader icon="generator" size="xs" inline className="relative z-[1]" />
         </div>
         <div className="min-w-0 flex-1">
@@ -26,9 +30,24 @@ export function LoopCardSkeleton({ title, sub }: { title: string; sub?: string }
             <div className="h-5 w-14 rounded-full bg-pk-border/40 animate-pulse" />
             <div className="h-5 w-16 rounded-full bg-pk-border/40 animate-pulse" />
           </div>
-          <div className="mt-2 text-xs text-pk-muted">{sub || "Création en cours…"}</div>
+          <div className="mt-2 text-xs text-pk-muted">
+            {typeof progressPct === "number" ? (
+              <>
+                {sub || "Création en cours…"}
+                <span className="pk-gen-loading-pct ml-1.5 tabular-nums text-pk-accent/90">{progressPct} %</span>
+              </>
+            ) : (
+              sub || "Création en cours…"
+            )}
+          </div>
         </div>
       </div>
+
+      {typeof progressPct === "number" ? (
+        <div className="relative z-[2] mt-3">
+          <GenerationProgressBar percent={progressPct} label={progressLabel} />
+        </div>
+      ) : null}
 
       <div className="relative z-[2] mt-3">
         <WaveformLoader height={28} active />

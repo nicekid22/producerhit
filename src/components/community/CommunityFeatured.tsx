@@ -1,7 +1,7 @@
 import { Loader2, Pause, Play, Shuffle, Sparkles } from "lucide-react";
 import { ProfileAuthorChip } from "@/components/profile/ProfileAuthorChip";
-import { publicRowToCoverLoop, resolveCoverImageUrl } from "@/lib/coverArt";
-import { coverGradient } from "@/lib/utils";
+import { publicRowToCoverLoop, resolveCommunityDisplayCoverUrl } from "@/lib/coverArt";
+import { COVER_SURFACE_CLASS, cn } from "@/lib/utils";
 import type { PublicLoopRow } from "@/lib/publicLoops";
 
 type Props = {
@@ -26,8 +26,7 @@ export function CommunityFeatured({
   onRemix,
 }: Props) {
   const loop = publicRowToCoverLoop(row);
-  const bg = coverGradient(loop);
-  const coverUrl = resolveCoverImageUrl(loop);
+  const coverUrl = resolveCommunityDisplayCoverUrl(row);
   const playingNow = isActive && isPlaying;
 
   return (
@@ -37,8 +36,10 @@ export function CommunityFeatured({
         <button
           type="button"
           onClick={onPlay}
-          className="pk-community-featured__cover group relative shrink-0 overflow-hidden rounded-2xl border border-white/10 text-left"
-          style={{ background: bg }}
+          className={cn(
+            "pk-community-featured__cover group relative shrink-0 overflow-hidden rounded-2xl border border-white/10 text-left",
+            COVER_SURFACE_CLASS,
+          )}
         >
           <img
             src={coverUrl}

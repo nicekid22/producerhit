@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useEffect, useMemo } from "react";
+import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";
 import { Navbar } from "@/components/Navbar";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { useLocaleStore } from "@/stores/localeStore";
@@ -35,7 +36,7 @@ export default function ComparePage() {
 
   if (!page) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] text-white">
+      <MarketingPageShell>
         <Navbar variant="marketing" />
         <div className="mx-auto max-w-5xl px-4 py-16 text-center">
           <p className="text-white/70">{isFr ? "Page introuvable." : "Page not found."}</p>
@@ -44,7 +45,7 @@ export default function ComparePage() {
           </Link>
         </div>
         <LandingFooter locale={locale} user={user} />
-      </div>
+      </MarketingPageShell>
     );
   }
 
@@ -55,7 +56,7 @@ export default function ComparePage() {
   const faq = isFr ? page.faqFr : page.faqEn;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white">
+    <MarketingPageShell>
       <Navbar variant="marketing" />
       <div className="mx-auto max-w-5xl px-4 py-16">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#a78bfa]">
@@ -239,6 +240,6 @@ export default function ComparePage() {
         ) : null}
       </div>
       <LandingFooter locale={locale} user={user} />
-    </div>
+    </MarketingPageShell>
   );
 }

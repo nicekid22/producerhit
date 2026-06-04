@@ -1,85 +1,258 @@
 import type { Loop } from "@/types/loop";
-import { supabase } from "@/lib/supabaseClient";
 import { parseStemsUrl } from "@/lib/publicLoops";
+
 import type { CoverKind } from "@/lib/coverMedia";
-import {
-  buildCoverPromptSnapshot,
-  coverImageSeed,
-  coverImageUrl as buildPollinationsCoverUrl,
-  hashString,
-  resolveCoverArtPrompt,
-} from "@/lib/utils";
+
+import { PINTEREST_PERSIST_COVERS } from "@/lib/featureFlags";
+import { coverUrlFromLoop, coverUrlFromLoopRow } from "@/lib/loopCoverUrl";
+import { buildCoverPromptSnapshot, hashString } from "@/lib/utils";
+
+export { persistLoopCover, saveLoopCoverUrl } from "@/lib/loopCoverUrl";
+
+
 
 /**
- * Rollback perf / covers : passer à `false` pour revenir aux URLs Pollinations à la volée partout.
+
+ * Rollback perf / covers : passer à `false` pour revenir aux URLs externes à la volée.
+
  */
+
 export const USE_PERSISTED_COVER_URL = true;
 
+
+
+const LEGACY_POLLINATIONS_HOSTS = ["pollinations.ai", "image.pollinations.ai"] as const;
+
+
+
 export type AceCoverFields = {
+
   coverPrompt?: string;
+
   coverUrl?: string;
+
   coverKind?: CoverKind;
+
 };
+
+
 
 export type CoverPersistResult = {
+
   coverUrl: string | null;
+
   coverKind?: CoverKind;
+
 };
 
+
+
 export function parseAceCoverFields(stemsUrl: unknown): AceCoverFields {
+
   const stems = parseStemsUrl(stemsUrl);
+
   if (!stems) return {};
+
   const ace = stems.ace;
+
   if (!ace || typeof ace !== "object") return {};
+
   const obj = ace as Record<string, unknown>;
+
   const coverPrompt = typeof obj.coverPrompt === "string" ? obj.coverPrompt.trim() : undefined;
+
   const coverUrl = typeof obj.coverUrl === "string" ? obj.coverUrl.trim() : undefined;
+
   const coverKindRaw = obj.coverKind;
+
   const coverKind = coverKindRaw === "video" || coverKindRaw === "image" ? coverKindRaw : undefined;
+
   return {
+
     coverPrompt: coverPrompt || undefined,
+
     coverUrl: coverUrl && (coverUrl.startsWith("http://") || coverUrl.startsWith("https://")) ? coverUrl : undefined,
+
     coverKind,
+
   };
+
 }
+
+
 
 function isStoredVideoCover(loop: Loop, url: string): boolean {
+
   if (loop.details?.coverKind === "video") return true;
+
   const lower = url.toLowerCase();
+
   return lower.includes("/loop-covers/") && lower.endsWith(".mp4");
+
 }
 
-/** URL affichée : cover image persistée en DB si présente, sinon Pollinations (cartes = photos uniquement). */
-export function resolveCoverImageUrl(loop: Loop, size = 512): string {
-  const stored = loop.details?.coverUrl?.trim();
+
+
+/** Cover enregistrée dans loop-covers (Pinterest persistée ou média stocké). */
+
+export function isPersistedStorageCoverUrl(url: string | null | undefined): boolean {
+
+  const u = (url ?? "").trim().toLowerCase();
+
+  if (!u.startsWith("http")) return false;
+
+  return u.includes("/loop-covers/") || (u.includes("supabase.co/storage") && u.includes("loop-covers"));
+
+}
+
+
+
+/** Cover Pinterest affichable (Storage ou pinimg en attendant le déploiement persist). */
+
+export function isDisplayablePinterestCoverUrl(url: string | null | undefined): boolean {
+
+  const u = (url ?? "").trim().toLowerCase();
+
+  if (!u.startsWith("http")) return false;
+
+  return isPersistedStorageCoverUrl(u) || u.includes("pinimg.com");
+
+}
+
+
+
+export function isPollinationsCoverUrl(url: string | null | undefined): boolean {
+
+  const u = (url ?? "").trim().toLowerCase();
+
+  if (!u) return false;
+
+  return LEGACY_POLLINATIONS_HOSTS.some((h) => u.includes(h));
+
+}
+
+
+
+/** Morceau sans cover Storage Pinterest (à backfill). */
+
+export function needsPinterestCover(loop: Loop): boolean {
+
+  if (!PINTEREST_PERSIST_COVERS) return false;
+
+  const stored = loop.details?.coverUrl?.trim() ?? "";
+
+  if (!stored) return true;
+
+  if (isPollinationsCoverUrl(stored)) return true;
+
+  if (isDisplayablePinterestCoverUrl(stored)) return false;
+
+  return true;
+
+}
+
+
+
+/** Ancienne cover pinimg en DB — migration unique vers Storage (même visuel). */
+
+export function needsPinimgStorageUpgrade(loop: Loop): boolean {
+
+  if (!PINTEREST_PERSIST_COVERS) return false;
+
+  const stored = loop.details?.coverUrl?.trim() ?? "";
+
+  return stored.includes("pinimg.com") && !isPersistedStorageCoverUrl(stored);
+
+}
+
+
+
+/** URL d’affichage unique pour une carte — workspace, community, landing, détail, player. */
+
+export function resolveLoopDisplayCoverUrl(loop: Loop, _size = 512): string {
+
+  return resolveCoverImageUrl(loop, _size);
+
+}
+
+
+
+export function resolveCoverImageUrl(loop: Loop, _size = 512): string {
+  const stored = resolveStoredCoverUrl(loop);
   if (
     USE_PERSISTED_COVER_URL &&
     stored &&
-    (stored.startsWith("http://") || stored.startsWith("https://")) &&
-    !isStoredVideoCover(loop, stored)
+    !isStoredVideoCover(loop, stored) &&
+    !(PINTEREST_PERSIST_COVERS && isPollinationsCoverUrl(stored))
   ) {
     return stored;
   }
-  return buildPollinationsCoverUrl(loop, size);
+  return "";
 }
 
-/** Cover pour une row publique : URL persistée ou Pollinations stable (même seed/prompt à chaque visite). */
+
+
+/** Cover pour une row publique : URL persistée uniquement. */
+
 export function resolvePublicRowCoverUrl(
+
   row: Parameters<typeof publicRowToCoverLoop>[0],
+
   size = 512,
+
 ): string {
+
   return resolveCoverImageUrl(publicRowToCoverLoop(row), size);
+
 }
+
+
+
+/** Flux communauté — cover persistée uniquement (Pinterest Storage). */
+
+export function resolveCommunityDisplayCoverUrl(
+
+  row: Parameters<typeof publicRowToCoverLoop>[0],
+
+  size = 512,
+
+): string {
+
+  return resolvePublicRowCoverUrl(row, size);
+
+}
+
+
+
+/** Player dock — cover persistée uniquement. */
+
+export function resolvePlayerDisplayCoverUrl(loop: Loop, size = 96): string {
+
+  return resolveLoopDisplayCoverUrl(loop, size);
+
+}
+
+
 
 export function loopDetailsFromAceStems(stemsUrl: unknown): Loop["details"] {
+
   const ace = parseAceCoverFields(stemsUrl);
+
   if (!ace.coverPrompt && !ace.coverUrl) return null;
+
   return {
+
     coverPrompt: ace.coverPrompt,
+
     coverUrl: ace.coverUrl,
+
     coverKind: ace.coverKind,
+
   };
+
 }
+
+
 
 export function mergeCoverIntoStems(
   stemsUrl: unknown,
@@ -101,170 +274,152 @@ export function mergeCoverIntoStems(
   };
 }
 
+/** Lit la cover — colonne loops.cover_url puis details / stems legacy. */
+export function resolveStoredCoverUrl(loop: Pick<Loop, "details" | "stemsUrl">): string {
+  return coverUrlFromLoop(loop);
+}
+
+
+
 /** @deprecated use mergeCoverIntoStems */
+
 export function mergeCoverUrlIntoStems(stemsUrl: unknown, coverUrl: string): Record<string, unknown> | null {
+
   return mergeCoverIntoStems(stemsUrl, coverUrl, "image");
+
 }
 
-async function invokeCoverMediaGeneration(
-  loopId: string,
-  loop: Loop,
-  preferVideo: boolean,
-): Promise<CoverPersistResult | null> {
-  const coverPrompt = resolveCoverArtPrompt(loop);
-  const seed = coverImageSeed(loop);
-  const { data, error } = await supabase.functions.invoke("generate-cover-media", {
-    body: { loopId, coverPrompt, seed, preferVideo },
-  });
-  if (error) return null;
-  const coverUrl = typeof data?.coverUrl === "string" ? data.coverUrl.trim() : "";
-  if (!coverUrl.startsWith("http")) return null;
-  const coverKind = data?.coverKind === "video" ? "video" : "image";
-  return { coverUrl, coverKind };
-}
 
-/** Enregistre l’URL cover une fois (image Pollinations — chemin legacy, sans vidéo). */
-export async function persistCoverUrlForLoop(
-  loopId: string,
-  userId: string,
-  loop: Loop,
-  stemsUrl: unknown,
-): Promise<string | null> {
-  const existing = loop.details?.coverUrl?.trim();
-  if (existing && (existing.startsWith("http://") || existing.startsWith("https://"))) return existing;
-
-  const canonical = buildPollinationsCoverUrl(loop, 512);
-  const nextStems = mergeCoverIntoStems(stemsUrl, canonical, "image");
-  if (!nextStems) return null;
-
-  const { error } = await supabase.from("loops").update({ stems_url: nextStems }).eq("id", loopId).eq("user_id", userId);
-  if (error) return null;
-  return canonical;
-}
-
-async function persistCoverMediaForLoop(
-  loopId: string,
-  userId: string,
-  stemsUrl: unknown,
-  result: CoverPersistResult,
-): Promise<CoverPersistResult | null> {
-  if (!result.coverUrl) return null;
-  const nextStems = mergeCoverIntoStems(stemsUrl, result.coverUrl, result.coverKind ?? "image");
-  if (!nextStems) return null;
-  const { error } = await supabase.from("loops").update({ stems_url: nextStems }).eq("id", loopId).eq("user_id", userId);
-  if (error) return null;
-  return result;
-}
-
-/**
- * Précharge la cover puis persiste l’URL.
- * `preferVideo: true` uniquement pour les nouvelles générations (edge function vidéo → fallback image).
- */
-export function warmCoverAndPersist(
-  loopId: string,
-  userId: string,
-  loop: Loop,
-  stemsUrl: unknown,
-  onDone?: (result: CoverPersistResult | null) => void,
-  options?: { preferVideo?: boolean },
-): void {
-  if (loop.details?.coverUrl?.trim()) {
-    onDone?.({
-      coverUrl: loop.details.coverUrl.trim(),
-      coverKind: loop.details.coverKind ?? "image",
-    });
-    return;
-  }
-
-  const preferVideo = options?.preferVideo === true;
-
-  if (preferVideo) {
-    void (async () => {
-      const generated = await invokeCoverMediaGeneration(loopId, loop, true);
-      if (!generated) {
-        const imageUrl = buildPollinationsCoverUrl(loop, 512);
-        const img = new Image();
-        img.referrerPolicy = "no-referrer";
-        await new Promise<void>((resolve) => {
-          img.onload = () => resolve();
-          img.onerror = () => resolve();
-          img.src = imageUrl;
-        });
-        const saved = await persistCoverMediaForLoop(loopId, userId, stemsUrl, {
-          coverUrl: imageUrl,
-          coverKind: "image",
-        });
-        onDone?.(saved);
-        return;
-      }
-      const saved = await persistCoverMediaForLoop(loopId, userId, stemsUrl, generated);
-      onDone?.(saved);
-    })();
-    return;
-  }
-
-  const url = buildPollinationsCoverUrl(loop, 512);
-  const img = new Image();
-  img.referrerPolicy = "no-referrer";
-  const done = () => {
-    void persistCoverUrlForLoop(loopId, userId, loop, stemsUrl).then((saved) =>
-      onDone?.(saved ? { coverUrl: saved, coverKind: "image" } : null),
-    );
-  };
-  img.onload = done;
-  img.onerror = done;
-  img.src = url;
-}
 
 export function publicRowToCoverLoop(row: {
+
   id: string;
+
   name: string | null;
+
   genre: string | null;
+
   influence?: string | null;
+
   mood: string | null;
+
   bpm: number | null;
+
   prompt: string | null;
+
   audio_url?: string | null;
+
   stems_url?: unknown;
+
+  cover_url?: string | null;
+
   created_at?: string | null;
+
   seed?: number | null;
+
 }): Loop {
+
   const ace = parseAceCoverFields(row.stems_url);
+
+  const resolvedCover = coverUrlFromLoopRow(row);
+
   const name = (row.name ?? "Untitled").trim() || "Untitled";
+
   const genre = (row.genre ?? "").trim();
+
   const mood = (row.mood ?? "").trim();
+
   const prompt = (row.prompt ?? "").trim() || [name, genre, mood].filter(Boolean).join(", ");
+
   return {
+
     id: row.id,
+
     name,
+
     genre: genre || "",
+
     influence: (row.influence ?? "").trim() || "No Influence",
+
     key: "",
+
     scale: "",
+
     bpm: typeof row.bpm === "number" ? row.bpm : 0,
+
     loopLength: "16 bars",
+
     swing: 0,
+
     mood: mood || "",
+
     energyLevel: "Medium",
+
     reverb: "Subtle",
+
     prompt,
+
     audioUrl: typeof row.audio_url === "string" ? row.audio_url.trim() || null : null,
+
     seed: typeof row.seed === "number" ? row.seed : null,
+
     details:
-      ace.coverPrompt || ace.coverUrl
-        ? { coverPrompt: ace.coverPrompt, coverUrl: ace.coverUrl, coverKind: ace.coverKind }
+      resolvedCover || ace.coverPrompt
+        ? {
+            coverPrompt: ace.coverPrompt,
+            coverUrl: resolvedCover || ace.coverUrl,
+            coverKind: ace.coverKind ?? (resolvedCover ? "image" : undefined),
+          }
         : null,
+
     stemsUrl: parseStemsUrl(row.stems_url),
+
     isSaved: false,
+
     isPublic: true,
+
     createdAt: row.created_at ?? new Date().toISOString(),
+
   };
+
 }
+
+
 
 export function coverImageKeyFromLoop(loop: Loop): string {
   const stored = loop.details?.coverUrl?.trim();
-  if (stored) return `${loop.id}:stored:${hashString(stored)}:${loop.details?.coverKind ?? "image"}`;
-  return `${loop.id}:${coverImageSeed(loop)}:${hashString(resolveCoverArtPrompt(loop))}`;
+  const rev = loop.details?.coverRevision ?? 0;
+  if (stored) {
+    return `${loop.id}:stored:${hashString(stored)}:${rev}:${loop.details?.coverKind ?? "image"}`;
+  }
+  return `${loop.id}:pending`;
 }
 
+/** URL d’affichage — bust cache navigateur après reroll (même chemin Storage). */
+export function displayCoverUrl(url: string, revision?: number): string {
+  const u = url.trim();
+  if (!u.startsWith("http")) return u;
+  const rev = typeof revision === "number" && revision > 0 ? revision : 0;
+  if (!rev) return u;
+  const sep = u.includes("?") ? "&" : "?";
+  return `${u}${sep}phv=${rev}`;
+}
+
+
+
 export { buildCoverPromptSnapshot };
+
+const preloadedCoverUrls = new Set<string>();
+
+/** Précharge une cover pour affichage plus rapide sur les cartes. */
+export function preloadCoverImage(url: string | null | undefined): void {
+  const u = (url ?? "").trim();
+  if (!u.startsWith("http") || preloadedCoverUrls.has(u)) return;
+  preloadedCoverUrls.add(u);
+  const img = new Image();
+  img.referrerPolicy = "no-referrer";
+  img.decoding = "async";
+  img.src = u;
+}
+
+

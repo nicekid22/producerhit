@@ -16,17 +16,14 @@ export function MobileResultsToolbar({ locale, generating, activeCount, onCreate
   return (
     <div
       className={cn(
-        "sticky top-0 z-20 -mx-1 mb-3 flex items-center gap-2 rounded-2xl border px-3 py-2.5 backdrop-blur-xl md:hidden",
-        busy
-          ? "border-[rgba(103,195,255,0.22)] bg-[rgba(8,12,22,0.92)] shadow-[0_0_24px_rgba(103,195,255,0.12)]"
-          : "border-white/10 bg-[rgba(8,8,14,0.88)]",
+        "pk-mobile-gen-notice sticky top-0 z-20 -mx-1 mb-3 flex items-center gap-2 rounded-2xl border px-3 py-2.5 backdrop-blur-xl md:hidden",
+        busy && "pk-mobile-gen-notice--busy",
       )}
     >
       {busy ? (
         <div className="flex min-w-0 flex-1 items-center gap-2.5">
-          <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.06]">
-            <AudioWaveform className="h-4 w-4 text-[#8fd4ff] animate-pulse" aria-hidden />
-            <span className="absolute inset-0 rounded-xl ring-1 ring-[rgba(103,195,255,0.35)]" aria-hidden />
+          <span className="pk-mobile-gen-notice__icon-box relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.06]">
+            <AudioWaveform className="pk-mobile-gen-notice__icon h-4 w-4 animate-pulse" aria-hidden />
           </span>
           <div className="min-w-0">
             <div className="truncate text-sm font-semibold text-white">
@@ -45,7 +42,7 @@ export function MobileResultsToolbar({ locale, generating, activeCount, onCreate
             </div>
           </div>
           {activeCount > 0 ? (
-            <span className="shrink-0 rounded-full bg-[rgba(103,195,255,0.2)] px-2 py-0.5 text-[10px] font-bold text-[#8fd4ff]">
+            <span className="pk-mobile-gen-notice__badge shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold">
               {activeCount > 9 ? "9+" : activeCount}
             </span>
           ) : null}

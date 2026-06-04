@@ -50,9 +50,8 @@ export function CommunityVibeNav({
               type="button"
               onClick={() => onVibeChange(active ? null : category.id)}
               className={["pk-hub-vibe-tile", active ? "pk-hub-vibe-tile--active" : ""].join(" ")}
-              style={{ "--pk-vibe-accent": category.accent } as React.CSSProperties}
+              data-vibe={category.id}
             >
-              <span className="pk-hub-vibe-tile__glow" aria-hidden />
               <span className="pk-hub-vibe-tile__title">{isFr ? category.title.fr : category.title.en}</span>
               <span className="pk-hub-vibe-tile__sub">{isFr ? category.subtitle.fr : category.subtitle.en}</span>
               <span className="pk-hub-vibe-tile__count">{count}</span>

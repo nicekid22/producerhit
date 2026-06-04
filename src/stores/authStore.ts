@@ -80,9 +80,10 @@ function authCallbackUrl(nextPath = "/dashboard"): string {
 /** Never call supabase.auth.* synchronously inside onAuthStateChange — defer to avoid deadlocks. */
 function scheduleProfileSync(session: Session): void {
   const userId = session.user.id;
+  const hasProfile = !!useAuthStore.getState().profile && useAuthStore.getState().user?.id === userId;
   window.setTimeout(() => {
     if (authUserId() !== userId) return;
-    void syncProfileForSession(session);
+    void syncProfileForSession(session, { soft: hasProfile });
   }, 0);
 }
 
@@ -111,6 +112,9 @@ async function syncProfileForSession(
   const token = ++profileSyncToken;
   const hasProfile = !!useAuthStore.getState().profile;
   if (options?.soft && hasProfile) {
+    useAuthStore.setState({ lastError: null });
+  } else if (hasProfile && authUserId() === session.user.id) {
+    // Refresh en arrière-plan — ne pas masquer le quota / settings déjà affichés.
     useAuthStore.setState({ lastError: null });
   } else if (isSessionStillActive(session)) {
     useAuthStore.setState({ profileReady: false, lastError: null });

@@ -2,52 +2,42 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 type Props = {
-  /** Pollinations / cover persistée — couche du dessus */
-  pollinationsUrl: string;
-  /** Pinterest — entre le dégradé et Pollinations */
-  pinterestUrl?: string | null;
+  /** Cover Pinterest / Storage */
+  coverUrl: string;
   className?: string;
   loading?: "eager" | "lazy";
+  darkSurface?: boolean;
 };
 
-/**
- * Landing communauté uniquement — empilement (bas → haut) :
- * dégradé (parent) → Pinterest → Pollinations.
- * Au survol : Pollinations s’efface pour laisser voir Pinterest.
- */
-export function LandingCommunityCoverStack({ pollinationsUrl, pinterestUrl, className, loading = "lazy" }: Props) {
-  const pol = pollinationsUrl.trim();
-  const pin = (pinterestUrl ?? "").trim();
-  const hasPin = pin.startsWith("http");
-  const hasPol = pol.startsWith("http");
-  const [polLoaded, setPolLoaded] = useState(false);
-  const [pinLoaded, setPinLoaded] = useState(false);
+/** Landing communauté — surface noire + cover unique. */
+export function LandingCommunityCoverStack({
+  coverUrl,
+  className,
+  loading = "lazy",
+  darkSurface = true,
+}: Props) {
+  const src = coverUrl.trim();
+  const hasCover = src.startsWith("http");
+  const [loaded, setLoaded] = useState(false);
+
+  const markLoaded = () => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => setLoaded(true));
+    });
+  };
 
   return (
-    <div className={cn("pk-landing-cover-stack", hasPin && "pk-landing-cover-stack--has-pin", className)}>
-      {hasPin ? (
+    <div className={cn("pk-landing-cover-stack", hasCover && "pk-landing-cover-stack--has-pin", className)}>
+      {darkSurface ? <div className="pk-landing-cover-stack__surface" aria-hidden /> : null}
+      {hasCover ? (
         <img
-          src={pin}
+          src={src}
           alt=""
           loading={loading}
           decoding="async"
           referrerPolicy="no-referrer"
-          className={cn("pk-landing-cover-stack__layer pk-landing-cover-stack__pinterest", pinLoaded && "is-loaded")}
-          onLoad={() => setPinLoaded(true)}
-          onError={(e) => {
-            e.currentTarget.style.display = "none";
-          }}
-        />
-      ) : null}
-      {hasPol ? (
-        <img
-          src={pol}
-          alt=""
-          loading={loading}
-          decoding="async"
-          referrerPolicy="no-referrer"
-          className={cn("pk-landing-cover-stack__layer pk-landing-cover-stack__pollinations", polLoaded && "is-loaded")}
-          onLoad={() => setPolLoaded(true)}
+          className={cn("pk-landing-cover-stack__layer pk-landing-cover-stack__pinterest", loaded && "is-loaded")}
+          onLoad={markLoaded}
           onError={(e) => {
             e.currentTarget.style.display = "none";
           }}

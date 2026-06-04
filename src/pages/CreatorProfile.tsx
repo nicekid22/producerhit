@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { ExternalLink, Loader2, Users } from "lucide-react";
 import toast from "react-hot-toast";
+import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/Button";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
@@ -16,7 +17,8 @@ import {
   type PublicProfile,
   type UserPublicLoop,
 } from "@/lib/creatorProfile";
-import { coverGradient, coverImageUrl } from "@/lib/utils";
+import { COVER_SURFACE_CLASS, cn } from "@/lib/utils";
+import { resolveLoopDisplayCoverUrl } from "@/lib/coverArt";
 import { useAuthStore } from "@/stores/authStore";
 import { useLocaleStore } from "@/stores/localeStore";
 import type { Loop } from "@/types/loop";
@@ -140,7 +142,7 @@ export default function CreatorProfile() {
   if (!username?.trim()) return <Navigate to="/community" replace />;
 
   return (
-    <div className="min-h-screen bg-pk-bg text-pk-text">
+    <MarketingPageShell className="text-pk-text">
       <Navbar variant="marketing" />
       <main className="mx-auto max-w-4xl px-4 py-10">
         <div className="text-sm text-pk-muted">
@@ -246,15 +248,14 @@ export default function CreatorProfile() {
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {loops.map((track) => {
                     const loop = toLoop(track);
-                    const bg = coverGradient(loop);
-                    const url = coverImageUrl(loop);
+                    const url = resolveLoopDisplayCoverUrl(loop);
                     return (
                       <Link
                         key={track.id}
                         to={`/loop/${track.id}`}
                         className="group overflow-hidden rounded-2xl border border-pk-border bg-pk-panel/50 transition hover:border-pk-accent/40"
                       >
-                        <div className="relative h-32 overflow-hidden" style={{ background: bg }}>
+                        <div className={cn("relative h-32 overflow-hidden", COVER_SURFACE_CLASS)}>
                           <img
                             src={url}
                             alt=""
@@ -286,6 +287,6 @@ export default function CreatorProfile() {
           </>
         )}
       </main>
-    </div>
+    </MarketingPageShell>
   );
 }

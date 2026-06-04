@@ -19,6 +19,7 @@ import { AudioPlayer } from "@/components/AudioPlayer";
 import { useLocaleStore } from "@/stores/localeStore";
 import { BLOG_POSTS, getBlogPostBySlug } from "@/content/blog";
 import { PLAN_LIMITS } from "@/lib/planLimits";
+import { isSampleLabEnabled } from "@/lib/sampleLab";
 import { getSeoPageByPath, SEO_PAGE_PATHS, getSeoPageCanonicalPath, getSeoPageLocaleForPath } from "@/lib/seoPages";
 import { getComparisonByPath, COMPARISON_PAGE_PATHS, getComparisonCanonicalPath, getComparisonLocaleForPath } from "@/lib/seoComparisons";
 import { GrowthBootstrap } from "@/components/GrowthBootstrap";
@@ -36,6 +37,7 @@ const DashboardPage = lazy(() => import("@/pages/Dashboard"));
 const LibraryPage = lazy(() => import("@/pages/Library"));
 const SettingsPage = lazy(() => import("@/pages/Settings"));
 const GrowthAdminPage = lazy(() => import("@/pages/GrowthAdmin"));
+const SampleLabPage = lazy(() => import("@/pages/SampleLab"));
 
 function PageLoader() {
   const { pathname } = useLocation();
@@ -44,7 +46,7 @@ function PageLoader() {
   const icon = loaderIconFromPath(pathname);
 
   return (
-    <div className="grid min-h-[60vh] place-items-center px-6">
+    <div className="pk-page-loader grid min-h-[70vh] place-items-center px-6 py-16">
       <PkIconLoader
         icon={icon}
         size="lg"
@@ -106,7 +108,11 @@ function SeoBootstrap() {
     const ogImageUrl = `${origin}/og-image.svg`;
 
     const isAppRoute =
-      pathname.startsWith("/dashboard") || pathname.startsWith("/library") || pathname.startsWith("/settings") || pathname.startsWith("/auth");
+      pathname.startsWith("/dashboard") ||
+      pathname.startsWith("/library") ||
+      pathname.startsWith("/sample-lab") ||
+      pathname.startsWith("/settings") ||
+      pathname.startsWith("/auth");
     const robots = isAppRoute ? "noindex,nofollow" : "index,follow";
 
     const seoPage = getSeoPageByPath(pathname);
@@ -128,6 +134,7 @@ function SeoBootstrap() {
       if (pathname === "/auth") return "auth";
       if (pathname === "/dashboard") return "dashboard";
       if (pathname === "/library") return "library";
+      if (pathname === "/sample-lab") return "sample-lab";
       if (pathname === "/settings") return "settings";
       if (pathname === "/ai-beat-generator") return "ai-beat-generator";
       if (pathname === "/ai-music-generator") return "ai-music-generator";
@@ -154,6 +161,7 @@ function SeoBootstrap() {
       if (slugKey === "auth") return t("Sign Up Free — ProducerHit", "Inscription gratuite — ProducerHit");
       if (slugKey === "dashboard") return t("My Studio — ProducerHit", "Mon studio — ProducerHit");
       if (slugKey === "library") return t("My Library — ProducerHit", "Ma bibliothèque — ProducerHit");
+      if (slugKey === "sample-lab") return t("AI Sample Lab — ProducerHit", "AI Sample Lab — ProducerHit");
       if (slugKey === "settings") return t("Settings — ProducerHit", "Paramètres — ProducerHit");
       if (slugKey === "ai-beat-generator") return t("AI Beat Generator — Create Type Beats Online | ProducerHit", "Générateur de beats IA — Type beats en ligne | ProducerHit");
       if (slugKey === "ai-music-generator") return t("AI Music Generator — Generate Songs & Beats | ProducerHit", "Générateur de musique IA — Songs & beats | ProducerHit");
@@ -495,6 +503,7 @@ export default function App() {
 
                   <Route element={<ProtectedRoute />}>
                     <Route path="/library" element={<LibraryPage />} />
+                    {isSampleLabEnabled() ? <Route path="/sample-lab" element={<SampleLabPage />} /> : null}
                     <Route path="/settings" element={<SettingsPage />} />
                     <Route path="/admin/growth" element={<GrowthAdminPage />} />
                   </Route>

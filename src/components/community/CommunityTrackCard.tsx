@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
-import { Loader2, Pause, Play, Sparkles, Star } from "lucide-react";
+import { Pause, Play, Sparkles, Star } from "lucide-react";
 import { ProfileAuthorChip } from "@/components/profile/ProfileAuthorChip";
-import { CoverForegroundFirst } from "@/components/cover/CoverPeekStack";
-import { publicRowToCoverLoop, resolveCoverImageUrl } from "@/lib/coverArt";
-import { COMMUNITY_PINTEREST_FOREGROUND } from "@/lib/featureFlags";
-import { coverGradient } from "@/lib/utils";
+import { StoredLoopCover } from "@/components/cover/StoredLoopCover";
+import { publicRowToCoverLoop, resolveCommunityDisplayCoverUrl, resolvePublicRowCoverUrl, isPersistedStorageCoverUrl } from "@/lib/coverArt";
+import { useLazyPinterestCover } from "@/hooks/useLazyPinterestCover";
+import { UNIFIED_STORED_COVERS } from "@/lib/featureFlags";
+import { COVER_SURFACE_CLASS, cn } from "@/lib/utils";
 import type { PublicLoopRow } from "@/lib/publicLoops";
 
 type RatingStats = { sum: number; count: number; myRating: number | null };
@@ -22,7 +23,7 @@ type Props = {
   onPlay: () => void;
   onRemix: () => void;
   onRate: (stars: number) => void;
-  pinterestCoverUrl?: string | null;
+  slotIndex?: number;
 };
 
 export function CommunityTrackCard({
@@ -38,19 +39,28 @@ export function CommunityTrackCard({
   onPlay,
   onRemix,
   onRate,
-  pinterestCoverUrl,
+  slotIndex = 0,
 }: Props) {
   const loop = publicRowToCoverLoop(row);
-  const bg = coverGradient(loop);
-  const pollinationsUrl = resolveCoverImageUrl(loop);
-  const pinUrl = pinterestCoverUrl?.trim() ?? "";
-  const usePinterestFirst = COMMUNITY_PINTEREST_FOREGROUND && pinUrl.startsWith("http");
+  const storedCover = resolvePublicRowCoverUrl(row);
+  const needsLazyPinterest = !storedCover.startsWith("http");
+  const { ref: coverRef, url: lazyCover } = useLazyPinterestCover(
+    { id: row.id, genre: row.genre, mood: row.mood, name: row.name, prompt: row.prompt },
+    slotIndex,
+    needsLazyPinterest,
+  );
+  const coverUrl = storedCover.startsWith("http")
+    ? storedCover
+    : lazyCover?.startsWith("http")
+      ? lazyCover
+      : resolveCommunityDisplayCoverUrl(row);
   const playingNow = isActive && isPlaying;
   const avg = rating && rating.count > 0 ? (rating.sum / rating.count).toFixed(1) : null;
   const compact = variant === "rail";
 
   return (
     <article
+      ref={coverRef}
       className={[
         "pk-community-card group",
         compact ? "pk-community-card--rail" : "pk-community-card--grid",
@@ -63,29 +73,8 @@ export function CommunityTrackCard({
         className="pk-community-card__cover-btn w-full text-left"
         aria-label={playingNow ? (isFr ? `Pause ${row.name}` : `Pause ${row.name}`) : isFr ? `Écouter ${row.name}` : `Play ${row.name}`}
       >
-        <div className="pk-community-card__cover relative overflow-hidden rounded-2xl" style={{ background: bg }}>
-          {usePinterestFirst ? (
-            <CoverForegroundFirst
-              primaryUrl={pinUrl}
-              fallbackUrl={pollinationsUrl}
-              className="absolute inset-0 h-full w-full"
-            />
-          ) : (
-            <img
-              src={pollinationsUrl}
-              alt=""
-              loading="lazy"
-              decoding="async"
-              referrerPolicy="no-referrer"
-              className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-300 group-hover:scale-[1.03]"
-              onLoad={(e) => {
-                e.currentTarget.style.opacity = "1";
-              }}
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-              }}
-            />
-          )}
+        <div className={cn("pk-community-card__cover relative overflow-hidden rounded-2xl", COVER_SURFACE_CLASS)}>
+          <StoredLoopCover coverUrl={coverUrl} className="absolute inset-0 h-full w-full" loading="lazy" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
           <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
             {row.genre ? (
@@ -105,20 +94,22 @@ export function CommunityTrackCard({
               </span>
             ) : null}
           </div>
-          <div
-            className={[
-              "absolute inset-0 flex items-center justify-center transition-opacity duration-300",
-              playingNow ? "opacity-100" : "opacity-0 group-hover:opacity-100",
-            ].join(" ")}
-          >
-            <span className="flex h-11 w-11 items-center justify-center rounded-full border border-white/30 bg-black/50 text-white shadow-[0_0_40px_rgba(103,195,255,0.35)] backdrop-blur-md">
-              {resolving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : playingNow ? (
-                <Pause className="h-4 w-4" fill="currentColor" />
-              ) : (
-                <Play className="ml-0.5 h-4 w-4" fill="currentColor" />
+          <div className="pk-community-card__play-wrap">
+            <span
+              className={cn(
+                "pk-community-card__play",
+                resolving && "pk-community-card__play--loading",
+                playingNow && "pk-community-card__play--active",
               )}
+              aria-hidden
+            >
+              <span className="pk-community-card__play-icon">
+                {playingNow ? (
+                  <Pause className="h-4 w-4" fill="currentColor" />
+                ) : (
+                  <Play className="ml-0.5 h-4 w-4" fill="currentColor" />
+                )}
+              </span>
             </span>
           </div>
         </div>

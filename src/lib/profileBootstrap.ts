@@ -151,7 +151,9 @@ async function waitForAuthSession(maxAttempts = 6): Promise<void> {
   throw new Error("not_authenticated");
 }
 
-async function runOptionalRpc(name: "ensure_profile" | "reconcile_profile_by_email" | "load_session_profile"): Promise<ReconcileResult | null> {
+async function runOptionalRpc(
+  name: "ensure_profile" | "reconcile_profile_by_email" | "load_session_profile" | "repair_missing_profile",
+): Promise<ReconcileResult | null> {
   const { data, error } = await supabase.rpc(name);
   if (error) {
     if (!isMissingRpcError(error.message) && import.meta.env.DEV) {
@@ -166,6 +168,7 @@ async function runOptionalRpc(name: "ensure_profile" | "reconcile_profile_by_ema
 }
 
 async function ensureProfileRow(userId: string, email?: string | null): Promise<void> {
+  await runOptionalRpc("repair_missing_profile");
   await runOptionalRpc("ensure_profile");
 
   const { data: existing } = await supabase.from("profiles").select("id").eq("id", userId).maybeSingle();
@@ -253,6 +256,8 @@ export async function bootstrapUserProfile(userId: string, email?: string | null
 
 export async function loadUserProfile(userId: string, email?: string | null): Promise<UserProfileRow> {
   await waitForAuthSession();
+
+  await runOptionalRpc("repair_missing_profile");
 
   let reconcile: ReconcileResult | null = null;
   try {

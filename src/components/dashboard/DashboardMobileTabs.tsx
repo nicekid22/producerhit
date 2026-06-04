@@ -18,7 +18,7 @@ export function DashboardMobileTabs({
 }) {
   return (
     <div
-      className="flex gap-0.5 rounded-2xl bg-black/20 p-1 ring-1 ring-white/[0.06]"
+      className="pk-dashboard-mobile-tabs flex gap-0.5 rounded-2xl bg-black/20 p-1 ring-1 ring-white/[0.06]"
       role="tablist"
       aria-label="Dashboard"
     >
@@ -40,13 +40,13 @@ export function DashboardMobileTabs({
             className={cn(
               "relative flex flex-1 items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-[11px] font-semibold tracking-wide transition-all sm:px-3 sm:text-xs",
               active
-                ? "pk-prism-pill-active shadow-[0_0_20px_rgba(157,124,255,0.22)]"
+                ? "pk-prism-pill-active pk-mobile-tab-active"
                 : "text-white/45 hover:bg-white/[0.04] hover:text-white/80",
             )}
           >
             {item.label}
             {"badge" in item && item.badge != null && item.badge > 0 ? (
-              <span className="inline-flex min-w-[1.125rem] items-center justify-center rounded-full bg-[rgba(103,195,255,0.28)] px-1.5 py-0.5 text-[10px] font-bold text-[#8fd4ff]">
+              <span className="pk-mobile-tab-badge inline-flex min-w-[1.125rem] items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-bold">
                 {item.badge > 9 ? "9+" : item.badge}
               </span>
             ) : null}

@@ -4,6 +4,7 @@ import { Menu, X } from "lucide-react";
 import { useLocaleStore } from "@/stores/localeStore";
 import { useAuthStore } from "@/stores/authStore";
 import { HeroCtaButton } from "@/components/landing/HeroCtaButton";
+import { ThemeToggleButton } from "@/components/ThemeToggleButton";
 
 export function Navbar({ variant }: { variant: "marketing" | "auth" }) {
   const locale = useLocaleStore((s) => s.locale);
@@ -15,14 +16,14 @@ export function Navbar({ variant }: { variant: "marketing" | "auth" }) {
   return (
     <header
       className={[
-        "sticky top-0 z-20 border-b border-pk-border/70 backdrop-blur-xl pt-[env(safe-area-inset-top,0px)]",
+        "pk-marketing-navbar sticky top-0 z-20 border-b border-pk-border/70 backdrop-blur-xl pt-[env(safe-area-inset-top,0px)]",
         variant === "marketing" ? "bg-pk-bg/55" : "bg-pk-bg/80",
       ].join(" ")}
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
         <Link to="/" className="text-base font-semibold tracking-tight text-pk-text">
           <span className="lowercase text-pk-text/90">producer</span>
-          <span className="lowercase bg-gradient-to-r from-[#a78bfa] via-[#7c3aed] to-[#22d3ee] bg-clip-text text-transparent">hit</span>
+          <span className="pk-navbar-logo-hit lowercase bg-gradient-to-r from-[#a78bfa] via-[#7c3aed] to-[#22d3ee] bg-clip-text text-transparent">hit</span>
         </Link>
         {variant === "marketing" ? (
           <nav className="hidden items-center gap-7 text-sm text-pk-muted md:flex">
@@ -46,6 +47,7 @@ export function Navbar({ variant }: { variant: "marketing" | "auth" }) {
                 {locale === "fr" ? "Connexion" : "Login"}
               </Link>
             )}
+            <ThemeToggleButton variant="icon" />
             <div className="inline-flex items-center gap-1 rounded-full border border-pk-border bg-white/5 px-1 py-1">
               <button
                 type="button"
@@ -139,6 +141,9 @@ export function Navbar({ variant }: { variant: "marketing" | "auth" }) {
                 {isFr ? "Page d’accueil" : "Home page"}
               </Link>
             )}
+            <div className="mt-2 flex justify-center">
+              <ThemeToggleButton variant="icon" className="rounded-xl" />
+            </div>
             <div className="mt-1 inline-flex w-full items-center gap-1 rounded-full border border-pk-border bg-white/5 p-1">
               <button
                 type="button"

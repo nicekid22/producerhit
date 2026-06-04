@@ -42,12 +42,12 @@ export const DashboardGamingPanelShell = forwardRef<DashboardGamingPanelHandle, 
     <div
       id={id}
       className={cn(
-        "relative overflow-hidden rounded-2xl border border-white/10 bg-black/50 p-[1px] shadow-[0_12px_40px_rgba(0,0,0,0.35)]",
+        "pk-gaming-panel-shell relative overflow-hidden rounded-2xl border border-white/10 bg-black/50 p-[1px] shadow-[0_12px_40px_rgba(0,0,0,0.35)]",
         className,
       )}
     >
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/[0.12] via-transparent to-cyan-500/[0.08]" />
-      <div className="relative rounded-[15px] bg-[#0a0a0f]/90">
+      <div className="pk-gaming-panel-shell__glow pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/[0.12] via-transparent to-cyan-500/[0.08]" />
+      <div className="pk-gaming-panel-shell__body relative rounded-[15px] bg-[#0a0a0f]/90">
         <div className="flex items-center justify-between gap-3 border-b border-white/[0.06] px-3 py-2.5 sm:px-4">
           <div className="min-w-0">
             <div className="text-xs font-semibold text-white">{title}</div>

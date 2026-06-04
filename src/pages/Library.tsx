@@ -15,8 +15,11 @@ import { useLoopsStore } from "@/stores/loopsStore";
 import { LoopCardItem } from "@/components/LoopCardItem";
 import { useLocaleStore } from "@/stores/localeStore";
 import { useMobileUiV2 } from "@/hooks/useMobileUiV2";
-import { Bookmark, Disc3, Layers, Search, Sparkles } from "lucide-react";
+import { Bookmark, Disc3, Layers, Music2, Search, Sparkles, X } from "lucide-react";
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
+import { dedupeLoopsById } from "@/lib/loopWorkspaceUtils";
+import { genreCoverGradient } from "@/lib/genreCoverStyle";
+import { cn } from "@/lib/utils";
 
 type Filter = "all" | "genre" | "key" | "bpm";
 
@@ -30,6 +33,7 @@ function formatTime(sec: number) {
 export default function Library() {
   const locale = useLocaleStore((s) => s.locale);
   const loops = useLoopsStore((s) => s.loops);
+  const loopsTotalCount = useLoopsStore((s) => s.loopsTotalCount);
   const loopsLoading = useLoopsStore((s) => s.loading);
   const loopsSyncError = useLoopsStore((s) => s.lastSyncError);
   const loadMyLoops = useLoopsStore((s) => s.loadMyLoops);
@@ -41,9 +45,16 @@ export default function Library() {
   const [detailsId, setDetailsId] = useState<string | null>(null);
   const [bpmMin, setBpmMin] = useState(90);
   const [bpmMax, setBpmMax] = useState(160);
+  const [genreFilter, setGenreFilter] = useState<string | null>(null);
+
+  const libraryLoops = useMemo(() => dedupeLoopsById(loops), [loops]);
+
+  useEffect(() => {
+    void loadMyLoops();
+  }, [loadMyLoops]);
 
   const filtered = useMemo(() => {
-    const base = loops;
+    const base = genreFilter ? libraryLoops.filter((l) => l.genre === genreFilter) : libraryLoops;
     const text = q.trim().toLowerCase();
     const afterSearch = text
       ? base.filter((l) => [l.name, l.genre, l.key, l.mood].some((x) => x.toLowerCase().includes(text)))
@@ -59,22 +70,25 @@ export default function Library() {
       .filter((l) => l.bpm >= min && l.bpm <= max)
       .slice()
       .sort((a, b) => a.bpm - b.bpm);
-  }, [bpmMax, bpmMin, filter, loops, q]);
+  }, [bpmMax, bpmMin, filter, genreFilter, libraryLoops, q]);
 
-  const savedCount = useMemo(() => loops.filter((l) => l.isSaved).length, [loops]);
-  const totalCount = loops.length;
-  const genreCount = useMemo(() => new Set(loops.map((l) => l.genre).filter(Boolean)).size, [loops]);
+  const savedCount = useMemo(() => libraryLoops.filter((l) => l.isSaved).length, [libraryLoops]);
+  const libraryTotalCount = loopsTotalCount ?? libraryLoops.length;
+  const genreCount = useMemo(() => new Set(libraryLoops.map((l) => l.genre).filter(Boolean)).size, [libraryLoops]);
   const topGenres = useMemo(() => {
     const counts = new Map<string, number>();
-    for (const l of loops) {
+    for (const l of libraryLoops) {
       if (!l.genre) continue;
       counts.set(l.genre, (counts.get(l.genre) ?? 0) + 1);
     }
     return Array.from(counts.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, 6);
-  }, [loops]);
-  const detailsLoop = useMemo(() => (detailsId ? loops.find((l) => l.id === detailsId) ?? null : null), [detailsId, loops]);
+  }, [libraryLoops]);
+  const detailsLoop = useMemo(
+    () => (detailsId ? libraryLoops.find((l) => l.id === detailsId) ?? null : null),
+    [detailsId, libraryLoops],
+  );
   const mobileUiV2 = useMobileUiV2();
   const renameLoopRemote = useLoopsStore((s) => s.renameLoopRemote);
   const [detailsTitle, setDetailsTitle] = useState("");
@@ -115,7 +129,7 @@ export default function Library() {
               : "All your creations — ready to replay, remix, or share."
           }
           stats={[
-            { label: isFr ? "Total" : "Total", value: totalCount },
+            { label: isFr ? "Total" : "Total", value: libraryTotalCount },
             { label: isFr ? "Sauvés" : "Saved", value: savedCount },
             { label: isFr ? "Genres" : "Genres", value: genreCount },
             { label: isFr ? "Résultats" : "Showing", value: filtered.length },
@@ -128,9 +142,17 @@ export default function Library() {
               </div>
               <div className="pk-prism-chip-cloud mt-2">
                 {topGenres.map(([g, n]) => (
-                  <span key={g} className="pk-prism-vibe-chip">
+                  <button
+                    key={g}
+                    type="button"
+                    className="pk-prism-vibe-chip transition-opacity hover:opacity-90"
+                    onClick={() => {
+                      setGenreFilter((prev) => (prev === g ? null : g));
+                      setQ("");
+                    }}
+                  >
                     {g} · {n}
-                  </span>
+                  </button>
                 ))}
               </div>
             </div>
@@ -145,8 +167,9 @@ export default function Library() {
         </AppShellAsideHeader>
       }
     >
-      <div className="h-full space-y-5 px-4 pt-6">
+      <div className="pk-library-page h-full space-y-5 px-4 pt-6">
         <PrismPageHero
+          className="pk-library-hero"
           eyebrow={isFr ? "ARCHIVE PREMIUM" : "PREMIUM ARCHIVE"}
           title={<span className="pk-prism-holo-text">{isFr ? "Ta bibliothèque sonore" : "Your sound library"}</span>}
           description={
@@ -164,7 +187,7 @@ export default function Library() {
           }
         >
           <div className="pk-prism-stat-grid">
-            <PrismStat label={isFr ? "Beats" : "Beats"} value={totalCount} icon={<Disc3 className="h-4 w-4" />} accent="cyan" />
+            <PrismStat label={isFr ? "Beats" : "Beats"} value={libraryTotalCount} icon={<Disc3 className="h-4 w-4" />} accent="cyan" />
             <PrismStat label={isFr ? "Favoris" : "Saved"} value={savedCount} icon={<Bookmark className="h-4 w-4" />} accent="violet" />
             <PrismStat label={isFr ? "Genres" : "Genres"} value={genreCount} icon={<Layers className="h-4 w-4" />} />
             <PrismStat label={isFr ? "Affichés" : "Visible"} value={filtered.length} icon={<Search className="h-4 w-4" />} />
@@ -211,7 +234,54 @@ export default function Library() {
             </div>
           ) : null}
 
-          <div className="pk-prism-section-card">
+          {topGenres.length ? (
+            <div className="pk-library-genre-banners">
+              <button
+                type="button"
+                className={cn(
+                  "pk-library-genre-tile",
+                  !genreFilter ? "pk-library-genre-tile--active" : "",
+                )}
+                onClick={() => setGenreFilter(null)}
+              >
+                <Music2 className="pk-library-genre-tile__icon" aria-hidden />
+                <span className="pk-library-genre-tile__label">{isFr ? "Tout le vault" : "All vault"}</span>
+                <span className="pk-library-genre-tile__count">{libraryLoops.length}</span>
+              </button>
+              {topGenres.map(([g, n]) => (
+                <button
+                  key={g}
+                  type="button"
+                  className={cn(
+                    "pk-library-genre-tile",
+                    genreFilter === g ? "pk-library-genre-tile--active" : "",
+                  )}
+                  style={{ backgroundImage: genreCoverGradient(g) }}
+                  onClick={() => {
+                    setGenreFilter((prev) => (prev === g ? null : g));
+                    setQ("");
+                  }}
+                >
+                  <span className="pk-library-genre-tile__label">{g}</span>
+                  <span className="pk-library-genre-tile__count">{n}</span>
+                </button>
+              ))}
+            </div>
+          ) : null}
+
+          {genreFilter ? (
+            <div className="pk-library-active-filter">
+              <span>
+                {isFr ? "Filtre" : "Filter"} · <strong>{genreFilter}</strong>
+              </span>
+              <button type="button" className="pk-library-active-filter__clear" onClick={() => setGenreFilter(null)}>
+                <X className="h-3.5 w-3.5" />
+                {isFr ? "Effacer" : "Clear"}
+              </button>
+            </div>
+          ) : null}
+
+          <div className="pk-prism-section-card pk-library-toolbar">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="flex flex-wrap gap-2 pk-chip-scroll md:overflow-visible">
                 <PrismFilterPill active={filter === "all"} onClick={() => setFilter("all")}>
@@ -277,24 +347,24 @@ export default function Library() {
             detailsLoop && !mobileUiV2 ? (
               <div className="md:grid md:grid-cols-[minmax(0,1fr)_420px] md:gap-4">
                 <div>
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  <div className="pk-library-grid">
                     {filtered.map((l) => (
-                      <div key={l.id}>
-                        <LoopCardItem
-                          loop={l}
-                          compact={mobileUiV2}
-                          queueLoops={filtered}
-                          onDelete={() => setConfirmId(l.id)}
-                          onOpenDetails={(loop) => setDetailsId((prev) => (prev === loop.id ? null : loop.id))}
-                        />
-                      </div>
+                      <LoopCardItem
+                        key={l.id}
+                        loop={l}
+                        cardVariant="library"
+                        compact={mobileUiV2}
+                        queueLoops={filtered}
+                        onDelete={() => setConfirmId(l.id)}
+                        onOpenDetails={(loop) => setDetailsId((prev) => (prev === loop.id ? null : loop.id))}
+                      />
                     ))}
                   </div>
                 </div>
 
                 <div className="hidden md:block">
                   <div className="sticky top-6 max-h-[calc(100vh-32px)] overflow-y-auto">
-                    <div className="pk-studio-detail-panel relative overflow-hidden rounded-2xl p-5 backdrop-blur">
+                    <div className="pk-library-detail-panel pk-studio-detail-panel relative overflow-hidden rounded-2xl p-5 backdrop-blur">
                       <div className="pk-prism-panel-glow" />
                       <LoopDetailsSheetHeader
                         title={detailsLoop.name}
@@ -316,17 +386,17 @@ export default function Library() {
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="pk-library-grid">
                 {filtered.map((l) => (
-                  <div key={l.id}>
-                    <LoopCardItem
-                      loop={l}
-                      compact={mobileUiV2}
-                      queueLoops={filtered}
-                      onDelete={() => setConfirmId(l.id)}
-                      onOpenDetails={(loop) => setDetailsId(loop.id)}
-                    />
-                  </div>
+                  <LoopCardItem
+                    key={l.id}
+                    loop={l}
+                    cardVariant="library"
+                    compact={mobileUiV2}
+                    queueLoops={filtered}
+                    onDelete={() => setConfirmId(l.id)}
+                    onOpenDetails={(loop) => setDetailsId(loop.id)}
+                  />
                 ))}
               </div>
             )

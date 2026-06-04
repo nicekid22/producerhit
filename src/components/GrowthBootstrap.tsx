@@ -1,12 +1,12 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { captureAttributionFromUrl } from "@/lib/attribution";
+import { GA_MEASUREMENT_ID, isGa4ScriptPresent } from "@/lib/googleAnalytics";
 import { flushEventQueue, trackClientEvent } from "@/lib/supabaseClient";
-
-const GA_ID = import.meta.env.VITE_GA_MEASUREMENT_ID as string | undefined;
 
 function loadGa4(id: string) {
   if (typeof window === "undefined") return;
+  if (isGa4ScriptPresent(id)) return;
   if (document.getElementById("pk-ga4")) return;
 
   const s1 = document.createElement("script");
@@ -25,7 +25,7 @@ function loadGa4(id: string) {
   document.head.appendChild(s2);
 }
 
-/** Captures UTM/ref on every navigation + optional GA4 page views. */
+/** Captures UTM/ref on every navigation + GA4 page views (SPA). */
 export function GrowthBootstrap() {
   const { pathname, search } = useLocation();
 
@@ -49,12 +49,12 @@ export function GrowthBootstrap() {
   }, []);
 
   useEffect(() => {
-    if (!GA_ID) return;
-    loadGa4(GA_ID);
+    if (!GA_MEASUREMENT_ID) return;
+    loadGa4(GA_MEASUREMENT_ID);
   }, []);
 
   useEffect(() => {
-    if (!GA_ID) return;
+    if (!GA_MEASUREMENT_ID) return;
     const w = window as unknown as { gtag?: (...args: unknown[]) => void };
     w.gtag?.("event", "page_view", { page_path: pathname + search, page_title: document.title });
   }, [pathname, search]);

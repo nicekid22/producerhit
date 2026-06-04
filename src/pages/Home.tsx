@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useEffect, useMemo } from "react";
+import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";
 import { Navbar } from "@/components/Navbar";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { SeoLandingExtras } from "@/components/seo/SeoLandingExtras";
@@ -71,7 +72,7 @@ export default function Home() {
     : buildGrowthUrl("/auth", "organic", { campaign: seo?.slugKey ?? "seo-landing", content: pathname.replace(/^\//, "") });
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white">
+    <MarketingPageShell>
       <Navbar variant="marketing" />
       <div className="mx-auto max-w-5xl px-4 py-16">
         {seo ? (
@@ -172,6 +173,6 @@ export default function Home() {
         </div>
       </div>
       <LandingFooter locale={locale} user={user} />
-    </div>
+    </MarketingPageShell>
   );
 }

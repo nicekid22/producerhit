@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { ArrowRight, Loader2, Music2, Pause, Play, Share2, Sparkles, Star, Zap } from "lucide-react";
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
 import toast from "react-hot-toast";
+import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";
 import { Navbar } from "@/components/Navbar";
 import { isPlayablePublicLoop, resolvePlayableCommunityAudio, type PublicLoopRow } from "@/lib/publicLoops";
 import { publicRowToCoverLoop, resolvePublicRowCoverUrl } from "@/lib/coverArt";
@@ -14,7 +15,7 @@ import { loopToRemixSource } from "@/lib/remixSourceLoop";
 import { setLoopPageSeo } from "@/lib/seoMeta";
 import { getGenreSeoLink } from "@/lib/seoPages";
 import { buildLoopShareUrl } from "@/lib/growthLinks";
-import { coverGradient } from "@/lib/utils";
+import { COVER_SURFACE_CLASS, cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabaseClient";
 import { useLocaleStore } from "@/stores/localeStore";
 import { useAuthStore } from "@/stores/authStore";
@@ -70,7 +71,6 @@ export default function PublicLoop() {
 
   const coverLoop = useMemo(() => (row ? publicRowToCoverLoop(row) : null), [row]);
   const coverUrl = useMemo(() => (row ? resolvePublicRowCoverUrl(row, 1024) : ""), [row]);
-  const coverBg = useMemo(() => (coverLoop ? coverGradient(coverLoop) : ""), [coverLoop]);
   const genreSeo = useMemo(() => getGenreSeoLink(row?.genre, locale), [row?.genre, locale]);
   const avgRating = ratingCount > 0 ? ratingSum / ratingCount : null;
 
@@ -326,7 +326,7 @@ export default function PublicLoop() {
       ];
 
   return (
-    <div className="pk-public-loop min-h-screen bg-pk-bg text-pk-text">
+    <MarketingPageShell className="pk-public-loop text-pk-text">
       <Navbar variant="marketing" />
       <main className="mx-auto max-w-5xl px-4 pb-16 pt-8 sm:px-6">
         <nav className="text-sm text-pk-muted" aria-label="Breadcrumb">
@@ -349,7 +349,7 @@ export default function PublicLoop() {
           <>
             <article className="mt-8 overflow-hidden rounded-3xl border border-pk-border bg-pk-panel/60 shadow-[0_32px_90px_rgba(0,0,0,0.55)] backdrop-blur-xl">
               <div className="relative min-h-[280px] sm:min-h-[340px]">
-                <div className="absolute inset-0" style={{ background: coverBg }} />
+                <div className={cn("absolute inset-0", coverLoop && COVER_SURFACE_CLASS)} />
                 <img
                   src={coverUrl}
                   alt=""
@@ -571,6 +571,6 @@ export default function PublicLoop() {
           <div className="mt-4">© 2026 ProducerHit</div>
         </footer>
       </main>
-    </div>
+    </MarketingPageShell>
   );
 }

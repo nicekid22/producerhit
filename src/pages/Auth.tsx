@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/stores/authStore";
+import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";
 import { Navbar } from "@/components/Navbar";
 import { trackClientEvent } from "@/lib/supabaseClient";
 import { getAttributionProps } from "@/lib/attribution";
@@ -143,14 +144,16 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-pk-bg text-pk-text">
+    <MarketingPageShell className="min-h-[100dvh] text-pk-text">
       <Navbar variant="auth" />
       <div className="mx-auto flex min-h-[calc(100dvh-3.5rem)] max-w-md flex-col justify-center px-6 py-10">
-        <div className="rounded-2xl border border-pk-border bg-pk-panel/70 p-8 shadow-[0_24px_70px_rgba(0,0,0,0.55)] backdrop-blur-xl">
+        <div className="pk-auth-panel rounded-2xl border border-pk-border bg-pk-panel/70 p-8 shadow-[0_24px_70px_rgba(0,0,0,0.55)] backdrop-blur-xl">
           <div className="text-center">
             <div className="text-2xl font-semibold tracking-tight">
               <span className="lowercase text-pk-text/90">producer</span>
-              <span className="lowercase bg-gradient-to-r from-[#a78bfa] via-[#7c3aed] to-[#22d3ee] bg-clip-text text-transparent">hit</span>
+              <span className="pk-auth-logo-hit lowercase bg-gradient-to-r from-[#a78bfa] via-[#7c3aed] to-[#22d3ee] bg-clip-text text-transparent">
+                hit
+              </span>
             </div>
             <p className="mt-2 text-sm text-pk-muted">
               {mode === "login"
@@ -163,13 +166,13 @@ export default function Auth() {
             </p>
           </div>
 
-          <div className="mt-6 flex gap-1 rounded-full border border-pk-border bg-white/5 p-1 text-xs">
+          <div className="pk-auth-tabs mt-6 flex gap-1 rounded-full border border-pk-border bg-white/5 p-1 text-xs">
             <button
               type="button"
               onClick={() => setMode("login")}
               className={
                 mode === "login"
-                  ? "flex-1 rounded-full bg-[#7c3aed] px-3 py-2 font-semibold text-white"
+                  ? "pk-auth-tab-active flex-1 rounded-full bg-[#7c3aed] px-3 py-2 font-semibold text-white"
                   : "flex-1 rounded-full px-3 py-2 font-semibold text-pk-muted hover:text-pk-text"
               }
             >
@@ -180,7 +183,7 @@ export default function Auth() {
               onClick={() => setMode("signup")}
               className={
                 mode === "signup"
-                  ? "flex-1 rounded-full bg-[#7c3aed] px-3 py-2 font-semibold text-white"
+                  ? "pk-auth-tab-active flex-1 rounded-full bg-[#7c3aed] px-3 py-2 font-semibold text-white"
                   : "flex-1 rounded-full px-3 py-2 font-semibold text-pk-muted hover:text-pk-text"
               }
             >
@@ -190,25 +193,29 @@ export default function Auth() {
 
           <form className="mt-6 space-y-4" onSubmit={onSubmit}>
             <div>
-              <label className="text-xs font-medium text-pk-muted">Email</label>
+              <label htmlFor="auth-email" className="text-xs font-medium text-pk-muted">Email</label>
               <input
+                id="auth-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="mt-1 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2 text-sm text-pk-text outline-none ring-0 placeholder:text-pk-muted focus:border-pk-accent"
                 placeholder="you@studio.com"
+                autoComplete="email"
                 required
               />
             </div>
 
             <div>
-              <label className="text-xs font-medium text-pk-muted">Password</label>
+              <label htmlFor="auth-password" className="text-xs font-medium text-pk-muted">Password</label>
               <input
+                id="auth-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2 text-sm text-pk-text outline-none ring-0 placeholder:text-pk-muted focus:border-pk-accent"
                 placeholder="••••••••"
+                autoComplete="current-password"
                 required
                 minLength={6}
               />
@@ -253,6 +260,6 @@ export default function Auth() {
           </form>
         </div>
       </div>
-    </div>
+    </MarketingPageShell>
   );
 }

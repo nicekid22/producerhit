@@ -9,8 +9,9 @@ import type { PendingRemix } from "@/lib/pendingRemix";
 import { REMIX_VIBE_FALLBACK_COPY } from "@/lib/remixVibeFallback";
 import { fetchRemixSourceLoop, loopToRemixSource, remixSourceSummary, remixSourceToLoop } from "@/lib/remixSourceLoop";
 import { isSongLoop } from "@/lib/vocalLanguages";
-import { resolveCoverImageUrl } from "@/lib/coverArt";
-import { cn, coverGradient } from "@/lib/utils";
+import { resolveLoopDisplayCoverUrl } from "@/lib/coverArt";
+import { GenerationCreditAmount } from "@/components/GenerationCreditIcon";
+import { cn, COVER_SURFACE_CLASS } from "@/lib/utils";
 import { useGrowthUpsellStore } from "@/stores/growthUpsellStore";
 
 function loopLibrarySubtitle(loop: Loop, isFr: boolean): string {
@@ -401,8 +402,7 @@ export function RemixStudioPanel({
             {filteredLibraryLoops.length ? (
               filteredLibraryLoops.map((loop) => {
                 const selected = sourceLoop?.id === loop.id;
-                const coverUrl = resolveCoverImageUrl(loop, 96);
-                const bg = coverGradient(loop);
+                const coverUrl = resolveLoopDisplayCoverUrl(loop, 96);
                 return (
                   <button
                     key={loop.id}
@@ -415,8 +415,10 @@ export function RemixStudioPanel({
                     )}
                   >
                     <span
-                      className="pk-remix-library-pill__thumb relative block shrink-0 overflow-hidden rounded-lg"
-                      style={{ background: bg }}
+                      className={cn(
+                        "pk-remix-library-pill__thumb relative block shrink-0 overflow-hidden rounded-lg",
+                        COVER_SURFACE_CLASS,
+                      )}
                     >
                       {coverUrl ? (
                         <img src={coverUrl} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
@@ -636,9 +638,16 @@ export function RemixStudioPanel({
           ) : !vibeRecreateMode && prompt.trim().length <= 3 ? (
             <p className="text-xs text-white/45">{isFr ? "Décris le style du remix (4+ caractères)." : "Describe the remix style (4+ chars)."}</p>
           ) : (
-            <p className="text-xs text-white/45">
-              {vibeRecreateMode ? vibeCopy.creditHint : isFr ? "1 crédit · résultat dans ta bibliothèque" : "1 credit · saved to your library"}
-              {plan ? ` · ${plan}` : ""}
+            <p className="inline-flex flex-wrap items-center gap-1 text-xs text-white/45">
+              <GenerationCreditAmount amount={1} iconClassName="h-2.5 w-2.5" />
+              <span>
+                {vibeRecreateMode
+                  ? vibeCopy.creditHintSuffix
+                  : isFr
+                    ? " · résultat dans ta bibliothèque"
+                    : " · saved to your library"}
+                {plan ? ` · ${plan}` : ""}
+              </span>
             </p>
           )}
 

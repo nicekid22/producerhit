@@ -1,11 +1,13 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { Grid3X3, Settings, LogIn, LogOut, AudioWaveform, Users, BarChart3, Loader2, Home } from "lucide-react";
+import { Grid3X3, Settings, LogIn, LogOut, AudioWaveform, Users, BarChart3, Loader2, Home, Layers } from "lucide-react";
+import { isSampleLabEnabled } from "@/lib/sampleLab";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 import { useGrowthAdmin } from "@/hooks/useGrowthAdmin";
 import { useAuthStore } from "@/stores/authStore";
 import { COMMUNITY_HUB_NAV } from "@/lib/communityHub";
+import { ThemeToggleButton } from "@/components/ThemeToggleButton";
 import { useLocaleStore } from "@/stores/localeStore";
 
 type Item = { to: string; label: string; icon: React.ReactNode };
@@ -24,6 +26,15 @@ export function Sidebar() {
     { to: "/?home=1", label: locale === "fr" ? "Accueil" : "Home", icon: <Home className="h-5 w-5" /> },
     { to: "/dashboard", label: locale === "fr" ? "Générateur" : "Generator", icon: <AudioWaveform className="h-5 w-5" /> },
     { to: "/library", label: locale === "fr" ? "Bibliothèque" : "Library", icon: <Grid3X3 className="h-5 w-5" /> },
+    ...(isSampleLabEnabled()
+      ? [
+          {
+            to: "/sample-lab",
+            label: locale === "fr" ? "Sample Lab" : "Sample Lab",
+            icon: <Layers className="h-5 w-5" />,
+          } satisfies Item,
+        ]
+      : []),
     { to: "/community", label: locale === "fr" ? COMMUNITY_HUB_NAV.fr : COMMUNITY_HUB_NAV.en, icon: <Users className="h-5 w-5" /> },
     { to: "/settings", label: locale === "fr" ? "Paramètres" : "Settings", icon: <Settings className="h-5 w-5" /> },
     ...(isGrowthAdmin
@@ -48,9 +59,9 @@ export function Sidebar() {
   const logoutIcon = loggingOut ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogOut className="h-5 w-5" />;
 
   return (
-    <div className="flex h-full items-center justify-between bg-transparent px-3 py-2 md:flex-col md:justify-between md:border-r-0 md:px-0 md:py-4">
+    <div className="flex h-full items-center justify-between bg-transparent px-3 py-2 md:h-auto md:flex-col md:justify-between md:border-r-0 md:px-2 md:py-3">
       <div className="flex items-center gap-2 md:flex-col">
-        <div className="flex items-center gap-1 md:mt-3 md:flex-col">
+        <div className="flex items-center gap-1 md:mt-1 md:flex-col md:gap-0.5">
           {items.map((it) => {
             const active =
               it.to === "/?home=1"
@@ -77,7 +88,8 @@ export function Sidebar() {
           })}
         </div>
 
-        <div className="hidden md:flex md:flex-col md:gap-2 md:pt-3">
+        <div className="hidden md:flex md:flex-col md:gap-1.5 md:pt-2">
+          <ThemeToggleButton variant="icon" />
           <button
             type="button"
             onClick={() => setLocale("en")}
@@ -127,6 +139,7 @@ export function Sidebar() {
       </div>
 
       <div className="flex items-center gap-2 md:hidden">
+        <ThemeToggleButton variant="icon" className="rounded-lg" />
         <button
           type="button"
           onClick={() => setLocale("en")}

@@ -1,9 +1,12 @@
 import { loadBrowserAceApiKeys, pickBrowserAceApiKey, usesDirectAceFromBrowser } from "@/lib/aceBrowserKeys";
 import { nextAceKeyPreferIndex } from "@/lib/aceKeyRotation";
 import { supabase } from "@/lib/supabaseClient";
+import { aceMelodyCompositionAceFields } from "@/lib/aceMelodyComposition";
 import { buildAceCaption, buildRichPrompt, buildSonautoTags, type GenerateParams } from "@/lib/promptBuilder";
 import { appendAceQualityToParamObj, ACE_RELEASE_MODEL, ACE_QUALITY_DEFAULTS, isAceReleaseTaskEnabled, resolveAceQualityFlags } from "@/lib/aceQuality";
-import { parseAceChatCompletionsResponse } from "@/lib/aceChatCompletions";
+import { parseAceChatCompletionsResponse, parseAllAceChatCompletionsAudios } from "@/lib/aceChatCompletions";
+import type { AceDualBatchResponse } from "@/lib/aceDualBatch";
+import { computeAceRequestedDurationSec } from "@/lib/aceDuration";
 import { resolveAceAudioUrl } from "@/lib/publicLoops";
 
 export type AceMeta = {
@@ -64,10 +67,11 @@ function normalizeAceBaseUrl(baseUrlRaw: string) {
   return noTrailingSlash;
 }
 
-async function invokeSupabaseFunction<T>(args: {
+async function invokeSupabaseFunctionOnce<T>(args: {
   name: string;
   body: unknown;
   accessToken?: string;
+  signal?: AbortSignal;
 }): Promise<{ data: T | null; errorText: string | null; limitReached?: boolean }> {
   const forcedRegion = import.meta.env.VITE_SUPABASE_FUNCTION_REGION as string | undefined;
   if (!forcedRegion) {
@@ -94,13 +98,38 @@ async function invokeSupabaseFunction<T>(args: {
       Accept: "application/json",
     },
     body: JSON.stringify(args.body ?? {}),
+    signal: args.signal,
   });
   const text = await res.text().catch(() => "");
-  if (!res.ok) return { data: null, errorText: text || `Edge Function error (${res.status})` };
+  if (!res.ok) {
+    const statusHint =
+      res.status === 504 || res.status === 546
+        ? `Edge timeout (${res.status})`
+        : `Edge Function error (${res.status})`;
+    return { data: null, errorText: text || statusHint };
+  }
   try {
     return { data: (JSON.parse(text) as T) ?? null, errorText: null };
   } catch {
     return { data: null, errorText: "Invalid JSON from Edge Function" };
+  }
+}
+
+/** Pas de timeout client — on laisse l'Edge / ACE finir ; messages user via generationErrors. */
+async function invokeSupabaseFunction<T>(args: {
+  name: string;
+  body: unknown;
+  accessToken?: string;
+}): Promise<{ data: T | null; errorText: string | null; limitReached?: boolean }> {
+  try {
+    return await invokeSupabaseFunctionOnce<T>({
+      name: args.name,
+      body: args.body,
+      accessToken: args.accessToken,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { data: null, errorText: message };
   }
 }
 
@@ -131,7 +160,7 @@ async function extractInvokeError(error: unknown): Promise<{ message: string; li
         }
       }
       if (res.status === 504 || res.status === 546) {
-        return { message: "Génération trop longue (timeout Edge). Réessaie avec un clip plus court." };
+        return { message: `Edge timeout (${res.status})` };
       }
       if (res.status >= 500) {
         return { message: `Erreur serveur Edge (${res.status}). Réessaie dans un instant.` };
@@ -156,7 +185,7 @@ async function extractInvokeError(error: unknown): Promise<{ message: string; li
 
   const fallback = anyError.message ?? "Edge Function error";
   if (fallback.includes("non-2xx")) {
-    return { message: "Erreur Edge Function — génération interrompue (timeout ou réponse trop volumineuse). Réessaie." };
+    return { message: "Edge Function non-2xx" };
   }
   return { message: fallback };
 }
@@ -180,7 +209,14 @@ type GenerateLoopAceOptions = {
   aceKeyPreferIndex?: number;
   /** Passe par l’Edge Function (release_task serveur) pour une URL HTTP en DB — requis pour is_public. */
   requirePersistableUrl?: boolean;
+  /** Prompt ACE complet (ex. Sample Lab) — remplace buildAceCaption. */
+  captionOverride?: string;
+  /** Composition mélodique sample pack — ne pas préfixer par « beat with drums » (edge + direct ACE). */
+  melodyComposition?: boolean;
 };
+
+const MELODY_COMPOSITION_ACE_RULES =
+  "TASK: Melody-only sample pack composition for beatmakers. CRITICAL — generate ZERO drums: no kick, snare, clap, hi-hat, percussion, trap drums, or 808. Only melodic layers and optional vocal chops. NOT a beat. Do not output lyrics.";
 
 function isHttpAceUrl(url: unknown): url is string {
   const s = typeof url === "string" ? url.trim() : "";
@@ -276,12 +312,13 @@ async function generateLoopAceDirect(
   const promptParams = options?.autoMeta ? { ...params, bpm: 0, key: "", scale: "" } : params;
   const instrumental = options?.instrumental ?? true;
   const vocalLanguage = options?.vocalLanguage ?? "en";
-  const baseCaption = buildAceCaption(promptParams, { isSong, instrumental, autoMeta: Boolean(options?.autoMeta), vocalLanguage });
+  const captionOverride = options?.captionOverride?.trim() ?? "";
+  const baseCaption = captionOverride || buildAceCaption(promptParams, { isSong, instrumental, autoMeta: Boolean(options?.autoMeta), vocalLanguage });
 
   const lyrics = options?.lyrics ?? "";
   const effectiveLyrics = instrumental ? "[Instrumental]" : lyrics.trim();
   const isAiLyrics = !instrumental && effectiveLyrics === "";
-  const effectiveSampleMode = Boolean(options?.sampleMode || isAiLyrics);
+  const effectiveSampleMode = Boolean(!captionOverride && (options?.sampleMode || isAiLyrics));
   const releasePrompt = effectiveSampleMode ? (options?.sampleQuery?.trim() || baseCaption) : baseCaption;
   const quality = resolveAceQualityFlags({
     thinking: options?.thinking,
@@ -333,9 +370,20 @@ async function generateLoopAceDirect(
     };
   };
 
+  const melodyComposition = Boolean(options?.melodyComposition);
+
   const generateViaChatCompletions = async (): Promise<{ audioUrl: string; meta: AceMeta | null }> => {
     const parts: string[] = [];
-    if (instrumental) {
+    if (melodyComposition) {
+      parts.push(baseCaption.trim());
+      parts.push(MELODY_COMPOSITION_ACE_RULES);
+      if (params.mood) parts.push(`Mood: ${params.mood}.`);
+      if (params.energyLevel) parts.push(`Energy: ${params.energyLevel}.`);
+      if (!options?.autoMeta && params.bpm > 0) parts.push(`BPM: ${params.bpm}.`);
+      if (!options?.autoMeta && params.key && params.scale) parts.push(`Key: ${params.key} ${params.scale}.`);
+      if (options?.timeSignature) parts.push(`Time signature: ${options.timeSignature}.`);
+      if (params.genre) parts.push(`Genre in metadata: "${params.genre}".`);
+    } else if (instrumental) {
       const beatTemplate =
         params.genre === "Old School Hip-Hop"
           ? pickOne([
@@ -362,20 +410,22 @@ async function generateLoopAceDirect(
       }
       parts.push("Include clear lead vocals with professional production quality.");
     }
-    if (!instrumental && effectiveLyrics) parts.push(`Lyrics:\n${effectiveLyrics}`);
-    parts.push(
-      instrumental
-        ? "Instrumental beat. No lead singing and no rapped verses. Avoid intelligible lyrics or spoken words. Vocal chops are allowed."
-        : "Include vocals.",
-    );
-    if (!options?.autoMeta && params.bpm > 0) parts.push(`BPM: ${params.bpm}.`);
-    if (!options?.autoMeta && params.key && params.scale) parts.push(`Key: ${params.key} ${params.scale}.`);
-    if (options?.timeSignature) parts.push(`Time signature: ${options.timeSignature}.`);
-    if (params.genre) {
-      parts.push(`In the generated Metadata caption, explicitly include the genre: "${params.genre}".`);
-    }
-    if (params.genre === "Dancehall") {
-      parts.push('In the generated Metadata caption, explicitly include the words: "dancehall" and "riddim".');
+    if (!melodyComposition && !instrumental && effectiveLyrics) parts.push(`Lyrics:\n${effectiveLyrics}`);
+    if (!melodyComposition) {
+      parts.push(
+        instrumental
+          ? "Instrumental beat. No lead singing and no rapped verses. Avoid intelligible lyrics or spoken words. Vocal chops are allowed."
+          : "Include vocals.",
+      );
+      if (!options?.autoMeta && params.bpm > 0) parts.push(`BPM: ${params.bpm}.`);
+      if (!options?.autoMeta && params.key && params.scale) parts.push(`Key: ${params.key} ${params.scale}.`);
+      if (options?.timeSignature) parts.push(`Time signature: ${options.timeSignature}.`);
+      if (params.genre) {
+        parts.push(`In the generated Metadata caption, explicitly include the genre: "${params.genre}".`);
+      }
+      if (params.genre === "Dancehall") {
+        parts.push('In the generated Metadata caption, explicitly include the words: "dancehall" and "riddim".');
+      }
     }
 
     const res = await fetch(`${baseUrl}/v1/chat/completions`, {
@@ -392,6 +442,7 @@ async function generateLoopAceDirect(
         messages: [{ role: "user", content: parts.join("\n\n") }],
         lyrics: instrumental ? "[instrumental]" : effectiveLyrics,
         task_type: "text2music",
+        ...(melodyComposition ? aceMelodyCompositionAceFields() : {}),
         audio_config: {
           instrumental,
           ...(requestedDuration != null ? { duration: requestedDuration } : {}),
@@ -447,16 +498,11 @@ async function generateLoopAceDirect(
 
   const clampNumber = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
 
-  const requestedDuration: number | null = (() => {
-    if (!instrumental) {
-      const raw = typeof options?.duration === "number" && Number.isFinite(options.duration) && options.duration > 0 ? options.duration : 90;
-      return clampNumber(raw, 10, 120);
-    }
-    if (typeof options?.duration === "number" && Number.isFinite(options.duration) && options.duration > 0) {
-      return clampNumber(options.duration, 10, 120);
-    }
-    return null;
-  })();
+  const durationRaw =
+    typeof options?.duration === "number" && Number.isFinite(options.duration) && options.duration > 0
+      ? options.duration
+      : null;
+  const requestedDuration = computeAceRequestedDurationSec({ instrumental, durationRaw });
 
   const paramObj: Record<string, unknown> = {};
   if (requestedDuration != null) paramObj.duration = requestedDuration;
@@ -658,7 +704,8 @@ export async function generateLoopAce(
   const instrumental = options?.instrumental ?? true;
   const lyricsRaw = options?.lyrics ?? "";
   const vocalLanguage = options?.vocalLanguage ?? "en";
-  const baseCaption = buildAceCaption(promptParams, { isSong, instrumental, autoMeta: Boolean(options?.autoMeta), vocalLanguage });
+  const captionOverride = options?.captionOverride?.trim() ?? "";
+  const baseCaption = captionOverride || buildAceCaption(promptParams, { isSong, instrumental, autoMeta: Boolean(options?.autoMeta), vocalLanguage });
   const sampleQuery = options?.sampleQuery?.trim() || "";
   const audioFormatRaw = (options?.audioFormat || "").trim().toLowerCase();
   const audioFormat =
@@ -673,7 +720,7 @@ export async function generateLoopAce(
   // sample_mode should only be used when we want ACE to auto-generate lyrics/metas.
   // use_format should stay independent (it formats/enhances provided caption/lyrics).
   const isAiLyrics = !instrumental && lyricsRaw === "";
-  const effectiveSampleMode = Boolean(options?.sampleMode || isAiLyrics);
+  const effectiveSampleMode = Boolean(!captionOverride && (options?.sampleMode || isAiLyrics));
   const caption = effectiveSampleMode ? "" : baseCaption;
   const lyrics = instrumental ? "[Instrumental]" : lyricsRaw;
   const effectiveSampleQuery = effectiveSampleMode ? (sampleQuery || baseCaption) : sampleQuery;
@@ -681,11 +728,7 @@ export async function generateLoopAce(
   const clampNumber = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
   const bars = typeof params.loopLengthBars === "number" && Number.isFinite(params.loopLengthBars) && params.loopLengthBars > 0 ? params.loopLengthBars : 8;
   const durationRaw = typeof options?.duration === "number" && Number.isFinite(options.duration) && options.duration > 0 ? options.duration : null;
-  const desiredDurationSec: number | null = (() => {
-    if (!instrumental) return clampNumber(durationRaw ?? 90, 10, 120);
-    if (durationRaw != null) return clampNumber(durationRaw, 10, 120);
-    return null;
-  })();
+  const desiredDurationSec = computeAceRequestedDurationSec({ instrumental, durationRaw });
 
   const quality = resolveAceQualityFlags({
     thinking: options?.thinking,
@@ -723,6 +766,37 @@ export async function generateLoopAce(
       ? Math.abs(Math.floor(options.aceKeyPreferIndex))
       : nextAceKeyPreferIndex();
   if (options?.requirePersistableUrl) body.requirePersistableUrl = true;
+  if (options?.melodyComposition === true || captionOverride) {
+    body.melodyComposition = true;
+    Object.assign(body, aceMelodyCompositionAceFields());
+  }
+
+  const { asyncGenerationJobsEnabled, startGenerationJob, waitForGenerationJob } = await import(
+    "@/lib/generationJobs"
+  );
+  if (asyncGenerationJobsEnabled() && session?.access_token) {
+    const { jobId } = await startGenerationJob(body);
+    const jobResult = await waitForGenerationJob(jobId);
+    const audioUrl = jobResult.audioUrl;
+    const rawMeta = (jobResult.meta ?? null) as Record<string, unknown> | null;
+    const metaObj = rawMeta && typeof rawMeta === "object" ? rawMeta : null;
+    const taskIdFromMeta =
+      (typeof metaObj?.taskId === "string" ? metaObj.taskId : "") ||
+      (typeof metaObj?.task_id === "string" ? metaObj.task_id : "");
+    let normalizedMeta: AceMeta | null = metaObj
+      ? ({
+          ...(metaObj as unknown as AceMeta),
+          taskId: taskIdFromMeta ? taskIdFromMeta.trim() : undefined,
+          sessionOnly: metaObj.sessionOnly === true,
+          ...(isHttpAceUrl(metaObj.httpAudioUrl) ? { httpAudioUrl: String(metaObj.httpAudioUrl).trim() } : {}),
+          ...(!metaObj.httpAudioUrl && isHttpAceUrl(audioUrl) ? { httpAudioUrl: audioUrl.trim() } : {}),
+        } as AceMeta)
+      : null;
+    if (options?.requirePersistableUrl) {
+      return enrichPersistableAceResult(audioUrl, normalizedMeta, true);
+    }
+    return { audioUrl, meta: normalizedMeta };
+  }
 
   const { data, errorText, limitReached } = await invokeSupabaseFunction<{
     audioUrl?: string;
@@ -771,6 +845,350 @@ export async function generateLoopAce(
     audioUrl,
     meta: normalizedMeta,
   };
+}
+
+export type GenerateLoopAceDualBatchOptions = GenerateLoopAceOptions & {
+  dualSeeds: [number, number];
+  generationKeys: [string, string];
+};
+
+function metaFromAceChatJson(
+  json: unknown,
+  parsed: { audioUrl: string; httpAudioUrl: string | null; taskId: string | null; sessionOnly: boolean },
+  ctx: {
+    baseCaption: string;
+    effectiveLyrics: string;
+    instrumental: boolean;
+    audioFormat: string;
+    requestedDuration: number | null;
+    fallbackBpm: number | null;
+    fallbackKeyScale: string;
+    timeSignature?: string;
+    aceKeyIndex?: number;
+    aceKeyCount?: number;
+    seed?: number;
+  },
+): AceMeta {
+  const choices = (json as { choices?: unknown } | null)?.choices;
+  const firstChoice = Array.isArray(choices) ? choices[0] : null;
+  const messageObj =
+    firstChoice && typeof firstChoice === "object" && firstChoice !== null
+      ? (firstChoice as { message?: unknown }).message
+      : null;
+  const content =
+    messageObj && typeof messageObj === "object" && messageObj !== null && typeof (messageObj as { content?: unknown }).content === "string"
+      ? ((messageObj as { content: string }).content as string)
+      : "";
+  type ParsedChatMeta = {
+    prompt?: string;
+    lyrics?: string;
+    bpm?: number | null;
+    duration?: number | null;
+    keyScale?: string;
+    timeSignature?: string;
+  };
+  const parsedContent: ParsedChatMeta = content
+    ? (() => {
+        const pick = (re: RegExp) => {
+          const m = content.match(re);
+          return m && typeof m[1] === "string" ? m[1].trim() : "";
+        };
+        const bpmStr = pick(/\*\*BPM:\*\*\s*([0-9]{2,3})/i);
+        const durationStr = pick(/\*\*Duration:\*\*\s*([0-9]{1,3})/i);
+        const keyScaleMatch =
+          content.match(/\*\*(?:Key|Key Scale|KeyScale):\*\*\s*([^\n]+)/i) ?? content.match(/\*\*Key:\*\*\s*([^\n]+)/i);
+        return {
+          prompt: pick(/\*\*Caption:\*\*\s*([^\n]+)/i) || undefined,
+          lyrics: (() => {
+            const idx = content.toLowerCase().indexOf("## lyrics");
+            return idx >= 0 ? content.slice(idx + "## lyrics".length).trim() : undefined;
+          })(),
+          bpm: bpmStr ? Number(bpmStr) : null,
+          duration: durationStr ? Number(durationStr) : null,
+          keyScale: keyScaleMatch?.[1]?.trim() || undefined,
+          timeSignature:
+            content.match(/\*\*(?:Time Signature|TimeSignature):\*\*\s*([^\n]+)/i)?.[1]?.trim() || undefined,
+        };
+      })()
+    : {};
+
+  return {
+    prompt: parsedContent.prompt || ctx.baseCaption,
+    lyrics: ctx.instrumental ? "" : parsedContent.lyrics || ctx.effectiveLyrics || undefined,
+    bpm: (parsedContent.bpm && parsedContent.bpm > 0 ? parsedContent.bpm : ctx.fallbackBpm) ?? null,
+    duration: (parsedContent.duration && parsedContent.duration > 0 ? parsedContent.duration : ctx.requestedDuration) ?? null,
+    keyScale: parsedContent.keyScale || ctx.fallbackKeyScale || undefined,
+    timeSignature: parsedContent.timeSignature || ctx.timeSignature || undefined,
+    audioFormat: ctx.audioFormat,
+    seed: ctx.seed ?? null,
+    aceKeyIndex: ctx.aceKeyIndex,
+    aceKeyCount: ctx.aceKeyCount,
+    ...(parsed.taskId ? { taskId: parsed.taskId } : {}),
+    ...(parsed.httpAudioUrl ? { httpAudioUrl: parsed.httpAudioUrl } : {}),
+    sessionOnly: parsed.sessionOnly && !parsed.httpAudioUrl,
+  };
+}
+
+/** Un seul POST /v1/chat/completions avec batch_size=2 (2 seeds). */
+export async function generateLoopAceDualBatch(
+  params: GenerateParams,
+  options: GenerateLoopAceDualBatchOptions,
+): Promise<AceDualBatchResponse> {
+  const [seed1, seed2] = options.dualSeeds;
+  const seeds: [number, number] = [seed1, seed2];
+
+  if (usesDirectAceFromBrowser()) {
+    const aceKeys = loadBrowserAceApiKeys();
+    const keyCount = aceKeys.length;
+    const preferStart =
+      typeof options.aceKeyPreferIndex === "number" && Number.isFinite(options.aceKeyPreferIndex)
+        ? Math.abs(Math.floor(options.aceKeyPreferIndex)) % Math.max(keyCount, 1)
+        : nextAceKeyPreferIndex() % Math.max(keyCount, 1);
+    const baseUrl = normalizeAceBaseUrl(
+      (import.meta.env.VITE_ACE_STEP_BASE_URL as string | undefined) ?? "https://api.acemusic.ai",
+    );
+    const aceApiKey = aceKeys[preferStart]!;
+    if (!keyCount) throw new Error("Missing VITE_ACE_STEP_API_KEY");
+
+    const isSong = options?.isSong ?? !options?.instrumental;
+    const promptParams = options?.autoMeta ? { ...params, bpm: 0, key: "", scale: "" } : params;
+    const instrumental = options?.instrumental ?? true;
+    const vocalLanguage = options?.vocalLanguage ?? "en";
+    const baseCaption = buildAceCaption(promptParams, {
+      isSong,
+      instrumental,
+      autoMeta: Boolean(options?.autoMeta),
+      vocalLanguage,
+    });
+    const lyrics = options?.lyrics ?? "";
+    const effectiveLyrics = instrumental ? "[Instrumental]" : lyrics.trim();
+    const quality = resolveAceQualityFlags({
+      thinking: options?.thinking,
+      useFormat: options?.useFormat,
+      sampleMode: Boolean(options?.sampleMode || (!instrumental && effectiveLyrics === "")),
+    });
+    const audioFormatRaw = (options?.audioFormat || "").trim().toLowerCase();
+    const audioFormat =
+      audioFormatRaw === "wav" ||
+      audioFormatRaw === "wav32" ||
+      audioFormatRaw === "flac" ||
+      audioFormatRaw === "mp3" ||
+      audioFormatRaw === "aac" ||
+      audioFormatRaw === "opus"
+        ? audioFormatRaw
+        : "mp3";
+
+    const clampNumber = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
+    const durationRaw =
+      typeof options?.duration === "number" && Number.isFinite(options.duration) && options.duration > 0
+        ? options.duration
+        : null;
+    const requestedDuration = computeAceRequestedDurationSec({ instrumental, durationRaw });
+
+    const parts: string[] = [];
+    if (instrumental) {
+      parts.push(`Create a modern 2026 ${params.genre} beat with contemporary drums and sound design.`);
+      parts.push(baseCaption.trim());
+      if (params.mood) parts.push(`Mood: ${params.mood}.`);
+      if (params.energyLevel) parts.push(`Energy: ${params.energyLevel}.`);
+      parts.push("No lead singing and no rapped verses. Avoid intelligible lyrics or spoken words.");
+    } else {
+      parts.push(baseCaption.trim());
+      parts.push("Include clear lead vocals with professional production quality.");
+      if (effectiveLyrics) parts.push(`Lyrics:\n${effectiveLyrics}`);
+    }
+    if (!options?.autoMeta && params.bpm > 0) parts.push(`BPM: ${params.bpm}.`);
+    if (!options?.autoMeta && params.key && params.scale) parts.push(`Key: ${params.key} ${params.scale}.`);
+
+    const res = await fetch(`${baseUrl}/v1/chat/completions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${aceApiKey}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        model: ACE_RELEASE_MODEL,
+        thinking: quality.thinking,
+        use_format: quality.useFormat,
+        batch_size: 2,
+        messages: [{ role: "user", content: parts.join("\n\n") }],
+        lyrics: instrumental ? "[instrumental]" : effectiveLyrics,
+        task_type: "text2music",
+        audio_config: {
+          instrumental,
+          ...(requestedDuration != null ? { duration: requestedDuration } : {}),
+          bpm: !options?.autoMeta && params.bpm > 0 ? params.bpm : null,
+          key_scale: !options?.autoMeta && params.key && params.scale ? `${params.key} ${params.scale}` : null,
+          time_signature: options?.timeSignature || null,
+          vocal_language: vocalLanguage,
+          format: audioFormat,
+          audio_format: audioFormat,
+          shift: ACE_QUALITY_DEFAULTS.shift,
+          inference_steps: ACE_QUALITY_DEFAULTS.inferenceSteps,
+          seed: seeds[0],
+          seeds,
+        },
+        stream: false,
+      }),
+    });
+    const text = await res.text().catch(() => "");
+    if (!res.ok) throw new Error(`ACE API dual batch failed (${res.status}): ${text.slice(0, 400)}`);
+
+    const json = JSON.parse(text) as unknown;
+    const audios = parseAllAceChatCompletionsAudios(json, baseUrl);
+    if (!audios.length) throw new Error("ACE dual batch returned no audio");
+
+    const metaCtx = {
+      baseCaption,
+      effectiveLyrics,
+      instrumental,
+      audioFormat,
+      requestedDuration,
+      fallbackBpm: !options?.autoMeta && params.bpm > 0 ? params.bpm : null,
+      fallbackKeyScale: !options?.autoMeta && params.key && params.scale ? `${params.key} ${params.scale}` : "",
+      timeSignature: options?.timeSignature,
+      aceKeyIndex: preferStart,
+      aceKeyCount: keyCount,
+    };
+
+    const results = audios.slice(0, 2).map((parsed, i) => ({
+      audioUrl: parsed.httpAudioUrl || parsed.audioUrl,
+      meta: metaFromAceChatJson(json, parsed, { ...metaCtx, seed: seeds[i] }),
+      seed: seeds[i],
+    }));
+
+    for (const gk of options.generationKeys) {
+      await bumpAceUsage(gk);
+    }
+
+    return { results, partial: results.length < 2 };
+  }
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const isSong = options?.isSong ?? !options?.instrumental;
+  const promptParams = options?.autoMeta ? { ...params, bpm: 0, key: "", scale: "" } : params;
+  const instrumental = options?.instrumental ?? true;
+  const lyricsRaw = options?.lyrics ?? "";
+  const vocalLanguage = options?.vocalLanguage ?? "en";
+  const baseCaption = buildAceCaption(promptParams, {
+    isSong,
+    instrumental,
+    autoMeta: Boolean(options?.autoMeta),
+    vocalLanguage,
+  });
+  const isAiLyrics = !instrumental && lyricsRaw.trim() === "";
+  const effectiveSampleMode = Boolean(options?.sampleMode || isAiLyrics);
+  const caption = effectiveSampleMode ? "" : baseCaption;
+  const lyrics = instrumental ? "[Instrumental]" : lyricsRaw;
+  const effectiveSampleQuery = effectiveSampleMode ? (options?.sampleQuery?.trim() || baseCaption) : options?.sampleQuery?.trim() || "";
+  const audioFormatRaw = (options?.audioFormat || "").trim().toLowerCase();
+  const audioFormat =
+    audioFormatRaw === "wav" ||
+    audioFormatRaw === "wav32" ||
+    audioFormatRaw === "flac" ||
+    audioFormatRaw === "mp3" ||
+    audioFormatRaw === "aac" ||
+    audioFormatRaw === "opus"
+      ? audioFormatRaw
+      : "mp3";
+
+  const clampNumber = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
+  const bars =
+    typeof params.loopLengthBars === "number" && Number.isFinite(params.loopLengthBars) && params.loopLengthBars > 0
+      ? params.loopLengthBars
+      : 8;
+  const durationRaw = typeof options?.duration === "number" && Number.isFinite(options.duration) && options.duration > 0 ? options.duration : null;
+  const desiredDurationSec = computeAceRequestedDurationSec({ instrumental, durationRaw });
+
+  const quality = resolveAceQualityFlags({
+    thinking: options?.thinking,
+    useFormat: options?.useFormat,
+    sampleMode: effectiveSampleMode,
+  });
+
+  const body: Record<string, unknown> = {
+    dualBatch: true,
+    dualSeeds: seeds,
+    generationKeys: options.generationKeys,
+    caption,
+    lyrics,
+    instrumental,
+    vocalLanguage,
+    useFormat: quality.useFormat,
+    thinking: quality.thinking,
+    sampleMode: effectiveSampleMode,
+    audioFormat,
+    loopLengthBars: bars,
+  };
+  if (desiredDurationSec != null) body.duration = desiredDurationSec;
+  if (!options?.autoMeta && params.bpm > 0) body.bpm = params.bpm;
+  if (!options?.autoMeta && params.key && params.scale) body.keyScale = `${params.key} ${params.scale}`;
+  if (options?.timeSignature) body.timeSignature = options.timeSignature;
+  if (params.genre) body.genre = params.genre;
+  if (params.mood) body.mood = params.mood;
+  if (params.energyLevel) body.energyLevel = params.energyLevel;
+  if (options?.autoMeta) body.autoMeta = true;
+  body.isSong = isSong;
+  if (effectiveSampleQuery) body.sampleQuery = effectiveSampleQuery;
+  body.aceKeyPreferIndex =
+    typeof options?.aceKeyPreferIndex === "number" && Number.isFinite(options.aceKeyPreferIndex)
+      ? Math.abs(Math.floor(options.aceKeyPreferIndex))
+      : nextAceKeyPreferIndex();
+
+  const { data, errorText, limitReached } = await invokeSupabaseFunction<{
+    results?: Array<{ audioUrl?: string; meta?: AceMeta | null; seed?: number }>;
+    partial?: boolean;
+    error?: string;
+    limitReached?: boolean;
+  }>({
+    name: "generate-loop-ace",
+    body,
+    accessToken: session?.access_token,
+  });
+
+  if (errorText) {
+    const e = new Error(errorText) as Error & { limitReached?: boolean };
+    if (limitReached) e.limitReached = true;
+    throw e;
+  }
+  if ((data as { error?: string } | null)?.error) {
+    const d = data as { error: string; limitReached?: boolean };
+    const e = new Error(d.error) as Error & { limitReached?: boolean };
+    e.limitReached = d.limitReached;
+    throw e;
+  }
+
+  const rows = Array.isArray(data?.results) ? data.results : [];
+  const results = rows
+    .filter((r) => typeof r?.audioUrl === "string" && r.audioUrl.trim().length > 0)
+    .slice(0, 2)
+    .map((r, i) => ({
+      audioUrl: r.audioUrl!.trim(),
+      meta: (r.meta as AceMeta | null) ?? null,
+      seed: typeof r.seed === "number" ? r.seed : seeds[i],
+    }));
+
+  if (!results.length) throw new Error("ACE dual batch returned no audio");
+  return { results, partial: results.length < 2 || Boolean(data?.partial) };
+}
+
+export async function generateBeatDualBatch(
+  params: GenerateParams,
+  engine: "sonauto" | "ace-step",
+  options: GenerateLoopAceDualBatchOptions,
+): Promise<Array<{ audioUrl: string; engine: string; meta?: AceMeta | null; seed?: number }>> {
+  if (engine !== "ace-step") throw new Error("Dual batch only supported for ace-step");
+  const batch = await generateLoopAceDualBatch(params, options);
+  return batch.results.map((r) => ({
+    audioUrl: r.audioUrl,
+    engine: "ace-step-dual-batch",
+    meta: r.meta,
+    seed: r.seed,
+  }));
 }
 
 export async function generateBeat(

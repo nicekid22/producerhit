@@ -1,5 +1,6 @@
 import { Bookmark, Download, RefreshCcw, Play, Pause, Loader2 } from "lucide-react";
-import { cn, coverGradient, coverImageKey, coverImageUrl } from "@/lib/utils";
+import { cn, COVER_SURFACE_CLASS } from "@/lib/utils";
+import { coverImageKeyFromLoop, resolveLoopDisplayCoverUrl } from "@/lib/coverArt";
 import { loopCardClass, loopCoverClass, loopPlayButtonClass, loopToggleButtonClass } from "@/lib/loopCardUi";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -41,13 +42,13 @@ export function LoopCard({
             "relative h-12 w-12 shrink-0 rounded-pk p-[2px]",
             loopCoverClass(isActive, isActive && isPlaying),
           )}
-          style={{ background: coverGradient(loop) }}
           aria-hidden
         >
-          <div className="relative h-full w-full overflow-hidden rounded-[6px] bg-[#050508]">
+          <div className={cn("relative h-full w-full overflow-hidden rounded-[6px]", COVER_SURFACE_CLASS)}>
+          {resolveLoopDisplayCoverUrl(loop).startsWith("http") ? (
           <img
-            key={coverImageKey(loop)}
-            src={coverImageUrl(loop)}
+            key={coverImageKeyFromLoop(loop)}
+            src={resolveLoopDisplayCoverUrl(loop)}
             alt=""
             className="absolute inset-0 h-full w-full object-cover"
             loading="lazy"
@@ -65,7 +66,7 @@ export function LoopCard({
               const retry = Number(img.dataset.retry ?? "0");
               if (retry < 4) {
                 img.dataset.retry = String(retry + 1);
-                const url = coverImageUrl(loop);
+                const url = resolveLoopDisplayCoverUrl(loop);
                 window.setTimeout(() => {
                   img.style.display = "block";
                   img.style.opacity = "0";
@@ -77,6 +78,7 @@ export function LoopCard({
               img.style.display = "none";
             }}
           />
+          ) : null}
           </div>
         </div>
         <div className="min-w-0">

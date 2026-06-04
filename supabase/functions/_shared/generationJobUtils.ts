@@ -1,0 +1,271 @@
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+export type GenerationJobStatus = "pending" | "running" | "completed" | "failed";
+
+export type GenerationJobRow = {
+  id: string;
+  user_id: string;
+  generation_key: string | null;
+  status: GenerationJobStatus;
+  mode: string | null;
+  ace_task_id: string | null;
+  ace_base_url: string | null;
+  ace_key_index: number | null;
+  audio_url: string | null;
+  meta: Record<string, unknown> | null;
+  error: string | null;
+  payload: Record<string, unknown>;
+};
+
+export function aceAsyncJobsEnabled(): boolean {
+  return Deno.env.get("ACE_ASYNC_JOBS") !== "0";
+}
+
+export function aceAsyncTryReleaseTask(): boolean {
+  return Deno.env.get("ACE_ASYNC_TRY_RELEASE_TASK") !== "0";
+}
+
+export function internalJobSecret(): string {
+  return (Deno.env.get("ACE_INTERNAL_JOB_SECRET") ?? Deno.env.get("ACE_JOB_SECRET") ?? "").trim();
+}
+
+export function createServiceSupabase(): SupabaseClient | null {
+  const url = (Deno.env.get("SUPABASE_URL") ?? "").trim();
+  const key = (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "").trim();
+  if (!url || !key) return null;
+  return createClient(url, key, { auth: { persistSession: false } });
+}
+
+export function scheduleRunJob(jobId: string): void {
+  const url = `${(Deno.env.get("SUPABASE_URL") ?? "").trim()}/functions/v1/generate-loop-ace`;
+  const serviceKey = (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "").trim();
+  const secret = internalJobSecret();
+  if (!url || !serviceKey || !secret) {
+    console.error("scheduleRunJob: missing SUPABASE_URL, SERVICE_ROLE_KEY or ACE_INTERNAL_JOB_SECRET");
+    return;
+  }
+  void fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${serviceKey}`,
+      "x-ace-job-secret": secret,
+    },
+    body: JSON.stringify({ action: "run_job", jobId }),
+  }).catch((e) => console.error("scheduleRunJob fetch failed", e));
+}
+
+export function buildAceAudioUrlFromPath(baseUrl: string, filePath: string): string {
+  const t = filePath.trim();
+  if (!t) return "";
+  if (t.startsWith("http://") || t.startsWith("https://")) return t;
+  const base = baseUrl.replace(/\/$/, "");
+  if (t.startsWith("/v1/audio?path=")) return `${base}${t}`;
+  if (t.startsWith("v1/audio?path=")) return `${base}/${t}`;
+  if (t.startsWith("/")) return `${base}/v1/audio?path=${encodeURIComponent(t)}`;
+  return `${base}/v1/audio?path=${encodeURIComponent(t)}`;
+}
+
+async function readTextSafe(res: Response) {
+  return await res.text().catch(() => "");
+}
+
+export type AcePollResult =
+  | { status: "pending" }
+  | { status: "failed"; error: string }
+  | { status: "ready"; audioUrl: string; meta: Record<string, unknown> };
+
+/** Un seul poll ACE query_result — rapide (<10s), pour boucle client 3s. */
+export async function pollAceTaskOnce(args: {
+  baseUrl: string;
+  apiKey: string;
+  taskId: string;
+  effectivePrompt: string;
+  effectiveLyrics: string;
+  audioFormat: string;
+  requestedDuration: number | null;
+  bpm: number | null;
+  keyScale: string;
+  timeSignature: string;
+  seed: number | null;
+  signal?: AbortSignal;
+}): Promise<AcePollResult> {
+  const pollParams = new URLSearchParams();
+  pollParams.append("ai_token", args.apiKey);
+  pollParams.append("task_id_list", JSON.stringify([args.taskId]));
+  pollParams.append("app", "studio-web");
+  const pollRes = await fetch(`${args.baseUrl.replace(/\/$/, "")}/query_result`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Accept: "application/json",
+    },
+    body: pollParams,
+    signal: args.signal,
+  });
+  const pollText = await readTextSafe(pollRes);
+  if (!pollRes.ok) {
+    return { status: "pending" };
+  }
+  let pollJson: unknown;
+  try {
+    pollJson = JSON.parse(pollText);
+  } catch {
+    return { status: "pending" };
+  }
+  const item = Array.isArray((pollJson as { data?: unknown } | null)?.data)
+    ? (pollJson as { data: unknown[] }).data[0]
+    : null;
+  const statusNum =
+    item && typeof (item as { status?: unknown }).status === "number"
+      ? ((item as { status: number }).status as number)
+      : 0;
+  if (statusNum === 2) {
+    return { status: "failed", error: "ACE task failed" };
+  }
+  if (statusNum !== 1) return { status: "pending" };
+
+  const resultStr =
+    typeof (item as { result?: unknown } | null)?.result === "string"
+      ? ((item as { result: string }).result as string)
+      : "";
+  if (!resultStr) return { status: "pending" };
+
+  let results: unknown;
+  try {
+    results = JSON.parse(resultStr);
+  } catch {
+    return { status: "pending" };
+  }
+  const first = Array.isArray(results) ? results[0] : null;
+  const firstObj = first && typeof first === "object" && first !== null ? (first as Record<string, unknown>) : null;
+  const file =
+    first && typeof (first as { file?: unknown }).file === "string"
+      ? ((first as { file: string }).file as string)
+      : "";
+  const audioUrl = buildAceAudioUrlFromPath(args.baseUrl, file);
+  if (!audioUrl) return { status: "pending" };
+
+  const metasObj =
+    firstObj && typeof firstObj.metas === "object" && firstObj.metas !== null
+      ? (firstObj.metas as Record<string, unknown>)
+      : null;
+  const lyricsFromResult =
+    firstObj && typeof firstObj.lyrics === "string" ? (firstObj.lyrics as string) : "";
+  const meta: Record<string, unknown> = {
+    taskId: args.taskId,
+    task_id: args.taskId,
+    prompt: args.effectivePrompt,
+    lyrics: lyricsFromResult.trim() || args.effectiveLyrics,
+    bpm: metasObj && typeof metasObj.bpm === "number" ? metasObj.bpm : args.bpm,
+    duration: metasObj && typeof metasObj.duration === "number" ? metasObj.duration : args.requestedDuration,
+    keyScale:
+      metasObj && typeof metasObj.keyscale === "string"
+        ? metasObj.keyscale
+        : metasObj && typeof metasObj.key_scale === "string"
+          ? metasObj.key_scale
+          : args.keyScale || null,
+    timeSignature: args.timeSignature.trim() || null,
+    audioFormat: args.audioFormat,
+    seed: args.seed,
+    httpAudioUrl: audioUrl.startsWith("http") ? audioUrl : null,
+    sessionOnly: false,
+    asyncJob: true,
+  };
+  return { status: "ready", audioUrl, meta };
+}
+
+export async function loadGenerationJob(
+  client: SupabaseClient,
+  jobId: string,
+): Promise<GenerationJobRow | null> {
+  const { data, error } = await client
+    .from("generation_jobs")
+    .select(
+      "id, user_id, generation_key, status, mode, ace_task_id, ace_base_url, ace_key_index, audio_url, meta, error, payload",
+    )
+    .eq("id", jobId)
+    .maybeSingle();
+  if (error || !data) return null;
+  return data as GenerationJobRow;
+}
+
+export async function updateGenerationJob(
+  client: SupabaseClient,
+  jobId: string,
+  patch: Record<string, unknown>,
+): Promise<void> {
+  const { error } = await client.from("generation_jobs").update(patch).eq("id", jobId);
+  if (error) console.error("updateGenerationJob", error.message);
+}
+
+export function jobResponsePayload(job: GenerationJobRow) {
+  return {
+    jobId: job.id,
+    status: job.status,
+    audioUrl: job.audio_url ?? undefined,
+    meta: job.meta ?? undefined,
+    error: job.error ?? undefined,
+    generationKey: job.generation_key ?? undefined,
+  };
+}
+
+/** Crée une tâche ACE release_task — retourne task_id ou null si 404. */
+export async function createAceReleaseTask(args: {
+  baseUrl: string;
+  apiKey: string;
+  effectivePrompt: string;
+  effectiveLyrics: string;
+  instrumental: boolean;
+  sampleMode: boolean;
+  sampleQuery: string;
+  vocalLanguage: string;
+  audioFormat: string;
+  paramObj: Record<string, unknown>;
+  thinking: boolean;
+  useFormat: boolean;
+  modelName: string;
+  shift: number;
+  inferenceSteps: number;
+}): Promise<{ taskId: string } | null> {
+  const baseUrl = args.baseUrl.replace(/\/$/, "");
+  const releaseForm = new FormData();
+  releaseForm.append("env", "production");
+  releaseForm.append("ai_token", args.apiKey);
+  releaseForm.append("prompt", args.effectivePrompt);
+  releaseForm.append("lyrics", args.effectiveLyrics);
+  releaseForm.append("model_name", args.modelName);
+  releaseForm.append("app", "studio-web");
+  releaseForm.append("thinking", args.thinking ? "true" : "false");
+  releaseForm.append("use_format", args.useFormat ? "true" : "false");
+  if (args.sampleMode) {
+    releaseForm.append("sample_mode", "true");
+    const sq = args.sampleQuery.trim();
+    if (sq) releaseForm.append("sample_query", sq);
+  }
+  releaseForm.append("vocal_language", args.vocalLanguage);
+  releaseForm.append("param_obj", JSON.stringify(args.paramObj));
+
+  const createRes = await fetch(`${baseUrl}/release_task`, {
+    method: "POST",
+    headers: { Accept: "application/json" },
+    body: releaseForm,
+  });
+  const createText = await readTextSafe(createRes);
+  if (!createRes.ok) {
+    if (createRes.status === 404) return null;
+    throw new Error(`ACE release_task failed (${createRes.status}): ${createText.slice(0, 400)}`);
+  }
+  let createJson: unknown;
+  try {
+    createJson = JSON.parse(createText);
+  } catch {
+    throw new Error("ACE release_task invalid JSON");
+  }
+  const taskId =
+    (createJson as { data?: unknown } | null)?.data && typeof (createJson as { data?: unknown }).data === "object"
+      ? String(((createJson as { data: { task_id?: unknown } }).data.task_id as unknown) ?? "").trim()
+      : "";
+  if (!taskId) throw new Error("ACE API did not return a task_id");
+  return { taskId };
+}

@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { supabaseAuthStorage } from "@/lib/authStorage";
 import { getAttributionProps } from "@/lib/attribution";
 import { getOrCreateSessionId } from "@/lib/sessionId";
 
@@ -16,6 +17,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     autoRefreshToken: true,
     flowType: "pkce",
+    storage: supabaseAuthStorage,
   },
 });
 

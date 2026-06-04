@@ -1,6 +1,8 @@
 import { Component, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
+import "./styles/warm-glass-theme.css";
+import "./styles/cover-surface.css";
 
 import App from "./App";
 

@@ -1,11 +1,12 @@
 import type { Loop } from "@/types/loop";
+import { pinterestGenerationTitle } from "@/lib/pinterestCoverFetch";
 import { coverImageSeed, hashString } from "@/lib/utils";
 import { PINTEREST_DISCOVERY_PREVIEW } from "@/lib/featureFlags";
 
 /** Rollback : supprimer ce fichier + flag off — voir PINTEREST_DISCOVERY_ROLLBACK.md */
 export const PINTEREST_DISCOVERY_MODULE = true;
 
-export type PinterestDiscoveryTemplate = "default" | "retro-futur";
+export type PinterestDiscoveryTemplate = "default" | "streetwear" | "retro-futur";
 
 export type PinterestTermSource = "genre" | "mood" | "prompt" | "template" | "universal";
 
@@ -46,14 +47,15 @@ type BucketDef = {
 };
 
 const VISUAL_BOOSTERS = [
-  { query: "pinterest aesthetic", weight: 0.12 },
-  { query: "people portrait lifestyle", weight: 0.1 },
-  { query: "editorial photography", weight: 0.08 },
+  { query: "pinterest streetwearaesthetic", weight: 0.12 },
+  { query: "music people portrait lifestyle", weight: 0.1 },
+  { query: "editorial beatmaker photography", weight: 0.08 },
   { query: "trending visual", weight: 0.06 },
 ] as const;
 
 const TEMPLATE_TERMS: Record<PinterestDiscoveryTemplate, Array<{ query: string; weight: number }>> = {
   default: [],
+  streetwear: [],
   "retro-futur": [
     { query: "retro futurism aesthetic", weight: 0.95 },
     { query: "y2k chrome portrait editorial", weight: 0.9 },
@@ -303,6 +305,17 @@ export function discoverPinterestCoverTerms(
   const bucket = detectGenreBucket(haystack);
   const map = new Map<string, PinterestDiscoveryTerm>();
 
+  const generationTitle = pinterestGenerationTitle(loop);
+  if (generationTitle.length >= 3) {
+    addTerm(map, `${generationTitle} pinterest aesthetic portrait`, 1.12, "prompt");
+    for (const word of generationTitle
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((w) => w.length >= 3)) {
+      addTerm(map, `${word} editorial portrait ambiance`, 0.88, "prompt");
+    }
+  }
+
   for (const t of bucket.terms) addTerm(map, t.query, t.weight, "genre");
   for (const t of TEMPLATE_TERMS[template]) addTerm(map, t.query, t.weight, "template");
   for (const t of VISUAL_BOOSTERS) addTerm(map, t.query, t.weight, "universal");
@@ -335,7 +348,7 @@ export function discoverPinterestCoverTerms(
   jittered.sort((a, b) => b.score - a.score);
 
   const pickIdx = stablePickIndex(seed, variant, jittered.length);
-  const picked = jittered[pickIdx]?.query ?? jittered[0]?.query ?? "music aesthetic streetwear hip hop 2026";
+  const picked = jittered[pickIdx]?.query ?? jittered[0]?.query ?? "music aesthetic streetwear hip hop";
 
   return {
     terms: jittered,
@@ -376,7 +389,7 @@ export function previewPinterestDiscoveryIfEnabled(
     );
     console.table(result.terms.map((t) => ({ query: t.query, score: t.score.toFixed(3), sources: t.sources.join("+") })));
     console.log("picked:", result.picked);
-    console.log("future pollinations prompt:", buildPinterestEnrichedCoverPrompt(loop));
+    console.log("enriched cover query:", buildPinterestEnrichedCoverPrompt(loop));
     console.groupEnd();
   }
   return result;

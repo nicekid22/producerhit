@@ -1,5 +1,5 @@
 import { useEffect, useState, type RefObject } from "react";
-import { isPinterestCoverPreloaded } from "@/lib/pinterestCoverFetch";
+import { COVER_SURFACE_CLASS, cn } from "@/lib/utils";
 import { Music2, Pause, Play, SlidersHorizontal, Sparkles } from "lucide-react";
 import { PLAN_LIMITS } from "@/lib/planLimits";
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
@@ -11,9 +11,8 @@ export type GeneratorSideCard = {
   title: string;
   subtitle: string;
   coverUrl: string;
-  /** Cover d’origine si test Pinterest actif. */
+  /** Legacy lazy Pinterest — ignoré si persist actif. */
   coverUrlFallback?: string;
-  /** Requête Pinterest affichée au survol (test). */
   coverPinterestQuery?: string;
   coverBg: string;
   audioUrl: string | null;
@@ -70,19 +69,11 @@ function FloatingCard({
 }) {
   const isFr = locale === "fr";
   const playingNow = isActive && isPlaying;
-  const [coverReady, setCoverReady] = useState(() =>
-    Boolean(card.coverPinterestQuery && isPinterestCoverPreloaded(card.coverUrl)),
-  );
-  const [coverSrc, setCoverSrc] = useState(card.coverUrl);
+  const [coverReady, setCoverReady] = useState(false);
 
   useEffect(() => {
-    setCoverSrc(card.coverUrl);
-    if (card.coverPinterestQuery && isPinterestCoverPreloaded(card.coverUrl)) {
-      setCoverReady(true);
-      return;
-    }
     setCoverReady(false);
-  }, [card.id, card.coverUrl, card.coverPinterestQuery]);
+  }, [card.id, card.coverUrl]);
 
   return (
     <div
@@ -113,30 +104,26 @@ function FloatingCard({
               coverReady ? "pk-landing-gen-card__media--cover-ready" : "",
             ].join(" ")}
           >
-            <div className="absolute inset-0" style={{ background: card.coverBg }} aria-hidden />
-            {coverSrc ? (
+            <div className={cn("absolute inset-0", card.coverBg || COVER_SURFACE_CLASS)} aria-hidden />
+            {card.coverUrl ? (
               <img
-                key={coverSrc}
-                src={coverSrc}
+                key={card.coverUrl}
+                src={card.coverUrl}
                 alt=""
-                title={card.coverPinterestQuery ?? undefined}
                 loading="eager"
                 decoding="async"
                 fetchPriority="high"
                 referrerPolicy="no-referrer"
                 className={[
-                  "pk-landing-gen-card__cover absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-300",
-                  coverReady ? "opacity-100" : card.coverPinterestQuery ? "opacity-90" : "opacity-0",
+                  "pk-landing-gen-card__cover absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-300 ease-out",
+                  coverReady ? "opacity-100" : "opacity-0",
                 ].join(" ")}
-                onLoad={() => setCoverReady(true)}
-                onError={() => {
-                  if (card.coverUrlFallback && coverSrc !== card.coverUrlFallback) {
-                    setCoverSrc(card.coverUrlFallback);
-                    setCoverReady(false);
-                    return;
-                  }
-                  setCoverReady(false);
+                onLoad={() => {
+                  requestAnimationFrame(() => {
+                    requestAnimationFrame(() => setCoverReady(true));
+                  });
                 }}
+                onError={() => setCoverReady(false)}
               />
             ) : null}
             <div className="pk-landing-gen-card__fx" aria-hidden />
@@ -396,7 +383,7 @@ export function LandingGenerator({
         <div className="flex flex-col gap-3 border-t border-white/[0.08] px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
           <p className="text-center text-[11px] font-semibold text-white/40 sm:text-left sm:hidden">{freeLabel}</p>
           <p className="hidden text-xs text-white/45 sm:block">
-            {isFr ? "Entrée pour générer · Shift+Entrée nouvelle ligne" : "Enter to generate · Shift+Enter new line"}
+            {isFr ? "Entre ton texte et clique sur Créer · Shift+Entrée pour une nouvelle ligne" : "Enter to generate · Shift+Enter new line"}
           </p>
           <div className="pk-landing-gen__cta-shell relative inline-flex w-full sm:w-auto sm:min-w-[148px]">
             <span className="pk-landing-gen__cta-field" aria-hidden />

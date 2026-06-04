@@ -1050,8 +1050,8 @@ export const COMPARISON_PAGES: ComparisonPageConfig[] = [
     ],
     matrix: [
       {
-        labelEn: "Upload audio → new cover",
-        labelFr: "Upload audio → nouvelle cover",
+        labelEn: "Upload audio → new image",
+        labelFr: "Upload audio → nouvelle image",
         values: { [PH]: "Remix Studio (ACE)", [SUNO]: "Not core", [MANUAL]: "Hours of editing" },
       },
       {

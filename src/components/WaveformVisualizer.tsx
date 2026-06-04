@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCoarsePointer } from "@/hooks/useCoarsePointer";
+import { getWaveformColors } from "@/lib/waveformThemeColors";
 import { fetchCachedLoopAudioBlob } from "@/stores/loopsStore";
+import { useVisualThemeStore } from "@/stores/visualThemeStore";
 
 const PEAK_POINTS = 256;
 const DECODE_TIMEOUT_MS = 10_000;
@@ -265,6 +267,9 @@ export function WaveformVisualizer({
   barCount?: number;
   variant?: "default" | "prism";
 }) {
+  const visualTheme = useVisualThemeStore((s) => s.theme);
+  const waveColors = getWaveformColors(variant === "prism" ? visualTheme : "prism");
+
   const getBarHeight = (i: number) => {
     const heights = [
       3, 5, 8, 12, 7, 15, 10, 4, 18, 9, 6, 14, 11, 3, 16, 8, 5, 13, 7, 19, 4, 11, 9, 6, 15, 12, 3, 17, 8,
@@ -273,8 +278,8 @@ export function WaveformVisualizer({
     return heights[i % heights.length];
   };
 
-  const playedColor = variant === "prism" ? "rgba(103, 195, 255, 0.92)" : "#7c3aed";
-  const idleColor = variant === "prism" ? "rgba(255, 255, 255, 0.14)" : "#2d2d3d";
+  const playedColor = variant === "prism" ? waveColors.played : "#7c3aed";
+  const idleColor = variant === "prism" ? waveColors.unplayed : "#2d2d3d";
 
   return (
     <div className="h-10 w-full">
@@ -290,7 +295,7 @@ export function WaveformVisualizer({
           const h = Math.min(40, getBarHeight(i) * 2);
           const prismGradient =
             variant === "prism"
-              ? `linear-gradient(to top, rgba(157, 124, 255, 0.55), rgba(103, 195, 255, 0.95))`
+              ? `linear-gradient(to top, ${waveColors.gradientStart}, ${waveColors.gradientEnd})`
               : undefined;
           return (
             <div
@@ -323,8 +328,8 @@ export function AudioWaveform({
   progress,
   onSeek,
   height = 28,
-  color = "#7c3aed",
-  unplayedColor = "#2d2d3d",
+  color,
+  unplayedColor,
 }: {
   audioUrl: string | null;
   loopId?: string;
@@ -335,6 +340,10 @@ export function AudioWaveform({
   color?: string;
   unplayedColor?: string;
 }) {
+  const visualTheme = useVisualThemeStore((s) => s.theme);
+  const themeWave = getWaveformColors(visualTheme);
+  const playedColor = color ?? themeWave.played;
+  const idleColor = unplayedColor ?? themeWave.unplayed;
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [visible, setVisible] = useState(false);
@@ -425,9 +434,9 @@ export function AudioWaveform({
     return () => {
       const canvas = canvasRef.current;
       if (!canvas || !peaks) return;
-      drawWaveform({ canvas, peaks, progress: clampedProgress, playedColor: color, unplayedColor });
+      drawWaveform({ canvas, peaks, progress: clampedProgress, playedColor, unplayedColor: idleColor });
     };
-  }, [clampedProgress, color, peaks, unplayedColor]);
+  }, [clampedProgress, playedColor, idleColor, peaks]);
 
   useEffect(() => {
     if (liteWaveform) return;
@@ -463,7 +472,7 @@ export function AudioWaveform({
                 className="flex-1 rounded-full"
                 style={{
                   height: barH,
-                  backgroundColor: played ? color : unplayedColor,
+                  backgroundColor: played ? playedColor : idleColor,
                   opacity: played ? 1 : 0.85,
                 }}
               />

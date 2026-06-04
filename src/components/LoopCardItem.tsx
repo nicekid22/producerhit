@@ -1,11 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { persistCoverUrlForLoop, resolveCoverImageUrl, coverImageKeyFromLoop } from "@/lib/coverArt";
-import { CoverPeekStack } from "@/components/cover/CoverPeekStack";
+import {
+  coverImageKeyFromLoop,
+  displayCoverUrl,
+  isPersistedStorageCoverUrl,
+  needsPinterestCover,
+  resolveLoopDisplayCoverUrl,
+} from "@/lib/coverArt";
+import { useLazyPinterestCover } from "@/hooks/useLazyPinterestCover";
+import { StoredLoopCover } from "@/components/cover/StoredLoopCover";
 import { CoverMedia } from "@/components/CoverMedia";
-import { LANDING_PINTEREST_COVERS } from "@/lib/featureFlags";
-import { fetchPinterestCoverForLoop } from "@/lib/pinterestCoverFetch";
-import { buildCoverPromptSnapshot, cn, coverGradient } from "@/lib/utils";
+import { buildCoverPromptSnapshot, cn, COVER_SURFACE_CLASS } from "@/lib/utils";
 import { loopCardClass, loopCoverClass, loopPlayButtonClass, loopPublicButtonClass, loopToggleButtonClass } from "@/lib/loopCardUi";
 import { useAuthStore } from "@/stores/authStore";
 import { Badge } from "@/components/ui/Badge";
@@ -13,6 +18,8 @@ import { Button } from "@/components/ui/Button";
 import { ShareMomentModal } from "@/components/growth/ShareMomentModal";
 import { AudioWaveform } from "@/components/WaveformVisualizer";
 import { useLoopsStore } from "@/stores/loopsStore";
+import { unlockAudioPlaybackFromGesture } from "@/lib/audioPlaybackUnlock";
+import { resolvePlaybackUrlForLoop } from "@/stores/loopsStore";
 import { playLoopInContext, usePlayerStore } from "@/stores/playerStore";
 import { useLocaleStore } from "@/stores/localeStore";
 import type { Loop } from "@/types/loop";
@@ -22,6 +29,9 @@ import { getLoopAudioRetentionCardLabel, type LoopAudioRetentionContext } from "
 import { extractLoopVocalLanguage, formatVocalLanguageLabel, isSongLoop } from "@/lib/vocalLanguages";
 import { canDownloadStems } from "@/lib/planEntitlements";
 import { useGrowthUpsellStore } from "@/stores/growthUpsellStore";
+import { GenerationCreditAmount } from "@/components/GenerationCreditIcon";
+import { rerollLoopCover, LOOP_COVER_REROLL_CREDIT_COST } from "@/lib/loopCoverReroll";
+import { PINTEREST_PERSIST_COVERS } from "@/lib/featureFlags";
 import {
   Bookmark,
   Check,
@@ -53,8 +63,12 @@ export function LoopCardItem({
   onDelete,
   onOpenDetails,
   onGenerationUsed,
+  onCoverRerollUsed,
+  creditsRemaining,
+  onNeedCredits,
   onStartWorkspaceJob,
   compact = false,
+  cardVariant = "default",
   slotIndex = 0,
   queueLoops,
   queueSource = "workspace",
@@ -66,8 +80,14 @@ export function LoopCardItem({
   onDelete?: () => void;
   onOpenDetails?: (loop: Loop, anchorTop: number) => void;
   onGenerationUsed?: () => void;
+  /** Appelé après reroll cover réussi (1 crédit). */
+  onCoverRerollUsed?: () => void;
+  creditsRemaining?: number;
+  onNeedCredits?: () => void;
   onStartWorkspaceJob?: (title: string, sub: string) => (() => void) | void;
   compact?: boolean;
+  /** Carte bibliothèque — cover large, grille premium */
+  cardVariant?: "default" | "library";
   slotIndex?: number;
   queueLoops?: Loop[];
   queueSource?: string;
@@ -102,6 +122,7 @@ export function LoopCardItem({
   const togglePublicRemote = useLoopsStore((s) => s.togglePublicRemote);
   const loops = useLoopsStore((s) => s.loops);
   const renameLoopRemote = useLoopsStore((s) => s.renameLoopRemote);
+  const applyLoopCoverUrl = useLoopsStore((s) => s.applyLoopCoverUrl);
   const createLoop = useLoopsStore((s) => s.createLoop);
   const upsertLoop = useLoopsStore((s) => s.upsertLoop);
   const enqueuePendingSave = useLoopsStore((s) => s.enqueuePendingSave);
@@ -115,56 +136,123 @@ export function LoopCardItem({
   const [savingTitle, setSavingTitle] = useState(false);
   const [isVarying, setIsVarying] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isRerollingCover, setIsRerollingCover] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const user = useAuthStore((s) => s.user);
-  const coverUrl = useMemo(
-    () => resolveCoverImageUrl(loop),
+  const coverUrlRaw = useMemo(
+    () => resolveLoopDisplayCoverUrl(loop),
     [loop.details?.coverPrompt, loop.details?.coverUrl, loop.details?.coverKind, loop.genre, loop.id, loop.influence, loop.mood, loop.seed],
+  );
+  const coverUrl = useMemo(
+    () => displayCoverUrl(coverUrlRaw, loop.details?.coverRevision),
+    [coverUrlRaw, loop.details?.coverRevision],
   );
   const coverKey = useMemo(
     () => coverImageKeyFromLoop(loop),
-    [loop.details?.coverPrompt, loop.details?.coverUrl, loop.details?.coverKind, loop.genre, loop.id, loop.influence, loop.mood, loop.seed],
+    [
+      loop.details?.coverPrompt,
+      loop.details?.coverUrl,
+      loop.details?.coverKind,
+      loop.details?.coverRevision,
+      loop.genre,
+      loop.id,
+      loop.influence,
+      loop.mood,
+      loop.seed,
+    ],
   );
 
-  const [pinterestCoverUrl, setPinterestCoverUrl] = useState<string | null>(null);
-  const showWorkspaceCoverPeek = !compact && LANDING_PINTEREST_COVERS;
+  const needsLazyCover = needsPinterestCover(loop) || !coverUrl.startsWith("http");
+  const { ref: coverLazyRef, url: lazyCoverUrl } = useLazyPinterestCover(
+    {
+      id: loop.id,
+      genre: loop.genre,
+      mood: loop.mood,
+      name: loop.name,
+      prompt: loop.details?.coverPrompt,
+    },
+    slotIndex,
+    needsLazyCover,
+    "320px",
+    "workspace",
+  );
+  const bannerCoverUrl =
+    coverUrl.startsWith("http") ? coverUrl : lazyCoverUrl?.startsWith("http") ? lazyCoverUrl : "";
 
-  useEffect(() => {
-    if (!showWorkspaceCoverPeek) {
-      setPinterestCoverUrl(null);
+  const isLibraryCard = cardVariant === "library";
+  const showWorkspaceCoverPeek = isLibraryCard || !compact;
+  const shareLoop = useMemo(() => loops.find((l) => l.id === loop.id) ?? loop, [loop, loops]);
+  const isOwnLoop = Boolean(user?.id && loop.userId === user.id);
+  const canRerollCover =
+    PINTEREST_PERSIST_COVERS && isOwnLoop && !loop.id.startsWith("local-") && !loop.id.startsWith("preview-");
+
+  const handleRerollCover = useCallback(() => {
+    if (!canRerollCover || isRerollingCover) return;
+    const remaining = creditsRemaining ?? LOOP_COVER_REROLL_CREDIT_COST;
+    if (remaining < LOOP_COVER_REROLL_CREDIT_COST) {
+      onNeedCredits?.();
       return;
     }
-    let cancelled = false;
-    void fetchPinterestCoverForLoop(loop, slotIndex).then((url) => {
-      if (!cancelled) setPinterestCoverUrl(url);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [loop.genre, loop.id, loop.mood, loop.name, loop.prompt, showWorkspaceCoverPeek, slotIndex]);
-  const persistCoverOnLoad = () => {
-    if (loop.details?.coverUrl?.trim() || !user?.id || loop.id.startsWith("local-") || loop.id.startsWith("preview-")) return;
-    void persistCoverUrlForLoop(loop.id, user.id, loop, loop.stemsUrl).then((saved) => {
-      if (!saved) return;
-      useLoopsStore.setState((s) => ({
-        loops: s.loops.map((l) =>
-          l.id === loop.id
-            ? {
-                ...l,
-                details: {
-                  ...(l.details ?? {}),
-                  coverUrl: saved,
-                  coverKind: "image",
-                  coverPrompt: l.details?.coverPrompt,
-                },
-              }
-            : l,
-        ),
-      }));
-    });
-  };
-  const shareLoop = useMemo(() => loops.find((l) => l.id === loop.id) ?? loop, [loop, loops]);
+    void (async () => {
+      setIsRerollingCover(true);
+      try {
+        const latest = useLoopsStore.getState().loops.find((l) => l.id === loop.id) ?? loop;
+        const prevDisplay = resolveLoopDisplayCoverUrl(latest);
+        const pin = await rerollLoopCover(latest);
+        if (pin.skipped) {
+          toast.error(
+            locale === "fr"
+              ? "Aucune autre image disponible — réessaie plus tard"
+              : "No other image available — try again later",
+          );
+          return;
+        }
+        if (pin.coverUrl?.startsWith("http")) {
+          applyLoopCoverUrl(loop.id, pin.coverUrl, pin.coverKind ?? "image", { bumpRevision: true });
+          onCoverRerollUsed?.();
+          const changed = pin.coverUrl.split("?")[0] !== prevDisplay.split("?")[0];
+          toast.success(
+            locale === "fr"
+              ? changed
+                ? "Nouvelle image appliquée"
+                : "Image mise à jour"
+              : changed
+                ? "New cover applied"
+                : "Cover refreshed",
+          );
+        } else {
+          toast.error(locale === "fr" ? "Impossible de charger une nouvelle image" : "Could not load a new image");
+        }
+      } catch (err) {
+        const code = err instanceof Error ? err.message : "";
+        if (code === "no_credits") {
+          onNeedCredits?.();
+          return;
+        }
+        if (code === "pinterest_all_used") {
+          toast.error(
+            locale === "fr"
+              ? "Plus d’images uniques pour ce style — réessaie plus tard"
+              : "No unique images left for this style — try again later",
+          );
+          return;
+        }
+        toast.error(locale === "fr" ? "Échec du changement d’image" : "Cover change failed");
+      } finally {
+        setIsRerollingCover(false);
+      }
+    })();
+  }, [
+    applyLoopCoverUrl,
+    canRerollCover,
+    creditsRemaining,
+    isRerollingCover,
+    locale,
+    loop,
+    onCoverRerollUsed,
+    onNeedCredits,
+  ]);
 
   const active = current?.id === loop.id;
   const activePlaying = active && isPlaying;
@@ -392,9 +480,13 @@ export function LoopCardItem({
   return (
     <div
       data-loop-card
-      ref={cardRef}
+      ref={(node) => {
+        cardRef.current = node;
+        coverLazyRef.current = node;
+      }}
       className={cn(
         "relative rounded-pk border border-pk-border bg-pk-panel p-4",
+        isLibraryCard ? "pk-loop-card--library" : "",
         onOpenDetails ? "pr-14" : "",
         loopCardClass(active, activePlaying),
       )}
@@ -427,13 +519,19 @@ export function LoopCardItem({
       ) : null}
       {showWorkspaceCoverPeek ? (
         <div
-          className={cn("mb-3 rounded-xl p-[2px]", loopCoverClass(active, activePlaying))}
-          style={{ background: coverGradient(loop) }}
+          className={cn(
+            "pk-loop-cover-banner mb-2 rounded-xl p-[2px]",
+            loopCoverClass(active, activePlaying),
+          )}
         >
-          <CoverPeekStack
-            baseUrl={coverUrl}
-            revealUrl={pinterestCoverUrl}
-            className="pk-cover-peek--workspace h-32 w-full overflow-hidden rounded-[10px] bg-[#050508]"
+          <StoredLoopCover
+            key={`${coverKey}:${bannerCoverUrl}`}
+            coverUrl={bannerCoverUrl}
+            className={cn(
+              "w-full rounded-[10px]",
+              isLibraryCard ? "pk-loop-card--library-cover aspect-[5/4] min-h-[9.5rem]" : "h-32",
+            )}
+            loading="lazy"
           />
         </div>
       ) : null}
@@ -441,17 +539,15 @@ export function LoopCardItem({
         {!showWorkspaceCoverPeek ? (
           <div
             className={cn(
-              "relative h-12 w-12 shrink-0 rounded-pk p-[2px]",
+              "relative h-12 w-12 shrink-0 rounded-pk p-[2px] pk-loop-cover-thumb",
               loopCoverClass(active, activePlaying),
             )}
-            style={{ background: coverGradient(loop) }}
           >
-            <div className="relative h-full w-full overflow-hidden rounded-[6px] bg-[#050508]">
+            <div className={cn("relative h-full w-full overflow-hidden rounded-[6px]", COVER_SURFACE_CLASS)}>
               <CoverMedia
                 loop={loop}
-                coverUrl={coverUrl}
-                coverKey={coverKey}
-                onImageLoad={persistCoverOnLoad}
+                coverUrl={bannerCoverUrl || coverUrl}
+                coverKey={`${coverKey}:${bannerCoverUrl}`}
                 onImageError={(e) => {
                   const img = e.currentTarget;
                   img.style.opacity = "0";
@@ -474,7 +570,7 @@ export function LoopCardItem({
           </div>
         ) : null}
         <div className="min-w-0 flex-1">
-          <div className="flex items-start gap-2">
+          <div className="flex items-center gap-2">
             <div className="min-w-0 flex flex-1 items-center gap-2">
               {isEditingTitle ? (
                 <>
@@ -549,6 +645,43 @@ export function LoopCardItem({
                 </>
               )}
             </div>
+            {showWorkspaceCoverPeek && canRerollCover && !isEditingTitle ? (
+              <button
+                type="button"
+                className={cn(
+                  "inline-flex shrink-0 items-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-2 py-0.5",
+                  "text-[10px] font-medium tracking-wide text-pk-muted backdrop-blur-sm",
+                  "transition-colors hover:border-white/[0.14] hover:bg-white/[0.06] hover:text-pk-text",
+                  "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-pk-accent/80",
+                  "disabled:pointer-events-none disabled:opacity-50",
+                )}
+                disabled={isRerollingCover}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRerollCover();
+                }}
+                aria-label={
+                  locale === "fr"
+                    ? `Changer la cover (${LOOP_COVER_REROLL_CREDIT_COST} crédit)`
+                    : `Change cover (${LOOP_COVER_REROLL_CREDIT_COST} credit)`
+                }
+              >
+                {isRerollingCover ? (
+                  <Loader2 className="h-3 w-3 shrink-0 animate-spin" aria-hidden />
+                ) : (
+                  <RefreshCcw className="h-3 w-3 shrink-0 opacity-75" aria-hidden />
+                )}
+                <span className="inline-flex items-center gap-1 max-[380px]:hidden">
+                  <span>{locale === "fr" ? "Autre cover" : "New cover"}</span>
+                  <GenerationCreditAmount
+                    amount={LOOP_COVER_REROLL_CREDIT_COST}
+                    showPlus
+                    className="opacity-90"
+                    iconClassName="h-2.5 w-2.5"
+                  />
+                </span>
+              </button>
+            ) : null}
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
             <Badge>{loop.genre}</Badge>
@@ -600,8 +733,8 @@ export function LoopCardItem({
               return (
                 <span
                   className={cn(
-                    "text-[10px] font-medium tabular-nums",
-                    expired ? "text-pk-muted/60" : "text-amber-200/75",
+                    "pk-loop-retention-label text-[10px] font-medium tabular-nums",
+                    expired && "pk-loop-retention-label--expired",
                   )}
                   title={
                     locale === "fr"
@@ -626,19 +759,16 @@ export function LoopCardItem({
             className={loopPlayButtonClass(active, activePlaying, "min-h-11 flex-1")}
             onClick={(e) => {
               e.stopPropagation();
+              unlockAudioPlaybackFromGesture();
               void (async () => {
                 if (active) {
                   setPlaying(!isPlaying);
                   return;
                 }
-                const directUrl = typeof loop.audioUrl === "string" ? loop.audioUrl.trim() : "";
-                if (directUrl) {
-                  startPlayback({ ...loop, audioUrl: directUrl }, true);
-                  return;
-                }
                 let url = "";
                 try {
-                  url = await ensureAudioReady(loop.id);
+                  const raw = typeof loop.audioUrl === "string" ? loop.audioUrl.trim() : "";
+                  url = raw ? await resolvePlaybackUrlForLoop(loop.id, raw) : await ensureAudioReady(loop.id);
                 } catch {
                   url = "";
                 }
@@ -803,21 +933,17 @@ export function LoopCardItem({
           className={loopPlayButtonClass(active, activePlaying)}
           onClick={(e) => {
             e.stopPropagation();
+            unlockAudioPlaybackFromGesture();
             void (async () => {
               if (active) {
                 setPlaying(!isPlaying);
                 return;
               }
 
-              const directUrl = typeof loop.audioUrl === "string" ? loop.audioUrl.trim() : "";
-              if (directUrl) {
-                startPlayback({ ...loop, audioUrl: directUrl }, true);
-                return;
-              }
-
               let url = "";
               try {
-                url = await ensureAudioReady(loop.id);
+                const raw = typeof loop.audioUrl === "string" ? loop.audioUrl.trim() : "";
+                url = raw ? await resolvePlaybackUrlForLoop(loop.id, raw) : await ensureAudioReady(loop.id);
               } catch {
                 url = "";
               }

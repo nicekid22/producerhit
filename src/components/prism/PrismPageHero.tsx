@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 export function PrismPageHero({
   eyebrow,
@@ -6,15 +7,17 @@ export function PrismPageHero({
   description,
   children,
   actions,
+  className,
 }: {
   eyebrow?: string;
   title: ReactNode;
   description?: string;
   children?: ReactNode;
   actions?: ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="pk-prism-page-hero">
+    <div className={cn("pk-prism-page-hero", className)}>
       <div className="pk-prism-hero-orb pk-prism-hero-orb--a" aria-hidden />
       <div className="pk-prism-hero-orb pk-prism-hero-orb--b" aria-hidden />
       <div className="relative z-[1] flex flex-col gap-5 md:flex-row md:items-end md:justify-between">

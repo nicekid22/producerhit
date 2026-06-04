@@ -55,7 +55,7 @@ export function LandingFooter({ locale, user }: Props) {
   ];
 
   return (
-    <footer className="pk-landing-footer relative z-[1] border-t border-white/[0.06] bg-[#04030a]">
+    <footer className="pk-landing-footer relative z-[1] border-t border-white/[0.06]">
       <div className="mx-auto max-w-6xl px-4 py-12 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:py-14 md:py-16">
         <div className="grid gap-10 md:grid-cols-12 md:gap-8">
           <div className="md:col-span-4">
@@ -125,7 +125,9 @@ export function LandingFooter({ locale, user }: Props) {
         </div>
 
         <div className="mt-10 flex flex-col gap-4 border-t border-white/[0.06] pt-8 sm:flex-row sm:items-center sm:justify-between">
-          <span className="text-sm text-white/50">Made with 💜 © 2026 ProducerHit</span>
+          <span className="text-sm text-white/50">
+            Made with <span className="pk-footer-heart" aria-hidden>♥</span> © 2026 ProducerHit
+          </span>
           <div className="flex flex-wrap gap-x-5 gap-y-2">
             <Link to={user ? "/dashboard" : "/auth"} className="text-sm font-semibold text-[var(--prism-cyan)] hover:text-white">
               {user ? "Dashboard" : isFr ? "Commencer gratuitement" : "Start free"}

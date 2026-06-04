@@ -5,4 +5,5 @@ export function routeHasMobileBottomNav(pathname: string): boolean {
   return MOBILE_BOTTOM_NAV_RE.test(pathname);
 }
 
-export const PLAYER_HEIGHT_COLLAPSED = "52px";
+/** Fallback CSS avant mesure ResizeObserver (PlayerDockBootstrap). */
+export const PLAYER_HEIGHT_FALLBACK = "72px";

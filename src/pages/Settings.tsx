@@ -29,7 +29,9 @@ import { Button } from "@/components/ui/Button";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { Modal } from "@/components/ui/Modal";
 import { useLocaleStore } from "@/stores/localeStore";
-import { CreditCard, Shield, Sparkles, UserRound, Zap } from "lucide-react";
+import { CreditCard, Palette, Shield, Sparkles, UserRound, Zap } from "lucide-react";
+import { ThemeToggleButton } from "@/components/ThemeToggleButton";
+import { useVisualThemeStore } from "@/stores/visualThemeStore";
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
 import { hasEmailPassword, hasGoogleAuth, mapAuthError } from "@/lib/authProviders";
 import { useMobileUiV2 } from "@/hooks/useMobileUiV2";
@@ -54,6 +56,7 @@ export default function Settings() {
   const linkGoogle = useAuthStore((s) => s.linkGoogle);
   const setPassword = useAuthStore((s) => s.setPassword);
   const locale = useLocaleStore((s) => s.locale);
+  const visualTheme = useVisualThemeStore((s) => s.theme);
   const isFr = locale === "fr";
   const mobileUiV2 = useMobileUiV2();
 
@@ -228,6 +231,32 @@ export default function Settings() {
         </PrismPageHero>
 
         <SettingsGrowthExtras locale={locale} plan={plan} />
+
+        <div className="pk-prism-section-card">
+          <div className="pk-prism-section-head">
+            <div className="pk-prism-section-head__icon">
+              <Palette className="h-4 w-4" />
+            </div>
+            <div>
+              <div className="text-lg font-semibold">{isFr ? "Apparence" : "Appearance"}</div>
+              <div className="text-xs text-pk-muted">
+                {isFr ? "Thème de l’espace studio (Dashboard, Bibliothèque…)" : "Studio shell theme (Dashboard, Library…)"}
+              </div>
+            </div>
+          </div>
+          <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-sm text-pk-muted">
+              {visualTheme === "warm-glass"
+                ? isFr
+                  ? "Warm Glass — dégradés orange, rose et jaune, effet liquid glass."
+                  : "Warm Glass — orange, pink and yellow gradients with liquid glass."
+                : isFr
+                  ? "Prism — cyan, violet et chrome (thème principal)."
+                  : "Prism — cyan, violet and chrome (default theme)."}
+            </div>
+            <ThemeToggleButton variant="segmented" />
+          </div>
+        </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
           <div id="pk-settings-profile" className="pk-prism-section-card">

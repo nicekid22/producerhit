@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { Calendar, Clock } from "lucide-react";
+import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";
 import { Navbar } from "@/components/Navbar";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { BlogBlockRenderer } from "@/components/blog/BlogBlockRenderer";
@@ -41,7 +42,7 @@ export default function BlogPost() {
   const ctaHref = user ? "/dashboard" : buildSignupUrl("blog");
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white">
+    <MarketingPageShell>
       <Navbar variant="marketing" />
       <main className="mx-auto max-w-4xl px-4 pb-16 pt-6">
         <nav className="text-sm text-white/50">
@@ -158,6 +159,6 @@ export default function BlogPost() {
         ) : null}
       </main>
       <LandingFooter locale={locale} user={user} />
-    </div>
+    </MarketingPageShell>
   );
 }

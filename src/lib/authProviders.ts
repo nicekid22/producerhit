@@ -80,10 +80,37 @@ export function mapAuthError(
       : "Google session missing — retry or add /auth/callback to Supabase redirect URLs.";
   }
 
-  if (raw.includes("pkce") || raw.includes("code verifier")) {
+  if (
+    raw.includes("pkce") ||
+    raw.includes("code verifier") ||
+    raw.includes("verifier not found") ||
+    raw.includes("non-empty")
+  ) {
     return locale === "fr"
-      ? "Connexion interrompue — réessaie depuis le même navigateur."
-      : "Sign-in interrupted — retry from the same browser.";
+      ? "Connexion interrompue — réessaie depuis le même navigateur (pas de navigation privée)."
+      : "Sign-in interrupted — retry from the same browser (not private browsing).";
+  }
+
+  if (raw.includes("invalid_grant") || raw.includes("invalid code") || raw.includes("expired")) {
+    return locale === "fr"
+      ? "Lien Google expiré ou déjà utilisé — relance « Continuer avec Google »."
+      : "Google link expired or already used — tap Continue with Google again.";
+  }
+
+  if (
+    raw.includes("database error saving new user") ||
+    raw.includes("error saving new user") ||
+    (raw.includes("unexpected_failure") && raw.includes("database"))
+  ) {
+    return locale === "fr"
+      ? "Impossible de créer ton profil Studio — réessaie dans un instant. Si ça persiste, contacte le support (erreur base de données)."
+      : "Could not create your Studio profile — try again shortly. If it persists, contact support (database error).";
+  }
+
+  if (raw.includes("server_error") || raw.includes("unexpected_failure")) {
+    return locale === "fr"
+      ? "Erreur serveur à l'inscription — réessaie ou utilise un autre email."
+      : "Server error during sign-up — retry or use another email.";
   }
 
   if (context === "google") {

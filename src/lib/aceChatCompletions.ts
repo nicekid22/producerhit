@@ -57,6 +57,81 @@ export type AceChatParseResult = {
   sessionOnly: boolean;
 };
 
+function parseAceChatAudioEntry(
+  audioEntry: Record<string, unknown> | null,
+  msg: Record<string, unknown> | null,
+  baseUrl: string,
+  taskIdSources: unknown[],
+): AceChatParseResult {
+  const taskId = pickTaskId(...taskIdSources, audioEntry?.task_id, audioEntry?.taskId) || null;
+  const pathCandidate = pickFilePath(audioEntry) || pickFilePath(msg);
+  const directAudioUrl =
+    asTrimmedString(audioEntry?.url) ||
+    (typeof audioEntry?.audio_url === "string" ? asTrimmedString(audioEntry.audio_url) : "");
+  const audioUrlRaw =
+    directAudioUrl.startsWith("http") || directAudioUrl.startsWith("data:")
+      ? directAudioUrl
+      : audioEntry && typeof audioEntry.audio_url === "object" && audioEntry.audio_url !== null
+        ? asTrimmedString((audioEntry.audio_url as { url?: unknown }).url)
+        : "";
+
+  let httpAudioUrl: string | null = null;
+  if (audioUrlRaw.startsWith("http://") || audioUrlRaw.startsWith("https://")) {
+    httpAudioUrl = audioUrlRaw;
+  } else if (pathCandidate) {
+    const built = buildAceAudioUrlFromPath(baseUrl, pathCandidate);
+    if (built.startsWith("http")) httpAudioUrl = built;
+  } else if (audioUrlRaw && !audioUrlRaw.startsWith("data:")) {
+    const built = buildAceAudioUrlFromPath(baseUrl, audioUrlRaw);
+    if (built.startsWith("http")) httpAudioUrl = built;
+  }
+
+  const dataUrl = audioUrlRaw.startsWith("data:") ? audioUrlRaw : "";
+  const playbackUrl =
+    httpAudioUrl ||
+    dataUrl ||
+    (pathCandidate ? buildAceAudioUrlFromPath(baseUrl, pathCandidate) : "") ||
+    "";
+
+  return { audioUrl: playbackUrl, httpAudioUrl, taskId, sessionOnly: !httpAudioUrl && !taskId };
+}
+
+/** Tous les audios renvoyés (batch_size > 1 sur chat/completions ou release_task). */
+export function parseAllAceChatCompletionsAudios(json: unknown, baseUrl: string): AceChatParseResult[] {
+  const root = json && typeof json === "object" ? (json as Record<string, unknown>) : {};
+  const dataObj = root.data && typeof root.data === "object" ? (root.data as Record<string, unknown>) : null;
+  const choices = root.choices;
+  const firstChoice = Array.isArray(choices) ? choices[0] : null;
+  const choiceObj =
+    firstChoice && typeof firstChoice === "object" && firstChoice !== null ? (firstChoice as Record<string, unknown>) : null;
+  const msg =
+    choiceObj?.message && typeof choiceObj.message === "object" && choiceObj.message !== null
+      ? (choiceObj.message as Record<string, unknown>)
+      : null;
+  const audioArr = msg && Array.isArray(msg.audio) ? (msg.audio as unknown[]) : [];
+  const taskIdSources = [
+    root.task_id,
+    root.taskId,
+    root.id,
+    dataObj?.task_id,
+    dataObj?.taskId,
+    choiceObj?.task_id,
+    choiceObj?.taskId,
+    msg?.task_id,
+    msg?.taskId,
+  ];
+
+  const out: AceChatParseResult[] = [];
+  for (const item of audioArr) {
+    if (!item || typeof item !== "object") continue;
+    const parsed = parseAceChatAudioEntry(item as Record<string, unknown>, msg, baseUrl, taskIdSources);
+    if (parsed.audioUrl.trim()) out.push(parsed);
+  }
+  if (out.length) return out;
+  const single = parseAceChatCompletionsResponse(json, baseUrl);
+  return single.audioUrl.trim() ? [single] : [];
+}
+
 export function parseAceChatCompletionsResponse(json: unknown, baseUrl: string): AceChatParseResult {
   const root = json && typeof json === "object" ? (json as Record<string, unknown>) : {};
   const dataObj = root.data && typeof root.data === "object" ? (root.data as Record<string, unknown>) : null;

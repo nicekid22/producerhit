@@ -4,7 +4,8 @@ import { ChevronDown, ChevronUp, Download, Pause, Play, SkipBack, SkipForward, V
 import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import { usePlayerStore } from "@/stores/playerStore";
 import { Button } from "@/components/ui/Button";
-import { coverGradient, coverImageKey, coverImageUrl } from "@/lib/utils";
+import { PlayerCoverThumb } from "@/components/player/PlayerCoverThumb";
+import { cn } from "@/lib/utils";
 import {
   getCachedPlaybackMakeup,
   measurePlaybackMakeupLinear,
@@ -17,6 +18,8 @@ import {
   shouldUsePlaybackOutputGraph,
   shouldUseWebAudioGraph,
 } from "@/lib/playableAudio";
+import { getPlayerVisualizerRgb } from "@/lib/waveformThemeColors";
+import { useVisualThemeStore } from "@/stores/visualThemeStore";
 
 function formatTime(sec: number): string {
   if (!sec || !isFinite(sec) || sec < 0) return "0:00";
@@ -52,6 +55,7 @@ export function AudioPlayer() {
   const next = usePlayerStore((s) => s.next);
   const dockCollapsed = usePlayerStore((s) => s.dockCollapsed);
   const toggleDockCollapsed = usePlayerStore((s) => s.toggleDockCollapsed);
+  const visualTheme = useVisualThemeStore((s) => s.theme);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTimeSec, setCurrentTimeSec] = useState(0);
@@ -183,6 +187,7 @@ export function AudioPlayer() {
         }
 
         audioCtxRef.current = ctx;
+        (window as unknown as { __pkAudioCtx?: AudioContext }).__pkAudioCtx = ctx;
         mediaSourceRef.current = source;
         gainRef.current = gain;
         graphAttachedRef.current = true;
@@ -235,13 +240,11 @@ export function AudioPlayer() {
       const x = startX + i * (barW + gap);
       const y = Math.floor(h - barH);
       const t = barCount === 1 ? 0 : i / (barCount - 1);
-      const r = Math.round(203 + (103 - 203) * t);
-      const g = Math.round(213 + (195 - 213) * t);
-      const b = Math.round(225 + (255 - 225) * t);
+      const [r, g, b] = getPlayerVisualizerRgb(visualTheme, t);
       ctx2d.fillStyle = `rgb(${r}, ${g}, ${b})`;
       ctx2d.fillRect(x, y, barW, barH);
     }
-  }, []);
+  }, [visualTheme]);
 
   const startVisualizer = useCallback(() => {
     if (skipVisualizer) return;
@@ -302,16 +305,16 @@ export function AudioPlayer() {
         if (gen !== loadGenRef.current) return;
         tryPlayAudio();
       };
-      if (audio.readyState >= 2) {
+      if (audio.readyState >= 3) {
         playNow();
         return;
       }
-      const onLoadedData = () => {
-        audio.removeEventListener("loadeddata", onLoadedData);
+      const onCanPlayThrough = () => {
+        audio.removeEventListener("canplaythrough", onCanPlayThrough);
         playNow();
       };
-      audio.addEventListener("loadeddata", onLoadedData);
-      if (audio.readyState >= 2) onLoadedData();
+      audio.addEventListener("canplaythrough", onCanPlayThrough);
+      if (audio.readyState >= 3) onCanPlayThrough();
     },
     [tryPlayAudio],
   );
@@ -331,7 +334,7 @@ export function AudioPlayer() {
     if (storeIsPlaying === false) {
       if (!audio.paused) audio.pause();
     }
-  }, [currentBeat?.audioUrl, scheduleEarlyPlay, storeIsPlaying, tryPlayAudio]);
+  }, [currentBeat?.audioUrl, currentBeat?.id, scheduleEarlyPlay, storeIsPlaying, tryPlayAudio]);
 
   /** Enchaînement playlist — relance la lecture quand la piste ou l’index file change (mobile inclus). */
   useEffect(() => {
@@ -342,7 +345,8 @@ export function AudioPlayer() {
     const playWhenReady = () => {
       if (gen !== loadGenRef.current) return;
       const { isPlaying } = usePlayerStore.getState();
-      if (!isPlaying || !audio.paused || !audio.src) return;
+      if (!isPlaying || !audio.src) return;
+      if (!audio.paused) return;
       tryPlayAudio();
     };
 
@@ -564,8 +568,8 @@ export function AudioPlayer() {
   }, [
     applyAudioCrossOrigin,
     audioMountKey,
-    currentBeat?.id,
     currentBeat?.audioUrl,
+    currentBeat?.id,
     ensureAudioGraph,
     applyOutputVolume,
     needsOutputGraph,
@@ -667,61 +671,65 @@ export function AudioPlayer() {
     applyOutputVolume(v);
   };
 
+  const handleDownload = useCallback(() => {
+    if (!currentBeat) return;
+    void (async () => {
+      try {
+        const res = await fetch(currentBeat.audioUrl);
+        if (!res.ok) throw new Error("Download failed");
+        const blob = await res.blob();
+        const formatHint = (currentBeat.details?.audioFormat || "").toLowerCase();
+        const type = (blob.type || "").toLowerCase();
+        const ext =
+          formatHint === "wav" || formatHint === "wav32"
+            ? "wav"
+            : formatHint === "flac"
+              ? "flac"
+              : formatHint === "opus"
+                ? "opus"
+                : formatHint === "aac"
+                  ? "aac"
+                  : type.includes("wav")
+                    ? "wav"
+                    : type.includes("flac")
+                      ? "flac"
+                      : type.includes("opus")
+                        ? "opus"
+                        : type.includes("aac")
+                          ? "aac"
+                          : "mp3";
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${currentBeat.name}.${ext}`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        console.error(e);
+      }
+    })();
+  }, [currentBeat]);
+
   useEffect(() => {
     return () => {
       teardownAudioContext();
     };
   }, [teardownAudioContext]);
 
-  const coverBg = currentBeat ? coverGradient(currentBeat) : "";
-  const coverUrl = currentBeat ? coverImageUrl(currentBeat) : "";
-  const coverKey = currentBeat ? coverImageKey(currentBeat) : "";
-
   return (
     <>
       {currentBeat ? (
     <div
-      className={`pk-prism-player pk-prism-player--dock fixed bottom-[calc(var(--pk-bottom-nav)+env(safe-area-inset-bottom,0px))] left-0 right-0 z-30 md:bottom-0 md:z-50${dockCollapsed ? " pk-prism-player--collapsed" : ""}`}
+      className={`pk-prism-player pk-prism-player--dock pk-prism-player--dock-modern fixed bottom-[calc(var(--pk-bottom-nav)+env(safe-area-inset-bottom,0px))] left-0 right-0 z-30 md:z-50${visualTheme === "warm-glass" ? " pk-warm-glass-player" : ""}${dockCollapsed ? " pk-prism-player--collapsed" : ""}`}
       aria-busy={isLoading}
     >
       <div className="mx-auto flex max-w-[1440px] items-center gap-2 px-3 py-2 sm:gap-4 sm:px-4 sm:py-3">
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:max-w-none sm:gap-3">
           <div
-            className={`pk-prism-cover relative h-9 w-9 shrink-0 rounded-xl p-[2px] sm:h-11 sm:w-11${dockCollapsed ? "" : " hidden sm:block"}`}
-            style={{ background: coverBg }}
+            className="pk-loop-cover-thumb relative z-0 h-9 w-9 shrink-0 rounded-xl p-[2px] sm:h-11 sm:w-11"
           >
-            <div className="relative h-full w-full overflow-hidden rounded-[10px] bg-[#050508]">
-            {coverUrl ? (
-              <img
-                key={coverKey}
-                src={coverUrl}
-                alt=""
-                className="absolute inset-0 h-full w-full object-cover"
-                loading="lazy"
-                decoding="async"
-                referrerPolicy="no-referrer"
-                style={{ opacity: 0 }}
-                onLoad={(e) => {
-                  e.currentTarget.style.opacity = "1";
-                  e.currentTarget.dataset.retry = "0";
-                }}
-                onError={(e) => {
-                  const img = e.currentTarget;
-                  img.style.opacity = "0";
-                  const retry = Number(img.dataset.retry ?? "0");
-                  if (retry < 4) {
-                    img.dataset.retry = String(retry + 1);
-                    window.setTimeout(() => {
-                      img.style.opacity = "0";
-                      img.src = "";
-                      img.src = coverUrl;
-                    }, 800 * (retry + 1));
-                    return;
-                  }
-                  img.style.display = "none";
-                }}
-              />
-            ) : null}
+            <div className="relative z-[1] h-full w-full overflow-hidden rounded-[10px] bg-[#060608]">
+              {currentBeat ? <PlayerCoverThumb loop={currentBeat} /> : null}
             </div>
           </div>
           <div className="min-w-0 flex-1">
@@ -800,12 +808,11 @@ export function AudioPlayer() {
             </div>
             <button
               type="button"
-              onClick={toggleDockCollapsed}
-              className="pk-prism-player-btn ml-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl sm:ml-2 sm:h-9 sm:w-9"
-              aria-label="Minimize player"
-              title="Minimize"
+              onClick={handleDownload}
+              className="pk-prism-player-btn ml-1 hidden h-8 w-8 shrink-0 items-center justify-center rounded-xl sm:ml-2 sm:inline-flex sm:h-9 sm:w-9"
+              aria-label="Download"
             >
-              <ChevronDown className="h-4 w-4" />
+              <Download className="h-4 w-4" />
             </button>
           </div>
           <canvas ref={vizCanvasRef} className="mt-1.5 hidden h-7 w-full max-w-xl opacity-90 sm:mt-2 sm:block" aria-hidden />
@@ -822,7 +829,7 @@ export function AudioPlayer() {
               ) : isLoading ? (
                 <div className="absolute inset-0">
                   <div
-                    className="absolute left-0 top-0 h-full w-[42%] bg-gradient-to-r from-transparent via-[rgba(157,124,255,0.55)] to-transparent"
+                    className="pk-prism-player-shimmer absolute left-0 top-0 h-full w-[42%] bg-gradient-to-r from-transparent via-[rgba(157,124,255,0.55)] to-transparent"
                     style={{ animation: "pkShimmer 1.1s ease-in-out infinite" }}
                   />
                 </div>
@@ -848,47 +855,12 @@ export function AudioPlayer() {
           </div>
           <button
             type="button"
+            onClick={toggleDockCollapsed}
             className="pk-prism-player-btn inline-flex h-9 w-9 items-center justify-center rounded-xl"
-            aria-label="Download"
-            onClick={() => {
-              void (async () => {
-                try {
-                  const res = await fetch(currentBeat.audioUrl);
-                  if (!res.ok) throw new Error("Download failed");
-                  const blob = await res.blob();
-                  const formatHint = (currentBeat.details?.audioFormat || "").toLowerCase();
-                  const type = (blob.type || "").toLowerCase();
-                  const ext =
-                    formatHint === "wav" || formatHint === "wav32"
-                      ? "wav"
-                      : formatHint === "flac"
-                        ? "flac"
-                        : formatHint === "opus"
-                          ? "opus"
-                          : formatHint === "aac"
-                            ? "aac"
-                            : type.includes("wav")
-                              ? "wav"
-                              : type.includes("flac")
-                                ? "flac"
-                                : type.includes("opus")
-                                  ? "opus"
-                                  : type.includes("aac")
-                                    ? "aac"
-                                    : "mp3";
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement("a");
-                  a.href = url;
-                  a.download = `${currentBeat.name}.${ext}`;
-                  a.click();
-                  URL.revokeObjectURL(url);
-                } catch (e) {
-                  console.error(e);
-                }
-              })();
-            }}
+            aria-label="Minimize player"
+            title="Minimize"
           >
-            <Download className="h-4 w-4" />
+            <ChevronDown className="h-4 w-4" />
           </button>
         </div>
       </div>

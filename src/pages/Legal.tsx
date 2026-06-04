@@ -1,3 +1,4 @@
+import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";
 import { Navbar } from "@/components/Navbar";
 import { useLocaleStore } from "@/stores/localeStore";
 
@@ -238,7 +239,7 @@ export default function Legal() {
   ] as const;
 
   return (
-    <div className="min-h-screen bg-pk-bg text-pk-text">
+    <MarketingPageShell className="text-pk-text">
       <Navbar variant="marketing" />
       <main className="mx-auto max-w-3xl px-4 py-12">
         <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
@@ -264,6 +265,6 @@ export default function Legal() {
           </section>
         ))}
       </main>
-    </div>
+    </MarketingPageShell>
   );
 }

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { DashboardPromoBillboard } from "@/components/growth/DashboardPromoBillboard";
@@ -31,6 +31,11 @@ export function SettingsGrowthExtras({ locale, plan }: Props) {
   const refreshProfile = useAuthStore((s) => s.refreshProfile);
   const progressionRef = useRef<DashboardGamingPanelHandle>(null);
   const [gamificationRefreshKey, setGamificationRefreshKey] = useState(0);
+
+  useEffect(() => {
+    const hash = window.location.hash.replace("#", "").trim();
+    if (hash === "progression") scrollToId("pk-settings-progression");
+  }, []);
 
   const onReferral = useCallback(async () => {
     scrollToId("pk-settings-referral");

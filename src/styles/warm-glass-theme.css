@@ -1,0 +1,2161 @@
+/**
+ * Warm Glass theme — opt-in uniquement (orange / rose / jaune, liquid glass).
+ * Rollback : voir WARM_GLASS_THEME_ROLLBACK.md
+ *
+ * Fond mesh jaune · orange · rose + grain pigmenté (premium pro, contrasté).
+ */
+
+.pk-warm-glass-stage {
+  --prism-violet: #e85a78;
+  --prism-cyan: #ffb347;
+  --prism-silver: #fff4e8;
+  --prism-chrome: #fff8f0;
+  --prism-accent: #ff7040;
+  --prism-glass: rgba(255, 240, 220, 0.14);
+  --prism-border: rgba(255, 210, 170, 0.28);
+  --warm-pigment-yellow: #c89830;
+  --warm-pigment-rose: #a83858;
+  --warm-pigment-orange: #c05028;
+  --warm-pigment-coral: #8a3820;
+  --warm-glass-surface: rgba(38, 16, 10, 0.42);
+  --warm-glass-surface-elevated: rgba(48, 22, 14, 0.56);
+  --warm-glass-border: rgba(255, 195, 150, 0.24);
+  --warm-glass-highlight: rgba(255, 220, 180, 0.1);
+  /* Champs texte — fond ambre (pas de gris bleuté overlay) */
+  --warm-field-bg: rgba(48, 22, 14, 0.62);
+  --warm-field-bg-focus: rgba(58, 28, 16, 0.74);
+  --warm-field-border: rgba(255, 195, 150, 0.28);
+  --warm-field-border-focus: rgba(255, 160, 80, 0.55);
+  --warm-field-text: rgba(255, 252, 248, 0.94);
+  --warm-field-placeholder: rgba(255, 220, 180, 0.46);
+  --warm-field-readonly-bg: rgba(40, 18, 10, 0.5);
+  --warm-grain-coarse: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.38' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --warm-grain-fine: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.05' numOctaves='5' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --warm-grain-film: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Base mesh — jaune · orange · rose (saturé, pas pastel) */
+.pk-warm-glass-stage.pk-prism-stage,
+.pk-warm-glass-stage.pk-prism-dashboard {
+  background:
+    radial-gradient(ellipse 86% 70% at 8% 34%, #c89838 0%, transparent 58%),
+    radial-gradient(ellipse 74% 68% at 50% 70%, #a83858 0%, transparent 60%),
+    radial-gradient(ellipse 68% 60% at 92% 26%, #c85028 0%, transparent 54%),
+    radial-gradient(ellipse 56% 48% at 74% 82%, #b84048 0%, transparent 52%),
+    radial-gradient(ellipse 60% 52% at 18% 88%, #a87828 0%, transparent 50%),
+    linear-gradient(148deg, #8a6020 0%, #963848 32%, #a84828 62%, #7a3018 100%) !important;
+}
+
+@media (min-width: 768px) {
+  .pk-warm-glass-stage.pk-prism-dashboard {
+    background:
+      radial-gradient(ellipse 86% 70% at 8% 34%, #c89838 0%, transparent 58%),
+      radial-gradient(ellipse 74% 68% at 50% 70%, #a83858 0%, transparent 60%),
+      radial-gradient(ellipse 68% 60% at 92% 26%, #c85028 0%, transparent 54%),
+      radial-gradient(ellipse 56% 48% at 74% 82%, #b84048 0%, transparent 52%),
+      radial-gradient(ellipse 60% 52% at 18% 88%, #a87828 0%, transparent 50%),
+      linear-gradient(148deg, #8a6020 0%, #963848 32%, #a84828 62%, #7a3018 100%) !important;
+  }
+}
+
+/* ——— Calques pigment (AppShell) ——— */
+
+/* Renforce le mesh avec des taches plus organiques */
+.pk-warm-pigment-mesh {
+  background:
+    radial-gradient(ellipse 52% 44% at 14% 48%, rgba(220, 170, 60, 0.45), transparent 68%),
+    radial-gradient(ellipse 48% 56% at 50% 62%, rgba(180, 60, 80, 0.38), transparent 66%),
+    radial-gradient(ellipse 44% 40% at 86% 32%, rgba(220, 90, 45, 0.42), transparent 64%),
+    radial-gradient(ellipse 38% 34% at 68% 78%, rgba(200, 70, 55, 0.28), transparent 60%);
+  mix-blend-mode: soft-light;
+  opacity: 0.88;
+}
+
+.pk-warm-pigment-blooms {
+  background:
+    radial-gradient(ellipse 54% 46% at 10% 22%, rgba(255, 200, 90, 0.55), transparent 66%),
+    radial-gradient(ellipse 50% 48% at 90% 18%, rgba(220, 80, 100, 0.42), transparent 64%),
+    radial-gradient(ellipse 58% 50% at 82% 78%, rgba(240, 100, 50, 0.48), transparent 68%),
+    radial-gradient(ellipse 46% 40% at 24% 86%, rgba(200, 70, 60, 0.35), transparent 62%),
+    radial-gradient(ellipse 42% 36% at 55% 44%, rgba(255, 180, 70, 0.28), transparent 58%);
+  filter: saturate(1.12) contrast(1.08);
+  mix-blend-mode: soft-light;
+  opacity: 0.82;
+}
+
+.pk-warm-pigment-sweep {
+  background:
+    conic-gradient(
+      from 195deg at 42% 48%,
+      rgba(255, 200, 90, 0.22) 0deg,
+      rgba(200, 70, 90, 0.24) 90deg,
+      rgba(230, 90, 45, 0.26) 170deg,
+      rgba(255, 180, 70, 0.18) 260deg,
+      rgba(255, 200, 90, 0.22) 360deg
+    );
+  mix-blend-mode: overlay;
+  opacity: 0.55;
+}
+
+/* Grain grossier — sable / pigment (comme la ref) */
+.pk-warm-pigment-grain-coarse {
+  opacity: 0.52;
+  mix-blend-mode: overlay;
+  background-color: rgba(80, 35, 18, 0.08);
+  background-image: var(--warm-grain-coarse);
+  background-size: 160px 160px;
+  filter: contrast(185%) brightness(88%);
+}
+
+/* Grain fin — stipple / papier */
+.pk-warm-pigment-grain-fine {
+  opacity: 0.38;
+  mix-blend-mode: multiply;
+  background-image: var(--warm-grain-fine);
+  background-size: 112px 112px;
+  filter: contrast(160%);
+}
+
+/* Grain film — bruit visible type ISO élevé */
+.pk-warm-pigment-grain-film {
+  opacity: 0.22;
+  mix-blend-mode: soft-light;
+  background-image: var(--warm-grain-film);
+  background-size: 200px 200px;
+  filter: contrast(200%) brightness(95%);
+}
+
+/* Speckle — micro-taches pigment dispersées */
+.pk-warm-pigment-speckle {
+  opacity: 0.48;
+  mix-blend-mode: color-burn;
+  background-image: var(--warm-grain-fine);
+  background-size: 72px 72px;
+  filter: contrast(240%) brightness(110%);
+  mask-image: radial-gradient(ellipse at center, black 20%, transparent 78%);
+}
+
+.pk-warm-pigment-fiber {
+  opacity: 0.28;
+  mix-blend-mode: overlay;
+  background:
+    repeating-linear-gradient(
+      118deg,
+      transparent 0 48px,
+      rgba(255, 210, 150, 0.06) 48px 49px,
+      transparent 49px 96px
+    ),
+    repeating-linear-gradient(
+      32deg,
+      transparent 0 72px,
+      rgba(200, 80, 50, 0.05) 72px 73px,
+      transparent 73px 144px
+    );
+}
+
+.pk-warm-pigment-vignette {
+  background:
+    radial-gradient(ellipse at center, transparent 36%, rgba(40, 18, 12, 0.22) 100%),
+    linear-gradient(180deg, rgba(255, 200, 120, 0.04) 0%, transparent 14%, transparent 86%, rgba(50, 22, 14, 0.18) 100%) !important;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .pk-warm-pigment-grain-coarse {
+    opacity: 0.4;
+    background-size: 140px 140px;
+  }
+
+  .pk-warm-pigment-grain-fine {
+    opacity: 0.3;
+    background-size: 96px 96px;
+  }
+
+  .pk-warm-pigment-grain-film {
+    opacity: 0.16;
+  }
+
+  .pk-warm-pigment-speckle {
+    opacity: 0.32;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pk-warm-pigment-grain-film {
+    animation: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pk-warm-pigment-grain-film {
+    animation: pkWarmGrainDrift 18s linear infinite;
+  }
+}
+
+@keyframes pkWarmGrainDrift {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 200px 160px;
+  }
+}
+
+/* Lisibilité sur fond pigmenté */
+.pk-warm-glass-stage.pk-prism-dashboard .text-pk-text {
+  color: #fff9f4 !important;
+  text-shadow: 0 1px 14px rgba(120, 45, 30, 0.28);
+}
+
+.pk-warm-glass-stage.pk-prism-dashboard .text-pk-muted {
+  color: rgba(255, 248, 240, 0.78) !important;
+  text-shadow: 0 1px 10px rgba(100, 40, 30, 0.2);
+}
+
+/* Pas de mesh Prism par-dessus le pigment */
+.pk-warm-glass-stage > .pointer-events-none {
+  background: none !important;
+}
+
+.pk-warm-glass-stage .pk-prism-fx-vignette:not(.pk-warm-pigment-vignette) {
+  display: none;
+}
+
+.pk-warm-glass-stage .pk-prism-grid {
+  display: none !important;
+}
+
+/* Surfaces dashboard — verre sombre chaud sur pigment */
+.pk-warm-glass-stage.pk-prism-dashboard .bg-pk-panel,
+.pk-warm-glass-stage.pk-prism-dashboard .bg-pk-panel\/70,
+.pk-warm-glass-stage.pk-prism-dashboard .bg-pk-panel\/40,
+.pk-warm-glass-stage.pk-prism-dashboard .bg-pk-panel\/30 {
+  background-color: var(--warm-glass-surface) !important;
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+}
+
+/* .bg-pk-input sur boutons = dropdown — voir règles button.bg-pk-input plus bas */
+
+.pk-warm-glass-stage.pk-prism-dashboard .bg-pk-bg {
+  background-color: rgba(30, 14, 8, 0.28) !important;
+}
+
+.pk-warm-glass-stage.pk-prism-dashboard .border-pk-border,
+.pk-warm-glass-stage.pk-prism-dashboard .border-pk-border\/70,
+.pk-warm-glass-stage.pk-prism-dashboard .border-pk-border\/30 {
+  border-color: rgba(255, 255, 255, 0.32) !important;
+}
+
+.pk-warm-glass-stage .pk-prism-holo-text {
+  background-image: linear-gradient(
+    115deg,
+    #ffd066 0%,
+    #ffb347 26%,
+    #e85a78 52%,
+    #ffc870 78%,
+    #ffd066 100%
+  ) !important;
+}
+
+.pk-warm-glass-stage .pk-prism-glass,
+.pk-warm-glass-stage .pk-prism-card {
+  border-color: var(--warm-glass-border) !important;
+  background:
+    radial-gradient(900px circle at 16% 0%, rgba(255, 200, 140, 0.12), transparent 50%),
+    radial-gradient(700px circle at 94% 8%, rgba(220, 80, 90, 0.1), transparent 48%),
+    linear-gradient(155deg, var(--warm-glass-surface-elevated), var(--warm-glass-surface)) !important;
+  backdrop-filter: blur(18px) saturate(1.35);
+  -webkit-backdrop-filter: blur(18px) saturate(1.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 180, 0.14),
+    0 0 0 1px rgba(255, 180, 130, 0.1),
+    0 16px 48px rgba(40, 16, 8, 0.32) !important;
+}
+
+/* Grain pigmenté sur les surfaces verre (cartes, panneaux, dock…) */
+.pk-warm-glass-stage .pk-prism-glass,
+.pk-warm-glass-stage .pk-prism-card,
+.pk-warm-glass-stage .pk-studio-console,
+.pk-warm-glass-stage .pk-studio-workspace,
+.pk-warm-glass-stage .pk-studio-rail,
+.pk-warm-glass-stage .pk-gaming-panel-shell,
+.pk-warm-glass-stage .pk-gaming-panel-shell__body,
+.pk-warm-glass-stage .pk-studio-generate-dock,
+.pk-warm-glass-stage .pk-dashboard-mobile-footer,
+.pk-warm-glass-stage .pk-studio-workspace-header,
+.pk-warm-glass-stage .pk-dashboard-spotlight-banner,
+.pk-warm-glass-stage .pk-gen-loading-card,
+.pk-warm-glass-stage [data-loop-card] {
+  position: relative;
+}
+
+.pk-warm-glass-stage .pk-prism-glass::before,
+.pk-warm-glass-stage .pk-prism-card::before,
+.pk-warm-glass-stage .pk-studio-console::before,
+.pk-warm-glass-stage .pk-studio-workspace::before,
+.pk-warm-glass-stage .pk-studio-rail::before,
+.pk-warm-glass-stage .pk-gaming-panel-shell::before,
+.pk-warm-glass-stage .pk-gaming-panel-shell__body::before,
+.pk-warm-glass-stage .pk-studio-generate-dock::before,
+.pk-warm-glass-stage .pk-dashboard-mobile-footer::before,
+.pk-warm-glass-stage .pk-studio-workspace-header::before,
+.pk-warm-glass-stage .pk-dashboard-spotlight-banner::before,
+.pk-warm-glass-stage .pk-gen-loading-card::before,
+.pk-warm-glass-stage [data-loop-card]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.32;
+  mix-blend-mode: overlay;
+  background-image: var(--warm-grain-fine);
+  background-size: 84px 84px;
+  filter: contrast(155%) brightness(96%);
+}
+
+.pk-warm-glass-stage .pk-prism-glass > *,
+.pk-warm-glass-stage .pk-prism-card > *,
+.pk-warm-glass-stage .pk-studio-console > *,
+.pk-warm-glass-stage .pk-studio-workspace > *,
+.pk-warm-glass-stage .pk-gaming-panel-shell__body > *,
+.pk-warm-glass-stage .pk-studio-generate-dock > *,
+.pk-warm-glass-stage .pk-dashboard-mobile-footer > *,
+.pk-warm-glass-stage [data-loop-card] > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ——— Champs texte : beat, song, remix, détails, recherche ——— */
+.pk-warm-glass-stage input.bg-pk-input:not([type="checkbox"]):not([type="radio"]),
+.pk-warm-glass-stage textarea.bg-pk-input,
+.pk-warm-glass-stage .pk-studio-console textarea,
+.pk-warm-glass-stage .pk-studio-console input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="file"]),
+.pk-warm-glass-stage .pk-gaming-panel-shell textarea,
+.pk-warm-glass-stage .pk-gaming-panel-shell input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="file"]):not([type="range"]),
+.pk-warm-glass-stage .pk-studio-workspace input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="file"]),
+.pk-warm-glass-stage .pk-studio-workspace textarea,
+.pk-warm-glass-stage .pk-studio-detail-panel input.bg-pk-input,
+.pk-warm-glass-stage .pk-studio-detail-panel textarea,
+.pk-warm-glass-stage [data-loop-card] input.bg-pk-input {
+  background-color: var(--warm-field-bg) !important;
+  background-image: linear-gradient(
+    155deg,
+    rgba(255, 220, 180, 0.11) 0%,
+    rgba(52, 24, 14, 0.55) 48%,
+    rgba(40, 18, 10, 0.65) 100%
+  ) !important;
+  background-blend-mode: normal !important;
+  background-size: auto !important;
+  border-color: var(--warm-field-border) !important;
+  color: var(--warm-field-text) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 220, 180, 0.1);
+  backdrop-filter: blur(10px) saturate(1.25);
+  -webkit-backdrop-filter: blur(10px) saturate(1.25);
+}
+
+.pk-warm-glass-stage input.bg-pk-input:not([type="checkbox"]):not([type="radio"])::placeholder,
+.pk-warm-glass-stage textarea.bg-pk-input::placeholder,
+.pk-warm-glass-stage .pk-studio-console textarea::placeholder,
+.pk-warm-glass-stage .pk-studio-console input:not([type="checkbox"]):not([type="radio"])::placeholder,
+.pk-warm-glass-stage .pk-gaming-panel-shell textarea::placeholder,
+.pk-warm-glass-stage .pk-gaming-panel-shell input:not([type="button"]):not([type="file"])::placeholder,
+.pk-warm-glass-stage .placeholder\:text-pk-muted::placeholder,
+.pk-warm-glass-stage .placeholder\:text-white\/35::placeholder {
+  color: var(--warm-field-placeholder) !important;
+  opacity: 1 !important;
+}
+
+.pk-warm-glass-stage input.bg-pk-input:not([type="checkbox"]):not([type="radio"]):focus,
+.pk-warm-glass-stage textarea.bg-pk-input:focus,
+.pk-warm-glass-stage .pk-studio-console textarea:focus,
+.pk-warm-glass-stage .pk-studio-console input:not([type="checkbox"]):not([type="radio"]):focus,
+.pk-warm-glass-stage .pk-gaming-panel-shell textarea:focus,
+.pk-warm-glass-stage .pk-gaming-panel-shell input:not([type="button"]):not([type="file"]):focus {
+  background-color: var(--warm-field-bg-focus) !important;
+  border-color: var(--warm-field-border-focus) !important;
+  --tw-ring-color: rgba(255, 140, 80, 0.2) !important;
+  outline: none;
+}
+
+/* Remix / beat : champs Tailwind bg-white/[0.03] + bordures froides */
+.pk-warm-glass-stage .pk-gaming-panel-shell .bg-white\/\[0\.03\],
+.pk-warm-glass-stage .pk-gaming-panel-shell .bg-white\/\[0\.02\],
+.pk-warm-glass-stage .pk-gaming-panel-shell .bg-pk-bg {
+  background-color: var(--warm-field-bg) !important;
+  background-image: linear-gradient(
+    155deg,
+    rgba(255, 220, 180, 0.1) 0%,
+    rgba(48, 22, 14, 0.58) 100%
+  ) !important;
+  border-color: var(--warm-field-border) !important;
+  color: var(--warm-field-text) !important;
+}
+
+.pk-warm-glass-stage .pk-gaming-panel-shell .bg-black\/20,
+.pk-warm-glass-stage .pk-gaming-panel-shell .bg-black\/25 {
+  background-color: var(--warm-field-readonly-bg) !important;
+  border-color: var(--warm-field-border) !important;
+  color: rgba(255, 248, 240, 0.72) !important;
+}
+
+.pk-warm-glass-stage .pk-gaming-panel-shell .text-white\/55,
+.pk-warm-glass-stage .pk-gaming-panel-shell .text-white\/50,
+.pk-warm-glass-stage .pk-gaming-panel-shell .text-white\/45 {
+  color: rgba(255, 248, 240, 0.68) !important;
+}
+
+.pk-warm-glass-stage .pk-gaming-panel-shell .focus\:border-cyan-400\/40:focus {
+  border-color: var(--warm-field-border-focus) !important;
+}
+
+/* Menus genre / langue / influence — fond verre chaud uni */
+.pk-warm-glass-stage button.bg-pk-input,
+.pk-warm-glass-stage .pk-studio-console button.bg-pk-input {
+  background-color: rgba(48, 22, 14, 0.52) !important;
+  background-image: linear-gradient(
+    155deg,
+    rgba(255, 220, 180, 0.12) 0%,
+    rgba(40, 18, 10, 0.28) 100%
+  ) !important;
+  background-blend-mode: normal !important;
+  border-color: var(--warm-glass-border) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 220, 180, 0.1);
+}
+
+.pk-warm-glass-stage button.bg-pk-input:hover:not(:disabled) {
+  background-color: rgba(56, 26, 16, 0.58) !important;
+}
+
+/* Boutons verre / prism — dégradé warm (plus de reflets violet) */
+.pk-warm-glass-stage .pk-glass-btn,
+html.pk-warm-glass-active .pk-glass-btn,
+.pk-warm-glass-stage .pk-prism-btn {
+  color: rgba(255, 252, 248, 0.96) !important;
+  background: linear-gradient(
+    132deg,
+    rgba(255, 200, 120, 0.22) 0%,
+    rgba(230, 100, 50, 0.18) 45%,
+    rgba(200, 70, 90, 0.16) 100%
+  ) !important;
+  backdrop-filter: blur(14px) saturate(1.5) brightness(1.06);
+  -webkit-backdrop-filter: blur(14px) saturate(1.5) brightness(1.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 180, 0.38),
+    inset 0 -1px 0 rgba(40, 16, 8, 0.22),
+    inset 2px 0 8px rgba(255, 180, 90, 0.12),
+    inset -2px 0 8px rgba(220, 80, 90, 0.1),
+    inset 0 0 0 1px rgba(255, 200, 150, 0.2),
+    0 8px 22px rgba(40, 16, 8, 0.28) !important;
+}
+
+.pk-warm-glass-stage .pk-glass-btn::before,
+html.pk-warm-glass-active .pk-glass-btn::before,
+.pk-warm-glass-stage .pk-prism-btn::before {
+  background: conic-gradient(
+    from 208deg at 50% 50%,
+    rgba(255, 255, 255, 0.55) 0deg,
+    rgba(255, 200, 90, 0.42) 52deg,
+    rgba(230, 100, 50, 0.38) 118deg,
+    rgba(220, 80, 90, 0.32) 178deg,
+    rgba(255, 180, 70, 0.36) 248deg,
+    rgba(255, 255, 255, 0.48) 312deg,
+    rgba(255, 255, 255, 0.55) 360deg
+  ) !important;
+  opacity: 0.65 !important;
+}
+
+.pk-warm-glass-stage .pk-glass-btn::after,
+html.pk-warm-glass-active .pk-glass-btn::after,
+.pk-warm-glass-stage .pk-prism-btn::after {
+  background:
+    radial-gradient(ellipse 78% 58% at 16% 8%, rgba(255, 220, 160, 0.32), transparent 52%),
+    radial-gradient(ellipse 52% 40% at 86% 94%, rgba(230, 100, 50, 0.22), transparent 54%),
+    radial-gradient(ellipse 40% 30% at 68% 16%, rgba(200, 70, 90, 0.16), transparent 48%) !important;
+  opacity: 0.72 !important;
+}
+
+.pk-warm-glass-stage .pk-glass-btn--primary,
+.pk-warm-glass-stage .pk-prism-btn,
+.pk-warm-glass-stage .pk-prism-btn.pk-glass-btn--primary,
+html.pk-warm-glass-active .pk-glass-btn--primary {
+  background: linear-gradient(
+    120deg,
+    rgba(255, 210, 130, 0.42) 0%,
+    rgba(230, 110, 50, 0.38) 48%,
+    rgba(200, 70, 90, 0.34) 100%
+  ) !important;
+}
+
+.pk-warm-glass-stage .pk-glass-btn--ghost,
+html.pk-warm-glass-active .pk-glass-btn--ghost {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: rgba(255, 252, 248, 0.9) !important;
+}
+
+.pk-warm-glass-stage .pk-glass-btn--ghost::before,
+html.pk-warm-glass-active .pk-glass-btn--ghost::before {
+  opacity: 0.38 !important;
+}
+
+.pk-warm-glass-stage .pk-glass-btn--ghost::after,
+html.pk-warm-glass-active .pk-glass-btn--ghost::after {
+  opacity: 0.4 !important;
+}
+
+.pk-warm-glass-stage .pk-glass-btn:hover:not(:disabled),
+html.pk-warm-glass-active .pk-glass-btn:hover:not(:disabled),
+.pk-warm-glass-stage .pk-prism-btn:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 180, 0.45),
+    inset 0 -1px 0 rgba(40, 16, 8, 0.18),
+    inset 3px 0 12px rgba(255, 180, 90, 0.16),
+    inset -3px 0 12px rgba(220, 80, 90, 0.12),
+    inset 0 0 0 1px rgba(255, 200, 150, 0.24),
+    0 12px 32px rgba(40, 16, 8, 0.32) !important;
+}
+
+/* Hero CTA landing (beam, drift, orbit, wave, spark) */
+.pk-warm-glass-stage .pk-hero-cta {
+  background: linear-gradient(
+    132deg,
+    rgba(255, 200, 120, 0.28) 0%,
+    rgba(230, 110, 50, 0.22) 40%,
+    rgba(200, 70, 90, 0.2) 100%
+  ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 180, 0.5),
+    inset 0 -1px 0 rgba(40, 16, 8, 0.2),
+    inset 0 0 0 1px rgba(255, 200, 150, 0.22),
+    0 6px 22px rgba(220, 90, 50, 0.2),
+    0 10px 32px rgba(40, 16, 8, 0.28) !important;
+}
+
+.pk-warm-glass-stage .pk-hero-cta::before {
+  background: linear-gradient(
+    168deg,
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(255, 210, 150, 0.28) 18%,
+    rgba(230, 120, 80, 0.12) 36%,
+    transparent 58%
+  ) !important;
+}
+
+.pk-warm-glass-stage .pk-hero-cta__fx,
+.pk-warm-glass-stage .pk-hero-cta--spark .pk-hero-cta__fx,
+.pk-warm-glass-stage .pk-hero-cta--beam .pk-hero-cta__fx,
+.pk-warm-glass-stage .pk-hero-cta--drift .pk-hero-cta__fx,
+.pk-warm-glass-stage .pk-hero-cta--orbit .pk-hero-cta__fx,
+.pk-warm-glass-stage .pk-hero-cta--wave .pk-hero-cta__fx {
+  background:
+    radial-gradient(ellipse 72% 52% at 18% 8%, rgba(255, 220, 160, 0.34), transparent 52%),
+    radial-gradient(ellipse 58% 44% at 88% 92%, rgba(230, 100, 50, 0.28), transparent 54%),
+    radial-gradient(ellipse 46% 36% at 72% 22%, rgba(200, 70, 90, 0.22), transparent 50%),
+    linear-gradient(118deg, rgba(255, 200, 90, 0.2) 0%, rgba(220, 80, 90, 0.18) 100%) !important;
+}
+
+.pk-warm-glass-stage .pk-hero-cta__label {
+  text-shadow: 0 1px 3px rgba(40, 16, 8, 0.35), 0 0 14px rgba(220, 90, 50, 0.18) !important;
+}
+
+.pk-warm-glass-stage .pk-hero-cta:hover:not(:active) {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 180, 0.58),
+    inset 0 0 0 1px rgba(255, 200, 150, 0.28),
+    0 8px 28px rgba(220, 90, 50, 0.28),
+    0 14px 40px rgba(40, 16, 8, 0.32) !important;
+}
+
+/* Loop card — bannière cover */
+.pk-warm-glass-stage .pk-loop-cover-banner {
+  padding: 0 !important;
+  border: 1.5px solid rgba(255, 252, 248, 0.88) !important;
+  background: transparent !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 8px 24px rgba(40, 16, 8, 0.28) !important;
+}
+
+.pk-warm-glass-stage .pk-loop-cover-banner .rounded-\[10px\] {
+  border-radius: 0.65rem;
+}
+
+/* Loop card — boutons Play / Save / actions */
+.pk-warm-glass-stage .pk-loop-play-btn--selected {
+  color: rgba(255, 252, 248, 0.98) !important;
+  background: linear-gradient(135deg, rgba(255, 200, 120, 0.28) 0%, rgba(200, 70, 90, 0.2) 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 180, 0.35),
+    inset 0 0 0 1px rgba(255, 160, 80, 0.35),
+    0 0 18px rgba(220, 90, 50, 0.18) !important;
+}
+
+.pk-warm-glass-stage .pk-loop-play-btn--playing,
+.pk-warm-glass-stage .pk-loop-toggle-btn--on,
+.pk-warm-glass-stage .pk-loop-toggle-btn--public {
+  color: rgba(255, 252, 248, 0.98) !important;
+  background: linear-gradient(120deg, #ffd066 0%, #e87828 44%, #c84858 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 180, 0.35),
+    inset 0 0 0 1px rgba(255, 200, 150, 0.22),
+    0 0 22px rgba(220, 90, 50, 0.24) !important;
+}
+
+.pk-warm-glass-stage .pk-loop-play-btn--playing svg,
+.pk-warm-glass-stage .pk-loop-toggle-btn--on svg,
+.pk-warm-glass-stage .pk-loop-toggle-btn--public svg {
+  filter: drop-shadow(0 1px 2px rgba(40, 16, 8, 0.35));
+}
+
+.pk-warm-glass-stage .pk-loop-card--active {
+  border-color: rgba(255, 160, 80, 0.32) !important;
+  background:
+    radial-gradient(520px circle at 0% 0%, rgba(220, 140, 60, 0.1), transparent 52%),
+    radial-gradient(480px circle at 100% 100%, rgba(200, 70, 90, 0.08), transparent 50%),
+    var(--warm-glass-surface) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 180, 0.1),
+    0 0 0 1px rgba(255, 160, 80, 0.14),
+    0 12px 40px rgba(40, 16, 8, 0.28) !important;
+}
+
+.pk-warm-glass-stage .pk-loop-cover--selected::after {
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 252, 248, 0.75),
+    0 0 14px rgba(220, 90, 50, 0.22) !important;
+}
+
+.pk-warm-glass-stage .pk-loop-cover--playing::after {
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 252, 248, 0.88),
+    0 0 18px rgba(230, 110, 50, 0.32),
+    0 0 28px rgba(200, 70, 90, 0.18) !important;
+}
+
+.pk-warm-glass-stage .pk-loop-card--playing {
+  border-color: rgba(255, 160, 120, 0.42) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 0 1px rgba(255, 140, 100, 0.22),
+    0 0 28px rgba(255, 160, 90, 0.14),
+    0 16px 48px rgba(255, 100, 120, 0.1) !important;
+}
+
+.pk-warm-glass-stage .pk-prism-live-badge__dot {
+  background: #ffb347 !important;
+  box-shadow: 0 0 10px rgba(255, 160, 90, 0.65);
+}
+
+.pk-warm-glass-stage .pk-studio-rail {
+  border-color: var(--warm-glass-border) !important;
+  background: linear-gradient(180deg, var(--warm-glass-surface-elevated), var(--warm-glass-surface)) !important;
+  backdrop-filter: blur(14px) saturate(1.3);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 180, 0.14),
+    0 0 0 1px rgba(255, 160, 90, 0.1),
+    0 20px 48px rgba(40, 16, 8, 0.28) !important;
+}
+
+/* ——— Accents dashboard (remplace le violet Tailwind / Prism hardcodé) ——— */
+.pk-warm-glass-stage .bg-pk-accent {
+  background: linear-gradient(120deg, #ffd066 0%, var(--prism-cyan) 42%, var(--prism-violet) 100%) !important;
+  color: rgba(255, 252, 248, 0.98) !important;
+}
+
+.pk-warm-glass-stage .text-pk-accent {
+  color: var(--prism-cyan) !important;
+}
+
+.pk-warm-glass-stage .bg-pk-accent\/15 {
+  background-color: rgba(255, 160, 100, 0.14) !important;
+}
+
+.pk-warm-glass-stage .bg-pk-accent\/11 {
+  background-color: rgba(255, 140, 120, 0.1) !important;
+}
+
+.pk-warm-glass-stage .border-pk-accent\/40 {
+  border-color: rgba(255, 140, 100, 0.35) !important;
+}
+
+.pk-warm-glass-stage .shadow-glow {
+  box-shadow:
+    0 0 0 1px rgba(255, 160, 100, 0.18),
+    0 10px 30px -20px rgba(255, 120, 140, 0.35) !important;
+}
+
+/* Nav sidebar + onglets mode */
+.pk-warm-glass-stage .pk-studio-nav-link--active {
+  border-color: var(--warm-glass-border) !important;
+  background: linear-gradient(145deg, rgba(255, 200, 140, 0.16), var(--warm-glass-surface-elevated)) !important;
+  color: rgba(255, 252, 248, 0.96) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 180, 0.14),
+    0 0 24px rgba(220, 90, 50, 0.18) !important;
+}
+
+.pk-warm-glass-stage .pk-studio-nav-link:hover {
+  border-color: rgba(255, 200, 150, 0.18) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+.pk-warm-glass-stage .pk-studio-nav-link--active .pk-studio-nav-indicator {
+  box-shadow: 0 0 12px rgba(255, 179, 71, 0.65) !important;
+}
+
+.pk-warm-glass-stage .pk-studio-nav-indicator {
+  background: linear-gradient(180deg, var(--prism-cyan), var(--prism-violet)) !important;
+}
+
+.pk-warm-glass-stage .pk-studio-workspace {
+  background:
+    radial-gradient(680px circle at 100% 0%, rgba(220, 140, 60, 0.1), transparent 58%),
+    radial-gradient(520px circle at 0% 100%, rgba(180, 60, 80, 0.08), transparent 52%),
+    linear-gradient(165deg, var(--warm-glass-surface-elevated), var(--warm-glass-surface)) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 180, 0.1),
+    0 16px 48px rgba(40, 16, 8, 0.24) !important;
+}
+
+.pk-warm-glass-stage .pk-studio-mode-rail {
+  border-color: var(--warm-glass-border) !important;
+  background: var(--warm-glass-surface) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: inset 0 1px 0 rgba(255, 220, 180, 0.1) !important;
+}
+
+.pk-warm-glass-stage .pk-studio-console {
+  box-shadow:
+    inset 1px 0 0 rgba(255, 255, 255, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 20px 56px rgba(160, 70, 40, 0.14) !important;
+}
+
+.pk-warm-glass-stage .pk-studio-console-header {
+  border-bottom-color: var(--warm-glass-border) !important;
+  background: linear-gradient(180deg, rgba(255, 200, 140, 0.08), transparent) !important;
+}
+
+.pk-warm-glass-stage .pk-prism-pill-active {
+  background: linear-gradient(120deg, #ffd066 0%, var(--prism-cyan) 42%, var(--prism-violet) 100%) !important;
+  color: rgba(255, 252, 248, 0.98) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 0 24px rgba(220, 90, 50, 0.22) !important;
+}
+
+.pk-warm-glass-stage .pk-studio-mode-rail .pk-prism-pill-active {
+  background: linear-gradient(120deg, #ffd066 0%, var(--prism-cyan) 42%, var(--prism-violet) 100%) !important;
+  color: rgba(255, 252, 248, 0.98) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 0 24px rgba(220, 90, 50, 0.22) !important;
+}
+
+.pk-warm-glass-stage .pk-prism-panel-glow {
+  background: linear-gradient(to bottom, rgba(255, 140, 100, 0.14), transparent) !important;
+}
+
+.pk-warm-glass-stage .pk-prism-progress-fill {
+  background: linear-gradient(120deg, #ffd066 0%, var(--prism-cyan) 42%, var(--prism-violet) 100%) !important;
+  box-shadow: 0 0 16px rgba(255, 140, 100, 0.24) !important;
+}
+
+/* Player dock */
+.pk-warm-glass-stage .pk-prism-player,
+.pk-warm-glass-stage .pk-prism-player-card,
+.pk-prism-player.pk-warm-glass-player {
+  background:
+    radial-gradient(900px circle at 12% 0%, rgba(220, 140, 60, 0.12), transparent 52%),
+    radial-gradient(700px circle at 92% 0%, rgba(180, 60, 80, 0.1), transparent 48%),
+    linear-gradient(165deg, var(--warm-glass-surface-elevated), var(--warm-glass-surface)) !important;
+  backdrop-filter: blur(20px) saturate(1.35);
+  -webkit-backdrop-filter: blur(20px) saturate(1.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 180, 0.12),
+    0 0 0 1px rgba(200, 80, 50, 0.12),
+    0 12px 40px rgba(40, 16, 8, 0.28) !important;
+}
+
+@media (min-width: 768px) {
+  .pk-prism-player.pk-warm-glass-player.pk-prism-player--dock-modern {
+    border-color: rgba(255, 200, 150, 0.2) !important;
+    border-radius: 1.25rem !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 220, 180, 0.16),
+      0 0 0 1px rgba(200, 80, 50, 0.14),
+      0 20px 52px rgba(40, 16, 8, 0.34),
+      0 6px 22px rgba(220, 90, 50, 0.12) !important;
+  }
+
+  .pk-prism-player.pk-warm-glass-player.pk-prism-player--dock-modern.pk-prism-player--collapsed {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 220, 180, 0.12),
+      0 0 0 1px rgba(200, 80, 50, 0.12),
+      0 14px 40px rgba(40, 16, 8, 0.3),
+      0 4px 16px rgba(220, 90, 50, 0.1) !important;
+  }
+}
+
+.pk-warm-glass-stage .pk-prism-player-btn--primary,
+.pk-prism-player.pk-warm-glass-player .pk-prism-player-btn--primary {
+  border-color: rgba(255, 200, 150, 0.22) !important;
+  background: linear-gradient(135deg, #e87828 0%, #c84858 52%, #c85028 100%) !important;
+  color: rgba(255, 252, 248, 0.98) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 180, 0.22),
+    0 0 24px rgba(220, 90, 50, 0.28) !important;
+}
+
+.pk-warm-glass-stage .pk-prism-live-dot {
+  background: var(--prism-cyan) !important;
+  box-shadow: 0 0 14px rgba(255, 160, 90, 0.5) !important;
+}
+
+.pk-warm-glass-stage .pk-prism-player-shimmer,
+.pk-prism-player.pk-warm-glass-player .pk-prism-player-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 160, 90, 0.55),
+    transparent
+  ) !important;
+}
+
+/* Bouton Générer — lisible + cohérent avec le verre chaud */
+.pk-warm-glass-stage .pk-landing-gen__cta-field {
+  background:
+    radial-gradient(ellipse 72% 88% at 28% 50%, rgba(255, 180, 120, 0.38), transparent 56%),
+    radial-gradient(ellipse 68% 82% at 74% 48%, rgba(255, 140, 170, 0.32), transparent 54%),
+    radial-gradient(ellipse 54% 64% at 50% 88%, rgba(255, 200, 120, 0.22), transparent 52%) !important;
+  opacity: 0.72 !important;
+}
+
+.pk-warm-glass-stage .pk-landing-gen__cta-field::before {
+  border-color: rgba(255, 160, 90, 0.22) !important;
+}
+
+.pk-warm-glass-stage .pk-landing-gen__cta-field::after {
+  border-color: rgba(255, 120, 140, 0.18) !important;
+}
+
+.pk-warm-glass-stage .pk-landing-gen__cta:not(.is-generating) {
+  color: rgba(255, 252, 248, 0.98) !important;
+  background: linear-gradient(
+    135deg,
+    #d87828 0%,
+    #c04058 48%,
+    #c85028 100%
+  ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 180, 0.28),
+    inset 0 -2px 8px rgba(40, 16, 8, 0.28),
+    inset 0 0 0 1px rgba(255, 200, 150, 0.18),
+    0 0 0 1px rgba(200, 80, 50, 0.22),
+    0 8px 28px rgba(40, 16, 8, 0.32),
+    0 0 40px rgba(220, 90, 50, 0.22) !important;
+}
+
+.pk-warm-glass-stage .pk-landing-gen__cta.is-generating {
+  color: rgba(255, 252, 248, 0.96) !important;
+}
+
+.pk-warm-glass-stage .pk-landing-gen__cta-liquid {
+  background:
+    radial-gradient(ellipse 88% 68% at 16% 8%, rgba(255, 220, 160, 0.28), transparent 52%),
+    radial-gradient(ellipse 58% 46% at 86% 94%, rgba(220, 80, 90, 0.22), transparent 54%),
+    radial-gradient(ellipse 46% 38% at 70% 16%, rgba(240, 110, 50, 0.18), transparent 50%),
+    radial-gradient(ellipse 38% 32% at 44% 82%, rgba(255, 190, 80, 0.12), transparent 46%) !important;
+}
+
+.pk-warm-glass-stage .pk-landing-gen__cta:not(.is-generating) .pk-landing-gen__cta-inner {
+  color: rgba(255, 252, 248, 0.98) !important;
+  text-shadow: 0 1px 3px rgba(40, 16, 8, 0.35) !important;
+}
+
+.pk-warm-glass-stage .pk-landing-gen__cta:not(.is-generating) .pk-landing-gen__cta-inner svg {
+  color: rgba(255, 240, 220, 0.95) !important;
+  opacity: 1;
+}
+
+.pk-warm-glass-stage .pk-landing-gen__cta.is-generating .pk-landing-gen__cta-inner {
+  color: rgba(255, 252, 248, 0.96) !important;
+  text-shadow: 0 1px 3px rgba(60, 25, 15, 0.45) !important;
+}
+
+.pk-warm-glass-stage .pk-landing-gen__cta::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 3;
+  opacity: 0.22;
+  mix-blend-mode: overlay;
+  background-image: var(--warm-grain-fine);
+  background-size: 64px 64px;
+}
+
+.pk-warm-glass-stage .pk-landing-gen__cta:hover:not(:disabled):not(.is-generating) {
+  filter: brightness(1.06) saturate(1.04);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 180, 0.32),
+    inset 0 -2px 8px rgba(40, 16, 8, 0.24),
+    inset 0 0 0 1px rgba(255, 200, 150, 0.22),
+    0 0 0 1px rgba(220, 90, 50, 0.28),
+    0 12px 36px rgba(40, 16, 8, 0.38),
+    0 0 52px rgba(240, 100, 50, 0.28) !important;
+}
+
+/* Waveforms (loader CSS) */
+.pk-warm-glass-stage .pk-waveform-loader--idle[role="button"]:hover {
+  border-color: rgba(255, 179, 71, 0.32) !important;
+}
+
+.pk-warm-glass-stage .pk-waveform-loader__baseline {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 179, 71, 0.14) 12%,
+    rgba(255, 120, 140, 0.4) 50%,
+    rgba(255, 179, 71, 0.14) 88%,
+    transparent 100%
+  ) !important;
+}
+
+.pk-warm-glass-stage .pk-waveform-loader__scan {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 179, 71, 0.08) 28%,
+    rgba(255, 120, 140, 0.24) 50%,
+    rgba(255, 179, 71, 0.08) 72%,
+    transparent 100%
+  ) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 179, 71, 0.1),
+    0 0 18px rgba(255, 160, 90, 0.14) !important;
+}
+
+.pk-warm-glass-stage .pk-waveform-loader__segment {
+  background: linear-gradient(
+    to top,
+    rgba(255, 120, 140, 0.38) 0%,
+    rgba(255, 179, 71, 0.78) 100%
+  ) !important;
+}
+
+.pk-warm-glass-stage .pk-waveform-loader__hint {
+  color: rgba(255, 179, 71, 0.6) !important;
+}
+
+/* Cartes dashboard */
+.pk-warm-glass-stage .pk-prism-card:hover {
+  border-color: rgba(255, 230, 200, 0.38) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 0 0 1px rgba(255, 190, 150, 0.18),
+    0 20px 56px rgba(80, 45, 55, 0.24) !important;
+}
+
+.pk-warm-glass-stage .absolute.rounded-full.bg-pk-accent {
+  background: linear-gradient(180deg, var(--prism-cyan), var(--prism-violet)) !important;
+}
+
+/* ——— Modules — verre sombre chaud (génération, progression, console) ——— */
+
+/* Footer génération desktop */
+.pk-warm-glass-stage .pk-studio-generate-dock {
+  border-top-color: var(--warm-glass-border) !important;
+  background: linear-gradient(
+    180deg,
+    var(--warm-glass-surface) 0%,
+    var(--warm-glass-surface-elevated) 100%
+  ) !important;
+  backdrop-filter: blur(20px) saturate(1.35);
+  -webkit-backdrop-filter: blur(20px) saturate(1.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 180, 0.12),
+    0 -8px 28px rgba(40, 16, 8, 0.28) !important;
+}
+
+/* Footer génération mobile */
+.pk-warm-glass-stage .pk-dashboard-mobile-footer {
+  border-top-color: var(--warm-glass-border) !important;
+  background: linear-gradient(
+    180deg,
+    var(--warm-glass-surface) 0%,
+    var(--warm-glass-surface-elevated) 100%
+  ) !important;
+  backdrop-filter: blur(20px) saturate(1.35) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.35) !important;
+  box-shadow: 0 -8px 28px rgba(40, 16, 8, 0.28) !important;
+}
+
+.pk-warm-glass-stage .pk-studio-generate-dock .text-gray-500,
+.pk-warm-glass-stage .pk-dashboard-mobile-footer .text-gray-500,
+.pk-warm-glass-stage .pk-studio-generate-dock .text-gray-600,
+.pk-warm-glass-stage .pk-dashboard-mobile-footer .text-gray-600 {
+  color: rgba(255, 248, 240, 0.62) !important;
+  text-shadow: none !important;
+}
+
+.pk-warm-glass-stage .pk-studio-generate-dock .text-white\/45,
+.pk-warm-glass-stage .pk-studio-generate-dock .text-white\/50,
+.pk-warm-glass-stage .pk-dashboard-mobile-footer .text-white\/45,
+.pk-warm-glass-stage .pk-dashboard-mobile-footer .text-white\/50 {
+  color: rgba(255, 248, 240, 0.55) !important;
+  text-shadow: none !important;
+}
+
+.pk-warm-glass-stage .pk-studio-generate-dock .text-cyan-200\/70,
+.pk-warm-glass-stage .pk-dashboard-mobile-footer .text-cyan-200\/70 {
+  color: rgba(255, 210, 150, 0.82) !important;
+}
+
+.pk-warm-glass-stage .pk-studio-generate-dock .bg-white\/5,
+.pk-warm-glass-stage .pk-dashboard-mobile-footer .bg-white\/5 {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 200, 150, 0.14);
+}
+
+.pk-warm-glass-stage .pk-studio-generate-dock .pk-prism-pill-active,
+.pk-warm-glass-stage .pk-dashboard-mobile-footer .pk-prism-pill-active {
+  color: rgba(255, 252, 248, 0.96) !important;
+}
+
+/* Panneau console création (colonne gauche) */
+.pk-warm-glass-stage .pk-studio-console {
+  background: var(--warm-glass-surface) !important;
+  border-color: var(--warm-glass-border) !important;
+}
+
+.pk-warm-glass-stage .pk-studio-console .text-white\/50,
+.pk-warm-glass-stage .pk-studio-console .text-white\/55,
+.pk-warm-glass-stage .pk-studio-console .text-white\/60,
+.pk-warm-glass-stage .pk-studio-console .text-white\/45 {
+  color: rgba(255, 246, 238, 0.72) !important;
+  text-shadow: 0 1px 8px rgba(40, 16, 8, 0.22);
+}
+
+.pk-warm-glass-stage .pk-studio-console-header,
+.pk-warm-glass-stage .pk-studio-section {
+  border-color: var(--warm-glass-border) !important;
+}
+
+.pk-warm-glass-stage .pk-studio-section__title {
+  color: rgba(255, 200, 120, 0.92) !important;
+  text-shadow: 0 1px 8px rgba(40, 16, 8, 0.28);
+}
+
+/* Onglets mobile Créer / Résultats */
+.pk-warm-glass-stage .pk-dashboard-mobile-tabs {
+  background: var(--warm-glass-surface-elevated) !important;
+  box-shadow: inset 0 0 0 1px var(--warm-glass-border);
+  --tw-ring-color: rgba(255, 200, 150, 0.18) !important;
+}
+
+.pk-warm-glass-stage .pk-dashboard-mobile-tabs button:not(.pk-prism-pill-active) {
+  color: rgba(255, 248, 240, 0.58) !important;
+}
+
+.pk-warm-glass-stage .pk-dashboard-mobile-tabs button:not(.pk-prism-pill-active):hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: rgba(255, 252, 248, 0.88) !important;
+}
+
+.pk-warm-glass-stage .pk-mobile-tab-badge {
+  background: rgba(255, 160, 80, 0.28) !important;
+  color: #ffd4a8 !important;
+}
+
+.pk-warm-glass-stage .pk-dashboard-mobile-tabs .pk-mobile-tab-active {
+  box-shadow: 0 0 20px rgba(220, 90, 50, 0.22) !important;
+}
+
+.pk-warm-glass-stage .pk-mobile-gen-notice--busy {
+  border-color: rgba(255, 160, 80, 0.28) !important;
+  background: rgba(38, 16, 10, 0.88) !important;
+  box-shadow: 0 0 24px rgba(220, 90, 50, 0.14) !important;
+}
+
+.pk-warm-glass-stage .pk-mobile-gen-notice__icon-box {
+  box-shadow: inset 0 0 0 1px rgba(255, 160, 80, 0.38) !important;
+}
+
+.pk-warm-glass-stage .pk-mobile-gen-notice__icon {
+  color: #ffb347 !important;
+}
+
+.pk-warm-glass-stage .pk-mobile-gen-notice__badge {
+  background: rgba(255, 140, 70, 0.24) !important;
+  color: #ffd4a8 !important;
+}
+
+.pk-warm-glass-stage .pk-loop-details-stat-label {
+  color: rgba(255, 200, 130, 0.72) !important;
+  text-shadow: 0 1px 8px rgba(40, 16, 8, 0.22);
+}
+
+/* Nav mobile bas (sidebar) */
+.pk-warm-glass-stage .pk-app-shell-mobile-nav {
+  border-top-color: var(--warm-glass-border) !important;
+  background: var(--warm-glass-surface-elevated) !important;
+  backdrop-filter: blur(22px) saturate(1.35);
+  -webkit-backdrop-filter: blur(22px) saturate(1.35);
+}
+
+.pk-warm-glass-stage .pk-app-shell-mobile-nav .text-pk-muted {
+  color: rgba(255, 248, 240, 0.62) !important;
+  text-shadow: none !important;
+}
+
+.pk-warm-glass-stage .pk-app-shell-mobile-nav .text-pk-text,
+.pk-warm-glass-stage .pk-app-shell-mobile-nav .hover\:text-pk-text:hover {
+  color: rgba(255, 252, 248, 0.92) !important;
+}
+
+.pk-warm-glass-stage .pk-app-shell-mobile-nav .bg-pk-accent\/15 {
+  background-color: rgba(255, 160, 80, 0.18) !important;
+}
+
+/* Encart progression / gaming */
+.pk-warm-glass-stage .pk-gaming-panel-shell {
+  border-color: var(--warm-glass-border) !important;
+  background: var(--warm-glass-surface) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 180, 0.12),
+    0 14px 40px rgba(40, 16, 8, 0.28) !important;
+}
+
+.pk-warm-glass-stage .pk-gaming-panel-shell__glow {
+  background: linear-gradient(
+    to bottom right,
+    rgba(255, 180, 80, 0.18),
+    transparent 45%,
+    rgba(220, 80, 90, 0.14)
+  ) !important;
+}
+
+.pk-warm-glass-stage .pk-gaming-panel-shell__body {
+  background: var(--warm-glass-surface-elevated) !important;
+  backdrop-filter: blur(18px) saturate(1.3);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+}
+
+.pk-warm-glass-stage .pk-gaming-panel-shell__body > div:first-child {
+  border-bottom-color: var(--warm-glass-border) !important;
+}
+
+.pk-warm-glass-stage .pk-gaming-panel-shell .text-white {
+  color: rgba(255, 252, 248, 0.96) !important;
+  text-shadow: 0 1px 8px rgba(40, 16, 8, 0.22);
+}
+
+.pk-warm-glass-stage .pk-gaming-panel-shell .text-white\/40,
+.pk-warm-glass-stage .pk-gaming-panel-shell .text-white\/42,
+.pk-warm-glass-stage .pk-gaming-panel-shell .text-white\/45,
+.pk-warm-glass-stage .pk-gaming-panel-shell .text-white\/55,
+.pk-warm-glass-stage .pk-gaming-panel-shell .text-white\/85 {
+  color: rgba(255, 248, 240, 0.68) !important;
+}
+
+.pk-warm-glass-stage .pk-gaming-panel-shell .bg-white\/\[0\.04\],
+.pk-warm-glass-stage .pk-gaming-panel-shell .bg-white\/\[0\.06\] {
+  background-color: var(--warm-field-bg) !important;
+  background-image: linear-gradient(155deg, rgba(255, 220, 180, 0.09), rgba(48, 22, 14, 0.56)) !important;
+}
+
+.pk-warm-glass-stage .pk-gaming-panel-shell .border-white\/10,
+.pk-warm-glass-stage .pk-gaming-panel-shell .border-white\/\[0\.06\] {
+  border-color: rgba(255, 200, 150, 0.16) !important;
+}
+
+.pk-warm-glass-stage .pk-gaming-panel-shell [class*="from-violet"] {
+  --tw-gradient-from: rgba(255, 190, 90, 0.45) var(--tw-gradient-from-position);
+  --tw-gradient-to: rgba(255, 190, 90, 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+
+.pk-warm-glass-stage .pk-gaming-panel-shell [class*="to-cyan"] {
+  --tw-gradient-to: rgba(255, 150, 180, 0.35) var(--tw-gradient-to-position);
+}
+
+.pk-warm-glass-stage .pk-gaming-panel-shell .bg-gradient-to-r.from-violet-400,
+.pk-warm-glass-stage .pk-gaming-panel-shell .bg-gradient-to-r.from-violet-300 {
+  background: linear-gradient(to right, #e8a830, #c84858) !important;
+}
+
+/* Spotlight billboard */
+.pk-warm-glass-stage .pk-dashboard-spotlight-banner {
+  border-color: var(--warm-glass-border) !important;
+  background: linear-gradient(
+    to right,
+    rgba(200, 120, 40, 0.22),
+    var(--warm-glass-surface),
+    rgba(180, 60, 80, 0.18)
+  ) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Barres de progression (Settings, gaming, etc.) */
+.pk-warm-glass-stage .pk-prism-progress-track {
+  background: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: inset 0 1px 2px rgba(40, 16, 8, 0.22);
+}
+
+/* Cartes génération en cours */
+.pk-warm-glass-stage .pk-gen-loading-card {
+  background: var(--warm-glass-surface-elevated) !important;
+  border-color: var(--warm-glass-border) !important;
+  box-shadow: 0 0 28px rgba(220, 90, 50, 0.16) !important;
+}
+
+.pk-warm-glass-stage .pk-gen-loading-card .pk-gen-loading-shimmer {
+  opacity: 0.55 !important;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(255, 200, 120, 0.22) 42%,
+    rgba(255, 150, 180, 0.32) 50%,
+    rgba(255, 200, 120, 0.22) 58%,
+    transparent 100%
+  ) !important;
+}
+
+.pk-warm-glass-stage .pk-generation-progress-track {
+  background: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: inset 0 1px 2px rgba(40, 16, 8, 0.22);
+}
+
+.pk-warm-glass-stage .pk-generation-progress-fill {
+  background: linear-gradient(
+    90deg,
+    rgba(220, 120, 55, 0.95) 0%,
+    rgba(255, 170, 90, 0.98) 45%,
+    rgba(255, 140, 160, 0.95) 100%
+  ) !important;
+  box-shadow: 0 0 12px rgba(255, 150, 80, 0.35);
+}
+
+.pk-warm-glass-stage .pk-gen-loading-card .pk-gen-loading-pct {
+  color: rgba(255, 200, 140, 0.95) !important;
+}
+
+/* Carré icône génération — warm (plus de violet / bleu) */
+html.pk-warm-glass-active .pk-gen-loading-icon-box,
+.pk-warm-glass-stage .pk-gen-loading-icon-box {
+  border-color: rgba(255, 160, 80, 0.38) !important;
+  background: linear-gradient(145deg, rgba(255, 170, 90, 0.2), rgba(200, 70, 90, 0.14)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 180, 0.14),
+    0 0 18px rgba(220, 90, 50, 0.14) !important;
+}
+
+html.pk-warm-glass-active .pk-gen-loading-icon-box::before,
+.pk-warm-glass-stage .pk-gen-loading-icon-box::before {
+  background: radial-gradient(circle at 50% 50%, rgba(255, 160, 80, 0.42), transparent 58%) !important;
+  opacity: 0.72 !important;
+}
+
+html.pk-warm-glass-active .pk-gen-loading-card .pk-icon-loader__icon,
+.pk-warm-glass-stage .pk-gen-loading-card .pk-icon-loader__icon {
+  color: #ffb347 !important;
+  filter: drop-shadow(0 0 8px rgba(255, 140, 80, 0.45)) !important;
+  animation: pkIconLoaderColorWarm 2.4s ease-in-out infinite !important;
+}
+
+html.pk-warm-glass-active .pk-gen-loading-card .pk-icon-loader__ring,
+.pk-warm-glass-stage .pk-gen-loading-card .pk-icon-loader__ring {
+  inset: -22% !important;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(255, 160, 80, 0.34),
+    rgba(220, 90, 50, 0.12) 58%,
+    transparent 72%
+  ) !important;
+}
+
+html.pk-warm-glass-active .pk-gen-loading-card .pk-waveform-loader__grid,
+.pk-warm-glass-stage .pk-gen-loading-card .pk-waveform-loader__grid {
+  background-image:
+    linear-gradient(rgba(255, 179, 71, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 179, 71, 0.06) 1px, transparent 1px) !important;
+}
+
+/* Auth — panneau login / signup */
+html.pk-warm-glass-active .pk-auth-panel,
+.pk-warm-glass-stage .pk-auth-panel {
+  border-color: var(--warm-glass-border) !important;
+  background: linear-gradient(165deg, var(--warm-glass-surface-elevated), var(--warm-glass-surface)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 180, 0.1),
+    0 24px 70px rgba(32, 12, 6, 0.42) !important;
+}
+
+html.pk-warm-glass-active .pk-auth-logo-hit,
+.pk-warm-glass-stage .pk-auth-logo-hit {
+  background-image: linear-gradient(90deg, #ffd4a8, #ff7040, #ffb347) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+}
+
+html.pk-warm-glass-active .pk-auth-tab-active,
+.pk-warm-glass-stage .pk-auth-tab-active {
+  background: linear-gradient(120deg, #e87828 0%, #c84858 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 180, 0.22),
+    0 4px 16px rgba(220, 90, 50, 0.22) !important;
+}
+
+html.pk-warm-glass-active .pk-auth-tabs,
+.pk-warm-glass-stage .pk-auth-tabs {
+  border-color: var(--warm-glass-border) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* En-tête workspace + panneau détail */
+.pk-warm-glass-stage .pk-studio-workspace-header {
+  border-color: var(--warm-glass-border) !important;
+  background:
+    radial-gradient(480px circle at 0% 0%, rgba(220, 140, 60, 0.14), transparent 55%),
+    linear-gradient(135deg, var(--warm-glass-surface-elevated), var(--warm-glass-surface)) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 220, 180, 0.1) !important;
+}
+
+.pk-warm-glass-stage .pk-studio-detail-panel {
+  border-color: var(--warm-glass-border) !important;
+  background:
+    radial-gradient(560px circle at 18% 0%, rgba(220, 100, 60, 0.12), transparent 54%),
+    linear-gradient(165deg, var(--warm-glass-surface-elevated), var(--warm-glass-surface)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 180, 0.1),
+    0 0 0 1px rgba(200, 80, 50, 0.1),
+    0 20px 56px rgba(40, 16, 8, 0.28) !important;
+}
+
+/* Waveform loader */
+.pk-warm-glass-stage .pk-waveform-loader {
+  background: linear-gradient(180deg, var(--warm-glass-surface-elevated) 0%, var(--warm-glass-surface) 100%) !important;
+  border-color: var(--warm-glass-border) !important;
+}
+
+/* Fiche info mobile + onboarding — portaled sur body */
+html.pk-warm-glass-active .pk-loop-details-sheet {
+  border-color: var(--warm-glass-border) !important;
+  background: linear-gradient(
+    180deg,
+    rgba(48, 22, 14, 0.96),
+    rgba(38, 16, 10, 0.98)
+  ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 180, 0.1),
+    0 -24px 80px rgba(40, 16, 8, 0.55) !important;
+}
+
+html.pk-warm-glass-active .pk-loop-details-sheet-header {
+  background: rgba(48, 22, 14, 0.92) !important;
+  border-bottom-color: var(--warm-glass-border) !important;
+}
+
+html.pk-warm-glass-active .pk-loop-details-sheet .text-pk-muted,
+html.pk-warm-glass-active .pk-loop-details-sheet .pk-loop-details-stat-label {
+  color: rgba(255, 200, 130, 0.72) !important;
+  text-shadow: 0 1px 8px rgba(40, 16, 8, 0.22);
+}
+
+html.pk-warm-glass-active .pk-loop-details-sheet .text-pk-text {
+  color: rgba(255, 252, 248, 0.94) !important;
+}
+
+html.pk-warm-glass-active .pk-loop-details-sheet .border-white\/\[0\.08\],
+html.pk-warm-glass-active .pk-loop-details-sheet .border-white\/10 {
+  border-color: var(--warm-glass-border) !important;
+}
+
+html.pk-warm-glass-active .pk-loop-details-sheet .bg-white\/\[0\.04\] {
+  background: rgba(255, 200, 140, 0.06) !important;
+}
+
+html.pk-warm-glass-active .pk-mobile-onboarding-sheet {
+  border-color: var(--warm-glass-border) !important;
+  background: linear-gradient(
+    180deg,
+    rgba(48, 22, 14, 0.96),
+    rgba(38, 16, 10, 0.98)
+  ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 180, 0.1),
+    0 -24px 80px rgba(40, 16, 8, 0.55) !important;
+}
+
+html.pk-warm-glass-active .pk-mobile-onboarding-icon-box--0 .pk-mobile-onboarding-icon {
+  color: #ffb347 !important;
+}
+
+html.pk-warm-glass-active .pk-mobile-onboarding-icon-box--1 .pk-mobile-onboarding-icon {
+  color: #ff8a65 !important;
+}
+
+html.pk-warm-glass-active .pk-mobile-onboarding-icon-box--2 .pk-mobile-onboarding-icon {
+  color: #ffd4a8 !important;
+}
+
+html.pk-warm-glass-active .pk-mobile-onboarding-dot--active {
+  background: linear-gradient(90deg, #ffb347, #e85a78) !important;
+}
+
+/* Dropdowns portaled (genre, langue vocale…) — hors .pk-warm-glass-stage */
+html.pk-warm-glass-active {
+  --warm-glass-surface: rgba(38, 16, 10, 0.52);
+  --warm-glass-surface-elevated: rgba(48, 22, 14, 0.68);
+  --warm-glass-border: rgba(255, 195, 150, 0.28);
+  --warm-field-bg: rgba(48, 22, 14, 0.62);
+  --warm-field-bg-focus: rgba(58, 28, 16, 0.74);
+  --warm-field-border: rgba(255, 195, 150, 0.28);
+  --warm-field-border-focus: rgba(255, 160, 80, 0.55);
+  --warm-field-text: rgba(255, 252, 248, 0.94);
+  --warm-field-placeholder: rgba(255, 220, 180, 0.46);
+  --warm-field-readonly-bg: rgba(40, 18, 10, 0.5);
+  --prism-cyan: #ffb347;
+  --prism-violet: #e85a78;
+  --prism-chrome: #fff8f0;
+}
+
+html.pk-warm-glass-active .pk-dropdown-panel {
+  border-color: var(--warm-glass-border) !important;
+  background: linear-gradient(
+    165deg,
+    var(--warm-glass-surface-elevated),
+    var(--warm-glass-surface)
+  ) !important;
+  backdrop-filter: blur(22px) saturate(1.35);
+  -webkit-backdrop-filter: blur(22px) saturate(1.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 180, 0.1),
+    0 24px 70px rgba(40, 16, 8, 0.48) !important;
+}
+
+html.pk-warm-glass-active .pk-dropdown-panel .text-pk-text,
+html.pk-warm-glass-active .pk-dropdown-panel button[role="option"] {
+  color: rgba(255, 252, 248, 0.94) !important;
+}
+
+html.pk-warm-glass-active .pk-dropdown-panel .text-pk-muted {
+  color: rgba(255, 248, 240, 0.58) !important;
+}
+
+html.pk-warm-glass-active .pk-dropdown-panel .border-pk-border,
+html.pk-warm-glass-active .pk-dropdown-panel .border-pk-border\/60,
+html.pk-warm-glass-active .pk-dropdown-panel .border-pk-border\/70 {
+  border-color: var(--warm-glass-border) !important;
+}
+
+html.pk-warm-glass-active .pk-dropdown-panel .bg-pk-input,
+html.pk-warm-glass-active .pk-dropdown-panel .bg-white\/3 {
+  background-color: var(--warm-field-bg) !important;
+  background-image: linear-gradient(155deg, rgba(255, 220, 180, 0.08), rgba(48, 22, 14, 0.55)) !important;
+}
+
+html.pk-warm-glass-active .pk-dropdown-panel input {
+  color: var(--warm-field-text) !important;
+}
+
+html.pk-warm-glass-active input.bg-pk-input:not([type="checkbox"]):not([type="radio"]),
+html.pk-warm-glass-active textarea.bg-pk-input {
+  background-color: var(--warm-field-bg) !important;
+  background-image: linear-gradient(155deg, rgba(255, 220, 180, 0.1), rgba(48, 22, 14, 0.58)) !important;
+  border-color: var(--warm-field-border) !important;
+  color: var(--warm-field-text) !important;
+}
+
+html.pk-warm-glass-active input.bg-pk-input::placeholder,
+html.pk-warm-glass-active textarea.bg-pk-input::placeholder,
+html.pk-warm-glass-active .placeholder\:text-pk-muted::placeholder {
+  color: var(--warm-field-placeholder) !important;
+  opacity: 1 !important;
+}
+
+html.pk-warm-glass-active .pk-dropdown-panel input:focus,
+html.pk-warm-glass-active .pk-warm-glass-stage .bg-pk-input:focus,
+html.pk-warm-glass-active .pk-warm-glass-stage button.border-pk-accent\/60 {
+  border-color: rgba(255, 160, 80, 0.55) !important;
+  --tw-ring-color: rgba(255, 140, 80, 0.22) !important;
+}
+
+html.pk-warm-glass-active .pk-dropdown-panel button[role="option"]:hover,
+html.pk-warm-glass-active .pk-dropdown-panel button[role="option"].bg-pk-accent\/15 {
+  background-color: rgba(255, 160, 80, 0.14) !important;
+}
+
+html.pk-warm-glass-active .pk-dropdown-panel .text-pk-accent {
+  color: #ffb347 !important;
+}
+
+/* Trigger ouvert (genre / langue dans la console) */
+.pk-warm-glass-stage button.border-pk-accent\/60 {
+  border-color: rgba(255, 160, 80, 0.5) !important;
+  --tw-ring-color: rgba(255, 140, 80, 0.22) !important;
+}
+
+/* EN / FR sidebar — actif lisible */
+.pk-warm-glass-stage button.bg-pk-accent\/15.text-pk-accent {
+  color: rgba(255, 252, 248, 0.92) !important;
+}
+
+/* ——— Scrollbars ambre (override global * { scrollbar-color: #2d2d3d }) ——— */
+html.pk-warm-glass-active,
+html.pk-warm-glass-active *,
+.pk-warm-glass-stage,
+.pk-warm-glass-stage * {
+  scrollbar-color: rgba(230, 140, 70, 0.72) rgba(55, 24, 12, 0.55);
+}
+
+html.pk-warm-glass-active ::-webkit-scrollbar,
+html.pk-warm-glass-active *::-webkit-scrollbar,
+.pk-warm-glass-stage ::-webkit-scrollbar,
+.pk-warm-glass-stage *::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+html.pk-warm-glass-active ::-webkit-scrollbar-track,
+html.pk-warm-glass-active *::-webkit-scrollbar-track,
+.pk-warm-glass-stage ::-webkit-scrollbar-track,
+.pk-warm-glass-stage *::-webkit-scrollbar-track {
+  background: rgba(55, 24, 12, 0.5);
+  border-radius: 999px;
+}
+
+html.pk-warm-glass-active ::-webkit-scrollbar-thumb,
+html.pk-warm-glass-active *::-webkit-scrollbar-thumb,
+.pk-warm-glass-stage ::-webkit-scrollbar-thumb,
+.pk-warm-glass-stage *::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(255, 190, 100, 0.85), rgba(220, 100, 50, 0.78));
+  border-radius: 999px;
+  border: 2px solid rgba(55, 24, 12, 0.45);
+}
+
+html.pk-warm-glass-active ::-webkit-scrollbar-thumb:hover,
+html.pk-warm-glass-active *::-webkit-scrollbar-thumb:hover,
+.pk-warm-glass-stage ::-webkit-scrollbar-thumb:hover,
+.pk-warm-glass-stage *::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(255, 210, 120, 0.95), rgba(240, 120, 55, 0.88));
+}
+
+/* ——— Landing ——— */
+.pk-warm-glass-stage.pk-prism-stage--landing {
+  background:
+    radial-gradient(ellipse 86% 70% at 8% 34%, #c89838 0%, transparent 58%),
+    radial-gradient(ellipse 74% 68% at 50% 70%, #a83858 0%, transparent 60%),
+    radial-gradient(ellipse 68% 60% at 92% 26%, #c85028 0%, transparent 54%),
+    radial-gradient(ellipse 56% 48% at 74% 82%, #b84048 0%, transparent 52%),
+    radial-gradient(ellipse 60% 52% at 18% 88%, #a87828 0%, transparent 50%),
+    linear-gradient(148deg, #8a6020 0%, #963848 32%, #a84828 62%, #7a3018 100%) !important;
+}
+
+.pk-warm-glass-stage.pk-prism-stage--landing::before {
+  display: none !important;
+}
+
+.pk-warm-glass-stage.pk-prism-stage--landing .pk-landing-header--scrolled {
+  background: rgba(48, 22, 14, 0.72) !important;
+  border-bottom: 1px solid var(--warm-glass-border) !important;
+  box-shadow: 0 6px 28px rgba(40, 16, 8, 0.32) !important;
+}
+
+.pk-warm-glass-stage .pk-landing-header .border-white\/10 {
+  border-color: var(--warm-glass-border) !important;
+}
+
+.pk-warm-glass-stage .pk-prism-card .text-\[var\(--prism-cyan\)\] {
+  color: var(--prism-cyan) !important;
+}
+
+/* ——— Communauté (Le Flux) ——— */
+.pk-warm-glass-stage .pk-hub-hero {
+  border-color: var(--warm-glass-border) !important;
+  background: var(--warm-glass-surface-elevated) !important;
+}
+
+.pk-warm-glass-stage .pk-hub-hero__mesh {
+  background:
+    radial-gradient(680px circle at 8% -10%, rgba(220, 160, 60, 0.2), transparent 55%),
+    radial-gradient(520px circle at 92% 110%, rgba(180, 60, 80, 0.18), transparent 52%),
+    radial-gradient(400px circle at 50% 50%, rgba(220, 90, 45, 0.08), transparent 60%) !important;
+}
+
+.pk-warm-glass-stage .pk-hub-hero__orb--a {
+  background: rgba(220, 140, 50, 0.32) !important;
+}
+
+.pk-warm-glass-stage .pk-hub-hero__orb--b {
+  background: rgba(200, 70, 90, 0.28) !important;
+}
+
+.pk-warm-glass-stage .pk-hub-hero__card {
+  border-color: var(--warm-glass-border) !important;
+  background: var(--warm-glass-surface) !important;
+}
+
+.pk-warm-glass-stage .pk-hub-nav {
+  border-color: var(--warm-glass-border) !important;
+  background: var(--warm-glass-surface-elevated) !important;
+}
+
+.pk-warm-glass-stage .pk-hub-nav.bg-\[\#06060c\]\/90 {
+  background: var(--warm-glass-surface-elevated) !important;
+}
+
+.pk-warm-glass-stage .pk-hub-vibe-tile {
+  border-color: rgba(255, 200, 150, 0.14) !important;
+  background: var(--warm-glass-surface) !important;
+}
+
+.pk-warm-glass-stage .pk-hub-vibe-tile:hover {
+  border-color: rgba(255, 160, 80, 0.35) !important;
+  box-shadow: 0 8px 24px rgba(40, 16, 8, 0.22);
+}
+
+.pk-warm-glass-stage .pk-hub-vibe-tile--active {
+  border-color: rgba(255, 160, 80, 0.45) !important;
+  box-shadow: 0 0 32px rgba(220, 90, 50, 0.18) !important;
+}
+
+.pk-warm-glass-stage .pk-hub-vibe-tile--active .pk-hub-vibe-tile__glow {
+  opacity: 0.28 !important;
+}
+
+.pk-warm-glass-stage .pk-prism-input-shell input {
+  background: var(--warm-field-bg) !important;
+  background-image: linear-gradient(155deg, rgba(255, 220, 180, 0.1), rgba(48, 22, 14, 0.58)) !important;
+  border-color: var(--warm-field-border) !important;
+  color: var(--warm-field-text) !important;
+}
+
+.pk-warm-glass-stage .pk-prism-input-shell input::placeholder {
+  color: var(--warm-field-placeholder) !important;
+}
+
+.pk-warm-glass-stage .pk-prism-input-shell input:focus {
+  border-color: rgba(255, 160, 80, 0.5) !important;
+  box-shadow: 0 0 0 1px rgba(255, 140, 80, 0.18) !important;
+}
+
+.pk-warm-glass-stage .pk-prism-input-shell svg {
+  color: rgba(255, 200, 120, 0.65) !important;
+}
+
+/* ——— Paramètres / profil (champs bio, réseaux) ——— */
+.pk-warm-glass-stage .pk-prism-section-card {
+  border-color: var(--warm-glass-border) !important;
+  background: linear-gradient(165deg, var(--warm-glass-surface-elevated), var(--warm-glass-surface)) !important;
+}
+
+.pk-warm-glass-stage .pk-prism-section-card input,
+.pk-warm-glass-stage .pk-prism-section-card textarea {
+  background: var(--warm-field-bg) !important;
+  background-image: linear-gradient(155deg, rgba(255, 220, 180, 0.1), rgba(48, 22, 14, 0.58)) !important;
+  border-color: var(--warm-field-border) !important;
+  color: var(--warm-field-text) !important;
+}
+
+.pk-warm-glass-stage .pk-prism-section-card input::placeholder,
+.pk-warm-glass-stage .pk-prism-section-card textarea::placeholder {
+  color: var(--warm-field-placeholder) !important;
+  opacity: 1;
+}
+
+.pk-warm-glass-stage .pk-prism-section-card input:focus,
+.pk-warm-glass-stage .pk-prism-section-card textarea:focus {
+  border-color: rgba(255, 160, 80, 0.5) !important;
+  box-shadow: 0 0 0 1px rgba(255, 140, 80, 0.16) !important;
+}
+
+.pk-warm-glass-stage .pk-prism-section-head__icon {
+  border-color: var(--warm-glass-border) !important;
+  background: rgba(255, 160, 80, 0.1) !important;
+  color: #ffb347 !important;
+}
+
+.pk-warm-glass-stage .pk-prism-vibe-chip {
+  border-color: var(--warm-glass-border) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: rgba(255, 248, 240, 0.78) !important;
+}
+
+/* ——— Footer landing ——— */
+html.pk-warm-glass-active .pk-landing-footer,
+body[data-pk-warm-glass="1"] .pk-landing-footer {
+  border-top-color: var(--warm-glass-border) !important;
+  background: linear-gradient(180deg, rgba(58, 26, 14, 0.98) 0%, rgba(38, 16, 10, 1) 100%) !important;
+}
+
+html.pk-warm-glass-active .pk-landing-footer::before,
+body[data-pk-warm-glass="1"] .pk-landing-footer::before {
+  background: radial-gradient(ellipse at 50% 0%, rgba(220, 140, 60, 0.16), transparent 55%) !important;
+}
+
+html.pk-warm-glass-active .pk-footer-heart,
+.pk-warm-glass-stage .pk-footer-heart {
+  color: #ff8c42;
+  text-shadow: 0 0 12px rgba(255, 140, 80, 0.45);
+}
+
+html.pk-warm-glass-active .pk-landing-footer .text-\[var\(--prism-cyan\)\] {
+  color: #ffb347 !important;
+}
+
+html.pk-warm-glass-active .pk-footer-social__link {
+  border-color: rgba(255, 200, 150, 0.14) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+html.pk-warm-glass-active .pk-footer-social__link--tt::before {
+  background: linear-gradient(135deg, rgba(255, 160, 80, 0.18), rgba(255, 255, 255, 0.06)) !important;
+}
+
+html.pk-warm-glass-active .pk-footer-social__link--tt:hover {
+  border-color: rgba(255, 160, 80, 0.38) !important;
+  box-shadow: 0 8px 28px rgba(220, 90, 50, 0.16) !important;
+}
+
+/* ——— Chargement entre pages (Suspense) ——— */
+html.pk-warm-glass-active .pk-page-loader {
+  min-height: 70vh;
+  background:
+    radial-gradient(ellipse 70% 55% at 20% 40%, rgba(200, 120, 40, 0.2), transparent 58%),
+    radial-gradient(ellipse 60% 50% at 80% 60%, rgba(180, 60, 80, 0.14), transparent 55%),
+    transparent;
+}
+
+html.pk-warm-glass-active .pk-icon-loader__ring {
+  background: radial-gradient(
+    circle,
+    rgba(255, 160, 80, 0.32),
+    rgba(220, 90, 50, 0.12) 58%,
+    transparent 72%
+  ) !important;
+}
+
+html.pk-warm-glass-active .pk-icon-loader__icon {
+  color: #ffb347 !important;
+  filter: drop-shadow(0 0 12px rgba(255, 140, 80, 0.42)) !important;
+  animation: pkIconLoaderColorWarm 2.4s ease-in-out infinite !important;
+}
+
+html.pk-warm-glass-active .pk-icon-loader__label {
+  color: rgba(255, 252, 248, 0.92) !important;
+}
+
+html.pk-warm-glass-active .pk-icon-loader__sublabel {
+  color: rgba(255, 200, 120, 0.72) !important;
+}
+
+@keyframes pkIconLoaderColorWarm {
+  0%,
+  100% {
+    color: #ffb347;
+    filter: drop-shadow(0 0 12px rgba(255, 140, 80, 0.42));
+  }
+  50% {
+    color: #ff8c42;
+    filter: drop-shadow(0 0 16px rgba(230, 100, 50, 0.55));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.pk-warm-glass-active .pk-icon-loader__icon {
+    animation: none !important;
+  }
+}
+
+/* ——— Pages marketing (blog, tarifs, SEO, légal, auth…) ——— */
+
+.pk-warm-glass-stage.pk-marketing-page {
+  background: transparent !important;
+}
+
+.pk-warm-glass-stage.pk-marketing-page .pk-prism-card {
+  border-color: var(--warm-glass-border) !important;
+  background: linear-gradient(165deg, var(--warm-glass-surface-elevated), var(--warm-glass-surface)) !important;
+  box-shadow: 0 24px 64px rgba(32, 12, 6, 0.35);
+}
+
+.pk-warm-glass-stage .pk-pricing-card {
+  background:
+    radial-gradient(420px circle at 0% 0%, rgba(255, 160, 80, 0.1), transparent 52%),
+    linear-gradient(165deg, rgba(255, 255, 255, 0.06), rgba(48, 22, 14, 0.35)) !important;
+  border-color: var(--warm-glass-border) !important;
+}
+
+.pk-warm-glass-stage .pk-pricing-card--popular {
+  background:
+    radial-gradient(480px circle at 100% 0%, rgba(255, 140, 80, 0.18), transparent 55%),
+    radial-gradient(360px circle at 0% 100%, rgba(220, 90, 50, 0.12), transparent 50%),
+    linear-gradient(165deg, rgba(255, 255, 255, 0.07), rgba(200, 80, 50, 0.1)) !important;
+  border-color: rgba(255, 160, 80, 0.38) !important;
+  box-shadow: 0 0 40px rgba(220, 90, 50, 0.14);
+}
+
+.pk-warm-glass-stage .pk-blog-card {
+  border-color: var(--warm-glass-border) !important;
+  background: linear-gradient(165deg, var(--warm-glass-surface-elevated), var(--warm-glass-surface)) !important;
+}
+
+.pk-warm-glass-stage .pk-blog-card:hover {
+  border-color: rgba(255, 160, 80, 0.35) !important;
+}
+
+.pk-warm-glass-stage .from-violet-600\/20 {
+  --tw-gradient-from: rgba(220, 100, 50, 0.22) var(--tw-gradient-from-position) !important;
+}
+
+.pk-warm-glass-stage .to-cyan-500\/10 {
+  --tw-gradient-to: rgba(255, 180, 90, 0.12) var(--tw-gradient-to-position) !important;
+}
+
+.pk-warm-glass-stage .text-violet-200,
+.pk-warm-glass-stage .text-violet-300 {
+  color: #ffd4a8 !important;
+}
+
+.pk-warm-glass-stage .hover\:border-violet-400\/30:hover {
+  border-color: rgba(255, 160, 80, 0.32) !important;
+}
+
+.pk-warm-glass-stage .text-violet-300.hover\:underline {
+  color: #ffb347 !important;
+}
+
+.pk-warm-glass-stage .border-\[\#7c3aed\]\/30,
+.pk-warm-glass-stage .border-\[\#7c3aed\]\/40 {
+  border-color: rgba(255, 140, 80, 0.32) !important;
+}
+
+.pk-warm-glass-stage .bg-\[\#7c3aed\]\/10,
+.pk-warm-glass-stage .bg-\[\#7c3aed\]\/15 {
+  background-color: rgba(255, 120, 60, 0.12) !important;
+}
+
+.pk-warm-glass-stage .text-\[\#a78bfa\],
+.pk-warm-glass-stage .text-\[\#c4b5fd\] {
+  color: #ffb347 !important;
+}
+
+.pk-warm-glass-stage .bg-\[\#7c3aed\] {
+  background-color: #e85a28 !important;
+}
+
+.pk-warm-glass-stage .bg-\[\#7c3aed\]:hover {
+  background-color: #ff7040 !important;
+}
+
+.pk-warm-glass-stage .from-\[\#0a0a0f\] {
+  --tw-gradient-from: #5a2810 var(--tw-gradient-from-position) !important;
+}
+
+html.pk-warm-glass-active .pk-marketing-navbar,
+.pk-warm-glass-stage .pk-marketing-navbar {
+  border-bottom-color: var(--warm-glass-border) !important;
+  background: rgba(48, 22, 14, 0.72) !important;
+}
+
+html.pk-warm-glass-active .pk-marketing-navbar .pk-navbar-logo-hit,
+.pk-warm-glass-stage .pk-marketing-navbar .pk-navbar-logo-hit {
+  background-image: linear-gradient(90deg, #ffd4a8, #ff7040, #ffb347) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+}
+
+html.pk-warm-glass-active .pk-marketing-navbar .bg-\[\#7c3aed\],
+.pk-warm-glass-stage .pk-marketing-navbar .bg-\[\#7c3aed\] {
+  background-color: #ff7040 !important;
+}
+
+.pk-warm-glass-stage .pk-public-loop .border-pk-border {
+  border-color: var(--warm-glass-border) !important;
+}
+
+.pk-warm-glass-stage .pk-public-loop .bg-pk-panel\/60,
+.pk-warm-glass-stage .pk-public-loop .bg-pk-panel\/70 {
+  background: linear-gradient(165deg, var(--warm-glass-surface-elevated), var(--warm-glass-surface)) !important;
+}
+
+/* ——— Bouton Générer : idle plus brillant + état « Génération… » warm (plus de bleu/violet) ——— */
+
+.pk-warm-glass-stage .pk-landing-gen__cta:not(.is-generating) .pk-landing-gen__cta-shine {
+  opacity: 1 !important;
+  animation: pkWarmGenCtaShine 4.2s ease-in-out infinite;
+}
+
+.pk-warm-glass-stage .pk-landing-gen__cta:not(.is-generating) .pk-landing-gen__cta-spark {
+  background: radial-gradient(circle, rgba(255, 200, 120, 0.55) 0%, transparent 70%) !important;
+}
+
+.pk-warm-glass-stage .pk-landing-gen__cta:not(.is-generating) .pk-landing-gen__cta-spark--alt {
+  background: radial-gradient(circle, rgba(255, 140, 160, 0.45) 0%, transparent 72%) !important;
+}
+
+.pk-warm-glass-stage .pk-landing-gen__cta:not(.is-generating) .pk-landing-gen__cta-rim {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 230, 200, 0.45),
+    inset 0 -1px 0 rgba(80, 30, 15, 0.35),
+    0 0 0 1px rgba(255, 180, 100, 0.2) !important;
+}
+
+.pk-warm-glass-stage .pk-landing-gen__cta:not(.is-generating) .pk-landing-gen__cta-inner {
+  text-shadow:
+    0 0 18px rgba(255, 160, 80, 0.35),
+    0 1px 3px rgba(40, 16, 8, 0.4) !important;
+}
+
+.pk-warm-glass-stage .pk-dashboard-gen__cta.pk-gen-btn-electric.is-active,
+.pk-warm-glass-stage .pk-landing-gen__cta.pk-gen-btn-electric.is-active {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 180, 0.22),
+    inset 0 -2px 10px rgba(40, 16, 8, 0.28),
+    0 0 calc(6px + var(--pk-gen-power) * 22px) rgba(255, 140, 60, calc(0.2 + var(--pk-gen-power) * 0.42)),
+    0 0 calc(2px + var(--pk-gen-power) * 12px) rgba(255, 100, 120, calc(0.14 + var(--pk-gen-power) * 0.34)) !important;
+}
+
+.pk-warm-glass-stage .pk-gen-btn-electric__sheen {
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(255, 200, 120, calc(0.06 + var(--pk-gen-power) * 0.2)) 42%,
+    rgba(255, 120, 140, calc(0.05 + var(--pk-gen-power) * 0.16)) 58%,
+    transparent 100%
+  ) !important;
+}
+
+.pk-warm-glass-stage .pk-gen-btn-electric__arc {
+  background: radial-gradient(circle, rgba(255, 160, 80, 0.75) 0%, transparent 68%) !important;
+}
+
+.pk-warm-glass-stage .pk-gen-btn-electric__arc--right {
+  background: radial-gradient(circle, rgba(255, 120, 140, 0.7) 0%, transparent 68%) !important;
+}
+
+.pk-warm-glass-stage .pk-landing-gen__cta.is-generating .pk-landing-gen__cta-field {
+  filter: blur(26px) saturate(1.35) !important;
+  background:
+    radial-gradient(ellipse 72% 88% at 28% 50%, rgba(255, 160, 80, 0.42), transparent 56%),
+    radial-gradient(ellipse 68% 82% at 74% 48%, rgba(255, 110, 130, 0.34), transparent 54%) !important;
+}
+
+.pk-warm-glass-stage .pk-gen-electric-mark__word {
+  background: linear-gradient(120deg, #ffd4a8 0%, #ff8c42 42%, #ff6b8a 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+  filter: drop-shadow(0 0 calc(4px + var(--pk-gen-power, 0.5) * 10px) rgba(255, 140, 60, 0.55)) !important;
+}
+
+.pk-warm-glass-stage .pk-gen-electric-mark__bolt {
+  background: rgba(255, 170, 90, 0.95) !important;
+  box-shadow: 0 0 8px rgba(255, 140, 60, 0.75) !important;
+}
+
+.pk-warm-glass-stage .pk-gen-electric-mark__bolt--b {
+  background: rgba(255, 110, 130, 0.95) !important;
+  box-shadow: 0 0 8px rgba(255, 100, 120, 0.7) !important;
+}
+
+.pk-warm-glass-stage .pk-landing-gen__cta.is-generating .pk-landing-gen__cta-liquid {
+  opacity: 0.95 !important;
+}
+
+@keyframes pkWarmGenCtaShine {
+  0%,
+  100% {
+    transform: skewX(-18deg) translateX(-125%);
+    opacity: 0.55;
+  }
+  48% {
+    transform: skewX(-18deg) translateX(220%);
+    opacity: 0.95;
+  }
+}
+
+/* Icônes menu (genre aléatoire, langue auto) */
+html.pk-warm-glass-active .pk-menu-icon-accent,
+.pk-warm-glass-stage .pk-menu-icon-accent {
+  color: #ffb347 !important;
+}
+
+html.pk-warm-glass-active .pk-loop-cover-thumb,
+.pk-warm-glass-stage .pk-loop-cover-thumb {
+  background: linear-gradient(135deg, #ffd066 0%, #e87828 48%, #c84858 100%) !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 200, 150, 0.22),
+    0 4px 14px rgba(40, 16, 8, 0.24) !important;
+}
+
+html.pk-warm-glass-active .pk-prism-cover.pk-loop-cover-thumb,
+.pk-warm-glass-stage .pk-prism-cover.pk-loop-cover-thumb {
+  padding: 2px !important;
+}
+
+/* Landing — section communauté (cartes cinéma) */
+.pk-warm-glass-stage .pk-landing-community,
+html.pk-warm-glass-active .pk-landing-community {
+  --pk-community-eq-glow: color-mix(in srgb, var(--prism-cyan) 58%, transparent);
+  --pk-community-cover-glow: color-mix(in srgb, var(--warm-pigment-orange) 42%, transparent);
+  --pk-community-aurora-a: color-mix(in srgb, var(--warm-pigment-rose) 28%, transparent);
+  --pk-community-aurora-b: color-mix(in srgb, var(--prism-cyan) 24%, transparent);
+  --pk-community-aurora-c: color-mix(in srgb, var(--warm-pigment-yellow) 16%, transparent);
+}
+
+.pk-warm-glass-stage .pk-landing-community__cover-shine,
+html.pk-warm-glass-active .pk-landing-community__cover-shine {
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    transparent 36%,
+    color-mix(in srgb, var(--prism-chrome) 28%, transparent) 46%,
+    color-mix(in srgb, var(--prism-cyan) 22%, transparent) 52%,
+    color-mix(in srgb, var(--prism-violet) 12%, transparent) 56%,
+    transparent 64%,
+    transparent 100%
+  );
+}
+
+/* Le Flux — palette unifiée Warm */
+html.pk-warm-glass-active .pk-hub-hero,
+.pk-warm-glass-stage .pk-hub-hero {
+  --pk-hub-accent: color-mix(in srgb, var(--warm-pigment-orange) 72%, transparent);
+  --pk-hub-accent-soft: color-mix(in srgb, var(--warm-pigment-rose) 28%, transparent);
+  --pk-hub-tile-active-border: color-mix(in srgb, var(--warm-pigment-orange) 42%, transparent);
+  --pk-hub-tile-active-glow: color-mix(in srgb, var(--warm-pigment-rose) 12%, transparent);
+  --pk-hub-border: color-mix(in srgb, var(--warm-glass-border) 85%, transparent);
+  --pk-hub-surface: rgba(255, 200, 140, 0.05);
+  border-color: var(--pk-hub-border) !important;
+  background: rgba(38, 16, 10, 0.88) !important;
+}
+
+html.pk-warm-glass-active .pk-hub-hero__mesh,
+.pk-warm-glass-stage .pk-hub-hero__mesh {
+  background:
+    radial-gradient(480px circle at 0% 0%, color-mix(in srgb, var(--warm-pigment-orange) 12%, transparent), transparent 58%),
+    radial-gradient(380px circle at 100% 100%, color-mix(in srgb, var(--warm-pigment-rose) 10%, transparent), transparent 55%) !important;
+}
+
+html.pk-warm-glass-active .pk-hub-nav,
+.pk-warm-glass-stage .pk-hub-nav {
+  border-color: var(--pk-hub-border) !important;
+  background: rgba(38, 16, 10, 0.94) !important;
+}
+
+html.pk-warm-glass-active .pk-hub-vibe-tile--active,
+.pk-warm-glass-stage .pk-hub-vibe-tile--active {
+  border-color: var(--pk-hub-tile-active-border) !important;
+  box-shadow: 0 0 0 1px var(--pk-hub-tile-active-glow) !important;
+}
+
+html.pk-warm-glass-active .pk-hub-hero .pk-prism-holo-text,
+.pk-warm-glass-stage .pk-hub-hero .pk-prism-holo-text {
+  -webkit-text-fill-color: rgba(255, 252, 248, 0.96) !important;
+  color: rgba(255, 252, 248, 0.96) !important;
+}
+
+html.pk-warm-glass-active .pk-hub-hero__chip::before,
+.pk-warm-glass-stage .pk-hub-hero__chip::before {
+  background: var(--pk-hub-accent) !important;
+}
+
+html.pk-warm-glass-active .pk-community-card:hover,
+.pk-warm-glass-stage .pk-community-card:hover {
+  border-color: color-mix(in srgb, var(--warm-pigment-orange) 32%, transparent) !important;
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--warm-pigment-rose) 10%, transparent) !important;
+}
+
+html.pk-warm-glass-active .pk-community-card__play,
+.pk-warm-glass-stage .pk-community-card__play {
+  --pk-community-play-ring: color-mix(in srgb, var(--warm-pigment-orange) 88%, white);
+}
+
+html.pk-warm-glass-active .pk-community-card:hover .pk-community-card__play,
+html.pk-warm-glass-active .pk-community-card--playing .pk-community-card__play,
+.pk-warm-glass-stage .pk-community-card:hover .pk-community-card__play,
+.pk-warm-glass-stage .pk-community-card--playing .pk-community-card__play {
+  box-shadow: 0 0 28px color-mix(in srgb, var(--warm-pigment-rose) 22%, transparent) !important;
+}
+
+html.pk-warm-glass-active .pk-community-card__play--active,
+.pk-warm-glass-stage .pk-community-card__play--active {
+  border-color: color-mix(in srgb, var(--warm-pigment-orange) 55%, transparent) !important;
+}
+
+/* Bibliothèque — warm */
+html.pk-warm-glass-active .pk-library-genre-tile--active,
+.pk-warm-glass-stage .pk-library-genre-tile--active {
+  border-color: color-mix(in srgb, var(--warm-pigment-orange) 50%, transparent) !important;
+  box-shadow: 0 0 28px color-mix(in srgb, var(--warm-pigment-rose) 18%, transparent) !important;
+}
+
+html.pk-warm-glass-active .pk-library-active-filter,
+.pk-warm-glass-stage .pk-library-active-filter {
+  border-color: color-mix(in srgb, var(--warm-pigment-orange) 35%, transparent) !important;
+  background: color-mix(in srgb, var(--warm-pigment-orange) 10%, transparent) !important;
+}
+
+html.pk-warm-glass-active .pk-loop-card--library:hover,
+.pk-warm-glass-stage .pk-loop-card--library:hover {
+  border-color: color-mix(in srgb, var(--warm-pigment-orange) 32%, transparent) !important;
+  box-shadow: 0 16px 48px color-mix(in srgb, var(--warm-pigment-rose) 10%, transparent) !important;
+}
+
+html.pk-warm-glass-active .pk-library-detail-panel,
+.pk-warm-glass-stage .pk-library-detail-panel {
+  border-color: color-mix(in srgb, var(--warm-pigment-orange) 28%, transparent) !important;
+  background: rgba(48, 22, 14, 0.92) !important;
+}
+
+html.pk-warm-glass-active .pk-loop-details-panel .pk-loop-details-stat-label,
+.pk-warm-glass-stage .pk-loop-details-panel .pk-loop-details-stat-label {
+  color: rgba(255, 200, 130, 0.72) !important;
+}
+
+/* Bonus header + rétention audio — palette Warm (Prism reste cyan dans index.css) */
+html.pk-warm-glass-active .pk-daily-bonus-btn--ready,
+.pk-warm-glass-stage .pk-daily-bonus-btn--ready {
+  border-color: color-mix(in srgb, var(--warm-pigment-orange) 42%, transparent) !important;
+  background: color-mix(in srgb, var(--warm-pigment-orange) 24%, transparent) !important;
+  color: #ffecd8 !important;
+  box-shadow: 0 0 14px color-mix(in srgb, var(--warm-pigment-orange) 26%, transparent) !important;
+}
+
+html.pk-warm-glass-active .pk-daily-bonus-btn--ready:hover,
+.pk-warm-glass-stage .pk-daily-bonus-btn--ready:hover {
+  background: color-mix(in srgb, var(--warm-pigment-orange) 32%, transparent) !important;
+  border-color: color-mix(in srgb, var(--warm-pigment-rose) 38%, transparent) !important;
+}
+
+html.pk-warm-glass-active .pk-daily-bonus-btn__icon,
+.pk-warm-glass-stage .pk-daily-bonus-btn__icon {
+  color: #ffc89a !important;
+}
+
+html.pk-warm-glass-active .pk-daily-bonus-btn__pill,
+.pk-warm-glass-stage .pk-daily-bonus-btn__pill {
+  background: color-mix(in srgb, var(--warm-pigment-orange) 32%, transparent) !important;
+  color: #ffe8d0 !important;
+}
+
+html.pk-warm-glass-active .pk-loop-retention-label,
+.pk-warm-glass-stage .pk-loop-retention-label {
+  color: color-mix(in srgb, var(--prism-cyan) 92%, white) !important;
+}
+
+html.pk-warm-glass-active .pk-loop-retention-label--expired,
+.pk-warm-glass-stage .pk-loop-retention-label--expired {
+  color: rgba(255, 200, 150, 0.42) !important;
+}
+

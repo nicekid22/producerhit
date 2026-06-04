@@ -1,9 +1,22 @@
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { PLAYER_HEIGHT_COLLAPSED, routeHasMobileBottomNav } from "@/lib/playerDock";
+import { routeHasMobileBottomNav } from "@/lib/playerDock";
 import { usePlayerStore } from "@/stores/playerStore";
 
-/** Syncs dock CSS vars on :root for fixed player + shell padding. */
+const PLAYER_DOCK_SELECTOR = ".pk-prism-player--dock";
+
+function schedulePlayerHeightSync(run: () => void) {
+  run();
+  requestAnimationFrame(() => {
+    run();
+    requestAnimationFrame(run);
+  });
+  window.setTimeout(run, 0);
+  window.setTimeout(run, 80);
+  window.setTimeout(run, 200);
+}
+
+/** Syncs player CSS vars from the fixed dock bar (height + viewport reserve). */
 export function PlayerDockBootstrap() {
   const { pathname } = useLocation();
   const dockCollapsed = usePlayerStore((s) => s.dockCollapsed);
@@ -17,15 +30,53 @@ export function PlayerDockBootstrap() {
     };
   }, [pathname]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const root = document.documentElement;
-    if (!hasPlayer || !dockCollapsed) {
+
+    const clear = () => {
       root.style.removeProperty("--pk-player-height");
+      root.style.removeProperty("--pk-player-reserve");
+      root.removeAttribute("data-pk-player-dock");
+    };
+
+    if (!hasPlayer) {
+      clear();
       return;
     }
-    root.style.setProperty("--pk-player-height", PLAYER_HEIGHT_COLLAPSED);
+
+    const measure = () => {
+      const el = document.querySelector<HTMLElement>(PLAYER_DOCK_SELECTOR);
+      if (!el) {
+        clear();
+        return;
+      }
+      const rect = el.getBoundingClientRect();
+      const h = Math.max(1, Math.ceil(rect.height));
+      const reserve = Math.max(1, Math.ceil(window.innerHeight - rect.top));
+      root.style.setProperty("--pk-player-height", `${h}px`);
+      root.style.setProperty("--pk-player-reserve", `${reserve}px`);
+      root.setAttribute(
+        "data-pk-player-dock",
+        el.classList.contains("pk-prism-player--collapsed") ? "collapsed" : "expanded",
+      );
+    };
+
+    schedulePlayerHeightSync(measure);
+
+    const el = document.querySelector<HTMLElement>(PLAYER_DOCK_SELECTOR);
+    if (!el) {
+      clear();
+      return;
+    }
+
+    const ro = new ResizeObserver(() => schedulePlayerHeightSync(measure));
+    ro.observe(el);
+    window.addEventListener("resize", measure);
+
     return () => {
-      root.style.removeProperty("--pk-player-height");
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+      clear();
     };
   }, [dockCollapsed, hasPlayer]);
 

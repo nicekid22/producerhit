@@ -3,6 +3,7 @@ import {
   COMMUNITY_PINTEREST_FOREGROUND,
   LANDING_PINTEREST_COVERS,
   LANDING_PINTEREST_SEARCH_TAGS,
+  PINTEREST_PERSIST_COVERS,
 } from "@/lib/featureFlags";
 import type { Loop } from "@/types/loop";
 import { hashString } from "@/lib/utils";
@@ -15,8 +16,17 @@ const preloadedUrls = new Set<string>();
 
 let warmPromise: Promise<string[]> | null = null;
 
+/** Lazy Pinterest désactivé quand les covers sont persistées en Storage (même URL partout). */
 function pinterestApiEnabled(): boolean {
+  if (PINTEREST_PERSIST_COVERS) return false;
   return LANDING_PINTEREST_COVERS || COMMUNITY_PINTEREST_FOREGROUND;
+}
+
+/** Flux communauté — fetch Pinterest à la volée si pas de cover persistée (sans écrire en DB). */
+export function communityCoverFetchEnabled(): boolean {
+  if (COMMUNITY_PINTEREST_FOREGROUND) return true;
+  if (import.meta.env.VITE_COMMUNITY_COVER_LAZY === "0") return false;
+  return PINTEREST_PERSIST_COVERS;
 }
 
 /** Tags fixes (.env) — ex. retro purple, streetwear, girl */
@@ -34,6 +44,36 @@ export type PinterestStyleInput = {
   prompt?: string | null;
 };
 
+/** Titre de génération (genre par défaut ou titre/idée modifié par l'utilisateur). */
+export function pinterestGenerationTitle(input: PinterestStyleInput): string {
+  const name = (input.name ?? "").trim();
+  const cleaned = name
+    .replace(/[^a-zA-Z0-9À-ÿ\s'-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (cleaned.length >= 2 && !/^untitled$/i.test(cleaned)) return cleaned.slice(0, 48);
+  const genre = (typeof input.genre === "string" ? input.genre : "").trim();
+  if (genre.length >= 2) return genre.slice(0, 48);
+  const prompt = (typeof input.prompt === "string" ? input.prompt : "").trim();
+  const snippet = prompt.split(/[,.]/)[0]?.trim() ?? "";
+  if (snippet.length >= 3 && snippet.length <= 48) return snippet;
+  return "";
+}
+
+/** Tags style + mood (sans le titre — composé avec pinterestGenerationTitle). */
+export function buildPinterestStyleTail(input: PinterestStyleInput, slotIndex = 0): string {
+  const base = landingPinterestSearchQuery();
+  const musicStyle = [input.genre, input.mood]
+    .map((s) => (typeof s === "string" ? s.trim() : ""))
+    .filter((s) => s.length > 1);
+  const title = pinterestGenerationTitle(input);
+  const variant = queryVariantToken(input, slotIndex);
+  const parts = [base, ...musicStyle];
+  if (variant && !title.toLowerCase().includes(variant.toLowerCase())) parts.push(variant);
+  parts.push("music aesthetic", "people portrait ambiance");
+  return parts.join(" ").replace(/\s+/g, " ").trim();
+}
+
 /** Mot-clé court dérivé du titre pour diversifier la recherche Pinterest. */
 function queryVariantToken(input: PinterestStyleInput, slotIndex: number): string {
   const name = (input.name ?? "").trim();
@@ -49,14 +89,11 @@ function queryVariantToken(input: PinterestStyleInput, slotIndex: number): strin
   return `set${slotIndex}`;
 }
 
-/** Requête Pinterest = tags fixes + style musical + variante (évite le même pool pour tous). */
+/** Requête Pinterest — titre de génération en premier, puis tags + style musical. */
 export function buildPinterestSearchQueryForStyle(input: PinterestStyleInput, slotIndex = 0): string {
-  const base = landingPinterestSearchQuery();
-  const musicStyle = [input.genre, input.mood]
-    .map((s) => (typeof s === "string" ? s.trim() : ""))
-    .filter((s) => s.length > 1);
-
-  const parts = [base, ...musicStyle, queryVariantToken(input, slotIndex), "music aesthetic", "people portrait ambiance"];
+  const title = pinterestGenerationTitle(input);
+  const tail = buildPinterestStyleTail(input, slotIndex);
+  const parts = [title, tail].filter((p) => p.length > 0);
   return parts.join(" ").replace(/\s+/g, " ").trim().slice(0, 100);
 }
 
@@ -142,7 +179,7 @@ export async function enrichTracksWithPinterestCovers<
 }
 
 export function isPinterestSideCard(card: GeneratorSideCard): boolean {
-  return Boolean(card.coverPinterestQuery) || card.coverUrl.includes("pinimg.com");
+  return card.coverUrl.includes("pinimg.com");
 }
 
 export function isPinterestCoverPreloaded(url: string): boolean {
@@ -196,6 +233,75 @@ function setCachedUrl(query: string, seed: number, url: string): void {
   writeSessionCache(session);
 }
 
+const workspaceUsedPinterestUrls = new Set<string>();
+
+/** Dashboard — 1 URL Pinterest stable par morceau (session, jusqu’au refresh). */
+const WORKSPACE_LOOP_PIN_KEY = "ph_workspace_pinterest_by_loop_v1";
+const workspaceCoverByLoopId = new Map<string, string>();
+
+function readWorkspaceLoopPinSession(): Record<string, string> {
+  try {
+    const raw = sessionStorage.getItem(WORKSPACE_LOOP_PIN_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Record<string, string>;
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeWorkspaceLoopPinSession(entries: Record<string, string>): void {
+  try {
+    sessionStorage.setItem(WORKSPACE_LOOP_PIN_KEY, JSON.stringify(entries));
+  } catch {
+    // ignore quota
+  }
+}
+
+function rememberWorkspacePinterestCover(loopId: string, url: string): void {
+  workspaceCoverByLoopId.set(loopId, url);
+  const session = readWorkspaceLoopPinSession();
+  session[loopId] = url;
+  writeWorkspaceLoopPinSession(session);
+}
+
+/** URL Pinterest déjà résolue pour ce morceau (mémoire + sessionStorage). */
+export function getCachedWorkspacePinterestCover(loopId: string): string | null {
+  const mem = workspaceCoverByLoopId.get(loopId);
+  if (mem?.startsWith("http")) return mem;
+
+  const session = readWorkspaceLoopPinSession();
+  const hit = session[loopId];
+  if (typeof hit === "string" && hit.startsWith("http")) {
+    workspaceCoverByLoopId.set(loopId, hit);
+    preloadPinterestCoverUrl(hit);
+    return hit;
+  }
+  return null;
+}
+
+/**
+ * Dashboard / Mon espace — une image Pinterest par loop.id (stable, cache session).
+ * Réutilise la même URL entre bannière carte et panneau détails.
+ */
+export async function fetchWorkspacePinterestCover(
+  item: PinterestStyleInput & { id: string },
+): Promise<string | null> {
+  const cached = getCachedWorkspacePinterestCover(item.id);
+  if (cached) return cached;
+
+  if (!pinterestApiEnabled()) return null;
+
+  const query = buildPinterestSearchQueryForStyle(item, 0);
+  const seed = hashString(`${item.id}:workspace:${query}`) >>> 0;
+  const url = await fetchUniquePinterestCover(query, seed, workspaceUsedPinterestUrls);
+  if (!url?.startsWith("http")) return null;
+
+  rememberWorkspacePinterestCover(item.id, url);
+  await preloadPinterestCoverUrlAsync(url);
+  return url;
+}
+
 /** Précharge dans le cache navigateur pour affichage immédiat. */
 export function preloadPinterestCoverUrl(url: string): void {
   if (!url.startsWith("http")) return;
@@ -206,6 +312,37 @@ export function preloadPinterestCoverUrl(url: string): void {
   img.onload = () => preloadedUrls.add(url);
   img.onerror = () => preloadedUrls.delete(url);
   img.src = url;
+}
+
+/** Précharge puis résout quand l’image est décodée (évite le « pop » visuel). */
+export function preloadPinterestCoverUrlAsync(url: string): Promise<boolean> {
+  if (!url.startsWith("http")) return Promise.resolve(false);
+  if (preloadedUrls.has(url)) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.referrerPolicy = "no-referrer";
+    img.decoding = "async";
+    img.onload = () => {
+      preloadedUrls.add(url);
+      resolve(true);
+    };
+    img.onerror = () => resolve(false);
+    img.src = url;
+  });
+}
+
+/** Une cover Pinterest pour un morceau / carte (lazy scroll). */
+export async function fetchPinterestCoverForStyle(
+  item: PinterestStyleInput & { id: string },
+  slotIndex = 0,
+): Promise<string | null> {
+  if (!pinterestApiEnabled() && !communityCoverFetchEnabled()) return null;
+  const query = buildPinterestSearchQueryForStyle(item, slotIndex);
+  const seed = (hashString(`${item.id}:${query}:${slotIndex}`) + slotIndex * 53) >>> 0;
+  const url = await fetchUniquePinterestCover(query, seed, workspaceUsedPinterestUrls);
+  if (!url?.startsWith("http")) return null;
+  await preloadPinterestCoverUrlAsync(url);
+  return url;
 }
 
 async function extractInvokeError(error: unknown): Promise<string> {
@@ -223,8 +360,6 @@ async function extractInvokeError(error: unknown): Promise<string> {
   }
   return anyError.message ?? "invoke_failed";
 }
-
-const workspaceUsedPinterestUrls = new Set<string>();
 
 export async function fetchPinterestCoverForLoop(
   loop: Pick<Loop, "id" | "genre" | "mood" | "name" | "prompt">,

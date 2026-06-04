@@ -20,7 +20,6 @@ type Props = {
   onRemix: (row: PublicLoopRow) => void;
   onRate: (loopId: string, stars: number) => void;
   onSeeAll?: () => void;
-  pinterestCovers?: Record<string, string>;
 };
 
 export function CommunityRail({
@@ -38,7 +37,6 @@ export function CommunityRail({
   onRemix,
   onRate,
   onSeeAll,
-  pinterestCovers,
 }: Props) {
   if (!items.length) return null;
 
@@ -76,7 +74,7 @@ export function CommunityRail({
             onPlay={() => onPlay(row, idx)}
             onRemix={() => onRemix(row)}
             onRate={(stars) => onRate(row.id, stars)}
-            pinterestCoverUrl={pinterestCovers?.[row.id]}
+            slotIndex={idx}
           />
         ))}
       </div>

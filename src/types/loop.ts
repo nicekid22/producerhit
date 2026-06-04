@@ -14,6 +14,14 @@ export type LoopDetails = {
   coverUrl?: string;
   /** video = cover animée (nouvelles générations). image = cover statique. */
   coverKind?: "video" | "image";
+  /** Incrémenté à chaque reroll — force le rechargement navigateur si l’URL Storage est stable. */
+  coverRevision?: number;
+  /** AI Sample Lab — instrument généré (guitar, drums, …). */
+  sampleInstrument?: string;
+  /** AI Sample Lab — preset pack (ex. guitar-drip). */
+  samplePack?: string;
+  /** composition | vocal_composition | mini_loop */
+  sampleFormat?: string;
 };
 
 export type Loop = {

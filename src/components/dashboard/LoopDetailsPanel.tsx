@@ -3,8 +3,9 @@ import { useMemo } from "react";
 import { Clock, Copy, Gauge, Info, KeyRound, Loader2, Sigma } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { CoverMedia } from "@/components/CoverMedia";
-import { coverImageKeyFromLoop, resolveCoverImageUrl } from "@/lib/coverArt";
-import { cn, coverGradient } from "@/lib/utils";
+import { isCoverVideo } from "@/lib/coverMedia";
+import { coverImageKeyFromLoop, isPersistedStorageCoverUrl, resolveLoopDisplayCoverUrl } from "@/lib/coverArt";
+import { cn, COVER_SURFACE_CLASS } from "@/lib/utils";
 import type { Loop } from "@/types/loop";
 
 function formatTime(sec: number) {
@@ -23,6 +24,7 @@ export function LoopDetailsPanel({
   onSaveTitle,
   durationSec,
   className,
+  isPlayingCover = false,
   compact = false,
 }: {
   loop: Loop;
@@ -33,6 +35,8 @@ export function LoopDetailsPanel({
   onSaveTitle: () => void;
   durationSec?: number | null;
   className?: string;
+  /** Cover animée vintage si ce morceau est en lecture */
+  isPlayingCover?: boolean;
   /** Mobile bottom sheet — tighter spacing, taller lyrics area */
   compact?: boolean;
 }) {
@@ -41,24 +45,32 @@ export function LoopDetailsPanel({
     (loop.details?.duration ?? durationSec) as number | null | undefined;
   const durationLabel =
     typeof dur === "number" && isFinite(dur) && dur > 0 ? formatTime(dur) : "—";
-  const coverUrl = useMemo(() => resolveCoverImageUrl(loop, 768), [loop]);
+  const coverUrl = useMemo(() => resolveLoopDisplayCoverUrl(loop, 768), [loop]);
   const coverKey = useMemo(() => coverImageKeyFromLoop(loop), [loop]);
+  const isVideoCover = isCoverVideo(loop, coverUrl);
+  const usePhotoCover = !isVideoCover && coverUrl.startsWith("http");
 
   return (
-    <div className={className}>
+    <div className={cn("pk-loop-details-panel", className)}>
       <div className={cn("overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.04]", compact ? "mt-1" : "mt-4")}>
         <div
-          className={cn("relative w-full", compact ? "aspect-[4/3] max-h-[220px]" : "aspect-square")}
-          style={{ backgroundImage: coverGradient(loop) }}
-          aria-hidden
+          className={cn(
+            "relative w-full overflow-hidden",
+            COVER_SURFACE_CLASS,
+            compact ? "aspect-[4/3] max-h-[220px]" : "aspect-square",
+          )}
         >
-          <CoverMedia loop={loop} coverUrl={coverUrl} coverKey={coverKey} imageClassName="object-contain" />
+          {usePhotoCover ? (
+            <CoverMedia loop={loop} coverUrl={coverUrl} coverKey={coverKey} imageClassName="object-cover" />
+          ) : (
+            <CoverMedia loop={loop} coverUrl={coverUrl} coverKey={coverKey} imageClassName="object-contain" />
+          )}
         </div>
       </div>
 
       <div className={cn("grid grid-cols-2 gap-2 text-xs", compact ? "mt-3" : "mt-4")}>
         <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-2.5">
-          <div className="flex items-center gap-1 text-pk-muted">
+          <div className="pk-loop-details-stat-label flex items-center gap-1">
             <Gauge className="h-3.5 w-3.5" />
             BPM
           </div>
@@ -67,21 +79,21 @@ export function LoopDetailsPanel({
           </div>
         </div>
         <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-2.5">
-          <div className="flex items-center gap-1 text-pk-muted">
+          <div className="pk-loop-details-stat-label flex items-center gap-1">
             <Clock className="h-3.5 w-3.5" />
             {isFr ? "Durée" : "Duration"}
           </div>
           <div className="mt-1 font-semibold text-pk-text">{durationLabel}</div>
         </div>
         <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-2.5">
-          <div className="flex items-center gap-1 text-pk-muted">
+          <div className="pk-loop-details-stat-label flex items-center gap-1">
             <KeyRound className="h-3.5 w-3.5" />
             {isFr ? "Tonalité" : "Key"}
           </div>
           <div className="mt-1 font-semibold text-pk-text">{loop.details?.keyScale || "—"}</div>
         </div>
         <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-2.5">
-          <div className="flex items-center gap-1 text-pk-muted">
+          <div className="pk-loop-details-stat-label flex items-center gap-1">
             <Sigma className="h-3.5 w-3.5" />
             {isFr ? "Signature" : "Time Sig"}
           </div>
@@ -91,7 +103,7 @@ export function LoopDetailsPanel({
 
       <div className="mt-4">
         <div className="flex items-center gap-2 text-xs font-semibold text-pk-text">
-          <Info className="h-4 w-4 text-pk-muted" />
+          <Info className="pk-loop-details-stat-label h-4 w-4" />
           {isFr ? "Détails" : "Details"}
         </div>
         <div className="mt-2 rounded-xl border border-white/[0.08] bg-white/[0.04] p-3 text-xs text-pk-text">

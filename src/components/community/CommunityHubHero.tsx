@@ -1,13 +1,10 @@
 import { Loader2, Pause, Play, Radio, Shuffle, Sparkles, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ProfileAuthorChip } from "@/components/profile/ProfileAuthorChip";
-import { publicRowToCoverLoop, resolveCoverImageUrl } from "@/lib/coverArt";
+import { publicRowToCoverLoop, resolveCommunityDisplayCoverUrl } from "@/lib/coverArt";
 import { COMMUNITY_HUB_PAGE, type CommunityVibeCategory } from "@/lib/communityHub";
-import { coverGradient } from "@/lib/utils";
+import { COVER_SURFACE_CLASS, cn } from "@/lib/utils";
 import type { PublicLoopRow } from "@/lib/publicLoops";
-
-/** public/img/starz.png → servi par Vite à /img/starz.png */
-const STARZ_SRC = "/img/starz.png";
 
 type Props = {
   isFr: boolean;
@@ -43,14 +40,11 @@ export function CommunityHubHero({
   const playingNow = isActive && isPlaying;
 
   const loop = spotlight ? publicRowToCoverLoop(spotlight) : null;
-  const bg = loop ? coverGradient(loop) : "linear-gradient(135deg, #1e1b4b, #0f172a)";
-  const coverUrl = loop ? resolveCoverImageUrl(loop) : "";
+  const coverUrl = spotlight ? resolveCommunityDisplayCoverUrl(spotlight) : "";
 
   return (
     <section className="pk-hub-hero" aria-labelledby="hub-hero-title">
       <div className="pk-hub-hero__mesh" aria-hidden />
-      <div className="pk-hub-hero__orb pk-hub-hero__orb--a" aria-hidden />
-      <div className="pk-hub-hero__orb pk-hub-hero__orb--b" aria-hidden />
 
       <div className="pk-hub-hero__inner">
         <div className="pk-hub-hero__copy">
@@ -76,7 +70,7 @@ export function CommunityHubHero({
                 <span
                   key={category.id}
                   className="pk-hub-hero__chip"
-                  style={{ backgroundImage: category.accent }}
+                  data-vibe={category.id}
                   title={isFr ? category.subtitle.fr : category.subtitle.en}
                 >
                   {isFr ? category.title.fr : category.title.en}
@@ -97,18 +91,9 @@ export function CommunityHubHero({
               className="pk-glass-btn pk-glass-btn--ghost inline-flex h-9 items-center gap-2 rounded-full px-4 text-xs font-semibold"
             >
               <Shuffle className="h-3.5 w-3.5" />
-              {isFr ? "Surprise-moi" : "Surprise me"}
+              {isFr ? "Aléatoire" : "Random"}
             </button>
           </div>
-          </div>
-        </div>
-
-        <div className="pk-hub-hero__starz-col" aria-hidden>
-          <div className="pk-hub-hero__starz-stage">
-            <div className="pk-hub-hero__starz-aura" />
-            <div className="pk-hub-hero__starz-shine" />
-            <div className="pk-hub-hero__starz-sheen" />
-            <img src={STARZ_SRC} alt="" className="pk-hub-hero__starz-img" decoding="async" draggable={false} />
           </div>
         </div>
 
@@ -120,8 +105,10 @@ export function CommunityHubHero({
                 <button
                   type="button"
                   onClick={onPlay}
-                  className="pk-hub-hero__card-cover group relative shrink-0 overflow-hidden rounded-lg border border-white/12 text-left"
-                  style={{ background: bg }}
+                  className={cn(
+                    "pk-hub-hero__card-cover group relative shrink-0 overflow-hidden rounded-lg border border-white/12 text-left",
+                    COVER_SURFACE_CLASS,
+                  )}
                 >
                   <img
                     src={coverUrl}
@@ -177,7 +164,7 @@ export function CommunityHubHero({
                       disabled={resolving}
                       className="pk-glass-btn pk-glass-btn--ghost inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-[11px] font-semibold"
                     >
-                      <Sparkles className="h-3 w-3 text-cyan-300" />
+                      <Sparkles className="h-3 w-3 opacity-80" />
                       Remix
                     </button>
                   </div>

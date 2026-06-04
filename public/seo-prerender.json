@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-03T08:10:36.084Z",
+  "generatedAt": "2026-06-04T23:11:31.127Z",
   "pages": {
     "/suno-alternatives": {
       "kind": "comparison",
@@ -3076,7 +3076,7 @@
       ],
       "matrix": [
         {
-          "label": "Upload audio → new cover",
+          "label": "Upload audio → new image",
           "values": [
             {
               "name": "ProducerHit Remix",
@@ -3206,7 +3206,7 @@
       ],
       "matrix": [
         {
-          "label": "Upload audio → nouvelle cover",
+          "label": "Upload audio → nouvelle image",
           "values": [
             {
               "name": "ProducerHit Remix",

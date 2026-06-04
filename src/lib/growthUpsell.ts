@@ -1,4 +1,10 @@
-import { normalizePlanId, type PaidPlanId } from "@/lib/planEntitlements";
+import {
+  hasFullMastering,
+  hasPriorityGeneration,
+  normalizePlanId,
+  planDisplayName,
+  type PaidPlanId,
+} from "@/lib/planEntitlements";
 import { PLAN_LIMITS, getPlanBaseLimit } from "@/lib/planLimits";
 
 export type UpsellReason =
@@ -11,10 +17,39 @@ export type UpsellReason =
 
 export type UpsellContext = {
   source: string;
+  /** Plan effectif au moment du prompt (évite free en cache vs quota Studio). */
+  plan?: string;
   remaining?: number;
   totalLimit?: number;
   usedThisMonth?: number;
 };
+
+/** Ne pas afficher de modal upgrade incohérent (ex. « Passe Pro » pour un compte Studio). */
+export function shouldShowPlanUpsell(
+  plan: string | null | undefined,
+  reason: UpsellReason,
+  ctx: UpsellContext = { source: "unknown" },
+): boolean {
+  const cur = normalizePlanId(plan);
+  const remaining = Math.max(0, ctx.remaining ?? 0);
+  const target = recommendedUpgradePlan(plan);
+
+  switch (reason) {
+    case "credits_low":
+      return cur === "free" && remaining > 0 && remaining <= 2;
+    case "post_generation":
+      return cur === "free";
+    case "feature_priority":
+      return !hasPriorityGeneration(plan);
+    case "wav_export":
+      return !hasFullMastering(plan);
+    case "credits_exhausted":
+    case "limit_reached":
+      return remaining < 1;
+    default:
+      return cur === "free" || target !== null;
+  }
+}
 
 const LOW_CREDITS_SESSION_KEY = "producerhit_low_credits_prompt_v1";
 const POST_GEN_COOLDOWN_KEY = "producerhit_upgrade_prompt_ts";
@@ -130,6 +165,25 @@ export function getUpsellCopy(
   }
 
   if (reason === "credits_low") {
+    const label = planDisplayName(cur);
+    if (cur !== "free") {
+      return {
+        title: isFr ? "Quota mensuel presque atteint" : "Monthly quota almost reached",
+        description: isFr
+          ? `Plan ${label} (${baseLimit}/mois) — ${remaining} génération${remaining !== 1 ? "s" : ""} restante${remaining !== 1 ? "s" : ""}.`
+          : `${label} plan (${baseLimit}/month) — ${remaining} generation${remaining !== 1 ? "s" : ""} left.`,
+        bullets: isFr
+          ? target === "plus"
+            ? [`${PLAN_LIMITS.plus} générations / mois sur Plus`, "Audio hébergé permanent", "Stems & sans watermark"]
+            : [`${studioLimit} générations / mois sur Studio`, "Export WAV mastering", "Tout Pro inclus"]
+          : target === "plus"
+            ? [`${PLAN_LIMITS.plus} generations / month on Plus`, "Permanent hosted audio", "Stems & no watermark"]
+            : [`${studioLimit} generations / month on Studio`, "Mastered WAV export", "Everything in Pro"],
+        primaryLabel: target ? primaryForTarget : isFr ? "Voir les tarifs" : "View pricing",
+        secondaryLabel: isFr ? "Fermer" : "Close",
+        targetPlan: target,
+      };
+    }
     return {
       title: isFr
         ? `Plus que ${remaining} génération${remaining !== 1 ? "s" : ""} ce mois-ci`
@@ -147,6 +201,9 @@ export function getUpsellCopy(
   }
 
   if (reason === "post_generation") {
+    if (cur !== "free") {
+      return getUpsellCopy("limit_reached", locale, plan, ctx);
+    }
     return {
       title: isFr ? "Tu produis sérieusement 🔥" : "You're on a roll 🔥",
       description: isFr

@@ -2,6 +2,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, Shield } from "lucide-react";
 import toast from "react-hot-toast";
+import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";
 import { Navbar } from "@/components/Navbar";
 import { useAuthStore } from "@/stores/authStore";
 import { useLocaleStore } from "@/stores/localeStore";
@@ -267,7 +268,7 @@ export default function Pricing() {
     : ["Secure Stripe checkout", "Cancel anytime", "Credits activated instantly"];
 
   return (
-    <div className="min-h-screen pk-prism-stage text-white">
+    <MarketingPageShell>
       <Navbar variant="marketing" />
 
       <main className="mx-auto max-w-6xl px-4 py-14">
@@ -433,6 +434,6 @@ export default function Pricing() {
           <div className="mt-4 text-white/35">© 2026 ProducerHit</div>
         </footer>
       </main>
-    </div>
+    </MarketingPageShell>
   );
 }

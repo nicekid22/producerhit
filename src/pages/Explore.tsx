@@ -14,10 +14,11 @@ import {
   categoriesWithTracks,
   COMMUNITY_VIBE_CATEGORIES,
   pickSpotlight,
-  sortByRating,
+  sortByCommunityLove,
   tracksForCategory,
 } from "@/lib/communityHub";
 import {
+  fetchCommunityPlayCounts,
   fetchPublicLoops,
   resolvePlayableCommunityAudio,
   sortPublicLoopsByNewest,
@@ -26,8 +27,6 @@ import {
 import { savePendingRemix } from "@/lib/pendingRemix";
 import { isRemixVibeRecreateEnabled } from "@/lib/remixVibeFallback";
 import { fetchRemixSourceLoop } from "@/lib/remixSourceLoop";
-import { COMMUNITY_PINTEREST_FOREGROUND } from "@/lib/featureFlags";
-import { fetchPinterestCoversForStyles } from "@/lib/pinterestCoverFetch";
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
 import { useLocaleStore } from "@/stores/localeStore";
 import { useAuthStore } from "@/stores/authStore";
@@ -56,7 +55,7 @@ export default function Explore() {
   const setPlaying = usePlayerStore((s) => s.setPlaying);
   const setQueue = usePlayerStore((s) => s.setQueue);
   const [ratingsById, setRatingsById] = useState<Record<string, RatingStats>>({});
-  const [pinterestCovers, setPinterestCovers] = useState<Record<string, string>>({});
+  const [playsById, setPlaysById] = useState<Record<string, number>>({});
 
   const toLoop = (r: PublicLoopRow): Loop => publicRowToCoverLoop(r);
   const isNew = (createdAt: string) => Date.now() - new Date(createdAt).getTime() < 24 * 60 * 60 * 1000;
@@ -192,6 +191,22 @@ export default function Explore() {
     };
   }, [rows, user]);
 
+  useEffect(() => {
+    let cancelled = false;
+    const ids = rows.map((r) => r.id).filter(Boolean);
+    if (!ids.length) {
+      setPlaysById({});
+      return;
+    }
+    void (async () => {
+      const counts = await fetchCommunityPlayCounts(ids);
+      if (!cancelled) setPlaysById(counts);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [rows]);
+
   const vibeNavItems = useMemo(() => {
     return COMMUNITY_VIBE_CATEGORIES.map((category) => ({
       category,
@@ -224,18 +239,21 @@ export default function Explore() {
       return copy;
     }
 
-    if (sort === "top") return sortByRating(base, ratingsById);
+    if (sort === "top") return sortByCommunityLove(base, ratingsById, playsById);
     return sortPublicLoopsByNewest(base);
-  }, [activeCategory, query, ratingsById, rows, sort]);
+  }, [activeCategory, playsById, query, ratingsById, rows, sort]);
 
   const newestRail = useMemo(() => sortPublicLoopsByNewest(rows).slice(0, 12), [rows]);
-  const topRail = useMemo(() => sortByRating(rows, ratingsById).slice(0, 12), [ratingsById, rows]);
+  const topRail = useMemo(
+    () => sortByCommunityLove(rows, ratingsById, playsById).slice(0, 12),
+    [playsById, ratingsById, rows],
+  );
   const myTracks = useMemo(() => {
     if (!user?.id) return [];
     return sortPublicLoopsByNewest(rows.filter((r) => r.user_id === user.id));
   }, [rows, user?.id]);
 
-  const spotlight = useMemo(() => pickSpotlight(rows, ratingsById), [ratingsById, rows]);
+  const spotlight = useMemo(() => pickSpotlight(rows, ratingsById, playsById), [playsById, ratingsById, rows]);
   const categorySections = useMemo(() => categoriesWithTracks(rows), [rows]);
 
   const hasActiveFilters = query.trim().length > 0 || activeVibeId !== null || sort !== "new";
@@ -380,7 +398,6 @@ export default function Explore() {
     isMineRow,
     onRemix: remixFrom,
     onRate: setRating,
-    pinterestCovers,
   };
 
   return (
@@ -451,7 +468,7 @@ export default function Explore() {
             />
 
             {categorySections.map(({ category, tracks }) => {
-              const rail = sortByRating(tracks, ratingsById).slice(0, 10);
+              const rail = sortByCommunityLove(tracks, ratingsById, playsById).slice(0, 10);
               if (!rail.length) return null;
               return (
                 <CommunityRail
@@ -517,7 +534,7 @@ export default function Explore() {
                 ))}
               </>
             ) : (
-              filtered.map((r) => (
+              filtered.map((r, idx) => (
                 <CommunityTrackCard
                   key={r.id}
                   row={r}
@@ -531,7 +548,7 @@ export default function Explore() {
                   onPlay={() => void togglePlayFromFiltered(r)}
                   onRemix={() => remixFrom(r)}
                   onRate={(stars) => setRating(r.id, stars)}
-                  pinterestCoverUrl={pinterestCovers[r.id]}
+                  slotIndex={idx}
                 />
               ))
             )}

@@ -11,11 +11,7 @@ type Props = {
   onClose: () => void;
 };
 
-const STEPS = [
-  { icon: Music2, color: "text-violet-300" },
-  { icon: Sparkles, color: "text-pink-300" },
-  { icon: Share2, color: "text-cyan-300" },
-] as const;
+const STEPS = [Music2, Sparkles, Share2] as const;
 
 export function hasSeenMobileOnboarding(): boolean {
   try {
@@ -68,8 +64,7 @@ export function MobileOnboardingSheet({ locale, open, onClose }: Props) {
       ];
 
   const current = copy[step] ?? copy[0]!;
-  const Icon = STEPS[step]?.icon ?? Music2;
-  const iconColor = STEPS[step]?.color ?? "text-violet-300";
+  const Icon = STEPS[step] ?? Music2;
   const isLast = step >= copy.length - 1;
 
   const finish = () => {
@@ -82,7 +77,7 @@ export function MobileOnboardingSheet({ locale, open, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-[80] md:hidden">
       <button type="button" className="absolute inset-0 bg-black/70 backdrop-blur-sm" aria-label="Close" onClick={finish} />
-      <div className="absolute bottom-0 left-0 right-0 rounded-t-3xl border border-white/10 bg-[#0a0812]/95 p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-[0_-24px_80px_rgba(0,0,0,0.55)]">
+      <div className="pk-mobile-onboarding-sheet absolute bottom-0 left-0 right-0 rounded-t-3xl border border-white/10 p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-[0_-24px_80px_rgba(0,0,0,0.55)]">
         <div className="mb-4 flex items-center justify-between">
           <div className="text-[10px] font-semibold uppercase tracking-widest text-white/40">
             {isFr ? "Bienvenue" : "Welcome"} · {step + 1}/{copy.length}
@@ -93,8 +88,8 @@ export function MobileOnboardingSheet({ locale, open, onClose }: Props) {
         </div>
 
         <div className="flex flex-col items-center text-center">
-          <div className={cn("mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/[0.06]", iconColor)}>
-            <Icon className="h-7 w-7" />
+          <div className={cn("pk-mobile-onboarding-icon-box mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/[0.06]", `pk-mobile-onboarding-icon-box--${step}`)}>
+            <Icon className="pk-mobile-onboarding-icon h-7 w-7" />
           </div>
           <h2 className="text-lg font-bold text-white">{current.title}</h2>
           <p className="mt-2 max-w-sm text-sm leading-relaxed text-white/60">{current.body}</p>
@@ -102,7 +97,13 @@ export function MobileOnboardingSheet({ locale, open, onClose }: Props) {
 
         <div className="mt-5 flex justify-center gap-1.5">
           {copy.map((_, i) => (
-            <span key={i} className={cn("h-1.5 rounded-full transition-all", i === step ? "w-6 bg-pink-400/80" : "w-1.5 bg-white/20")} />
+            <span
+              key={i}
+              className={cn(
+                "pk-mobile-onboarding-dot h-1.5 rounded-full transition-all",
+                i === step ? "pk-mobile-onboarding-dot--active w-6" : "w-1.5 bg-white/20",
+              )}
+            />
           ))}
         </div>
 

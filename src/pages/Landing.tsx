@@ -7,19 +7,13 @@ import { useLocaleStore } from "@/stores/localeStore";
 import { FolderOpen, Keyboard, Menu, Mic2, Sparkles, Video, X, Zap } from "lucide-react";
 import { usePlayerStore } from "@/stores/playerStore";
 import type { Loop } from "@/types/loop";
-import { publicRowToCoverLoop, resolvePublicRowCoverUrl } from "@/lib/coverArt";
-import { LANDING_PINTEREST_COVERS } from "@/lib/featureFlags";
-import {
-  enrichTracksWithPinterestCovers,
-  isPinterestSideCard,
-  resolveSideCardsWithPinterest,
-  warmLandingPinterestCovers,
-} from "@/lib/pinterestCoverFetch";
+import { isPersistedStorageCoverUrl, publicRowToCoverLoop, resolvePublicRowCoverUrl } from "@/lib/coverArt";
+import { UNIFIED_STORED_COVERS } from "@/lib/featureFlags";
 import {
   consumeJustAuthenticated,
   hasOAuthCallbackParams,
 } from "@/lib/postAuthRedirect";
-import { coverGradient, hashString } from "@/lib/utils";
+import { COVER_SURFACE_CLASS, hashString } from "@/lib/utils";
 import {
   extractAceTaskId,
   fetchPublicLoops,
@@ -42,7 +36,11 @@ import { HeroCtaButton } from "@/components/landing/HeroCtaButton";
 import { HeroTypewriterPrompt } from "@/components/landing/HeroTypewriterPrompt";
 import { LandingValueGrid } from "@/components/landing/LandingValueGrid";
 import { LandingPitchSections } from "@/components/landing/LandingPitchSections";
+import { ThemeToggleButton } from "@/components/ThemeToggleButton";
+import { WarmGlassBackdrop } from "@/components/WarmGlassBackdrop";
+import { useVisualThemeStore, isWarmGlassTheme } from "@/stores/visualThemeStore";
 import { landingCopy, landingFeatureCards, landingFlowSectionClass, landingSectionClass } from "@/lib/landingContent";
+import { cn } from "@/lib/utils";
 import { PLAN_LIMITS } from "@/lib/planLimits";
 import { isRecommendedPlan, normalizePlan, pricingCtaHref, pricingCtaMeta } from "@/lib/billing";
 import { plusPermanentAudioBenefit } from "@/lib/loopAudioRetention";
@@ -145,6 +143,8 @@ export default function Landing() {
   const refreshProfile = useAuthStore((s) => s.refreshProfile);
   const locale = useLocaleStore((s) => s.locale);
   const setLocale = useLocaleStore((s) => s.setLocale);
+  const visualTheme = useVisualThemeStore((s) => s.theme);
+  const warmGlass = isWarmGlassTheme(visualTheme);
   const copy = useMemo(() => landingCopy(locale), [locale]);
 
   const [navScrolled, setNavScrolled] = useState(false);
@@ -311,7 +311,7 @@ export default function Landing() {
       title: name,
       subtitle,
       coverUrl,
-      coverBg: coverGradient(loopForCover),
+      coverBg: COVER_SURFACE_CLASS,
       audioUrl: audioUrlRaw.length > 0 ? audioUrlRaw : null,
       stemsUrl: stemsUrlObj,
       name,
@@ -324,9 +324,7 @@ export default function Landing() {
 
   const mapTrackToSideCard = useCallback(
     (t: PublicTrack): GeneratorSideCard | null => {
-      const coverUrl = t.coverUrl?.trim() ?? "";
-      if (!coverUrl.startsWith("http")) return null;
-      const loopForCover = publicRowToCoverLoop({
+      const row = {
         id: t.id,
         name: t.name,
         genre: t.genre,
@@ -336,13 +334,16 @@ export default function Landing() {
         stems_url: t.stemsUrl ?? null,
         seed: t.seed ?? null,
         created_at: t.createdAt,
-      });
+      };
+      const loopForCover = publicRowToCoverLoop(row);
+      const coverUrl = t.coverUrl?.trim() || resolvePublicRowCoverUrl(row);
+      if (!coverUrl.startsWith("http")) return null;
       return {
         id: t.id,
         title: t.name,
         subtitle: t.tags.slice(0, 3).join(" · ") || t.badge,
         coverUrl,
-        coverBg: coverGradient(loopForCover),
+        coverBg: COVER_SURFACE_CLASS,
         audioUrl: t.audioUrl,
         stemsUrl: t.stemsUrl ?? null,
         name: t.name,
@@ -470,7 +471,6 @@ export default function Landing() {
     color: string;
     prompt: string;
     coverUrl?: string | null;
-    pinterestCoverUrl?: string | null;
     author?: PublicProfileCard | null;
   };
 
@@ -498,9 +498,7 @@ export default function Landing() {
 
   useEffect(() => {
     let cancelled = false;
-    const cacheKey = LANDING_PINTEREST_COVERS
-      ? "producerhit_landing_gen_cards_v5_pin"
-      : "producerhit_landing_gen_cards_v4";
+    const cacheKey = "producerhit_landing_gen_cards_v6_stored";
     const seedKey = "producerhit_landing_gen_cards_seed";
 
     const hasValidCoverUrl = (cards: GeneratorSideCard[]) =>
@@ -521,20 +519,13 @@ export default function Landing() {
     };
 
     void (async () => {
-      if (LANDING_PINTEREST_COVERS) {
-        void warmLandingPinterestCovers();
-      }
-
       try {
         const raw = window.sessionStorage.getItem(cacheKey);
         if (raw) {
           const parsed = JSON.parse(raw) as { ts?: unknown; cards?: unknown };
           const ts = typeof parsed?.ts === "number" ? parsed.ts : 0;
           const cached = Array.isArray(parsed?.cards) ? (parsed.cards as GeneratorSideCard[]) : [];
-          const ok =
-            Date.now() - ts < 15 * 60 * 1000 &&
-            hasValidCoverUrl(cached) &&
-            (!LANDING_PINTEREST_COVERS || cached.every(isPinterestSideCard));
+          const ok = Date.now() - ts < 15 * 60 * 1000 && hasValidCoverUrl(cached);
           if (ok) {
             commitSideCards(cached);
             syncSideCardPool(cached);
@@ -570,12 +561,8 @@ export default function Landing() {
         }
 
         const picked = pickRandomSideCards(pool, 2, seed);
-        const finalCards = LANDING_PINTEREST_COVERS
-          ? await resolveSideCardsWithPinterest(picked)
-          : picked;
-
         if (cancelled) return;
-        commitSideCards(finalCards);
+        commitSideCards(picked);
       } catch {
         // ignore — cards stay hidden if fetch fails
       }
@@ -636,32 +623,16 @@ export default function Landing() {
         const next = pickNextSideCard(pool, prev);
         if (!next) return prev;
 
-        if (LANDING_PINTEREST_COVERS) {
-          const slotAtSchedule = slot;
-          void resolveSideCardsWithPinterest([next]).then((enriched) => {
-            if (cancelled || !enriched[0]) return;
-            setGeneratorSideCards((cur) => {
-              if (cur.length < 2) return cur;
-              const updated: GeneratorSideCard[] = [...cur];
-              if (updated[slotAtSchedule]?.id !== next.id) return cur;
-              updated[slotAtSchedule] = enriched[0]!;
-              try {
-                const key = "producerhit_landing_gen_cards_v5_pin";
-                window.sessionStorage.setItem(
-                  key,
-                  JSON.stringify({ ts: Date.now(), cards: updated.slice(0, 2) }),
-                );
-              } catch {
-                // ignore
-              }
-              return updated;
-            });
-          });
-          return prev;
-        }
-
         const updated: GeneratorSideCard[] = [...prev];
         updated[slot] = next;
+        try {
+          window.sessionStorage.setItem(
+            "producerhit_landing_gen_cards_v6_stored",
+            JSON.stringify({ ts: Date.now(), cards: updated.slice(0, 2) }),
+          );
+        } catch {
+          // ignore
+        }
         return updated;
       });
 
@@ -832,11 +803,6 @@ export default function Landing() {
           setTrending(cached);
           setTrendingLoading(false);
           loadedFromCache = true;
-          if (LANDING_PINTEREST_COVERS && cached.some((t) => !t.pinterestCoverUrl?.trim())) {
-            void enrichTracksWithPinterestCovers(cached).then((enriched) => {
-              if (!cancelled) setTrending(enriched);
-            });
-          }
         }
       }
     } catch {
@@ -907,15 +873,11 @@ export default function Landing() {
         const next = mapped.slice(0, 12);
         setTrending(next);
         setTrendingLoading(false);
-        void enrichTracksWithPinterestCovers(next).then((enriched) => {
-          if (cancelled) return;
-          setTrending(enriched);
-          try {
-            window.sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), items: enriched }));
-          } catch {
-            void 0;
-          }
-        });
+        try {
+          window.sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), items: next }));
+        } catch {
+          void 0;
+        }
       } catch {
         if (!cancelled) {
           window.clearTimeout(slowTimer);
@@ -1062,7 +1024,18 @@ export default function Landing() {
   const [faqOpen, setFaqOpen] = useState<number | null>(0);
 
   return (
-    <div ref={pageRef} className="min-h-screen pk-prism-stage pk-prism-stage--landing text-white">
+    <div
+      ref={pageRef}
+      className={cn(
+        "relative min-h-screen pk-prism-stage pk-prism-stage--landing text-white",
+        warmGlass && "pk-warm-glass-stage",
+      )}
+    >
+      {warmGlass ? (
+        <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden>
+          <WarmGlassBackdrop />
+        </div>
+      ) : null}
 
       <header
         className={[
@@ -1102,6 +1075,7 @@ export default function Landing() {
                 </HeroCtaButton>
               </>
             )}
+            <ThemeToggleButton variant="icon" />
             <div className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] p-1">
               <button
                 type="button"
@@ -1191,33 +1165,36 @@ export default function Landing() {
                   {locale === "fr" ? "Rester sur l’accueil" : "Stay on home"}
                 </Link>
               )}
-              <div className="mt-1 flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] p-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLocale("en");
-                    setMobileOpen(false);
-                  }}
-                  className={[
-                    "flex-1 rounded-full px-3 py-2 text-xs font-semibold transition-colors",
-                    locale === "en" ? "pk-prism-pill-active" : "text-white/45",
-                  ].join(" ")}
-                >
-                  EN
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLocale("fr");
-                    setMobileOpen(false);
-                  }}
-                  className={[
-                    "flex-1 rounded-full px-3 py-2 text-xs font-semibold transition-colors",
-                    locale === "fr" ? "pk-prism-pill-active" : "text-white/45",
-                  ].join(" ")}
-                >
-                  FR
-                </button>
+              <div className="flex items-center gap-2">
+                <ThemeToggleButton variant="icon" className="rounded-xl" />
+                <div className="flex flex-1 items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] p-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLocale("en");
+                      setMobileOpen(false);
+                    }}
+                    className={[
+                      "flex-1 rounded-full px-3 py-2 text-xs font-semibold transition-colors",
+                      locale === "en" ? "pk-prism-pill-active" : "text-white/45",
+                    ].join(" ")}
+                  >
+                    EN
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLocale("fr");
+                      setMobileOpen(false);
+                    }}
+                    className={[
+                      "flex-1 rounded-full px-3 py-2 text-xs font-semibold transition-colors",
+                      locale === "fr" ? "pk-prism-pill-active" : "text-white/45",
+                    ].join(" ")}
+                  >
+                    FR
+                  </button>
+                </div>
               </div>
             </nav>
           </div>
@@ -1225,9 +1202,11 @@ export default function Landing() {
       </header>
 
       <main ref={heroRef} className="relative z-10">
-        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-          <LandingPrismScene spot={spot} reduceMotion={reduceMotion} />
-        </div>
+        {!warmGlass ? (
+          <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+            <LandingPrismScene spot={spot} reduceMotion={reduceMotion} />
+          </div>
+        ) : null}
         <RevealSection className={landingFlowSectionClass()}>
           <section className="pk-landing-flow__stack w-full" aria-label="Hero">
             <div className="pk-landing-flow__intro mx-auto w-full max-w-2xl text-center">

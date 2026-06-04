@@ -18,15 +18,30 @@ import { Slider } from "@/components/ui/Slider";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/EmptyState";
 import { useGeneratorStore } from "@/stores/generatorStore";
-import { aceKeyIndexForGenerationSlot, browserAceKeyCount } from "@/lib/aceBrowserKeys";
-import { canParallelizeDualGeneration } from "@/lib/generationConcurrency";
+import { browserAceKeyCount } from "@/lib/aceBrowserKeys";
+import {
+  aceKeyPreferIndexForSlot,
+  dualAdaptiveFallbackEnabled,
+  dualGenerationEffectiveMode,
+  dualGenerationStaggerMs,
+  dualParallelStaggerMs,
+  generationStrategySnapshot,
+  dualBatchProdMonitoringEnabled,
+  type DualGenerationMode,
+} from "@/lib/generationStrategy";
+import { estimateGenerationDurationMs, simulatedGenerationPercent } from "@/lib/generationProgress";
 import {
   formatGenerationErrorMessage,
   generationRetryDelayMs,
+  isGenerationCapacityError,
   isRetryableGenerationError,
+  markPriorityUpsellPrompted,
+  shouldTriggerDualSequentialFallback,
   normalizeGenerationRawError,
+  shouldPromptPriorityUpsellAfterCapacityError,
 } from "@/lib/generationErrors";
 import { resolvePlaybackUrlForLoop, useLoopsStore } from "@/stores/loopsStore";
+import { unlockAudioPlaybackFromGesture } from "@/lib/audioPlaybackUnlock";
 import type { Loop, LoopLength } from "@/types/loop";
 import { usePlayerStore } from "@/stores/playerStore";
 import { LoopCardItem } from "@/components/LoopCardItem";
@@ -37,10 +52,9 @@ import { supabase, trackClientEvent } from "@/lib/supabaseClient";
 import { ShareMomentModal } from "@/components/growth/ShareMomentModal";
 import { ReferralInviteModal } from "@/components/growth/ReferralInviteModal";
 import { MasteringUpsellModal } from "@/components/growth/MasteringUpsellModal";
-import { GamificationStrip, notifyGamificationGeneration } from "@/components/growth/GamificationStrip";
-import { GamificationCollapsedPreview } from "@/components/growth/GamificationCollapsedPreview";
+import { notifyGamificationGeneration } from "@/components/growth/GamificationStrip";
+import { DailyBonusBannerButton } from "@/components/growth/DailyBonusBannerButton";
 import { DashboardPromoBillboard } from "@/components/growth/DashboardPromoBillboard";
-import { DashboardGamingPanelShell, type DashboardGamingPanelHandle } from "@/components/dashboard/DashboardGamingPanelShell";
 import { pickLoopForSharePrompt, shouldShowSharePromptAfterGeneration } from "@/lib/sharePrompt";
 import { markReferralInvitePromptShown, shouldShowReferralInvitePrompt } from "@/lib/referralPrompt";
 import { ensureReferralCode } from "@/lib/referral";
@@ -55,12 +69,14 @@ import { getRemainingBeats, PLAN_LIMITS, FREE_MASTERING_UPSELL_AT, getTotalGener
 import {
   markLowCreditsPromptShown,
   shouldShowLowCreditsPrompt,
+  shouldShowPlanUpsell,
   shouldShowPostGenerationPrompt,
   type UpsellReason,
 } from "@/lib/growthUpsell";
+import { isPaidPlan } from "@/lib/planEntitlements";
 import { useGrowthUpsellStore } from "@/stores/growthUpsellStore";
 import { RemixStudioPanel } from "@/components/dashboard/RemixStudioPanel";
-import { generateBeat, remixLoopAce } from "@/lib/audioApi";
+import { generateBeat, generateBeatDualBatch, remixLoopAce } from "@/lib/audioApi";
 import { ACE_REMIX_UNAVAILABLE_COPY, AceRemixUnavailableError } from "@/lib/aceRemix";
 import { dropStalePreviewDuplicates } from "@/lib/loopWorkspaceUtils";
 import { buildAceCaption, type GenerateParams } from "@/lib/promptBuilder";
@@ -76,6 +92,12 @@ import { LoopDetailsPanel } from "@/components/dashboard/LoopDetailsPanel";
 import { LoopDetailsSheet, LoopDetailsSheetHeader } from "@/components/dashboard/LoopDetailsSheet";
 import { MasteringPanel } from "@/components/mastering/MasteringPanel";
 import { DashboardGenerateButton } from "@/components/dashboard/DashboardGenerateButton";
+import {
+  GeneratorAdvancedOutputControls,
+  VOCAL_STYLE_OPTIONS,
+  type VocalStyleValue,
+} from "@/components/dashboard/GeneratorAdvancedOutputControls";
+import { GenerationCreditAmount, GenerationCreditIcon } from "@/components/GenerationCreditIcon";
 import { triggerBeatReady } from "@/lib/delight/moments";
 import { loadGamification } from "@/lib/gamification";
 import { profileLoadErrorMessage, readProfileCache, shouldShowProfileLoadToast, syncProfileCache, type UserProfileRow } from "@/lib/profileBootstrap";
@@ -137,13 +159,6 @@ const bpmPresets = [
 ] as const;
 const songDurationPresets = [15, 30, 45] as const;
 const timeSignatureOptions = ["2/4", "3/4", "4/4", "6/8"] as const;
-const vocalStyleOptions = [
-  { value: "Singer", label: "Singer" },
-  { value: "Rapper", label: "Rapper" },
-  { value: "Singer-Rapper", label: "Hybrid" },
-  { value: "Choir", label: "Vocal group" },
-] as const;
-
 const genreInspirationChips: Record<string, readonly string[]> = {
   "Contemporary Rap": ["Hard Drums", "808/Sub", "Minimal Melody", "Bouncy Hats", "Ear Candy", "Modern"],
   "Lo-Fi Hip-Hop": ["Vintage", "Sad", "Vinyl", "Rain", "Night City", "Study"],
@@ -335,7 +350,7 @@ function compareWorkspaceLoops(a: Loop, b: Loop) {
 export default function Dashboard() {
   type GenerationSlot = {
     idx: 1 | 2;
-    status: "generating" | "error";
+    status: "queued" | "waiting" | "generating" | "error";
     errorText?: string;
     seed?: number;
     title: string;
@@ -345,6 +360,8 @@ export default function Dashboard() {
     /** Loop persistée — évite de perdre la carte si la preview a déjà été remplacée. */
     savedLoopId?: string;
     generationKey?: string;
+    /** Estimation locale — pas un % renvoyé par ACE. */
+    progressPct?: number;
   };
 
   const navigate = useNavigate();
@@ -353,7 +370,9 @@ export default function Dashboard() {
   const setBpm = useGeneratorStore((s) => s.setBpm);
   const setLoopLength = useGeneratorStore((s) => s.setLoopLength);
   const loops = useLoopsStore((s) => s.loops);
+  const loopsTotalCount = useLoopsStore((s) => s.loopsTotalCount);
   const loopsLoading = useLoopsStore((s) => s.loading);
+  const loopsHydrated = useLoopsStore((s) => s.loopsHydrated);
   const loopsSyncError = useLoopsStore((s) => s.lastSyncError);
   const loadMyLoops = useLoopsStore((s) => s.loadMyLoops);
   const durationsSecById = useLoopsStore((s) => s.durationsSecById);
@@ -367,6 +386,8 @@ export default function Dashboard() {
   const togglePublicRemote = useLoopsStore((s) => s.togglePublicRemote);
   const setQueue = usePlayerStore((s) => s.setQueue);
   const mergeQueue = usePlayerStore((s) => s.mergeQueue);
+  const playerCurrent = usePlayerStore((s) => s.current);
+  const playerIsPlaying = usePlayerStore((s) => s.isPlaying);
   const user = useAuthStore((s) => s.user);
   const authStatus = useAuthStore((s) => s.status);
   const authProfile = useAuthStore((s) => s.profile);
@@ -383,7 +404,9 @@ export default function Dashboard() {
   const [workspaceJobs, setWorkspaceJobs] = useState<Array<{ id: string; title: string; sub: string }>>([]);
   const [versions, setVersions] = useState<1 | 2>(() => {
     const saved = typeof window !== "undefined" ? window.localStorage.getItem("producerhit_versions") : null;
-    return saved === "1" ? 1 : 2;
+    if (saved === "1") return 1;
+    if (saved === "2") return 2;
+    return 1;
   });
   const [plan, setPlan] = useState("free");
   const planRef = useRef("free");
@@ -401,7 +424,6 @@ export default function Dashboard() {
   const generationAutoplayByIdxRef = useRef<Map<1 | 2, Loop>>(new Map());
   const generateSessionRef = useRef(0);
   const referralPromptTimerRef = useRef<number | null>(null);
-  const progressionPanelRef = useRef<DashboardGamingPanelHandle>(null);
   const [externalRemix, setExternalRemix] = useState<PendingRemix | null>(null);
   const [mobileOnboardingOpen, setMobileOnboardingOpen] = useState(false);
   const [masteringUpsellLoop, setMasteringUpsellLoop] = useState<Loop | null>(null);
@@ -448,7 +470,7 @@ export default function Dashboard() {
   const [lastRandomGenre, setLastRandomGenre] = useState("");
   const [lyrics, setLyrics] = useState("");
   const [songDescription, setSongDescription] = useState("");
-  const [songVocalStyle, setSongVocalStyle] = useState<(typeof vocalStyleOptions)[number]["value"]>("Singer");
+  const [songVocalStyle, setSongVocalStyle] = useState<VocalStyleValue>("Singer");
   const [songTempoMode, setSongTempoMode] = useState<"auto" | "manual">("auto");
   const [songKeyMode, setSongKeyMode] = useState<"auto" | "manual">("auto");
   const [beatTempoMode, setBeatTempoMode] = useState<"auto" | "manual">("auto");
@@ -574,12 +596,9 @@ export default function Dashboard() {
   }, [goMaster, mobileV2]);
 
   const openBillboardProgress = useCallback(() => {
-    progressionPanelRef.current?.expand();
-    window.setTimeout(() => {
-      document.getElementById("pk-dashboard-progression")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    }, 120);
+    navigate("/settings#progression");
     trackClientEvent("dashboard_billboard_progress", { source: "spotlight" });
-  }, []);
+  }, [navigate]);
 
   const openBillboardPricing = useCallback(() => {
     navigate("/pricing?plan=plus");
@@ -606,6 +625,15 @@ export default function Dashboard() {
   useEffect(() => {
     if (authProfile) applyProfile(authProfile);
   }, [applyProfile, authProfile]);
+
+  /** Plan free : ×1 par défaut (moins de timeouts) sauf choix explicite en localStorage. */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = window.localStorage.getItem("producerhit_versions");
+    if (saved === "1" || saved === "2") return;
+    if (plan === "free") setVersions(1);
+    else if (plan && plan !== "free") setVersions(2);
+  }, [plan]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -651,20 +679,6 @@ export default function Dashboard() {
     window.addEventListener("beforeunload", onBeforeUnload);
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
   }, [generating, generationSlots]);
-
-  useEffect(() => {
-    if (authStatus !== "ready") return;
-    if (!user) return;
-    if (loopsLoading) return;
-    if (loops.length > 0) return;
-    const t = window.setTimeout(() => {
-      if (!useAuthStore.getState().user) return;
-      if (useLoopsStore.getState().loading) return;
-      if (useLoopsStore.getState().loops.length > 0) return;
-      void useLoopsStore.getState().loadMyLoops();
-    }, 450);
-    return () => window.clearTimeout(t);
-  }, [authStatus, loops.length, loopsLoading, user]);
 
   useEffect(() => {
     if (plan === "free" && audioFormat !== "mp3") setAudioFormat("mp3");
@@ -833,7 +847,6 @@ export default function Dashboard() {
   const remaining = getRemainingBeats(plan, usedThisMonth, referralBonus, levelBonus, dailyBonusMonth);
   const totalLimit = getTotalGenerationLimit(plan, { referralBonus, levelBonus, dailyBonusMonth });
   const bonusCreditsTotal = referralBonus + levelBonus + dailyBonusMonth;
-  const remainingAfterGenerate = Math.max(0, remaining - versions);
   useEffect(() => {
     if (typeof window === "undefined") return;
     window.localStorage.setItem("producerhit_versions", String(versions));
@@ -845,16 +858,37 @@ export default function Dashboard() {
 
   const promptPlanUpsell = useCallback(
     (reason: UpsellReason) => {
-      openUpsell(reason, {
+      const ctx = {
         source: entrySource,
+        plan: planRef.current,
         remaining,
         totalLimit,
         usedThisMonth,
-      });
-      trackClientEvent("upgrade_prompt_shown", { source: entrySource, reason, plan });
+      };
+      if (!shouldShowPlanUpsell(planRef.current, reason, ctx)) return;
+      openUpsell(reason, ctx);
+      trackClientEvent("upgrade_prompt_shown", { source: entrySource, reason, plan: planRef.current });
     },
-    [entrySource, openUpsell, plan, remaining, totalLimit, usedThisMonth],
+    [entrySource, openUpsell, remaining, totalLimit, usedThisMonth],
   );
+
+  const handleNeedCredits = useCallback(() => {
+    const reason: UpsellReason = remaining < 1 ? "credits_exhausted" : "credits_low";
+    if (shouldShowPlanUpsell(planRef.current, reason, { source: entrySource, plan: planRef.current, remaining })) {
+      promptPlanUpsell(reason);
+      return;
+    }
+    if (isPaidPlan(planRef.current)) {
+      toast.error(
+        locale === "fr"
+          ? "Quota indisponible pour cette action — réessaie ou rafraîchis la page."
+          : "Quota unavailable for this action — retry or refresh the page.",
+      );
+      void refreshProfile();
+      return;
+    }
+    promptPlanUpsell(reason);
+  }, [entrySource, locale, promptPlanUpsell, refreshProfile, remaining]);
 
   useEffect(() => {
     if (profileBusy || !user) return;
@@ -974,11 +1008,31 @@ export default function Dashboard() {
     }).length;
   }, [loops, query, savedOnly]);
 
+  const libraryTotalCount = loopsTotalCount ?? loops.length;
+  const workspaceFilteredTotal = totalMatches;
+  const workspaceVisibleCount = displayedLoops.length;
+  const hasWorkspaceFilters = savedOnly || query.trim().length > 0;
+
+  const visibleGenerationSlots = useMemo(
+    () =>
+      generationSlots?.filter((s) => {
+        if (!s.visible) return false;
+        if (s.savedLoopId && loops.some((l) => l.id === s.savedLoopId)) return false;
+        return true;
+      }) ?? [],
+    [generationSlots, loops],
+  );
+
   const mobileResultsBadge = useMemo(() => {
     const jobs = workspaceJobs.length;
-    const slots = generationSlots?.filter((s) => s.visible).length ?? 0;
-    return jobs + slots;
-  }, [generationSlots, workspaceJobs]);
+    return jobs + visibleGenerationSlots.length;
+  }, [visibleGenerationSlots, workspaceJobs]);
+
+  const generationProgressPct = useMemo(() => {
+    const active = visibleGenerationSlots.filter((s) => s.status === "generating");
+    if (!active.length) return undefined;
+    return Math.max(0, ...active.map((s) => s.progressPct ?? 0));
+  }, [visibleGenerationSlots]);
 
   const mobileGenActive = generating || mobileResultsBadge > 0;
   const mobileGenerationsAnchorRef = useRef<HTMLDivElement>(null);
@@ -1080,6 +1134,7 @@ export default function Dashboard() {
     }
     if (generating) return;
     const sessionId = ++generateSessionRef.current;
+    unlockAudioPlaybackFromGesture();
     setGenerating(true);
     genAutoplayStartedRef.current = false;
     generationAutoplayByIdxRef.current = new Map();
@@ -1198,18 +1253,37 @@ export default function Dashboard() {
 
     const seed1 = externalSeed ?? randInt(999999);
     const seed2 = seed1 + 12345;
+    const dualMode = versions === 2 ? dualGenerationEffectiveMode() : null;
     const slots: GenerationSlot[] =
       versions === 2
         ? [
-            { idx: 1, status: "generating", title: makeTitle(1), seed: seed1, visible: true, previewReady: false },
-            { idx: 2, status: "generating", title: makeTitle(2), seed: seed2, visible: true, previewReady: false },
+            { idx: 1, status: "generating", title: makeTitle(1), seed: seed1, visible: true, previewReady: false, progressPct: 0 },
+            {
+              idx: 2,
+              status: dualMode === "sequential" ? "queued" : "generating",
+              title: makeTitle(2),
+              seed: seed2,
+              visible: true,
+              previewReady: false,
+              progressPct: dualMode === "sequential" ? undefined : 0,
+            },
           ]
-        : [{ idx: 1, status: "generating", title: makeTitle(1), seed: seed1, visible: true, previewReady: false }];
+        : [{ idx: 1, status: "generating", title: makeTitle(1), seed: seed1, visible: true, previewReady: false, progressPct: 0 }];
     setGenerationSlots(slots);
 
     let didGenerate = false;
+    const slotErrors: Partial<Record<1 | 2, string>> = {};
     try {
-      trackClientEvent("generate_start", { mode, versions, plan, source: entrySource });
+      trackClientEvent("generate_start", {
+        mode,
+        versions,
+        plan,
+        source: entrySource,
+        ...generationStrategySnapshot(versions),
+      });
+      if (import.meta.env.DEV) {
+        console.info("[generate] strategy", generationStrategySnapshot(versions));
+      }
       if (import.meta.env.DEV && versions === 2 && browserAceKeyCount() < 2) {
         console.warn(
           "[generate] 1 seule clé VITE ACE — ajoute VITE_ACE_STEP_API_KEYS (comme ACE_STEP_API_KEYS) pour v1/v2 en parallèle sans 429.",
@@ -1232,8 +1306,7 @@ export default function Dashboard() {
       };
 
       const buildOptions = (seed?: number, slotIdx?: 1 | 2) => {
-        const aceKeyPreferIndex =
-          versions === 2 && slotIdx ? aceKeyIndexForGenerationSlot(slotIdx) : undefined;
+        const aceKeyPreferIndex = aceKeyPreferIndexForSlot(slotIdx, versions);
         const base = isSong
           ? {
               instrumental: false,
@@ -1411,23 +1484,60 @@ export default function Dashboard() {
         return ordered;
       };
 
+      const loopForPlayback = async (loop: Loop): Promise<Loop | null> => {
+        const url = loop.audioUrl?.trim();
+        if (!url) return null;
+        try {
+          const resolved = await resolvePlaybackUrlForLoop(loop.id, url);
+          if (!resolved.trim()) return null;
+          const fresh = useLoopsStore.getState().loops.find((l) => l.id === loop.id) ?? loop;
+          return { ...fresh, audioUrl: resolved };
+        } catch {
+          return null;
+        }
+      };
+
+      /** Autoplay dès URL résolue (blob/http) — pas d’attente canplaythrough (expire le geste navigateur). */
       const maybeAutoplayGenerationReady = (idx: 1 | 2, loop: Loop) => {
         if (!loop.audioUrl?.trim() || !isActiveSession()) return;
-        generationAutoplayByIdxRef.current.set(idx, loop);
-        const ordered = buildAutoplayQueue();
-        if (!ordered.length) return;
 
-        if (!genAutoplayStartedRef.current) {
+        void (async () => {
+          const playbackLoop = await loopForPlayback(loop);
+          if (!playbackLoop?.audioUrl?.trim() || !isActiveSession()) return;
+
+          generationAutoplayByIdxRef.current.set(idx, playbackLoop);
+          const ordered = buildAutoplayQueue();
+          if (!ordered.length) return;
+
           const v1Ready = Boolean(generationAutoplayByIdxRef.current.get(1)?.audioUrl?.trim());
-          if (versions === 2 && idx === 2 && !v1Ready) return;
-          genAutoplayStartedRef.current = true;
-          setQueue(ordered, 0, true, "generation");
-          trackClientEvent("growth_autoplay", { loop_id: ordered[0]?.id ?? loop.id, count: ordered.length, early: true });
-          if (mobileV2) goResults();
-          return;
-        }
 
-        mergeQueue(ordered, "generation");
+          if (!genAutoplayStartedRef.current) {
+            if (versions === 2 && !v1Ready) return;
+            genAutoplayStartedRef.current = true;
+            setQueue(ordered, 0, true, "generation");
+            trackClientEvent("growth_autoplay", {
+              loop_id: ordered[0]?.id ?? playbackLoop.id,
+              count: ordered.length,
+              early: true,
+              slot: idx,
+            });
+            if (mobileV2) goResults();
+            return;
+          }
+
+          mergeQueue(ordered, "generation");
+          const player = usePlayerStore.getState();
+          if (player.queueSource !== "generation") return;
+          if (player.isPlaying && player.current?.audioUrl?.trim() === playbackLoop.audioUrl?.trim()) return;
+
+          const targetIdx = ordered.findIndex(
+            (l) => l.id === playbackLoop.id || l.audioUrl?.trim() === playbackLoop.audioUrl?.trim(),
+          );
+          if (targetIdx < 0) return;
+          if (idx === 2 || targetIdx > player.queueIndex || !player.isPlaying) {
+            setQueue(ordered, targetIdx, true, "generation");
+          }
+        })();
       };
 
       const isActiveSession = () => generateSessionRef.current === sessionId;
@@ -1436,28 +1546,122 @@ export default function Dashboard() {
         if (!isActiveSession()) return;
         setGenerationSlots((prev) => {
           if (!prev) return prev;
-          const updated = prev.map((it) => (it.idx === idx ? { ...it, ...next } : it));
-          const stillGenerating = updated.some((s) => s.visible && s.status === "generating");
-          if (!stillGenerating && isActiveSession()) setGenerating(false);
-          return updated;
+          return prev.map((it) => (it.idx === idx ? { ...it, ...next } : it));
         });
       };
 
-      let releaseSlot1Gate: (() => void) | null = null;
-      const slot1ReleasedPromise = new Promise<void>((resolve) => {
-        releaseSlot1Gate = resolve;
-      });
+      const hideGenerationSlot = (idx: 1 | 2, extra?: Partial<GenerationSlot>) => {
+        setSlot(idx, { visible: false, progressPct: undefined, ...extra });
+      };
+
+      const applyBeatFromValue = async (
+        idx: 1 | 2,
+        seed: number,
+        title: string,
+        value: Awaited<ReturnType<typeof generateBeat>>,
+        generationKey: string,
+      ) => {
+        const audioUrl = value.audioUrl;
+        if (!audioUrl) throw new Error(locale === "fr" ? "Audio manquant" : "Missing audio");
+        didGenerate = true;
+        const { draft } = buildDraft(value, audioUrl);
+        draft.name = title;
+        if (typeof value.meta?.seed === "number" && Number.isFinite(value.meta.seed)) {
+          draft.seed = value.meta.seed;
+        } else if (Number.isFinite(seed)) {
+          draft.seed = seed;
+        }
+
+        const previewId = `preview-${generationKey}`;
+        const buildPreviewLoop = (playbackUrl: string): Loop => ({
+          id: previewId,
+          userId: user?.id,
+          createdAt: new Date().toISOString(),
+          engine: draft.engine,
+          name: title,
+          genre: draft.genre,
+          influence: draft.influence,
+          key: draft.key,
+          scale: draft.scale,
+          bpm: draft.bpm,
+          loopLength: draft.loopLength,
+          swing: draft.swing,
+          mood: draft.mood,
+          energyLevel: draft.energyLevel,
+          reverb: draft.reverb,
+          prompt: draft.prompt,
+          audioUrl: playbackUrl,
+          seed: draft.seed ?? null,
+          details: draft.details ?? null,
+          stemsUrl: draft.stemsUrl ?? null,
+          isSaved: false,
+          isPublic: draft.isPublic,
+        });
+
+        let previewCancelled = false;
+        const quickUrl = audioUrl.trim();
+        if (quickUrl) {
+          if (audioUrl.startsWith("http")) void primeAudioCache(previewId, audioUrl);
+          void (async () => {
+            const playbackUrl = ((await resolvePlaybackUrlForLoop(previewId, audioUrl)) || quickUrl).trim();
+            if (!playbackUrl || !isActiveSession() || previewCancelled) return;
+            const previewLoop = buildPreviewLoop(playbackUrl);
+            upsertLoop(previewLoop);
+            hideGenerationSlot(idx, { previewLoopId: previewId, previewReady: true });
+            generationAutoplayByIdxRef.current.set(idx, previewLoop);
+            maybeAutoplayGenerationReady(idx, previewLoop);
+          })();
+        }
+
+        const loop = await persistDraft(draft, audioUrl, value.engine, previewId);
+        previewCancelled = true;
+        await migrateAudioCache(previewId, loop.id);
+        const player = usePlayerStore.getState();
+        const wasPreview =
+          player.current?.id === previewId || player.queue.some((l) => l.id === previewId);
+        if (wasPreview) {
+          player.promoteLoop(previewId, loop);
+        }
+        removeLoop(previewId);
+        hideGenerationSlot(idx, { savedLoopId: loop.id, previewLoopId: undefined, previewReady: true });
+        generationAutoplayByIdxRef.current.set(idx, loop);
+        created.push(loop);
+        const samePlayback =
+          genAutoplayStartedRef.current &&
+          player.isPlaying &&
+          typeof player.current?.audioUrl === "string" &&
+          player.current.audioUrl.trim() === (loop.audioUrl?.trim() ?? "");
+        if (!samePlayback) {
+          maybeAutoplayGenerationReady(idx, loop);
+        } else if (wasPreview) {
+          mergeQueue(buildAutoplayQueue(), "generation");
+        }
+        trackClientEvent("generate_success", {
+          loop_id: loop.id,
+          mode,
+          versions,
+          plan,
+          source: entrySource,
+          dual_batch: value.engine.includes("dual-batch"),
+        });
+        consumeCredit();
+      };
 
       const startOne = async (idx: 1 | 2, seed: number, title: string) => {
         const generationKey =
           typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `gen-${Date.now()}-${Math.random().toString(16).slice(2)}`;
         let previewId: string | null = null;
-        let slot1GateReleased = false;
-        const releaseSlot1 = () => {
-          if (idx !== 1 || slot1GateReleased) return;
-          slot1GateReleased = true;
-          releaseSlot1Gate?.();
+        const expectedMs = estimateGenerationDurationMs(
+          mode === "song" ? "song" : "beat",
+          mode === "song" ? manualSongDuration ?? null : null,
+        );
+        const slotStartedAt = Date.now();
+        let progressTick: number | undefined;
+        const stopProgressTick = () => {
+          if (progressTick !== undefined) window.clearInterval(progressTick);
+          progressTick = undefined;
         };
+
         setSlot(idx, {
           status: "generating",
           seed,
@@ -1465,7 +1669,17 @@ export default function Dashboard() {
           visible: true,
           previewReady: false,
           generationKey,
+          progressPct: 0,
         });
+
+        progressTick = window.setInterval(() => {
+          if (!isActiveSession()) {
+            stopProgressTick();
+            return;
+          }
+          const pct = simulatedGenerationPercent(Date.now() - slotStartedAt, expectedMs);
+          setSlot(idx, { progressPct: pct });
+        }, 400);
 
         try {
           for (let attempt = 0; attempt < 2; attempt++) {
@@ -1474,86 +1688,20 @@ export default function Dashboard() {
                 ...buildOptions(seed, idx),
                 generationKey,
               });
-              const audioUrl = value.audioUrl;
-              if (!audioUrl) throw new Error(locale === "fr" ? "Audio manquant" : "Missing audio");
-              didGenerate = true;
-              const { draft } = buildDraft(value, audioUrl);
-              draft.name = title;
-
-              previewId = `preview-${generationKey}`;
-              const buildPreviewLoop = (playbackUrl: string): Loop => ({
-                id: previewId!,
-                userId: user?.id,
-                createdAt: new Date().toISOString(),
-                engine: draft.engine,
-                name: title,
-                genre: draft.genre,
-                influence: draft.influence,
-                key: draft.key,
-                scale: draft.scale,
-                bpm: draft.bpm,
-                loopLength: draft.loopLength,
-                swing: draft.swing,
-                mood: draft.mood,
-                energyLevel: draft.energyLevel,
-                reverb: draft.reverb,
-                prompt: draft.prompt,
-                audioUrl: playbackUrl,
-                seed: draft.seed ?? null,
-                details: draft.details ?? null,
-                stemsUrl: draft.stemsUrl ?? null,
-                isSaved: false,
-                isPublic: draft.isPublic,
-              });
-
-              const quickUrl = audioUrl.trim();
-              if (quickUrl) {
-                if (audioUrl.startsWith("http")) void primeAudioCache(previewId, audioUrl);
-                const previewLoop = buildPreviewLoop(quickUrl);
-                upsertLoop(previewLoop);
-                setSlot(idx, { visible: false, previewLoopId: previewId, previewReady: true });
-                releaseSlot1();
-                maybeAutoplayGenerationReady(idx, previewLoop);
-              }
-
-              void resolvePlaybackUrlForLoop(previewId, audioUrl).then((resolvedUrl) => {
-                if (!isActiveSession() || !previewId) return;
-                const upgraded = (resolvedUrl || quickUrl).trim();
-                if (!upgraded || upgraded === quickUrl) return;
-                const previewLoop = buildPreviewLoop(upgraded);
-                upsertLoop(previewLoop);
-                generationAutoplayByIdxRef.current.set(idx, previewLoop);
-                if (!genAutoplayStartedRef.current) return;
-                const player = usePlayerStore.getState();
-                player.promoteLoop(previewId, previewLoop);
-                if (isActiveSession()) mergeQueue(buildAutoplayQueue(), "generation");
-              });
-
-              const loop = await persistDraft(draft, audioUrl, value.engine, previewId);
-              await migrateAudioCache(previewId, loop.id);
-              const player = usePlayerStore.getState();
-              if (
-                previewId &&
-                (player.current?.id === previewId || player.queue.some((l) => l.id === previewId))
-              ) {
-                player.promoteLoop(previewId, loop);
-              }
-              if (previewId) removeLoop(previewId);
-              setSlot(idx, { savedLoopId: loop.id, previewLoopId: undefined });
-              generationAutoplayByIdxRef.current.set(idx, loop);
-              created.push(loop);
-              if (genAutoplayStartedRef.current && isActiveSession()) mergeQueue(buildAutoplayQueue(), "generation");
-              trackClientEvent("generate_success", { loop_id: loop.id, mode, versions, plan, source: entrySource });
-              consumeCredit();
+              stopProgressTick();
+              setSlot(idx, { progressPct: 100 });
+              await applyBeatFromValue(idx, seed, title, value, generationKey);
               previewId = null;
               break;
             } catch (e) {
               const msg = e instanceof Error ? e.message : String(e);
               if (!isRetryableGenerationError(msg) || attempt === 1) throw e;
+              setSlot(idx, { progressPct: 8 });
               await new Promise((r) => setTimeout(r, generationRetryDelayMs(msg, attempt)));
             }
           }
         } catch (err) {
+          stopProgressTick();
           const anyErr = err as { limitReached?: boolean };
           const rawMessage = normalizeGenerationRawError(err instanceof Error ? err.message : String(err));
           if (import.meta.env.DEV) console.warn("[generate] slot failed", { idx, rawMessage, err });
@@ -1561,39 +1709,200 @@ export default function Dashboard() {
             ? locale === "fr"
               ? "Limite mensuelle atteinte"
               : "Monthly limit reached"
-            : formatGenerationErrorMessage(rawMessage, locale);
+            : formatGenerationErrorMessage(rawMessage, locale, { plan });
+          if (plan === "free" && isGenerationCapacityError(rawMessage) && shouldPromptPriorityUpsellAfterCapacityError(plan)) {
+            markPriorityUpsellPrompted();
+            promptPlanUpsell("feature_priority");
+          }
           if (previewId) {
             removeLoop(previewId);
             previewId = null;
           }
+          slotErrors[idx] = errorText;
           setSlot(idx, { status: "error", errorText, visible: true, previewLoopId: undefined, savedLoopId: undefined });
-        } finally {
-          releaseSlot1();
         }
       };
 
-      /** Délai après la v1 « release » (preview ou erreur) avant de lancer la v2 — évite 429 ACE. */
-      const PARALLEL_V2_AFTER_V1_MS = 2800;
+      const slotHasPersistedLoop = (idx: 1 | 2) => created.some((l) => l.name === makeTitle(idx));
 
-      if (versions !== 2) {
+      const slotsNeedingSequentialFallback = (): Array<1 | 2> => {
+        const need: Array<1 | 2> = [];
+        for (const idx of [1, 2] as const) {
+          if (slotHasPersistedLoop(idx)) continue;
+          const err = slotErrors[idx];
+          const lower = (err ?? "").toLowerCase();
+          if (lower.includes("limite mensuelle") || lower.includes("monthly limit") || lower.includes("limit reached")) {
+            continue;
+          }
+          if (err && !shouldTriggerDualSequentialFallback(err)) continue;
+          need.push(idx);
+        }
+        return need;
+      };
+
+      const runDualMode = async (mode: DualGenerationMode) => {
+        if (mode === "batch") await runDualBatch();
+        else if (mode === "parallel") await runDualParallel();
+        else await runDualSequential();
+      };
+
+      const runDualFallbackSequential = async (indices: Array<1 | 2>, fromMode: string) => {
+        trackClientEvent("generate_dual_fallback", { from: fromMode, to: "sequential", slots: indices.join(",") });
+        if (import.meta.env.DEV) console.info("[generate] dual fallback → sequential", { from: fromMode, indices });
+        toast.loading(
+          locale === "fr" ? "Relance en file (plus stable)…" : "Retrying in queue mode (more stable)…",
+          { id: "dual-fallback", duration: 5000 },
+        );
+
+        for (const idx of indices) {
+          delete slotErrors[idx];
+          setSlot(idx, {
+            status: "generating",
+            visible: true,
+            errorText: undefined,
+            progressPct: 0,
+            previewReady: false,
+            previewLoopId: undefined,
+            savedLoopId: undefined,
+          });
+        }
+
+        if (indices.includes(1)) {
+          await startOne(1, seed1, makeTitle(1));
+          if (!isActiveSession()) {
+            toast.dismiss("dual-fallback");
+            return;
+          }
+        }
+        if (indices.includes(2)) {
+          const staggerMs = dualGenerationStaggerMs();
+          if (staggerMs > 0 && (indices.includes(1) || slotHasPersistedLoop(1))) {
+            setSlot(2, { status: "waiting", visible: true, progressPct: undefined });
+            await new Promise((r) => setTimeout(r, staggerMs));
+          }
+          if (isActiveSession()) await startOne(2, seed2, makeTitle(2));
+        }
+        toast.dismiss("dual-fallback");
+      };
+
+      const runDualSequential = async () => {
         await startOne(1, seed1, makeTitle(1));
-      } else if (canParallelizeDualGeneration()) {
+        if (!isActiveSession()) return;
+        const staggerMs = dualGenerationStaggerMs();
+        if (staggerMs > 0) {
+          setSlot(2, { status: "waiting", visible: true });
+          await new Promise((r) => setTimeout(r, staggerMs));
+        }
+        if (isActiveSession()) await startOne(2, seed2, makeTitle(2));
+      };
+
+      const runDualParallel = async () => {
+        const parallelStaggerMs = dualParallelStaggerMs();
         await Promise.all([
           startOne(1, seed1, makeTitle(1)),
           (async () => {
-            await Promise.race([
-              slot1ReleasedPromise,
-              new Promise<void>((r) => setTimeout(r, 90_000)),
-            ]);
-            if (!isActiveSession()) return;
-            await new Promise((r) => setTimeout(r, PARALLEL_V2_AFTER_V1_MS));
-            if (!isActiveSession()) return;
-            await startOne(2, seed2, makeTitle(2));
+            if (parallelStaggerMs > 0) await new Promise((r) => setTimeout(r, parallelStaggerMs));
+            if (isActiveSession()) await startOne(2, seed2, makeTitle(2));
           })(),
         ]);
-      } else {
+      };
+
+      const runDualBatch = async () => {
+        if (dualBatchProdMonitoringEnabled()) {
+          trackClientEvent("generate_batch_start", {
+            plan,
+            mode,
+            versions: 2,
+            strategy: generationStrategySnapshot(2).dual_mode,
+          });
+        }
+        const generationKey1 =
+          typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `gen-${Date.now()}-1`;
+        const generationKey2 =
+          typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `gen-${Date.now()}-2`;
+        const title1 = makeTitle(1);
+        const title2 = makeTitle(2);
+        setSlot(1, { status: "generating", seed: seed1, title: title1, visible: true, previewReady: false, generationKey: generationKey1, progressPct: 0 });
+        setSlot(2, { status: "generating", seed: seed2, title: title2, visible: true, previewReady: false, generationKey: generationKey2, progressPct: 0 });
+
+        const expectedMs = estimateGenerationDurationMs(
+          mode === "song" ? "song" : "beat",
+          mode === "song" ? manualSongDuration ?? null : null,
+        );
+        const batchStartedAt = Date.now();
+        let progressTick: number | undefined;
+        const stopProgressTick = () => {
+          if (progressTick !== undefined) window.clearInterval(progressTick);
+          progressTick = undefined;
+        };
+        progressTick = window.setInterval(() => {
+          if (!isActiveSession()) {
+            stopProgressTick();
+            return;
+          }
+          const pct = simulatedGenerationPercent(Date.now() - batchStartedAt, expectedMs * 1.35);
+          setSlot(1, { progressPct: pct });
+          setSlot(2, { progressPct: pct });
+        }, 400);
+
+        try {
+          const rows = await generateBeatDualBatch(inputParams, effectiveEngine, {
+            ...buildOptions(seed1, 1),
+            dualSeeds: [seed1, seed2],
+            generationKeys: [generationKey1, generationKey2],
+          });
+          stopProgressTick();
+          const slotMeta: Array<{ idx: 1 | 2; seed: number; title: string; generationKey: string }> = [
+            { idx: 1, seed: seed1, title: title1, generationKey: generationKey1 },
+            { idx: 2, seed: seed2, title: title2, generationKey: generationKey2 },
+          ];
+          for (let i = 0; i < rows.length; i++) {
+            const meta = slotMeta[i];
+            if (!meta) break;
+            setSlot(meta.idx, { progressPct: 100 });
+            await applyBeatFromValue(meta.idx, rows[i]?.seed ?? meta.seed, meta.title, rows[i]!, meta.generationKey);
+          }
+          if (rows.length < 2 && isActiveSession()) {
+            const failedIdx = rows.length === 0 ? 1 : 2;
+            const failedTitle = failedIdx === 1 ? title1 : title2;
+            const batchPartialErr =
+              locale === "fr"
+                ? "Batch ACE incomplet — réessaie en mode séquentiel"
+                : "Incomplete ACE batch — retry in sequential mode";
+            slotErrors[failedIdx] = batchPartialErr;
+            setSlot(failedIdx, {
+              status: "error",
+              title: failedTitle,
+              visible: true,
+              errorText: batchPartialErr,
+            });
+          }
+        } catch (err) {
+          stopProgressTick();
+          const rawMessage = normalizeGenerationRawError(err instanceof Error ? err.message : String(err));
+          const errorText = formatGenerationErrorMessage(rawMessage, locale, { plan });
+          if (plan === "free" && isGenerationCapacityError(rawMessage) && shouldPromptPriorityUpsellAfterCapacityError(plan)) {
+            markPriorityUpsellPrompted();
+            promptPlanUpsell("feature_priority");
+          }
+          for (const idx of [1, 2] as const) {
+            if (!created.some((l) => l.name === makeTitle(idx))) {
+              slotErrors[idx] = errorText;
+              setSlot(idx, { status: "error", errorText, visible: true, previewLoopId: undefined, savedLoopId: undefined });
+            }
+          }
+        }
+      };
+
+      if (versions !== 2) {
         await startOne(1, seed1, makeTitle(1));
-        if (isActiveSession()) await startOne(2, seed2, makeTitle(2));
+      } else {
+        const fastMode = dualGenerationEffectiveMode();
+        await runDualMode(fastMode);
+        if (dualAdaptiveFallbackEnabled() && created.length < 2) {
+          const need = slotsNeedingSequentialFallback();
+          if (need.length > 0) await runDualFallbackSequential(need, fastMode);
+        }
       }
 
       if (!created.length) {
@@ -1608,11 +1917,38 @@ export default function Dashboard() {
       const playableCreated = created
         .filter((l) => typeof l.audioUrl === "string" && l.audioUrl.trim().length > 0)
         .sort((a, b) => (slotOrder.get(a.name) ?? 99) - (slotOrder.get(b.name) ?? 99));
-      if (playableCreated.length && !genAutoplayStartedRef.current) {
-        setQueue(playableCreated, 0, true, "generation");
-        trackClientEvent("growth_autoplay", { loop_id: playableCreated[0]?.id, count: playableCreated.length });
-      } else if (playableCreated.length && genAutoplayStartedRef.current) {
-        mergeQueue(playableCreated, "generation");
+      if (playableCreated.length) {
+        for (const loop of playableCreated) {
+          const slotIdx = slotOrder.get(loop.name);
+          if (slotIdx === 1 || slotIdx === 2) generationAutoplayByIdxRef.current.set(slotIdx, loop);
+        }
+        const ordered = buildAutoplayQueue();
+        const resolvedOrdered = (
+          await Promise.all(ordered.map((l) => loopForPlayback(l)))
+        ).filter((l): l is Loop => !!l?.audioUrl?.trim());
+        for (const loop of resolvedOrdered) {
+          const slotIdx = slotOrder.get(loop.name);
+          if (slotIdx === 1 || slotIdx === 2) generationAutoplayByIdxRef.current.set(slotIdx, loop);
+        }
+        if (resolvedOrdered.length && !genAutoplayStartedRef.current) {
+          genAutoplayStartedRef.current = true;
+          setQueue(resolvedOrdered, 0, true, "generation");
+          trackClientEvent("growth_autoplay", {
+            loop_id: resolvedOrdered[0]?.id,
+            count: resolvedOrdered.length,
+            early: false,
+          });
+        } else if (resolvedOrdered.length && genAutoplayStartedRef.current) {
+          mergeQueue(resolvedOrdered, "generation");
+          const player = usePlayerStore.getState();
+          if (player.queueSource === "generation" && !player.isPlaying && versions === 2) {
+            const v2 = generationAutoplayByIdxRef.current.get(2);
+            if (v2?.audioUrl?.trim()) {
+              const v2Idx = resolvedOrdered.findIndex((l) => l.id === v2.id);
+              if (v2Idx >= 0 && v2Idx > player.queueIndex) setQueue(resolvedOrdered, v2Idx, true, "generation");
+            }
+          }
+        }
       }
 
       if (playableCreated.length) {
@@ -1674,14 +2010,14 @@ export default function Dashboard() {
       }
       if (anyErr?.allSlotsFailed) return;
       const rawMessage = err instanceof Error ? err.message : "";
-      toast.error(formatGenerationErrorMessage(rawMessage, locale));
+      toast.error(formatGenerationErrorMessage(rawMessage, locale, { plan }));
     } finally {
       if (generateSessionRef.current === sessionId) {
         setGenerating(false);
         setGenerationSlots((prev) => {
           if (!prev) return null;
-          const remaining = prev.filter((s) => s.visible);
-          return remaining.length > 0 ? remaining : null;
+          const errors = prev.filter((s) => s.visible && s.status === "error");
+          return errors.length > 0 ? errors : null;
         });
       }
       if (didGenerate && user) void refreshProfile();
@@ -1731,6 +2067,7 @@ export default function Dashboard() {
     mode,
     songUiMode,
     navigate,
+    plan,
     promptPlanUpsell,
     remaining,
     versions,
@@ -2166,8 +2503,8 @@ export default function Dashboard() {
       if (pending.genrePickMode) setGenrePickMode(pending.genrePickMode);
       if (typeof pending.songDescription === "string") setSongDescription(pending.songDescription);
       if (typeof pending.songVocalStyle === "string") {
-        const allowed = vocalStyleOptions.some((v) => v.value === pending.songVocalStyle);
-        setSongVocalStyle(allowed ? (pending.songVocalStyle as (typeof vocalStyleOptions)[number]["value"]) : "Singer");
+        const allowed = VOCAL_STYLE_OPTIONS.some((v) => v.value === pending.songVocalStyle);
+        setSongVocalStyle(allowed ? (pending.songVocalStyle as VocalStyleValue) : "Singer");
       }
       setAutoGeneratePending(true);
     } catch {
@@ -2246,41 +2583,30 @@ export default function Dashboard() {
     : "";
 
   const dashboardPromoAndGaming = (
-    <>
-      <DashboardPromoBillboard
-        locale={locale}
-        plan={plan}
-        onShare={openBillboardShare}
-        onReferral={() => void openBillboardReferral()}
-        onCommunity={openBillboardCommunity}
-        onMastering={openBillboardMastering}
-        onProgress={openBillboardProgress}
-        onPricing={openBillboardPricing}
-        onProfile={openBillboardProfile}
-        onCreate={openBillboardCreate}
-      />
-      <div className="mb-5">
-        <DashboardGamingPanelShell
-          ref={progressionPanelRef}
-          id="pk-dashboard-progression"
+    <DashboardPromoBillboard
+      locale={locale}
+      plan={plan}
+      onShare={openBillboardShare}
+      onReferral={() => void openBillboardReferral()}
+      onCommunity={openBillboardCommunity}
+      onMastering={openBillboardMastering}
+      onProgress={openBillboardProgress}
+      onPricing={openBillboardPricing}
+      onProfile={openBillboardProfile}
+      onCreate={openBillboardCreate}
+      bonusAction={
+        <DailyBonusBannerButton
           locale={locale}
-          title={locale === "fr" ? "Progression" : "Progress"}
-          subtitle={locale === "fr" ? "Niveau · série · bonus" : "Level · streak · bonus"}
-          storageKey="producerhit_dashboard_gaming_collapsed_v1"
-          collapsedPreview={<GamificationCollapsedPreview locale={locale} />}
-        >
-          <GamificationStrip
-            locale={locale}
-            refreshKey={gamificationRefreshKey}
-            syncRewards={!!user}
-            onBonusCreditsChange={(credits) => {
-              setLevelBonus(credits.levelBonus);
-              setDailyBonusMonth(credits.dailyBonusMonth);
-            }}
-          />
-        </DashboardGamingPanelShell>
-      </div>
-    </>
+          syncRewards={!!user}
+          onCreditsChange={(credits) => {
+            setLevelBonus(credits.levelBonus);
+            setDailyBonusMonth(credits.dailyBonusMonth);
+            setGamificationRefreshKey((k) => k + 1);
+          }}
+          onOpenProgress={openBillboardProgress}
+        />
+      }
+    />
   );
 
   return (
@@ -2307,12 +2633,12 @@ export default function Dashboard() {
       left={
         <div
           className={cn(
-            "flex flex-col md:h-full md:overflow-hidden",
+            "pk-studio-left-stack flex min-h-0 flex-1 flex-col md:h-full md:overflow-hidden",
             mobileV2 && mobileTab === "create" && "pk-mobile-create-shell",
           )}
         >
           {!mobileV2 ? (
-            <div className="border-b border-white/10 px-4 pb-3 pt-4">
+            <div className="flex-shrink-0 border-b border-white/10 px-4 pb-3 pt-4">
               <BrandLogo />
             </div>
           ) : null}
@@ -2390,7 +2716,12 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className={cn("md:overflow-y-auto", mobileV2 ? "pk-mobile-create-scroll" : "flex-1 min-h-0 overflow-y-auto")}>
+          <div
+            className={cn(
+              "pk-studio-left-scroll min-h-0 md:overflow-y-auto",
+              mobileV2 ? "pk-mobile-create-scroll overflow-y-auto" : "flex-1 overflow-y-auto",
+            )}
+          >
             {mode === "remix" ? (
               <RemixStudioPanel
                 locale={locale}
@@ -2695,6 +3026,13 @@ export default function Dashboard() {
                   <div className={cn("pk-studio-section border-b border-pk-border bg-pk-bg/30", generatorSectionPad)}>
                     <div className="text-sm font-semibold">{locale === "fr" ? "Avancé" : "Advanced"}</div>
                     <div className="mt-4 grid gap-4">
+                      <GeneratorAdvancedOutputControls
+                        locale={locale}
+                        versions={versions}
+                        onVersionsChange={setVersions}
+                        remaining={remaining}
+                        chipRowClass={chipRowClass}
+                      />
                       <div>
                         <div className="text-xs text-pk-muted mb-2">{locale === "fr" ? "Longueur" : "Length"}</div>
                         <div className="grid grid-cols-4 gap-2">
@@ -2842,29 +3180,6 @@ export default function Dashboard() {
                       }}
                       options={[vocalLanguageAutoOption(locale), ...vocalLanguageDropdownOptions(locale)]}
                     />
-
-                    <div>
-                      <div className="text-xs text-pk-muted">{locale === "fr" ? "Style vocal" : "Vocal Style"}</div>
-                      <div className={chipRowClass}>
-                        {vocalStyleOptions.map((v) => {
-                          const active = songVocalStyle === v.value;
-                          return (
-                            <button
-                              key={v.value}
-                              type="button"
-                              onClick={() => setSongVocalStyle(v.value)}
-                              className={
-                                active
-                                  ? "rounded-full border border-pk-accent/40 bg-pk-accent/15 px-3.5 py-2 text-xs font-semibold text-pk-accent"
-                                  : "rounded-full border border-pk-border bg-pk-bg px-3.5 py-2 text-xs text-pk-muted hover:bg-white/5 hover:text-pk-text"
-                              }
-                            >
-                              {v.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
                   </div>
                 </GeneratorSection>
 
@@ -2984,8 +3299,18 @@ export default function Dashboard() {
 
                 {songIsCustom && (
                   <div className={cn("pk-studio-section border-b border-pk-border bg-pk-bg/30", generatorSectionPad)}>
-                    <div className="text-sm font-semibold">{locale === "fr" ? "Réglages chanson" : "Song Customization"}</div>
+                    <div className="text-sm font-semibold">{locale === "fr" ? "Réglages avancés" : "Advanced Settings"}</div>
                     <div className="mt-4 grid gap-4">
+                      <GeneratorAdvancedOutputControls
+                        locale={locale}
+                        versions={versions}
+                        onVersionsChange={setVersions}
+                        remaining={remaining}
+                        chipRowClass={chipRowClass}
+                        showVocalStyle
+                        vocalStyle={songVocalStyle}
+                        onVocalStyleChange={setSongVocalStyle}
+                      />
                       <Dropdown
                         label={locale === "fr" ? "Influence" : "Influence"}
                         value={form.influence}
@@ -3324,32 +3649,9 @@ export default function Dashboard() {
               />
             ) : !isRemix ? (
               <>
-                <div className={cn("mb-3 flex items-center justify-between text-xs", mobileV2 && "mb-2")}>
-                  <span className={mobileV2 ? "text-white/45" : "text-gray-500"}>{locale === "fr" ? "Versions" : "Versions"}</span>
-                  <div className="flex items-center gap-1 rounded-full bg-white/5 p-1">
-                    <button
-                      type="button"
-                      onClick={() => setVersions(1)}
-                      className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${
-                        versions === 1 ? "pk-prism-pill-active" : "text-white/50 hover:text-white"
-                      }`}
-                    >
-                      1
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setVersions(2)}
-                      disabled={remaining < 2}
-                      className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${
-                        versions === 2 ? "pk-prism-pill-active" : "text-white/50 hover:text-white"
-                      } ${remaining < 2 ? "opacity-50" : ""}`}
-                    >
-                      2
-                    </button>
-                  </div>
-                </div>
                 <DashboardGenerateButton
                   generating={generating}
+                  progressPct={generationProgressPct}
                   disabled={!genreReady || generating || profileBusy || remaining < versions}
                   idleLabel={
                     mode === "song"
@@ -3360,7 +3662,7 @@ export default function Dashboard() {
                         ? "Générer un beat"
                         : "Generate Beat"
                   }
-                  generatingLabel={locale === "fr" ? "Génération…" : "Generating..."}
+                  generatingLabel={locale === "fr" ? "Génération" : "Generating"}
                   onClick={async () => {
                     if (remaining < versions) {
                       promptPlanUpsell(remaining < 1 ? "credits_exhausted" : "credits_low");
@@ -3391,14 +3693,22 @@ export default function Dashboard() {
               </>
             ) : null}
             <div className={cn("mt-3 flex items-center justify-between text-xs", mobileV2 && "mt-2.5")}>
-              <span className={mobileV2 ? "text-white/45" : "text-gray-500"}>
-                {profileBusy
-                  ? locale === "fr"
-                    ? "Chargement du quota…"
-                    : "Loading quota…"
-                  : locale === "fr"
-                    ? `${remainingAfterGenerate}/${totalLimit} restantes ce mois-ci`
-                    : `${remainingAfterGenerate}/${totalLimit} left this month`}
+              <span className={cn("inline-flex flex-wrap items-center gap-1", mobileV2 ? "text-white/45" : "text-gray-500")}>
+                {profileBusy ? (
+                  locale === "fr" ? (
+                    "Chargement du quota…"
+                  ) : (
+                    "Loading quota…"
+                  )
+                ) : (
+                  <>
+                    <span className="tabular-nums">
+                      {remaining}/{totalLimit}
+                    </span>
+                    <GenerationCreditIcon className="h-3 w-3" />
+                    <span>{locale === "fr" ? "restantes ce mois-ci" : "left this month"}</span>
+                  </>
+                )}
               </span>
               <span className="text-gray-600">
                 {profileBusy
@@ -3411,10 +3721,13 @@ export default function Dashboard() {
               </span>
             </div>
             {bonusCreditsTotal > 0 ? (
-              <div className="mt-1 text-[10px] text-cyan-200/70">
-                {locale === "fr"
-                  ? `+${bonusCreditsTotal} bonus actifs (niveau, parrainage, daily)`
-                  : `+${bonusCreditsTotal} active bonus (level, referral, daily)`}
+              <div className="mt-1 inline-flex flex-wrap items-center gap-1 text-[10px] text-cyan-200/70">
+                <GenerationCreditAmount amount={bonusCreditsTotal} showPlus iconClassName="h-2.5 w-2.5" />
+                <span>
+                  {locale === "fr"
+                    ? "bonus actifs (niveau, parrainage, daily)"
+                    : "active bonus (level, referral, daily)"}
+                </span>
               </div>
             ) : null}
             {plan === "free" && remaining > 0 && remaining <= 2 ? (
@@ -3429,7 +3742,7 @@ export default function Dashboard() {
                 </Link>
               </div>
             ) : null}
-            {remainingAfterGenerate === 0 ? (
+            {remaining === 0 ? (
               <div className="mt-2 flex flex-col gap-2 text-xs text-gray-500">
                 {plan === "free"
                   ? locale === "fr"
@@ -3495,18 +3808,29 @@ export default function Dashboard() {
               <div className="pk-studio-workspace-header__title text-lg font-semibold">{locale === "fr" ? "Mon espace" : "My Workspace"}</div>
               <div className="mt-1 text-sm text-pk-muted">
                 {locale === "fr"
-                  ? `Affichage ${Math.min(30, totalMatches)} sur ${totalMatches}`
-                  : `Showing ${Math.min(30, totalMatches)} of ${totalMatches}`}
+                  ? `Affichage ${workspaceVisibleCount} sur ${hasWorkspaceFilters ? workspaceFilteredTotal : libraryTotalCount}`
+                  : `Showing ${workspaceVisibleCount} of ${hasWorkspaceFilters ? workspaceFilteredTotal : libraryTotalCount}`}
               </div>
             </div>
-          ) : (
-            <div className="text-xs text-white/45">
-              {locale === "fr"
-                ? `${Math.min(30, totalMatches)} / ${totalMatches} tracks`
-                : `${Math.min(30, totalMatches)} / ${totalMatches} tracks`}
-            </div>
-          )}
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+          ) : null}
+          <div
+            className={
+              mobileV2
+                ? "flex w-full items-center gap-3"
+                : "flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center"
+            }
+          >
+            {mobileV2 ? (
+              <div className="pk-workspace-track-count shrink-0 text-xs leading-snug text-white/45">
+                {locale === "fr"
+                  ? hasWorkspaceFilters
+                    ? `${workspaceVisibleCount} / ${workspaceFilteredTotal} · ${libraryTotalCount}`
+                    : `${workspaceVisibleCount} / ${libraryTotalCount}`
+                  : hasWorkspaceFilters
+                    ? `${workspaceVisibleCount} / ${workspaceFilteredTotal} · ${libraryTotalCount}`
+                    : `${workspaceVisibleCount} / ${libraryTotalCount}`}
+              </div>
+            ) : null}
             {!mobileV2 ? (
               <div className="flex items-center gap-2">
                 <button
@@ -3532,6 +3856,7 @@ export default function Dashboard() {
                 </button>
               </div>
             ) : null}
+            <div className={mobileV2 ? "flex min-w-0 flex-1 flex-col gap-2" : "contents"}>
             <div className="relative w-full sm:w-80">
               <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-pk-muted" />
               <input
@@ -3561,6 +3886,7 @@ export default function Dashboard() {
                 {locale === "fr" ? "Sauvegardés" : "Saved"}
               </button>
             </div>
+            </div>
           </div>
         </div>
 
@@ -3572,33 +3898,81 @@ export default function Dashboard() {
               ))}
             </div>
           ) : null}
-          {generationSlots?.length ? (
+          {visibleGenerationSlots.length ? (
             <div className="space-y-2">
-              {generationSlots
+              {visibleGenerationSlots
                 .slice()
                 .sort((a, b) => b.idx - a.idx)
                 .map((slot) => {
-                  if (slot.visible && slot.status === "generating") {
+                  if (slot.visible && slot.status === "queued") {
                     return (
                       <LoopCardSkeleton
                         key={slot.idx}
                         title={slot.title}
-                        sub={locale === "fr" ? "Création en cours…" : "Generating..."}
+                        sub={locale === "fr" ? "En attente de la version 1…" : "Waiting for version 1…"}
+                      />
+                    );
+                  }
+                  if (slot.visible && slot.status === "waiting") {
+                    return (
+                      <LoopCardSkeleton
+                        key={slot.idx}
+                        title={slot.title}
+                        sub={
+                          locale === "fr"
+                            ? "Version 1 prête — lancement de la version 2…"
+                            : "Version 1 ready — starting version 2…"
+                        }
+                      />
+                    );
+                  }
+                  if (slot.visible && slot.status === "generating") {
+                    const pct = slot.progressPct ?? 0;
+                    const sub =
+                      pct >= 90
+                        ? locale === "fr"
+                          ? "Finalisation…"
+                          : "Finishing up…"
+                        : locale === "fr"
+                          ? "Création en cours…"
+                          : "Generating…";
+                    return (
+                      <LoopCardSkeleton
+                        key={slot.idx}
+                        title={slot.title}
+                        sub={sub}
+                        progressPct={pct}
+                        progressLabel={
+                          locale === "fr"
+                            ? "Progression estimée pendant la génération"
+                            : "Estimated progress during generation"
+                        }
                       />
                     );
                   }
                   if (slot.visible && slot.status === "error") {
                     return (
                       <div key={slot.idx} className="flex items-center gap-3 rounded-pk border border-rose-500/25 bg-pk-panel p-4">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-black/25">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-black/25">
                           <AlertTriangle className="h-4 w-4 text-rose-400" />
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-sm font-semibold text-pk-text">{slot.title}</div>
-                          <div className="mt-0.5 truncate text-xs text-pk-muted">
-                            {slot.errorText || (locale === "fr" ? "Échec de génération" : "Generation failed")}
-                          </div>
+                          <div className="mt-0.5 text-xs text-pk-muted">{slot.errorText || (locale === "fr" ? "Échec de génération" : "Generation failed")}</div>
                         </div>
+                        <button
+                          type="button"
+                          className="shrink-0 rounded-lg px-2 py-1 text-xs font-semibold text-white/50 hover:bg-white/10 hover:text-white"
+                          onClick={() => {
+                            setGenerationSlots((prev) => {
+                              if (!prev) return null;
+                              const next = prev.filter((s) => s.idx !== slot.idx);
+                              return next.length ? next : null;
+                            });
+                          }}
+                        >
+                          {locale === "fr" ? "Fermer" : "Dismiss"}
+                        </button>
                       </div>
                     );
                   }
@@ -3606,9 +3980,13 @@ export default function Dashboard() {
                 })}
             </div>
           ) : null}
-          {displayedLoops.length === 0 && loopsLoading ? (
+          {displayedLoops.length === 0 &&
+          loopsLoading &&
+          !loopsHydrated &&
+          !generating &&
+          visibleGenerationSlots.length === 0 ? (
             <div className="space-y-2">
-              {Array.from({ length: 8 }).map((_, i) => (
+              {Array.from({ length: 2 }).map((_, i) => (
                 <LoopCardSkeleton
                   key={i}
                   title={locale === "fr" ? "Chargement de tes créations…" : "Loading your creations..."}
@@ -3686,6 +4064,9 @@ export default function Dashboard() {
                       audioRetention={audioRetentionCtx}
                       onOpenDetails={(loop) => setDetailsId((prev) => (prev === loop.id ? null : loop.id))}
                       onGenerationUsed={consumeCredit}
+                      onCoverRerollUsed={consumeCredit}
+                      creditsRemaining={remaining}
+                      onNeedCredits={handleNeedCredits}
                       onStartWorkspaceJob={(title, sub) => startWorkspaceJob(title, sub)}
                       onOpenMaster={openMaster}
                     />
@@ -3712,6 +4093,7 @@ export default function Dashboard() {
                       onSaveTitle={saveDetailsTitle}
                       durationSec={durationsSecById[detailsLoop.id]}
                       className="px-0"
+                      isPlayingCover={playerCurrent?.id === detailsLoop.id && playerIsPlaying}
                     />
                   </div>
                 </div>
@@ -3730,6 +4112,9 @@ export default function Dashboard() {
                     audioRetention={audioRetentionCtx}
                     onOpenDetails={(loop) => setDetailsId(loop.id)}
                     onGenerationUsed={consumeCredit}
+                    onCoverRerollUsed={consumeCredit}
+                    creditsRemaining={remaining}
+                    onNeedCredits={handleNeedCredits}
                     onStartWorkspaceJob={(title, sub) => startWorkspaceJob(title, sub)}
                     onOpenMaster={openMaster}
                   />
@@ -3759,6 +4144,7 @@ export default function Dashboard() {
             durationSec={durationsSecById[detailsLoop.id]}
             className="px-0"
             compact
+            isPlayingCover={playerCurrent?.id === detailsLoop.id && playerIsPlaying}
           />
         </LoopDetailsSheet>
       ) : null}
