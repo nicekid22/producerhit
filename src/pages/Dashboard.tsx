@@ -3612,7 +3612,7 @@ export default function Dashboard() {
           <div
             className={cn(
               "flex-shrink-0 border-t border-pk-border/80 p-4",
-              mobileV2 ? "pk-dashboard-mobile-footer border-t-white/10 px-3 py-3" : "pk-studio-generate-dock",
+              mobileV2 ? "pk-dashboard-mobile-footer border-t-white/10 px-3 pt-2.5 pb-2" : "pk-studio-generate-dock",
             )}
           >
             {isRemix && mobileV2 && remixMobileDock ? (
@@ -3668,36 +3668,53 @@ export default function Dashboard() {
                 />
               </>
             ) : null}
-            <div className={cn("mt-3 flex items-center justify-between text-xs", mobileV2 && "mt-2.5")}>
-              <span className={cn("inline-flex flex-wrap items-center gap-1", mobileV2 ? "text-white/45" : "text-gray-500")}>
-                {profileBusy ? (
-                  locale === "fr" ? (
-                    "Chargement du quota…"
-                  ) : (
-                    "Loading quota…"
-                  )
-                ) : (
-                  <>
-                    <span className="tabular-nums">
-                      {remaining}/{totalLimit}
-                    </span>
-                    <GenerationCreditIcon className="h-3 w-3" />
-                    <span>{locale === "fr" ? "restantes ce mois-ci" : "left this month"}</span>
-                  </>
+            <div className={cn(mobileV2 ? "pk-dashboard-mobile-footer__meta mt-2.5" : "mt-3")}>
+              <div
+                className={cn(
+                  mobileV2
+                    ? "pk-dashboard-mobile-footer__quota-row"
+                    : "flex items-center justify-between text-xs",
                 )}
-              </span>
-              <span className="text-gray-600">
-                {profileBusy
-                  ? locale === "fr"
-                    ? "Plan…"
-                    : "Plan…"
-                  : locale === "fr"
-                    ? `Plan ${plan}`
-                    : `${plan} plan`}
-              </span>
-            </div>
+              >
+                <span
+                  className={cn(
+                    "inline-flex min-w-0 flex-wrap items-center gap-1",
+                    mobileV2 ? "text-white/50" : "text-gray-500",
+                  )}
+                >
+                  {profileBusy ? (
+                    locale === "fr" ? (
+                      "Chargement du quota…"
+                    ) : (
+                      "Loading quota…"
+                    )
+                  ) : (
+                    <>
+                      <span className="tabular-nums font-medium">
+                        {remaining}/{totalLimit}
+                      </span>
+                      <GenerationCreditIcon className="h-3 w-3 shrink-0" />
+                      <span>{locale === "fr" ? "restantes ce mois-ci" : "left this month"}</span>
+                    </>
+                  )}
+                </span>
+                <span className={mobileV2 ? "pk-dashboard-mobile-footer__plan" : "shrink-0 text-gray-600"}>
+                  {profileBusy
+                    ? locale === "fr"
+                      ? "Plan…"
+                      : "Plan…"
+                    : locale === "fr"
+                      ? `Plan ${plan}`
+                      : `${plan} plan`}
+                </span>
+              </div>
             {bonusCreditsTotal > 0 ? (
-              <div className="mt-1 inline-flex flex-wrap items-center gap-1 text-[10px] text-cyan-200/70">
+              <div
+                className={cn(
+                  "inline-flex flex-wrap items-center gap-1 text-cyan-200/70",
+                  mobileV2 ? "text-[10px] leading-snug" : "mt-1 text-[10px]",
+                )}
+              >
                 <GenerationCreditAmount amount={bonusCreditsTotal} showPlus iconClassName="h-2.5 w-2.5" />
                 <span>
                   {locale === "fr"
@@ -3706,6 +3723,7 @@ export default function Dashboard() {
                 </span>
               </div>
             ) : null}
+            </div>
             {plan === "free" && remaining > 0 && remaining <= 2 ? (
               <div className="mt-2 flex flex-col gap-2 rounded-lg border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-100/90">
                 <span>
