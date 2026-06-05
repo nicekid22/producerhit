@@ -355,6 +355,7 @@ export default function Library() {
                         cardVariant="library"
                         compact={mobileUiV2}
                         queueLoops={filtered}
+                        queueSource="library"
                         onDelete={() => setConfirmId(l.id)}
                         onOpenDetails={(loop) => setDetailsId((prev) => (prev === loop.id ? null : loop.id))}
                       />

@@ -5,7 +5,12 @@ import { PkIconLoader } from "@/components/ui/PkIconLoader";
 import toast from "react-hot-toast";
 import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";
 import { Navbar } from "@/components/Navbar";
-import { isPlayablePublicLoop, resolvePlayableCommunityAudio, type PublicLoopRow } from "@/lib/publicLoops";
+import { isPlayablePublicLoop, fetchPublicLoops, resolvePlayableCommunityAudio, type PublicLoopRow } from "@/lib/publicLoops";
+import {
+  findPublicRowIndex,
+  playPublicRowsInQueue,
+  PUBLIC_LOOP_QUEUE_SOURCE,
+} from "@/lib/communityPlaybackQueue";
 import { publicRowToCoverLoop, resolvePublicRowCoverUrl } from "@/lib/coverArt";
 import { fetchPublicProfileCards, type PublicProfileCard } from "@/lib/creatorProfile";
 import { ProfileAuthorChip } from "@/components/profile/ProfileAuthorChip";
@@ -52,10 +57,10 @@ export default function PublicLoop() {
   const user = useAuthStore((s) => s.user);
   const current = usePlayerStore((s) => s.current);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
-  const setCurrent = usePlayerStore((s) => s.setCurrent);
   const setPlaying = usePlayerStore((s) => s.setPlaying);
   const [loading, setLoading] = useState(true);
   const [row, setRow] = useState<LoopRow | null>(null);
+  const [playbackQueue, setPlaybackQueue] = useState<PublicLoopRow[]>([]);
   const [ratingSum, setRatingSum] = useState(0);
   const [ratingCount, setRatingCount] = useState(0);
   const [myRating, setMyRating] = useState<number | null>(null);
@@ -182,6 +187,57 @@ export default function PublicLoop() {
     };
   }, [id, user]);
 
+  useEffect(() => {
+    let cancelled = false;
+    if (!row?.id) {
+      setPlaybackQueue([]);
+      return;
+    }
+    void (async () => {
+      try {
+        const pool = await fetchPublicLoops({ limit: 32, playableOnly: true, timeoutMs: 12000 });
+        if (cancelled) return;
+        const currentRow: PublicLoopRow = {
+          id: row.id,
+          name: row.name,
+          genre: row.genre,
+          influence: row.influence,
+          mood: row.mood,
+          bpm: row.bpm,
+          prompt: row.prompt,
+          audio_url: row.audio_url,
+          stems_url: row.stems_url ?? null,
+          created_at: row.created_at,
+          seed: row.seed,
+        };
+        const sameGenre = pool.filter((r) => r.id !== row.id && r.genre === row.genre);
+        const related = (sameGenre.length >= 3 ? sameGenre : pool.filter((r) => r.id !== row.id)).slice(0, 15);
+        setPlaybackQueue([currentRow, ...related]);
+      } catch {
+        if (!cancelled) {
+          setPlaybackQueue([
+            {
+              id: row.id,
+              name: row.name,
+              genre: row.genre,
+              influence: row.influence,
+              mood: row.mood,
+              bpm: row.bpm,
+              prompt: row.prompt,
+              audio_url: row.audio_url,
+              stems_url: row.stems_url ?? null,
+              created_at: row.created_at,
+              seed: row.seed,
+            },
+          ]);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [row]);
+
   const canView = row?.is_public === true;
   const canPlay = row ? isPlayablePublicLoop(row.audio_url, row.stems_url) : false;
   if (!id) return <Navigate to="/community" replace />;
@@ -197,26 +253,38 @@ export default function PublicLoop() {
     }
     void (async () => {
       setResolvingAudio(true);
-      const playableRow: PublicLoopRow = {
-        id: row.id,
-        name: row.name,
-        genre: row.genre,
-        influence: row.influence,
-        mood: row.mood,
-        bpm: row.bpm,
-        prompt: row.prompt,
-        audio_url: row.audio_url,
-        stems_url: row.stems_url ?? null,
-        created_at: row.created_at,
-        seed: row.seed,
-      };
-      const url = await resolvePlayableCommunityAudio(playableRow).catch(() => "");
+      const list =
+        playbackQueue.length > 0
+          ? playbackQueue
+          : [
+              {
+                id: row.id,
+                name: row.name,
+                genre: row.genre,
+                influence: row.influence,
+                mood: row.mood,
+                bpm: row.bpm,
+                prompt: row.prompt,
+                audio_url: row.audio_url,
+                stems_url: row.stems_url ?? null,
+                created_at: row.created_at,
+                seed: row.seed,
+              } satisfies PublicLoopRow,
+            ];
+      const idx = findPublicRowIndex(list, row.id);
+      const ok = await playPublicRowsInQueue(list, idx >= 0 ? idx : 0, {
+        source: PUBLIC_LOOP_QUEUE_SOURCE,
+        onResolveStart: () => setResolvingAudio(true),
+        onResolveEnd: () => setResolvingAudio(false),
+        onRowUrlResolved: (rowId, url) => {
+          if (rowId !== row.id) return;
+          setRow((prev) => (prev ? { ...prev, audio_url: url } : prev));
+        },
+      });
       setResolvingAudio(false);
-      if (!url) {
+      if (!ok) {
         toast.error(isFr ? "Audio indisponible" : "Audio unavailable");
-        return;
       }
-      setCurrent(toLoop({ ...row, audio_url: url }), true);
     })();
   };
 

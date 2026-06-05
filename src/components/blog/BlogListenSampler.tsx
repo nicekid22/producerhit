@@ -2,7 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Loader2, Play, Shuffle, Square } from "lucide-react";
 import { publicRowToCoverLoop, resolveLoopDisplayCoverUrl } from "@/lib/coverArt";
-import { fetchPublicLoops, resolvePlayableCommunityAudio, type PublicLoopRow } from "@/lib/publicLoops";
+import {
+  BLOG_SAMPLER_QUEUE_SOURCE,
+  findPublicRowIndex,
+  playPublicRowsInQueue,
+} from "@/lib/communityPlaybackQueue";
+import { fetchPublicLoops, type PublicLoopRow } from "@/lib/publicLoops";
 import { usePlayerStore } from "@/stores/playerStore";
 import { cn } from "@/lib/utils";
 
@@ -33,7 +38,6 @@ export function BlogListenSampler({ locale, genreMatchers, className }: Props) {
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const current = usePlayerStore((s) => s.current);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
-  const setQueue = usePlayerStore((s) => s.setQueue);
   const setPlaying = usePlayerStore((s) => s.setPlaying);
 
   const load = useCallback(async () => {
@@ -56,24 +60,14 @@ export function BlogListenSampler({ locale, genreMatchers, className }: Props) {
   }, [load]);
 
   const playRow = async (row: PublicLoopRow, playlist?: PublicLoopRow[]) => {
-    setResolvingId(row.id);
-    try {
-      const list = playlist ?? rows;
-      const resolved: { row: PublicLoopRow; url: string }[] = [];
-      for (const r of list) {
-        const url = await resolvePlayableCommunityAudio(r);
-        if (url?.trim()) resolved.push({ row: r, url: url.trim() });
-      }
-      if (!resolved.length) return;
-      const loops = resolved.map(({ row: r, url }) => {
-        const loop = publicRowToCoverLoop({ ...r, audio_url: url });
-        return loop;
-      });
-      const startIdx = Math.max(0, loops.findIndex((l) => l.id === row.id));
-      setQueue(loops, startIdx >= 0 ? startIdx : 0, true, "blog_sampler");
-    } finally {
-      setResolvingId(null);
-    }
+    const list = playlist ?? rows;
+    const idx = findPublicRowIndex(list, row.id);
+    const ok = await playPublicRowsInQueue(list, idx >= 0 ? idx : 0, {
+      source: BLOG_SAMPLER_QUEUE_SOURCE,
+      onResolveStart: (rowId) => setResolvingId(rowId),
+      onResolveEnd: () => setResolvingId(null),
+    });
+    if (!ok) setResolvingId(null);
   };
 
   const playRandom = () => {

@@ -6,7 +6,12 @@ import { supabase, trackClientEvent } from "@/lib/supabaseClient";
 import { useLocaleStore } from "@/stores/localeStore";
 import { FolderOpen, Keyboard, Menu, Mic2, Sparkles, Video, X, Zap } from "lucide-react";
 import { usePlayerStore } from "@/stores/playerStore";
-import type { Loop } from "@/types/loop";
+import {
+  findPublicRowIndex,
+  landingTrackToPublicRow,
+  LANDING_COMMUNITY_QUEUE_SOURCE,
+  playPublicRowsInQueue,
+} from "@/lib/communityPlaybackQueue";
 import { isPersistedStorageCoverUrl, publicRowToCoverLoop, resolvePublicRowCoverUrl } from "@/lib/coverArt";
 import { UNIFIED_STORED_COVERS } from "@/lib/featureFlags";
 import {
@@ -19,7 +24,6 @@ import {
   fetchPublicLoops,
   isPlayablePublicLoop,
   resolveAceAudioUrl,
-  resolvePlayableCommunityAudio,
   type PublicLoopRow,
 } from "@/lib/publicLoops";
 import { LandingPrismScene } from "@/components/landing/LandingPrismScene";
@@ -30,6 +34,7 @@ import { SocialProofStats } from "@/components/landing/SocialProofStats";
 import { TestimonialsStrip } from "@/components/landing/TestimonialsStrip";
 import { LandingSocialFeed } from "@/components/landing/LandingSocialFeed";
 import { LandingCommunityRail } from "@/components/landing/LandingCommunityRail";
+import { LandingMobileTrendingStrip } from "@/components/landing/LandingMobileTrendingStrip";
 import { LandingGenerator, type GeneratorSideCard } from "@/components/landing/LandingGenerator";
 import { LandingWorkflow } from "@/components/landing/LandingWorkflow";
 import { HeroCtaButton } from "@/components/landing/HeroCtaButton";
@@ -45,6 +50,8 @@ import { PLAN_LIMITS } from "@/lib/planLimits";
 import { isRecommendedPlan, normalizePlan, pricingCtaHref, pricingCtaMeta } from "@/lib/billing";
 import { plusPermanentAudioBenefit } from "@/lib/loopAudioRetention";
 import { PricingPlanButton } from "@/components/pricing/PricingPlanButton";
+import { LANDING_MOBILE_V2 } from "@/lib/featureFlags";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { PublicProfileCard } from "@/lib/creatorProfile";
 
 type CreateMode = "song" | "beat";
@@ -146,6 +153,8 @@ export default function Landing() {
   const visualTheme = useVisualThemeStore((s) => s.theme);
   const warmGlass = isWarmGlassTheme(visualTheme);
   const copy = useMemo(() => landingCopy(locale), [locale]);
+  const isMobileViewport = useMediaQuery("(max-width: 767px)");
+  const mobileLandingFocus = LANDING_MOBILE_V2 && isMobileViewport;
 
   const [navScrolled, setNavScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -164,7 +173,6 @@ export default function Landing() {
 
   const current = usePlayerStore((s) => s.current);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
-  const setCurrent = usePlayerStore((s) => s.setCurrent);
   const setPlaying = usePlayerStore((s) => s.setPlaying);
 
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -651,7 +659,7 @@ export default function Landing() {
     };
   }, []);
 
-  const handlePlay = (track: { id: string; audioUrl: string | null; stemsUrl?: Record<string, unknown> | null; name: string; prompt: string; genre: string | null; mood: string | null; bpm: number | null }) => {
+  const handlePlay = (track: PublicTrack, queueTracks?: PublicTrack[]) => {
     if (track.id.startsWith("ph-")) {
       toast(locale === "fr" ? "Aperçu bientôt disponible" : "Preview coming soon");
       return;
@@ -662,68 +670,69 @@ export default function Landing() {
     }
     trackClientEvent("landing_trending_play", { loop_id: track.id });
     void (async () => {
-      const buildLoop = (url: string): Loop => ({
-        id: track.id,
-        name: track.name,
-        genre: track.genre ?? "",
-        influence: "No Influence",
-        key: "",
-        scale: "",
-        bpm: typeof track.bpm === "number" ? track.bpm : 0,
-        loopLength: "16 bars",
-        swing: 0,
-        mood: track.mood ?? "",
-        energyLevel: "Medium",
-        reverb: "Subtle",
-        prompt: track.prompt,
-        audioUrl: url,
-        details: null,
-        stemsUrl: track.stemsUrl && typeof track.stemsUrl === "object" ? (track.stemsUrl as Record<string, unknown>) : null,
-        isSaved: false,
-        isPublic: true,
-        createdAt: new Date().toISOString(),
+      const queue = queueTracks ?? trending.slice(0, 12);
+      const rows = queue.map((t) =>
+        landingTrackToPublicRow({
+          id: t.id,
+          name: t.name,
+          genre: t.genre,
+          mood: t.mood,
+          bpm: t.bpm,
+          audioUrl: t.audioUrl,
+          stemsUrl: t.stemsUrl,
+          prompt: t.prompt,
+          createdAt: t.createdAt,
+        }),
+      );
+      const idx = findPublicRowIndex(rows, track.id);
+      const ok = await playPublicRowsInQueue(rows, idx >= 0 ? idx : 0, {
+        source: LANDING_COMMUNITY_QUEUE_SOURCE,
+        onRowUrlResolved: (rowId, url) => {
+          setTrending((prev) => prev.map((t) => (t.id === rowId ? { ...t, audioUrl: url } : t)));
+          setGeneratorSideCards((prev) => prev.map((c) => (c.id === rowId ? { ...c, audioUrl: url } : c)));
+        },
       });
-
-      const row: PublicLoopRow = {
-        id: track.id,
-        name: track.name,
-        genre: track.genre,
-        mood: track.mood,
-        bpm: track.bpm,
-        prompt: track.prompt,
-        audio_url: track.audioUrl,
-        stems_url: track.stemsUrl ?? null,
-        created_at: null,
-      };
-
-      const resolved = await resolvePlayableCommunityAudio(row).catch(() => "");
-      if (resolved) {
-        if (!resolved.startsWith("blob:") && resolved !== track.audioUrl?.trim()) {
-          setTrending((prev) => prev.map((t) => (t.id === track.id ? { ...t, audioUrl: resolved } : t)));
-          setGeneratorSideCards((prev) =>
-            prev.map((c) => (c.id === track.id ? { ...c, audioUrl: resolved } : c)),
-          );
-        }
-        setCurrent(buildLoop(resolved), true);
-        return;
+      if (!ok) {
+        toast.error(locale === "fr" ? "Audio indisponible" : "Audio unavailable");
       }
-
-      toast.error(locale === "fr" ? "Audio indisponible" : "Audio unavailable");
     })();
   };
 
   const handlePlaySideCard = (card: GeneratorSideCard) => {
     trackClientEvent("landing_gen_card_play", { loop_id: card.id });
-    handlePlay({
-      id: card.id,
-      audioUrl: card.audioUrl,
-      stemsUrl: card.stemsUrl ?? null,
-      name: card.name,
-      prompt: card.prompt,
-      genre: card.genre,
-      mood: card.mood,
-      bpm: card.bpm,
-    });
+    if (card.id.startsWith("ph-")) {
+      toast(locale === "fr" ? "Aperçu bientôt disponible" : "Preview coming soon");
+      return;
+    }
+    if (current?.id === card.id) {
+      setPlaying(!isPlaying);
+      return;
+    }
+    void (async () => {
+      const rows = generatorSideCards.map((c) =>
+        landingTrackToPublicRow({
+          id: c.id,
+          name: c.name,
+          genre: c.genre,
+          mood: c.mood,
+          bpm: c.bpm,
+          audioUrl: c.audioUrl,
+          stemsUrl: c.stemsUrl,
+          prompt: c.prompt,
+        }),
+      );
+      const idx = findPublicRowIndex(rows, card.id);
+      const ok = await playPublicRowsInQueue(rows, idx >= 0 ? idx : 0, {
+        source: LANDING_COMMUNITY_QUEUE_SOURCE,
+        onRowUrlResolved: (rowId, url) => {
+          setTrending((prev) => prev.map((t) => (t.id === rowId ? { ...t, audioUrl: url } : t)));
+          setGeneratorSideCards((prev) => prev.map((c) => (c.id === rowId ? { ...c, audioUrl: url } : c)));
+        },
+      });
+      if (!ok) {
+        toast.error(locale === "fr" ? "Audio indisponible" : "Audio unavailable");
+      }
+    })();
   };
 
   const homeTrendingCards = useMemo(() => {
@@ -777,6 +786,12 @@ export default function Landing() {
   const [shouldLoadTrending, setShouldLoadTrending] = useState(false);
 
   useEffect(() => {
+    /* Mobile v2 : strip visible dans le hero — le rail desktop (#trending) est hidden lg:block */
+    if (mobileLandingFocus) {
+      setShouldLoadTrending(true);
+      return;
+    }
+
     const el = document.getElementById("trending");
     if (!el) return;
     const observer = new IntersectionObserver(
@@ -790,7 +805,7 @@ export default function Landing() {
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [mobileLandingFocus]);
 
   useEffect(() => {
     if (!shouldLoadTrending) return;
@@ -1034,6 +1049,7 @@ export default function Landing() {
       className={cn(
         "relative min-h-screen pk-prism-stage pk-prism-stage--landing text-white",
         warmGlass && "pk-warm-glass-stage",
+        mobileLandingFocus && "pk-landing--mobile-focus",
       )}
     >
       {warmGlass ? (
@@ -1213,21 +1229,51 @@ export default function Landing() {
           </div>
         ) : null}
         <RevealSection className={landingFlowSectionClass()}>
-          <section className="pk-landing-flow__stack w-full" aria-label="Hero">
-            <div className="pk-landing-flow__intro mx-auto w-full max-w-2xl text-center">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/40">
+          <section
+            className={cn(
+              "pk-landing-flow__stack w-full",
+              mobileLandingFocus && "pk-landing-flow__stack--mobile",
+            )}
+            aria-label="Hero"
+          >
+            <div
+              className={cn(
+                "pk-landing-flow__intro mx-auto w-full max-w-2xl text-center",
+                mobileLandingFocus && "pk-landing-flow__intro--mobile",
+              )}
+            >
+              <p
+                className={cn(
+                  "font-semibold uppercase tracking-[0.18em] text-white/45",
+                  mobileLandingFocus ? "pk-landing-flow__tagline--mobile text-[9px] tracking-[0.2em]" : "text-[10px] text-white/40",
+                )}
+              >
                 {copy.heroTagline}
               </p>
-              <HeroTypewriterPrompt locale={locale} reduceMotion={reduceMotion} className="mt-2" />
-              <p className="mx-auto mt-2 max-w-lg text-pretty text-xs leading-relaxed text-white/45 sm:text-[13px]">
+              <HeroTypewriterPrompt
+                locale={locale}
+                reduceMotion={reduceMotion}
+                className={mobileLandingFocus ? "pk-hero-prompt-wrap--mobile mt-3" : "mt-2"}
+              />
+              <p
+                className={cn(
+                  "mx-auto max-w-lg text-pretty leading-relaxed text-white/50",
+                  mobileLandingFocus
+                    ? "pk-landing-flow__lead--mobile mt-2 text-[11px]"
+                    : "mt-2 text-xs sm:text-[13px] text-white/45",
+                )}
+              >
                 {copy.heroLead}
               </p>
             </div>
 
-            <div className="pk-landing-flow__handoff" aria-hidden />
+            {!mobileLandingFocus ? <div className="pk-landing-flow__handoff" aria-hidden /> : null}
 
+            <div className={cn(mobileLandingFocus && "pk-landing-flow__gen-zone")}>
             <LandingGenerator
               embedded
+              compactMobile={mobileLandingFocus}
+              reduceMotion={reduceMotion}
               locale={locale}
               mode={mode}
               setMode={setMode}
@@ -1253,19 +1299,40 @@ export default function Landing() {
               isPlaying={isPlaying}
               onPlayCard={handlePlaySideCard}
             />
+            </div>
+
+            {mobileLandingFocus ? (
+              <LandingMobileTrendingStrip
+                locale={locale}
+                tracks={homeTrendingCards}
+                loading={trendingLoading || !shouldLoadTrending}
+                activeTrackId={current?.id ?? null}
+                isPlaying={isPlaying}
+                onPlay={(track) => {
+                  const row = trending.find((t) => t.id === track.id);
+                  if (row) handlePlay(row, trending.slice(0, 12));
+                }}
+              />
+            ) : null}
           </section>
         </RevealSection>
 
-        <RevealSection className={`${landingSectionClass("pk-landing-section--trust")} pk-landing-below-fold`}>
-          <LogoMarquee locale={locale} />
-          <SocialProofStats locale={locale} />
-        </RevealSection>
+        {mobileLandingFocus ? (
+          <RevealSection className={`${landingSectionClass("pk-landing-section--trust pk-landing-section--trust-compact")} pk-landing-below-fold`}>
+            <SocialProofStats locale={locale} compact />
+          </RevealSection>
+        ) : (
+          <RevealSection className={`${landingSectionClass("pk-landing-section--trust")} pk-landing-below-fold`}>
+            <LogoMarquee locale={locale} />
+            <SocialProofStats locale={locale} />
+          </RevealSection>
+        )}
 
-        <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
+        <RevealSection className={`${landingSectionClass()} pk-landing-below-fold${mobileLandingFocus ? " hidden lg:block" : ""}`}>
           <LandingCommunityRail
             locale={locale}
             title={copy.communityTitle}
-            lead={copy.communityLead}
+            lead={mobileLandingFocus ? (locale === "fr" ? "Tracks publics — écoute, remixe, publie." : "Public tracks — listen, remix, publish.") : copy.communityLead}
             tracks={homeTrendingCards}
             loading={trendingLoading || !shouldLoadTrending}
             activeTrackId={current?.id ?? null}

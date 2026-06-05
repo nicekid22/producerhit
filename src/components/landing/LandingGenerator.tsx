@@ -51,6 +51,8 @@ type Props = {
   isPlaying: boolean;
   onPlayCard: (card: GeneratorSideCard) => void;
   embedded?: boolean;
+  compactMobile?: boolean;
+  reduceMotion?: boolean;
 };
 
 function FloatingCard({
@@ -159,6 +161,18 @@ function FloatingCard({
   );
 }
 
+function GeneratorReassurance({ locale, compact }: { locale: "en" | "fr"; compact?: boolean }) {
+  const isFr = locale === "fr";
+  return (
+    <p className={cn("pk-landing-gen__reassurance", compact && "pk-landing-gen__reassurance--mobile")}>
+      <Sparkles className="pk-landing-gen__reassurance-icon" aria-hidden />
+      <span className="pk-landing-gen__reassurance-copy">
+        {isFr ? "Aucune compétence requise — décris ton idée, on s’occupe du reste." : "No skills needed — describe your idea, we handle the rest."}
+      </span>
+    </p>
+  );
+}
+
 export function LandingGenerator({
   locale,
   mode,
@@ -185,12 +199,25 @@ export function LandingGenerator({
   isPlaying,
   onPlayCard,
   embedded = false,
+  compactMobile = false,
+  reduceMotion = false,
 }: Props) {
   const isFr = locale === "fr";
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [shellTouched, setShellTouched] = useState(false);
+  const [shellIdle, setShellIdle] = useState(false);
   const freeLabel = isFr
-    ? `${PLAN_LIMITS.free} générations gratuites / mois`
-    : `${PLAN_LIMITS.free} free generations / month`;
+    ? `${PLAN_LIMITS.free} gratuites / mois`
+    : `${PLAN_LIMITS.free} free / month`;
+
+  useEffect(() => {
+    if (!compactMobile || focused || generating || shellTouched || reduceMotion) {
+      setShellIdle(false);
+      return;
+    }
+    const start = window.setTimeout(() => setShellIdle(true), 1800);
+    return () => window.clearTimeout(start);
+  }, [compactMobile, focused, generating, shellTouched, reduceMotion]);
 
   const headline =
     mode === "song"
@@ -252,57 +279,79 @@ export function LandingGenerator({
           )}
 
           <div
-            className={[
+            className={cn(
+              compactMobile && "pk-landing-gen__mobile-stage",
+              compactMobile && shellIdle && !focused && !generating && "pk-landing-gen__mobile-stage--idle",
+            )}
+            onPointerDown={() => setShellTouched(true)}
+          >
+          {compactMobile ? (
+            <>
+              <span className="pk-landing-gen__mobile-stage-grain" aria-hidden />
+              <span className="pk-landing-gen__mobile-stage-vignette" aria-hidden />
+            </>
+          ) : null}
+          <div
+            className={cn(
               "pk-landing-gen__shell relative z-[1]",
               embedded ? "mt-0" : "mt-6 sm:mt-8",
+              compactMobile && "pk-landing-gen__shell--mobile",
               focused ? "pk-landing-gen__shell--focused" : "",
-            ].join(" ")}
+            )}
           >
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.08] px-3 py-2.5 sm:px-4">
-          <div className="inline-flex rounded-full border border-white/10 bg-white/[0.04] p-0.5">
-            <button
-              type="button"
-              onClick={() => setMode("song")}
-              className={[
-                "rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors sm:px-4 sm:text-sm",
-                mode === "song" ? "pk-prism-pill-active" : "text-white/55 hover:text-white",
-              ].join(" ")}
-            >
-              Song
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode("beat")}
-              className={[
-                "rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors sm:px-4 sm:text-sm",
-                mode === "beat" ? "pk-prism-pill-active" : "text-white/55 hover:text-white",
-              ].join(" ")}
-            >
-              Type Beat
-            </button>
-          </div>
+          {!compactMobile ? (
+            <>
+              <div className="inline-flex rounded-full border border-white/10 bg-white/[0.04] p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setMode("song")}
+                  className={[
+                    "rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors sm:px-4 sm:text-sm",
+                    mode === "song" ? "pk-prism-pill-active" : "text-white/55 hover:text-white",
+                  ].join(" ")}
+                >
+                  Song
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode("beat")}
+                  className={[
+                    "rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors sm:px-4 sm:text-sm",
+                    mode === "beat" ? "pk-prism-pill-active" : "text-white/55 hover:text-white",
+                  ].join(" ")}
+                >
+                  Type Beat
+                </button>
+              </div>
 
-          <div className="flex items-center gap-2">
-            {mode === "beat" ? (
-              <button
-                type="button"
-                onClick={() => setAdvancedOpen((v) => !v)}
-                className={[
-                  "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
-                  advancedOpen
-                    ? "border-[var(--prism-violet)]/40 bg-[var(--prism-violet)]/10 text-white"
-                    : "border-white/10 bg-white/[0.03] text-white/60 hover:text-white",
-                ].join(" ")}
-              >
-                <SlidersHorizontal className="h-3.5 w-3.5" />
-                {isFr ? "Avancé" : "Advanced"}
-              </button>
-            ) : null}
-            <span className="hidden text-[11px] font-semibold text-white/40 sm:inline">{freeLabel}</span>
-          </div>
+              <div className="flex items-center gap-2">
+                {mode === "beat" ? (
+                  <button
+                    type="button"
+                    onClick={() => setAdvancedOpen((v) => !v)}
+                    className={[
+                      "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
+                      advancedOpen
+                        ? "border-[var(--prism-violet)]/40 bg-[var(--prism-violet)]/10 text-white"
+                        : "border-white/10 bg-white/[0.03] text-white/60 hover:text-white",
+                    ].join(" ")}
+                  >
+                    <SlidersHorizontal className="h-3.5 w-3.5" />
+                    {isFr ? "Avancé" : "Advanced"}
+                  </button>
+                ) : null}
+                <span className="hidden text-[11px] font-semibold text-white/40 sm:inline">{freeLabel}</span>
+              </div>
+            </>
+          ) : (
+            <p className="w-full text-center text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">
+              {isFr ? "Décris ton idée — ton hit est à un clic" : "Describe your idea — your next track is one click away"}
+            </p>
+          )}
         </div>
 
-        <div className="px-3 py-3 sm:px-4 sm:py-4">
+        <div className={cn("px-3 py-3 sm:px-4 sm:py-4", compactMobile && "pk-landing-gen__prompt-zone")}>
           <SpeechDictationField
             multiline
             locale={locale}
@@ -319,7 +368,7 @@ export function LandingGenerator({
               }
             }}
             placeholder={placeholders[placeholderIndex]}
-            rows={3}
+            rows={compactMobile ? 3 : 3}
             wrapperClassName="mt-0"
           />
         </div>
@@ -384,43 +433,121 @@ export function LandingGenerator({
           </div>
         ) : null}
 
-        <div className="flex flex-col gap-3 border-t border-white/[0.08] px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
-          <p className="text-center text-[11px] font-semibold text-white/40 sm:text-left sm:hidden">{freeLabel}</p>
-          <p className="hidden text-xs text-white/45 sm:block">
-            {isFr ? "Entre ton texte et clique sur Créer · Shift+Entrée pour une nouvelle ligne" : "Enter to generate · Shift+Enter new line"}
-          </p>
-          <div className="pk-landing-gen__cta-shell relative inline-flex w-full sm:w-auto sm:min-w-[148px]">
-            <span className="pk-landing-gen__cta-field" aria-hidden />
-            <button
-              type="button"
-              onClick={() => void onGenerate()}
-              disabled={generating}
-              className={`pk-landing-gen__cta group inline-flex h-12 w-full items-center justify-center rounded-full px-6 sm:w-auto sm:min-w-[148px]${generating ? " is-generating" : ""}`}
-            >
-              <span className="pk-landing-gen__cta-rim" aria-hidden />
-              <span className="pk-landing-gen__cta-spark" aria-hidden />
-              <span className="pk-landing-gen__cta-spark pk-landing-gen__cta-spark--alt" aria-hidden />
-              <span className="pk-landing-gen__cta-glass" aria-hidden>
-                <span className="pk-landing-gen__cta-liquid" aria-hidden />
-                <span className="pk-landing-gen__cta-shine" aria-hidden />
-              </span>
-              <span className="pk-landing-gen__cta-inner inline-flex items-center justify-center gap-2 text-sm font-bold">
-                {generating ? (
-                  <PkIconLoader icon="generator" size="xs" inline />
-                ) : (
-                  <Music2 className="h-4 w-4" aria-hidden />
-                )}
-                {generating ? (isFr ? "Génération…" : "Generating…") : isFr ? "Créer" : "Create"}
-              </span>
-            </button>
-          </div>
+        <div
+          className={cn(
+            "border-t border-white/[0.08] px-3 py-3 sm:px-4",
+            compactMobile ? "pk-landing-gen__mobile-toolbar" : "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
+          )}
+        >
+          {compactMobile ? (
+            <>
+              <div className="pk-landing-gen__mobile-toolbar-left">
+                <div className="inline-flex rounded-full border border-white/10 bg-black/20 p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setMode("song")}
+                    className={cn(
+                      "rounded-full px-3 py-1.5 text-[11px] font-semibold transition-colors",
+                      mode === "song" ? "pk-prism-pill-active" : "text-white/55 hover:text-white",
+                    )}
+                  >
+                    Song
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMode("beat")}
+                    className={cn(
+                      "rounded-full px-3 py-1.5 text-[11px] font-semibold transition-colors",
+                      mode === "beat" ? "pk-prism-pill-active" : "text-white/55 hover:text-white",
+                    )}
+                  >
+                    Type Beat
+                  </button>
+                </div>
+                {mode === "beat" ? (
+                  <button
+                    type="button"
+                    onClick={() => setAdvancedOpen((v) => !v)}
+                    className={cn(
+                      "inline-flex h-9 w-9 items-center justify-center rounded-full border transition-colors",
+                      advancedOpen
+                        ? "border-[var(--prism-violet)]/40 bg-[var(--prism-violet)]/10 text-white"
+                        : "border-white/10 bg-white/[0.03] text-white/60 hover:text-white",
+                    )}
+                    aria-label={isFr ? "Options avancées" : "Advanced options"}
+                  >
+                    <SlidersHorizontal className="h-4 w-4" />
+                  </button>
+                ) : null}
+              </div>
+              <div className="pk-landing-gen__cta-shell pk-landing-gen__cta-shell--mobile relative inline-flex min-w-[132px] flex-1 sm:flex-none">
+                <span className="pk-landing-gen__cta-field" aria-hidden />
+                <button
+                  type="button"
+                  onClick={() => void onGenerate()}
+                  disabled={generating}
+                  className={`pk-landing-gen__cta pk-landing-gen__cta--mobile group inline-flex h-11 w-full items-center justify-center rounded-full px-5${generating ? " is-generating" : ""}`}
+                >
+                  <span className="pk-landing-gen__cta-rim" aria-hidden />
+                  <span className="pk-landing-gen__cta-spark" aria-hidden />
+                  <span className="pk-landing-gen__cta-spark pk-landing-gen__cta-spark--alt" aria-hidden />
+                  <span className="pk-landing-gen__cta-glass" aria-hidden>
+                    <span className="pk-landing-gen__cta-liquid" aria-hidden />
+                    <span className="pk-landing-gen__cta-shine" aria-hidden />
+                  </span>
+                  <span className="pk-landing-gen__cta-inner inline-flex items-center justify-center gap-2 text-sm font-bold">
+                    {generating ? (
+                      <PkIconLoader icon="generator" size="xs" inline />
+                    ) : (
+                      <Music2 className="h-4 w-4" aria-hidden />
+                    )}
+                    {generating ? (isFr ? "Génération…" : "Generating…") : isFr ? "Créer" : "Create"}
+                  </span>
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-center text-[11px] font-semibold text-white/40 sm:text-left sm:hidden">{freeLabel}</p>
+              <p className="hidden text-xs text-white/45 sm:block">
+                {isFr ? "Entre ton texte et clique sur Créer · Shift+Entrée pour une nouvelle ligne" : "Enter to generate · Shift+Enter new line"}
+              </p>
+              <div className="pk-landing-gen__cta-shell relative inline-flex w-full sm:w-auto sm:min-w-[148px]">
+                <span className="pk-landing-gen__cta-field" aria-hidden />
+                <button
+                  type="button"
+                  onClick={() => void onGenerate()}
+                  disabled={generating}
+                  className={`pk-landing-gen__cta group inline-flex h-12 w-full items-center justify-center rounded-full px-6 sm:w-auto sm:min-w-[148px]${generating ? " is-generating" : ""}`}
+                >
+                  <span className="pk-landing-gen__cta-rim" aria-hidden />
+                  <span className="pk-landing-gen__cta-spark" aria-hidden />
+                  <span className="pk-landing-gen__cta-spark pk-landing-gen__cta-spark--alt" aria-hidden />
+                  <span className="pk-landing-gen__cta-glass" aria-hidden>
+                    <span className="pk-landing-gen__cta-liquid" aria-hidden />
+                    <span className="pk-landing-gen__cta-shine" aria-hidden />
+                  </span>
+                  <span className="pk-landing-gen__cta-inner inline-flex items-center justify-center gap-2 text-sm font-bold">
+                    {generating ? (
+                      <PkIconLoader icon="generator" size="xs" inline />
+                    ) : (
+                      <Music2 className="h-4 w-4" aria-hidden />
+                    )}
+                    {generating ? (isFr ? "Génération…" : "Generating…") : isFr ? "Créer" : "Create"}
+                  </span>
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
+          </div>
 
-          <p className="relative z-[1] mt-4 flex items-center justify-center gap-2 text-center text-xs text-white/45">
-            <Sparkles className="h-3.5 w-3.5 text-[var(--prism-violet)]" aria-hidden />
-            {isFr ? "Aucune compétence requise — décris ton idée, on s’occupe du reste." : "No skills needed — describe your idea, we handle the rest."}
-          </p>
+          {compactMobile ? (
+            <GeneratorReassurance locale={locale} compact />
+          ) : (
+            <GeneratorReassurance locale={locale} />
+          )}
         </div>
 
         {sideCards[1] ? (

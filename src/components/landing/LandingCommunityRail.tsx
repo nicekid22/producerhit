@@ -39,6 +39,8 @@ type Props = {
   onRemix: (track: LandingCommunityTrack) => void;
   onRefresh?: () => void;
   footer?: React.ReactNode;
+  /** Masque le paragraphe lead (landing mobile épurée). */
+  compactLead?: boolean;
 };
 
 const INITIAL_VISIBLE = 4;
@@ -231,6 +233,7 @@ export function LandingCommunityRail({
   onRemix,
   onRefresh,
   footer,
+  compactLead = false,
 }: Props) {
   const isFr = locale === "fr";
   const reduceMotion = useReducedMotion();
@@ -359,7 +362,9 @@ export function LandingCommunityRail({
           <h2 className="mt-3 text-balance text-[clamp(1.5rem,3.2vw,2.25rem)] font-bold tracking-tight text-white">
             <span className="pk-prism-holo-text">{title}</span>
           </h2>
-          <p className="mt-3 max-w-3xl text-balance text-sm leading-relaxed text-white/60">{lead}</p>
+          <p className={cn("mt-3 max-w-3xl text-balance text-sm leading-relaxed text-white/60", compactLead && "pk-landing-community__lead--compact")}>
+            {lead}
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button

@@ -3,9 +3,10 @@ import { landingCopy } from "@/lib/landingContent";
 
 type Props = {
   locale: "en" | "fr";
+  compact?: boolean;
 };
 
-export function SocialProofStats({ locale }: Props) {
+export function SocialProofStats({ locale, compact = false }: Props) {
   const copy = landingCopy(locale);
 
   const stats =
@@ -24,14 +25,16 @@ export function SocialProofStats({ locale }: Props) {
         ];
 
   return (
-    <div className="mt-2">
+    <div className={compact ? "pk-social-proof pk-social-proof--compact" : "mt-2"}>
+      {compact ? null : (
       <div className="mx-auto max-w-3xl text-center">
         <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/40">{copy.trustEyebrow}</p>
         <h2 className="mt-3 text-balance text-lg font-bold tracking-tight text-white sm:text-xl">{copy.trustTitle}</h2>
         <p className="mt-2 text-balance text-xs leading-relaxed text-white/55 sm:text-sm">{copy.trustLead}</p>
       </div>
+      )}
 
-      <div className="mt-8 grid grid-cols-2 gap-2.5 sm:mt-10 sm:grid-cols-4 sm:gap-4">
+      <div className={`grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-4${compact ? "" : " mt-8 sm:mt-10"}`}>
         {stats.map((s) => (
           <div
             key={s.label}
@@ -44,9 +47,11 @@ export function SocialProofStats({ locale }: Props) {
         ))}
       </div>
 
+      {compact ? null : (
       <p className="mx-auto mt-6 max-w-2xl text-center text-[11px] font-semibold text-white/40">
         {locale === "fr" ? "Génération rapide · Itérations seed · Export direct" : "Fast generation · Seed iterations · Direct export"}
       </p>
+      )}
     </div>
   );
 }

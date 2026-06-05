@@ -1,6 +1,9 @@
 /** Mobile Dashboard v2 — actif par défaut. Désactiver avec VITE_MOBILE_DASHBOARD_V2=0 */
 export const MOBILE_DASHBOARD_V2 = import.meta.env.VITE_MOBILE_DASHBOARD_V2 !== "0";
 
+/** Landing mobile épurée (générateur centré, moins de texte). Rollback : VITE_LANDING_MOBILE_V2=0 */
+export const LANDING_MOBILE_V2 = import.meta.env.VITE_LANDING_MOBILE_V2 !== "0";
+
 /** Pinterest discovery — log console des termes classés. Rollback : 0 ou retirer. Voir PINTEREST_DISCOVERY_ROLLBACK.md */
 export const PINTEREST_DISCOVERY_PREVIEW =
   import.meta.env.VITE_PINTEREST_DISCOVERY_PREVIEW === "1";

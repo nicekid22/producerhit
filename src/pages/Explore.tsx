@@ -9,7 +9,6 @@ import { CommunityHubHero } from "@/components/community/CommunityHubHero";
 import { CommunityRail } from "@/components/community/CommunityRail";
 import { CommunityTrackCard } from "@/components/community/CommunityTrackCard";
 import { CommunityVibeNav } from "@/components/community/CommunityVibeNav";
-import { publicRowToCoverLoop } from "@/lib/coverArt";
 import {
   categoriesWithTracks,
   COMMUNITY_VIBE_CATEGORIES,
@@ -30,8 +29,12 @@ import { fetchRemixSourceLoop } from "@/lib/remixSourceLoop";
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
 import { useLocaleStore } from "@/stores/localeStore";
 import { useAuthStore } from "@/stores/authStore";
+import {
+  COMMUNITY_QUEUE_SOURCE,
+  findPublicRowIndex,
+  playPublicRowsInQueue,
+} from "@/lib/communityPlaybackQueue";
 import { usePlayerStore } from "@/stores/playerStore";
-import type { Loop } from "@/types/loop";
 
 type RatingStats = { sum: number; count: number; myRating: number | null };
 
@@ -51,13 +54,10 @@ export default function Explore() {
 
   const current = usePlayerStore((s) => s.current);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
-  const setCurrent = usePlayerStore((s) => s.setCurrent);
   const setPlaying = usePlayerStore((s) => s.setPlaying);
-  const setQueue = usePlayerStore((s) => s.setQueue);
   const [ratingsById, setRatingsById] = useState<Record<string, RatingStats>>({});
   const [playsById, setPlaysById] = useState<Record<string, number>>({});
 
-  const toLoop = (r: PublicLoopRow): Loop => publicRowToCoverLoop(r);
   const isNew = (createdAt: string) => Date.now() - new Date(createdAt).getTime() < 24 * 60 * 60 * 1000;
 
   const remixFrom = (r: PublicLoopRow) => {
@@ -253,7 +253,15 @@ export default function Explore() {
     return sortPublicLoopsByNewest(rows.filter((r) => r.user_id === user.id));
   }, [rows, user?.id]);
 
+  const myTracksRail = useMemo(() => myTracks.slice(0, 10), [myTracks]);
+  const newestRailItems = useMemo(() => newestRail.slice(0, 10), [newestRail]);
+  const topRailItems = useMemo(() => topRail.slice(0, 10), [topRail]);
+
   const spotlight = useMemo(() => pickSpotlight(rows, ratingsById, playsById), [playsById, ratingsById, rows]);
+  const spotlightQueue = useMemo(() => {
+    if (!spotlight) return newestRailItems;
+    return [spotlight, ...newestRailItems.filter((r) => r.id !== spotlight.id)];
+  }, [newestRailItems, spotlight]);
   const categorySections = useMemo(() => categoriesWithTracks(rows), [rows]);
 
   const hasActiveFilters = query.trim().length > 0 || activeVibeId !== null || sort !== "new";
@@ -277,77 +285,40 @@ export default function Explore() {
             ? "Tout le catalogue"
             : "Full catalog";
 
-  const ensurePlayableUrl = async (r: PublicLoopRow) => {
-    setResolvingId(r.id);
-    try {
-      const resolved = await resolvePlayableCommunityAudio(r);
-      if (resolved) {
-        setRows((prev) =>
-          prev.map((x) =>
-            x.id === r.id && !x.audio_url?.trim()
-              ? { ...x, audio_url: resolved.startsWith("blob:") ? x.audio_url : resolved }
-              : x,
-          ),
-        );
-      }
-      return resolved;
-    } finally {
-      setResolvingId(null);
-    }
+  const queuePlayOptions = {
+    source: COMMUNITY_QUEUE_SOURCE,
+    onResolveStart: (rowId: string) => setResolvingId(rowId),
+    onResolveEnd: () => setResolvingId(null),
+    onRowUrlResolved: (rowId: string, url: string) => {
+      setRows((prev) =>
+        prev.map((x) => (x.id === rowId && !x.audio_url?.trim() ? { ...x, audio_url: url } : x)),
+      );
+    },
   };
 
   const playQueue = async (list: PublicLoopRow[], startIndex: number) => {
     const startRow = list[startIndex] ?? list[0] ?? null;
     if (!startRow) return;
 
-    const startUrl = await ensurePlayableUrl(startRow);
-    if (!startUrl) {
+    const ok = await playPublicRowsInQueue(list, startIndex, queuePlayOptions);
+    if (!ok) {
       toast.error(isFr ? "Audio indisponible" : "Audio unavailable");
       return;
     }
-
-    const withUrls = list.filter((r) => typeof r.audio_url === "string" && r.audio_url.trim().length > 0);
-    const clean = withUrls;
-    if (!clean.length) {
-      trackClientEvent("community_play", { loop_id: startRow.id, source: "queue_resolve" });
-      setQueue([toLoop({ ...startRow, audio_url: startUrl })], 0, true, "community");
-      return;
-    }
-
-    const idx = Math.max(0, clean.findIndex((r) => r.id === startRow.id));
-    const picked = clean[idx >= 0 ? idx : 0]!;
-    trackClientEvent("community_play", { loop_id: picked.id, source: "queue" });
-
-    const queueLoops = await Promise.all(
-      clean.map(async (r) => {
-        const playable = r.id === picked.id ? startUrl : await resolvePlayableCommunityAudio(r).catch(() => r.audio_url!.trim());
-        return toLoop({ ...r, audio_url: playable });
-      }),
-    );
-    setQueue(queueLoops, idx >= 0 ? idx : 0, true, "community");
+    trackClientEvent("community_play", { loop_id: startRow.id, source: "queue" });
   };
 
-  const togglePlay = async (r: PublicLoopRow) => {
-    const url = await ensurePlayableUrl(r);
-    if (!url) {
-      toast.error(isFr ? "Audio indisponible" : "Audio unavailable");
-      return;
-    }
+  const togglePlayInList = async (r: PublicLoopRow, list: PublicLoopRow[]) => {
     if (current?.id === r.id) {
       setPlaying(!isPlaying);
       return;
     }
-    trackClientEvent("community_play", { loop_id: r.id, source: "direct" });
-    setCurrent(toLoop({ ...r, audio_url: url }), true);
+    const idx = findPublicRowIndex(list, r.id);
+    await playQueue(list, idx >= 0 ? idx : 0);
   };
 
   const togglePlayFromFiltered = async (r: PublicLoopRow) => {
-    const idx = filtered.findIndex((x) => x.id === r.id);
-    if (idx >= 0) {
-      await playQueue(filtered, idx);
-      return;
-    }
-    await togglePlay(r);
+    await togglePlayInList(r, filtered);
   };
 
   const setRating = (loopId: string, rating: number) => {
@@ -412,7 +383,7 @@ export default function Explore() {
           isActive={spotlight ? current?.id === spotlight.id : false}
           isPlaying={isPlaying}
           resolving={spotlight ? resolvingId === spotlight.id : false}
-          onPlay={() => spotlight && void togglePlay(spotlight)}
+          onPlay={() => spotlight && void playQueue(spotlightQueue, 0)}
           onShuffle={shufflePlay}
           onRemix={() => spotlight && remixFrom(spotlight)}
           onCreate={() => navigate("/dashboard")}
@@ -435,18 +406,18 @@ export default function Explore() {
               <CommunityRail
                 title={isFr ? "Tes créations sur le flux" : "Your tracks on the feed"}
                 icon={<Flame className="h-4 w-4 text-orange-400" />}
-                items={myTracks.slice(0, 10)}
+                items={myTracksRail}
                 {...railProps}
-                onPlay={(_row, idx) => void playQueue(myTracks, idx)}
+                onPlay={(_row, idx) => void playQueue(myTracksRail, idx)}
               />
             ) : null}
 
             <CommunityRail
               title={isFr ? "Fraîchement sortis" : "Fresh drops"}
               icon={<Sparkles className="h-4 w-4 text-cyan-300" />}
-              items={newestRail.slice(0, 10)}
+              items={newestRailItems}
               {...railProps}
-              onPlay={(_row, idx) => void playQueue(newestRail, idx)}
+              onPlay={(_row, idx) => void playQueue(newestRailItems, idx)}
               onSeeAll={() => {
                 setSort("new");
                 setActiveVibeId(null);
@@ -457,9 +428,9 @@ export default function Explore() {
             <CommunityRail
               title={isFr ? "Les plus kiffés" : "Most loved"}
               icon={<Trophy className="h-4 w-4 text-yellow-400" />}
-              items={topRail.slice(0, 10)}
+              items={topRailItems}
               {...railProps}
-              onPlay={(_row, idx) => void playQueue(topRail, idx)}
+              onPlay={(_row, idx) => void playQueue(topRailItems, idx)}
               onSeeAll={() => {
                 setSort("top");
                 setActiveVibeId(null);
@@ -477,7 +448,7 @@ export default function Explore() {
                   icon={<Waves className="h-4 w-4 text-violet-300" />}
                   items={rail}
                   {...railProps}
-                  onPlay={(_row, idx) => void playQueue(tracks, idx)}
+                  onPlay={(_row, idx) => void playQueue(rail, idx)}
                   onSeeAll={() => {
                     setActiveVibeId(category.id);
                     setSort("top");
