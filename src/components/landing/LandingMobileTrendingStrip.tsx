@@ -85,9 +85,10 @@ export function LandingMobileTrendingStrip({
                       <StoredLoopCover
                         coverUrl={coverUrl}
                         className="absolute inset-0 h-full w-full"
-                        imageClassName="h-full w-full object-cover object-center"
+                        imageClassName="pk-landing-trending-strip__cover-img h-full w-full object-cover object-center"
                         loading="eager"
                       />
+                      <span className="pk-landing-trending-strip__cover-tint" aria-hidden />
                       <span className="pk-landing-trending-strip__play" aria-hidden>
                         {playingNow ? <Pause className="h-5 w-5" fill="currentColor" /> : <Play className="ml-0.5 h-5 w-5" fill="currentColor" />}
                       </span>

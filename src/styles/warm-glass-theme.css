@@ -2027,6 +2027,48 @@ html.pk-warm-glass-active .pk-landing-community__cover-shine {
   );
 }
 
+/* Landing mobile — teinte covers trending strip (thème Warm) */
+.pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-trending-strip__cover img,
+.pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-trending-strip__cover-img,
+html.pk-warm-glass-active .pk-landing--mobile-focus .pk-landing-trending-strip__cover img,
+html.pk-warm-glass-active .pk-landing--mobile-focus .pk-landing-trending-strip__cover-img {
+  filter: saturate(0.78) contrast(1.02) brightness(0.93) sepia(0.14);
+}
+
+.pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-trending-strip__cover-tint,
+html.pk-warm-glass-active .pk-landing--mobile-focus .pk-landing-trending-strip__cover-tint {
+  mix-blend-mode: soft-light;
+  opacity: 0.92;
+  background:
+    linear-gradient(
+      148deg,
+      color-mix(in srgb, var(--warm-pigment-orange) 34%, transparent) 0%,
+      transparent 42%,
+      color-mix(in srgb, var(--warm-pigment-rose) 22%, transparent) 100%
+    ),
+    radial-gradient(
+      ellipse at 24% 78%,
+      color-mix(in srgb, var(--warm-pigment-yellow) 18%, transparent),
+      transparent 58%
+    ),
+    linear-gradient(180deg, rgba(255, 210, 150, 0.06) 0%, rgba(50, 18, 8, 0.32) 100%);
+}
+
+.pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-trending-strip__card.is-playing .pk-landing-trending-strip__cover-tint,
+.pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-trending-strip__cover.is-playing .pk-landing-trending-strip__cover-tint,
+html.pk-warm-glass-active .pk-landing--mobile-focus .pk-landing-trending-strip__card.is-playing .pk-landing-trending-strip__cover-tint,
+html.pk-warm-glass-active .pk-landing--mobile-focus .pk-landing-trending-strip__cover.is-playing .pk-landing-trending-strip__cover-tint {
+  opacity: 0.78;
+  background:
+    linear-gradient(
+      148deg,
+      color-mix(in srgb, var(--warm-pigment-orange) 28%, transparent) 0%,
+      transparent 40%,
+      color-mix(in srgb, var(--prism-cyan) 16%, transparent) 100%
+    ),
+    linear-gradient(180deg, rgba(255, 210, 150, 0.04) 0%, rgba(50, 18, 8, 0.28) 100%);
+}
+
 /* Le Flux — palette unifiée Warm */
 html.pk-warm-glass-active .pk-hub-hero,
 .pk-warm-glass-stage .pk-hub-hero {
