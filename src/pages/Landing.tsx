@@ -807,7 +807,7 @@ export default function Landing() {
     return () => observer.disconnect();
   }, [mobileLandingFocus]);
 
-  /* Mobile v2 : 1er écran = générateur + cartes ; intro au-dessus, visible au scroll vers le haut */
+  /* Mobile v2 : hauteur hero = viewport réel (évite le débordement des stats) */
   useEffect(() => {
     if (!mobileLandingFocus) return;
     const pageEl = pageRef.current;
@@ -823,30 +823,10 @@ export default function Landing() {
     window.addEventListener("resize", syncHeroViewport, { passive: true });
     window.visualViewport?.addEventListener("resize", syncHeroViewport);
 
-    const prevRestoration = history.scrollRestoration;
-    history.scrollRestoration = "manual";
-
-    let snapped = false;
-    const snapToHero = () => {
-      if (snapped) return;
-      const intro = document.getElementById("landing-mobile-intro");
-      if (!intro || intro.offsetHeight < 8) return;
-      syncHeroViewport();
-      window.scrollTo({ top: intro.offsetHeight, left: 0, behavior: "auto" });
-      snapped = true;
-    };
-
-    snapToHero();
-    const raf = window.requestAnimationFrame(snapToHero);
-    const t = window.setTimeout(snapToHero, 120);
-
     return () => {
-      window.cancelAnimationFrame(raf);
-      window.clearTimeout(t);
       window.removeEventListener("resize", syncHeroViewport);
       window.visualViewport?.removeEventListener("resize", syncHeroViewport);
       pageEl.style.removeProperty("--pk-mobile-hero-h");
-      history.scrollRestoration = prevRestoration;
     };
   }, [mobileLandingFocus]);
 
@@ -1271,16 +1251,6 @@ export default function Landing() {
             <LandingPrismScene spot={spot} reduceMotion={reduceMotion} />
           </div>
         ) : null}
-        {mobileLandingFocus ? (
-          <section id="landing-mobile-intro" className="pk-landing-mobile-intro-scroll" aria-label={locale === "fr" ? "Présentation" : "Introduction"}>
-            <div className="pk-landing-flow__intro pk-landing-flow__intro--mobile pk-landing-flow__intro-scroll mx-auto w-full max-w-2xl text-center">
-              <p className="pk-landing-flow__tagline--mobile text-[9px] font-semibold uppercase tracking-[0.2em] text-white/45">
-                {copy.heroTagline}
-              </p>
-              <HeroTypewriterPrompt locale={locale} reduceMotion={reduceMotion} className="pk-hero-prompt-wrap--mobile mt-3" />
-            </div>
-          </section>
-        ) : null}
         <RevealSection className={landingFlowSectionClass()}>
           <section
             className={cn(
@@ -1289,13 +1259,36 @@ export default function Landing() {
             )}
             aria-label="Hero"
           >
-            {!mobileLandingFocus ? (
-              <div className="pk-landing-flow__intro mx-auto w-full max-w-2xl text-center">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/40">{copy.heroTagline}</p>
-                <HeroTypewriterPrompt locale={locale} reduceMotion={reduceMotion} className="mt-2" />
-                <p className="mx-auto mt-2 max-w-lg text-pretty text-xs leading-relaxed text-white/45 sm:text-[13px]">{copy.heroLead}</p>
-              </div>
-            ) : null}
+            <div
+              className={cn(
+                "pk-landing-flow__intro mx-auto w-full max-w-2xl text-center",
+                mobileLandingFocus && "pk-landing-flow__intro--mobile",
+              )}
+            >
+              <p
+                className={cn(
+                  "font-semibold uppercase tracking-[0.18em] text-white/45",
+                  mobileLandingFocus ? "pk-landing-flow__tagline--mobile text-[9px] tracking-[0.2em]" : "text-[10px] text-white/40",
+                )}
+              >
+                {copy.heroTagline}
+              </p>
+              <HeroTypewriterPrompt
+                locale={locale}
+                reduceMotion={reduceMotion}
+                className={mobileLandingFocus ? "pk-hero-prompt-wrap--mobile mt-3" : "mt-2"}
+              />
+              <p
+                className={cn(
+                  "mx-auto max-w-lg text-pretty leading-relaxed text-white/50",
+                  mobileLandingFocus
+                    ? "pk-landing-flow__lead--mobile mt-2 text-[11px]"
+                    : "mt-2 text-xs sm:text-[13px] text-white/45",
+                )}
+              >
+                {copy.heroLead}
+              </p>
+            </div>
 
             {!mobileLandingFocus ? <div className="pk-landing-flow__handoff" aria-hidden /> : null}
 

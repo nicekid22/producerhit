@@ -46,7 +46,7 @@
     container-name: pk-mobile-hero;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr) auto;
     align-content: stretch;
     gap: var(--pk-mobile-gap);
     width: 100%;
@@ -56,18 +56,8 @@
     overflow: hidden;
   }
 
-  /* Intro hors 1er écran — scroll vers le haut pour la voir */
-  .pk-landing--mobile-focus .pk-landing-mobile-intro-scroll {
-    padding-top: calc(var(--pk-mobile-nav) + clamp(0.35rem, 1.2vh, 0.65rem));
-    padding-inline: var(--pk-mobile-gutter);
-    padding-bottom: clamp(0.85rem, 2.5vh, 1.25rem);
-  }
-
-  .pk-landing--mobile-focus .pk-landing-flow__intro-scroll {
-    margin: 0;
-    padding: 0;
-    animation: none;
-    transform: none;
+  .pk-landing--mobile-focus .pk-landing-flow__stack--mobile > * {
+    min-width: 0;
   }
 
   .pk-landing--mobile-focus .pk-landing-flow__intro--mobile {
@@ -75,27 +65,24 @@
     max-width: 100%;
     margin: 0;
     overflow: hidden;
+    padding-top: clamp(0.35rem, 1.2vh, 0.65rem);
     padding-inline: clamp(0.15rem, 1vw, 0.35rem);
     animation: none;
     transform: none;
   }
 
   .pk-landing--mobile-focus .pk-landing-flow__tagline--mobile {
-    margin-top: 0;
+    margin-top: clamp(0.15rem, 0.5vh, 0.35rem);
     padding-top: 0;
     font-size: clamp(8px, 2.2vw, 9px);
   }
 
   .pk-landing--mobile-focus .pk-landing-flow__intro--mobile .pk-hero-prompt-wrap--mobile {
-    margin-top: clamp(0.45rem, 1.2vh, 0.7rem) !important;
-  }
-
-  .pk-landing--mobile-focus .pk-landing-flow__stack--mobile > * {
-    min-width: 0;
+    margin-top: clamp(0.35rem, 1vh, 0.55rem) !important;
   }
 
   .pk-landing--mobile-focus .pk-landing-flow__lead--mobile {
-    margin-top: clamp(0.35rem, 0.9vh, 0.5rem);
+    margin-top: clamp(0.25rem, 0.7vh, 0.4rem);
     font-size: clamp(10px, 2.6vw, 11px);
     line-height: 1.35;
   }
@@ -573,6 +560,10 @@
 
   /* Compression auto selon la hauteur du hero (container query) */
   @container pk-mobile-hero (max-height: 760px) {
+    .pk-landing-flow__lead--mobile {
+      display: none;
+    }
+
     .pk-landing-flow__stack--mobile {
       --pk-mobile-prompt-min: clamp(3rem, 9.5vh, 4.25rem);
     }
