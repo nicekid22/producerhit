@@ -13,20 +13,19 @@
 @media (max-width: 767px) {
   .pk-landing--mobile-focus {
     --pk-mobile-nav: calc(4.85rem + env(safe-area-inset-top, 0px));
-    --pk-mobile-hero-h: calc(100svh - var(--pk-mobile-nav) - var(--pk-mobile-dock-player, 0px));
-    --pk-mobile-gap: clamp(0.3rem, 1.4vh, 0.65rem);
+    --pk-mobile-hero-h: calc(100vh - var(--pk-mobile-dock-player, 0px));
+    --pk-mobile-gap: clamp(0.28rem, 1.1vh, 0.5rem);
     --pk-mobile-gutter: clamp(0.5rem, 2.5vw, 0.75rem);
-    --pk-mobile-hero-top: clamp(2rem, 7vh, 3rem);
     --pk-mobile-gen-inset: clamp(0.85rem, 4.5vw, 1.2rem);
     --pk-mobile-card: clamp(6rem, 21vw, 7.35rem);
-    --pk-mobile-prompt-min: clamp(3.75rem, 12vh, 5.25rem);
+    --pk-mobile-prompt-min: clamp(3.25rem, 11vh, 4.65rem);
     --pk-mobile-type-size: clamp(1.15rem, 4.8vw, 1.52rem);
     padding-bottom: var(--pk-mobile-dock-player);
   }
 
   @supports (height: 100dvh) {
     .pk-landing--mobile-focus {
-      --pk-mobile-hero-h: calc(100dvh - var(--pk-mobile-nav) - var(--pk-mobile-dock-player, 0px));
+      --pk-mobile-hero-h: calc(100dvh - var(--pk-mobile-dock-player, 0px));
     }
   }
 
@@ -37,8 +36,8 @@
     min-height: var(--pk-mobile-hero-h);
     max-height: var(--pk-mobile-hero-h);
     overflow: hidden;
-    padding-top: var(--pk-mobile-nav);
-    padding-bottom: 0;
+    padding-top: var(--pk-mobile-nav) !important;
+    padding-bottom: 0 !important;
     padding-inline: var(--pk-mobile-gutter);
   }
 
@@ -47,7 +46,7 @@
     container-name: pk-mobile-hero;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, 1fr) auto;
     align-content: stretch;
     gap: var(--pk-mobile-gap);
     width: 100%;
@@ -57,8 +56,18 @@
     overflow: hidden;
   }
 
-  .pk-landing--mobile-focus .pk-landing-flow__stack--mobile > * {
-    min-width: 0;
+  /* Intro hors 1er écran — scroll vers le haut pour la voir */
+  .pk-landing--mobile-focus .pk-landing-mobile-intro-scroll {
+    padding-top: calc(var(--pk-mobile-nav) + clamp(0.35rem, 1.2vh, 0.65rem));
+    padding-inline: var(--pk-mobile-gutter);
+    padding-bottom: clamp(0.85rem, 2.5vh, 1.25rem);
+  }
+
+  .pk-landing--mobile-focus .pk-landing-flow__intro-scroll {
+    margin: 0;
+    padding: 0;
+    animation: none;
+    transform: none;
   }
 
   .pk-landing--mobile-focus .pk-landing-flow__intro--mobile {
@@ -66,20 +75,23 @@
     max-width: 100%;
     margin: 0;
     overflow: hidden;
-    padding-top: var(--pk-mobile-hero-top);
     padding-inline: clamp(0.15rem, 1vw, 0.35rem);
     animation: none;
     transform: none;
   }
 
   .pk-landing--mobile-focus .pk-landing-flow__tagline--mobile {
-    margin-top: clamp(0.2rem, 0.7vh, 0.45rem);
+    margin-top: 0;
     padding-top: 0;
     font-size: clamp(8px, 2.2vw, 9px);
   }
 
   .pk-landing--mobile-focus .pk-landing-flow__intro--mobile .pk-hero-prompt-wrap--mobile {
     margin-top: clamp(0.45rem, 1.2vh, 0.7rem) !important;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-flow__stack--mobile > * {
+    min-width: 0;
   }
 
   .pk-landing--mobile-focus .pk-landing-flow__lead--mobile {
@@ -140,7 +152,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding-block: clamp(0.6rem, 2.2vh, 0.95rem) clamp(0.08rem, 0.35vh, 0.22rem);
+    padding-block: clamp(0.15rem, 0.65vh, 0.35rem) 0;
     overflow: hidden;
   }
 
@@ -342,9 +354,7 @@
   }
 
   .pk-landing--mobile-focus .pk-landing-gen__reassurance--mobile {
-    margin-top: clamp(0.4rem, 1vh, 0.6rem);
-    padding-inline: 0.35rem;
-    font-size: clamp(10px, 2.6vw, 11px);
+    display: none;
   }
 
   .pk-landing--mobile-focus .pk-landing-trending-strip {
@@ -361,7 +371,7 @@
     align-items: flex-end;
     justify-content: space-between;
     gap: 0.5rem;
-    margin-bottom: clamp(0.4rem, 1vh, 0.55rem);
+    margin-bottom: clamp(0.28rem, 0.8vh, 0.45rem);
     padding-inline: 0.15rem;
   }
 
@@ -563,13 +573,8 @@
 
   /* Compression auto selon la hauteur du hero (container query) */
   @container pk-mobile-hero (max-height: 760px) {
-    .pk-landing-flow__lead--mobile {
-      display: none;
-    }
-
     .pk-landing-flow__stack--mobile {
-      --pk-mobile-prompt-min: clamp(3.25rem, 10vh, 4.5rem);
-      --pk-mobile-hero-top: clamp(0.85rem, 3.2vh, 1.35rem);
+      --pk-mobile-prompt-min: clamp(3rem, 9.5vh, 4.25rem);
     }
   }
 
