@@ -32,16 +32,15 @@ export function PlanUpsellModal({
   onClose,
 }: Props) {
   const navigate = useNavigate();
-  if (!reason) return null;
-
   const ctx = { source, plan, remaining, totalLimit, usedThisMonth };
-  const visible = shouldShowPlanUpsell(plan, reason, ctx);
+  const visible = reason ? shouldShowPlanUpsell(plan, reason, ctx) : false;
 
   useEffect(() => {
+    if (!reason) return;
     if (open && !visible) onClose();
-  }, [open, visible, onClose]);
+  }, [open, visible, onClose, reason]);
 
-  if (!visible) return null;
+  if (!reason || !visible) return null;
 
   const copy = getUpsellCopy(reason, locale, plan, ctx);
 

@@ -43,7 +43,10 @@ export default function SampleLab() {
   if (!isSampleLabEnabled()) {
     return <Navigate to="/dashboard" replace />;
   }
+  return <SampleLabContent />;
+}
 
+function SampleLabContent() {
   const locale = useLocaleStore((s) => s.locale);
   const isFr = locale === "fr";
   const user = useAuthStore((s) => s.user);

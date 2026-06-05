@@ -19,9 +19,13 @@ function persistDockCollapsed(value: boolean) {
   }
 }
 
+export type PlaybackOverride = "none" | "paused" | "manual";
+
 type PlayerState = {
   current: Loop | null;
   isPlaying: boolean;
+  /** `paused` = pause utilisateur (v2 peut reprendre) · `manual` = autre piste choisie. */
+  playbackOverride: PlaybackOverride;
   progress: number;
   currentTimeSec: number;
   durationSec: number;
@@ -29,6 +33,12 @@ type PlayerState = {
   queue: Loop[];
   queueIndex: number;
   queueSource: string | null;
+  /** Incrémenté à chaque setQueue/next autoplay — force AudioPlayer à retenter play(). */
+  playbackRequest: number;
+  bumpPlaybackRequest: () => void;
+  armGenerationAutoplay: () => void;
+  markPausedPlayback: () => void;
+  markManualPlayback: () => void;
   setCurrent: (loop: Loop, autoPlay: boolean) => void;
   setQueue: (loops: Loop[], startIndex: number, autoPlay: boolean, source?: string) => void;
   mergeQueue: (loops: Loop[], source?: string) => void;
@@ -69,6 +79,7 @@ function playableLoops(loops: Loop[]) {
 /** Play one loop within a list — queue keeps list order so « ended » advances to the next card. */
 export function playLoopInContext(loop: Loop, context: Loop[] | undefined, autoPlay: boolean, source = "context") {
   const store = usePlayerStore.getState();
+  if (autoPlay) store.markManualPlayback();
   const clean = playableLoops(context ?? []);
   if (!clean.length) {
     store.setCurrent(loop, autoPlay);
@@ -86,6 +97,7 @@ export function playLoopInContext(loop: Loop, context: Loop[] | undefined, autoP
 export const usePlayerStore = create<PlayerState>((set) => ({
   current: null,
   isPlaying: false,
+  playbackOverride: "none",
   progress: 0,
   currentTimeSec: 0,
   durationSec: 0,
@@ -93,6 +105,7 @@ export const usePlayerStore = create<PlayerState>((set) => ({
   queue: [],
   queueIndex: 0,
   queueSource: null,
+  playbackRequest: 0,
   seekToPct: null,
   dockCollapsed: readDockCollapsed(),
   setDockCollapsed: (collapsed) => {
@@ -104,6 +117,10 @@ export const usePlayerStore = create<PlayerState>((set) => ({
     persistDockCollapsed(next);
     set({ dockCollapsed: next });
   },
+  armGenerationAutoplay: () => set({ playbackOverride: "none" }),
+  bumpPlaybackRequest: () => set((s) => ({ playbackRequest: s.playbackRequest + 1 })),
+  markPausedPlayback: () => set({ playbackOverride: "paused" }),
+  markManualPlayback: () => set({ playbackOverride: "manual" }),
   setCurrent: (loop, autoPlay) =>
     set({
       current: loop,
@@ -118,13 +135,14 @@ export const usePlayerStore = create<PlayerState>((set) => ({
       seekToPct: null,
     }),
   setQueue: (loops, startIndex, autoPlay, source) =>
-    set(() => {
+    set((s) => {
       const clean = playableLoops(loops ?? []);
       const idx = Math.max(0, Math.min(clean.length - 1, startIndex));
       const current = clean[idx] ?? null;
+      const willPlay = Boolean(autoPlay && current);
       return {
         current,
-        isPlaying: Boolean(autoPlay && current),
+        isPlaying: willPlay,
         progress: 0,
         currentTimeSec: 0,
         durationSec: 0,
@@ -133,6 +151,7 @@ export const usePlayerStore = create<PlayerState>((set) => ({
         queueIndex: idx,
         queueSource: typeof source === "string" ? source : null,
         seekToPct: null,
+        playbackRequest: willPlay ? s.playbackRequest + 1 : s.playbackRequest,
       };
     }),
   mergeQueue: (loops, source) =>
@@ -190,6 +209,7 @@ export const usePlayerStore = create<PlayerState>((set) => ({
         loopEndSec: computeLoopEndSec(next),
         queueIndex: idx,
         seekToPct: null,
+        playbackRequest: s.playbackRequest + 1,
       };
     }),
   prev: () =>

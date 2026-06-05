@@ -45,7 +45,7 @@ class RootErrorBoundary extends Component<{ children: React.ReactNode }, { error
   render() {
     if (this.state.error) {
       const message = this.state.error instanceof Error ? this.state.error.message : String(this.state.error);
-      return <ErrorScreen title="App failed to start" message={message} />;
+      return <ErrorScreen title="Une erreur est survenue" message={message} />;
     }
     return this.props.children;
   }

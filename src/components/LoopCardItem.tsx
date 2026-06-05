@@ -110,6 +110,7 @@ export function LoopCardItem({
   const currentTimeSec = usePlayerStore((s) => s.currentTimeSec);
   const requestSeek = usePlayerStore((s) => s.requestSeek);
   const setPlaying = usePlayerStore((s) => s.setPlaying);
+  const markPausedPlayback = usePlayerStore((s) => s.markPausedPlayback);
 
   const startPlayback = useCallback(
     (target: Loop, autoPlay = true) => {
@@ -762,6 +763,7 @@ export function LoopCardItem({
               unlockAudioPlaybackFromGesture();
               void (async () => {
                 if (active) {
+                  if (isPlaying) markPausedPlayback();
                   setPlaying(!isPlaying);
                   return;
                 }
@@ -936,6 +938,7 @@ export function LoopCardItem({
             unlockAudioPlaybackFromGesture();
             void (async () => {
               if (active) {
+                if (isPlaying) markPausedPlayback();
                 setPlaying(!isPlaying);
                 return;
               }

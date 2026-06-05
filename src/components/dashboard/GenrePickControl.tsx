@@ -17,6 +17,8 @@ type Props = {
   genre: string;
   onGenreChange: (genre: string) => void;
   lastRandomGenre?: string;
+  /** Masque labels et texte d’aide — section titre suffit. */
+  compact?: boolean;
 };
 
 const modes: { id: GenrePickMode; fr: string; en: string }[] = [
@@ -24,7 +26,7 @@ const modes: { id: GenrePickMode; fr: string; en: string }[] = [
   { id: "auto", fr: "Auto", en: "Auto" },
 ];
 
-export function GenrePickControl({ locale, mode, onModeChange, genre, onGenreChange, lastRandomGenre }: Props) {
+export function GenrePickControl({ locale, mode, onModeChange, genre, onGenreChange, lastRandomGenre, compact = false }: Props) {
   const isFr = locale === "fr";
 
   const genreOptions = useMemo(() => {
@@ -42,10 +44,10 @@ export function GenrePickControl({ locale, mode, onModeChange, genre, onGenreCha
       : RANDOM_GENRE_VALUE;
 
   return (
-    <div className="grid gap-3">
+    <div className={cn("grid", compact ? "gap-2.5" : "gap-3")}>
       <div>
-        <div className="text-xs text-pk-muted">{isFr ? "Genre" : "Genre"}</div>
-        <div className="mt-2 flex flex-wrap gap-2">
+        {compact ? null : <div className="text-xs text-pk-muted">{isFr ? "Genre" : "Genre"}</div>}
+        <div className={cn("flex flex-wrap gap-2", compact ? "" : "mt-2")}>
           {modes.map((m) => {
             const active = mode === m.id;
             return (
@@ -65,12 +67,15 @@ export function GenrePickControl({ locale, mode, onModeChange, genre, onGenreCha
             );
           })}
         </div>
-        <p className="mt-2 text-[11px] leading-relaxed text-pk-muted">{genrePickModeHint(mode, locale, lastRandomGenre)}</p>
+        {compact ? null : (
+          <p className="mt-2 text-[11px] leading-relaxed text-pk-muted">{genrePickModeHint(mode, locale, lastRandomGenre)}</p>
+        )}
       </div>
 
       {mode === "custom" ? (
         <Dropdown
-          label={isFr ? "Genre précis" : "Exact genre"}
+          label={compact ? undefined : isFr ? "Genre précis" : "Exact genre"}
+          menuTitle={isFr ? "Genre" : "Genre"}
           value={dropdownValue}
           onChange={onGenreChange}
           options={genreOptions}

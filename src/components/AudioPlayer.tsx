@@ -43,8 +43,10 @@ export function AudioPlayer() {
   const lastBarsRef = useRef<Float32Array>(new Float32Array(64));
   const currentBeat = usePlayerStore((s) => s.current);
   const storeIsPlaying = usePlayerStore((s) => s.isPlaying);
+  const playbackRequest = usePlayerStore((s) => s.playbackRequest);
   const seekToPct = usePlayerStore((s) => s.seekToPct);
   const setPlaying = usePlayerStore((s) => s.setPlaying);
+  const markPausedPlayback = usePlayerStore((s) => s.markPausedPlayback);
   const setProgressStore = usePlayerStore((s) => s.setProgress);
   const setCurrentTimeStore = usePlayerStore((s) => s.setCurrentTime);
   const setDurationStore = usePlayerStore((s) => s.setDuration);
@@ -74,6 +76,7 @@ export function AudioPlayer() {
 
   const lastLoadedKeyRef = useRef<string | null>(null);
   const loadGenRef = useRef(0);
+  const ignorePauseSyncRef = useRef(false);
   const graphAttachedRef = useRef(false);
   const [audioMountKey, setAudioMountKey] = useState(0);
 
@@ -293,11 +296,10 @@ export function AudioPlayer() {
     const ctx = audioCtxRef.current;
     if (ctx && ctx.state === "suspended") void ctx.resume().catch(() => undefined);
     void audio.play().catch(() => {
-      setIsPlaying(false);
-      setPlaying(false);
+      /* Ne pas effacer isPlaying store — retry via playbackRequest / canplay */
     });
     return true;
-  }, [ensureAudioGraph, setPlaying]);
+  }, [ensureAudioGraph]);
 
   const scheduleEarlyPlay = useCallback(
     (audio: HTMLAudioElement, gen: number) => {
@@ -334,7 +336,20 @@ export function AudioPlayer() {
     if (storeIsPlaying === false) {
       if (!audio.paused) audio.pause();
     }
-  }, [currentBeat?.audioUrl, currentBeat?.id, scheduleEarlyPlay, storeIsPlaying, tryPlayAudio]);
+  }, [currentBeat?.audioUrl, currentBeat?.id, playbackRequest, scheduleEarlyPlay, storeIsPlaying, tryPlayAudio]);
+
+  /** Retente play() après setQueue autoplay (src peut ne pas être prêt au 1er tick). */
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !storeIsPlaying || !currentBeat?.audioUrl?.trim()) return;
+    if (!audio.paused && !audio.ended) return;
+    const gen = loadGenRef.current;
+    if (audio.src) {
+      tryPlayAudio();
+      return;
+    }
+    scheduleEarlyPlay(audio, gen);
+  }, [currentBeat?.audioUrl, currentBeat?.id, playbackRequest, scheduleEarlyPlay, storeIsPlaying, tryPlayAudio]);
 
   /** Enchaînement playlist — relance la lecture quand la piste ou l’index file change (mobile inclus). */
   useEffect(() => {
@@ -415,6 +430,7 @@ export function AudioPlayer() {
     if (!audio) return;
 
     const onPlay = () => {
+      ignorePauseSyncRef.current = false;
       ensureAudioGraph(audio.currentSrc || audio.src);
       const ctx = audioCtxRef.current;
       if (ctx && ctx.state === "suspended") void ctx.resume().catch(() => undefined);
@@ -426,8 +442,9 @@ export function AudioPlayer() {
     };
     const onPause = () => {
       setIsPlaying(false);
-      setPlaying(false);
       stopRaf();
+      if (ignorePauseSyncRef.current) return;
+      setPlaying(false);
     };
     const onEnded = () => {
       const { queue: q, queueIndex: qi, next: goNext } = usePlayerStore.getState();
@@ -485,7 +502,7 @@ export function AudioPlayer() {
       audio.removeEventListener("stalled", onStalled);
       audio.removeEventListener("error", onError);
     };
-  }, [decayVisualizerToZero, ensureAudioGraph, setPlaying, startVisualizer, stopRaf]);
+  }, [decayVisualizerToZero, ensureAudioGraph, markPausedPlayback, setPlaying, startVisualizer, stopRaf]);
 
   useEffect(() => {
     applyOutputVolume(volume);
@@ -520,6 +537,7 @@ export function AudioPlayer() {
         playableUrl = await resolvePlayableAudioUrl(rawUrl, currentBeat.id);
       } catch {
         if (gen !== loadGenRef.current) return;
+        ignorePauseSyncRef.current = false;
         setHasError(true);
         setIsLoading(false);
         setIsPlaying(false);
@@ -549,6 +567,7 @@ export function AudioPlayer() {
       lastLoadedKeyRef.current = resolvedKey;
       applyAudioCrossOrigin(playableUrl);
       ensureAudioGraph(playableUrl);
+      ignorePauseSyncRef.current = true;
       audio.src = playableUrl;
       audio.load();
       audio.muted = false;
@@ -620,6 +639,7 @@ export function AudioPlayer() {
       audio.pause();
       setIsPlaying(false);
       setPlaying(false);
+      markPausedPlayback();
       return;
     }
     try {

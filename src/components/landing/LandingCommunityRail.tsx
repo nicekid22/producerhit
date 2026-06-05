@@ -153,64 +153,26 @@ function useReducedMotion() {
   return reduced;
 }
 
-/** Reveal + léger tilt souris sur la première carte (section communauté). */
-function useCommunityHeroCard(reduceMotion: boolean, enabled: boolean, loading: boolean) {
+/** Léger tilt souris sur la carte centrée du carousel communauté. */
+function useCommunityCenterTilt(reduceMotion: boolean, enabled: boolean, focusedIndex: number) {
   const stageRef = useRef<HTMLDivElement | null>(null);
-  const [heroLive, setHeroLive] = useState(reduceMotion);
-  const [heroEntered, setHeroEntered] = useState(reduceMotion);
   const [pointerTilt, setPointerTilt] = useState({ rx: 0, ry: 0, tx: 0, ty: 0 });
   const [pointerOn, setPointerOn] = useState(false);
 
   useEffect(() => {
-    if (loading) {
-      setHeroLive(reduceMotion);
-      setHeroEntered(reduceMotion);
-      return;
-    }
-  }, [loading, reduceMotion]);
+    setPointerOn(false);
+    setPointerTilt({ rx: 0, ry: 0, tx: 0, ty: 0 });
+  }, [focusedIndex]);
 
   useEffect(() => {
-    if (!heroLive) return;
-    if (reduceMotion) {
-      setHeroEntered(true);
-      return;
-    }
-    const t = window.setTimeout(() => setHeroEntered(true), 1180);
-    return () => window.clearTimeout(t);
-  }, [heroLive, reduceMotion]);
-
-  useEffect(() => {
-    if (reduceMotion) {
-      setHeroLive(true);
-      setHeroEntered(true);
-      return;
-    }
-    if (!enabled || loading) return;
-    const el = stageRef.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          setHeroLive(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "0px 0px -8% 0px", threshold: 0.22 },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [reduceMotion, enabled, loading]);
-
-  useEffect(() => {
-    if (reduceMotion || !heroLive || !enabled) return;
+    if (reduceMotion || !enabled) return;
     const stage = stageRef.current;
     if (!stage) return;
     const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
     if (!finePointer) return;
 
     const onMove = (e: PointerEvent) => {
-      const card = stage.querySelector<HTMLElement>(".pk-landing-community__card--hero");
+      const card = stage.querySelector<HTMLElement>(".pk-landing-community__card--focus");
       if (!card) return;
       const rect = card.getBoundingClientRect();
       const nx = (e.clientX - (rect.left + rect.width / 2)) / (rect.width / 2);
@@ -220,10 +182,10 @@ function useCommunityHeroCard(reduceMotion: boolean, enabled: boolean, loading: 
       const cy = clamp(ny);
       setPointerOn(true);
       setPointerTilt({
-        rx: cy * -2.8,
-        ry: cx * 3.2,
-        tx: cx * 5,
-        ty: cy * 4,
+        rx: cy * -1.6,
+        ry: cx * 2,
+        tx: cx * 3,
+        ty: cy * 2.5,
       });
     };
 
@@ -238,32 +200,22 @@ function useCommunityHeroCard(reduceMotion: boolean, enabled: boolean, loading: 
       stage.removeEventListener("pointermove", onMove);
       stage.removeEventListener("pointerleave", onLeave);
     };
-  }, [reduceMotion, heroLive, enabled]);
+  }, [reduceMotion, enabled, focusedIndex]);
 
-  const stageClass = cn(
-    !heroLive && enabled && "pk-landing-community__stage--hero-pending",
-    heroLive && "pk-landing-community__stage--hero-live",
-    heroEntered && "pk-landing-community__stage--hero-entered",
-  );
-
-  const heroInnerStyle =
-    pointerOn && heroEntered
-      ? {
-          transform: `perspective(900px) rotateX(${pointerTilt.rx}deg) rotateY(${pointerTilt.ry}deg) translate3d(${pointerTilt.tx}px, ${pointerTilt.ty}px, 0)`,
-        }
-      : undefined;
+  const centerInnerStyle = pointerOn
+    ? {
+        transform: `perspective(900px) rotateX(${pointerTilt.rx}deg) rotateY(${pointerTilt.ry}deg) translate3d(${pointerTilt.tx}px, ${pointerTilt.ty}px, 0)`,
+      }
+    : undefined;
 
   return {
     stageRef,
-    stageClass,
-    heroLive,
-    heroEntered,
-    heroInnerClass: cn(
-      "pk-landing-community__hero-inner",
-      heroEntered && !pointerOn && "pk-landing-community__hero-inner--float",
-      pointerOn && "pk-landing-community__hero-inner--tilt",
+    centerInnerClass: cn(
+      "pk-landing-community__center-inner",
+      !pointerOn && !reduceMotion && "pk-landing-community__center-inner--float",
+      pointerOn && "pk-landing-community__center-inner--tilt",
     ),
-    heroInnerStyle,
+    centerInnerStyle,
   };
 }
 
@@ -288,7 +240,7 @@ export function LandingCommunityRail({
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
 
   const visibleTracks = useMemo(() => tracks.slice(0, visibleCount), [tracks, visibleCount]);
-  const hero = useCommunityHeroCard(reduceMotion, !loading && visibleTracks.length > 0, loading);
+  const centerTilt = useCommunityCenterTilt(reduceMotion, !loading && visibleTracks.length > 0, focusedIndex);
 
   useEffect(() => {
     if (loading) return;
@@ -363,6 +315,15 @@ export function LandingCommunityRail({
     [reduceMotion],
   );
 
+  useEffect(() => {
+    if (loading || !visibleTracks.length) return;
+    const rail = railRef.current;
+    if (!rail) return;
+    // Important : ne pas utiliser scrollIntoView ici, sinon le navigateur peut faire défiler
+    // toute la page jusqu’à la section "trending" au chargement.
+    rail.scrollLeft = 0;
+  }, [loading, visibleTracks.length]);
+
   const scrollByStep = (dir: -1 | 1) => {
     const next = Math.max(0, Math.min(visibleTracks.length - 1, focusedIndex + dir));
     scrollToIndex(next);
@@ -421,11 +382,8 @@ export function LandingCommunityRail({
       </div>
 
       <div
-        ref={hero.stageRef}
-        className={cn(
-          "pk-landing-community__stage pk-landing-community__stage--cinema mt-6 sm:mt-8",
-          hero.stageClass,
-        )}
+        ref={centerTilt.stageRef}
+        className="pk-landing-community__stage pk-landing-community__stage--cinema mt-6 sm:mt-8"
       >
         <div className="pk-landing-community__aurora" aria-hidden />
         <div className="pk-landing-community__spotlight" aria-hidden />
@@ -470,6 +428,7 @@ export function LandingCommunityRail({
                   const active = activeTrackId === t.id;
                   const playingNow = active && isPlaying;
                   const playable = isPlayablePublicLoop(t.audioUrl, t.stemsUrl, t.createdAt);
+                  const isCenter = idx === focusedIndex;
                   const dist = Math.abs(idx - focusedIndex);
                   const focusClass =
                     dist === 0
@@ -482,7 +441,7 @@ export function LandingCommunityRail({
                     <>
                       <LandingCommunityCardCover
                         track={t}
-                        coverPriority={dist <= 1 || idx === 0}
+                        coverPriority={dist <= 1}
                         playingNow={playingNow}
                         isFr={isFr}
                         onPlay={() => onPlay(t)}
@@ -533,8 +492,6 @@ export function LandingCommunityRail({
                     </>
                   );
 
-                  const isHero = idx === 0;
-
                   return (
                     <article
                       key={t.id}
@@ -545,13 +502,12 @@ export function LandingCommunityRail({
                         "pk-landing-community__card group",
                         focusClass,
                         playingNow && "pk-landing-community__card--playing",
-                        isHero && "pk-landing-community__card--hero",
-                        !isHero && !reduceMotion && "pk-landing-community__card--reveal",
+                        !reduceMotion && "pk-landing-community__card--reveal",
                       )}
-                      style={!isHero && !reduceMotion ? { animationDelay: `${Math.min(idx, 6) * 90}ms` } : undefined}
+                      style={!reduceMotion ? { animationDelay: `${Math.min(idx, 6) * 90}ms` } : undefined}
                     >
-                      {isHero ? (
-                        <div className={hero.heroInnerClass} style={hero.heroInnerStyle}>
+                      {isCenter ? (
+                        <div className={centerTilt.centerInnerClass} style={centerTilt.centerInnerStyle}>
                           {cardBody}
                         </div>
                       ) : (

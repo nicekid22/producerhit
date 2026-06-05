@@ -4,6 +4,11 @@ import {
   extendedGenrePromptMap,
   extendedGenreSonautoMap,
 } from "@/lib/genres/extendedCatalog";
+import { buildBeatAmbianceMoodMap } from "@/lib/beatAmbiance";
+import { buildBeatInfluenceMap } from "@/lib/beatInfluence";
+
+const influenceMap: Record<string, string> = buildBeatInfluenceMap();
+const moodMap: Record<string, string> = buildBeatAmbianceMoodMap();
 
 export type GenerateParams = {
   genre: string;
@@ -159,53 +164,6 @@ const genreMap: Record<string, string> = {
   "Sci-Fi R&B": "sci-fi R&B, moody futuristic pads, deep sub, minimal drums, alien textures, wide space, nocturnal vibe",
   "Ethereal Trap": "ethereal trap, airy pads, shimmering plucks, minimal trap drums, deep 808, dreamy floating atmosphere",
   "Nostalgic Future Beats": "nostalgic future beats, retro melodic motifs with futuristic textures, warm chords, modern drums, shimmering nostalgia",
-};
-
-Object.assign(genreMap, extendedGenrePromptMap());
-
-const influenceMap: Record<string, string> = {
-  "Metro Boomin":
-    "dark cinematic trap, eerie pads, minor-key motifs (bells/strings), clean hard drums, tight arrangement, modern bounce, strong transitions and drop moments",
-  Southside: "hard dark trap, relentless drum pressure, heavy 808 slides, minimal ominous melody, aggressive pocket, club/street energy",
-  Wheezy: "spacey melodic trap, airy pads, bouncing hi-hats, clean 808 glides, simple emotional toplines, modern Atlanta swing",
-  "Tay Keith": "hard-hitting Memphis-style drums, loud punchy kick/snare, minimal melody, aggressive energy, simple but effective hooks, heavy 808",
-  "Murda Beatz": "bouncy modern trap, catchy melodic hook, clean punchy drums, easy-to-rap pocket, bright ear candy and transitions",
-  "Mike Will Made-It": "anthemic trap/hip-hop, big drums, simple memorable synth motif, strong low-end, clean modern radio mix",
-  "Boi-1da": "hip-hop/r&b crossover, tasteful drums, clean bounce, restrained melody, polished mix, catchy but minimal groove",
-  "Hit-Boy": "modern hip-hop, crisp drums, soulful but modern samples/keys, big chorus energy, strong bass, premium mix",
-  "The Alchemist": "dark dusty sample-based hip-hop, gritty texture, chopped loops, minimal drums, raw swing, underground vibe",
-  "DJ Premier": "boom bap, hard snare, swing, scratched/vinyl texture, chopped jazz/soul samples, classic east coast feel",
-  "Just Blaze": "big soulful samples, energetic boom bap drums, stadium-ready hip-hop feel, dramatic drops and stabs",
-  "Pete Rock": "jazzy boom bap, warm Rhodes chords, dusty samples, laid-back swing, smooth bass, classic",
-  Timbaland: "percussive rhythmic complexity, syncopated drums, quirky swing, futuristic R&B textures, punchy minimal bass, signature grooves",
-  Pharrell: "minimal but infectious groove, clean drums, funky syncopation, bright chord stabs, playful melodic motif, dry punchy mix",
-  "Dr. Dre": "west coast hip-hop, tight live-feel drums, funky bassline, clean synth leads, cinematic arrangement, punchy mix",
-  Darkchild: "late 90s/2000s R&B, thick drum programming, stuttered rhythms, lush chords, big hooks, glossy mix",
-  "Rodney Jerkins": "90s/2000s R&B, polished drums, big chord progressions, clean bass, hook-forward arrangement",
-  Kaytranada: "housey R&B groove, swung drums, funky bass, warm chords, tasteful percussion, clean but vibey mix",
-  "OG Parker": "melodic trapsoul/R&B, smooth emotional chord progressions, airy textures, clean modern drums, late-night vibe",
-  "Kanye West (808s era)": "808s-era emotional hip-hop, minimal drums, cold synths, autotune-friendly melodic space, big 808s, dramatic ambience",
-  "40": "moody minimal R&B/rap, deep sub, sparse drums, airy pads, emotional ambience, wide space, nighttime vibe",
-  P2J: "UK afrobeats/afroswing, melodic guitar, clean percussion, warm bounce, smooth modern mix, catchy hooks",
-  JAE5: "afroswing / UK afro, rhythmic guitar, bouncy drums, melodic hooks, modern London groove",
-  "No Influence": "",
-};
-
-const moodMap: Record<string, string> = {
-  Dark: "dark brooding atmosphere, minor tonality, tense",
-  Melancholic: "melancholic emotional, sad beauty, longing feeling",
-  Euphoric: "euphoric uplifting, triumphant, emotional highs",
-  Aggressive: "aggressive intense, high energy, powerful",
-  Smooth: "smooth silky, relaxed groove, effortless flow",
-  Dreamy: "dreamy atmospheric, ethereal, floating sensation",
-  Hypnotic: "hypnotic repetitive, trance-like, mesmerizing",
-  Chill: "chill relaxed mood, laid-back feel, easy groove",
-  Happy: "happy uplifting mood, bright feel, positive vibe",
-  Sad: "sad melancholic mood, emotional feel, vulnerable",
-  Romantic: "romantic intimate mood, sensual feel, warm",
-  Confident: "confident bold mood, swagger, self-assured",
-  Nostalgic: "nostalgic warm mood, bittersweet, throwback",
-  Hype: "hype energetic mood, high excitement, crowd-ready",
 };
 
 const energyMap: Record<string, string> = {

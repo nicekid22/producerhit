@@ -626,7 +626,13 @@ export function RemixStudioPanel({
               <button
                 type="button"
                 className="font-semibold text-cyan-200 underline-offset-2 hover:text-white hover:underline"
-                onClick={() => useGrowthUpsellStore.getState().openUpsell("credits_exhausted", { source: "remix_studio" })}
+                onClick={() =>
+              useGrowthUpsellStore.getState().openUpsell("credits_exhausted", {
+                source: "remix_studio",
+                plan,
+                remaining,
+              })
+            }
               >
                 {isFr ? "voir les plans" : "view plans"}
               </button>

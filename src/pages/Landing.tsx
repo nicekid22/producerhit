@@ -392,6 +392,11 @@ export default function Landing() {
   };
 
   useEffect(() => {
+    if (location.hash) return;
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [location.hash]);
+
+  useEffect(() => {
     const raw = location.hash || "";
     const id = raw.startsWith("#") ? raw.slice(1) : raw;
     if (!id) return;

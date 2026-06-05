@@ -2159,3 +2159,57 @@ html.pk-warm-glass-active .pk-loop-retention-label--expired,
   color: rgba(255, 200, 150, 0.42) !important;
 }
 
+/* Dictée vocale — thème Warm Glass */
+html.pk-warm-glass-active .pk-speech-field__mic:hover:not(:disabled),
+.pk-warm-glass-stage .pk-speech-field__mic:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--warm-pigment-orange) 48%, transparent) !important;
+  background: color-mix(in srgb, var(--warm-pigment-orange) 14%, rgba(255, 255, 255, 0.06)) !important;
+}
+
+html.pk-warm-glass-active .pk-speech-field__mic.is-listening,
+.pk-warm-glass-stage .pk-speech-field__mic.is-listening {
+  border-color: color-mix(in srgb, var(--warm-pigment-orange) 58%, transparent) !important;
+  background: color-mix(in srgb, var(--warm-pigment-orange) 22%, rgba(38, 16, 10, 0.92)) !important;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--warm-pigment-orange) 24%, transparent),
+    0 0 24px color-mix(in srgb, var(--warm-pigment-rose) 22%, transparent) !important;
+}
+
+html.pk-warm-glass-active .pk-speech-field__mic.is-listening .pk-speech-field__mic-ring,
+.pk-warm-glass-stage .pk-speech-field__mic.is-listening .pk-speech-field__mic-ring {
+  border-color: color-mix(in srgb, var(--warm-pigment-orange) 55%, transparent) !important;
+}
+
+html.pk-warm-glass-active .pk-speech-field__control--listening,
+.pk-warm-glass-stage .pk-speech-field__control--listening {
+  border-color: color-mix(in srgb, var(--warm-pigment-orange) 42%, var(--pk-border)) !important;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--warm-pigment-orange) 16%, transparent) !important;
+}
+
+html.pk-warm-glass-active .pk-speech-field__control--listening-landing,
+.pk-warm-glass-stage .pk-speech-field__control--listening-landing {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warm-pigment-orange) 32%, transparent) !important;
+}
+
+html.pk-warm-glass-active .pk-speech-field__status,
+.pk-warm-glass-stage .pk-speech-field__status {
+  color: color-mix(in srgb, var(--warm-pigment-orange) 78%, white) !important;
+}
+
+html.pk-warm-glass-active .pk-speech-field__status-dot,
+.pk-warm-glass-stage .pk-speech-field__status-dot {
+  background: var(--warm-pigment-orange) !important;
+}
+
+html.pk-warm-glass-active .pk-gen-hint,
+.pk-warm-glass-stage .pk-gen-hint {
+  color: color-mix(in srgb, var(--warm-pigment-orange) 55%, transparent) !important;
+}
+
+html.pk-warm-glass-active .pk-gen-hint:hover,
+html.pk-warm-glass-active .pk-gen-hint:focus-visible,
+.pk-warm-glass-stage .pk-gen-hint:hover,
+.pk-warm-glass-stage .pk-gen-hint:focus-visible {
+  color: color-mix(in srgb, var(--warm-pigment-orange) 82%, white) !important;
+}
+

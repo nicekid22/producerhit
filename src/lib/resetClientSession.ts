@@ -5,6 +5,7 @@ export async function resetClientSessionStores(): Promise<void> {
   usePlayerStore.setState({
     current: null,
     isPlaying: false,
+    playbackOverride: "none",
     progress: 0,
     currentTimeSec: 0,
     durationSec: 0,
@@ -12,6 +13,7 @@ export async function resetClientSessionStores(): Promise<void> {
     queue: [],
     queueIndex: 0,
     queueSource: null,
+    playbackRequest: 0,
     seekToPct: null,
   });
 

@@ -52,6 +52,7 @@ export function shouldShowPlanUpsell(
 }
 
 const LOW_CREDITS_SESSION_KEY = "producerhit_low_credits_prompt_v1";
+const EXHAUSTED_CREDITS_SESSION_KEY = "producerhit_exhausted_upsell_v2";
 const POST_GEN_COOLDOWN_KEY = "producerhit_upgrade_prompt_ts";
 const POST_GEN_COOLDOWN_MS = 6 * 60 * 60 * 1000;
 
@@ -79,6 +80,27 @@ export function markLowCreditsPromptShown(): void {
   } catch {
     void 0;
   }
+}
+
+/** Popup quota épuisé — une fois par session (tous plans, Studio → Plus inclus). */
+export function shouldShowExhaustedCreditsPrompt(): boolean {
+  try {
+    return sessionStorage.getItem(EXHAUSTED_CREDITS_SESSION_KEY) !== "1";
+  } catch {
+    return true;
+  }
+}
+
+export function markExhaustedCreditsPromptShown(): void {
+  try {
+    sessionStorage.setItem(EXHAUSTED_CREDITS_SESSION_KEY, "1");
+  } catch {
+    void 0;
+  }
+}
+
+export function creditsBlockedReason(remaining: number, cost = 1): UpsellReason {
+  return remaining < cost ? "credits_exhausted" : "credits_low";
 }
 
 export function shouldShowPostGenerationPrompt(): boolean {
@@ -118,6 +140,7 @@ export function getUpsellCopy(
   const baseLimit = getPlanBaseLimit(cur);
   const proLimit = PLAN_LIMITS.pro;
   const studioLimit = PLAN_LIMITS.studio;
+  const plusLimit = PLAN_LIMITS.plus;
 
   const planName = (p: PaidPlanId) => {
     if (p === "plus") return "Plus";
@@ -255,9 +278,23 @@ export function getUpsellCopy(
           ? isFr
             ? [`${studioLimit} générations / mois`, "Export WAV mastering", "Tout Pro inclus", "30€ / mois"]
             : [`${studioLimit} generations / month`, "Mastered WAV export", "Everything in Pro", "$30 / month"]
-          : isFr
-            ? ["Bonus demain (daily & niveau)", "Invite un pote = crédits", "Tes tracks restent dans la bibliothèque"]
-            : ["Bonuses tomorrow (daily & level)", "Invite friends = credits", "Your tracks stay in the library"],
+          : target === "plus"
+            ? isFr
+              ? [
+                  `${plusLimit} générations / mois (vs ${studioLimit} Studio)`,
+                  "Audio hébergé permanent",
+                  "Stems & export rapide",
+                  "Pour enchaîner sans limite",
+                ]
+              : [
+                  `${plusLimit} generations / month (vs ${studioLimit} Studio)`,
+                  "Permanently hosted audio",
+                  "Stems & audio fast export",
+                  "Keep creating without hitting the wall",
+                ]
+            : isFr
+              ? ["Bonus demain (daily & niveau)", "Invite un pote = crédits", "Tes tracks restent dans la bibliothèque"]
+              : ["Bonuses tomorrow (daily & level)", "Invite friends = credits", "Your tracks stay in the library"],
     primaryLabel: target ? primaryForTarget : isFr ? "Voir les tarifs" : "View pricing",
     secondaryLabel: isFr ? "Fermer" : "Close",
     targetPlan: target,

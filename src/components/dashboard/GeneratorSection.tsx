@@ -1,18 +1,30 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DiscreetInfoTip } from "@/components/dashboard/DiscreetInfoTip";
 
 /** Padding horizontal du contenu générateur (Style & Vibe, L'idée…) — pas le header ni le footer */
 export const generatorSectionPad = "px-5 py-4 md:px-6 md:py-4";
 
+function GeneratorSectionHeading({ title, hint }: { title: string; hint?: string }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <span>{title}</span>
+      {hint ? <DiscreetInfoTip text={hint} /> : null}
+    </div>
+  );
+}
+
 export function GeneratorSection({
   title,
+  hint,
   collapsible = false,
   defaultOpen = true,
   className,
   children,
 }: {
   title: string;
+  hint?: string;
   collapsible?: boolean;
   defaultOpen?: boolean;
   className?: string;
@@ -23,7 +35,9 @@ export function GeneratorSection({
   if (!collapsible) {
     return (
       <div className={cn("pk-studio-section border-b border-pk-border", generatorSectionPad, className)}>
-        <div className="text-sm font-semibold pk-studio-section__title md:text-inherit">{title}</div>
+        <div className="text-sm font-semibold pk-studio-section__title md:text-inherit">
+          <GeneratorSectionHeading title={title} hint={hint} />
+        </div>
         <div className="mt-4 md:mt-5">{children}</div>
       </div>
     );
@@ -44,7 +58,9 @@ export function GeneratorSection({
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
       >
-        <span className="pk-studio-section__title text-[13px] font-semibold text-left tracking-tight md:text-inherit">{title}</span>
+        <span className="pk-studio-section__title text-[13px] font-semibold text-left tracking-tight md:text-inherit">
+          <GeneratorSectionHeading title={title} hint={hint} />
+        </span>
         <ChevronDown
           className={cn("h-4 w-4 shrink-0 text-white/40 transition-transform md:hidden", open && "rotate-180")}
           aria-hidden

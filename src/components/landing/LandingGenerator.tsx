@@ -1,5 +1,6 @@
 import { useEffect, useState, type RefObject } from "react";
 import { COVER_SURFACE_CLASS, cn } from "@/lib/utils";
+import { SpeechDictationField } from "@/components/SpeechDictationField";
 import { Music2, Pause, Play, SlidersHorizontal, Sparkles } from "lucide-react";
 import { PLAN_LIMITS } from "@/lib/planLimits";
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
@@ -302,10 +303,13 @@ export function LandingGenerator({
         </div>
 
         <div className="px-3 py-3 sm:px-4 sm:py-4">
-          <textarea
-            ref={inputRef}
+          <SpeechDictationField
+            multiline
+            locale={locale}
+            variant="landing"
+            inputRef={inputRef}
             value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
+            onChange={setPrompt}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
             onKeyDown={(e) => {
@@ -315,8 +319,8 @@ export function LandingGenerator({
               }
             }}
             placeholder={placeholders[placeholderIndex]}
-            rows={2}
-            className="w-full resize-none bg-transparent text-base font-medium leading-relaxed text-white outline-none placeholder:text-white/35 sm:text-lg"
+            rows={3}
+            wrapperClassName="mt-0"
           />
         </div>
 

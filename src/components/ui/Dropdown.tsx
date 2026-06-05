@@ -119,6 +119,7 @@ function computeDesktopPanelRect(anchor: HTMLElement): PanelRect {
 
 export function Dropdown({
   label,
+  menuTitle,
   value,
   onChange,
   options,
@@ -126,7 +127,9 @@ export function Dropdown({
   className,
   disabled,
 }: {
-  label: string;
+  label?: string;
+  /** Titre du panneau mobile si `label` est absent. */
+  menuTitle?: string;
   value: string;
   onChange: (v: string) => void;
   options: DropdownOption[];
@@ -135,6 +138,7 @@ export function Dropdown({
   disabled?: boolean;
 }) {
   const isMobile = useIsMobileViewport();
+  const panelLabel = label?.trim() || menuTitle?.trim() || placeholder?.trim() || "—";
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [panelRect, setPanelRect] = useState<PanelRect | null>(null);
@@ -305,7 +309,7 @@ export function Dropdown({
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={onKeyDown}
-                  placeholder={label}
+                  placeholder={panelLabel}
                   className="w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2 text-sm text-pk-text outline-none focus:border-pk-accent"
                 />
               </div>
@@ -319,8 +323,8 @@ export function Dropdown({
   return (
     <>
       <label className={cn("block", className)}>
-        <div className="text-xs text-pk-muted">{label}</div>
-        <div ref={rootRef} className="relative mt-1">
+        {label ? <div className="text-xs text-pk-muted">{label}</div> : null}
+        <div ref={rootRef} className={cn("relative", label ? "mt-1" : "")}>
           <button
             type="button"
             disabled={disabled}
@@ -360,7 +364,7 @@ export function Dropdown({
               <div className="pk-dropdown-panel relative z-[1] flex max-h-[min(78vh,560px)] flex-col overflow-hidden rounded-t-2xl border border-pk-border bg-pk-bg shadow-[0_-24px_80px_rgba(0,0,0,0.55)]">
                 <div className="flex items-center justify-between gap-3 border-b border-pk-border/70 px-4 py-3">
                   <div className="min-w-0">
-                    <div className="text-[11px] font-semibold uppercase tracking-wide text-pk-muted">{label}</div>
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-pk-muted">{panelLabel}</div>
                     {selected ? <div className="truncate text-sm font-semibold text-pk-text">{selected.label}</div> : null}
                   </div>
                   <button
@@ -380,7 +384,7 @@ export function Dropdown({
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                       onKeyDown={onKeyDown}
-                      placeholder={label}
+                      placeholder={panelLabel}
                       className="w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm text-pk-text outline-none focus:border-pk-accent"
                     />
                   </div>

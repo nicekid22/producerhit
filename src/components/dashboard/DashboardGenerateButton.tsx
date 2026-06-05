@@ -5,6 +5,8 @@ import { GenElectricMark } from "@/components/dashboard/GenElectricMark";
 type Props = {
   generating: boolean;
   disabled?: boolean;
+  /** Quota insuffisant — bouton cliquable pour ouvrir l’upsell (pas `disabled` natif). */
+  creditBlocked?: boolean;
   idleLabel: string;
   generatingLabel: string;
   /** 0–100 — estimation affichée dans le libellé (optionnel). */
@@ -17,6 +19,7 @@ type Props = {
 export function DashboardGenerateButton({
   generating,
   disabled,
+  creditBlocked,
   idleLabel,
   generatingLabel,
   progressPct,
@@ -39,6 +42,7 @@ export function DashboardGenerateButton({
         className={cn(
           "pk-landing-gen__cta pk-dashboard-gen__cta group inline-flex h-12 w-full items-center justify-center rounded-full px-6",
           generating && "is-generating pk-gen-btn-electric is-active",
+          creditBlocked && !generating && "opacity-75 saturate-75",
         )}
       >
         <span className="pk-landing-gen__cta-rim" aria-hidden />
