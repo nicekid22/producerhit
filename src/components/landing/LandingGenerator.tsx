@@ -278,6 +278,12 @@ export function LandingGenerator({
             </div>
           )}
 
+          {compactMobile ? (
+            <p className="pk-landing-gen__mobile-hint">
+              {isFr ? "Décris ton idée — ton hit est à un clic" : "Describe your idea — your next track is one click away"}
+            </p>
+          ) : null}
+
           <div
             className={cn(
               compactMobile && "pk-landing-gen__mobile-stage",
@@ -299,9 +305,8 @@ export function LandingGenerator({
               focused ? "pk-landing-gen__shell--focused" : "",
             )}
           >
+        {!compactMobile ? (
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.08] px-3 py-2.5 sm:px-4">
-          {!compactMobile ? (
-            <>
               <div className="inline-flex rounded-full border border-white/10 bg-white/[0.04] p-0.5">
                 <button
                   type="button"
@@ -343,13 +348,8 @@ export function LandingGenerator({
                 ) : null}
                 <span className="hidden text-[11px] font-semibold text-white/40 sm:inline">{freeLabel}</span>
               </div>
-            </>
-          ) : (
-            <p className="w-full text-center text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">
-              {isFr ? "Décris ton idée — ton hit est à un clic" : "Describe your idea — your next track is one click away"}
-            </p>
-          )}
         </div>
+        ) : null}
 
         <div className={cn("px-3 py-3 sm:px-4 sm:py-4", compactMobile && "pk-landing-gen__prompt-zone")}>
           <SpeechDictationField
