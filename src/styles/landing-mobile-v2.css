@@ -16,6 +16,8 @@
     --pk-mobile-hero-h: calc(100svh - var(--pk-mobile-nav) - var(--pk-mobile-dock-player, 0px));
     --pk-mobile-gap: clamp(0.3rem, 1.4vh, 0.65rem);
     --pk-mobile-gutter: clamp(0.5rem, 2.5vw, 0.75rem);
+    --pk-mobile-hero-top: clamp(2rem, 7vh, 3rem);
+    --pk-mobile-gen-inset: clamp(0.85rem, 4.5vw, 1.2rem);
     --pk-mobile-card: clamp(6rem, 21vw, 7.35rem);
     --pk-mobile-prompt-min: clamp(3.75rem, 12vh, 5.25rem);
     --pk-mobile-type-size: clamp(1.15rem, 4.8vw, 1.52rem);
@@ -64,11 +66,14 @@
     max-width: 100%;
     margin: 0;
     overflow: hidden;
+    padding-top: var(--pk-mobile-hero-top);
     padding-inline: clamp(0.15rem, 1vw, 0.35rem);
+    animation: none;
+    transform: none;
   }
 
   .pk-landing--mobile-focus .pk-landing-flow__tagline--mobile {
-    margin-top: clamp(0.65rem, 2vh, 1rem);
+    margin-top: clamp(0.2rem, 0.7vh, 0.45rem);
     padding-top: 0;
     font-size: clamp(8px, 2.2vw, 9px);
   }
@@ -133,7 +138,9 @@
     max-width: 100%;
     display: flex;
     flex-direction: column;
+    align-items: center;
     justify-content: center;
+    padding-block: clamp(0.6rem, 2.2vh, 0.95rem) clamp(0.08rem, 0.35vh, 0.22rem);
     overflow: hidden;
   }
 
@@ -163,7 +170,7 @@
     width: 100%;
     max-width: 100%;
     min-width: 0;
-    padding-inline: 0;
+    padding-inline: var(--pk-mobile-gen-inset);
     overflow: hidden;
   }
 
@@ -171,7 +178,7 @@
     position: relative;
     isolation: isolate;
     width: 100%;
-    max-width: min(100%, 26.5rem);
+    max-width: min(100%, 24.75rem);
     margin-inline: auto;
     border-radius: clamp(1rem, 3vw, 1.35rem);
     border: 1px solid rgba(255, 235, 210, 0.22);
@@ -562,6 +569,7 @@
 
     .pk-landing-flow__stack--mobile {
       --pk-mobile-prompt-min: clamp(3.25rem, 10vh, 4.5rem);
+      --pk-mobile-hero-top: clamp(0.85rem, 3.2vh, 1.35rem);
     }
   }
 
