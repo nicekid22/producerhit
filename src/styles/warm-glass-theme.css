@@ -1574,6 +1574,111 @@ html.pk-warm-glass-active *::-webkit-scrollbar-thumb:hover,
   border-color: var(--warm-glass-border) !important;
 }
 
+/* Landing mobile — menu déroulant + lien trending (thème Warm) */
+.pk-warm-glass-stage .pk-landing-mobile-nav__trigger,
+html.pk-warm-glass-active .pk-landing-mobile-nav__trigger {
+  border-color: color-mix(in srgb, var(--warm-glass-border) 88%, transparent) !important;
+  background: color-mix(in srgb, var(--warm-pigment-orange) 10%, rgba(255, 255, 255, 0.05)) !important;
+  color: rgba(255, 248, 235, 0.94) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 230, 190, 0.12);
+}
+
+.pk-warm-glass-stage .pk-landing-mobile-nav__trigger.is-open,
+.pk-warm-glass-stage .pk-landing-mobile-nav__trigger:hover,
+html.pk-warm-glass-active .pk-landing-mobile-nav__trigger.is-open,
+html.pk-warm-glass-active .pk-landing-mobile-nav__trigger:hover {
+  border-color: color-mix(in srgb, var(--warm-pigment-orange) 42%, transparent) !important;
+  background: color-mix(in srgb, var(--warm-pigment-orange) 16%, rgba(255, 255, 255, 0.06)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 230, 190, 0.16),
+    0 0 0 1px color-mix(in srgb, var(--warm-pigment-rose) 12%, transparent);
+}
+
+.pk-warm-glass-stage .pk-landing-mobile-nav,
+html.pk-warm-glass-active .pk-landing-mobile-nav {
+  border-top-color: color-mix(in srgb, var(--warm-glass-border) 90%, transparent) !important;
+}
+
+.pk-warm-glass-stage .pk-landing-mobile-nav__panel,
+html.pk-warm-glass-active .pk-landing-mobile-nav__panel {
+  background:
+    radial-gradient(120% 85% at 50% -25%, color-mix(in srgb, var(--warm-pigment-orange) 22%, transparent), transparent 58%),
+    radial-gradient(90% 70% at 100% 100%, color-mix(in srgb, var(--warm-pigment-rose) 14%, transparent), transparent 62%),
+    rgba(42, 18, 10, 0.94) !important;
+  backdrop-filter: blur(24px) saturate(1.2) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.2) !important;
+}
+
+.pk-warm-glass-stage .pk-landing-mobile-nav__item,
+html.pk-warm-glass-active .pk-landing-mobile-nav__item {
+  border-color: color-mix(in srgb, var(--warm-glass-border) 82%, transparent) !important;
+  background: color-mix(in srgb, var(--warm-pigment-orange) 6%, rgba(255, 255, 255, 0.04)) !important;
+  color: rgba(255, 248, 235, 0.94) !important;
+}
+
+.pk-warm-glass-stage .pk-landing-mobile-nav__item:hover,
+html.pk-warm-glass-active .pk-landing-mobile-nav__item:hover {
+  border-color: color-mix(in srgb, var(--warm-pigment-orange) 34%, transparent) !important;
+  background: color-mix(in srgb, var(--warm-pigment-orange) 14%, rgba(255, 255, 255, 0.05)) !important;
+}
+
+.pk-warm-glass-stage .pk-landing-mobile-nav__item--primary,
+html.pk-warm-glass-active .pk-landing-mobile-nav__item--primary {
+  border-color: color-mix(in srgb, var(--warm-pigment-orange) 38%, transparent) !important;
+  background: linear-gradient(
+    132deg,
+    color-mix(in srgb, var(--warm-pigment-yellow) 28%, transparent) 0%,
+    color-mix(in srgb, var(--warm-pigment-orange) 24%, transparent) 52%,
+    color-mix(in srgb, var(--warm-pigment-rose) 18%, transparent) 100%
+  ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 230, 190, 0.2),
+    0 8px 22px rgba(40, 16, 8, 0.22) !important;
+}
+
+.pk-warm-glass-stage .pk-landing-mobile-nav__item--muted,
+html.pk-warm-glass-active .pk-landing-mobile-nav__item--muted {
+  color: rgba(255, 235, 210, 0.58) !important;
+}
+
+.pk-warm-glass-stage .pk-landing-mobile-nav__footer,
+html.pk-warm-glass-active .pk-landing-mobile-nav__footer {
+  border-top-color: color-mix(in srgb, var(--warm-glass-border) 88%, transparent) !important;
+}
+
+.pk-warm-glass-stage .pk-landing-mobile-nav__locale,
+html.pk-warm-glass-active .pk-landing-mobile-nav__locale {
+  border-color: color-mix(in srgb, var(--warm-glass-border) 82%, transparent) !important;
+  background: color-mix(in srgb, var(--warm-pigment-orange) 5%, rgba(255, 255, 255, 0.03)) !important;
+}
+
+.pk-warm-glass-stage .pk-landing-mobile-nav__locale-btn.is-active,
+html.pk-warm-glass-active .pk-landing-mobile-nav__locale-btn.is-active {
+  background: linear-gradient(
+    132deg,
+    color-mix(in srgb, var(--warm-pigment-yellow) 34%, transparent) 0%,
+    color-mix(in srgb, var(--warm-pigment-orange) 28%, transparent) 48%,
+    color-mix(in srgb, var(--warm-pigment-rose) 22%, transparent) 100%
+  ) !important;
+  color: rgba(255, 252, 245, 0.96) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 230, 190, 0.18);
+}
+
+.pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-trending-strip__link,
+html.pk-warm-glass-active .pk-landing--mobile-focus .pk-landing-trending-strip__link {
+  color: color-mix(in srgb, var(--warm-pigment-orange) 72%, white) !important;
+}
+
+.pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-trending-strip__link:hover,
+html.pk-warm-glass-active .pk-landing--mobile-focus .pk-landing-trending-strip__link:hover {
+  color: color-mix(in srgb, var(--warm-pigment-yellow) 58%, white) !important;
+}
+
+.pk-warm-glass-stage .pk-landing-mobile-nav__item--cta.pk-hero-cta,
+html.pk-warm-glass-active .pk-landing-mobile-nav__item--cta.pk-hero-cta {
+  border-color: color-mix(in srgb, var(--warm-pigment-orange) 42%, transparent) !important;
+}
+
 .pk-warm-glass-stage .pk-prism-card .text-\[var\(--prism-cyan\)\] {
   color: var(--prism-cyan) !important;
 }

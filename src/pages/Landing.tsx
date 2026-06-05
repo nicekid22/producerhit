@@ -1146,7 +1146,10 @@ export default function Landing() {
 
           <button
             type="button"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white sm:hidden"
+            className={cn(
+              "pk-landing-mobile-nav__trigger inline-flex h-10 w-10 items-center justify-center rounded-full sm:hidden",
+              mobileOpen && "is-open",
+            )}
             onClick={() => setMobileOpen((v) => !v)}
             aria-expanded={mobileOpen}
             aria-label={locale === "fr" ? "Menu navigation" : "Navigation menu"}
@@ -1156,72 +1159,71 @@ export default function Landing() {
         </div>
 
         {mobileOpen ? (
-          <div className="border-t border-white/10 bg-[rgba(6,6,12,0.96)] backdrop-blur-xl sm:hidden">
-            <nav className="mx-auto flex max-w-6xl flex-col gap-1.5 px-4 py-4" aria-label={locale === "fr" ? "Menu mobile" : "Mobile menu"}>
-              {user ? (
-                <Link
-                  to="/dashboard"
-                  className="pk-prism-btn inline-flex h-11 items-center justify-center rounded-xl text-sm font-semibold"
-                  onClick={() => setMobileOpen(false)}
-                >
-                  {locale === "fr" ? "Ouvrir le studio" : "Open studio"}
-                </Link>
-              ) : null}
-              <Link
-                to="/community"
-                className="pk-glass-btn pk-glass-btn--ghost inline-flex h-11 items-center justify-center rounded-xl text-sm font-semibold text-white"
-                onClick={() => setMobileOpen(false)}
-              >
-                {locale === "fr" ? "Communauté" : "Community"}
-              </Link>
-              <Link
-                to="/pricing"
-                className="pk-glass-btn pk-glass-btn--ghost inline-flex h-11 items-center justify-center rounded-xl text-sm font-semibold text-white"
-                onClick={() => setMobileOpen(false)}
-              >
-                {locale === "fr" ? "Tarifs" : "Pricing"}
-              </Link>
-              {!user ? (
-                <>
+          <div className="pk-landing-mobile-nav sm:hidden">
+            <div className="pk-landing-mobile-nav__panel">
+              <nav className="pk-landing-mobile-nav__list" aria-label={locale === "fr" ? "Menu mobile" : "Mobile menu"}>
+                {user ? (
                   <Link
-                    to="/auth"
-                    className="pk-glass-btn pk-glass-btn--ghost inline-flex h-11 items-center justify-center rounded-xl text-sm font-semibold text-white"
+                    to="/dashboard"
+                    className="pk-landing-mobile-nav__item pk-landing-mobile-nav__item--primary"
                     onClick={() => setMobileOpen(false)}
                   >
-                    {locale === "fr" ? "Connexion" : "Login"}
+                    {locale === "fr" ? "Ouvrir le studio" : "Open studio"}
                   </Link>
-                  <HeroCtaButton
-                    to="/auth"
-                    variant="spark"
-                    size="nav"
-                    className="w-full rounded-xl"
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    {locale === "fr" ? "Essayer gratuit" : "Start free"}
-                  </HeroCtaButton>
-                </>
-              ) : (
+                ) : null}
                 <Link
-                  to="/?home=1"
-                  className="pk-glass-btn pk-glass-btn--ghost inline-flex h-11 items-center justify-center rounded-xl text-sm font-semibold text-white/80"
+                  to="/community"
+                  className="pk-landing-mobile-nav__item"
                   onClick={() => setMobileOpen(false)}
                 >
-                  {locale === "fr" ? "Rester sur l’accueil" : "Stay on home"}
+                  {locale === "fr" ? "Communauté" : "Community"}
                 </Link>
-              )}
-              <div className="flex items-center gap-2">
-                <ThemeToggleButton variant="icon" className="rounded-xl" />
-                <div className="flex flex-1 items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] p-1">
+                <Link
+                  to="/pricing"
+                  className="pk-landing-mobile-nav__item"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  {locale === "fr" ? "Tarifs" : "Pricing"}
+                </Link>
+                {!user ? (
+                  <>
+                    <Link
+                      to="/auth"
+                      className="pk-landing-mobile-nav__item"
+                      onClick={() => setMobileOpen(false)}
+                    >
+                      {locale === "fr" ? "Connexion" : "Login"}
+                    </Link>
+                    <HeroCtaButton
+                      to="/auth"
+                      variant="spark"
+                      size="nav"
+                      className="pk-landing-mobile-nav__item pk-landing-mobile-nav__item--cta w-full rounded-[0.875rem]"
+                      onClick={() => setMobileOpen(false)}
+                    >
+                      {locale === "fr" ? "Essayer gratuit" : "Start free"}
+                    </HeroCtaButton>
+                  </>
+                ) : (
+                  <Link
+                    to="/?home=1"
+                    className="pk-landing-mobile-nav__item pk-landing-mobile-nav__item--muted"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    {locale === "fr" ? "Rester sur l’accueil" : "Stay on home"}
+                  </Link>
+                )}
+              </nav>
+              <div className="pk-landing-mobile-nav__footer">
+                <ThemeToggleButton variant="icon" className="pk-landing-mobile-nav__theme" />
+                <div className="pk-landing-mobile-nav__locale" role="group" aria-label={locale === "fr" ? "Langue" : "Language"}>
                   <button
                     type="button"
                     onClick={() => {
                       setLocale("en");
                       setMobileOpen(false);
                     }}
-                    className={[
-                      "flex-1 rounded-full px-3 py-2 text-xs font-semibold transition-colors",
-                      locale === "en" ? "pk-prism-pill-active" : "text-white/45",
-                    ].join(" ")}
+                    className={cn("pk-landing-mobile-nav__locale-btn", locale === "en" && "is-active")}
                   >
                     EN
                   </button>
@@ -1231,16 +1233,13 @@ export default function Landing() {
                       setLocale("fr");
                       setMobileOpen(false);
                     }}
-                    className={[
-                      "flex-1 rounded-full px-3 py-2 text-xs font-semibold transition-colors",
-                      locale === "fr" ? "pk-prism-pill-active" : "text-white/45",
-                    ].join(" ")}
+                    className={cn("pk-landing-mobile-nav__locale-btn", locale === "fr" && "is-active")}
                   >
                     FR
                   </button>
                 </div>
               </div>
-            </nav>
+            </div>
           </div>
         ) : null}
       </header>
