@@ -22,7 +22,7 @@ export function MarketingPageShell({ children, className, contentClassName }: Pr
       )}
     >
       {warmGlass ? (
-        <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
+        <div className="pk-warm-backdrop pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
           <WarmGlassBackdrop />
         </div>
       ) : null}

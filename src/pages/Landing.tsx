@@ -1076,19 +1076,28 @@ export default function Landing() {
       )}
     >
       {warmGlass ? (
-        <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden>
+        <div className="pk-warm-backdrop pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
           <WarmGlassBackdrop />
         </div>
       ) : null}
 
       <header
-        className={[
+        className={cn(
           "pk-landing-header fixed inset-x-0 top-0 z-30 bg-transparent transition-[box-shadow,backdrop-filter] duration-300",
           navScrolled ? "pk-landing-header--scrolled" : "shadow-none",
-        ].join(" ")}
+          mobileLandingFocus && "pk-landing-header--mobile-focus-mode",
+          mobileOpen && "pk-landing-header--menu-open",
+        )}
       >
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-5 sm:py-3.5 lg:px-6">
-          <BrandLogo />
+        <div className="pk-landing-header__bar mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-5 sm:py-3.5 lg:px-6">
+          <div
+            className={cn(
+              "pk-landing-header__brand-slot min-w-0",
+              mobileLandingFocus && "pk-landing-header__brand-slot--mobile sm:block",
+            )}
+          >
+            <BrandLogo compact={mobileLandingFocus} />
+          </div>
 
           <nav className="hidden items-center gap-3 sm:flex">
             <Link to="/community" className="text-sm font-semibold text-white/70 transition-colors hover:text-white">

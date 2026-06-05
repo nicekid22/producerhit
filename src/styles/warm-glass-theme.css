@@ -34,6 +34,11 @@
   --warm-grain-film: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
+/* Calques pigment — toujours sous le contenu */
+.pk-warm-glass-stage > .pk-warm-backdrop {
+  z-index: 0;
+}
+
 /* Base mesh — jaune · orange · rose (saturé, pas pastel) */
 .pk-warm-glass-stage.pk-prism-stage,
 .pk-warm-glass-stage.pk-prism-dashboard {
@@ -255,6 +260,10 @@
     #ffc870 78%,
     #ffd066 100%
   ) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
 }
 
 .pk-warm-glass-stage .pk-prism-glass,
@@ -780,6 +789,22 @@ html.pk-warm-glass-active .pk-glass-btn:hover:not(:disabled),
     inset 0 1px 0 rgba(255, 220, 180, 0.12),
     0 0 0 1px rgba(200, 80, 50, 0.12),
     0 12px 40px rgba(40, 16, 8, 0.28) !important;
+}
+
+@media (max-width: 767px) {
+  .pk-warm-glass-stage .pk-prism-player.pk-warm-glass-player,
+  html.pk-warm-glass-active .pk-prism-player.pk-warm-glass-player.pk-prism-player--dock {
+    background:
+      radial-gradient(380px circle at 14% -4%, rgba(255, 210, 120, 0.14), transparent 54%),
+      radial-gradient(340px circle at 92% 104%, rgba(255, 130, 90, 0.1), transparent 56%),
+      linear-gradient(165deg, rgba(255, 252, 248, 0.12), rgba(255, 228, 195, 0.06)) !important;
+    backdrop-filter: blur(22px) saturate(1.35) !important;
+    -webkit-backdrop-filter: blur(22px) saturate(1.35) !important;
+    border-top-color: color-mix(in srgb, var(--warm-glass-border) 50%, transparent) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 248, 235, 0.16),
+      0 -6px 24px rgba(120, 50, 20, 0.12) !important;
+  }
 }
 
 @media (min-width: 768px) {
@@ -1514,22 +1539,23 @@ html.pk-warm-glass-active,
 html.pk-warm-glass-active *,
 .pk-warm-glass-stage,
 .pk-warm-glass-stage * {
-  scrollbar-color: rgba(230, 140, 70, 0.72) rgba(55, 24, 12, 0.55);
+  scrollbar-color: rgba(255, 175, 90, 0.42) transparent;
+  scrollbar-width: thin;
 }
 
 html.pk-warm-glass-active ::-webkit-scrollbar,
 html.pk-warm-glass-active *::-webkit-scrollbar,
 .pk-warm-glass-stage ::-webkit-scrollbar,
 .pk-warm-glass-stage *::-webkit-scrollbar {
-  width: 9px;
-  height: 9px;
+  width: 6px;
+  height: 6px;
 }
 
 html.pk-warm-glass-active ::-webkit-scrollbar-track,
 html.pk-warm-glass-active *::-webkit-scrollbar-track,
 .pk-warm-glass-stage ::-webkit-scrollbar-track,
 .pk-warm-glass-stage *::-webkit-scrollbar-track {
-  background: rgba(55, 24, 12, 0.5);
+  background: transparent;
   border-radius: 999px;
 }
 
@@ -1537,16 +1563,25 @@ html.pk-warm-glass-active ::-webkit-scrollbar-thumb,
 html.pk-warm-glass-active *::-webkit-scrollbar-thumb,
 .pk-warm-glass-stage ::-webkit-scrollbar-thumb,
 .pk-warm-glass-stage *::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(255, 190, 100, 0.85), rgba(220, 100, 50, 0.78));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--warm-pigment-yellow) 52%, rgba(255, 255, 255, 0.35)),
+    color-mix(in srgb, var(--warm-pigment-orange) 48%, rgba(255, 255, 255, 0.22))
+  );
   border-radius: 999px;
-  border: 2px solid rgba(55, 24, 12, 0.45);
+  border: 1px solid color-mix(in srgb, var(--warm-glass-border) 35%, transparent);
+  background-clip: padding-box;
 }
 
 html.pk-warm-glass-active ::-webkit-scrollbar-thumb:hover,
 html.pk-warm-glass-active *::-webkit-scrollbar-thumb:hover,
 .pk-warm-glass-stage ::-webkit-scrollbar-thumb:hover,
 .pk-warm-glass-stage *::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, rgba(255, 210, 120, 0.95), rgba(240, 120, 55, 0.88));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--warm-pigment-yellow) 62%, rgba(255, 255, 255, 0.42)),
+    color-mix(in srgb, var(--warm-pigment-rose) 38%, rgba(255, 255, 255, 0.28))
+  );
 }
 
 /* ——— Landing ——— */
@@ -1565,9 +1600,19 @@ html.pk-warm-glass-active *::-webkit-scrollbar-thumb:hover,
 }
 
 .pk-warm-glass-stage.pk-prism-stage--landing .pk-landing-header--scrolled {
-  background: rgba(48, 22, 14, 0.72) !important;
-  border-bottom: 1px solid var(--warm-glass-border) !important;
-  box-shadow: 0 6px 28px rgba(40, 16, 8, 0.32) !important;
+  background:
+    radial-gradient(120% 90% at 50% -30%, rgba(255, 210, 120, 0.14), transparent 58%),
+    linear-gradient(
+      180deg,
+      rgba(255, 252, 248, 0.12) 0%,
+      rgba(255, 228, 195, 0.07) 100%
+    ) !important;
+  backdrop-filter: blur(22px) saturate(1.4) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.4) !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--warm-glass-border) 48%, transparent) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 248, 235, 0.14),
+    0 4px 20px rgba(120, 50, 20, 0.1) !important;
 }
 
 .pk-warm-glass-stage .pk-landing-header .border-white\/10 {
@@ -1602,11 +1647,12 @@ html.pk-warm-glass-active .pk-landing-mobile-nav {
 .pk-warm-glass-stage .pk-landing-mobile-nav__panel,
 html.pk-warm-glass-active .pk-landing-mobile-nav__panel {
   background:
-    radial-gradient(120% 85% at 50% -25%, color-mix(in srgb, var(--warm-pigment-orange) 22%, transparent), transparent 58%),
-    radial-gradient(90% 70% at 100% 100%, color-mix(in srgb, var(--warm-pigment-rose) 14%, transparent), transparent 62%),
-    rgba(42, 18, 10, 0.94) !important;
-  backdrop-filter: blur(24px) saturate(1.2) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(1.2) !important;
+    radial-gradient(120% 85% at 50% -25%, rgba(255, 210, 120, 0.14), transparent 58%),
+    radial-gradient(90% 70% at 100% 100%, rgba(255, 130, 90, 0.1), transparent 62%),
+    linear-gradient(180deg, rgba(255, 252, 248, 0.11) 0%, rgba(255, 228, 195, 0.06) 100%) !important;
+  backdrop-filter: blur(28px) saturate(1.35) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(1.35) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 248, 235, 0.14) !important;
 }
 
 .pk-warm-glass-stage .pk-landing-mobile-nav__item,
@@ -1677,6 +1723,90 @@ html.pk-warm-glass-active .pk-landing--mobile-focus .pk-landing-trending-strip__
 .pk-warm-glass-stage .pk-landing-mobile-nav__item--cta.pk-hero-cta,
 html.pk-warm-glass-active .pk-landing-mobile-nav__item--cta.pk-hero-cta {
   border-color: color-mix(in srgb, var(--warm-pigment-orange) 42%, transparent) !important;
+}
+
+@media (max-width: 767px) {
+  /* Grain + mesh sous le contenu (pas par-dessus l’UI) */
+  .pk-warm-glass-stage.pk-landing--mobile-focus {
+    isolation: isolate;
+  }
+
+  .pk-warm-glass-stage.pk-landing--mobile-focus > .pk-warm-backdrop {
+    z-index: 0;
+  }
+
+  .pk-warm-glass-stage.pk-landing--mobile-focus > .pk-warm-backdrop .pk-warm-pigment-grain-coarse {
+    opacity: 0.26;
+    mix-blend-mode: soft-light;
+    filter: contrast(155%) brightness(96%);
+  }
+
+  .pk-warm-glass-stage.pk-landing--mobile-focus > .pk-warm-backdrop .pk-warm-pigment-grain-fine {
+    opacity: 0.16;
+    mix-blend-mode: soft-light;
+  }
+
+  .pk-warm-glass-stage.pk-landing--mobile-focus > .pk-warm-backdrop .pk-warm-pigment-grain-film {
+    opacity: 0.09;
+  }
+
+  .pk-warm-glass-stage.pk-landing--mobile-focus > .pk-warm-backdrop .pk-warm-pigment-speckle {
+    opacity: 0.1;
+    mix-blend-mode: soft-light;
+  }
+
+  .pk-warm-glass-stage.pk-landing--mobile-focus > .pk-warm-backdrop .pk-warm-pigment-fiber {
+    opacity: 0.12;
+  }
+
+  /* Header mobile — toujours transparent (scroll / menu : pas de bandeau ni blur) */
+  .pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-header,
+  .pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-header--scrolled,
+  .pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-header:has(.pk-landing-mobile-nav) {
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border-bottom: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Lisibilité logo + menu en haut de hero (sans pill) */
+  .pk-warm-glass-stage.pk-landing--mobile-focus
+    .pk-landing-header--mobile-focus-mode:not(.pk-landing-header--scrolled):not(.pk-landing-header--menu-open)
+    .pk-landing-header__brand-slot--mobile > a,
+  .pk-warm-glass-stage.pk-landing--mobile-focus
+    .pk-landing-header--mobile-focus-mode:not(.pk-landing-header--scrolled):not(.pk-landing-header--menu-open)
+    .pk-landing-mobile-nav__trigger {
+    text-shadow: 0 1px 10px rgba(50, 20, 10, 0.28);
+  }
+
+  /* Pills logo + menu — warm glass */
+  .pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-header--scrolled .pk-landing-header__brand-slot--mobile > a,
+  .pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-header--menu-open .pk-landing-header__brand-slot--mobile > a,
+  .pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-header--scrolled .pk-landing-mobile-nav__trigger,
+  .pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-header--menu-open .pk-landing-mobile-nav__trigger {
+    border-color: color-mix(in srgb, var(--warm-glass-border) 55%, transparent) !important;
+    background:
+      radial-gradient(120% 100% at 12% 0%, rgba(255, 210, 120, 0.12), transparent 58%),
+      linear-gradient(165deg, rgba(255, 252, 248, 0.11), rgba(255, 228, 195, 0.06)) !important;
+    backdrop-filter: blur(16px) saturate(1.2) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(1.2) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 248, 235, 0.14),
+      0 4px 18px rgba(120, 50, 20, 0.1) !important;
+    text-shadow: none !important;
+  }
+
+  /* Grain du générateur — intégré au verre, pas en surcouche */
+  .pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-gen__mobile-stage-grain,
+  .pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-gen__mobile-stage::after {
+    opacity: 0.12;
+    mix-blend-mode: soft-light;
+  }
+
+  .pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-gen__reassurance--mobile .pk-landing-gen__reassurance-icon {
+    color: color-mix(in srgb, var(--warm-pigment-orange) 72%, white) !important;
+  }
 }
 
 .pk-warm-glass-stage .pk-prism-card .text-\[var\(--prism-cyan\)\] {
@@ -2208,8 +2338,20 @@ html.pk-warm-glass-active .pk-hub-vibe-tile--active,
 
 html.pk-warm-glass-active .pk-hub-hero .pk-prism-holo-text,
 .pk-warm-glass-stage .pk-hub-hero .pk-prism-holo-text {
-  -webkit-text-fill-color: rgba(255, 252, 248, 0.96) !important;
-  color: rgba(255, 252, 248, 0.96) !important;
+  background: linear-gradient(
+    115deg,
+    #ffd066 0%,
+    #ffb347 26%,
+    #e85a78 52%,
+    #ffc870 78%,
+    #ffd066 100%
+  ) !important;
+  background-size: 180% auto !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+  animation: prismShimmer 12s linear infinite;
 }
 
 html.pk-warm-glass-active .pk-hub-hero__chip::before,

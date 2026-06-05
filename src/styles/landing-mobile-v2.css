@@ -347,7 +347,35 @@
   }
 
   .pk-landing--mobile-focus .pk-landing-gen__reassurance--mobile {
-    display: none;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    width: 100%;
+    max-width: min(100%, 24.75rem);
+    min-width: 0;
+    margin: clamp(0.45rem, 1.2vh, 0.65rem) auto 0;
+    padding-inline: clamp(0.15rem, 1vw, 0.35rem);
+    text-align: center;
+    font-size: 10px;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .pk-landing--mobile-focus .pk-landing-gen__reassurance--mobile .pk-landing-gen__reassurance-copy {
+    min-width: 0;
+    flex: 0 1 auto;
+    text-wrap: pretty;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-gen__reassurance--mobile .pk-landing-gen__reassurance-icon {
+    flex-shrink: 0;
+    margin-top: 0;
+    height: 0.75rem;
+    width: 0.75rem;
+    color: rgba(167, 139, 250, 0.88);
   }
 
   .pk-landing--mobile-focus .pk-landing-trending-strip {
@@ -684,36 +712,57 @@
     padding-bottom: 1.75rem;
   }
 
-  .pk-landing--mobile-focus .pk-landing-gen__reassurance {
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    gap: 0.45rem;
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    margin: 0;
-    text-align: center;
-    font-size: 11px;
-    line-height: 1.45;
-    color: rgba(255, 255, 255, 0.52);
+  .pk-landing--mobile-focus .pk-landing-header,
+  .pk-landing--mobile-focus .pk-landing-header--scrolled {
+    background: transparent !important;
+    border-bottom: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
   }
 
-  .pk-landing--mobile-focus .pk-landing-gen__reassurance-copy {
-    min-width: 0;
-    flex: 1 1 0%;
-    text-wrap: pretty;
+  /* Hero : logo visible normalement ; pills glass au scroll / menu ouvert */
+  .pk-landing--mobile-focus .pk-landing-header--mobile-focus-mode:not(.pk-landing-header--scrolled):not(.pk-landing-header--menu-open)
+    .pk-landing-header__brand-slot--mobile > a {
+    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.28);
   }
 
-  .pk-landing--mobile-focus .pk-landing-gen__reassurance-icon {
-    flex-shrink: 0;
-    margin-top: 0.1rem;
-    height: 0.875rem;
-    width: 0.875rem;
-    color: rgba(167, 139, 250, 0.95);
+  .pk-landing--mobile-focus .pk-landing-header--scrolled .pk-landing-header__brand-slot--mobile > a,
+  .pk-landing--mobile-focus .pk-landing-header--menu-open .pk-landing-header__brand-slot--mobile > a,
+  .pk-landing--mobile-focus .pk-landing-header--scrolled .pk-landing-mobile-nav__trigger,
+  .pk-landing--mobile-focus .pk-landing-header--menu-open .pk-landing-mobile-nav__trigger {
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background:
+      radial-gradient(120% 100% at 10% 0%, rgba(255, 255, 255, 0.1), transparent 55%),
+      rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(14px) saturate(1.15);
+    -webkit-backdrop-filter: blur(14px) saturate(1.15);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      0 4px 16px rgba(0, 0, 0, 0.12);
+    text-shadow: none;
   }
 
-  .pk-landing--mobile-focus .pk-landing-header .mx-auto {
+  .pk-landing--mobile-focus .pk-landing-header--scrolled .pk-landing-header__brand-slot--mobile > a,
+  .pk-landing--mobile-focus .pk-landing-header--menu-open .pk-landing-header__brand-slot--mobile > a {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    padding: 0.38rem 0.78rem;
+    transition:
+      background 220ms ease,
+      border-color 220ms ease,
+      box-shadow 220ms ease,
+      padding 220ms ease;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-header--mobile-focus-mode:not(.pk-landing-header--scrolled):not(.pk-landing-header--menu-open)
+    .pk-landing-mobile-nav__trigger {
+    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.28);
+  }
+
+  .pk-landing--mobile-focus .pk-landing-header .mx-auto,
+  .pk-landing--mobile-focus .pk-landing-header__bar {
     padding-top: 0.65rem;
     padding-bottom: 0.65rem;
   }
@@ -736,7 +785,7 @@
       --pk-mobile-gap: 0.28rem;
     }
 
-    .pk-landing-gen__reassurance--mobile {
+    .pk-landing--mobile-focus .pk-landing-gen__reassurance--mobile {
       display: none;
     }
 

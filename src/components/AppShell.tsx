@@ -50,7 +50,7 @@ export function AppShell({
         } as CSSProperties
       }
     >
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="pk-warm-backdrop pointer-events-none absolute inset-0 z-0 overflow-hidden">
         {isPrism ? (
           warmGlass ? (
             <WarmGlassBackdrop />
