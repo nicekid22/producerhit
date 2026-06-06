@@ -20,7 +20,7 @@ export function PrismPageHero({
     <div className={cn("pk-prism-page-hero", className)}>
       <div className="pk-prism-hero-orb pk-prism-hero-orb--a" aria-hidden />
       <div className="pk-prism-hero-orb pk-prism-hero-orb--b" aria-hidden />
-      <div className="relative z-[1] flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+      <div className="relative z-[1] flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="min-w-0">
           {eyebrow ? <div className="pk-prism-eyebrow">{eyebrow}</div> : null}
           <h1 className="mt-2 text-2xl font-bold tracking-tight md:text-3xl">{title}</h1>
@@ -28,7 +28,7 @@ export function PrismPageHero({
         </div>
         {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}
       </div>
-      {children ? <div className="relative z-[1] mt-5">{children}</div> : null}
+      {children ? <div className="relative z-[1] mt-4">{children}</div> : null}
     </div>
   );
 }

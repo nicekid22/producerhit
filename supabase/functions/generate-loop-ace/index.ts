@@ -26,6 +26,11 @@ function normalizeAuthedPlan(plan: string): keyof typeof LIMITS {
   return "free";
 }
 
+/** Génération ×2 en parallèle (dual batch v2) — Studio et Plus uniquement. */
+function canDualGenerationPlan(plan: keyof typeof LIMITS): boolean {
+  return plan === "studio" || plan === "plus";
+}
+
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -1870,6 +1875,16 @@ serve(async (req) => {
     })();
 
     if (dualBatch && dualSeedsParsed) {
+      if (!canDualGenerationPlan(authedPlan)) {
+        return new Response(
+          JSON.stringify({
+            error: "Dual batch generation requires Studio or Plus plan.",
+            dualBatchForbidden: true,
+            plan: authedPlan,
+          }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
       if (authedSupabase && authedUserId) {
         for (const gk of generationKeysList) {
           const { data: reserveData, error: reserveError } = await authedSupabase.rpc("check_loops_usage_idempotent", {

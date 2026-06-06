@@ -160,28 +160,38 @@ export function AppShell({
 
               <div
                 className={cn(
-                  "min-w-0 flex-1 overflow-visible rounded-2xl backdrop-blur md:min-h-0 md:overflow-y-auto",
+                  /* Scroll interne — le voile verre (::before/::after) reste sur le shell pleine hauteur */
+                  "pk-studio-workspace-shell min-w-0 flex flex-1 flex-col overflow-hidden rounded-2xl backdrop-blur md:min-h-0",
                   isPrism
                     ? "pk-prism-glass pk-studio-workspace border border-white/10 bg-white/[0.02]"
                     : "border border-pk-border/70 bg-pk-panel/30",
-                  mobileLayoutV2 ? cn("min-h-0 overflow-y-auto overscroll-contain", dockPb) : dockPbScrollOnly,
-                  hideChildrenOnMobile && "hidden md:block",
+                  mobileLayoutV2 && "min-h-0",
+                  hideChildrenOnMobile && "hidden md:flex md:flex-col",
                 )}
               >
-                {children}
+                <div
+                  className={cn(
+                    "pk-studio-workspace-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain",
+                    mobileLayoutV2 ? dockPb : dockPbScrollOnly,
+                  )}
+                >
+                  {children}
+                </div>
               </div>
             </div>
           ) : (
             <div
               className={cn(
-                "min-w-0 flex-1 overflow-visible rounded-2xl backdrop-blur md:min-h-0 md:overflow-y-auto",
+                "pk-studio-workspace-shell min-w-0 flex flex-1 flex-col overflow-hidden rounded-2xl backdrop-blur md:min-h-0",
                 isPrism
                   ? "pk-prism-glass pk-studio-workspace border border-white/10 bg-white/[0.02]"
                   : "border border-pk-border/70 bg-pk-panel/30",
-                dockPb,
+                mobileLayoutV2 && "min-h-0",
               )}
             >
-              {children}
+              <div className={cn("pk-studio-workspace-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain", dockPb)}>
+                {children}
+              </div>
             </div>
           )}
         </div>

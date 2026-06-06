@@ -1,4 +1,5 @@
 import {
+  canDualGeneration,
   hasFullMastering,
   hasPriorityGeneration,
   normalizePlanId,
@@ -13,7 +14,8 @@ export type UpsellReason =
   | "post_generation"
   | "limit_reached"
   | "wav_export"
-  | "feature_priority";
+  | "feature_priority"
+  | "feature_dual_generation";
 
 export type UpsellContext = {
   source: string;
@@ -41,6 +43,8 @@ export function shouldShowPlanUpsell(
       return cur === "free";
     case "feature_priority":
       return !hasPriorityGeneration(plan);
+    case "feature_dual_generation":
+      return !canDualGeneration(plan);
     case "wav_export":
       return !hasFullMastering(plan);
     case "credits_exhausted":
@@ -172,6 +176,21 @@ export function getUpsellCopy(
     };
   }
 
+  if (reason === "feature_dual_generation") {
+    return {
+      title: isFr ? "Génération ×2 en parallèle" : "Dual parallel generation",
+      description: isFr
+        ? "Lance deux versions en même temps et choisis la meilleure — réservé au plan Studio et au-dessus."
+        : "Run two versions at once and pick the best take — included with Studio and above.",
+      bullets: isFr
+        ? [`${studioLimit} générations / mois sur Studio`, "Versions ×2 en parallèle", "Export WAV mastering", "Tout Pro inclus"]
+        : [`${studioLimit} generations / month on Studio`, "Parallel ×2 versions", "Mastered WAV export", "Everything in Pro"],
+      primaryLabel: isFr ? "Passer Studio" : "Go Studio",
+      secondaryLabel: isFr ? "Rester en ×1" : "Stay on ×1",
+      targetPlan: "studio",
+    };
+  }
+
   if (reason === "feature_priority") {
     return {
       title: isFr ? "Priorité génération" : "Generation priority",
@@ -179,8 +198,8 @@ export function getUpsellCopy(
         ? "Le réseau est chargé. Les plans Pro et au-dessus passent avant la file d'attente free."
         : "The network is busy. Pro plans and above skip ahead of the free queue.",
       bullets: isFr
-        ? [`${proLimit} générations / mois sur Pro`, "File prioritaire", "Export MP3 & Song Mode", "Versions ×2"]
-        : [`${proLimit} generations / month on Pro`, "Priority queue", "MP3 export & Song Mode", "Versions ×2"],
+        ? [`${proLimit} générations / mois sur Pro`, "File prioritaire", "Export MP3 & Song Mode", "Remix Studio"]
+        : [`${proLimit} generations / month on Pro`, "Priority queue", "MP3 export & Song Mode", "Remix Studio"],
       primaryLabel: primaryForTarget,
       secondaryLabel: isFr ? "Voir les tarifs" : "View pricing",
       targetPlan: target ?? "pro",
@@ -233,8 +252,8 @@ export function getUpsellCopy(
         ? `Free = ${baseLimit} générations / mois. Upgrade pour enchaîner sans compter chaque crédit.`
         : `Free = ${baseLimit} generations / month. Upgrade to keep creating without watching every credit.`,
       bullets: isFr
-        ? [`Pro : ${proLimit} gen / mois`, "Versions ×2 pour A/B", "Priorité file", "Plus de bonus daily & niveau"]
-        : [`Pro: ${proLimit} gen / month`, "Versions ×2 for A/B", "Priority queue", "More daily & level bonuses"],
+        ? [`Pro : ${proLimit} gen / mois`, "Priorité file", "Song Mode + Remix", "Plus de bonus daily & niveau"]
+        : [`Pro: ${proLimit} gen / month`, "Priority queue", "Song Mode + Remix", "More daily & level bonuses"],
       primaryLabel: isFr ? "Passer Pro" : "Go Pro",
       secondaryLabel: isFr ? "Continuer en Free" : "Keep creating on Free",
       targetPlan: "pro",
@@ -276,8 +295,8 @@ export function getUpsellCopy(
           : [`${proLimit} generations / month`, "Priority vs Free", "Song Mode + Remix Studio", "$10 / month"]
         : target === "studio"
           ? isFr
-            ? [`${studioLimit} générations / mois`, "Export WAV mastering", "Tout Pro inclus", "30€ / mois"]
-            : [`${studioLimit} generations / month`, "Mastered WAV export", "Everything in Pro", "$30 / month"]
+            ? [`${studioLimit} générations / mois`, "Versions ×2 en parallèle", "Export WAV mastering", "30€ / mois"]
+            : [`${studioLimit} generations / month`, "Parallel ×2 versions", "Mastered WAV export", "$30 / month"]
           : target === "plus"
             ? isFr
               ? [

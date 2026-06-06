@@ -16,6 +16,9 @@ type Props = {
   onVersionsChange: (v: 1 | 2) => void;
   remaining: number;
   chipRowClass: string;
+  /** Studio+ — Pro et Free limités à ×1 */
+  canDualGeneration?: boolean;
+  onDualLocked?: () => void;
   showVocalStyle?: boolean;
   vocalStyle?: VocalStyleValue;
   onVocalStyleChange?: (v: VocalStyleValue) => void;
@@ -27,6 +30,8 @@ export function GeneratorAdvancedOutputControls({
   onVersionsChange,
   remaining,
   chipRowClass,
+  canDualGeneration = true,
+  onDualLocked,
   showVocalStyle = false,
   vocalStyle = "Singer",
   onVocalStyleChange,
@@ -40,9 +45,15 @@ export function GeneratorAdvancedOutputControls({
           <div>
             <div className="text-xs font-medium text-pk-muted">{isFr ? "Versions" : "Versions"}</div>
             <p className="mt-0.5 inline-flex flex-wrap items-center gap-1 text-[10px] text-pk-muted/80">
-              <span>{isFr ? "2 pistes en parallèle (" : "2 tracks at once ("}</span>
-              <GenerationCreditAmount amount={2} iconClassName="h-2.5 w-2.5" />
-              <span>{isFr ? ")." : ")."}</span>
+              {canDualGeneration ? (
+                <>
+                  <span>{isFr ? "2 pistes en parallèle (" : "2 tracks at once ("}</span>
+                  <GenerationCreditAmount amount={2} iconClassName="h-2.5 w-2.5" />
+                  <span>{isFr ? ")." : ")."}</span>
+                </>
+              ) : (
+                <span>{isFr ? "×2 en parallèle — plan Studio+" : "×2 parallel — Studio plan+"}</span>
+              )}
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-1 rounded-full bg-white/5 p-1">
@@ -58,12 +69,19 @@ export function GeneratorAdvancedOutputControls({
             </button>
             <button
               type="button"
-              onClick={() => onVersionsChange(2)}
-              disabled={remaining < 2}
+              onClick={() => {
+                if (!canDualGeneration) {
+                  onDualLocked?.();
+                  return;
+                }
+                onVersionsChange(2);
+              }}
+              disabled={canDualGeneration && remaining < 2}
               className={cn(
                 "rounded-full px-3 py-1 text-[11px] font-semibold transition-colors",
                 versions === 2 ? "pk-prism-pill-active" : "text-white/50 hover:text-white",
-                remaining < 2 && "opacity-50",
+                canDualGeneration && remaining < 2 && "opacity-50",
+                !canDualGeneration && "opacity-45",
               )}
             >
               2

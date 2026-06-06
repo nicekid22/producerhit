@@ -2229,6 +2229,27 @@ a.pk-pricing-plan-btn {
   scroll-padding-top: 0.5rem;
 }
 
+/* Split aside (Settings, Library…) — colonne gauche à hauteur contenu, pas viewport entier */
+@media (min-width: 768px) {
+  .pk-app-shell.pk-prism-dashboard:not(.pk-mobile-app-shell) .pk-studio-console:not(:has(.pk-dashboard-generator)) {
+    height: auto;
+    align-self: flex-start;
+    max-height: calc(100dvh - 1.5rem);
+  }
+}
+
+/* Dashboard — skip layout/paint for off-screen loop cards while scrolling */
+.pk-prism-dashboard [data-loop-card] {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 320px;
+}
+
+@media (max-width: 767px) {
+  .pk-prism-dashboard [data-loop-card] {
+    contain-intrinsic-size: auto 260px;
+  }
+}
+
 @media (min-width: 768px) {
   .pk-dashboard-mobile-footer {
     background: transparent;
@@ -2695,7 +2716,7 @@ a.pk-pricing-plan-btn {
   overflow: hidden;
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.11);
-  padding: 1.5rem;
+  padding: 1.25rem 1.5rem;
   background:
     radial-gradient(640px circle at 12% -10%, rgba(157, 124, 255, 0.14), transparent 58%),
     radial-gradient(520px circle at 92% 110%, rgba(103, 195, 255, 0.1), transparent 52%),
@@ -2707,7 +2728,7 @@ a.pk-pricing-plan-btn {
 
 @media (min-width: 768px) {
   .pk-prism-page-hero {
-    padding: 2rem;
+    padding: 1.35rem 1.75rem;
   }
 }
 

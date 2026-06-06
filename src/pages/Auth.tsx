@@ -9,6 +9,7 @@ import { getAttributionProps } from "@/lib/attribution";
 import { useLocaleStore } from "@/stores/localeStore";
 import { mapAuthError } from "@/lib/authProviders";
 import { markJustAuthenticated, sanitizePostAuthPath } from "@/lib/postAuthRedirect";
+import { buildDashboardUrlFromLandingPending } from "@/lib/landingPendingGeneration";
 
 type Mode = "login" | "signup";
 
@@ -46,11 +47,8 @@ export default function Auth() {
   }, [location.search, location.state]);
 
   const getPostAuthRedirect = useCallback(() => {
-    const pending = window.localStorage.getItem("producerhit_pending_prompt");
-    if (pending && pending.trim().length > 0) {
-      window.localStorage.removeItem("producerhit_pending_prompt");
-      return `/dashboard?prompt=${encodeURIComponent(pending.trim())}`;
-    }
+    const fromLanding = buildDashboardUrlFromLandingPending();
+    if (fromLanding) return fromLanding;
     return redirectTo;
   }, [redirectTo]);
 

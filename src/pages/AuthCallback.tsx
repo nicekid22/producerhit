@@ -8,6 +8,7 @@ import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
 import { useLocaleStore } from "@/stores/localeStore";
 import { markJustAuthenticated, sanitizePostAuthPath } from "@/lib/postAuthRedirect";
+import { buildDashboardUrlFromLandingPending } from "@/lib/landingPendingGeneration";
 import toast from "react-hot-toast";
 
 export default function AuthCallback() {
@@ -23,11 +24,8 @@ export default function AuthCallback() {
   const nextPath = useMemo(() => {
     const next = params.get("next");
     if (next && next.startsWith("/")) return sanitizePostAuthPath(next);
-    const pending = window.localStorage.getItem("producerhit_pending_prompt");
-    if (pending && pending.trim()) {
-      window.localStorage.removeItem("producerhit_pending_prompt");
-      return `/dashboard?prompt=${encodeURIComponent(pending.trim())}`;
-    }
+    const fromLanding = buildDashboardUrlFromLandingPending();
+    if (fromLanding) return fromLanding;
     return "/dashboard";
   }, [params]);
 

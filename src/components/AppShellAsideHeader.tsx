@@ -20,11 +20,11 @@ export function AppShellAsideHeader({
   children?: ReactNode;
 }) {
   return (
-    <div className="flex h-full flex-col overflow-hidden">
-      <div className="border-b border-white/10 px-4 pb-3 pt-4">
+    <div className="flex flex-col overflow-hidden">
+      <div className="border-b border-white/10 px-4 pb-2.5 pt-3">
         <BrandLogo compact />
       </div>
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="p-4">
         <div className="flex items-start gap-3">
           {avatarInitials ? (
             <div className="pk-prism-aside-avatar shrink-0" aria-hidden>

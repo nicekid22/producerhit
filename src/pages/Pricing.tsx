@@ -79,6 +79,7 @@ export default function Pricing() {
           bullets: [
             "250 générations / mois",
             "Tout Pro inclus",
+            "Versions ×2 en parallèle",
             "Mastering Studio complet",
             "Remix & Cover",
             "Export MP3 + WAV",
@@ -136,6 +137,7 @@ export default function Pricing() {
         bullets: [
           "250 generations / month",
           "Everything in Pro",
+          "Parallel ×2 versions",
           "Full Mastering Studio (apply + export)",
           "ACE Remix / Cover + seed iterations",
           "Vertical video export + promo clips",

@@ -46,6 +46,7 @@ import { ThemeToggleButton } from "@/components/ThemeToggleButton";
 import { WarmGlassBackdrop } from "@/components/WarmGlassBackdrop";
 import { useVisualThemeStore, isWarmGlassTheme } from "@/stores/visualThemeStore";
 import { landingCopy, landingFeatureCards, landingFlowSectionClass, landingSectionClass } from "@/lib/landingContent";
+import { saveLandingPendingGeneration } from "@/lib/landingPendingGeneration";
 import { cn } from "@/lib/utils";
 import { PLAN_LIMITS } from "@/lib/planLimits";
 import { isRecommendedPlan, normalizePlan, pricingCtaHref, pricingCtaMeta } from "@/lib/billing";
@@ -157,7 +158,6 @@ export default function Landing() {
   const isMobileViewport = useMediaQuery("(max-width: 767px)");
   const mobileLandingFocus = LANDING_MOBILE_V2 && isMobileViewport;
 
-  const [navScrolled, setNavScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const [mode, setMode] = useState<CreateMode>("song");
@@ -179,6 +179,7 @@ export default function Landing() {
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const pageRef = useRef<HTMLDivElement | null>(null);
   const heroRef = useRef<HTMLDivElement | null>(null);
+  const headerRef = useRef<HTMLElement | null>(null);
   const reduceMotion = useMemo(() => {
     try {
       return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -366,7 +367,13 @@ export default function Landing() {
   );
 
   useEffect(() => {
-    const onScroll = () => setNavScrolled(window.scrollY > 8);
+    const onScroll = () => {
+      const header = headerRef.current;
+      if (!header) return;
+      const scrolled = window.scrollY > 8;
+      header.classList.toggle("pk-landing-header--scrolled", scrolled);
+      header.classList.toggle("shadow-none", !scrolled);
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -435,24 +442,14 @@ export default function Landing() {
     setGenerating(true);
     await new Promise((r) => setTimeout(r, 1500));
     const promptValue = mode === "beat" ? inferBeatPrompt() : inferSongPrompt();
+    saveLandingPendingGeneration({ prompt: promptValue, mode });
     if (!user) {
       trackClientEvent("landing_generate_click", { mode });
-      try {
-        window.localStorage.setItem("producerhit_pending_source", "landing");
-      } catch {
-        void 0;
-      }
-      window.localStorage.setItem("producerhit_pending_prompt", promptValue);
       navigate("/auth");
       return;
     }
     trackClientEvent("landing_generate_click", { mode });
-    try {
-      window.localStorage.setItem("producerhit_pending_source", "landing");
-    } catch {
-      void 0;
-    }
-    navigate(`/dashboard?prompt=${encodeURIComponent(promptValue)}`);
+    navigate(`/dashboard?prompt=${encodeURIComponent(promptValue)}&mode=${mode}`);
   };
 
   const applyTrackPrompt = (nextPrompt: string, nextMode: CreateMode) => {
@@ -1086,9 +1083,9 @@ export default function Landing() {
       )}
 
       <header
+        ref={headerRef}
         className={cn(
-          "pk-landing-header fixed inset-x-0 top-0 z-30 bg-transparent transition-[box-shadow,backdrop-filter] duration-300",
-          navScrolled ? "pk-landing-header--scrolled" : "shadow-none",
+          "pk-landing-header fixed inset-x-0 top-0 z-30 bg-transparent shadow-none transition-[box-shadow,backdrop-filter] duration-300",
           mobileLandingFocus && "pk-landing-header--mobile-focus-mode",
           mobileOpen && "pk-landing-header--menu-open",
         )}

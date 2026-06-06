@@ -67,6 +67,11 @@ import { pickLoopForSharePrompt, shouldShowSharePromptAfterGeneration } from "@/
 import { markReferralInvitePromptShown, shouldShowReferralInvitePrompt } from "@/lib/referralPrompt";
 import { ensureReferralCode } from "@/lib/referral";
 import { loadPendingRemix, clearPendingRemix, type PendingRemix } from "@/lib/pendingRemix";
+import {
+  clearLandingPendingGeneration,
+  readLandingPendingGeneration,
+  type LandingPendingGeneration,
+} from "@/lib/landingPendingGeneration";
 import { isRemixVibeRecreateEnabled, REMIX_VIBE_FALLBACK_COPY } from "@/lib/remixVibeFallback";
 import { prepareLoopVariantGeneration, variantResultTitle } from "@/lib/loopVariantGeneration";
 import { loopToRemixSource } from "@/lib/remixSourceLoop";
@@ -74,6 +79,7 @@ import { MobileOnboardingSheet, hasSeenMobileOnboarding } from "@/components/das
 import { useAuthStore } from "@/stores/authStore";
 import { useLocaleStore } from "@/stores/localeStore";
 import { getRemainingBeats, PLAN_LIMITS, FREE_MASTERING_UPSELL_AT, getTotalGenerationLimit } from "@/lib/planLimits";
+import { canDualGeneration } from "@/lib/planEntitlements";
 import {
   creditsBlockedReason,
   markExhaustedCreditsPromptShown,
@@ -447,8 +453,9 @@ export default function Dashboard() {
   const [beatInstrumental] = useState(true);
   const [activeChips, setActiveChips] = useState<string[]>([]);
   const [autoGeneratePending, setAutoGeneratePending] = useState(false);
-  const [pendingLandingPrompt, setPendingLandingPrompt] = useState<string | null>(null);
+  const [pendingLandingRequest, setPendingLandingRequest] = useState<LandingPendingGeneration | null>(null);
   const [externalSeed, setExternalSeed] = useState<number | null>(null);
+  const landingFormAppliedRef = useRef(false);
   const autoLandingGenerateRef = useRef(false);
   const debugEnabled = useMemo(() => {
     try {
@@ -589,13 +596,17 @@ export default function Dashboard() {
     if (authProfile) applyProfile(authProfile);
   }, [applyProfile, authProfile]);
 
-  /** Plan free : ×1 par défaut (moins de timeouts) sauf choix explicite en localStorage. */
+  /** Plan free / Pro : ×1 par défaut. Studio+ : ×2 sauf choix explicite en localStorage. */
   useEffect(() => {
     if (typeof window === "undefined") return;
     const saved = window.localStorage.getItem("producerhit_versions");
-    if (saved === "1" || saved === "2") return;
-    if (plan === "free") setVersions(1);
-    else if (plan && plan !== "free") setVersions(2);
+    if (saved === "1") return;
+    if (saved === "2") {
+      if (!canDualGeneration(plan)) setVersions(1);
+      return;
+    }
+    if (canDualGeneration(plan)) setVersions(2);
+    else setVersions(1);
   }, [plan]);
 
   useEffect(() => {
@@ -682,10 +693,10 @@ export default function Dashboard() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const urlPrompt = params.get("prompt");
+    const urlMode = params.get("mode") === "beat" ? "beat" : "song";
     const urlSeedRaw = params.get("seed");
     const urlSeed = urlSeedRaw && /^\d+$/.test(urlSeedRaw) ? Number(urlSeedRaw) : null;
-    const localPrompt = window.localStorage.getItem("producerhit_pending_prompt");
-    const pendingPrompt = urlPrompt || localPrompt;
+    const storedLanding = readLandingPendingGeneration();
     const pendingRemix = loadPendingRemix();
     const remixParam = params.get("remix") === "1";
 
@@ -705,27 +716,37 @@ export default function Dashboard() {
       if (remixParam) window.history.replaceState({}, "", "/dashboard");
     }
 
-    if (!pendingPrompt && urlSeed === null && !pendingRemix && !remixParam) return;
-
-    let decoded = pendingPrompt;
-    try {
-      decoded = pendingPrompt ? decodeURIComponent(pendingPrompt) : null;
-    } catch {
-      decoded = pendingPrompt;
-    }
-
-    if (pendingPrompt && decoded) setPendingLandingPrompt(decoded);
-    if (urlSeed !== null && Number.isFinite(urlSeed)) setExternalSeed(urlSeed);
-    window.localStorage.removeItem("producerhit_pending_prompt");
-    try {
-      const src = window.localStorage.getItem("producerhit_pending_source");
-      if (src) {
-        setEntrySource(src);
-        window.localStorage.removeItem("producerhit_pending_source");
+    let landingRequest: LandingPendingGeneration | null = null;
+    if (urlPrompt) {
+      try {
+        landingRequest = { prompt: decodeURIComponent(urlPrompt), mode: urlMode };
+      } catch {
+        landingRequest = { prompt: urlPrompt, mode: urlMode };
       }
-    } catch {
-      void 0;
+    } else if (storedLanding) {
+      landingRequest = storedLanding;
     }
+
+    if (landingRequest?.prompt.trim()) {
+      setPendingLandingRequest({
+        prompt: landingRequest.prompt.trim(),
+        mode: landingRequest.mode,
+      });
+      setEntrySource("landing");
+      clearLandingPendingGeneration();
+    } else if (!pendingRemix && !remixParam) {
+      try {
+        const src = window.localStorage.getItem("producerhit_pending_source");
+        if (src) {
+          setEntrySource(src);
+          window.localStorage.removeItem("producerhit_pending_source");
+        }
+      } catch {
+        void 0;
+      }
+    }
+
+    if (urlSeed !== null && Number.isFinite(urlSeed)) setExternalSeed(urlSeed);
     if (urlPrompt) window.history.replaceState({}, "", "/dashboard");
   }, []);
 
@@ -810,14 +831,15 @@ export default function Dashboard() {
   const remaining = getRemainingBeats(plan, usedThisMonth, referralBonus, levelBonus, dailyBonusMonth);
   const totalLimit = getTotalGenerationLimit(plan, { referralBonus, levelBonus, dailyBonusMonth });
   const bonusCreditsTotal = referralBonus + levelBonus + dailyBonusMonth;
+  const dualGenerationAllowed = canDualGeneration(plan);
   useEffect(() => {
     if (typeof window === "undefined") return;
     window.localStorage.setItem("producerhit_versions", String(versions));
   }, [versions]);
 
   useEffect(() => {
-    if (versions === 2 && remaining < 2) setVersions(1);
-  }, [remaining, versions]);
+    if (versions === 2 && (!dualGenerationAllowed || remaining < 2)) setVersions(1);
+  }, [dualGenerationAllowed, remaining, versions]);
 
   const promptPlanUpsell = useCallback(
     (reason: UpsellReason) => {
@@ -844,6 +866,10 @@ export default function Dashboard() {
     },
     [promptPlanUpsell, remaining, versions],
   );
+
+  const handleDualLocked = useCallback(() => {
+    promptPlanUpsell("feature_dual_generation");
+  }, [promptPlanUpsell]);
 
   const handleNeedCredits = useCallback(() => {
     if (remaining >= LOOP_COVER_REROLL_CREDIT_COST) {
@@ -1093,8 +1119,9 @@ export default function Dashboard() {
   ]);
 
   const handleGenerate = useCallback(async () => {
-    if (remaining < versions) {
-      promptCreditsBlocked();
+    const effectiveVersions: 1 | 2 = dualGenerationAllowed && versions === 2 ? 2 : 1;
+    if (remaining < effectiveVersions) {
+      promptCreditsBlocked(effectiveVersions);
       return;
     }
     if (generating) return;
@@ -1224,9 +1251,9 @@ export default function Dashboard() {
 
     const seed1 = externalSeed ?? randInt(999999);
     const seed2 = seed1 + 12345;
-    const dualMode = versions === 2 ? dualGenerationEffectiveMode() : null;
+    const dualMode = effectiveVersions === 2 ? dualGenerationEffectiveMode() : null;
     const slots: GenerationSlot[] =
-      versions === 2
+      effectiveVersions === 2
         ? [
             { idx: 1, status: "generating", title: slotDisplayTitle, seed: seed1, visible: true, previewReady: false, progressPct: 0 },
             {
@@ -1247,15 +1274,15 @@ export default function Dashboard() {
     try {
       trackClientEvent("generate_start", {
         mode,
-        versions,
+        versions: effectiveVersions,
         plan,
         source: entrySource,
-        ...generationStrategySnapshot(versions),
+        ...generationStrategySnapshot(effectiveVersions),
       });
       if (import.meta.env.DEV) {
-        console.info("[generate] strategy", generationStrategySnapshot(versions));
+        console.info("[generate] strategy", generationStrategySnapshot(effectiveVersions));
       }
-      if (import.meta.env.DEV && versions === 2 && browserAceKeyCount() < 2) {
+      if (import.meta.env.DEV && effectiveVersions === 2 && browserAceKeyCount() < 2) {
         console.warn(
           "[generate] 1 seule clé VITE ACE — ajoute VITE_ACE_STEP_API_KEYS (comme ACE_STEP_API_KEYS) pour v1/v2 en parallèle sans 429.",
         );
@@ -1277,7 +1304,7 @@ export default function Dashboard() {
       };
 
       const buildOptions = (seed?: number, slotIdx?: 1 | 2) => {
-        const aceKeyPreferIndex = aceKeyPreferIndexForSlot(slotIdx, versions);
+        const aceKeyPreferIndex = aceKeyPreferIndexForSlot(slotIdx, effectiveVersions);
         const base = isSong
           ? {
               instrumental: false,
@@ -1799,7 +1826,7 @@ export default function Dashboard() {
         }
       };
 
-      if (versions !== 2) {
+      if (effectiveVersions !== 2) {
         await startOne(1, seed1, slotDisplayTitle);
       } else {
         const fastMode = dualGenerationEffectiveMode();
@@ -1873,7 +1900,7 @@ export default function Dashboard() {
       const isFirstEver = totalGens === successCount && successCount > 0;
       const seed = playableCreated[0]?.id ?? String(Date.now());
       triggerBeatReady(locale, seed, { isFirst: isFirstEver, versionCount: successCount >= 2 ? successCount : 1 });
-      if (versions === 2 && successCount === 1) {
+      if (effectiveVersions === 2 && successCount === 1) {
         toast.error(
           locale === "fr" ? "1 version sur 2 — l'autre a flop, réessaie" : "1 of 2 versions — the other flopped, retry",
         );
@@ -1944,6 +1971,7 @@ export default function Dashboard() {
     songUiMode,
     navigate,
     plan,
+    dualGenerationAllowed,
     promptCreditsBlocked,
     promptPlanUpsell,
     remaining,
@@ -2313,46 +2341,52 @@ export default function Dashboard() {
   );
 
   useEffect(() => {
-    if (!pendingLandingPrompt) return;
+    if (!pendingLandingRequest || landingFormAppliedRef.current) return;
+
+    landingFormAppliedRef.current = true;
+    const { prompt, mode: landingMode } = pendingLandingRequest;
+
+    setMode(landingMode);
+    setGenrePickMode("custom");
+    setField("genre", inferGenreFromPrompt(prompt));
+
+    if (landingMode === "song") {
+      setSongUiMode("simple");
+      setLyricsMode("ai");
+      setSongDescription(prompt);
+      setField("prompt", prompt);
+    } else {
+      setField("prompt", prompt);
+    }
+  }, [inferGenreFromPrompt, pendingLandingRequest, setField, setLyricsMode, setMode, setSongDescription, setSongUiMode]);
+
+  useEffect(() => {
+    if (!pendingLandingRequest) return;
     if (autoLandingGenerateRef.current) return;
-    if (profileBusy) return;
+    if (!user || profileBusy || generating) return;
+    if (!genreReady) return;
 
     if (remaining === 0) {
       promptPlanUpsell("credits_exhausted");
-      setPendingLandingPrompt(null);
+      setPendingLandingRequest(null);
       return;
     }
 
     autoLandingGenerateRef.current = true;
-    setMode("song");
-    setSongUiMode("simple");
-    setLyricsMode("ai");
-    setSongDescription(pendingLandingPrompt);
-    setField("prompt", pendingLandingPrompt);
-    if (!form.genre) {
-      setGenrePickMode("custom");
-      setField("genre", inferGenreFromPrompt(pendingLandingPrompt));
-    }
-
-    const timer = window.setTimeout(() => {
-      void handleGenerate();
-    }, 800);
-
-    return () => window.clearTimeout(timer);
+    setPendingLandingRequest(null);
+    if (mobileV2) goResults();
+    void handleGenerate();
   }, [
-    form.genre,
+    genreReady,
+    generating,
+    goResults,
     handleGenerate,
-    inferGenreFromPrompt,
-    pendingLandingPrompt,
+    mobileV2,
+    pendingLandingRequest,
     profileBusy,
     promptPlanUpsell,
     remaining,
-    setField,
-    setLyricsMode,
-    setMode,
-    setSongDescription,
-    setSongUiMode,
-    setPendingLandingPrompt,
+    user,
   ]);
 
   useEffect(() => {
@@ -2916,6 +2950,8 @@ export default function Dashboard() {
                         onVersionsChange={setVersions}
                         remaining={remaining}
                         chipRowClass={chipRowClass}
+                        canDualGeneration={dualGenerationAllowed}
+                        onDualLocked={handleDualLocked}
                       />
                       <div>
                         <div className="text-xs text-pk-muted mb-2">{locale === "fr" ? "Longueur" : "Length"}</div>
@@ -3193,6 +3229,8 @@ export default function Dashboard() {
                         onVersionsChange={setVersions}
                         remaining={remaining}
                         chipRowClass={chipRowClass}
+                        canDualGeneration={dualGenerationAllowed}
+                        onDualLocked={handleDualLocked}
                         showVocalStyle
                         vocalStyle={songVocalStyle}
                         onVocalStyleChange={setSongVocalStyle}

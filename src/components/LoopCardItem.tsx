@@ -104,10 +104,10 @@ export function LoopCardItem({
       return "free";
     }
   })();
-  const current = usePlayerStore((s) => s.current);
-  const isPlaying = usePlayerStore((s) => s.isPlaying);
-  const progress = usePlayerStore((s) => s.progress);
-  const currentTimeSec = usePlayerStore((s) => s.currentTimeSec);
+  const active = usePlayerStore((s) => s.current?.id === loop.id);
+  const activePlaying = usePlayerStore((s) => s.current?.id === loop.id && s.isPlaying);
+  const progress = usePlayerStore((s) => (s.current?.id === loop.id ? s.progress : 0));
+  const currentTimeSec = usePlayerStore((s) => (s.current?.id === loop.id ? s.currentTimeSec : 0));
   const requestSeek = usePlayerStore((s) => s.requestSeek);
   const setPlaying = usePlayerStore((s) => s.setPlaying);
   const markPausedPlayback = usePlayerStore((s) => s.markPausedPlayback);
@@ -255,8 +255,6 @@ export function LoopCardItem({
     onNeedCredits,
   ]);
 
-  const active = current?.id === loop.id;
-  const activePlaying = active && isPlaying;
   const canPlay = Boolean(loop.audioUrl);
   const totalLabel = cachedDurationSec > 0 ? formatTime(cachedDurationSec) : "—";
   const durationLabel = active ? formatTime(currentTimeSec) : totalLabel;
@@ -763,8 +761,8 @@ export function LoopCardItem({
               unlockAudioPlaybackFromGesture();
               void (async () => {
                 if (active) {
-                  if (isPlaying) markPausedPlayback();
-                  setPlaying(!isPlaying);
+                  if (activePlaying) markPausedPlayback();
+                  setPlaying(!activePlaying);
                   return;
                 }
                 let url = "";
@@ -938,8 +936,8 @@ export function LoopCardItem({
             unlockAudioPlaybackFromGesture();
             void (async () => {
               if (active) {
-                if (isPlaying) markPausedPlayback();
-                setPlaying(!isPlaying);
+                if (activePlaying) markPausedPlayback();
+                setPlaying(!activePlaying);
                 return;
               }
 

@@ -36,6 +36,11 @@ export function hasFullMastering(plan: string | null | undefined): boolean {
   return PLAN_RANK[normalizePlanId(plan)] >= PLAN_RANK.studio;
 }
 
+/** Génération ×2 en parallèle (double slot v2) — Studio et Plus uniquement. */
+export function canDualGeneration(plan: string | null | undefined): boolean {
+  return PLAN_RANK[normalizePlanId(plan)] >= PLAN_RANK.studio;
+}
+
 export function canExportMastering(plan: string | null | undefined): boolean {
   return hasFullMastering(plan);
 }
