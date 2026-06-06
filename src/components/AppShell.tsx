@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { BrandLogo } from "@/components/landing/BrandLogo";
 import { WarmGlassBackdrop } from "@/components/WarmGlassBackdrop";
+import { BackdropTextureVeil } from "@/components/BackdropTextureVeil";
 import { usePlayerStore } from "@/stores/playerStore";
 import { useVisualThemeStore, isWarmGlassTheme } from "@/stores/visualThemeStore";
 import { cn } from "@/lib/utils";
@@ -40,7 +41,7 @@ export function AppShell({
       className={cn(
         "pk-app-shell relative text-pk-text md:h-screen md:overflow-hidden",
         mobileLayoutV2 && "pk-mobile-app-shell",
-        isPrism ? "pk-prism-stage pk-prism-dashboard bg-[#050508]" : "bg-pk-bg",
+        isPrism ? "pk-prism-stage pk-prism-dashboard" : "bg-pk-bg",
         warmGlass && "pk-warm-glass-stage",
       )}
       style={
@@ -56,7 +57,6 @@ export function AppShell({
             <WarmGlassBackdrop />
           ) : (
             <>
-              <div className="pk-prism-fx-grain pk-prism-grain opacity-[0.035]" aria-hidden />
               <div
                 className="pk-prism-fx-vignette absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_42%,rgba(0,0,0,0.42)_100%)]"
                 aria-hidden
@@ -79,6 +79,7 @@ export function AppShell({
             <div className="pk-prism-fx-orb absolute -top-56 -right-24 h-[520px] w-[520px] rounded-full bg-cyan-500/10 blur-3xl" aria-hidden />
           </>
         )}
+        <BackdropTextureVeil variant="dashboard" />
       </div>
 
       <div
@@ -117,7 +118,7 @@ export function AppShell({
               {mobileLayoutV2 && mobileTabs ? (
                 <div
                   className={cn(
-                    "flex-shrink-0 md:hidden rounded-2xl border px-3 py-2.5 backdrop-blur",
+                    "pk-mobile-dashboard-chrome flex-shrink-0 md:hidden rounded-2xl border px-3 py-2.5 backdrop-blur",
                     isPrism ? "pk-prism-glass border-white/10 bg-white/[0.04]" : "border-pk-border/70 bg-pk-panel/70",
                   )}
                 >

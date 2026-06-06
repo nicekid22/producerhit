@@ -16,6 +16,7 @@ import Home from "@/pages/Home";
 import ComparePage from "@/pages/ComparePage";
 import Blog from "@/pages/Blog";
 import { AudioPlayer } from "@/components/AudioPlayer";
+import { SiteTextureVeil } from "@/components/SiteTextureVeil";
 import { useLocaleStore } from "@/stores/localeStore";
 import { BLOG_POSTS, getBlogPostBySlug } from "@/content/blog";
 import { PLAN_LIMITS } from "@/lib/planLimits";
@@ -513,6 +514,7 @@ export default function App() {
               </Suspense>
             </RouteFade>
             <AudioPlayer />
+            <SiteTextureVeil />
             <GrowthUpsellHost />
           </LoopsBootstrap>
         </ThemeBootstrap>

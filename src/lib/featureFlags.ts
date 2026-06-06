@@ -58,3 +58,9 @@ export const PINTEREST_PINIMG_FALLBACK = import.meta.env.VITE_PINTEREST_PINIMG_F
  * Rollback : VITE_WARM_GLASS_THEME=0 — voir WARM_GLASS_THEME_ROLLBACK.md
  */
 export const WARM_GLASS_THEME_DEFAULT = import.meta.env.VITE_WARM_GLASS_THEME === "1";
+
+/**
+ * Voile PNG feutre — site entier (Prism + Warm Glass, mobile + desktop).
+ * Rollback : VITE_SITE_TEXTURE_VEIL=0 — voir SITE_TEXTURE_VEIL.md
+ */
+export const SITE_TEXTURE_VEIL = import.meta.env.VITE_SITE_TEXTURE_VEIL !== "0";

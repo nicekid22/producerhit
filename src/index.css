@@ -114,6 +114,21 @@ body {
   --y2k-cyan: #22d3ee;
   --y2k-violet: #a78bfa;
   --y2k-lime: #a3ff12;
+  /* Grunge ISO — texture landing / dashboard (feTurbulence fractalNoise) */
+  --pk-grunge-grain-fallback:
+    repeating-radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.022) 0 0.55px, transparent 0.55px 2.1px),
+    repeating-radial-gradient(circle at 78% 62%, rgba(255, 255, 255, 0.016) 0 0.45px, transparent 0.45px 1.7px),
+    repeating-radial-gradient(circle at 46% 84%, rgba(0, 0, 0, 0.024) 0 0.65px, transparent 0.65px 2.4px);
+  --pk-grunge-grain-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --pk-grunge-grain-size: 180px;
+  --pk-grunge-grain-opacity: 0.048;
+  --pk-grunge-grain-blend: overlay;
+  --pk-grunge-grain-landing-opacity: 0.058;
+  --pk-grunge-grain-landing-mobile-opacity: 0.102;
+  --pk-grunge-grain-mobile-opacity: 0.102;
+  --pk-grunge-grain-mobile-blend: overlay;
+  --pk-grunge-grain-mobile-size: 132px;
+  --pk-grunge-grain-dashboard-warm-opacity: 0.108;
 }
 
 @keyframes y2kScan {
@@ -353,7 +368,8 @@ body {
   .y2k-stage::after,
   .y2k-scanbeam,
   .y2k-titlebar::after,
-  .pk-prism-aurora {
+  .pk-prism-aurora,
+  .pk-prism-dashboard:not(.pk-warm-glass-stage) > .pk-warm-backdrop::before {
     animation: none;
   }
 }
@@ -379,6 +395,17 @@ body {
   50% {
     transform: translate3d(2%, 1%, 0);
     opacity: 0.5;
+  }
+}
+
+@keyframes pkPrismMobileMesh {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.52;
+  }
+  100% {
+    transform: translate3d(4%, -3%, 0) scale(1.06);
+    opacity: 0.68;
   }
 }
 
@@ -567,6 +594,39 @@ body {
     linear-gradient(180deg, #020108 0%, #06050f 42%, #090812 100%);
 }
 
+/* Grunge ISO — calque réutilisable (landing, dashboard) */
+.pk-grunge-overlay,
+.pk-prism-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--pk-grunge-grain-opacity);
+  mix-blend-mode: var(--pk-grunge-grain-blend);
+  background-image: var(--pk-grunge-grain-fallback), var(--pk-grunge-grain-image);
+  background-size: var(--pk-grunge-grain-size) var(--pk-grunge-grain-size);
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+}
+
+@media (prefers-reduced-data: reduce) {
+  .pk-grunge-overlay--dashboard,
+  .pk-grunge-overlay:not(.pk-grunge-overlay--landing) {
+    background-image: var(--pk-grunge-grain-fallback);
+    --pk-grunge-grain-opacity: 0.062;
+  }
+}
+
+.pk-grunge-overlay--viewport {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+}
+
+/* Dashboard mobile Prism — grunge viewport (desktop : grain off, style déjà ok) */
+.pk-grunge-overlay--dashboard {
+  display: none;
+}
+
 /* Landing — header transparent sans bande violette en haut */
 .pk-prism-stage--landing {
   background:
@@ -575,34 +635,7 @@ body {
     linear-gradient(180deg, #020108 0%, #06050f 48%, #090812 100%);
 }
 
-.pk-prism-stage--landing::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  opacity: 0.048;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 180px 180px;
-  transform: translate3d(0, 0, 0);
-  -webkit-transform: translate3d(0, 0, 0);
-}
-
-@media (max-width: 767px) {
-  .pk-prism-stage--landing::before {
-    opacity: 0.085;
-    mix-blend-mode: soft-light;
-    background-size: 132px 132px;
-  }
-
-  .pk-prism-grain {
-    opacity: 0.07;
-    mix-blend-mode: soft-light;
-    transform: translate3d(0, 0, 0);
-    -webkit-transform: translate3d(0, 0, 0);
-  }
-}
+/* Voile texture site — voir SiteTextureVeil + src/lib/SITE_TEXTURE_VEIL.md */
 
 .pk-landing-header {
   padding-top: env(safe-area-inset-top, 0px);
@@ -636,10 +669,6 @@ body {
     animation: none;
     opacity: 0.2;
   }
-
-  .pk-prism-stage--landing .pk-prism-grain {
-    opacity: 0.03;
-  }
 }
 
 .pk-prism-scene {
@@ -652,17 +681,172 @@ body {
   background: radial-gradient(ellipse at center, transparent 42%, rgba(0, 0, 0, 0.55) 100%);
 }
 
+/* Hero landing — grain scène (ISO backup V4) */
 .pk-prism-grain {
-  position: absolute;
-  inset: 0;
   opacity: 0.045;
   mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* Dashboard — grain off (vertical tile seams / scratch look + GPU cost on iOS) */
+/* Dashboard — grain off desktop (vertical tile seams / GPU cost on iOS) */
 .pk-prism-dashboard .pk-prism-fx-grain {
   display: none !important;
+}
+
+/* Prism dashboard mobile — aurora mesh + grunge ISO (landing mobile) */
+@media (max-width: 767px) {
+  .pk-prism-dashboard:not(.pk-warm-glass-stage) {
+    isolation: isolate;
+    --prism-mobile-base-1: #0c0820;
+    --prism-mobile-base-2: #160a32;
+    --prism-mobile-base-3: #070510;
+    background:
+      radial-gradient(ellipse 130% 72% at -8% -12%, rgba(157, 124, 255, 0.58), transparent 54%),
+      radial-gradient(ellipse 110% 68% at 108% 4%, rgba(103, 195, 255, 0.4), transparent 52%),
+      radial-gradient(ellipse 88% 58% at 52% 36%, rgba(236, 72, 153, 0.1), transparent 60%),
+      radial-gradient(ellipse 120% 72% at 6% 102%, rgba(124, 58, 237, 0.34), transparent 56%),
+      radial-gradient(ellipse 100% 64% at 94% 96%, rgba(34, 211, 238, 0.22), transparent 54%),
+      linear-gradient(
+        172deg,
+        var(--prism-mobile-base-1) 0%,
+        var(--prism-mobile-base-2) 36%,
+        #100820 62%,
+        var(--prism-mobile-base-3) 100%
+      ) !important;
+  }
+
+  body:has(.pk-mobile-app-shell.pk-prism-dashboard:not(.pk-warm-glass-stage)) {
+    background: var(--prism-mobile-base-1, #0c0820);
+  }
+
+  .pk-prism-dashboard:not(.pk-warm-glass-stage) > .pk-warm-backdrop::before {
+    content: "";
+    position: absolute;
+    inset: -18% -22%;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.58;
+    mix-blend-mode: screen;
+    background:
+      conic-gradient(
+        from 205deg at 48% 32%,
+        transparent 0deg,
+        rgba(157, 124, 255, 0.18) 52deg,
+        transparent 108deg,
+        rgba(103, 195, 255, 0.14) 196deg,
+        transparent 268deg
+      ),
+      radial-gradient(circle at 22% 18%, rgba(157, 124, 255, 0.48), transparent 40%),
+      radial-gradient(circle at 78% 22%, rgba(103, 195, 255, 0.34), transparent 38%),
+      radial-gradient(circle at 50% 88%, rgba(168, 85, 247, 0.22), transparent 42%);
+    animation: pkPrismMobileMesh 24s ease-in-out infinite alternate;
+    will-change: transform, opacity;
+  }
+
+  /* Texture surface — calque fixe (remplace grunge dashboard) */
+  .pk-prism-dashboard:not(.pk-warm-glass-stage)::before {
+    display: none !important;
+    content: none !important;
+  }
+
+  .pk-prism-dashboard:not(.pk-warm-glass-stage) .pk-prism-fx-vignette {
+    background: radial-gradient(
+      ellipse 88% 78% at 50% 44%,
+      transparent 54%,
+      rgba(5, 2, 16, 0.42) 100%
+    ) !important;
+  }
+
+  .pk-prism-dashboard:not(.pk-warm-glass-stage) .pk-prism-fx-orb:first-of-type {
+    top: -22%;
+    left: -18%;
+    width: 82vw;
+    height: 82vw;
+    transform: none;
+    filter: none !important;
+    -webkit-filter: none !important;
+    opacity: 0.95;
+    background: radial-gradient(
+      circle,
+      rgba(157, 124, 255, 0.44) 0%,
+      rgba(157, 124, 255, 0.14) 44%,
+      transparent 68%
+    ) !important;
+  }
+
+  .pk-prism-dashboard:not(.pk-warm-glass-stage) .pk-prism-fx-orb:last-of-type {
+    bottom: -8%;
+    left: auto;
+    right: -16%;
+    width: 76vw;
+    height: 76vw;
+    filter: none !important;
+    -webkit-filter: none !important;
+    opacity: 0.88;
+    background: radial-gradient(
+      circle,
+      rgba(103, 195, 255, 0.36) 0%,
+      rgba(103, 195, 255, 0.1) 46%,
+      transparent 70%
+    ) !important;
+  }
+
+  .pk-prism-dashboard:not(.pk-warm-glass-stage) .pk-mobile-dashboard-chrome,
+  .pk-prism-dashboard:not(.pk-warm-glass-stage) .pk-studio-console.pk-prism-glass,
+  .pk-prism-dashboard:not(.pk-warm-glass-stage) .pk-studio-workspace.pk-prism-glass {
+    background:
+      radial-gradient(680px circle at 100% 0%, rgba(103, 195, 255, 0.1), transparent 58%),
+      radial-gradient(520px circle at 0% 100%, rgba(157, 124, 255, 0.08), transparent 52%),
+      linear-gradient(165deg, rgba(16, 12, 34, 0.78), rgba(8, 6, 20, 0.86)) !important;
+    border-color: rgba(157, 124, 255, 0.14) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.09),
+      0 12px 40px rgba(0, 0, 0, 0.28) !important;
+  }
+
+  .pk-prism-dashboard:not(.pk-warm-glass-stage) .pk-app-shell-mobile-nav {
+    border-top-color: rgba(157, 124, 255, 0.16) !important;
+    background: linear-gradient(
+      180deg,
+      rgba(14, 10, 32, 0.78) 0%,
+      rgba(8, 5, 18, 0.94) 100%
+    ) !important;
+    backdrop-filter: blur(18px) saturate(1.35);
+    -webkit-backdrop-filter: blur(18px) saturate(1.35);
+  }
+
+  .pk-prism-dashboard:not(.pk-warm-glass-stage) .pk-dashboard-mobile-tabs {
+    background: rgba(12, 10, 28, 0.72) !important;
+    box-shadow: inset 0 0 0 1px rgba(157, 124, 255, 0.12) !important;
+    --tw-ring-color: rgba(157, 124, 255, 0.1) !important;
+  }
+
+  .pk-prism-dashboard:not(.pk-warm-glass-stage) .pk-mobile-gen-notice {
+    border-color: rgba(157, 124, 255, 0.14) !important;
+    background:
+      radial-gradient(360px circle at 0% 0%, rgba(157, 124, 255, 0.1), transparent 58%),
+      linear-gradient(165deg, rgba(12, 10, 28, 0.9), rgba(8, 6, 20, 0.94)) !important;
+  }
+
+  .pk-prism-dashboard:not(.pk-warm-glass-stage) [data-loop-card],
+  .pk-prism-dashboard:not(.pk-warm-glass-stage) .bg-pk-panel,
+  .pk-prism-dashboard:not(.pk-warm-glass-stage) .bg-pk-panel\/70,
+  .pk-prism-dashboard:not(.pk-warm-glass-stage) .bg-pk-panel\/40,
+  .pk-prism-dashboard:not(.pk-warm-glass-stage) .bg-pk-panel\/30 {
+    background:
+      radial-gradient(420px circle at 0% 0%, rgba(157, 124, 255, 0.09), transparent 55%),
+      radial-gradient(380px circle at 100% 100%, rgba(103, 195, 255, 0.06), transparent 52%),
+      linear-gradient(165deg, rgba(12, 10, 28, 0.9), rgba(8, 6, 20, 0.94)) !important;
+    border-color: rgba(157, 124, 255, 0.12) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07) !important;
+  }
+}
+
+@media (max-width: 767px) and (prefers-reduced-motion: reduce) {
+  .pk-prism-dashboard:not(.pk-warm-glass-stage) > .pk-warm-backdrop::before {
+    animation: none;
+    opacity: 0.55;
+  }
 }
 
 .pk-prism-grid {
@@ -2382,10 +2566,23 @@ a.pk-pricing-plan-btn {
     display: none !important;
   }
 
+  @media (max-width: 767px) {
+    .pk-prism-dashboard:not(.pk-warm-glass-stage) .pk-prism-fx-orb {
+      display: block !important;
+    }
+  }
+
   .pk-prism-dashboard .pk-prism-glass,
   .pk-prism-dashboard [class*="backdrop-blur"] {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
+  }
+
+  @media (max-width: 767px) {
+    .pk-prism-dashboard:not(.pk-warm-glass-stage) .pk-app-shell-mobile-nav {
+      backdrop-filter: blur(14px) saturate(1.2);
+      -webkit-backdrop-filter: blur(14px) saturate(1.2);
+    }
   }
 
   .pk-prism-dashboard .pk-prism-holo-text,

@@ -55,7 +55,7 @@ import { LoopCardItem } from "@/components/LoopCardItem";
 import type { LoopAudioRetentionContext } from "@/lib/loopAudioRetention";
 import { LoopCardSkeleton } from "@/components/LoopCardSkeleton";
 import { SpeechDictationField } from "@/components/SpeechDictationField";
-import { AlertTriangle, Copy, Search, X } from "lucide-react";
+import { AlertTriangle, Copy, Search, SlidersHorizontal, X } from "lucide-react";
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
 import { ShareMomentModal } from "@/components/growth/ShareMomentModal";
 import { ReferralInviteModal } from "@/components/growth/ReferralInviteModal";
@@ -2534,7 +2534,7 @@ export default function Dashboard() {
       left={
         <div
           className={cn(
-            "pk-studio-left-stack flex min-h-0 flex-1 flex-col md:h-full md:overflow-hidden",
+            "pk-studio-left-stack pk-dashboard-generator flex min-h-0 flex-1 flex-col md:h-full md:overflow-hidden",
             mobileV2 && mobileTab === "create" && "pk-mobile-create-shell",
           )}
         >
@@ -2549,17 +2549,12 @@ export default function Dashboard() {
               mobileV2 ? "px-3 pb-2 pt-2" : "border-b border-pk-border p-4 md:border-white/10",
             )}
           >
-            <div
-              className={cn(
-                "flex items-center justify-between gap-2",
-                mobileV2 && "flex-col items-stretch gap-2.5",
-              )}
-            >
+            <div className={cn("flex items-center gap-2", mobileV2 ? "w-full" : "justify-between")}>
               <div
                 className={cn(
-                  "flex items-center gap-1",
-                  mobileV2 && "w-full rounded-2xl bg-black/20 p-1 ring-1 ring-white/[0.06]",
-                  !mobileV2 && "pk-studio-mode-rail",
+                  "flex min-w-0 items-center gap-1",
+                  "pk-studio-mode-rail",
+                  mobileV2 && "flex-1 rounded-2xl bg-black/20 p-1 ring-1 ring-white/[0.06]",
                 )}
               >
                 <button
@@ -2567,7 +2562,7 @@ export default function Dashboard() {
                   onClick={() => setMode("song")}
                   className={cn(
                     "rounded-xl px-3 py-2 text-xs font-semibold transition-all",
-                    mobileV2 && "flex-1 text-center",
+                    mobileV2 && "min-w-0 flex-1 text-center",
                     mode === "song" ? "pk-prism-pill-active" : "text-white/50 hover:text-white",
                   )}
                 >
@@ -2578,7 +2573,7 @@ export default function Dashboard() {
                   onClick={() => setMode("beat")}
                   className={cn(
                     "rounded-xl px-3 py-2 text-xs font-semibold transition-all",
-                    mobileV2 && "flex-1 text-center",
+                    mobileV2 && "min-w-0 flex-1 text-center",
                     mode === "beat" ? "pk-prism-pill-active" : "text-white/50 hover:text-white",
                   )}
                 >
@@ -2589,14 +2584,33 @@ export default function Dashboard() {
                   onClick={() => setMode("remix")}
                   className={cn(
                     "rounded-xl px-3 py-2 text-xs font-semibold transition-all",
-                    mobileV2 && "flex-1 text-center",
+                    mobileV2 && "min-w-0 flex-1 text-center",
                     mode === "remix" ? "pk-prism-pill-active" : "text-white/50 hover:text-white",
                   )}
                 >
                   {isRemixVibeRecreateEnabled() ? (locale === "fr" ? "Recréer" : "Recreate") : "Remix"}
                 </button>
+                {mobileV2 && (mode === "song" || mode === "beat") ? (
+                  <button
+                    type="button"
+                    aria-label={locale === "fr" ? "Réglages avancés" : "Advanced settings"}
+                    aria-pressed={mode === "song" ? songUiMode === "custom" : advancedOpen}
+                    onClick={() => {
+                      if (mode === "song") setSongUiMode((v) => (v === "custom" ? "simple" : "custom"));
+                      else setAdvancedOpen((v) => !v);
+                    }}
+                    className={cn(
+                      "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all",
+                      (mode === "song" ? songUiMode === "custom" : advancedOpen)
+                        ? "pk-prism-pill-active"
+                        : "text-white/50 hover:text-white",
+                    )}
+                  >
+                    <SlidersHorizontal className="h-4 w-4" aria-hidden />
+                  </button>
+                ) : null}
               </div>
-              {(mode === "song" || mode === "beat") && (
+              {!mobileV2 && (mode === "song" || mode === "beat") ? (
                 <button
                   type="button"
                   onClick={() => {
@@ -2605,7 +2619,6 @@ export default function Dashboard() {
                   }}
                   className={cn(
                     "rounded-full px-3 py-1.5 text-[11px] font-semibold transition-colors",
-                    mobileV2 && "self-end",
                     (mode === "song" ? songUiMode === "custom" : advancedOpen)
                       ? "bg-white/10 text-pk-text"
                       : "bg-white/5 text-pk-muted hover:text-pk-text",
@@ -2613,7 +2626,7 @@ export default function Dashboard() {
                 >
                   {locale === "fr" ? "Avancé" : "Advanced"}
                 </button>
-              )}
+              ) : null}
             </div>
           </div>
 
@@ -3697,7 +3710,12 @@ export default function Dashboard() {
             onCreate={goCreate}
           />
         ) : null}
-        <div className="pk-studio-workspace-header flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div
+          className={cn(
+            "pk-studio-workspace-header flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
+            mobileV2 && "hidden",
+          )}
+        >
           {!mobileV2 ? (
             <div>
               <div className="pk-studio-workspace-header__title text-lg font-semibold">{locale === "fr" ? "Mon espace" : "My Workspace"}</div>
@@ -3758,7 +3776,7 @@ export default function Dashboard() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={locale === "fr" ? "Rechercher…" : "Search your creations..."}
-                className="w-full rounded-pk border border-pk-border bg-pk-panel px-9 py-2 text-sm outline-none placeholder:text-pk-muted focus:border-pk-accent"
+                className="pk-workspace-search-field w-full rounded-pk border border-pk-border px-9 py-2 text-sm outline-none placeholder:text-pk-muted focus:border-pk-accent"
               />
             </div>
             <div className="flex items-center gap-2">

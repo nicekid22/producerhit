@@ -209,6 +209,47 @@ function drawWaveform({
 }
 
 const LOADER_SEGMENT_COUNT = 32;
+const WAVEFORM_LOADER_DELAY_MS = 380;
+
+/** Barres statiques — pas de flash skeleton animé pendant le decode rapide. */
+function WaveformStaticPlaceholder({
+  height = 28,
+  playedColor,
+  idleColor,
+  progress = 0,
+}: {
+  height?: number;
+  playedColor: string;
+  idleColor: string;
+  progress?: number;
+}) {
+  const clampedProgress = Math.max(0, Math.min(1, progress));
+  return (
+    <div
+      className="pk-waveform-placeholder w-full overflow-hidden rounded-md border border-white/10 bg-white/[0.03]"
+      style={{ height }}
+      aria-hidden
+    >
+      <div className="flex h-full items-end gap-[2px] px-1 pb-1">
+        {Array.from({ length: 24 }).map((_, i) => {
+          const played = i / 24 <= clampedProgress;
+          const barH = `${Math.max(18, 35 + Math.sin(i * 0.65) * 28)}%`;
+          return (
+            <div
+              key={i}
+              className="flex-1 rounded-full"
+              style={{
+                height: barH,
+                backgroundColor: played ? playedColor : idleColor,
+                opacity: played ? 0.95 : 0.55,
+              }}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export function WaveformLoader({
   height = 28,
@@ -346,7 +387,8 @@ export function AudioWaveform({
   const idleColor = unplayedColor ?? themeWave.unplayed;
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [visible, setVisible] = useState(false);
+  const [nearViewport, setNearViewport] = useState(false);
+  const [showAnimatedLoader, setShowAnimatedLoader] = useState(false);
   const [peaks, setPeaks] = useState<Float32Array | null>(() => (audioUrl ? peaksCache.get(audioUrl) ?? null : null));
   const [loadState, setLoadState] = useState<PeaksLoadState>(() =>
     audioUrl && peaksCache.has(audioUrl) ? "ready" : "idle",
@@ -355,6 +397,7 @@ export function AudioWaveform({
   const clampedProgress = Math.max(0, Math.min(1, Number.isFinite(progress) ? progress : 0));
   const coarsePointer = useCoarsePointer();
   const liteWaveform = coarsePointer;
+  const awaitingPeaks = Boolean(audioUrl) && !peaks && loadState !== "failed";
 
   const retryDecode = useCallback(() => {
     if (!audioUrl) return;
@@ -385,14 +428,23 @@ export function AudioWaveform({
     const el = containerRef.current;
     if (!el) return;
     const obs = new IntersectionObserver(
-      (entries) => {
-        setVisible(Boolean(entries[0]?.isIntersecting));
+      ([entry]) => {
+        if (entry?.isIntersecting) setNearViewport(true);
       },
-      { rootMargin: "250px" },
+      { rootMargin: "280px", threshold: 0.01 },
     );
     obs.observe(el);
     return () => obs.disconnect();
   }, []);
+
+  useEffect(() => {
+    if (!awaitingPeaks) {
+      setShowAnimatedLoader(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setShowAnimatedLoader(true), WAVEFORM_LOADER_DELAY_MS);
+    return () => window.clearTimeout(timer);
+  }, [awaitingPeaks, audioUrl, decodeAttempt]);
 
   useEffect(() => {
     if (!loopId || peaks) return;
@@ -406,29 +458,49 @@ export function AudioWaveform({
 
   useEffect(() => {
     const url = audioUrl;
-    if (!visible || !url || liteWaveform) return;
-    if (peaksCache.get(url)) return;
+    if (!nearViewport || !url || liteWaveform) return;
+
+    const cached = peaksCache.get(url);
+    if (cached) {
+      setPeaks(cached);
+      setLoadState("ready");
+      return;
+    }
+
+    const inflight = inflightPeaks.get(url);
+    let cancelled = false;
+
+    const applyPeaks = (next: Float32Array) => {
+      if (cancelled) return;
+      setPeaks(next);
+      setLoadState("ready");
+    };
+
+    const markFailed = () => {
+      if (cancelled) return;
+      setLoadState("failed");
+    };
+
+    if (inflight) {
+      setLoadState("loading");
+      void inflight.then(applyPeaks).catch(markFailed);
+      return () => {
+        cancelled = true;
+      };
+    }
 
     const controller = new AbortController();
-    let cancelled = false;
     setLoadState("loading");
 
     void getOrDecodePeaks({ audioUrl: url, loopId, signal: controller.signal })
-      .then((p) => {
-        if (cancelled) return;
-        setPeaks(p);
-        setLoadState("ready");
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setLoadState("failed");
-      });
+      .then(applyPeaks)
+      .catch(markFailed);
 
     return () => {
       cancelled = true;
       controller.abort();
     };
-  }, [audioUrl, liteWaveform, visible, loopId, decodeAttempt]);
+  }, [audioUrl, liteWaveform, nearViewport, loopId, decodeAttempt]);
 
   const draw = useMemo(() => {
     return () => {
@@ -504,10 +576,14 @@ export function AudioWaveform({
         <canvas ref={canvasRef} style={{ height }} className={seekEnabled ? "w-full cursor-pointer" : "w-full"} aria-hidden />
       ) : loadState === "failed" ? (
         <WaveformLoader height={height} active={false} onRetry={retryDecode} />
+      ) : showAnimatedLoader ? (
+        <WaveformLoader height={height} active={loadState === "loading"} />
       ) : (
-        <WaveformLoader
+        <WaveformStaticPlaceholder
           height={height}
-          active={loadState === "loading" || (loadState === "idle" && visible && Boolean(audioUrl))}
+          playedColor={playedColor}
+          idleColor={idleColor}
+          progress={clampedProgress}
         />
       )}
     </div>

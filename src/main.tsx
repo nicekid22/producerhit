@@ -4,6 +4,7 @@ import "./index.css";
 import "./styles/warm-glass-theme.css";
 import "./styles/cover-surface.css";
 import "./styles/landing-mobile-v2.css";
+import "./styles/site-texture-veil.css";
 
 import App from "./App";
 

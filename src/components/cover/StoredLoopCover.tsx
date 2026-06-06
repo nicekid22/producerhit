@@ -27,10 +27,16 @@ export function StoredLoopCover({ coverUrl, className, loading = "lazy", imageCl
   }, []);
 
   useEffect(() => {
-    setLoaded(false);
+    if (!src.startsWith("http")) {
+      setLoaded(false);
+      setFailed(false);
+      return;
+    }
     setFailed(false);
-    if (!src.startsWith("http")) return;
     preloadCoverImage(src);
+    markLoadedIfReady();
+    if (imgRef.current?.complete && imgRef.current.naturalWidth > 0) return;
+    setLoaded(false);
     const t = window.setTimeout(markLoadedIfReady, 80);
     return () => window.clearTimeout(t);
   }, [src, markLoadedIfReady]);

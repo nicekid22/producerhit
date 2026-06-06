@@ -1,4 +1,4 @@
-/** Calques pigment Warm Glass (fond mesh + grain). */
+/** Calques pigment Warm Glass (fond mesh). Voile PNG global : SiteTextureVeil. */
 export function WarmGlassBackdrop() {
   return (
     <>

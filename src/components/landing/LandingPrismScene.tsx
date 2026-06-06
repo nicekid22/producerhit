@@ -7,7 +7,6 @@ export function LandingPrismScene({ spot, reduceMotion }: Props) {
   return (
     <div aria-hidden className="pk-prism-scene pointer-events-none absolute inset-0 -z-10 overflow-hidden">
       <div className="pk-prism-vignette" />
-      <div className="pk-prism-grain" />
 
       <div
         className="pk-prism-scene-spotlight absolute inset-0 transition-opacity duration-700"

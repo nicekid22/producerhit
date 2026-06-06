@@ -34,6 +34,7 @@ import { SocialProofStats } from "@/components/landing/SocialProofStats";
 import { TestimonialsStrip } from "@/components/landing/TestimonialsStrip";
 import { LandingSocialFeed } from "@/components/landing/LandingSocialFeed";
 import { LandingCommunityRail } from "@/components/landing/LandingCommunityRail";
+import { BackdropTextureVeil } from "@/components/BackdropTextureVeil";
 import { LandingMobileTrendingStrip } from "@/components/landing/LandingMobileTrendingStrip";
 import { LandingGenerator, type GeneratorSideCard } from "@/components/landing/LandingGenerator";
 import { LandingWorkflow } from "@/components/landing/LandingWorkflow";
@@ -1078,8 +1079,11 @@ export default function Landing() {
       {warmGlass ? (
         <div className="pk-warm-backdrop pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
           <WarmGlassBackdrop />
+          <BackdropTextureVeil variant="marketing" />
         </div>
-      ) : null}
+      ) : (
+        <BackdropTextureVeil variant="landing" />
+      )}
 
       <header
         className={cn(

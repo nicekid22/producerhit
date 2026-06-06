@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { WarmGlassBackdrop } from "@/components/WarmGlassBackdrop";
+import { BackdropTextureVeil } from "@/components/BackdropTextureVeil";
 import { cn } from "@/lib/utils";
 import { useVisualThemeStore, isWarmGlassTheme } from "@/stores/visualThemeStore";
 
@@ -24,8 +25,11 @@ export function MarketingPageShell({ children, className, contentClassName }: Pr
       {warmGlass ? (
         <div className="pk-warm-backdrop pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
           <WarmGlassBackdrop />
+          <BackdropTextureVeil variant="marketing" />
         </div>
-      ) : null}
+      ) : (
+        <BackdropTextureVeil variant="landing" />
+      )}
       <div className={cn("relative z-[1]", contentClassName)}>{children}</div>
     </div>
   );

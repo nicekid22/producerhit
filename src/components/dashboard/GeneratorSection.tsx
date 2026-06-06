@@ -46,8 +46,8 @@ export function GeneratorSection({
   return (
     <div
       className={cn(
-        "mx-3 mb-3 overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.025]",
-        "md:pk-studio-section md:mx-0 md:mb-0 md:overflow-visible md:rounded-none md:border-0 md:border-b md:border-pk-border md:bg-transparent",
+        "pk-studio-section mx-3 mb-3 overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.025]",
+        "md:mx-0 md:mb-0 md:overflow-visible md:rounded-none md:border-0 md:border-b md:border-pk-border md:bg-transparent",
         "md:px-6 md:py-4",
         className,
       )}

@@ -43,7 +43,7 @@ export function Modal({
       onClick={onClose}
     >
       <div
-        className="my-auto w-full max-w-md rounded-pk border border-pk-border bg-pk-panel p-5 shadow-[0_24px_80px_rgba(0,0,0,0.55)]"
+        className="pk-veil-modal-panel my-auto w-full max-w-md rounded-pk border border-pk-border bg-pk-panel p-5 shadow-[0_24px_80px_rgba(0,0,0,0.55)]"
         onClick={(e) => e.stopPropagation()}
       >
         <div id="pk-modal-title" className="text-sm font-semibold">
