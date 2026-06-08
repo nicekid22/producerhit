@@ -133,35 +133,35 @@
 
 /* Grain grossier — sable / pigment (comme la ref) */
 .pk-warm-pigment-grain-coarse {
-  opacity: 0.52;
+  opacity: 0.36;
   mix-blend-mode: overlay;
-  background-color: rgba(80, 35, 18, 0.08);
+  background-color: rgba(80, 35, 18, 0.06);
   background-image: var(--warm-grain-coarse);
   background-size: 160px 160px;
-  filter: contrast(185%) brightness(88%);
+  filter: contrast(165%) brightness(90%);
 }
 
 /* Grain fin — stipple / papier */
 .pk-warm-pigment-grain-fine {
-  opacity: 0.38;
+  opacity: 0.26;
   mix-blend-mode: multiply;
   background-image: var(--warm-grain-fine);
   background-size: 112px 112px;
-  filter: contrast(160%);
+  filter: contrast(145%);
 }
 
 /* Grain film — bruit visible type ISO élevé */
 .pk-warm-pigment-grain-film {
-  opacity: 0.22;
+  opacity: 0.15;
   mix-blend-mode: soft-light;
   background-image: var(--warm-grain-film);
   background-size: 200px 200px;
-  filter: contrast(200%) brightness(95%);
+  filter: contrast(175%) brightness(96%);
 }
 
 /* Speckle — micro-taches pigment dispersées */
 .pk-warm-pigment-speckle {
-  opacity: 0.48;
+  opacity: 0.32;
   mix-blend-mode: color-burn;
   background-image: var(--warm-grain-fine);
   background-size: 72px 72px;
@@ -1111,6 +1111,33 @@ html.pk-warm-glass-active .pk-glass-btn:hover:not(:disabled),
       radial-gradient(680px circle at 100% 0%, rgba(220, 140, 60, 0.12), transparent 58%),
       radial-gradient(520px circle at 0% 100%, rgba(180, 60, 80, 0.09), transparent 52%),
       linear-gradient(165deg, rgba(48, 22, 14, 0.84), rgba(38, 16, 10, 0.9));
+  }
+
+  /* Génération mobile — verre gris (pas brun) */
+  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) {
+    --warm-mobile-panel: rgba(22, 20, 28, 0.86);
+    --warm-mobile-panel-border: rgba(255, 255, 255, 0.12);
+    --warm-mobile-panel-inset: rgba(255, 255, 255, 0.06);
+    --warm-mobile-panel-bg:
+      radial-gradient(680px circle at 100% 0%, rgba(255, 255, 255, 0.04), transparent 58%),
+      radial-gradient(520px circle at 0% 100%, rgba(255, 255, 255, 0.025), transparent 52%),
+      linear-gradient(165deg, rgba(28, 26, 34, 0.8), rgba(20, 18, 26, 0.86));
+  }
+
+  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-mobile-dashboard-chrome {
+    background:
+      radial-gradient(480px circle at 0% 0%, rgba(255, 255, 255, 0.04), transparent 55%),
+      linear-gradient(165deg, rgba(28, 26, 34, 0.78), rgba(20, 18, 26, 0.84)) !important;
+    border-color: rgba(255, 255, 255, 0.11) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 8px 28px rgba(8, 6, 12, 0.2) !important;
+  }
+
+  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-mobile-create-scroll .pk-studio-section {
+    background: var(--warm-dash-glass-soft) !important;
+    border-color: var(--warm-dash-chrome-border) !important;
+    box-shadow: inset 0 1px 0 var(--warm-dash-chrome-highlight) !important;
   }
 
   .pk-warm-glass-stage .pk-mobile-dashboard-chrome {
@@ -2219,16 +2246,64 @@ html.pk-warm-glass-active .pk-menu-icon-accent,
   color: rgba(255, 248, 240, 0.78) !important;
 }
 
-/* ——— Footer landing ——— */
+/* ——— Footer landing — transparent, mesh visible ——— */
 html.pk-warm-glass-active .pk-landing-footer,
 body[data-pk-warm-glass="1"] .pk-landing-footer {
-  border-top-color: var(--warm-glass-border) !important;
-  background: linear-gradient(180deg, rgba(58, 26, 14, 0.98) 0%, rgba(38, 16, 10, 1) 100%) !important;
+  border-top-color: rgba(255, 220, 180, 0.14) !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
 }
 
 html.pk-warm-glass-active .pk-landing-footer::before,
 body[data-pk-warm-glass="1"] .pk-landing-footer::before {
-  background: radial-gradient(ellipse at 50% 0%, rgba(220, 140, 60, 0.16), transparent 55%) !important;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 220, 180, 0.28) 18%,
+    rgba(255, 200, 120, 0.42) 50%,
+    rgba(255, 220, 180, 0.28) 82%,
+    transparent 100%
+  ) !important;
+  opacity: 1;
+}
+
+html.pk-warm-glass-active .pk-landing-footer::after,
+body[data-pk-warm-glass="1"] .pk-landing-footer::after {
+  display: none !important;
+}
+
+html.pk-warm-glass-active .pk-landing-footer .border-white\/\[0\.06\],
+html.pk-warm-glass-active .pk-landing-footer .border-white\/\[0\.08\],
+body[data-pk-warm-glass="1"] .pk-landing-footer .border-white\/\[0\.06\],
+body[data-pk-warm-glass="1"] .pk-landing-footer .border-white\/\[0\.08\] {
+  border-color: rgba(255, 195, 150, 0.14) !important;
+}
+
+html.pk-warm-glass-active .pk-landing-footer .text-white\/40,
+html.pk-warm-glass-active .pk-landing-footer .text-white\/35,
+html.pk-warm-glass-active .pk-landing-footer .text-white\/45,
+body[data-pk-warm-glass="1"] .pk-landing-footer .text-white\/40,
+body[data-pk-warm-glass="1"] .pk-landing-footer .text-white\/35,
+body[data-pk-warm-glass="1"] .pk-landing-footer .text-white\/45 {
+  color: rgba(255, 236, 210, 0.56) !important;
+}
+
+html.pk-warm-glass-active .pk-landing-footer .text-white\/50,
+html.pk-warm-glass-active .pk-landing-footer .text-white\/55,
+html.pk-warm-glass-active .pk-landing-footer .text-white\/65,
+body[data-pk-warm-glass="1"] .pk-landing-footer .text-white\/50,
+body[data-pk-warm-glass="1"] .pk-landing-footer .text-white\/55,
+body[data-pk-warm-glass="1"] .pk-landing-footer .text-white\/65 {
+  color: rgba(255, 248, 240, 0.68) !important;
+}
+
+html.pk-warm-glass-active .pk-landing-footer .hover\:text-white:hover,
+body[data-pk-warm-glass="1"] .pk-landing-footer .hover\:text-white:hover {
+  color: #fff9f4 !important;
 }
 
 html.pk-warm-glass-active .pk-footer-heart,
@@ -2329,6 +2404,13 @@ html.pk-warm-glass-active .pk-icon-loader__sublabel {
     linear-gradient(165deg, rgba(255, 255, 255, 0.07), rgba(200, 80, 50, 0.1)) !important;
   border-color: rgba(255, 160, 80, 0.38) !important;
   box-shadow: 0 0 40px rgba(220, 90, 50, 0.14);
+}
+
+/* Landing / pricing — textes secondaires lisibles sur fond ambre */
+.pk-warm-glass-stage .pk-prism-card .text-\[\#6b7280\],
+.pk-warm-glass-stage .pk-pricing-card .text-white\/45,
+.pk-warm-glass-stage .pk-pricing-card .text-white\/55 {
+  color: rgba(255, 248, 240, 0.58) !important;
 }
 
 .pk-warm-glass-stage .pk-blog-card {
@@ -2799,33 +2881,34 @@ html.pk-warm-glass-active .pk-gen-hint:focus-visible,
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .pk-warm-glass-stage.pk-prism-dashboard {
-  --warm-dash-glass: color-mix(in srgb, rgba(20, 18, 24, 0.22) 86%, transparent);
-  --warm-dash-glass-soft: color-mix(in srgb, rgba(18, 16, 22, 0.16) 84%, transparent);
+  --warm-dash-glass: rgba(38, 16, 10, 0.42);
+  --warm-dash-glass-soft: rgba(48, 22, 14, 0.36);
   --warm-dash-glass-sheen: linear-gradient(
     168deg,
-    rgba(255, 255, 255, 0.025) 0%,
-    rgba(0, 0, 0, 0.03) 100%
-  );
-  --warm-dash-chrome-border: rgba(255, 255, 255, 0.1);
-  --warm-dash-chrome-highlight: rgba(255, 255, 255, 0.045);
-  --warm-dash-field-fill: rgba(255, 255, 255, 0.035);
-  --warm-dash-field-fill-focus: rgba(255, 255, 255, 0.055);
-  --warm-dash-field-gradient: linear-gradient(
-    155deg,
-    rgba(255, 255, 255, 0.06) 0%,
-    rgba(255, 255, 255, 0.015) 52%,
+    rgba(255, 220, 180, 0.06) 0%,
+    rgba(255, 195, 150, 0.02) 42%,
     rgba(0, 0, 0, 0.04) 100%
   );
+  --warm-dash-chrome-border: rgba(255, 195, 150, 0.24);
+  --warm-dash-chrome-highlight: rgba(255, 220, 180, 0.1);
+  --warm-dash-field-fill: rgba(48, 22, 14, 0.62);
+  --warm-dash-field-fill-focus: rgba(58, 28, 16, 0.74);
+  --warm-dash-field-gradient: linear-gradient(
+    155deg,
+    rgba(255, 220, 180, 0.08) 0%,
+    rgba(255, 195, 150, 0.03) 52%,
+    rgba(0, 0, 0, 0.05) 100%
+  );
   --warm-glass-surface: var(--warm-dash-glass);
-  --warm-glass-surface-elevated: color-mix(in srgb, rgba(22, 20, 26, 0.26) 88%, transparent);
-  --warm-glass-border: rgba(255, 255, 255, 0.1);
-  --warm-glass-highlight: rgba(255, 255, 255, 0.045);
-  --warm-field-bg: rgba(255, 255, 255, 0.035);
-  --warm-field-bg-focus: rgba(255, 255, 255, 0.055);
-  --warm-field-border: rgba(255, 255, 255, 0.1);
-  --warm-field-border-focus: rgba(255, 175, 95, 0.45);
-  --warm-field-placeholder: rgba(255, 255, 255, 0.38);
-  --warm-field-readonly-bg: rgba(255, 255, 255, 0.025);
+  --warm-glass-surface-elevated: rgba(48, 22, 14, 0.56);
+  --warm-glass-border: var(--warm-dash-chrome-border);
+  --warm-glass-highlight: var(--warm-dash-chrome-highlight);
+  --warm-field-bg: var(--warm-dash-field-fill);
+  --warm-field-bg-focus: var(--warm-dash-field-fill-focus);
+  --warm-field-border: rgba(255, 195, 150, 0.28);
+  --warm-field-border-focus: rgba(255, 160, 80, 0.55);
+  --warm-field-placeholder: rgba(255, 220, 180, 0.46);
+  --warm-field-readonly-bg: rgba(40, 18, 10, 0.5);
 }
 
 .pk-warm-glass-stage.pk-prism-dashboard .pk-studio-console,
@@ -2877,15 +2960,48 @@ html.pk-warm-glass-active .pk-gen-hint:focus-visible,
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) {
-  --warm-dash-inset-fill: rgba(255, 255, 255, 0.028);
-  --warm-dash-inset-border: rgba(255, 255, 255, 0.08);
+  --warm-dash-glass: color-mix(in srgb, rgba(26, 24, 32, 0.38) 88%, transparent);
+  --warm-dash-glass-soft: color-mix(in srgb, rgba(22, 20, 28, 0.28) 86%, transparent);
+  --warm-dash-glass-sheen: linear-gradient(
+    168deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.015) 42%,
+    rgba(0, 0, 0, 0.03) 100%
+  );
+  --warm-dash-chrome-border: rgba(255, 255, 255, 0.11);
+  --warm-dash-chrome-highlight: rgba(255, 255, 255, 0.05);
+  --warm-dash-field-fill: rgba(255, 255, 255, 0.05);
+  --warm-dash-field-fill-focus: rgba(255, 255, 255, 0.072);
+  --warm-dash-field-gradient: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.065) 0%,
+    rgba(255, 255, 255, 0.02) 52%,
+    rgba(0, 0, 0, 0.04) 100%
+  );
+  --warm-dash-inset-fill: rgba(255, 255, 255, 0.035);
+  --warm-dash-inset-border: rgba(255, 255, 255, 0.09);
   --warm-dash-dock-fill: linear-gradient(
     180deg,
-    rgba(12, 10, 18, 0.92) 0%,
-    rgba(8, 6, 14, 0.98) 100%
+    rgba(20, 18, 26, 0.88) 0%,
+    rgba(16, 14, 22, 0.92) 100%
   );
-  --warm-dash-chrome-solid: rgba(12, 10, 18, 0.88);
-  --warm-dash-chrome-solid-soft: rgba(14, 12, 20, 0.82);
+  --warm-dash-chrome-solid: rgba(20, 18, 26, 0.86);
+  --warm-dash-chrome-solid-soft: rgba(24, 22, 30, 0.8);
+  --warm-glass-surface: var(--warm-dash-glass);
+  --warm-glass-surface-elevated: rgba(28, 26, 34, 0.48);
+  --warm-glass-border: var(--warm-dash-chrome-border);
+  --warm-glass-highlight: var(--warm-dash-chrome-highlight);
+  --warm-field-bg: var(--warm-dash-field-fill);
+  --warm-field-bg-focus: var(--warm-dash-field-fill-focus);
+  --warm-field-border: rgba(255, 255, 255, 0.12);
+  --warm-field-border-focus: rgba(255, 175, 95, 0.42);
+  --warm-field-placeholder: rgba(255, 248, 240, 0.42);
+  --warm-field-readonly-bg: rgba(255, 255, 255, 0.03);
+}
+
+.pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-dashboard-generator .pk-studio-section__title {
+  color: rgba(255, 248, 240, 0.72) !important;
+  text-shadow: none !important;
 }
 
 /* Console création — alignée sur les cartes loops (transparente) */
@@ -2898,7 +3014,7 @@ html.pk-warm-glass-active .pk-gen-hint:focus-visible,
     0 12px 40px rgba(8, 6, 12, 0.16) !important;
 }
 
-/* Workspace — légèrement plus présent que la console, toujours verre léger */
+/* Workspace — légèrement plus présent que la console, verre gris */
 .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-studio-workspace {
   background: linear-gradient(
     165deg,
@@ -3427,5 +3543,32 @@ html.pk-warm-glass-active:has(.pk-dashboard-generator) .pk-loop-details-sheet .b
     backdrop-filter: blur(10px) saturate(1.2) !important;
     -webkit-backdrop-filter: blur(10px) saturate(1.2) !important;
   }
+}
+
+/* Landing — shell générateur aligné cartes warm glass */
+.pk-warm-glass-stage .pk-landing-gen__shell {
+  overflow: hidden;
+  border-color: var(--warm-glass-border) !important;
+  background:
+    radial-gradient(680px circle at 12% 0%, rgba(255, 200, 140, 0.14), transparent 58%),
+    radial-gradient(520px circle at 88% 8%, rgba(220, 80, 90, 0.1), transparent 52%),
+    linear-gradient(165deg, var(--warm-glass-surface-elevated), var(--warm-glass-surface)) !important;
+  box-shadow:
+    inset 0 1px 0 var(--warm-glass-highlight),
+    0 28px 80px rgba(40, 16, 8, 0.32) !important;
+}
+
+.pk-warm-glass-stage .pk-landing-gen__shell--focused {
+  border-color: rgba(255, 160, 80, 0.42) !important;
+  box-shadow:
+    0 0 0 3px rgba(240, 192, 64, 0.12),
+    inset 0 1px 0 var(--warm-glass-highlight),
+    0 28px 80px rgba(40, 16, 8, 0.32) !important;
+}
+
+.pk-warm-glass-stage .pk-landing-gen__shell > div:first-child {
+  margin-top: -1px;
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
 }
 

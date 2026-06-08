@@ -107,10 +107,30 @@ function RevealSection({
   children: ReactNode;
 }) {
   const ref = useRef<HTMLElement | null>(null);
-  const [shown, setShown] = useState(false);
+  const [mode, setMode] = useState<"pending" | "scroll" | "shown">("pending");
 
   useEffect(() => {
-    if (shown) return;
+    if (typeof window === "undefined") return;
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setMode("shown");
+      return;
+    }
+
+    // Scroll-driven blur reste instable sur mobile (voile persistant sur le texte).
+    const preferSimpleReveal = window.matchMedia("(max-width: 767px)").matches;
+
+    const supportsScrollTimeline =
+      !preferSimpleReveal &&
+      typeof CSS !== "undefined" &&
+      CSS.supports("animation-timeline: view()") &&
+      CSS.supports("animation-range: entry 0% cover 42%");
+
+    if (supportsScrollTimeline) {
+      setMode("scroll");
+      return;
+    }
+
     const el = ref.current;
     if (!el) return;
 
@@ -118,16 +138,16 @@ function RevealSection({
       (entries) => {
         const entry = entries[0];
         if (entry?.isIntersecting) {
-          setShown(true);
+          setMode("shown");
           observer.disconnect();
         }
       },
-      { threshold: 0.14, rootMargin: "0px 0px -10% 0px" },
+      { threshold: 0.04, rootMargin: "96px 0px 72px 0px" },
     );
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, [shown]);
+  }, []);
 
   return (
     <section
@@ -135,9 +155,13 @@ function RevealSection({
       ref={ref}
       className={[
         "pk-prism-reveal",
-        shown ? "pk-prism-reveal--shown" : "pk-prism-reveal--hidden",
+        mode === "scroll" && "pk-prism-reveal--scroll",
+        mode === "pending" && "pk-prism-reveal--hidden",
+        mode === "shown" && "pk-prism-reveal--shown",
         className ?? "",
-      ].join(" ")}
+      ]
+        .filter(Boolean)
+        .join(" ")}
     >
       {children}
     </section>
@@ -1496,12 +1520,12 @@ export default function Landing() {
                   )}
                 </div>
                 <div className="mt-4 text-3xl font-extrabold leading-none tracking-tight text-white">{p.price}</div>
-                <div className="mt-2 text-sm font-semibold leading-snug text-[#6b7280]">{p.meta}</div>
-                <div className="mt-5 flex flex-1 flex-col gap-2.5 text-sm leading-snug text-white/80">
+                <div className="mt-2 text-sm font-medium leading-snug text-white/55">{p.meta}</div>
+                <div className="mt-5 flex flex-1 flex-col gap-2.5 text-sm leading-snug text-white/55">
                   {p.bullets.map((b) => (
                     <div key={b} className="flex items-start gap-2.5">
-                      <span className={`mt-0.5 shrink-0 ${b.startsWith("✓") ? "text-[#a78bfa]" : "text-[#6b7280]"}`}>{b.slice(0, 1)}</span>
-                      <span className={`min-w-0 flex-1 ${b.startsWith("✗") ? "text-[#6b7280]" : ""}`}>{b.slice(2)}</span>
+                      <span className={`mt-0.5 shrink-0 ${b.startsWith("✓") ? "text-[var(--prism-cyan)]" : "text-white/40"}`}>{b.slice(0, 1)}</span>
+                      <span className={`min-w-0 flex-1 ${b.startsWith("✗") ? "text-white/45" : ""}`}>{b.slice(2)}</span>
                     </div>
                   ))}
                 </div>

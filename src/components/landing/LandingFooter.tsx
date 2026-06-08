@@ -55,8 +55,8 @@ export function LandingFooter({ locale, user }: Props) {
   ];
 
   return (
-    <footer className="pk-landing-footer relative z-[1] border-t border-white/[0.06]">
-      <div className="mx-auto max-w-6xl px-4 py-12 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:py-14 md:py-16">
+    <footer className="pk-landing-footer relative z-[1]">
+      <div className="relative z-[1] mx-auto max-w-6xl px-4 py-12 pb-[calc(2rem+env(safe-area-inset-bottom,0px))] sm:py-14 sm:pb-[calc(2.25rem+env(safe-area-inset-bottom,0px))] md:py-16 md:pb-[calc(2.5rem+env(safe-area-inset-bottom,0px))]">
         <div className="grid gap-10 md:grid-cols-12 md:gap-8">
           <div className="md:col-span-4">
             <BrandLogo compact />
@@ -65,7 +65,7 @@ export function LandingFooter({ locale, user }: Props) {
                 ? "Générateur IA de chansons et type beats — studio quality, release-ready."
                 : "AI song & type beat generator — studio quality, release-ready output."}
             </p>
-            <p className="mt-4 text-xs font-semibold text-white/35">Powered by ACE-Step</p>
+            <p className="mt-4 text-xs font-medium tracking-wide text-white/45">Powered by ACE-Step</p>
             <div className="mt-6">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/40">{copy.footerSocialLabel}</p>
               <SocialIconLinks locale={locale} variant="footer" className="mt-3" />
@@ -124,7 +124,7 @@ export function LandingFooter({ locale, user }: Props) {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col gap-4 border-t border-white/[0.06] pt-8 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-10 flex flex-col gap-4 border-t border-white/[0.08] pt-8 sm:flex-row sm:items-center sm:justify-between">
           <span className="text-sm text-white/50">
             Made with <span className="pk-footer-heart" aria-hidden>♥</span> © 2026 ProducerHit
           </span>

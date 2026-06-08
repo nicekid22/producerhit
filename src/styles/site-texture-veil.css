@@ -4,12 +4,12 @@
  */
 
 :root {
-  --pk-veil-backdrop-opacity: 0.086;
+  --pk-veil-backdrop-opacity: 0.055;
   --pk-veil-backdrop-size: 480px;
   --pk-veil-backdrop-blur: 0.45px;
-  --pk-veil-ambient-global: 0.034;
-  --pk-veil-marketing-ambient: 0.034;
-  --pk-veil-panel-grain: 0.038;
+  --pk-veil-ambient-global: 0.024;
+  --pk-veil-marketing-ambient: 0.024;
+  --pk-veil-panel-grain: 0.026;
   --pk-veil-surface-blur: 18px;
   /* Surfaces — transparence : le fond texturé traverse, pas d’effet « collé par-dessus » */
   --pk-veil-surface-focal: rgba(8, 7, 14, 0.36);
@@ -81,7 +81,7 @@ body[data-pk-theme="marketing"] {
 .pk-site-texture-veil--ambient-global {
   position: fixed;
   inset: 0;
-  z-index: 4;
+  z-index: 0;
   pointer-events: none;
   opacity: var(--pk-veil-ambient-global);
   background-image: url("/textures/prism-landing-veil.png");
@@ -114,6 +114,11 @@ body[data-pk-theme="marketing"] {
   body[data-pk-theme="marketing"] {
     --pk-veil-backdrop-opacity: 0.08;
     --pk-veil-ambient-global: 0.038;
+  }
+
+  /* Landing mobile — cozy backdrop suffit ; évite le voile grain par-dessus le texte */
+  body[data-pk-theme="marketing"] .pk-site-texture-veil--ambient-global {
+    display: none;
   }
 }
 
@@ -173,7 +178,7 @@ body[data-pk-theme="marketing"] .pk-landing-gen__shell::after {
   border-radius: inherit;
   pointer-events: none;
   z-index: 0;
-  opacity: calc(var(--pk-veil-panel-grain) * 0.65);
+  opacity: calc(var(--pk-veil-panel-grain) * 0.5);
   background-image: url("/textures/prism-landing-veil.png");
   background-size: 200px 200px;
 }
@@ -218,20 +223,14 @@ body[data-pk-theme="marketing"] .pk-landing-trending-strip__link {
   background-color: rgba(8, 7, 14, 0.38) !important;
 }
 
-/* Footer — léger grain, pas de bloc opaque */
+/* Footer — léger séparateur, pas de bloc opaque */
 body[data-pk-theme="marketing"] .pk-landing-footer {
   isolation: isolate;
+  background: transparent;
 }
 
 body[data-pk-theme="marketing"] .pk-landing-footer::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  opacity: calc(var(--pk-veil-panel-grain) * 0.45);
-  background-image: url("/textures/prism-landing-veil.png");
-  background-size: 240px 240px;
+  display: none;
 }
 
 /* ═══ DASHBOARD — harmonie avec le voile fond ═══ */
@@ -858,9 +857,9 @@ body[data-pk-theme="app"] .pk-app-shell.pk-warm-glass-stage :is(
   background-color: color-mix(in srgb, rgba(34, 16, 9, 0.14) 80%, transparent) !important;
 }
 
-/* Dashboard warm glass — chrome neutre (prioritaire sur le brun ci-dessus) */
+/* Dashboard warm glass — zone génération : verre gris (mesh warm conservé au fond) */
 body[data-pk-theme="app"] .pk-app-shell.pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-studio-console {
-  background-color: color-mix(in srgb, rgba(20, 18, 24, 0.22) 86%, transparent) !important;
+  background-color: color-mix(in srgb, rgba(24, 22, 30, 0.34) 86%, transparent) !important;
 }
 
 body[data-pk-theme="app"] .pk-app-shell.pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) :is(
@@ -868,7 +867,7 @@ body[data-pk-theme="app"] .pk-app-shell.pk-warm-glass-stage.pk-prism-dashboard:h
     .pk-studio-rail,
     .pk-hub-nav
   ) {
-  background-color: color-mix(in srgb, rgba(24, 22, 28, 0.28) 88%, transparent) !important;
+  background-color: color-mix(in srgb, rgba(22, 20, 28, 0.28) 84%, transparent) !important;
 }
 
 body[data-pk-theme="app"] .pk-app-shell.pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) :is(
@@ -878,7 +877,7 @@ body[data-pk-theme="app"] .pk-app-shell.pk-warm-glass-stage.pk-prism-dashboard:h
     .pk-hub-hero__card,
     .pk-loop-details-panel
   ) {
-  background-color: color-mix(in srgb, rgba(24, 22, 28, 0.28) 88%, transparent) !important;
+  background-color: color-mix(in srgb, rgba(24, 22, 30, 0.26) 82%, transparent) !important;
 }
 
 body[data-pk-theme="app"] .pk-app-shell.pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) :is(
@@ -887,7 +886,7 @@ body[data-pk-theme="app"] .pk-app-shell.pk-warm-glass-stage.pk-prism-dashboard:h
     .pk-hub-vibe-tile,
     .pk-prism-stat
   ) {
-  background-color: color-mix(in srgb, rgba(20, 18, 24, 0.22) 86%, transparent) !important;
+  background-color: color-mix(in srgb, rgba(22, 20, 28, 0.2) 80%, transparent) !important;
 }
 
 body[data-pk-theme="app"] .pk-warm-glass-stage.pk-prism-dashboard :is(
@@ -900,31 +899,31 @@ body[data-pk-theme="app"] .pk-warm-glass-stage.pk-prism-dashboard :is(
     .pk-hub-nav,
     .pk-hub-vibe-tile
   ) {
-  background-color: color-mix(in srgb, rgba(20, 18, 24, 0.22) 86%, transparent) !important;
+  background-color: color-mix(in srgb, rgba(38, 16, 10, 0.36) 84%, transparent) !important;
   background-image: linear-gradient(
     168deg,
-    rgba(255, 255, 255, 0.025) 0%,
-    rgba(0, 0, 0, 0.03) 100%
+    rgba(255, 220, 180, 0.05) 0%,
+    rgba(0, 0, 0, 0.04) 100%
   ) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 195, 150, 0.22) !important;
 }
 
 body[data-pk-theme="app"] .pk-warm-glass-stage.pk-prism-dashboard .pk-studio-console:not(:has(.pk-dashboard-generator)),
 body[data-pk-theme="app"] .pk-warm-glass-stage.pk-prism-dashboard .pk-studio-workspace {
-  background-color: color-mix(in srgb, rgba(20, 18, 24, 0.22) 86%, transparent) !important;
+  background-color: color-mix(in srgb, rgba(38, 16, 10, 0.36) 84%, transparent) !important;
   background-image: linear-gradient(
     168deg,
-    rgba(255, 255, 255, 0.025) 0%,
-    rgba(0, 0, 0, 0.03) 100%
+    rgba(255, 220, 180, 0.05) 0%,
+    rgba(0, 0, 0, 0.04) 100%
   ) !important;
 }
 
 body[data-pk-theme="app"] .pk-app-shell.pk-warm-glass-stage .pk-hub-hero {
-  background-color: color-mix(in srgb, rgba(20, 18, 24, 0.22) 86%, transparent) !important;
+  background-color: color-mix(in srgb, rgba(38, 16, 10, 0.28) 82%, transparent) !important;
   background-image: linear-gradient(
     168deg,
-    rgba(255, 255, 255, 0.025) 0%,
-    rgba(0, 0, 0, 0.03) 100%
+    rgba(255, 220, 180, 0.05) 0%,
+    rgba(0, 0, 0, 0.04) 100%
   ) !important;
 }
 
@@ -946,31 +945,31 @@ body[data-pk-theme="app"] .pk-app-shell.pk-warm-glass-stage .pk-loop-details-she
   background-color: color-mix(in srgb, rgba(32, 14, 8, 0.36) 86%, transparent) !important;
 }
 
-/* Dashboard warm glass — verre léger aligné cartes (override harmonie site-texture) */
+/* Dashboard warm glass — zone génération : verre gris */
 body[data-pk-theme="app"] .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-studio-console {
-  background-color: color-mix(in srgb, rgba(20, 18, 24, 0.22) 86%, transparent) !important;
+  background-color: color-mix(in srgb, rgba(24, 22, 30, 0.34) 86%, transparent) !important;
   background-image: linear-gradient(
     168deg,
-    rgba(255, 255, 255, 0.025) 0%,
+    rgba(255, 255, 255, 0.035) 0%,
     rgba(0, 0, 0, 0.03) 100%
   ) !important;
 }
 
 body[data-pk-theme="app"] .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-studio-workspace {
-  background-color: color-mix(in srgb, rgba(22, 20, 26, 0.24) 88%, transparent) !important;
+  background-color: color-mix(in srgb, rgba(22, 20, 28, 0.3) 88%, transparent) !important;
   background-image: linear-gradient(
     165deg,
-    rgba(255, 255, 255, 0.02) 0%,
-    rgba(0, 0, 0, 0.025) 100%
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(0, 0, 0, 0.03) 100%
   ) !important;
 }
 
 body[data-pk-theme="app"] .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) [data-loop-card],
 body[data-pk-theme="app"] .pk-warm-glass-stage.pk-prism-dashboard .pk-gen-loading-card {
-  background-color: color-mix(in srgb, rgba(20, 18, 24, 0.22) 86%, transparent) !important;
+  background-color: color-mix(in srgb, rgba(24, 22, 30, 0.3) 84%, transparent) !important;
   background-image: linear-gradient(
     168deg,
-    rgba(255, 255, 255, 0.025) 0%,
+    rgba(255, 255, 255, 0.03) 0%,
     rgba(0, 0, 0, 0.03) 100%
   ) !important;
 }
@@ -985,20 +984,20 @@ body[data-pk-theme="app"] .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashbo
 }
 
 body[data-pk-theme="app"] .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-studio-detail-panel {
-  background-color: color-mix(in srgb, rgba(20, 18, 24, 0.22) 86%, transparent) !important;
+  background-color: color-mix(in srgb, rgba(38, 16, 10, 0.36) 84%, transparent) !important;
   background-image: linear-gradient(
     168deg,
-    rgba(255, 255, 255, 0.025) 0%,
-    rgba(0, 0, 0, 0.03) 100%
+    rgba(255, 220, 180, 0.05) 0%,
+    rgba(0, 0, 0, 0.04) 100%
   ) !important;
 }
 
 body[data-pk-theme="app"] .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-loop-details-sheet {
-  background-color: color-mix(in srgb, rgba(20, 18, 24, 0.28) 88%, transparent) !important;
+  background-color: color-mix(in srgb, rgba(38, 16, 10, 0.4) 86%, transparent) !important;
   background-image: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.03) 0%,
-    rgba(0, 0, 0, 0.04) 100%
+    rgba(255, 220, 180, 0.06) 0%,
+    rgba(0, 0, 0, 0.05) 100%
   ) !important;
 }
 
@@ -1017,12 +1016,12 @@ body[data-pk-theme="app"] .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashbo
 }
 
 body[data-pk-theme="app"] .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-dashboard-spotlight-banner {
-  background-color: color-mix(in srgb, rgba(20, 18, 24, 0.2) 86%, transparent) !important;
+  background-color: color-mix(in srgb, rgba(38, 16, 10, 0.3) 84%, transparent) !important;
   background-image: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.02) 0%,
-    rgba(255, 255, 255, 0.04) 50%,
-    rgba(255, 255, 255, 0.02) 100%
+    rgba(255, 200, 120, 0.04) 0%,
+    rgba(255, 160, 80, 0.06) 50%,
+    rgba(255, 200, 120, 0.04) 100%
   ) !important;
 }
 

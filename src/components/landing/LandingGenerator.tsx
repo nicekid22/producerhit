@@ -161,13 +161,26 @@ function FloatingCard({
   );
 }
 
-function GeneratorReassurance({ locale, compact }: { locale: "en" | "fr"; compact?: boolean }) {
+function GeneratorReassurance({
+  locale,
+  compact,
+  freeLabel,
+}: {
+  locale: "en" | "fr";
+  compact?: boolean;
+  freeLabel: string;
+}) {
   const isFr = locale === "fr";
   return (
     <p className={cn("pk-landing-gen__reassurance", compact && "pk-landing-gen__reassurance--mobile")}>
       <Sparkles className="pk-landing-gen__reassurance-icon" aria-hidden />
       <span className="pk-landing-gen__reassurance-copy">
-        {isFr ? "Aucune compétence requise — décris ton idée, on s’occupe du reste." : "No skills needed — describe your idea, we handle the rest."}
+        <span className="pk-landing-gen__reassurance-free">{freeLabel}</span>
+        <span className="pk-landing-gen__reassurance-sep" aria-hidden>
+          {" "}
+          ·{" "}
+        </span>
+        {isFr ? "Décris ton idée, on s’occupe du reste." : "Describe your idea, we handle the rest."}
       </span>
     </p>
   );
@@ -207,8 +220,8 @@ export function LandingGenerator({
   const [shellTouched, setShellTouched] = useState(false);
   const [shellIdle, setShellIdle] = useState(false);
   const freeLabel = isFr
-    ? `${PLAN_LIMITS.free} gratuites / mois`
-    : `${PLAN_LIMITS.free} free / month`;
+    ? `${PLAN_LIMITS.free} générations gratuites / mois`
+    : `${PLAN_LIMITS.free} free generations / month`;
 
   useEffect(() => {
     if (!compactMobile || focused || generating || shellTouched || reduceMotion) {
@@ -275,13 +288,17 @@ export function LandingGenerator({
                 {headline}
               </h2>
               <p className="mx-auto mt-3 max-w-xl text-balance text-sm leading-relaxed text-white/55">{sub}</p>
+              <p className="mx-auto mt-2 max-w-xl text-balance text-sm font-semibold text-amber-100/75">{freeLabel}</p>
             </div>
           )}
 
           {compactMobile ? (
-            <p className="pk-landing-gen__mobile-hint">
-              {isFr ? "Décris ton idée — ton hit est à un clic" : "Describe your idea — your next track is one click away"}
-            </p>
+            <>
+              <p className="pk-landing-gen__mobile-hint">
+                {isFr ? "Décris ton idée — ton hit est à un clic" : "Describe your idea — your next track is one click away"}
+              </p>
+              <p className="pk-landing-gen__mobile-free">{freeLabel}</p>
+            </>
           ) : null}
 
           <div
@@ -306,7 +323,7 @@ export function LandingGenerator({
             )}
           >
         {!compactMobile ? (
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.08] px-3 py-2.5 sm:px-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.08] bg-white/[0.02] px-3 py-2.5 sm:px-4">
               <div className="inline-flex rounded-full border border-white/10 bg-white/[0.04] p-0.5">
                 <button
                   type="button"
@@ -346,7 +363,7 @@ export function LandingGenerator({
                     {isFr ? "Avancé" : "Advanced"}
                   </button>
                 ) : null}
-                <span className="hidden text-[11px] font-semibold text-white/40 sm:inline">{freeLabel}</span>
+                <span className="text-[11px] font-semibold text-amber-100/70">{freeLabel}</span>
               </div>
         </div>
         ) : null}
@@ -544,9 +561,9 @@ export function LandingGenerator({
           </div>
 
           {compactMobile ? (
-            <GeneratorReassurance locale={locale} compact />
+            <GeneratorReassurance locale={locale} compact freeLabel={freeLabel} />
           ) : (
-            <GeneratorReassurance locale={locale} />
+            <GeneratorReassurance locale={locale} freeLabel={freeLabel} />
           )}
         </div>
 

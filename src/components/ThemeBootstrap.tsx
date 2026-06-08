@@ -64,9 +64,9 @@ export function ThemeBootstrap({ children }: { children: React.ReactNode }) {
     } else if (warmGlass) {
       const base = "#963848";
       const bg = [
-        "radial-gradient(ellipse 86% 70% at 8% 34%, rgba(200,152,56,0.42), transparent 58%)",
-        "radial-gradient(ellipse 74% 68% at 50% 70%, rgba(168,56,88,0.34), transparent 60%)",
-        "radial-gradient(ellipse 68% 60% at 92% 26%, rgba(200,80,40,0.38), transparent 54%)",
+        "radial-gradient(920px 640px at 12% 58%, rgba(200,152,56,0.28), rgba(200,152,56,0) 58%)",
+        "radial-gradient(760px 560px at 88% 52%, rgba(200,80,40,0.22), rgba(200,80,40,0) 55%)",
+        "radial-gradient(900px 620px at 50% 96%, rgba(168,56,88,0.18), rgba(168,56,88,0) 58%)",
         "linear-gradient(148deg, #8a6020 0%, #963848 32%, #a84828 62%, #963848 100%)",
       ].join(", ");
       html.style.background = base;
