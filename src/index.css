@@ -415,8 +415,8 @@ body {
     z-index: 0;
   }
 
-  .pk-prism-stage--landing.pk-landing--mobile-focus:not(.pk-warm-glass-stage) .pk-landing-header::before {
-    background: linear-gradient(180deg, #1e1040 0%, #0c0820 100%);
+  .pk-prism-stage--landing:not(.pk-warm-glass-stage) .pk-landing-header::before {
+    background: linear-gradient(180deg, #160a32 0%, #0c0820 100%);
   }
 
   .pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-header::before {
@@ -465,6 +465,40 @@ body {
   .pk-prism-stage--landing .pk-prism-aurora {
     animation: none;
     opacity: 0.2;
+  }
+
+  /* Landing mobile Prism — mesh violet dès le hero (radials en haut, pas seulement en bas) */
+  .pk-prism-stage--landing:not(.pk-warm-glass-stage) {
+    --prism-landing-mobile-base-1: #0c0820;
+    --prism-landing-mobile-base-2: #160a32;
+    --prism-landing-mobile-base-3: #070510;
+    background:
+      radial-gradient(ellipse 130% 72% at -8% -12%, rgba(157, 124, 255, 0.58), transparent 54%),
+      radial-gradient(ellipse 110% 68% at 108% 4%, rgba(103, 195, 255, 0.4), transparent 52%),
+      radial-gradient(ellipse 88% 58% at 52% 36%, rgba(236, 72, 153, 0.1), transparent 60%),
+      radial-gradient(ellipse 120% 72% at 6% 102%, rgba(124, 58, 237, 0.34), transparent 56%),
+      radial-gradient(ellipse 100% 64% at 94% 96%, rgba(34, 211, 238, 0.22), transparent 54%),
+      linear-gradient(
+        172deg,
+        var(--prism-landing-mobile-base-1) 0%,
+        var(--prism-landing-mobile-base-2) 36%,
+        #100820 62%,
+        var(--prism-landing-mobile-base-3) 100%
+      ) !important;
+  }
+
+  .pk-prism-stage--landing.pk-landing--mobile-focus:not(.pk-warm-glass-stage) .pk-prism-aurora {
+    opacity: 0.34;
+    inset: -28%;
+    filter: blur(28px);
+    background:
+      radial-gradient(circle at 18% 14%, rgba(157, 124, 255, 0.22), transparent 46%),
+      radial-gradient(circle at 82% 10%, rgba(103, 195, 255, 0.16), transparent 44%),
+      radial-gradient(circle at 50% 72%, rgba(168, 85, 247, 0.1), transparent 50%);
+  }
+
+  .pk-prism-stage--landing.pk-landing--mobile-focus:not(.pk-warm-glass-stage) .pk-prism-vignette {
+    background: radial-gradient(ellipse at center, transparent 52%, rgba(5, 2, 16, 0.32) 100%);
   }
 }
 
