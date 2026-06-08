@@ -137,8 +137,8 @@ export function LoopDetailsPanel({
         </div>
         <pre
           className={cn(
-            "mt-2 overflow-y-auto whitespace-pre-wrap rounded-xl border border-white/[0.08] bg-white/[0.04] p-3 text-xs text-pk-text",
-            compact ? "max-h-52" : "max-h-40",
+            "mt-2 overflow-y-auto whitespace-pre-wrap rounded-xl border border-white/[0.08] bg-white/[0.04] p-3 text-xs leading-relaxed text-pk-text",
+            compact ? "max-h-[min(42vh,320px)] min-h-[8rem]" : "max-h-40",
           )}
         >
           {loop.details?.lyrics?.trim() ? loop.details.lyrics.trim() : "—"}

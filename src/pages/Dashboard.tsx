@@ -2555,6 +2555,7 @@ export default function Dashboard() {
             tab={mobileTab}
             onChange={(next) => {
               setMobileTab(next);
+              setDetailsId(null);
               if (next === "master") setWorkspaceView("master");
               else if (next === "results") setWorkspaceView("tracks");
             }}
@@ -4061,7 +4062,7 @@ export default function Dashboard() {
                     queueLoops={displayedLoops}
                     showRetentionCountdown
                     audioRetention={audioRetentionCtx}
-                    onOpenDetails={(loop) => setDetailsId(loop.id)}
+                    onOpenDetails={(loop) => setDetailsId((prev) => (prev === loop.id ? null : loop.id))}
                     onGenerationUsed={consumeCredit}
                     onCoverRerollUsed={consumeCredit}
                     creditsRemaining={remaining}

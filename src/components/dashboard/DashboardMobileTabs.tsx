@@ -18,7 +18,7 @@ export function DashboardMobileTabs({
 }) {
   return (
     <div
-      className="pk-dashboard-mobile-tabs flex gap-0.5 rounded-2xl bg-black/20 p-1 ring-1 ring-white/[0.06]"
+      className="pk-dashboard-mobile-tabs flex gap-0.5 rounded-2xl bg-black/35 p-1 ring-1 ring-white/[0.1]"
       role="tablist"
       aria-label="Dashboard"
     >

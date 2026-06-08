@@ -1261,9 +1261,16 @@ html.pk-warm-glass-active .pk-glass-btn:hover:not(:disabled),
 /* Nav mobile bas (sidebar) */
 .pk-warm-glass-stage .pk-app-shell-mobile-nav {
   border-top-color: var(--warm-glass-border) !important;
-  background: var(--warm-glass-surface-elevated) !important;
+  background: linear-gradient(
+    180deg,
+    rgba(48, 22, 14, 0.9) 0%,
+    rgba(38, 16, 10, 0.96) 100%
+  ) !important;
   backdrop-filter: blur(22px) saturate(1.35);
   -webkit-backdrop-filter: blur(22px) saturate(1.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 180, 0.08),
+    0 -8px 32px rgba(40, 16, 8, 0.32) !important;
 }
 
 .pk-warm-glass-stage .pk-app-shell-mobile-nav .text-pk-muted {
@@ -2868,9 +2875,11 @@ html.pk-warm-glass-active .pk-gen-hint:focus-visible,
   --warm-dash-inset-border: rgba(255, 255, 255, 0.08);
   --warm-dash-dock-fill: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.028) 0%,
-    rgba(255, 255, 255, 0.008) 100%
+    rgba(12, 10, 18, 0.92) 0%,
+    rgba(8, 6, 14, 0.98) 100%
   );
+  --warm-dash-chrome-solid: rgba(12, 10, 18, 0.88);
+  --warm-dash-chrome-solid-soft: rgba(14, 12, 20, 0.82);
 }
 
 /* Console création — alignée sur les cartes loops (transparente) */
@@ -3009,9 +3018,12 @@ html.pk-warm-glass-active:has(.pk-dashboard-generator) .pk-dropdown-panel .bg-wh
 body[data-pk-theme="app"] .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-studio-console .pk-studio-generate-dock,
 body[data-pk-theme="app"] .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-studio-console .pk-dashboard-mobile-footer {
   background: var(--warm-dash-dock-fill) !important;
-  background-color: transparent !important;
-  border-top-color: rgba(255, 255, 255, 0.08) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(22px) saturate(1.28) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.28) !important;
+  border-top-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 -12px 40px rgba(0, 0, 0, 0.38) !important;
 }
 
 body[data-pk-theme="app"] .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-studio-console .pk-studio-generate-dock .bg-white\/5,
@@ -3206,21 +3218,21 @@ html.pk-warm-glass-active:has(.pk-dashboard-generator) .pk-prism-player.pk-warm-
 
 /* Fiche info mobile (portaled) */
 html.pk-warm-glass-active:has(.pk-dashboard-generator) .pk-loop-details-sheet {
-  background-color: color-mix(in srgb, rgba(20, 18, 24, 0.28) 88%, transparent) !important;
+  background-color: rgba(12, 10, 18, 0.97) !important;
   background-image: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.03) 0%,
-    rgba(0, 0, 0, 0.04) 100%
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(0, 0, 0, 0.1) 100%
   ) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 -20px 64px rgba(8, 6, 12, 0.28) !important;
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 -20px 64px rgba(0, 0, 0, 0.45) !important;
 }
 
 html.pk-warm-glass-active:has(.pk-dashboard-generator) .pk-loop-details-sheet-header {
-  background: rgba(255, 255, 255, 0.03) !important;
-  border-bottom-color: rgba(255, 255, 255, 0.09) !important;
+  background: rgba(12, 10, 18, 0.98) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 html.pk-warm-glass-active:has(.pk-dashboard-generator) .pk-loop-details-sheet .text-pk-muted,
@@ -3300,13 +3312,15 @@ html.pk-warm-glass-active:has(.pk-dashboard-generator) .pk-loop-details-sheet .b
   .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-mobile-dashboard-chrome {
     background: linear-gradient(
       165deg,
-      color-mix(in srgb, var(--warm-dash-glass) 92%, transparent),
-      color-mix(in srgb, var(--warm-dash-glass-soft) 94%, transparent)
+      var(--warm-dash-chrome-solid) 0%,
+      var(--warm-dash-chrome-solid-soft) 100%
     ) !important;
-    border-color: var(--warm-dash-chrome-border) !important;
+    backdrop-filter: blur(22px) saturate(1.25) !important;
+    -webkit-backdrop-filter: blur(22px) saturate(1.25) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
     box-shadow:
-      inset 0 1px 0 var(--warm-dash-chrome-highlight),
-      0 8px 28px rgba(8, 6, 12, 0.16) !important;
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 8px 28px rgba(0, 0, 0, 0.32) !important;
   }
 
   .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-mobile-gen-notice,
@@ -3323,10 +3337,10 @@ html.pk-warm-glass-active:has(.pk-dashboard-generator) .pk-loop-details-sheet .b
   }
 
   .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-dashboard-mobile-tabs {
-    background: var(--warm-dash-glass-soft) !important;
-    border-color: var(--warm-dash-chrome-border) !important;
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
-    --tw-ring-color: rgba(255, 255, 255, 0.08) !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+    --tw-ring-color: rgba(255, 255, 255, 0.1) !important;
   }
 
   .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-studio-console,
@@ -3362,8 +3376,26 @@ html.pk-warm-glass-active:has(.pk-dashboard-generator) .pk-loop-details-sheet .b
 
   .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-dashboard-mobile-footer {
     background: var(--warm-dash-dock-fill) !important;
-    border-top-color: rgba(255, 255, 255, 0.08) !important;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(22px) saturate(1.28) !important;
+    -webkit-backdrop-filter: blur(22px) saturate(1.28) !important;
+    border-top-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 -12px 40px rgba(0, 0, 0, 0.38) !important;
+  }
+
+  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-app-shell-mobile-nav {
+    background: linear-gradient(
+      180deg,
+      rgba(12, 10, 18, 0.92) 0%,
+      rgba(8, 6, 14, 0.98) 100%
+    ) !important;
+    backdrop-filter: blur(22px) saturate(1.3) !important;
+    -webkit-backdrop-filter: blur(22px) saturate(1.3) !important;
+    border-top-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 -8px 32px rgba(0, 0, 0, 0.35) !important;
   }
 
   .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-mobile-create-scroll .pk-studio-section {

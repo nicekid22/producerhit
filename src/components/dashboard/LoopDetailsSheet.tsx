@@ -42,20 +42,20 @@ export function LoopDetailsSheet({
   if (!open || typeof document === "undefined") return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[120] md:hidden" role="dialog" aria-modal="true" aria-label={title}>
+    <div className="fixed inset-0 z-[125] md:hidden" role="dialog" aria-modal="true" aria-label={title}>
       <button type="button" className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} aria-label={closeLabel} />
       <div
         className={cn(
-          "pk-loop-details-sheet absolute inset-x-0 flex flex-col overflow-hidden rounded-t-[1.25rem] border border-white/10",
+          "pk-loop-details-sheet absolute inset-x-0 flex flex-col overflow-hidden rounded-t-[1.25rem] border border-white/10 bg-[#050508]",
           "shadow-[0_-24px_80px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.06)]",
         )}
         style={{
           bottom: dockBottom,
-          maxHeight: `calc(100dvh - ${dockBottom} - 0.5rem)`,
+          maxHeight: `calc(100dvh - ${dockBottom} - 0.75rem)`,
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="pk-loop-details-sheet-header relative flex shrink-0 items-center border-b border-white/10 px-4 pb-3 pt-2 backdrop-blur-md">
+        <div className="pk-loop-details-sheet-header relative flex shrink-0 items-center border-b border-white/10 bg-[rgba(5,5,8,0.98)] px-4 pb-3 pt-2 backdrop-blur-md">
           <div className="flex w-full flex-col items-center gap-1.5 pr-11">
             <div className="h-1 w-10 rounded-full bg-white/25" aria-hidden />
             {title ? (
@@ -75,7 +75,10 @@ export function LoopDetailsSheet({
             <X className="h-4 w-4" />
           </Button>
         </div>
-        <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-6 pt-2">
+        <div
+          ref={scrollRef}
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-2 sm:px-5"
+        >
           {children}
         </div>
       </div>

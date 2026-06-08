@@ -287,6 +287,52 @@ export function Dropdown({
 
   const desktopListMaxHeight = panelRect ? Math.max(120, panelRect.maxHeight - (showSearch ? 56 : 0)) : 320;
 
+  const mobilePanel =
+    open && isMobile
+      ? createPortal(
+          <div className="fixed inset-0 z-[130] flex flex-col justify-end md:hidden" role="presentation">
+            <button
+              type="button"
+              className="absolute inset-0 bg-black/65 backdrop-blur-[2px]"
+              aria-label="Fermer"
+              onClick={() => setOpen(false)}
+            />
+            <div className="pk-dropdown-panel relative z-[1] flex max-h-[min(78vh,560px)] flex-col overflow-hidden rounded-t-2xl border border-pk-border bg-pk-bg shadow-[0_-24px_80px_rgba(0,0,0,0.55)]">
+              <div className="flex items-center justify-between gap-3 border-b border-pk-border/70 px-4 py-3">
+                <div className="min-w-0">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-pk-muted">{panelLabel}</div>
+                  {selected ? <div className="truncate text-sm font-semibold text-pk-text">{selected.label}</div> : null}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-pk-border bg-pk-input text-pk-muted"
+                  aria-label="Fermer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              {showSearch ? (
+                <div className="shrink-0 border-b border-pk-border/60 p-3">
+                  <input
+                    ref={searchRef}
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={onKeyDown}
+                    placeholder={panelLabel}
+                    className="w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm text-pk-text outline-none focus:border-pk-accent"
+                  />
+                </div>
+              ) : null}
+
+              <DropdownOptionsList {...listProps} listClassName="min-h-0 flex-1" listStyle={{ maxHeight: "min(62vh, 480px)" }} />
+            </div>
+          </div>,
+          document.body,
+        )
+      : null;
+
   const desktopPanel =
     open && !isMobile && panelRect
       ? createPortal(
@@ -352,50 +398,9 @@ export function Dropdown({
             )}
           </button>
           <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-pk-muted" aria-hidden />
-
-          {open && isMobile ? (
-            <div className="fixed inset-0 z-[120] flex flex-col justify-end md:hidden" role="presentation">
-              <button
-                type="button"
-                className="absolute inset-0 bg-black/65 backdrop-blur-[2px]"
-                aria-label="Fermer"
-                onClick={() => setOpen(false)}
-              />
-              <div className="pk-dropdown-panel relative z-[1] flex max-h-[min(78vh,560px)] flex-col overflow-hidden rounded-t-2xl border border-pk-border bg-pk-bg shadow-[0_-24px_80px_rgba(0,0,0,0.55)]">
-                <div className="flex items-center justify-between gap-3 border-b border-pk-border/70 px-4 py-3">
-                  <div className="min-w-0">
-                    <div className="text-[11px] font-semibold uppercase tracking-wide text-pk-muted">{panelLabel}</div>
-                    {selected ? <div className="truncate text-sm font-semibold text-pk-text">{selected.label}</div> : null}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setOpen(false)}
-                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-pk-border bg-pk-input text-pk-muted"
-                    aria-label="Fermer"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-
-                {showSearch ? (
-                  <div className="shrink-0 border-b border-pk-border/60 p-3">
-                    <input
-                      ref={searchRef}
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                      onKeyDown={onKeyDown}
-                      placeholder={panelLabel}
-                      className="w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm text-pk-text outline-none focus:border-pk-accent"
-                    />
-                  </div>
-                ) : null}
-
-                <DropdownOptionsList {...listProps} listClassName="min-h-0 flex-1" listStyle={{ maxHeight: "min(62vh, 480px)" }} />
-              </div>
-            </div>
-          ) : null}
         </div>
       </label>
+      {mobilePanel}
       {desktopPanel}
     </>
   );

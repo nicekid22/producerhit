@@ -539,11 +539,11 @@ body[data-pk-theme="app"] .pk-prism-stat {
 }
 
 body[data-pk-theme="app"] .pk-loop-details-sheet {
-  background-color: rgba(5, 5, 8, 0.88) !important;
+  background-color: rgba(5, 5, 8, 0.96) !important;
 }
 
 body[data-pk-theme="app"] .pk-loop-details-sheet-header {
-  background-color: rgba(5, 5, 8, 0.94) !important;
+  background-color: rgba(5, 5, 8, 0.98) !important;
 }
 
 body[data-pk-theme="app"] .pk-studio-rail {
@@ -551,12 +551,12 @@ body[data-pk-theme="app"] .pk-studio-rail {
 }
 
 body[data-pk-theme="app"] .pk-mobile-dashboard-chrome {
-  background-color: rgba(8, 7, 14, 0.56) !important;
+  background-color: rgba(8, 7, 14, 0.82) !important;
 }
 
 body[data-pk-theme="app"] .pk-dashboard-mobile-footer,
 body[data-pk-theme="app"] .pk-studio-generate-dock {
-  background-color: rgba(8, 7, 14, 0.54) !important;
+  background-color: rgba(8, 7, 14, 0.9) !important;
 }
 
 body[data-pk-theme="app"] .pk-mobile-gen-notice {
@@ -765,7 +765,7 @@ body[data-pk-theme="app"] .pk-prism-dashboard:not(.pk-warm-glass-stage) :is(
 }
 
 body[data-pk-theme="app"] .pk-app-shell-mobile-nav {
-  background-color: color-mix(in srgb, var(--pk-veil-surface-focal) 88%, transparent) !important;
+  background-color: rgba(8, 7, 14, 0.94) !important;
 }
 
 /* Micro-grain unifié (::after — ne touche pas ::before shimmer des cartes) */
