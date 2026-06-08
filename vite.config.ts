@@ -8,10 +8,13 @@ export default defineConfig(({ mode }) => ({
     sourcemap: "hidden",
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ["react", "react-dom", "react-router-dom"],
-          supabase: ["@supabase/supabase-js"],
-          ui: ["zustand", "react-hot-toast"],
+        manualChunks(id) {
+          if (id.includes("node_modules/react") || id.includes("node_modules/react-dom") || id.includes("node_modules/react-router-dom")) {
+            return "vendor";
+          }
+          if (id.includes("node_modules/@supabase/supabase-js")) return "supabase";
+          if (id.includes("node_modules/zustand") || id.includes("node_modules/react-hot-toast")) return "ui";
+          if (id.includes("/src/lib/audioApi") || id.includes("/src/lib/promptBuilder")) return "audio";
         },
       },
     },

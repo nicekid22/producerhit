@@ -36,6 +36,7 @@ export default function Library() {
   const loopsTotalCount = useLoopsStore((s) => s.loopsTotalCount);
   const loopsLoading = useLoopsStore((s) => s.loading);
   const loopsSyncError = useLoopsStore((s) => s.lastSyncError);
+  const loopsHydrated = useLoopsStore((s) => s.loopsHydrated);
   const loadMyLoops = useLoopsStore((s) => s.loadMyLoops);
   const durationsSecById = useLoopsStore((s) => s.durationsSecById);
   const deleteLoopRemote = useLoopsStore((s) => s.deleteLoopRemote);
@@ -50,8 +51,9 @@ export default function Library() {
   const libraryLoops = useMemo(() => dedupeLoopsById(loops), [loops]);
 
   useEffect(() => {
+    if (loopsHydrated) return;
     void loadMyLoops();
-  }, [loadMyLoops]);
+  }, [loadMyLoops, loopsHydrated]);
 
   const filtered = useMemo(() => {
     const base = genreFilter ? libraryLoops.filter((l) => l.genre === genreFilter) : libraryLoops;

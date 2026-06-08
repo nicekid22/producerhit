@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { captureAttributionFromUrl } from "@/lib/attribution";
 import { GA_MEASUREMENT_ID, isGa4ScriptPresent } from "@/lib/googleAnalytics";
+import { scheduleThirdPartyAnalytics } from "@/lib/deferredAnalytics";
 import { flushEventQueue, trackClientEvent } from "@/lib/supabaseClient";
 
 function loadGa4(id: string) {
@@ -49,6 +50,7 @@ export function GrowthBootstrap() {
   }, []);
 
   useEffect(() => {
+    scheduleThirdPartyAnalytics();
     if (!GA_MEASUREMENT_ID) return;
     loadGa4(GA_MEASUREMENT_ID);
   }, []);

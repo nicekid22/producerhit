@@ -16,6 +16,7 @@ export function saveLandingPendingGeneration(payload: LandingPendingGeneration) 
   } catch {
     void 0;
   }
+  void import("@/pages/Dashboard");
 }
 
 export function readLandingPendingGeneration(): LandingPendingGeneration | null {

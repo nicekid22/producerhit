@@ -23,7 +23,6 @@ import { resolvePlaybackUrlForLoop } from "@/stores/loopsStore";
 import { playLoopInContext, usePlayerStore } from "@/stores/playerStore";
 import { useLocaleStore } from "@/stores/localeStore";
 import type { Loop } from "@/types/loop";
-import { generateBeat } from "@/lib/audioApi";
 import { prepareLoopVariantGeneration, variantResultTitle } from "@/lib/loopVariantGeneration";
 import { getLoopAudioRetentionCardLabel, type LoopAudioRetentionContext } from "@/lib/loopAudioRetention";
 import { extractLoopVocalLanguage, formatVocalLanguageLabel, isSongLoop } from "@/lib/vocalLanguages";
@@ -336,6 +335,7 @@ export const LoopCardItem = memo(function LoopCardItem({
           typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `var-${Date.now()}-${Math.random().toString(16).slice(2)}`;
         const { inputParams, generateOptions, variantPrompt, nextSeed, engine, isSongLike } = prepareLoopVariantGeneration(loop, kind);
         const parentVocalLang = extractLoopVocalLanguage(loop) ?? "en";
+        const { generateBeat } = await import("@/lib/audioApi");
         const result = await generateBeat(inputParams, engine, { ...generateOptions, generationKey });
 
         audioUrl = result.audioUrl;
