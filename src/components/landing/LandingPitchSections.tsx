@@ -1,6 +1,7 @@
 import { Check } from "lucide-react";
 import { landingCopy } from "@/lib/landingContent";
 import { HeroCtaButton } from "@/components/landing/HeroCtaButton";
+import { buildAuthUrl } from "@/lib/authRoutes";
 import { LandingLiveGenerations } from "@/components/landing/LandingLiveGenerations";
 
 type Props = {
@@ -44,7 +45,7 @@ export function LandingPitchSections({ locale, user }: Props) {
             ))}
           </ul>
           <div className="mt-8">
-            <HeroCtaButton to={user ? "/dashboard" : "/auth"} variant="orbit">
+            <HeroCtaButton to={user ? "/dashboard" : buildAuthUrl()} variant="orbit">
               {copy.heroCtaPrimary}
             </HeroCtaButton>
           </div>

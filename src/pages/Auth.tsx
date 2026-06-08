@@ -9,9 +9,7 @@ import { getAttributionProps } from "@/lib/attribution";
 import { useLocaleStore } from "@/stores/localeStore";
 import { mapAuthError } from "@/lib/authProviders";
 import { markJustAuthenticated, sanitizePostAuthPath } from "@/lib/postAuthRedirect";
-import { buildDashboardUrlFromLandingPending } from "@/lib/landingPendingGeneration";
-
-type Mode = "login" | "signup";
+import { resolveAuthModeFromSearch, resolvePostAuthRedirect, type AuthMode } from "@/lib/authRoutes";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -24,11 +22,17 @@ export default function Auth() {
   const locale = useLocaleStore((s) => s.locale);
   const isFr = locale === "fr";
 
-  const [mode, setMode] = useState<Mode>("login");
+  const initialMode = useMemo(() => resolveAuthModeFromSearch(location.search), [location.search]);
+  const [mode, setMode] = useState<AuthMode>(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [inlineError, setInlineError] = useState<string | null>(null);
+  const [awaitingEmailConfirm, setAwaitingEmailConfirm] = useState(false);
+
+  useEffect(() => {
+    setMode(resolveAuthModeFromSearch(location.search));
+  }, [location.search]);
 
   const googleIcon = (
     <svg viewBox="0 0 48 48" className="h-4 w-4" aria-hidden="true">
@@ -46,11 +50,7 @@ export default function Auth() {
     return sanitizePostAuthPath(next || state?.from || "/dashboard");
   }, [location.search, location.state]);
 
-  const getPostAuthRedirect = useCallback(() => {
-    const fromLanding = buildDashboardUrlFromLandingPending();
-    if (fromLanding) return fromLanding;
-    return redirectTo;
-  }, [redirectTo]);
+  const getPostAuthRedirect = useCallback(() => resolvePostAuthRedirect(redirectTo), [redirectTo]);
 
   const finishAuthRedirect = useCallback(() => {
     markJustAuthenticated();
@@ -72,6 +72,7 @@ export default function Auth() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setInlineError(null);
+    setAwaitingEmailConfirm(false);
     setBusy(true);
     try {
       if (mode === "login") {
@@ -79,14 +80,12 @@ export default function Auth() {
         toast.success(isFr ? "T'es connecté — let's cook 🔥" : "You're in — let's cook 🔥");
         finishAuthRedirect();
       } else {
-        const { needsEmailConfirm } = await signUp(email.trim(), password);
+        trackClientEvent("signup_started", { method: "email", ...getAttributionProps() });
+        const postAuthPath = getPostAuthRedirect();
+        const { needsEmailConfirm } = await signUp(email.trim(), password, postAuthPath);
         trackClientEvent("signup_completed", { method: "email", needs_email_confirm: needsEmailConfirm, ...getAttributionProps() });
         if (needsEmailConfirm) {
-          toast.success(
-            isFr
-              ? "Si tu ne reçois pas d'email, ce compte existe peut-être déjà — essaie Google ou mot de passe oublié."
-              : "If no email arrives, this account may already exist — try Google or forgot password.",
-          );
+          setAwaitingEmailConfirm(true);
         } else {
           try {
             window.localStorage.setItem("producerhit_dashboard_welcome_v1", "1");
@@ -109,8 +108,10 @@ export default function Auth() {
     setInlineError(null);
     setBusy(true);
     try {
+      if (mode === "signup") {
+        trackClientEvent("signup_started", { method: "google", ...getAttributionProps() });
+      }
       await signInWithGoogle(email.trim() || undefined, getPostAuthRedirect());
-      trackClientEvent("signup_started", { method: "google", ...getAttributionProps() });
     } catch (err) {
       const message = mapAuthError(err, locale, "google");
       setInlineError(message);
@@ -141,6 +142,42 @@ export default function Auth() {
     }
   }
 
+  if (awaitingEmailConfirm) {
+    return (
+      <MarketingPageShell className="min-h-[100dvh] text-pk-text">
+        <Navbar variant="auth" />
+        <div className="mx-auto flex min-h-[calc(100dvh-3.5rem)] max-w-md flex-col justify-center px-6 py-10">
+          <div className="pk-auth-panel rounded-2xl border border-pk-border bg-pk-panel/70 p-8 shadow-[0_24px_70px_rgba(0,0,0,0.55)] backdrop-blur-xl text-center">
+            <div className="text-2xl" aria-hidden>
+              ✉️
+            </div>
+            <h1 className="mt-3 text-lg font-semibold">{isFr ? "Confirme ton email" : "Confirm your email"}</h1>
+            <p className="mt-2 text-sm leading-relaxed text-pk-muted">
+              {isFr
+                ? `On t'a envoyé un lien à ${email.trim()}. Ouvre-le pour activer ton compte et accéder au studio.`
+                : `We sent a link to ${email.trim()}. Open it to activate your account and enter the studio.`}
+            </p>
+            <p className="mt-3 text-[11px] leading-relaxed text-pk-muted/80">
+              {isFr
+                ? "Rien reçu ? Vérifie les spams ou connecte-toi avec Google — même email, même compte."
+                : "Nothing in inbox? Check spam or continue with Google — same email, same account."}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setAwaitingEmailConfirm(false);
+                setMode("login");
+              }}
+              className="pk-prism-btn mt-6 inline-flex w-full items-center justify-center rounded-full px-4 py-3 text-sm font-semibold"
+            >
+              {isFr ? "J'ai confirmé — me connecter" : "I confirmed — sign in"}
+            </button>
+          </div>
+        </div>
+      </MarketingPageShell>
+    );
+  }
+
   return (
     <MarketingPageShell className="min-h-[100dvh] text-pk-text">
       <Navbar variant="auth" />
@@ -159,8 +196,8 @@ export default function Auth() {
                   ? "Connecte-toi — email ou Google, même compte."
                   : "Sign in — email or Google, same account."
                 : isFr
-                  ? "Crée ton compte en quelques secondes."
-                  : "Create your account in seconds."}
+                  ? "Crée ton compte gratuit — prêt en quelques secondes."
+                  : "Create your free account — ready in seconds."}
             </p>
           </div>
 
@@ -213,7 +250,7 @@ export default function Auth() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2 text-sm text-pk-text outline-none ring-0 placeholder:text-pk-muted focus:border-pk-accent"
                 placeholder="••••••••"
-                autoComplete="current-password"
+                autoComplete={mode === "login" ? "current-password" : "new-password"}
                 required
                 minLength={6}
               />
@@ -234,7 +271,15 @@ export default function Auth() {
               disabled={busy}
               className="pk-prism-btn inline-flex w-full items-center justify-center rounded-full px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {busy ? (isFr ? "Chargement…" : "Loading…") : mode === "login" ? "Login" : "Create account"}
+              {busy
+                ? isFr
+                  ? "Chargement…"
+                  : "Loading…"
+                : mode === "login"
+                  ? "Login"
+                  : isFr
+                    ? "Créer mon compte gratuit"
+                    : "Create free account"}
             </button>
 
             <button

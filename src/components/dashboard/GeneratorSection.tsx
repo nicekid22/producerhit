@@ -34,11 +34,11 @@ export function GeneratorSection({
 
   if (!collapsible) {
     return (
-      <div className={cn("pk-studio-section border-b border-pk-border", generatorSectionPad, className)}>
+      <div className={cn("pk-studio-section min-w-0 max-w-full border-b border-pk-border", generatorSectionPad, className)}>
         <div className="text-sm font-semibold pk-studio-section__title md:text-inherit">
           <GeneratorSectionHeading title={title} hint={hint} />
         </div>
-        <div className="mt-4 md:mt-5">{children}</div>
+        <div className="mt-4 min-w-0 md:mt-5">{children}</div>
       </div>
     );
   }
@@ -46,19 +46,19 @@ export function GeneratorSection({
   return (
     <div
       className={cn(
-        "pk-studio-section mx-3 mb-3 overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.025]",
-        "md:mx-0 md:mb-0 md:overflow-visible md:rounded-none md:border-0 md:border-b md:border-pk-border md:bg-transparent",
+        "pk-studio-section mx-3 mb-3 min-w-0 max-w-[calc(100%-1.5rem)] overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.025]",
+        "md:mx-0 md:mb-0 md:max-w-none md:overflow-visible md:rounded-none md:border-0 md:border-b md:border-pk-border md:bg-transparent",
         "md:px-6 md:py-4",
         className,
       )}
     >
       <button
         type="button"
-        className="flex w-full items-center justify-between gap-3 px-3.5 py-3.5 md:pointer-events-none md:cursor-default md:border-0 md:bg-transparent md:p-0"
+        className="flex w-full min-w-0 items-center justify-between gap-3 px-3.5 py-3.5 md:pointer-events-none md:cursor-default md:border-0 md:bg-transparent md:p-0"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
       >
-        <span className="pk-studio-section__title text-[13px] font-semibold text-left tracking-tight md:text-inherit">
+        <span className="pk-studio-section__title min-w-0 text-[13px] font-semibold text-left tracking-tight md:text-inherit">
           <GeneratorSectionHeading title={title} hint={hint} />
         </span>
         <ChevronDown
@@ -66,8 +66,8 @@ export function GeneratorSection({
           aria-hidden
         />
       </button>
-      <div className={cn("px-3.5 pb-3.5 md:px-0 md:pb-0", !open && "hidden md:block")}>
-        <div className="md:mt-5">{children}</div>
+      <div className={cn("min-w-0 px-3.5 pb-3.5 md:px-0 md:pb-0", !open && "hidden md:block")}>
+        <div className="min-w-0 md:mt-5">{children}</div>
       </div>
     </div>
   );

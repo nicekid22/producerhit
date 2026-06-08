@@ -1,4 +1,5 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { buildAuthUrl } from "@/lib/authRoutes";
 import { useAuthStore } from "@/stores/authStore";
 
 export function ProtectedRoute() {
@@ -20,7 +21,8 @@ export function ProtectedRoute() {
   }
 
   if (!user) {
-    return <Navigate to="/auth" replace state={{ from: location.pathname }} />;
+    const returnTo = `${location.pathname}${location.search}`;
+    return <Navigate to={buildAuthUrl({ next: returnTo })} replace />;
   }
 
   return <Outlet />;

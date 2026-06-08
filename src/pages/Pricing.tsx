@@ -52,7 +52,7 @@ export default function Pricing() {
           bullets: [
             `${PLAN_LIMITS.free} générations Song + Beat`,
             standardAudioRetentionNote("fr"),
-            "Export MP3 royalty-free",
+            "Export MP3",
             "Bibliothèque cloud + player",
             "Preview mastering (après 4 gen)",
           ],
@@ -64,10 +64,11 @@ export default function Pricing() {
           meta: "75 générations / mois",
           bullets: [
             "75 générations / mois",
-            "Export MP3",
+            "Export WAV + MP3 Spotify Ready",
             "Mode Song + Type Beat",
             "Mode Remix & Cover",
-            
+            "Cover art auto + partage pro",
+            "Utilisation commerciale autorisée",
             standardAudioRetentionNote("fr"),
           ],
         },
@@ -83,7 +84,7 @@ export default function Pricing() {
             "Mastering Studio complet",
             "Remix & Cover",
             "Export MP3 + WAV",
-            "Utilisation commerciale autorisée",
+            "Libre de droits pour un usage commercial.",
           ],
         },
         {

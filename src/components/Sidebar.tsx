@@ -9,6 +9,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { COMMUNITY_HUB_NAV } from "@/lib/communityHub";
 import { ThemeToggleButton } from "@/components/ThemeToggleButton";
 import { useLocaleStore } from "@/stores/localeStore";
+import { buildAuthUrl } from "@/lib/authRoutes";
 
 type Item = { to: string; label: string; icon: React.ReactNode };
 
@@ -134,7 +135,7 @@ export function Sidebar() {
             </button>
           ) : (
             <Link
-              to="/auth?next=/dashboard"
+              to={buildAuthUrl({ mode: "login", next: "/dashboard" })}
               className="flex h-10 w-10 items-center justify-center rounded-pk text-pk-muted transition-colors hover:bg-white/5 hover:text-pk-text"
               aria-label={locale === "fr" ? "Connexion" : "Login"}
               title={locale === "fr" ? "Connexion" : "Login"}
@@ -184,7 +185,7 @@ export function Sidebar() {
           </button>
         ) : (
           <Link
-            to="/auth?next=/dashboard"
+            to={buildAuthUrl({ mode: "login", next: "/dashboard" })}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-pk-muted transition-colors hover:bg-white/5 hover:text-pk-text"
             aria-label={locale === "fr" ? "Connexion" : "Login"}
             title={locale === "fr" ? "Connexion" : "Login"}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
+import { buildAuthUrl } from "@/lib/authRoutes";
 import { useLocaleStore } from "@/stores/localeStore";
 import { useAuthStore } from "@/stores/authStore";
 import { HeroCtaButton } from "@/components/landing/HeroCtaButton";
@@ -43,7 +44,7 @@ export function Navbar({ variant }: { variant: "marketing" | "auth" }) {
               {locale === "fr" ? "Blog" : "Blog"}
             </Link>
             {user ? null : (
-              <Link to="/auth" className="hover:text-pk-text">
+              <Link to={buildAuthUrl({ mode: "login" })} className="hover:text-pk-text">
                 {locale === "fr" ? "Connexion" : "Login"}
               </Link>
             )}
@@ -78,7 +79,7 @@ export function Navbar({ variant }: { variant: "marketing" | "auth" }) {
                 {locale === "fr" ? "Dashboard" : "Dashboard"}
               </Link>
             ) : (
-              <HeroCtaButton to="/auth" variant="spark" size="nav">
+              <HeroCtaButton to={buildAuthUrl()} variant="spark" size="nav">
                 {locale === "fr" ? "Essayer gratuit" : "Start Free"}
               </HeroCtaButton>
             )}
@@ -129,10 +130,10 @@ export function Navbar({ variant }: { variant: "marketing" | "auth" }) {
             </Link>
             {!user ? (
               <>
-                <Link to="/auth" className="rounded-xl px-3 py-2.5 text-sm font-semibold text-pk-text hover:bg-white/5" onClick={() => setMobileOpen(false)}>
+                <Link to={buildAuthUrl({ mode: "login" })} className="rounded-xl px-3 py-2.5 text-sm font-semibold text-pk-text hover:bg-white/5" onClick={() => setMobileOpen(false)}>
                   {isFr ? "Connexion" : "Login"}
                 </Link>
-                <HeroCtaButton to="/auth" variant="spark" size="nav" className="w-full rounded-xl" onClick={() => setMobileOpen(false)}>
+                <HeroCtaButton to={buildAuthUrl()} variant="spark" size="nav" className="w-full rounded-xl" onClick={() => setMobileOpen(false)}>
                   {isFr ? "Essayer gratuit" : "Start free"}
                 </HeroCtaButton>
               </>

@@ -1,6 +1,11 @@
 # Supabase Edge Functions — JWT verification
 # stripe-webhook must accept unsigned Stripe POST requests.
 
+# Auth — inscription immédiate sans confirmation email (local + doc prod)
+[auth.email]
+enable_signup = true
+enable_confirmations = false
+
 [functions.stripe-webhook]
 verify_jwt = false
 

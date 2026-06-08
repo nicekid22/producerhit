@@ -44,10 +44,10 @@ export function GenrePickControl({ locale, mode, onModeChange, genre, onGenreCha
       : RANDOM_GENRE_VALUE;
 
   return (
-    <div className={cn("grid", compact ? "gap-2.5" : "gap-3")}>
-      <div>
+    <div className={cn("grid min-w-0 max-w-full", compact ? "gap-2.5" : "gap-3")}>
+      <div className="min-w-0 max-w-full">
         {compact ? null : <div className="text-xs text-pk-muted">{isFr ? "Genre" : "Genre"}</div>}
-        <div className={cn("flex flex-wrap gap-2", compact ? "" : "mt-2")}>
+        <div className={cn("flex max-w-full flex-wrap gap-2", compact ? "" : "mt-2")}>
           {modes.map((m) => {
             const active = mode === m.id;
             return (

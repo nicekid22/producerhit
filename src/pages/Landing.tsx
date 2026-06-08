@@ -48,6 +48,7 @@ import { WarmGlassBackdrop } from "@/components/WarmGlassBackdrop";
 import { useVisualThemeStore, isWarmGlassTheme } from "@/stores/visualThemeStore";
 import { landingCopy, landingFeatureCards, landingFlowSectionClass, landingSectionClass } from "@/lib/landingContent";
 import { saveLandingPendingGeneration } from "@/lib/landingPendingGeneration";
+import { buildAuthUrl } from "@/lib/authRoutes";
 import { cn } from "@/lib/utils";
 import { PLAN_LIMITS } from "@/lib/planLimits";
 import { isRecommendedPlan, normalizePlan, pricingCtaHref, pricingCtaMeta } from "@/lib/billing";
@@ -466,15 +467,13 @@ export default function Landing() {
     return placeholders[placeholderIndex] ?? "Afrobeats summer hit with female vocals";
   };
 
-  const onGenerate = async () => {
+  const onGenerate = () => {
     if (generating) return;
-    setGenerating(true);
-    await new Promise((r) => setTimeout(r, 1500));
     const promptValue = mode === "beat" ? inferBeatPrompt() : inferSongPrompt();
     saveLandingPendingGeneration({ prompt: promptValue, mode });
     if (!user) {
       trackClientEvent("landing_generate_click", { mode });
-      navigate("/auth");
+      navigate(buildAuthUrl());
       return;
     }
     trackClientEvent("landing_generate_click", { mode });
@@ -1148,12 +1147,12 @@ export default function Landing() {
             ) : (
               <>
                 <Link
-                  to="/auth"
+                  to={buildAuthUrl({ mode: "login" })}
                   className="pk-glass-btn pk-glass-btn--ghost inline-flex h-10 items-center justify-center rounded-full px-5 text-sm font-semibold"
                 >
                   {locale === "fr" ? "Connexion" : "Login"}
                 </Link>
-                <HeroCtaButton to="/auth" variant="spark" size="nav">
+                <HeroCtaButton to={buildAuthUrl()} variant="spark" size="nav">
                   {locale === "fr" ? "Essayer gratuit" : "Start Free"}
                 </HeroCtaButton>
               </>
@@ -1227,14 +1226,14 @@ export default function Landing() {
                 {!user ? (
                   <>
                     <Link
-                      to="/auth"
+                      to={buildAuthUrl({ mode: "login" })}
                       className="pk-landing-mobile-nav__item"
                       onClick={() => setMobileOpen(false)}
                     >
                       {locale === "fr" ? "Connexion" : "Login"}
                     </Link>
                     <HeroCtaButton
-                      to="/auth"
+                      to={buildAuthUrl()}
                       variant="spark"
                       size="nav"
                       className="pk-landing-mobile-nav__item pk-landing-mobile-nav__item--cta w-full rounded-[0.875rem]"
@@ -1579,7 +1578,7 @@ export default function Landing() {
                 {copy.ctaLead}
               </div>
               <div className="mt-8">
-                <HeroCtaButton to="/auth" variant="beam" size="lg">
+                <HeroCtaButton to={buildAuthUrl()} variant="beam" size="lg">
                   {copy.ctaButton}
                 </HeroCtaButton>
               </div>

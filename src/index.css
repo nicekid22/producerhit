@@ -2090,15 +2090,37 @@ a.pk-pricing-plan-btn {
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
+  min-width: 0;
+  max-width: 100%;
   overflow: hidden;
 }
 
 .pk-mobile-create-scroll {
   flex: 1 1 auto;
   min-height: 0;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 767px) {
+  .pk-dashboard-generator,
+  .pk-dashboard-generator .pk-studio-left-scroll {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .pk-dashboard-generator .pk-studio-section,
+  .pk-dashboard-generator .pk-studio-left-scroll > .border-b {
+    overflow-x: clip;
+  }
+
+  .pk-dashboard-generator .pk-gen-inline-toggle-row {
+    padding-right: 2px;
+  }
 }
 
 .pk-dashboard-results-scroll {

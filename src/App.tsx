@@ -90,9 +90,8 @@ export default function App() {
                   <Route path="/pricing" element={<PricingPage />} />
                   <Route path="/legal" element={<LegalPage />} />
 
-                  <Route path="/dashboard" element={<DashboardPage />} />
-
                   <Route element={<ProtectedRoute />}>
+                    <Route path="/dashboard" element={<DashboardPage />} />
                     <Route path="/library" element={<LibraryPage />} />
                     {isSampleLabEnabled() ? <Route path="/sample-lab" element={<SampleLabPage />} /> : null}
                     <Route path="/settings" element={<SettingsPage />} />

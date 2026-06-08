@@ -14,6 +14,7 @@ import { landingCopy, landingValueBlocks } from "@/lib/landingContent";
 import { PLAN_LIMITS } from "@/lib/planLimits";
 import { Button } from "@/components/ui/Button";
 import { HeroCtaButton } from "@/components/landing/HeroCtaButton";
+import { buildAuthUrl } from "@/lib/authRoutes";
 
 type Props = {
   locale: "en" | "fr";
@@ -50,7 +51,7 @@ export function LandingValueGrid({ locale, user }: Props) {
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/60">{copy.freeSpotlightLead}</p>
             <div className="mt-6">
-              <HeroCtaButton to={user ? "/dashboard" : "/auth"} variant="drift">
+              <HeroCtaButton to={user ? "/dashboard" : buildAuthUrl()} variant="drift">
                 {copy.heroCtaPrimary}
               </HeroCtaButton>
             </div>
@@ -89,7 +90,7 @@ export function LandingValueGrid({ locale, user }: Props) {
                 {copy.exploreCtaButton}
               </Button>
             </Link>
-            <HeroCtaButton to={user ? "/dashboard" : "/auth"} variant="wave">
+            <HeroCtaButton to={user ? "/dashboard" : buildAuthUrl()} variant="wave">
               {copy.heroCtaPrimary}
             </HeroCtaButton>
           </div>

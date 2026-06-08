@@ -2487,7 +2487,7 @@ export default function Dashboard() {
     })();
   }, [detailsLoop, detailsTitle, locale, renameLoopRemote]);
 
-  const chipRowClass = mobileV2 ? "pk-chip-scroll mt-2" : "mt-2 flex flex-wrap gap-2";
+  const chipRowClass = "mt-2 flex min-w-0 max-w-full flex-wrap gap-2";
 
   const openMaster = useCallback(
     (loop: Loop) => {
@@ -2569,7 +2569,7 @@ export default function Dashboard() {
       left={
         <div
           className={cn(
-            "pk-studio-left-stack pk-dashboard-generator flex min-h-0 flex-1 flex-col md:h-full md:overflow-hidden",
+            "pk-studio-left-stack pk-dashboard-generator flex min-h-0 min-w-0 max-w-full flex-1 flex-col md:h-full md:overflow-hidden",
             mobileV2 && mobileTab === "create" && "pk-mobile-create-shell",
           )}
         >
@@ -2667,7 +2667,7 @@ export default function Dashboard() {
 
           <div
             className={cn(
-              "pk-studio-left-scroll min-h-0 md:overflow-y-auto",
+              "pk-studio-left-scroll min-h-0 min-w-0 max-w-full md:overflow-y-auto",
               mobileV2 ? "pk-mobile-create-scroll overflow-y-auto" : "flex-1 overflow-y-auto",
             )}
           >
@@ -2698,7 +2698,7 @@ export default function Dashboard() {
                   collapsible={mobileV2}
                   defaultOpen
                 >
-                  <div className="grid gap-4">
+                  <div className="grid min-w-0 max-w-full gap-4">
                     <GenrePickControl
                       compact
                       locale={locale}
@@ -2822,14 +2822,14 @@ export default function Dashboard() {
                 ) : null}
 
                 {advancedOpen && (
-                  <div className={cn("border-b border-pk-border", generatorSectionPad)}>
+                  <div className={cn("min-w-0 max-w-full overflow-x-clip border-b border-pk-border", generatorSectionPad)}>
                     <div className="text-sm font-semibold">{locale === "fr" ? "Tempo & Tonalité" : "Tempo & Key"}</div>
 
-                    <div className="mt-4 grid gap-4">
+                    <div className="mt-4 grid min-w-0 max-w-full gap-4">
                       <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="text-xs text-pk-muted">BPM</div>
-                          <div className="flex bg-pk-bg rounded-full p-0.5 border border-pk-border">
+                        <div className="pk-gen-inline-toggle-row flex min-w-0 items-center justify-between gap-2 mb-2">
+                          <div className="min-w-0 shrink text-xs text-pk-muted">BPM</div>
+                          <div className="flex shrink-0 items-center rounded-full border border-pk-border bg-pk-bg p-0.5">
                             <button
                               type="button"
                               onClick={() => setBeatTempoMode("auto")}
@@ -2888,9 +2888,9 @@ export default function Dashboard() {
                       </div>
 
                       <div className="grid gap-3">
-                        <div className="flex items-center justify-between">
-                          <div className="text-xs text-pk-muted">{locale === "fr" ? "Tonalité" : "Musical Key"}</div>
-                          <div className="flex bg-pk-bg rounded-full p-0.5 border border-pk-border">
+                        <div className="pk-gen-inline-toggle-row flex min-w-0 items-center justify-between gap-2">
+                          <div className="min-w-0 shrink text-xs text-pk-muted">{locale === "fr" ? "Tonalité" : "Musical Key"}</div>
+                          <div className="flex shrink-0 items-center rounded-full border border-pk-border bg-pk-bg p-0.5">
                             <button
                               type="button"
                               onClick={() => setBeatKeyMode("auto")}
@@ -2942,9 +2942,9 @@ export default function Dashboard() {
                 )}
 
                 {advancedOpen && (
-                  <div className={cn("pk-studio-section border-b border-pk-border bg-pk-bg/30", generatorSectionPad)}>
+                  <div className={cn("pk-studio-section min-w-0 max-w-full overflow-x-clip border-b border-pk-border bg-pk-bg/30", generatorSectionPad)}>
                     <div className="text-sm font-semibold">{locale === "fr" ? "Avancé" : "Advanced"}</div>
-                    <div className="mt-4 grid gap-4">
+                    <div className="mt-4 grid min-w-0 max-w-full gap-4">
                       <GeneratorAdvancedOutputControls
                         locale={locale}
                         versions={versions}
@@ -2956,7 +2956,7 @@ export default function Dashboard() {
                       />
                       <div>
                         <div className="text-xs text-pk-muted mb-2">{locale === "fr" ? "Longueur" : "Length"}</div>
-                        <div className="grid grid-cols-4 gap-2">
+                        <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4">
                           {lengths.map((l) => {
                             const active = form.loopLength === l;
                             return (
@@ -3163,7 +3163,7 @@ export default function Dashboard() {
                   collapsible={mobileV2}
                   defaultOpen
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
                     <button
                       type="button"
                       onClick={() => setLyricsMode("manual")}
@@ -3221,9 +3221,9 @@ export default function Dashboard() {
                 </GeneratorSection>
 
                 {songIsCustom && (
-                  <div className={cn("pk-studio-section border-b border-pk-border bg-pk-bg/30", generatorSectionPad)}>
+                  <div className={cn("pk-studio-section min-w-0 max-w-full overflow-x-clip border-b border-pk-border bg-pk-bg/30", generatorSectionPad)}>
                     <div className="text-sm font-semibold">{locale === "fr" ? "Réglages avancés" : "Advanced Settings"}</div>
-                    <div className="mt-4 grid gap-4">
+                    <div className="mt-4 grid min-w-0 max-w-full gap-4">
                       <GeneratorAdvancedOutputControls
                         locale={locale}
                         versions={versions}
@@ -3243,10 +3243,10 @@ export default function Dashboard() {
                         options={influenceDropdownOptions}
                       />
                       
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="text-xs text-pk-muted">Tempo</div>
-                          <div className="flex bg-pk-bg rounded-full p-0.5 border border-pk-border">
+                      <div className="min-w-0">
+                        <div className="pk-gen-inline-toggle-row mb-2 flex min-w-0 items-center justify-between gap-2">
+                          <div className="min-w-0 shrink text-xs text-pk-muted">Tempo</div>
+                          <div className="flex shrink-0 items-center rounded-full border border-pk-border bg-pk-bg p-0.5">
                             <button
                               type="button"
                               onClick={() => setSongTempoMode("auto")}
@@ -3304,10 +3304,10 @@ export default function Dashboard() {
                         )}
                       </div>
 
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="text-xs text-pk-muted">{locale === "fr" ? "Durée" : "Duration"}</div>
-                          <div className="flex bg-pk-bg rounded-full p-0.5 border border-pk-border">
+                      <div className="min-w-0">
+                        <div className="pk-gen-inline-toggle-row mb-2 flex min-w-0 items-center justify-between gap-2">
+                          <div className="min-w-0 shrink text-xs text-pk-muted">{locale === "fr" ? "Durée" : "Duration"}</div>
+                          <div className="flex shrink-0 items-center rounded-full border border-pk-border bg-pk-bg p-0.5">
                             <button
                               type="button"
                               onClick={() => setSongDurationMode("auto")}

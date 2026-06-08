@@ -39,24 +39,11 @@ export function GeneratorAdvancedOutputControls({
   const isFr = locale === "fr";
 
   return (
-    <div className="grid gap-4">
-      <div>
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="text-xs font-medium text-pk-muted">{isFr ? "Versions" : "Versions"}</div>
-            <p className="mt-0.5 inline-flex flex-wrap items-center gap-1 text-[10px] text-pk-muted/80">
-              {canDualGeneration ? (
-                <>
-                  <span>{isFr ? "2 pistes en parallèle (" : "2 tracks at once ("}</span>
-                  <GenerationCreditAmount amount={2} iconClassName="h-2.5 w-2.5" />
-                  <span>{isFr ? ")." : ")."}</span>
-                </>
-              ) : (
-                <span>{isFr ? "×2 en parallèle — plan Studio+" : "×2 parallel — Studio plan+"}</span>
-              )}
-            </p>
-          </div>
-          <div className="flex shrink-0 items-center gap-1 rounded-full bg-white/5 p-1">
+    <div className="grid min-w-0 max-w-full gap-4">
+      <div className="min-w-0 max-w-full">
+        <div className="flex min-w-0 items-center justify-between gap-2">
+          <div className="min-w-0 text-xs font-medium text-pk-muted">{isFr ? "Versions" : "Versions"}</div>
+          <div className="flex shrink-0 items-center gap-1 rounded-full border border-white/[0.06] bg-white/5 p-1">
             <button
               type="button"
               onClick={() => onVersionsChange(1)}
@@ -88,12 +75,23 @@ export function GeneratorAdvancedOutputControls({
             </button>
           </div>
         </div>
+        <p className="mt-1.5 inline-flex max-w-full flex-wrap items-center gap-1 text-[10px] leading-snug text-pk-muted/80">
+          {canDualGeneration ? (
+            <>
+              <span>{isFr ? "2 pistes en parallèle (" : "2 tracks at once ("}</span>
+              <GenerationCreditAmount amount={2} iconClassName="h-2.5 w-2.5" />
+              <span>{isFr ? ")." : ")."}</span>
+            </>
+          ) : (
+            <span>{isFr ? "×2 en parallèle — plan Studio+" : "×2 parallel — Studio plan+"}</span>
+          )}
+        </p>
       </div>
 
       {showVocalStyle && onVocalStyleChange ? (
-        <div>
+        <div className="min-w-0 max-w-full">
           <div className="text-xs text-pk-muted">{isFr ? "Style vocal" : "Vocal Style"}</div>
-          <div className={chipRowClass}>
+          <div className={cn(chipRowClass, "max-w-full flex-wrap")}>
             {VOCAL_STYLE_OPTIONS.map((v) => {
               const active = vocalStyle === v.value;
               return (

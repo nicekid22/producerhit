@@ -1,4 +1,5 @@
 import toast from "react-hot-toast";
+import { buildAuthUrl } from "@/lib/authRoutes";
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
 import { PLAN_RANK, type PaidPlanId, type PlanId, normalizePlanId } from "@/lib/planEntitlements";
 
@@ -34,7 +35,7 @@ export function buildPricingUrl(plan?: PaidPlan, autoCheckout = false): string {
 }
 
 export function buildAuthNextUrl(plan: PaidPlan): string {
-  return `/auth?next=${encodeURIComponent(buildPricingUrl(plan, true))}`;
+  return buildAuthUrl({ next: buildPricingUrl(plan, true) });
 }
 
 export function extractInvokeError(err: unknown): { status?: number; message: string } {
