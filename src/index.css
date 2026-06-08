@@ -646,6 +646,47 @@ body {
   -webkit-backdrop-filter: none;
 }
 
+@media (max-width: 767px) {
+  /* Bandeau safe-area iPhone — fond thème (évite le brun body/html sous la status bar) */
+  .pk-landing-header::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-top, 0px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .pk-prism-stage--landing.pk-landing--mobile-focus:not(.pk-warm-glass-stage) .pk-landing-header::before {
+    background: linear-gradient(180deg, #1e1040 0%, #0c0820 100%);
+  }
+
+  .pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-header::before {
+    background: var(--warm-safe-area-fill, linear-gradient(180deg, #c89838 0%, #c85028 52%, #a83858 100%));
+  }
+
+  .pk-mobile-app-shell::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-top, 0px);
+    pointer-events: none;
+    z-index: 60;
+  }
+
+  .pk-prism-dashboard:not(.pk-warm-glass-stage).pk-mobile-app-shell::before {
+    background: linear-gradient(180deg, #1a0e38 0%, #0c0820 100%);
+  }
+
+  .pk-warm-glass-stage.pk-mobile-app-shell::before {
+    background: var(--warm-safe-area-fill, linear-gradient(180deg, #c89838 0%, #c85028 52%, #a83858 100%));
+  }
+}
+
 .pk-landing-header--scrolled {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);

@@ -210,7 +210,7 @@ export function DashboardPromoBillboard({
         accent: "rose",
         tag: isFr ? "Mastering" : "Mastering",
         headline: isFr ? "Haute qualité Audio" : "High Quality/WAV",
-        subline: isFr ? "Export pro, ready pour la release." : "Pro export, release-ready.",
+        subline: isFr ? "Export pro, prêt pour la sortie." : "Pro export, release-ready.",
         cta: isFr ? "Studio" : "Studio",
         icon: AudioWaveform,
         onClick: onMastering,

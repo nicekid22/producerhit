@@ -721,6 +721,11 @@
     -webkit-backdrop-filter: none !important;
   }
 
+  .pk-landing--mobile-focus .pk-landing-header__bar {
+    position: relative;
+    z-index: 1;
+  }
+
   /* Hero : logo visible normalement ; pills glass au scroll / menu ouvert */
   .pk-landing--mobile-focus .pk-landing-header--mobile-focus-mode:not(.pk-landing-header--scrolled):not(.pk-landing-header--menu-open)
     .pk-landing-header__brand-slot--mobile > a {

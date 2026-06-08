@@ -1,4 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { ensureLandingMobileStyles } from "@/lib/themeStyles";
 import { useEffect, useMemo, useRef, useState, useCallback, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/stores/authStore";
@@ -144,6 +145,10 @@ function RevealSection({
 }
 
 export default function Landing() {
+  useEffect(() => {
+    void ensureLandingMobileStyles();
+  }, []);
+
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAuthStore((s) => s.user);

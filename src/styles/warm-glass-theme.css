@@ -6,44 +6,45 @@
  */
 
 .pk-warm-glass-stage {
-  --prism-violet: #a07888;
-  --prism-cyan: #c9a878;
+  --prism-violet: #d85878;
+  --prism-cyan: #f0c848;
   --prism-silver: #fff4e8;
   --prism-chrome: #fff8f0;
-  --prism-accent: #c9a878;
+  --prism-accent: #e87838;
   --prism-glass: rgba(255, 240, 220, 0.14);
   --prism-border: rgba(255, 210, 170, 0.28);
   --warm-pigment-yellow: #c89830;
   --warm-pigment-rose: #a83858;
   --warm-pigment-orange: #c05028;
   --warm-pigment-coral: #8a3820;
-  /* Accents UI — ambre sable → rose poussière (ref. bouton Génération…) */
-  --warm-accent-gold: #c9a878;
-  --warm-accent-copper: #b89098;
-  --warm-accent-rose: #a07888;
-  --warm-accent-terracotta: #a88870;
-  --warm-accent-honey: #dcc090;
-  --warm-accent-gradient: linear-gradient(90deg, #c9a878 0%, #b89098 52%, #a07888 100%);
-  --warm-accent-gradient-strong: linear-gradient(90deg, #bea068 0%, #a88890 50%, #946878 100%);
-  --warm-accent-gradient-fill: linear-gradient(90deg, #c4a574 0%, #b08890 48%, #987088 100%);
+  /* Accents UI — jaune · orange · rose (mesh warm glass) */
+  --warm-accent-gold: #f0c848;
+  --warm-accent-copper: #e87838;
+  --warm-accent-rose: #d85878;
+  --warm-accent-terracotta: #c85028;
+  --warm-accent-honey: #f5dc70;
+  --warm-accent-gradient: linear-gradient(90deg, #f0c848 0%, #e87838 46%, #d85878 100%);
+  --warm-accent-gradient-strong: linear-gradient(90deg, #e8b838 0%, #d86830 48%, #c04058 100%);
+  --warm-accent-gradient-fill: linear-gradient(90deg, #f5d040 0%, #e87040 50%, #dc5070 100%);
   --warm-accent-gradient-glass: linear-gradient(
     90deg,
-    rgba(201, 168, 120, 0.68) 0%,
-    rgba(184, 144, 152, 0.58) 52%,
-    rgba(160, 120, 136, 0.52) 100%
+    rgba(240, 200, 72, 0.82) 0%,
+    rgba(232, 120, 56, 0.76) 48%,
+    rgba(216, 88, 120, 0.72) 100%
   );
   --warm-accent-gradient-holo: linear-gradient(
     115deg,
-    #c9a878 0%,
-    #b89098 38%,
-    #a07888 68%,
-    #c9a878 100%
+    #f0c848 0%,
+    #e87838 38%,
+    #d85878 68%,
+    #f0c848 100%
   );
-  --warm-accent-gradient-progress: linear-gradient(90deg, #c4a574 0%, #b89098 50%, #a07888 100%);
-  --warm-accent-glow: rgba(196, 168, 120, 0.22);
-  --warm-accent-glow-strong: rgba(160, 112, 136, 0.24);
-  --warm-icon-accent: #e8c890;
-  --warm-icon-accent-alt: #c8a0a8;
+  --warm-accent-gradient-progress: linear-gradient(90deg, #f0c848 0%, #e87838 50%, #d85878 100%);
+  --warm-accent-glow: rgba(240, 192, 64, 0.32);
+  --warm-accent-glow-strong: rgba(216, 88, 120, 0.28);
+  --warm-icon-accent: #f5dc78;
+  --warm-icon-accent-alt: #f0a0b0;
+  --warm-safe-area-fill: linear-gradient(180deg, #c89838 0%, #c85028 52%, #a83858 100%);
   --warm-icon-accent-soft: rgba(232, 200, 144, 0.88);
   --warm-glass-surface: rgba(38, 16, 10, 0.42);
   --warm-glass-surface-elevated: rgba(48, 22, 14, 0.56);
@@ -825,8 +826,8 @@ html.pk-warm-glass-active .pk-glass-btn:hover:not(:disabled),
       radial-gradient(380px circle at 14% -4%, rgba(255, 210, 120, 0.14), transparent 54%),
       radial-gradient(340px circle at 92% 104%, rgba(255, 130, 90, 0.1), transparent 56%),
       linear-gradient(165deg, rgba(255, 252, 248, 0.12), rgba(255, 228, 195, 0.06)) !important;
-    backdrop-filter: blur(22px) saturate(1.35) !important;
-    -webkit-backdrop-filter: blur(22px) saturate(1.35) !important;
+    backdrop-filter: blur(10px) saturate(1.25) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(1.25) !important;
     border-top-color: color-mix(in srgb, var(--warm-glass-border) 50%, transparent) !important;
     box-shadow:
       inset 0 1px 0 rgba(255, 248, 235, 0.16),
@@ -882,18 +883,18 @@ html.pk-warm-glass-active .pk-glass-btn:hover:not(:disabled),
 /* Bouton Générer — lisible + cohérent avec le verre chaud */
 .pk-warm-glass-stage .pk-landing-gen__cta-field {
   background:
-    radial-gradient(ellipse 72% 88% at 28% 50%, rgba(201, 168, 120, 0.42), transparent 56%),
-    radial-gradient(ellipse 68% 82% at 74% 48%, rgba(176, 128, 144, 0.34), transparent 54%),
-    radial-gradient(ellipse 54% 64% at 50% 88%, rgba(196, 168, 120, 0.2), transparent 52%) !important;
-  opacity: 0.72 !important;
+    radial-gradient(ellipse 72% 88% at 28% 50%, rgba(240, 200, 72, 0.48), transparent 56%),
+    radial-gradient(ellipse 68% 82% at 74% 48%, rgba(216, 88, 120, 0.38), transparent 54%),
+    radial-gradient(ellipse 54% 64% at 50% 88%, rgba(232, 120, 56, 0.24), transparent 52%) !important;
+  opacity: 0.78 !important;
 }
 
 .pk-warm-glass-stage .pk-landing-gen__cta-field::before {
-  border-color: rgba(201, 168, 120, 0.22) !important;
+  border-color: rgba(240, 200, 72, 0.28) !important;
 }
 
 .pk-warm-glass-stage .pk-landing-gen__cta-field::after {
-  border-color: rgba(176, 128, 144, 0.18) !important;
+  border-color: rgba(216, 88, 120, 0.22) !important;
 }
 
 .pk-warm-glass-stage .pk-landing-gen__cta:not(.is-generating) {
@@ -914,10 +915,10 @@ html.pk-warm-glass-active .pk-glass-btn:hover:not(:disabled),
 
 .pk-warm-glass-stage .pk-landing-gen__cta-liquid {
   background:
-    radial-gradient(ellipse 88% 68% at 16% 8%, rgba(220, 190, 140, 0.26), transparent 52%),
-    radial-gradient(ellipse 58% 46% at 86% 94%, rgba(176, 128, 144, 0.2), transparent 54%),
-    radial-gradient(ellipse 46% 38% at 70% 16%, rgba(201, 168, 120, 0.16), transparent 50%),
-    radial-gradient(ellipse 38% 32% at 44% 82%, rgba(184, 144, 152, 0.1), transparent 46%) !important;
+    radial-gradient(ellipse 88% 68% at 16% 8%, rgba(245, 220, 120, 0.3), transparent 52%),
+    radial-gradient(ellipse 58% 46% at 86% 94%, rgba(216, 88, 120, 0.24), transparent 54%),
+    radial-gradient(ellipse 46% 38% at 70% 16%, rgba(232, 120, 56, 0.2), transparent 50%),
+    radial-gradient(ellipse 38% 32% at 44% 82%, rgba(240, 160, 80, 0.14), transparent 46%) !important;
 }
 
 .pk-warm-glass-stage .pk-landing-gen__cta:not(.is-generating) .pk-landing-gen__cta-inner {
@@ -1584,36 +1585,36 @@ html.pk-warm-glass-active {
   --warm-field-text: rgba(255, 252, 248, 0.94);
   --warm-field-placeholder: rgba(255, 255, 255, 0.38);
   --warm-field-readonly-bg: rgba(255, 255, 255, 0.025);
-  --warm-accent-gold: #c9a878;
-  --warm-accent-copper: #b89098;
-  --warm-accent-rose: #a07888;
-  --warm-accent-terracotta: #a88870;
-  --warm-accent-honey: #dcc090;
-  --warm-accent-gradient: linear-gradient(90deg, #c9a878 0%, #b89098 52%, #a07888 100%);
-  --warm-accent-gradient-strong: linear-gradient(90deg, #bea068 0%, #a88890 50%, #946878 100%);
-  --warm-accent-gradient-fill: linear-gradient(90deg, #c4a574 0%, #b08890 48%, #987088 100%);
+  --warm-accent-gold: #f0c848;
+  --warm-accent-copper: #e87838;
+  --warm-accent-rose: #d85878;
+  --warm-accent-terracotta: #c85028;
+  --warm-accent-honey: #f5dc70;
+  --warm-accent-gradient: linear-gradient(90deg, #f0c848 0%, #e87838 46%, #d85878 100%);
+  --warm-accent-gradient-strong: linear-gradient(90deg, #e8b838 0%, #d86830 48%, #c04058 100%);
+  --warm-accent-gradient-fill: linear-gradient(90deg, #f5d040 0%, #e87040 50%, #dc5070 100%);
   --warm-accent-gradient-glass: linear-gradient(
     90deg,
-    rgba(201, 168, 120, 0.68) 0%,
-    rgba(184, 144, 152, 0.58) 52%,
-    rgba(160, 120, 136, 0.52) 100%
+    rgba(240, 200, 72, 0.82) 0%,
+    rgba(232, 120, 56, 0.76) 48%,
+    rgba(216, 88, 120, 0.72) 100%
   );
   --warm-accent-gradient-holo: linear-gradient(
     115deg,
-    #c9a878 0%,
-    #b89098 38%,
-    #a07888 68%,
-    #c9a878 100%
+    #f0c848 0%,
+    #e87838 38%,
+    #d85878 68%,
+    #f0c848 100%
   );
-  --warm-accent-gradient-progress: linear-gradient(90deg, #c4a574 0%, #b89098 50%, #a07888 100%);
-  --warm-accent-glow: rgba(196, 168, 120, 0.22);
-  --warm-accent-glow-strong: rgba(160, 112, 136, 0.24);
-  --warm-icon-accent: #e8c890;
-  --warm-icon-accent-alt: #c8a0a8;
-  --warm-icon-accent-soft: rgba(232, 200, 144, 0.88);
-  --prism-cyan: #c9a878;
-  --prism-violet: #a07888;
-  --prism-accent: #c9a878;
+  --warm-accent-gradient-progress: linear-gradient(90deg, #f0c848 0%, #e87838 50%, #d85878 100%);
+  --warm-accent-glow: rgba(240, 192, 64, 0.32);
+  --warm-accent-glow-strong: rgba(216, 88, 120, 0.28);
+  --warm-icon-accent: #f5dc78;
+  --warm-icon-accent-alt: #f0a0b0;
+  --warm-icon-accent-soft: rgba(245, 220, 120, 0.92);
+  --prism-cyan: #f0c848;
+  --prism-violet: #d85878;
+  --prism-accent: #e87838;
   --prism-chrome: #fff8f0;
 }
 
@@ -2009,7 +2010,7 @@ html.pk-warm-glass-active .pk-landing-mobile-nav__item--cta.pk-hero-cta {
     opacity: 0.12;
   }
 
-  /* Header mobile — toujours transparent (scroll / menu : pas de bandeau ni blur) */
+  /* Header mobile — transparent sauf safe-area (voir index.css ::before) */
   .pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-header,
   .pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-header--scrolled,
   .pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-header:has(.pk-landing-mobile-nav) {
@@ -2018,6 +2019,11 @@ html.pk-warm-glass-active .pk-landing-mobile-nav__item--cta.pk-hero-cta {
     -webkit-backdrop-filter: none !important;
     border-bottom: none !important;
     box-shadow: none !important;
+  }
+
+  .pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-header__bar {
+    position: relative;
+    z-index: 1;
   }
 
   /* Lisibilité logo + menu en haut de hero (sans pill) */
@@ -2465,10 +2471,10 @@ html.pk-warm-glass-active .pk-marketing-navbar .bg-\[\#7c3aed\],
 }
 
 .pk-warm-glass-stage .pk-landing-gen__cta.is-generating .pk-landing-gen__cta-field {
-  filter: blur(26px) saturate(1.25) !important;
+  filter: blur(26px) saturate(1.35) !important;
   background:
-    radial-gradient(ellipse 72% 88% at 28% 50%, rgba(201, 168, 120, 0.44), transparent 56%),
-    radial-gradient(ellipse 68% 82% at 74% 48%, rgba(176, 128, 144, 0.36), transparent 54%) !important;
+    radial-gradient(ellipse 72% 88% at 28% 50%, rgba(240, 200, 72, 0.5), transparent 56%),
+    radial-gradient(ellipse 68% 82% at 74% 48%, rgba(216, 88, 120, 0.42), transparent 54%) !important;
 }
 
 .pk-warm-glass-stage .pk-gen-electric-mark__word {
@@ -3390,8 +3396,8 @@ html.pk-warm-glass-active:has(.pk-dashboard-generator) .pk-loop-details-sheet .b
       rgba(12, 10, 18, 0.92) 0%,
       rgba(8, 6, 14, 0.98) 100%
     ) !important;
-    backdrop-filter: blur(22px) saturate(1.3) !important;
-    -webkit-backdrop-filter: blur(22px) saturate(1.3) !important;
+    backdrop-filter: blur(10px) saturate(1.2) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(1.2) !important;
     border-top-color: rgba(255, 255, 255, 0.12) !important;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.06),
@@ -3402,6 +3408,24 @@ html.pk-warm-glass-active:has(.pk-dashboard-generator) .pk-loop-details-sheet .b
     background: var(--warm-dash-glass-soft) !important;
     border-color: var(--warm-dash-chrome-border) !important;
     box-shadow: inset 0 1px 0 var(--warm-dash-chrome-highlight) !important;
+  }
+}
+
+/* Mobile perf — cap backdrop blur on warm glass chrome (GPU cost) */
+@media (max-width: 767px) {
+  html.pk-warm-glass-active :is(
+    .pk-app-shell-mobile-nav,
+    .pk-prism-player,
+    .pk-prism-player-card,
+    .pk-dashboard-details-panel,
+    .pk-dropdown-menu,
+    .pk-studio-section,
+    .pk-warm-glass-card,
+    .pk-mobile-footer,
+    .pk-landing-header
+  ) {
+    backdrop-filter: blur(10px) saturate(1.2) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(1.2) !important;
   }
 }
 

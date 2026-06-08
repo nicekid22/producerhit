@@ -1,12 +1,13 @@
 import { Component, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
-import "./styles/warm-glass-theme.css";
 import "./styles/cover-surface.css";
-import "./styles/landing-mobile-v2.css";
 import "./styles/site-texture-veil.css";
+import { preloadWarmGlassThemeIfNeeded } from "@/lib/themeStyles";
 
 import App from "./App";
+
+preloadWarmGlassThemeIfNeeded();
 
 function ErrorScreen({ title, message }: { title: string; message?: string }) {
   const missingEnv = [

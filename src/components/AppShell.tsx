@@ -40,7 +40,7 @@ export function AppShell({
     <div
       className={cn(
         "pk-app-shell relative text-pk-text md:h-screen md:overflow-hidden",
-        mobileLayoutV2 && "pk-mobile-app-shell",
+        mobileLayoutV2 && "pk-mobile-app-shell pt-[env(safe-area-inset-top,0px)]",
         isPrism ? "pk-prism-stage pk-prism-dashboard" : "bg-pk-bg",
         warmGlass && "pk-warm-glass-stage",
       )}

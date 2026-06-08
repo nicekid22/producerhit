@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useWarmGlassHtmlClass } from "@/hooks/useWarmGlassHtmlClass";
+import { ensureWarmGlassThemeStyles } from "@/lib/themeStyles";
 import { useVisualThemeStore, isWarmGlassTheme } from "@/stores/visualThemeStore";
 
 function isAppRoute(pathname: string) {
@@ -25,6 +26,10 @@ export function ThemeBootstrap({ children }: { children: React.ReactNode }) {
   useWarmGlassHtmlClass(warmGlass);
 
   useEffect(() => {
+    if (warmGlass) void ensureWarmGlassThemeStyles();
+  }, [warmGlass]);
+
+  useEffect(() => {
     const html = document.documentElement;
     const body = document.body;
 
@@ -34,17 +39,17 @@ export function ThemeBootstrap({ children }: { children: React.ReactNode }) {
 
     if (marketing) {
       if (warmGlass) {
-        const base = "#7a3018";
+        const base = "#963848";
         const bg = [
-          "radial-gradient(920px 640px at 12% 58%, rgba(200,120,40,0.22), rgba(200,120,40,0) 58%)",
-          "radial-gradient(760px 560px at 88% 52%, rgba(180,60,80,0.18), rgba(180,60,80,0) 55%)",
-          "radial-gradient(900px 620px at 50% 96%, rgba(220,90,45,0.14), rgba(220,90,45,0) 58%)",
-          base,
+          "radial-gradient(920px 640px at 12% 58%, rgba(200,152,56,0.28), rgba(200,152,56,0) 58%)",
+          "radial-gradient(760px 560px at 88% 52%, rgba(200,80,40,0.22), rgba(200,80,40,0) 55%)",
+          "radial-gradient(900px 620px at 50% 96%, rgba(168,56,88,0.18), rgba(168,56,88,0) 58%)",
+          "linear-gradient(148deg, #8a6020 0%, #963848 32%, #a84828 62%, #963848 100%)",
         ].join(", ");
         html.style.background = base;
         body.style.background = bg;
       } else {
-        const base = "#0a0a0f";
+        const base = "#0c0820";
         const bg = [
           "radial-gradient(920px 640px at 12% 58%, rgba(124,58,237,0.2), rgba(124,58,237,0) 58%)",
           "radial-gradient(760px 560px at 88% 52%, rgba(56,189,248,0.14), rgba(56,189,248,0) 55%)",
@@ -57,21 +62,30 @@ export function ThemeBootstrap({ children }: { children: React.ReactNode }) {
       body.style.backgroundAttachment = "fixed";
       body.style.color = "#fff9f4";
     } else if (warmGlass) {
-      const base = "#5c2818";
+      const base = "#963848";
       const bg = [
         "radial-gradient(ellipse 86% 70% at 8% 34%, rgba(200,152,56,0.42), transparent 58%)",
         "radial-gradient(ellipse 74% 68% at 50% 70%, rgba(168,56,88,0.34), transparent 60%)",
         "radial-gradient(ellipse 68% 60% at 92% 26%, rgba(200,80,40,0.38), transparent 54%)",
-        "linear-gradient(148deg, #8a6020 0%, #963848 32%, #a84828 62%, #7a3018 100%)",
+        "linear-gradient(148deg, #8a6020 0%, #963848 32%, #a84828 62%, #963848 100%)",
       ].join(", ");
       html.style.background = base;
       body.style.background = bg;
       body.style.backgroundAttachment = "fixed";
       body.style.color = "#fff9f4";
     } else {
-      html.style.background = "#0a0a0f";
-      body.style.background = "#0a0a0f";
+      html.style.background = "#0c0820";
+      body.style.background = "#0c0820";
       body.style.color = "#f1f0f5";
+    }
+
+    const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+    if (themeColorMeta) {
+      if (warmGlass) {
+        themeColorMeta.setAttribute("content", marketing ? "#c89838" : "#963848");
+      } else {
+        themeColorMeta.setAttribute("content", "#0c0820");
+      }
     }
 
     return () => {

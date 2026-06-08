@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import {
   coverImageKeyFromLoop,
@@ -58,7 +58,7 @@ function formatTime(sec: number) {
   return `${m}:${String(r).padStart(2, "0")}`;
 }
 
-export function LoopCardItem({
+export const LoopCardItem = memo(function LoopCardItem({
   loop,
   onDelete,
   onOpenDetails,
@@ -1200,4 +1200,4 @@ export function LoopCardItem({
       />
     </div>
   );
-}
+});
