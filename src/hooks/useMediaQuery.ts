@@ -20,3 +20,13 @@ export function useMediaQuery(query: string): boolean {
 export function useIsDesktop(): boolean {
   return useMediaQuery("(min-width: 768px)");
 }
+
+/** Téléphone paysage / viewport très bas — chrome et footer compacts. */
+export function useIsCompactMobileViewport(): boolean {
+  return useMediaQuery("(max-width: 767px) and (max-height: 520px)");
+}
+
+/** iPad / tablette — layout desktop mais colonnes plus étroites. */
+export function useIsTabletViewport(): boolean {
+  return useMediaQuery("(min-width: 768px) and (max-width: 1023px)");
+}

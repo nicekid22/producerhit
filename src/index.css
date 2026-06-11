@@ -1983,9 +1983,37 @@ a.pk-pricing-plan-btn {
 }
 
 @media (max-width: 767px) {
-  /* Colonne Créer — réserver la hauteur de la barre nav fixe (sans lecteur) */
+  /* Colonne Créer — grille scroll + footer (toujours, pas seulement avec lecteur) */
+  .pk-app-shell .pk-studio-console:has(.pk-mobile-create-shell) {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+
   .pk-app-shell .pk-mobile-create-shell {
-    padding-bottom: calc(var(--pk-bottom-nav) + env(safe-area-inset-bottom, 0px) + 2px);
+    box-sizing: border-box;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) minmax(min-content, auto);
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
+    padding-bottom: 0;
+    margin-bottom: calc(var(--pk-bottom-nav) + env(safe-area-inset-bottom, 0px) + 2px);
+  }
+
+  .pk-mobile-create-scroll {
+    min-height: 0;
+    padding-bottom: 0.25rem;
+    scroll-padding-bottom: 0.5rem;
+  }
+
+  .pk-dashboard-mobile-footer {
+    flex-shrink: 0;
+    min-height: min-content;
+    position: relative;
+    z-index: 2;
   }
 
   html[data-pk-player-dock="expanded"] {
@@ -1998,39 +2026,11 @@ a.pk-pricing-plan-btn {
     --pk-player-reserve-floor: calc(var(--pk-bottom-nav) + 60px + env(safe-area-inset-bottom, 0px) + 4px);
   }
 
-  body:has(.pk-prism-player--dock) .pk-app-shell .pk-studio-console:has(.pk-mobile-create-shell) {
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    overflow: hidden;
-  }
-
   body:has(.pk-prism-player--dock) .pk-app-shell .pk-mobile-create-shell {
-    box-sizing: border-box;
-    display: grid;
-    grid-template-rows: auto minmax(0, 1fr) minmax(min-content, auto);
-    flex: 1 1 auto;
     margin-bottom: max(
       var(--pk-player-reserve, var(--pk-player-height)),
       var(--pk-player-reserve-floor, calc(var(--pk-bottom-nav) + var(--pk-player-height)))
     );
-    max-height: 100%;
-    min-height: 0;
-    overflow: hidden;
-    padding-bottom: 0;
-  }
-
-  body:has(.pk-prism-player--dock) .pk-mobile-create-scroll {
-    min-height: 0;
-    padding-bottom: 0.25rem;
-    scroll-padding-bottom: 0.5rem;
-  }
-
-  body:has(.pk-prism-player--dock) .pk-dashboard-mobile-footer {
-    flex-shrink: 0;
-    min-height: min-content;
-    position: relative;
-    z-index: 2;
   }
 
   .pk-shell-dock-pb--player {
@@ -2120,6 +2120,171 @@ a.pk-pricing-plan-btn {
 
   .pk-dashboard-generator .pk-gen-inline-toggle-row {
     padding-right: 2px;
+  }
+}
+
+/* Téléphone paysage / viewport bas — chrome compact, moins de chevauchements */
+@media (max-width: 767px) and (orientation: landscape),
+  (max-width: 767px) and (max-height: 520px) {
+  .pk-mobile-shell-viewport {
+    height: 100svh;
+    max-height: 100svh;
+  }
+
+  body:has(.pk-mobile-app-shell) {
+    height: 100svh;
+    max-height: 100svh;
+  }
+
+  body:has(.pk-mobile-app-shell) #root {
+    height: 100svh;
+    max-height: 100svh;
+  }
+
+  .pk-mobile-shell-inner {
+    padding-left: max(0.375rem, env(safe-area-inset-left, 0px));
+    padding-right: max(0.375rem, env(safe-area-inset-right, 0px));
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+  }
+
+  .pk-mobile-app-shell .flex.flex-1.flex-col.gap-3 {
+    gap: 0.375rem;
+  }
+
+  .pk-dashboard-generator > .flex-shrink-0:first-of-type {
+    padding-top: 0.375rem !important;
+    padding-bottom: 0.375rem !important;
+  }
+
+  .pk-mobile-dashboard-chrome {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.625rem !important;
+  }
+
+  .pk-mobile-dashboard-chrome > div:first-child {
+    display: none;
+  }
+
+  .pk-mobile-dashboard-chrome > div:last-child {
+    margin-top: 0 !important;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .pk-dashboard-mobile-tabs button {
+    padding-top: 0.375rem;
+    padding-bottom: 0.375rem;
+    font-size: 0.625rem;
+  }
+
+  .pk-studio-mode-rail button {
+    padding-top: 0.375rem;
+    padding-bottom: 0.375rem;
+    font-size: 0.6875rem;
+  }
+
+  .pk-dashboard-generator .pk-studio-mode-rail {
+    padding: 0.125rem;
+  }
+
+  .pk-dashboard-mobile-footer {
+    padding-top: 0.375rem !important;
+    padding-bottom: 0.25rem !important;
+  }
+
+  .pk-dashboard-mobile-footer__meta {
+    gap: 0.125rem !important;
+    margin-top: 0.375rem !important;
+  }
+
+  .pk-dashboard-mobile-footer__upsell {
+    display: none !important;
+  }
+
+  .pk-dashboard-generator .pk-studio-section {
+    margin-bottom: 0.375rem;
+  }
+
+  .pk-dashboard-generator .pk-studio-section button {
+    padding-top: 0.625rem;
+    padding-bottom: 0.625rem;
+  }
+
+  .pk-mobile-results-toolbar {
+    padding-top: 0.375rem;
+    padding-bottom: 0.375rem;
+    margin-bottom: 0.375rem;
+  }
+
+  .pk-mobile-results-toolbar .pk-mobile-gen-notice__icon-box {
+    height: 2rem;
+    width: 2rem;
+  }
+
+  .pk-mobile-results-filters {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .pk-mobile-results-filters .pk-workspace-track-count {
+    width: 100%;
+  }
+
+  .pk-mobile-results-filters .pk-workspace-search-field {
+    padding-top: 0.375rem;
+    padding-bottom: 0.375rem;
+    font-size: 0.8125rem;
+  }
+
+  html[data-pk-player-dock="expanded"] {
+    --pk-player-reserve-floor: calc(var(--pk-bottom-nav) + 56px + env(safe-area-inset-bottom, 0px) + 2px);
+  }
+
+  .pk-app-shell-mobile-nav {
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+
+  .pk-app-shell-mobile-nav .h-14 {
+    height: 3rem;
+  }
+
+  .pk-prism-player--dock {
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+
+  .pk-prism-player--dock .mx-auto {
+    padding-top: 0.375rem;
+    padding-bottom: 0.375rem;
+  }
+}
+
+/* iPad / tablette — colonne générateur plus étroite */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .pk-app-shell.pk-prism-dashboard:not(.pk-mobile-app-shell) .pk-studio-console {
+    width: min(360px, 36vw) !important;
+    max-width: 360px;
+    flex-shrink: 0;
+  }
+
+  .pk-app-shell.pk-prism-dashboard:not(.pk-mobile-app-shell) .pk-studio-workspace-shell {
+    min-width: 0;
+  }
+
+  .pk-app-shell.pk-prism-dashboard:not(.pk-mobile-app-shell) > .max-w-\[1600px\] > .flex.flex-col {
+    gap: 0.5rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  .pk-app-shell.pk-prism-dashboard:not(.pk-mobile-app-shell) .pk-studio-rail-wrap {
+    width: 56px;
   }
 }
 

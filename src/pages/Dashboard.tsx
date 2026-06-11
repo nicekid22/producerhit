@@ -100,7 +100,7 @@ import { buildAceCaption, type GenerateParams } from "@/lib/promptBuilder";
 import { buildCoverPromptSnapshot, cn } from "@/lib/utils";
 import { BrandLogo } from "@/components/landing/BrandLogo";
 import { MOBILE_DASHBOARD_V2 } from "@/lib/featureFlags";
-import { useIsDesktop } from "@/hooks/useMediaQuery";
+import { useIsCompactMobileViewport, useIsDesktop } from "@/hooks/useMediaQuery";
 import { useMobileDashboardTab } from "@/hooks/useMobileDashboardTab";
 import { DashboardMobileTabs } from "@/components/dashboard/DashboardMobileTabs";
 import { MobileResultsToolbar } from "@/components/dashboard/MobileResultsToolbar";
@@ -368,7 +368,9 @@ export default function Dashboard() {
   const ambianceDropdownOptions = useMemo(() => beatAmbianceDropdownOptions(locale), [locale]);
   const influenceDropdownOptions = useMemo(() => beatInfluenceDropdownOptions(locale), [locale]);
   const isDesktop = useIsDesktop();
+  const compactMobile = useIsCompactMobileViewport();
   const mobileV2 = MOBILE_DASHBOARD_V2 && !isDesktop;
+  const mobileSectionDefaultOpen = !compactMobile;
   const { tab: mobileTab, setTab: setMobileTab, goResults, goMaster, goCreate } = useMobileDashboardTab("create");
   const hasPlayer = usePlayerStore((s) => !!s.current);
   const [generating, setGenerating] = useState(false);
@@ -2724,7 +2726,7 @@ export default function Dashboard() {
                       : "Custom: exact genre or Random. Auto: AI adapts style to your idea."
                   }
                   collapsible={mobileV2}
-                  defaultOpen
+                  defaultOpen={mobileV2 ? mobileSectionDefaultOpen : true}
                 >
                   <div className="grid min-w-0 max-w-full gap-4">
                     <GenrePickControl
@@ -2760,7 +2762,7 @@ export default function Dashboard() {
                 <GeneratorSection
                   title={locale === "fr" ? "L’idée" : "The Idea"}
                   collapsible={mobileV2}
-                  defaultOpen
+                  defaultOpen={mobileV2 ? mobileSectionDefaultOpen : true}
                 >
                   <InspirationChipRow
                     chips={getInspirationChipsForGenre(chipGenre)}
@@ -3106,7 +3108,7 @@ export default function Dashboard() {
                       : "Custom: catalog genre or Random. Auto: AI picks style from your idea."
                   }
                   collapsible={mobileV2}
-                  defaultOpen
+                  defaultOpen={mobileV2 ? mobileSectionDefaultOpen : true}
                 >
                   <GenrePickControl
                     compact
@@ -3130,7 +3132,7 @@ export default function Dashboard() {
                       : "Auto detects lyrics language. Pick a language to guide the vocals."
                   }
                   collapsible={mobileV2}
-                  defaultOpen
+                  defaultOpen={mobileV2 ? mobileSectionDefaultOpen : true}
                 >
                   <Dropdown
                     menuTitle={locale === "fr" ? "Langue" : "Language"}
@@ -3150,7 +3152,7 @@ export default function Dashboard() {
                 <GeneratorSection
                   title={locale === "fr" ? "L’idée" : "The Idea"}
                   collapsible={mobileV2}
-                  defaultOpen
+                  defaultOpen={mobileV2 ? mobileSectionDefaultOpen : true}
                 >
                   <InspirationChipRow
                     chips={getInspirationChipsForGenre(chipGenre)}
@@ -3189,7 +3191,7 @@ export default function Dashboard() {
                 <GeneratorSection
                   title={locale === "fr" ? "Paroles" : "The Lyrics"}
                   collapsible={mobileV2}
-                  defaultOpen
+                  defaultOpen={mobileV2 ? mobileSectionDefaultOpen : true}
                 >
                   <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
                     <button
@@ -3697,7 +3699,7 @@ export default function Dashboard() {
             ) : null}
             </div>
             {plan === "free" && remaining > 0 && remaining <= 2 ? (
-              <div className="mt-2 flex flex-col gap-2 rounded-lg border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-100/90">
+              <div className="pk-dashboard-mobile-footer__upsell mt-2 flex flex-col gap-2 rounded-lg border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-100/90">
                 <span>
                   {locale === "fr"
                     ? `Plus que ${remaining} génération${remaining !== 1 ? "s" : ""} ce mois-ci — passe Pro pour 75 tracks, priorité et export WAV.`
@@ -3709,7 +3711,7 @@ export default function Dashboard() {
               </div>
             ) : null}
             {remaining === 0 ? (
-              <div className="mt-2 flex flex-col gap-2 text-xs text-gray-500">
+              <div className="pk-dashboard-mobile-footer__upsell mt-2 flex flex-col gap-2 text-xs text-gray-500">
                 {plan === "free"
                   ? locale === "fr"
                     ? `Quota mensuel épuisé (${usedThisMonth}/${totalLimit}) — monte de niveau ou reviens demain pour des bonus`
@@ -3780,7 +3782,8 @@ export default function Dashboard() {
         <div
           className={cn(
             "pk-studio-workspace-header flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
-            mobileV2 && "hidden",
+            mobileV2 && mobileTab !== "results" && "hidden",
+            mobileV2 && mobileTab === "results" && "pk-mobile-results-filters mb-2 gap-2",
           )}
         >
           {!mobileV2 ? (
@@ -3796,7 +3799,7 @@ export default function Dashboard() {
           <div
             className={
               mobileV2
-                ? "flex w-full items-center gap-3"
+                ? "flex w-full min-w-0 flex-wrap items-center gap-2"
                 : "flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center"
             }
           >

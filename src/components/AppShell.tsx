@@ -47,7 +47,7 @@ export function AppShell({
       style={
         {
           "--pk-bottom-nav": "56px",
-          "--pk-player-height": "72px",
+          "--pk-player-height": mobileLayoutV2 ? "88px" : "72px",
         } as CSSProperties
       }
     >
@@ -86,15 +86,17 @@ export function AppShell({
         className={cn(
           "relative mx-auto max-w-[1600px]",
           mobileLayoutV2
-            ? "flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden md:h-screen md:max-h-none"
+            ? "pk-mobile-shell-viewport flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden md:h-screen md:max-h-none"
             : "min-h-screen min-h-[100svh] md:h-screen",
         )}
       >
         <div
           className={cn(
-            "flex flex-col px-3 py-3 md:h-screen md:min-h-0 md:flex-row md:gap-3 md:overflow-hidden",
+            "flex flex-col md:h-screen md:min-h-0 md:flex-row md:gap-3 md:overflow-hidden md:px-3 md:py-3",
             hasPlayer && "pb-0",
-            mobileLayoutV2 ? "min-h-0 flex-1 overflow-hidden" : "min-h-screen min-h-[100svh]",
+            mobileLayoutV2
+              ? "pk-mobile-shell-inner min-h-0 flex-1 overflow-hidden px-2 py-1.5 sm:px-3 sm:py-2"
+              : "min-h-screen min-h-[100svh] px-3 py-3",
           )}
         >
           <div className="pk-studio-rail-wrap relative z-10 hidden min-h-0 w-[64px] md:flex md:flex-col md:justify-center">

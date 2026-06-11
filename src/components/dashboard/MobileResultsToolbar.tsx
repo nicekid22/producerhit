@@ -16,7 +16,7 @@ export function MobileResultsToolbar({ locale, generating, activeCount, onCreate
   return (
     <div
       className={cn(
-        "pk-mobile-gen-notice sticky top-0 z-20 -mx-1 mb-3 flex items-center gap-2 rounded-2xl border px-3 py-2.5 backdrop-blur-xl md:hidden",
+        "pk-mobile-gen-notice pk-mobile-results-toolbar -mx-1 mb-2 flex shrink-0 items-center gap-2 rounded-2xl border px-3 py-2.5 backdrop-blur-xl md:hidden",
         busy && "pk-mobile-gen-notice--busy",
       )}
     >
