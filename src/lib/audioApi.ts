@@ -703,6 +703,7 @@ export async function generateLoopAce(
   const promptParams = options?.autoMeta ? { ...params, bpm: 0, key: "", scale: "" } : params;
   const instrumental = options?.instrumental ?? true;
   const lyricsRaw = options?.lyrics ?? "";
+  const lyricsTrimmed = lyricsRaw.trim();
   const vocalLanguage = options?.vocalLanguage ?? "en";
   const captionOverride = options?.captionOverride?.trim() ?? "";
   const baseCaption = captionOverride || buildAceCaption(promptParams, { isSong, instrumental, autoMeta: Boolean(options?.autoMeta), vocalLanguage });
@@ -719,10 +720,10 @@ export async function generateLoopAce(
 
   // sample_mode should only be used when we want ACE to auto-generate lyrics/metas.
   // use_format should stay independent (it formats/enhances provided caption/lyrics).
-  const isAiLyrics = !instrumental && lyricsRaw === "";
+  const isAiLyrics = !instrumental && lyricsTrimmed === "";
   const effectiveSampleMode = Boolean(!captionOverride && (options?.sampleMode || isAiLyrics));
   const caption = effectiveSampleMode ? "" : baseCaption;
-  const lyrics = instrumental ? "[Instrumental]" : lyricsRaw;
+  const lyrics = instrumental ? "[Instrumental]" : lyricsTrimmed;
   const effectiveSampleQuery = effectiveSampleMode ? (sampleQuery || baseCaption) : sampleQuery;
 
   const clampNumber = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);

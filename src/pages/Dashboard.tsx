@@ -1073,7 +1073,7 @@ export default function Dashboard() {
     : !advancedOpen || (beatTempoMode === "auto" && beatKeyMode === "auto");
 
   const detectedLang = isSong ? (songVocalLanguageMode === "manual" ? manualVocalLanguage : (lyricsMode === "manual" ? detectLanguage(lyrics) : "en")) : "en";
-  const songLyrics = isSong ? (lyricsMode === "manual" ? lyrics : "") : "";
+  const songLyrics = isSong ? (lyricsMode === "manual" ? lyrics.trim() : "") : "";
   const songDurationMax = 240;
   const manualSongDurationRaw = songIsCustom && songDurationMode === "manual" ? songDurationSec : undefined;
   const manualSongDuration = typeof manualSongDurationRaw === "number" ? Math.min(manualSongDurationRaw, songDurationMax) : undefined;
@@ -1125,6 +1125,14 @@ export default function Dashboard() {
       return;
     }
     if (generating) return;
+    if (mode === "song" && lyricsMode === "manual" && !songLyrics) {
+      toast.error(
+        locale === "fr"
+          ? "Ajoute tes paroles dans la section « Paroles », ou passe en mode « IA écrit »."
+          : "Add your lyrics in the Lyrics section, or switch to AI writes mode.",
+      );
+      return;
+    }
     const sessionId = ++generateSessionRef.current;
     unlockAudioPlaybackFromGesture();
     armGenerationAutoplay();
@@ -1382,7 +1390,7 @@ export default function Dashboard() {
           details: result.meta
             ? {
                 caption: result.meta.prompt ?? storedPrompt,
-                lyrics: result.meta.lyrics ?? "",
+                lyrics: isSong && lyricsMode === "manual" && songLyrics ? songLyrics : (result.meta.lyrics ?? ""),
                 bpm: result.meta.bpm ?? null,
                 duration: result.meta.duration ?? null,
                 keyScale: result.meta.keyScale ?? "",
@@ -1911,7 +1919,16 @@ export default function Dashboard() {
         promptPlanUpsell("limit_reached");
         return;
       }
-      if (anyErr?.allSlotsFailed) return;
+      if (anyErr?.allSlotsFailed) {
+        const failMsg =
+          err instanceof Error
+            ? err.message
+            : locale === "fr"
+              ? "Échec de génération — réessaie"
+              : "Generation failed — please try again";
+        toast.error(formatGenerationErrorMessage(failMsg, locale, { plan }));
+        return;
+      }
       const rawMessage = err instanceof Error ? err.message : "";
       toast.error(formatGenerationErrorMessage(rawMessage, locale, { plan }));
     } finally {
