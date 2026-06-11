@@ -24,7 +24,6 @@ export function Sidebar() {
   const [loggingOut, setLoggingOut] = useState(false);
 
   const items: Item[] = [
-    { to: "/?home=1", label: locale === "fr" ? "Accueil" : "Home", icon: <Home className="h-5 w-5" /> },
     { to: "/dashboard", label: locale === "fr" ? "Générateur" : "Generator", icon: <AudioWaveform className="h-5 w-5" /> },
     { to: "/library", label: locale === "fr" ? "Bibliothèque" : "Library", icon: <Grid3X3 className="h-5 w-5" /> },
     ...(isSampleLabEnabled()
@@ -38,6 +37,7 @@ export function Sidebar() {
       : []),
     { to: "/community", label: locale === "fr" ? COMMUNITY_HUB_NAV.fr : COMMUNITY_HUB_NAV.en, icon: <Users className="h-5 w-5" /> },
     { to: "/settings", label: locale === "fr" ? "Paramètres" : "Settings", icon: <Settings className="h-5 w-5" /> },
+    { to: "/?home=1", label: locale === "fr" ? "Site" : "Website", icon: <Home className="h-5 w-5" /> },
     ...(isGrowthAdmin
       ? [{ to: "/admin/growth", label: "Growth", icon: <BarChart3 className="h-5 w-5" /> } satisfies Item]
       : []),
