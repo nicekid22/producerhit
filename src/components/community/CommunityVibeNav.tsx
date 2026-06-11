@@ -1,6 +1,8 @@
+import { Link } from "react-router-dom";
 import { Search } from "lucide-react";
 import { PrismFilterPill } from "@/components/prism/PrismFilterPill";
 import type { CommunityVibeCategory } from "@/lib/communityHub";
+import { communityVibePath } from "@/lib/communitySeo";
 
 type Props = {
   isFr: boolean;
@@ -35,27 +37,27 @@ export function CommunityVibeNav({
       </div>
 
       <div className="pk-hub-nav__vibes flex gap-2 overflow-x-auto pb-0.5">
-        <button
-          type="button"
+        <Link
+          to="/community"
           onClick={() => onVibeChange(null)}
           className={["pk-hub-vibe-tile", !activeVibeId ? "pk-hub-vibe-tile--active" : ""].join(" ")}
         >
           <span className="pk-hub-vibe-tile__title">{isFr ? "Tout le flux" : "All vibes"}</span>
-        </button>
+        </Link>
         {categories.map(({ category, count }) => {
           const active = activeVibeId === category.id;
           return (
-            <button
+            <Link
               key={category.id}
-              type="button"
-              onClick={() => onVibeChange(active ? null : category.id)}
+              to={communityVibePath(category.id)}
+              onClick={() => onVibeChange(category.id)}
               className={["pk-hub-vibe-tile", active ? "pk-hub-vibe-tile--active" : ""].join(" ")}
               data-vibe={category.id}
             >
               <span className="pk-hub-vibe-tile__title">{isFr ? category.title.fr : category.title.en}</span>
               <span className="pk-hub-vibe-tile__sub">{isFr ? category.subtitle.fr : category.subtitle.en}</span>
               <span className="pk-hub-vibe-tile__count">{count}</span>
-            </button>
+            </Link>
           );
         })}
       </div>

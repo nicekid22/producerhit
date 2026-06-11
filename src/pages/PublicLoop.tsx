@@ -14,6 +14,7 @@ import {
 import { publicRowToCoverLoop, resolvePublicRowCoverUrl } from "@/lib/coverArt";
 import { fetchPublicProfileCards, type PublicProfileCard } from "@/lib/creatorProfile";
 import { ProfileAuthorChip } from "@/components/profile/ProfileAuthorChip";
+import { LoopCommentsSection } from "@/components/community/LoopCommentsSection";
 import { savePendingRemix } from "@/lib/pendingRemix";
 import { isRemixVibeRecreateEnabled } from "@/lib/remixVibeFallback";
 import { loopToRemixSource } from "@/lib/remixSourceLoop";
@@ -21,6 +22,7 @@ import { setLoopPageSeo } from "@/lib/seoMeta";
 import { getGenreSeoLink } from "@/lib/seoPages";
 import { buildLoopShareUrl } from "@/lib/growthLinks";
 import { COVER_SURFACE_CLASS, cn } from "@/lib/utils";
+import { fetchLoopCommentCounts } from "@/lib/loopComments";
 import { supabase } from "@/lib/supabaseClient";
 import { useLocaleStore } from "@/stores/localeStore";
 import { useAuthStore } from "@/stores/authStore";
@@ -64,6 +66,7 @@ export default function PublicLoop() {
   const [ratingSum, setRatingSum] = useState(0);
   const [ratingCount, setRatingCount] = useState(0);
   const [myRating, setMyRating] = useState<number | null>(null);
+  const [commentCount, setCommentCount] = useState(0);
   const [savingRating, setSavingRating] = useState(false);
   const [resolvingAudio, setResolvingAudio] = useState(false);
   const [remixLoading, setRemixLoading] = useState(false);
@@ -186,6 +189,18 @@ export default function PublicLoop() {
       cancelled = true;
     };
   }, [id, user]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!id) return;
+    void (async () => {
+      const counts = await fetchLoopCommentCounts([id]);
+      if (!cancelled) setCommentCount(counts[id] ?? 0);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -598,6 +613,74 @@ export default function PublicLoop() {
                 </Link>
               )}
             </section>
+
+            {row && playbackQueue.length > 1 ? (
+              <section className="mt-10 rounded-2xl border border-pk-border bg-pk-panel/40 p-6 sm:p-8" aria-labelledby="similar-tracks-title">
+                <h2 id="similar-tracks-title" className="text-xl font-bold">
+                  {isFr
+                    ? row.genre
+                      ? `Plus de beats ${row.genre} à remixer`
+                      : "Tracks similaires à remixer"
+                    : row.genre
+                      ? `More ${row.genre} beats to remix`
+                      : "Similar tracks to remix"}
+                </h2>
+                <p className="mt-2 text-sm text-pk-muted">
+                  {isFr
+                    ? "Écoute d'autres tracks publics du même genre — chaque page est indexable pour le SEO."
+                    : "Listen to more public tracks in the same genre — each page is indexable for SEO."}
+                </p>
+                <ul className="mt-5 grid gap-2 sm:grid-cols-2">
+                  {playbackQueue
+                    .filter((t) => t.id !== row.id)
+                    .slice(0, 8)
+                    .map((t) => (
+                      <li key={t.id}>
+                        <Link
+                          to={`/loop/${t.id}`}
+                          className="flex items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 transition-colors hover:border-pk-accent/30 hover:bg-white/[0.05]"
+                        >
+                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-pk-accent/15 text-xs font-bold text-pk-accent">
+                            ♪
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-semibold text-pk-text">{t.name || "Track"}</span>
+                            <span className="block truncate text-xs text-pk-muted">
+                              {[t.genre, t.mood, t.bpm ? `${t.bpm} BPM` : null].filter(Boolean).join(" · ")}
+                            </span>
+                          </span>
+                        </Link>
+                      </li>
+                    ))}
+                </ul>
+                {row.genre && genreSeo ? (
+                  <p className="mt-4 text-sm">
+                    <Link to={genreSeo.path} className="font-semibold text-pk-accent hover:underline">
+                      {genreSeo.label} →
+                    </Link>
+                    {" · "}
+                    <Link to="/trending" className="font-semibold text-pk-accent hover:underline">
+                      {isFr ? "Trending beats IA →" : "Trending AI beats →"}
+                    </Link>
+                  </p>
+                ) : (
+                  <p className="mt-4 text-sm">
+                    <Link to="/trending" className="font-semibold text-pk-accent hover:underline">
+                      {isFr ? "Trending beats IA →" : "Trending AI beats →"}
+                    </Link>
+                  </p>
+                )}
+              </section>
+            ) : null}
+
+            <LoopCommentsSection
+              loopId={row.id}
+              loopOwnerId={row.user_id}
+              isFr={isFr}
+              userId={user?.id ?? null}
+              commentCount={commentCount}
+              onCommentCountChange={setCommentCount}
+            />
 
             <section className="mt-10 rounded-2xl border border-pk-border bg-pk-panel/40 p-6 sm:p-8" aria-labelledby="loop-faq">
               <h2 id="loop-faq" className="text-xl font-bold">

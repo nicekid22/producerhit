@@ -147,16 +147,14 @@ export function BlogListenSampler({ locale, genreMatchers, className }: Props) {
             const active = current?.id === loop.id;
             const busy = resolvingId === row.id;
             return (
-              <li key={row.id}>
+              <li key={row.id} className="rounded-xl border border-white/10 bg-black/25 p-2">
                 <button
                   type="button"
                   disabled={busy}
                   onClick={() => void playRow(row)}
                   className={cn(
-                    "flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors",
-                    active
-                      ? "border-cyan-400/35 bg-cyan-500/[0.12]"
-                      : "border-white/10 bg-black/25 hover:border-white/20 hover:bg-white/[0.04]",
+                    "flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors",
+                    active ? "bg-cyan-500/[0.12]" : "hover:bg-white/[0.04]",
                   )}
                 >
                   <span
@@ -185,6 +183,9 @@ export function BlogListenSampler({ locale, genreMatchers, className }: Props) {
                     </span>
                   </span>
                 </button>
+                <Link to={`/loop/${row.id}`} className="pk-accent-link mt-1 inline-flex px-2 text-[10px] font-semibold">
+                  {isFr ? "Page track SEO →" : "SEO track page →"}
+                </Link>
               </li>
             );
           })}

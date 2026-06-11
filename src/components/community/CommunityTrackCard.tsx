@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Pause, Play, Sparkles, Star } from "lucide-react";
+import { MessageCircle, Pause, Play, Sparkles, Star } from "lucide-react";
 import { ProfileAuthorChip } from "@/components/profile/ProfileAuthorChip";
 import { StoredLoopCover } from "@/components/cover/StoredLoopCover";
 import { publicRowToCoverLoop, resolveCommunityDisplayCoverUrl, resolvePublicRowCoverUrl, isPersistedStorageCoverUrl } from "@/lib/coverArt";
@@ -18,6 +18,7 @@ type Props = {
   isPlaying: boolean;
   resolving: boolean;
   rating?: RatingStats;
+  commentCount?: number;
   isNew?: boolean;
   isMine?: boolean;
   onPlay: () => void;
@@ -34,6 +35,7 @@ export function CommunityTrackCard({
   isPlaying,
   resolving,
   rating,
+  commentCount = 0,
   isNew,
   isMine,
   onPlay,
@@ -83,7 +85,7 @@ export function CommunityTrackCard({
               </span>
             ) : null}
             {isMine ? (
-              <span className="rounded-full border border-cyan-400/35 bg-cyan-500/20 px-2 py-0.5 text-[10px] font-semibold text-cyan-100 backdrop-blur-sm">
+              <span className="pk-accent-badge rounded-full px-2 py-0.5 text-[10px] font-semibold backdrop-blur-sm">
                 {isFr ? "Ton son" : "Yours"}
               </span>
             ) : null}
@@ -144,31 +146,44 @@ export function CommunityTrackCard({
 
         {!compact ? (
           <div className="mt-3 flex items-center justify-between gap-2 border-t border-white/[0.06] pt-3">
-            <div className="flex items-center gap-0.5">
-              {Array.from({ length: 5 }).map((_, i) => {
-                const star = i + 1;
-                const my = rating?.myRating ?? 0;
-                return (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() => onRate(star)}
-                    className="rounded p-0.5 transition-colors hover:bg-white/5"
-                    aria-label={isFr ? `Noter ${star}/5` : `Rate ${star}/5`}
-                  >
-                    <Star className={star <= my ? "h-3.5 w-3.5 fill-yellow-400 text-yellow-400" : "h-3.5 w-3.5 text-white/20"} />
-                  </button>
-                );
-              })}
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              <div className="flex items-center gap-0.5">
+                {Array.from({ length: 5 }).map((_, i) => {
+                  const star = i + 1;
+                  const my = rating?.myRating ?? 0;
+                  return (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => onRate(star)}
+                      className="rounded p-0.5 transition-colors hover:bg-white/5"
+                      aria-label={isFr ? `Noter ${star}/5` : `Rate ${star}/5`}
+                    >
+                      <Star className={star <= my ? "h-3.5 w-3.5 fill-yellow-400 text-yellow-400" : "h-3.5 w-3.5 text-white/20"} />
+                    </button>
+                  );
+                })}
+              </div>
+              <Link
+                to={`/loop/${row.id}#comments`}
+                className="pk-accent-link inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold"
+              >
+                <MessageCircle className="h-3.5 w-3.5" />
+                {commentCount > 0
+                  ? commentCount
+                  : isFr
+                    ? "Commenter"
+                    : "Comment"}
+              </Link>
             </div>
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={onRemix}
                 disabled={resolving}
-                className="inline-flex h-8 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3 text-[11px] font-semibold text-white/75 transition-colors hover:border-cyan-400/30 hover:text-white disabled:opacity-50"
+                className="pk-community-card__remix-btn inline-flex h-8 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3 text-[11px] font-semibold text-white/75 transition-colors hover:text-white disabled:opacity-50"
               >
-                <Sparkles className="h-3 w-3 text-cyan-300" />
+                <Sparkles className="pk-community-card__remix-icon h-3 w-3" />
                 Remix
               </button>
               <Link
@@ -179,6 +194,14 @@ export function CommunityTrackCard({
               </Link>
             </div>
           </div>
+        ) : commentCount > 0 ? (
+          <Link
+            to={`/loop/${row.id}#comments`}
+            className="pk-accent-link mt-2 inline-flex items-center gap-1 text-[10px] font-semibold"
+          >
+            <MessageCircle className="h-3 w-3" />
+            {commentCount}
+          </Link>
         ) : null}
       </div>
     </article>

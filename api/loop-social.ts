@@ -62,6 +62,20 @@ export default async function handler(req: { query?: Record<string, string | str
     [row.genre, row.mood, row.bpm ? `${row.bpm} BPM` : null, "Listen and remix on ProducerHit"].filter(Boolean).join(" · "),
   );
   const image = escapeHtml(buildOgImageUrl(row));
+  const pageUrlRaw = pageUrl;
+  const jsonLd = escapeHtml(
+    JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "MusicRecording",
+      name: row.name ?? "Track",
+      url: pageUrlRaw,
+      genre: row.genre || undefined,
+      description: [row.genre, row.mood, row.bpm ? `${row.bpm} BPM` : null].filter(Boolean).join(" · "),
+      image: buildOgImageUrl(row),
+      isAccessibleForFree: true,
+      publisher: { "@type": "Organization", name: "ProducerHit", url: origin },
+    }),
+  );
 
   const html = `<!doctype html>
 <html lang="en">
@@ -69,6 +83,7 @@ export default async function handler(req: { query?: Record<string, string | str
   <meta charset="utf-8"/>
   <title>${title}</title>
   <meta name="description" content="${description}"/>
+  <meta name="robots" content="index,follow"/>
   <meta property="og:type" content="music.song"/>
   <meta property="og:site_name" content="ProducerHit"/>
   <meta property="og:title" content="${title}"/>
@@ -79,10 +94,16 @@ export default async function handler(req: { query?: Record<string, string | str
   <meta name="twitter:title" content="${title}"/>
   <meta name="twitter:description" content="${description}"/>
   <meta name="twitter:image" content="${image}"/>
-  <meta http-equiv="refresh" content="0;url=${pageUrl}"/>
   <link rel="canonical" href="${pageUrl}"/>
+  <script type="application/ld+json">${jsonLd}</script>
 </head>
-<body><p><a href="${pageUrl}">Open track on ProducerHit</a></p></body>
+<body>
+  <main>
+    <h1>${escapeHtml(row.name ?? "Track")}</h1>
+    <p>${description}</p>
+    <p><a href="${pageUrl}">Listen and remix on ProducerHit</a></p>
+  </main>
+</body>
 </html>`;
 
   res.setHeader("Content-Type", "text/html; charset=utf-8");

@@ -18,10 +18,43 @@
         {
           "type": "header",
           "key": "user-agent",
-          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Discordbot|WhatsApp|TelegramBot|Pinterest|redditbot).*"
+          "value": ".*(Googlebot|googlebot|Google-InspectionTool|bingbot|Bingbot|DuckDuckBot|Baiduspider|YandexBot|Slurp|facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Discordbot|WhatsApp|TelegramBot|Pinterest|redditbot).*"
         }
       ],
       "destination": "/api/loop-social?id=:id"
+    },
+    {
+      "source": "/community",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(Googlebot|googlebot|Google-InspectionTool|bingbot|Bingbot|DuckDuckBot|Baiduspider|YandexBot|Slurp).*"
+        }
+      ],
+      "destination": "/api/community-prerender?path=/community"
+    },
+    {
+      "source": "/community/vibe/:vibeId",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(Googlebot|googlebot|Google-InspectionTool|bingbot|Bingbot|DuckDuckBot|Baiduspider|YandexBot|Slurp).*"
+        }
+      ],
+      "destination": "/api/community-prerender?path=/community/vibe/:vibeId"
+    },
+    {
+      "source": "/trending",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(Googlebot|googlebot|Google-InspectionTool|bingbot|Bingbot|DuckDuckBot|Baiduspider|YandexBot|Slurp).*"
+        }
+      ],
+      "destination": "/api/community-prerender?path=/trending"
     },
     {
       "source": "/:seoPath(meilleur-generateur-beats-ia-producteurs|comparatif-generateur-musique-ia-2026|best-ai-beat-generator-for-producers|ai-music-generator-comparison-2026|alternatives-generateur-chanson-ia|ai-song-generator-alternatives|meilleur-generateur-musique-ai|generateur-musique-ia-gratuit|ai-deep-sleep-music-generator|ai-meditation-music-generator|generateur-cover-chanson-ia|ai-relaxing-music-generator|generate-beats-online-free|text-to-music-ai-generator|musique-sommeil-profond-ia|ai-ambient-music-generator|ai-hip-hop-beat-generator|musique-ia-spotify-ready|ai-sleep-music-generator|ai-study-music-generator|ai-focus-music-generator|musique-concentration-ia|ai-chill-music-generator|ai-cover-song-generator|generateur-type-beat-ia|free-music-ai-generator|best-music-ai-generator|ai-lofi-music-generator|ai-yoga-music-generator|ai-drill-beat-generator|generateur-afrobeats-ia|ai-phonk-beat-generator|spotify-ready-ai-music|type-beat-generator-ai|ai-trap-beat-generator|ai-afrobeats-generator|ai-lofi-beat-generator|producteurhit-vs-suno|producteurhit-vs-udio|beatoven-alternatives|alternatives-beatoven|soundraw-alternatives|alternatives-soundraw|generateur-musique-ia|generer-beats-gratuit|musique-meditation-ia|musique-relaxation-ia|ai-rnb-beat-generator|generateur-hip-hop-ia|ai-pop-beat-generator|comparatif-suno-udio|producerhit-vs-suno|producerhit-vs-udio|mubert-alternatives|alternatives-mubert|loudly-alternatives|alternatives-loudly|generateur-beats-ia|generateur-music-ai|texte-en-musique-ia|generateur-drill-ia|generateur-phonk-ia|ai-music-generator|music-ai-generator|musique-sommeil-ia|musique-ambient-ia|generateur-trap-ia|generateur-lofi-ia|suno-alternatives|alternatives-suno|udio-alternatives|alternatives-udio|ai-beat-generator|generateur-rnb-ia|generateur-pop-ia|musique-etude-ia|musique-chill-ia|musique-lofi-ia|musique-yoga-ia|remix-cover-ai|remix-cover-ia|suno-vs-udio)",

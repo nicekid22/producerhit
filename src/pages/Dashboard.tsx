@@ -48,12 +48,21 @@ import {
   autoplaySingleGenerationResult,
   createGenerationAutoplaySession,
 } from "@/lib/generationAutoplay";
+import {
+  isSyncGenerationSessionActive,
+  syncGenerationFinish,
+  syncGenerationSlotPatch,
+  syncGenerationSlots,
+  syncGenerationStart,
+  syncRemixGenerationFinish,
+  syncRemixGenerationStart,
+} from "@/lib/generationSessionSync";
+import { useGenerationSessionStore } from "@/stores/generationSessionStore";
 import { LOOP_COVER_REROLL_CREDIT_COST } from "@/lib/loopCoverReroll";
 import { buildWorkspacePlaybackQueue } from "@/lib/workspacePlaybackQueue";
 import type { Loop, LoopLength } from "@/types/loop";
 import { usePlayerStore } from "@/stores/playerStore";
 import { LoopCardItem } from "@/components/LoopCardItem";
-import type { LoopAudioRetentionContext } from "@/lib/loopAudioRetention";
 import { LoopCardSkeleton } from "@/components/LoopCardSkeleton";
 import { SpeechDictationField } from "@/components/SpeechDictationField";
 import { AlertTriangle, Copy, Search, SlidersHorizontal, X } from "lucide-react";
@@ -65,6 +74,7 @@ import { notifyGamificationGeneration } from "@/components/growth/GamificationSt
 import { DailyBonusBannerButton } from "@/components/growth/DailyBonusBannerButton";
 import { DashboardPromoBillboard } from "@/components/growth/DashboardPromoBillboard";
 import { pickLoopForSharePrompt, shouldShowSharePromptAfterGeneration } from "@/lib/sharePrompt";
+import { trackFreeGenerationMilestones } from "@/lib/conversionMetrics";
 import { markReferralInvitePromptShown, shouldShowReferralInvitePrompt } from "@/lib/referralPrompt";
 import { ensureReferralCode } from "@/lib/referral";
 import { loadPendingRemix, clearPendingRemix, type PendingRemix } from "@/lib/pendingRemix";
@@ -396,6 +406,28 @@ export default function Dashboard() {
   const pendingReferralAfterShareRef = useRef(false);
   const generateSessionRef = useRef(0);
   const referralPromptTimerRef = useRef<number | null>(null);
+
+  const hydrateGenerationFromStore = useCallback(() => {
+    const snap = useGenerationSessionStore.getState();
+    const hasVisibleSlots = Boolean(snap.slots?.some((s) => s.visible));
+    if (!snap.generating && snap.phase !== "done" && !hasVisibleSlots) return;
+    if (snap.sessionId > 0) generateSessionRef.current = snap.sessionId;
+    setGenerating(snap.generating);
+    if (snap.slots) setGenerationSlots(snap.slots as GenerationSlot[]);
+    if ((snap.generating || snap.phase === "done") && mobileV2) goResults();
+  }, [goResults, mobileV2]);
+
+  useEffect(() => {
+    hydrateGenerationFromStore();
+  }, [hydrateGenerationFromStore]);
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") hydrateGenerationFromStore();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [hydrateGenerationFromStore]);
   const [externalRemix, setExternalRemix] = useState<PendingRemix | null>(null);
   const [mobileOnboardingOpen, setMobileOnboardingOpen] = useState(false);
   const [masteringUpsellLoop, setMasteringUpsellLoop] = useState<Loop | null>(null);
@@ -676,6 +708,7 @@ export default function Dashboard() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("upgraded") === "true") {
+      trackClientEvent("subscription_activated", { source: "stripe_return" });
       toast.success(locale === "fr" ? "🎉 Paiement reçu. Activation de ton plan…" : "🎉 Payment received. Activating your plan…");
       window.history.replaceState({}, "", "/dashboard");
       void (async () => {
@@ -857,7 +890,6 @@ export default function Dashboard() {
       const forceExhausted = reason === "credits_exhausted" && remaining < 1;
       if (!canShow && !forceExhausted) return;
       openUpsell(reason, ctx);
-      trackClientEvent("upgrade_prompt_shown", { source: entrySource, reason, plan: planRef.current });
       if (forceExhausted) markExhaustedCreditsPromptShown();
     },
     [entrySource, openUpsell, remaining, totalLimit, usedThisMonth],
@@ -1031,14 +1063,6 @@ export default function Dashboard() {
   const mobileGenActive = generating || mobileResultsBadge > 0;
   const mobileGenerationsAnchorRef = useRef<HTMLDivElement>(null);
   const hasMobilePlayer = usePlayerStore((s) => !!s.current);
-
-  const audioRetentionCtx = useMemo(
-    (): LoopAudioRetentionContext => ({
-      plan: authProfile?.plan ?? plan,
-      hostedAudioExpiresAt: authProfile?.hosted_audio_expires_at ?? null,
-    }),
-    [authProfile?.hosted_audio_expires_at, authProfile?.plan, plan],
-  );
 
   const startWorkspaceJob = useCallback(
     (title: string, sub: string) => {
@@ -1278,6 +1302,7 @@ export default function Dashboard() {
           ]
         : [{ idx: 1, status: "generating", title: slotDisplayTitle, seed: seed1, visible: true, previewReady: false, progressPct: 0 }];
     setGenerationSlots(slots);
+    syncGenerationStart(sessionId, slots);
 
     let didGenerate = false;
     const slotErrors: Partial<Record<1 | 2, string>> = {};
@@ -1492,7 +1517,7 @@ export default function Dashboard() {
 
       const created: Loop[] = [];
 
-      const isActiveSession = () => generateSessionRef.current === sessionId;
+      const isActiveSession = () => isSyncGenerationSessionActive(sessionId);
 
       const generationAutoplay = createGenerationAutoplaySession({
         versions,
@@ -1508,6 +1533,7 @@ export default function Dashboard() {
           if (!prev) return prev;
           return prev.map((it) => (it.idx === idx ? { ...it, ...next } : it));
         });
+        syncGenerationSlotPatch(idx, next);
       };
 
       const hideGenerationSlot = (idx: 1 | 2, extra?: Partial<GenerationSlot>) => {
@@ -1596,6 +1622,14 @@ export default function Dashboard() {
           dual_batch: value.engine.includes("dual-batch"),
         });
         consumeCredit();
+        const usedAfterGen = usedCountRef.current;
+        trackFreeGenerationMilestones({
+          plan,
+          usedAfterGen,
+          loopId: loop.id,
+          mode,
+          source: entrySource,
+        });
       };
 
       const startOne = async (idx: 1 | 2, seed: number, title: string) => {
@@ -1881,7 +1915,7 @@ export default function Dashboard() {
         const first = playableCreated[queueIdx >= 0 ? queueIdx : 0] ?? playableCreated[0];
         if (first) {
           const usedBefore = usedCountRef.current - created.length;
-          if (shouldShowSharePromptAfterGeneration()) {
+          if (shouldShowSharePromptAfterGeneration(usedCountRef.current)) {
             const shareLoop =
               pickLoopForSharePrompt(useLoopsStore.getState().loops, playableCreated.map((l) => l.id), first.id) ??
               first;
@@ -1945,12 +1979,19 @@ export default function Dashboard() {
       const rawMessage = err instanceof Error ? err.message : "";
       toast.error(formatGenerationErrorMessage(rawMessage, locale, { plan }));
     } finally {
-      if (generateSessionRef.current === sessionId) {
+      if (isSyncGenerationSessionActive(sessionId)) {
         setGenerating(false);
+        let nextSlots: GenerationSlot[] | null = null;
         setGenerationSlots((prev) => {
           if (!prev) return null;
           const errors = prev.filter((s) => s.visible && s.status === "error");
-          return errors.length > 0 ? errors : null;
+          nextSlots = errors.length > 0 ? errors : null;
+          return nextSlots;
+        });
+        syncGenerationFinish(sessionId, {
+          slots: nextSlots,
+          didGenerate,
+          title: slotDisplayTitle,
         });
       }
       if (didGenerate && user) void refreshProfile();
@@ -2033,11 +2074,15 @@ export default function Dashboard() {
       if (remaining < 1 || generating) return;
       unlockAudioPlaybackFromGesture();
       armGenerationAutoplay();
+      const remixSessionId = ++generateSessionRef.current;
       setGenerating(true);
       const generationKey = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `remix-${Date.now()}`;
       const baseTitle = (input.sourceLoopName || (locale === "fr" ? "Remix" : "Remix")).replace(/\.[^.]+$/, "").slice(0, 48);
       const title = `${baseTitle} Remix`;
-      setGenerationSlots([{ idx: 1, status: "generating", title, seed: 0, visible: true, previewReady: false }]);
+      const remixSlots: GenerationSlot[] = [{ idx: 1, status: "generating", title, seed: 0, visible: true, previewReady: false, progressPct: 0 }];
+      setGenerationSlots(remixSlots);
+      syncRemixGenerationStart(remixSessionId, remixSlots);
+      let remixOk = false;
       try {
         trackClientEvent("remix_start", { task_type: input.taskType, plan, source: entrySource });
         const result = await remixLoopAce({
@@ -2089,7 +2134,9 @@ export default function Dashboard() {
           isPublic: true,
         };
         const loop = await createLoop({ ...draft, name: title });
+        remixOk = true;
         setGenerationSlots(null);
+        syncGenerationSlots(null);
         autoplaySingleGenerationResult(loop, {
           versions: 1,
           workspaceFilter: { query, savedOnly },
@@ -2099,9 +2146,17 @@ export default function Dashboard() {
         });
         trackClientEvent("generate_success", { loop_id: loop.id, mode: "remix", versions: 1, plan, source: entrySource });
         consumeCredit();
+        const usedAfterRemix = usedCountRef.current;
+        trackFreeGenerationMilestones({
+          plan,
+          usedAfterGen: usedAfterRemix,
+          loopId: loop.id,
+          mode: "remix",
+          source: entrySource,
+        });
         triggerBeatReady(locale, loop.id, { isFirst: false, versionCount: 1 });
         toast.success(locale === "fr" ? "Remix prêt — écoute le résultat 🎧" : "Remix ready — listen to the result 🎧");
-        if (shouldShowSharePromptAfterGeneration()) {
+        if (shouldShowSharePromptAfterGeneration(usedAfterRemix)) {
             const shareLoop =
               pickLoopForSharePrompt(useLoopsStore.getState().loops, [loop.id], loop.id) ?? loop;
             trackClientEvent("growth_share_prompt", {
@@ -2126,8 +2181,10 @@ export default function Dashboard() {
           toast.error(err instanceof Error ? err.message : locale === "fr" ? "Remix échoué" : "Remix failed");
         }
         setGenerationSlots(null);
+        syncGenerationSlots(null);
       } finally {
         setGenerating(false);
+        syncRemixGenerationFinish(remixSessionId, { ok: remixOk, title });
       }
     },
     [
@@ -2162,11 +2219,15 @@ export default function Dashboard() {
       if (remaining < 1 || generating) return;
       unlockAudioPlaybackFromGesture();
       armGenerationAutoplay();
+      const vibeSessionId = ++generateSessionRef.current;
       setGenerating(true);
       const generationKey =
         typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `vibe-${Date.now()}`;
       const title = variantResultTitle(input.sourceLoop, "remix");
-      setGenerationSlots([{ idx: 1, status: "generating", title, seed: 0, visible: true, previewReady: false }]);
+      const vibeSlots: GenerationSlot[] = [{ idx: 1, status: "generating", title, seed: 0, visible: true, previewReady: false, progressPct: 0 }];
+      setGenerationSlots(vibeSlots);
+      syncRemixGenerationStart(vibeSessionId, vibeSlots);
+      let vibeOk = false;
 
       const { inputParams, generateOptions, variantPrompt, nextSeed, engine, isSongLike } = prepareLoopVariantGeneration(
         input.sourceLoop,
@@ -2303,7 +2364,9 @@ export default function Dashboard() {
         const loop = await createLoop({ ...draft, name: title });
         await migrateAudioCache(previewId, loop.id);
         removeLoop(previewId);
+        vibeOk = true;
         setGenerationSlots(null);
+        syncGenerationSlots(null);
         autoplaySingleGenerationResult(loop, {
           versions: 1,
           workspaceFilter: { query, savedOnly },
@@ -2320,9 +2383,17 @@ export default function Dashboard() {
           vibe_recreate: true,
         });
         consumeCredit();
+        const usedAfterVibe = usedCountRef.current;
+        trackFreeGenerationMilestones({
+          plan,
+          usedAfterGen: usedAfterVibe,
+          loopId: loop.id,
+          mode: isSongLike ? "song" : "beat",
+          source: entrySource,
+        });
         triggerBeatReady(locale, loop.id, { isFirst: false, versionCount: 1 });
         toast.success(locale === "fr" ? REMIX_VIBE_FALLBACK_COPY.fr.successToast : REMIX_VIBE_FALLBACK_COPY.en.successToast);
-        if (shouldShowSharePromptAfterGeneration()) {
+        if (shouldShowSharePromptAfterGeneration(usedAfterVibe)) {
           const shareLoop =
             pickLoopForSharePrompt(useLoopsStore.getState().loops, [loop.id], loop.id) ?? loop;
           trackClientEvent("growth_share_prompt", {
@@ -2343,8 +2414,10 @@ export default function Dashboard() {
           toast.error(err instanceof Error ? err.message : locale === "fr" ? "Remix échoué" : "Remix failed");
         }
         setGenerationSlots(null);
+        syncGenerationSlots(null);
       } finally {
         setGenerating(false);
+        syncRemixGenerationFinish(vibeSessionId, { ok: vibeOk, title });
       }
     },
     [
@@ -3950,6 +4023,7 @@ export default function Dashboard() {
                             setGenerationSlots((prev) => {
                               if (!prev) return null;
                               const next = prev.filter((s) => s.idx !== slot.idx);
+                              syncGenerationSlots(next.length ? next : null);
                               return next.length ? next : null;
                             });
                           }}
@@ -4043,8 +4117,6 @@ export default function Dashboard() {
                       slotIndex={loopIdx}
                       compact={mobileV2}
                       queueLoops={displayedLoops}
-                      showRetentionCountdown
-                      audioRetention={audioRetentionCtx}
                       onOpenDetails={(loop) => setDetailsId((prev) => (prev === loop.id ? null : loop.id))}
                       onGenerationUsed={consumeCredit}
                       onCoverRerollUsed={consumeCredit}
@@ -4091,8 +4163,6 @@ export default function Dashboard() {
                     slotIndex={loopIdx}
                     compact={mobileV2}
                     queueLoops={displayedLoops}
-                    showRetentionCountdown
-                    audioRetention={audioRetentionCtx}
                     onOpenDetails={(loop) => setDetailsId((prev) => (prev === loop.id ? null : loop.id))}
                     onGenerationUsed={consumeCredit}
                     onCoverRerollUsed={consumeCredit}

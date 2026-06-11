@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Flame, Sparkles, Trophy, Waves } from "lucide-react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { Flame, Compass, Sparkles, Trophy, Waves } from "lucide-react";
 import toast from "react-hot-toast";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/Button";
@@ -10,12 +10,27 @@ import { CommunityRail } from "@/components/community/CommunityRail";
 import { CommunityTrackCard } from "@/components/community/CommunityTrackCard";
 import { CommunityVibeNav } from "@/components/community/CommunityVibeNav";
 import {
-  categoriesWithTracks,
+  buildCategoryRailPlans,
+  buildDiscoverRailItems,
+  CATEGORY_RAIL_SORT,
   COMMUNITY_VIBE_CATEGORIES,
   pickSpotlight,
   sortByCommunityLove,
+  sortCommunityRail,
+  takeUniqueRailItems,
   tracksForCategory,
+  type CommunityRailSort,
 } from "@/lib/communityHub";
+import { buildCommunityPulse, countNewToday } from "@/lib/communityPulse";
+import { CommunityPulseStrip } from "@/components/community/CommunityPulseStrip";
+import { CommunitySeoFooter } from "@/components/community/CommunitySeoFooter";
+import {
+  applyCommunityPageSeo,
+  buildCommunityItemListSchema,
+  buildCommunityVibeSeo,
+  communityVibePath,
+  isValidCommunityVibeId,
+} from "@/lib/communitySeo";
 import {
   fetchCommunityPlayCounts,
   fetchPublicLoops,
@@ -26,6 +41,7 @@ import {
 import { savePendingRemix } from "@/lib/pendingRemix";
 import { isRemixVibeRecreateEnabled } from "@/lib/remixVibeFallback";
 import { fetchRemixSourceLoop } from "@/lib/remixSourceLoop";
+import { fetchLoopCommentCounts } from "@/lib/loopComments";
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
 import { useLocaleStore } from "@/stores/localeStore";
 import { useAuthStore } from "@/stores/authStore";
@@ -40,6 +56,7 @@ type RatingStats = { sum: number; count: number; myRating: number | null };
 
 export default function Explore() {
   const navigate = useNavigate();
+  const { vibeId: vibeIdParam } = useParams<{ vibeId?: string }>();
   const locale = useLocaleStore((s) => s.locale);
   const isFr = locale === "fr";
   const user = useAuthStore((s) => s.user);
@@ -56,7 +73,35 @@ export default function Explore() {
   const isPlaying = usePlayerStore((s) => s.isPlaying);
   const setPlaying = usePlayerStore((s) => s.setPlaying);
   const [ratingsById, setRatingsById] = useState<Record<string, RatingStats>>({});
+  const [commentsById, setCommentsById] = useState<Record<string, number>>({});
   const [playsById, setPlaysById] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (vibeIdParam && !isValidCommunityVibeId(vibeIdParam)) {
+      navigate("/community", { replace: true });
+      return;
+    }
+    setActiveVibeId(vibeIdParam ?? null);
+  }, [navigate, vibeIdParam]);
+
+  const hubShuffleSeed = useMemo(() => {
+    const key = "producerhit_community_shuffle_v1";
+    try {
+      let seed = window.sessionStorage.getItem(key);
+      if (!seed) {
+        seed = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        window.sessionStorage.setItem(key, seed);
+      }
+      return seed;
+    } catch {
+      return "community";
+    }
+  }, []);
+
+  const sortCtx = useMemo(
+    () => ({ ratingsById, playsById, commentsById }),
+    [commentsById, playsById, ratingsById],
+  );
 
   const isNew = (createdAt: string) => Date.now() - new Date(createdAt).getTime() < 24 * 60 * 60 * 1000;
 
@@ -99,7 +144,7 @@ export default function Explore() {
 
   useEffect(() => {
     let cancelled = false;
-    const cacheKey = "producerhit_community_cache_v9";
+    const cacheKey = "producerhit_community_cache_v10";
     let loadedFromCache = false;
     try {
       const raw = window.sessionStorage.getItem(cacheKey);
@@ -153,6 +198,16 @@ export default function Explore() {
   }, [isFr, refetchToken]);
 
   useEffect(() => {
+    const refresh = () => setRefetchToken((x) => x + 1);
+    const interval = window.setInterval(refresh, 5 * 60 * 1000);
+    window.addEventListener("focus", refresh);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refresh);
+    };
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
     const ids = rows.slice(0, 40).map((r) => r.id).filter(Boolean);
     if (!ids.length) {
@@ -193,6 +248,22 @@ export default function Explore() {
 
   useEffect(() => {
     let cancelled = false;
+    const ids = rows.slice(0, 40).map((r) => r.id).filter(Boolean);
+    if (!ids.length) {
+      setCommentsById({});
+      return;
+    }
+    void (async () => {
+      const counts = await fetchLoopCommentCounts(ids);
+      if (!cancelled) setCommentsById(counts);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [rows]);
+
+  useEffect(() => {
+    let cancelled = false;
     const ids = rows.map((r) => r.id).filter(Boolean);
     if (!ids.length) {
       setPlaysById({});
@@ -210,7 +281,7 @@ export default function Explore() {
   const vibeNavItems = useMemo(() => {
     return COMMUNITY_VIBE_CATEGORIES.map((category) => ({
       category,
-      count: tracksForCategory(rows, category).length,
+      count: tracksForCategory(rows, category, true).length,
     })).filter((x) => x.count > 0);
   }, [rows]);
 
@@ -222,7 +293,7 @@ export default function Explore() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     let base = rows;
-    if (activeCategory) base = tracksForCategory(base, activeCategory);
+    if (activeCategory) base = tracksForCategory(base, activeCategory, true);
 
     base = base.filter((r) => {
       if (!q) return true;
@@ -240,29 +311,94 @@ export default function Explore() {
     }
 
     if (sort === "top") return sortByCommunityLove(base, ratingsById, playsById);
+    if (activeCategory) {
+      const catSort: CommunityRailSort = CATEGORY_RAIL_SORT[activeCategory.id] ?? "love";
+      if (catSort === "newest") return sortPublicLoopsByNewest(base);
+      if (catSort !== "love") {
+        return sortCommunityRail(base, catSort, sortCtx, hubShuffleSeed);
+      }
+    }
     return sortPublicLoopsByNewest(base);
-  }, [activeCategory, playsById, query, ratingsById, rows, sort]);
+  }, [activeCategory, hubShuffleSeed, playsById, query, ratingsById, rows, sort, sortCtx]);
 
-  const newestRail = useMemo(() => sortPublicLoopsByNewest(rows).slice(0, 12), [rows]);
-  const topRail = useMemo(
-    () => sortByCommunityLove(rows, ratingsById, playsById).slice(0, 12),
-    [playsById, ratingsById, rows],
-  );
   const myTracks = useMemo(() => {
     if (!user?.id) return [];
     return sortPublicLoopsByNewest(rows.filter((r) => r.user_id === user.id));
   }, [rows, user?.id]);
 
   const myTracksRail = useMemo(() => myTracks.slice(0, 10), [myTracks]);
-  const newestRailItems = useMemo(() => newestRail.slice(0, 10), [newestRail]);
-  const topRailItems = useMemo(() => topRail.slice(0, 10), [topRail]);
+
+  const { newestRailItems, topRailItems, discoverRailItems, categoryRailPlans } = useMemo(() => {
+    const usedIds = new Set<string>();
+    const newest = takeUniqueRailItems(sortPublicLoopsByNewest(rows), 10, usedIds);
+    const top = takeUniqueRailItems(sortByCommunityLove(rows, ratingsById, playsById), 10, usedIds);
+    const discoverRailItems = buildDiscoverRailItems(rows, sortCtx, {
+      limit: 10,
+      shuffleSeed: hubShuffleSeed,
+      usedIds,
+    });
+    const categoryRailPlans = buildCategoryRailPlans(rows, sortCtx, {
+      limit: 10,
+      shuffleSeed: hubShuffleSeed,
+      usedIds,
+    });
+    return { newestRailItems: newest, topRailItems: top, discoverRailItems, categoryRailPlans };
+  }, [hubShuffleSeed, playsById, ratingsById, rows, sortCtx]);
+
+  const pulseItems = useMemo(
+    () => buildCommunityPulse({ rows, commentsById, ratingsById }),
+    [commentsById, ratingsById, rows],
+  );
+  const newTodayCount = useMemo(() => countNewToday(rows), [rows]);
+  const totalComments = useMemo(
+    () => Object.values(commentsById).reduce((sum, n) => sum + n, 0),
+    [commentsById],
+  );
 
   const spotlight = useMemo(() => pickSpotlight(rows, ratingsById, playsById), [playsById, ratingsById, rows]);
   const spotlightQueue = useMemo(() => {
     if (!spotlight) return newestRailItems;
     return [spotlight, ...newestRailItems.filter((r) => r.id !== spotlight.id)];
   }, [newestRailItems, spotlight]);
-  const categorySections = useMemo(() => categoriesWithTracks(rows), [rows]);
+  useEffect(() => {
+    if (!activeCategory) return;
+    const seo = buildCommunityVibeSeo({
+      vibe: activeCategory,
+      isFr,
+      trackCount: filtered.length,
+    });
+    applyCommunityPageSeo({
+      title: seo.titleMeta,
+      description: seo.description,
+      keywords: seo.keywords,
+      pageUrl: seo.pageUrl,
+      jsonLd: buildCommunityItemListSchema({
+        pageUrl: seo.pageUrl,
+        listName: `${seo.title} — ProducerHit`,
+        items: filtered.slice(0, 12),
+      }),
+    });
+  }, [activeCategory, filtered, isFr]);
+
+  const handleVibeChange = (id: string | null) => {
+    setActiveVibeId(id);
+    navigate(id ? communityVibePath(id) : "/community");
+  };
+
+  const categoryRailSubtitle = (sort: CommunityRailSort, isFr: boolean) => {
+    switch (sort) {
+      case "newest":
+        return isFr ? "Nouveautés de la vibe" : "Fresh in this vibe";
+      case "plays":
+        return isFr ? "Les plus écoutés" : "Most played";
+      case "comments":
+        return isFr ? "Le plus de feedback" : "Most discussed";
+      case "shuffle":
+        return isFr ? "Sélection du jour" : "Daily picks";
+      default:
+        return isFr ? "Les plus kiffés de la vibe" : "Top loved in vibe";
+    }
+  };
 
   const hasActiveFilters = query.trim().length > 0 || activeVibeId !== null || sort !== "new";
   const catalogTitle = activeCategory
@@ -365,6 +501,7 @@ export default function Explore() {
     isPlaying,
     resolvingId,
     ratingsById,
+    commentsById,
     isNew,
     isMineRow,
     onRemix: remixFrom,
@@ -377,6 +514,8 @@ export default function Explore() {
         <CommunityHubHero
           isFr={isFr}
           liveCount={rows.length}
+          newTodayCount={newTodayCount}
+          totalComments={totalComments}
           loading={loading}
           spotlight={spotlight}
           topCategories={vibeNavItems}
@@ -389,13 +528,15 @@ export default function Explore() {
           onCreate={() => navigate("/dashboard")}
         />
 
+        <CommunityPulseStrip items={pulseItems} isFr={isFr} />
+
         <CommunityVibeNav
           isFr={isFr}
           categories={vibeNavItems}
           activeVibeId={activeVibeId}
           query={query}
           sort={sort}
-          onVibeChange={setActiveVibeId}
+          onVibeChange={handleVibeChange}
           onQueryChange={setQuery}
           onSortChange={setSort}
         />
@@ -438,25 +579,38 @@ export default function Explore() {
               }}
             />
 
-            {categorySections.map(({ category, tracks }) => {
-              const rail = sortByCommunityLove(tracks, ratingsById, playsById).slice(0, 10);
-              if (!rail.length) return null;
-              return (
-                <CommunityRail
-                  key={category.id}
-                  title={isFr ? category.title.fr : category.title.en}
-                  icon={<Waves className="h-4 w-4 text-violet-300" />}
-                  items={rail}
-                  {...railProps}
-                  onPlay={(_row, idx) => void playQueue(rail, idx)}
-                  onSeeAll={() => {
-                    setActiveVibeId(category.id);
-                    setSort("top");
-                    document.getElementById("hub-catalog")?.scrollIntoView({ behavior: "smooth" });
-                  }}
-                />
-              );
-            })}
+            {discoverRailItems.length > 0 ? (
+              <CommunityRail
+                title={isFr ? "Découvertes" : "Discoveries"}
+                subtitle={isFr ? "Vibes improbables — hors catégorie, 100% surprise" : "Wildcard vibes — off-category, pure surprise"}
+                icon={<Compass className="h-4 w-4 text-emerald-300" />}
+                items={discoverRailItems}
+                {...railProps}
+                onPlay={(_row, idx) => void playQueue(discoverRailItems, idx)}
+                onSeeAll={() => {
+                  setActiveVibeId(null);
+                  setSort("random");
+                  document.getElementById("hub-catalog")?.scrollIntoView({ behavior: "smooth" });
+                }}
+              />
+            ) : null}
+
+            {categoryRailPlans.map(({ category, sort, tracks: rail }) => (
+              <CommunityRail
+                key={category.id}
+                title={isFr ? category.title.fr : category.title.en}
+                subtitle={categoryRailSubtitle(sort, isFr)}
+                icon={<Waves className="h-4 w-4 text-violet-300" />}
+                items={rail}
+                {...railProps}
+                onPlay={(_row, idx) => void playQueue(rail, idx)}
+                onSeeAll={() => {
+                  setActiveVibeId(category.id);
+                  setSort(sort === "newest" ? "new" : sort === "shuffle" ? "random" : "top");
+                  document.getElementById("hub-catalog")?.scrollIntoView({ behavior: "smooth" });
+                }}
+              />
+            ))}
           </div>
         ) : null}
 
@@ -514,6 +668,7 @@ export default function Explore() {
                   isPlaying={isPlaying}
                   resolving={resolvingId === r.id}
                   rating={ratingsById[r.id]}
+                  commentCount={commentsById[r.id] ?? 0}
                   isNew={r.created_at ? isNew(r.created_at) : false}
                   isMine={isMineRow(r)}
                   onPlay={() => void togglePlayFromFiltered(r)}
@@ -526,8 +681,14 @@ export default function Explore() {
           </div>
         </section>
 
+        <CommunitySeoFooter
+          isFr={isFr}
+          variant={activeCategory ? "vibe" : "hub"}
+          vibeTitle={activeCategory ? (isFr ? activeCategory.title.fr : activeCategory.title.en) : undefined}
+        />
+
         <div className="flex justify-center pb-2">
-          <Link to="/library" className="text-xs font-semibold text-white/40 transition-colors hover:text-cyan-300/90">
+          <Link to="/library" className="pk-accent-link text-xs font-semibold">
             {isFr ? "Ma bibliothèque privée →" : "My private library →"}
           </Link>
         </div>

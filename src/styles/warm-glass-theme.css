@@ -46,6 +46,10 @@
   --warm-icon-accent-alt: #f0a0b0;
   --warm-safe-area-fill: linear-gradient(180deg, #c89838 0%, #c85028 52%, #a83858 100%);
   --warm-icon-accent-soft: rgba(232, 200, 144, 0.88);
+  --ph-mark-0: #fff8f0;
+  --ph-mark-1: #f0c848;
+  --ph-mark-2: #e87838;
+  --ph-mark-3: #f5dc70;
   --warm-glass-surface: rgba(38, 16, 10, 0.42);
   --warm-glass-surface-elevated: rgba(48, 22, 14, 0.56);
   --warm-glass-border: rgba(255, 195, 150, 0.24);
@@ -1643,6 +1647,28 @@ html.pk-warm-glass-active {
   --prism-violet: #d85878;
   --prism-accent: #e87838;
   --prism-chrome: #fff8f0;
+  --ph-mark-0: #fff8f0;
+  --ph-mark-1: #f0c848;
+  --ph-mark-2: #e87838;
+  --ph-mark-3: #f5dc70;
+}
+
+/* Logo waveform + wordmark holo — hors stage (marketing, auth, navbar…) */
+html.pk-warm-glass-active .pk-prism-holo-text {
+  background: var(--warm-accent-gradient-holo) !important;
+  background-size: 180% auto !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+html.pk-warm-glass-active .pk-brand-mark {
+  filter: drop-shadow(0 0 10px rgba(240, 192, 64, 0.32));
+}
+
+.pk-warm-glass-stage .pk-brand-mark {
+  filter: drop-shadow(0 0 10px rgba(240, 192, 64, 0.28));
 }
 
 /* Accents portaled (dropdowns, modales) — même palette que .pk-warm-glass-stage */
@@ -2732,6 +2758,190 @@ html.pk-warm-glass-active .pk-hub-hero__chip::before,
   background: var(--pk-hub-accent) !important;
 }
 
+/* Le Flux — pulse, badges hero, popup génération (thème Warm Glass) */
+html.pk-warm-glass-active .pk-hub-hero__hook,
+.pk-warm-glass-stage .pk-hub-hero__hook {
+  color: color-mix(in srgb, var(--warm-accent-honey) 88%, white) !important;
+}
+
+html.pk-warm-glass-active .pk-hub-hero__tagline,
+.pk-warm-glass-stage .pk-hub-hero__tagline {
+  color: rgba(255, 230, 210, 0.78) !important;
+}
+
+html.pk-warm-glass-active .pk-hub-hero__live-pill,
+.pk-warm-glass-stage .pk-hub-hero__live-pill {
+  border-color: color-mix(in srgb, var(--warm-pigment-rose) 45%, transparent) !important;
+  background: color-mix(in srgb, var(--warm-pigment-rose) 16%, transparent) !important;
+  color: #ffd4c8 !important;
+}
+
+html.pk-warm-glass-active .pk-hub-hero__live-dot,
+.pk-warm-glass-stage .pk-hub-hero__live-dot {
+  background: var(--warm-pigment-rose) !important;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--warm-pigment-rose) 70%, transparent) !important;
+}
+
+html.pk-warm-glass-active .pk-hub-hero__stat-pill,
+.pk-warm-glass-stage .pk-hub-hero__stat-pill {
+  border-color: var(--warm-glass-border) !important;
+  background: var(--warm-glass-surface) !important;
+  color: rgba(255, 230, 210, 0.82) !important;
+}
+
+html.pk-warm-glass-active .pk-hub-hero__btn-primary,
+.pk-warm-glass-stage .pk-hub-hero__btn-primary {
+  border-color: color-mix(in srgb, var(--warm-pigment-orange) 45%, transparent) !important;
+  background: var(--warm-accent-gradient-progress) !important;
+  color: #2a1208 !important;
+  box-shadow: 0 8px 28px var(--warm-accent-glow) !important;
+}
+
+html.pk-warm-glass-active .pk-hub-hero__btn-primary:hover,
+.pk-warm-glass-stage .pk-hub-hero__btn-primary:hover {
+  box-shadow: 0 12px 32px color-mix(in srgb, var(--warm-pigment-orange) 35%, transparent) !important;
+}
+
+html.pk-warm-glass-active .pk-hub-hero__btn-ghost,
+.pk-warm-glass-stage .pk-hub-hero__btn-ghost {
+  border-color: var(--warm-glass-border) !important;
+  background: var(--warm-glass-surface) !important;
+  color: rgba(255, 248, 240, 0.92) !important;
+}
+
+html.pk-warm-glass-active .pk-hub-hero__btn-ghost:hover,
+.pk-warm-glass-stage .pk-hub-hero__btn-ghost:hover {
+  border-color: color-mix(in srgb, var(--warm-pigment-orange) 35%, transparent) !important;
+  background: color-mix(in srgb, var(--warm-pigment-orange) 10%, transparent) !important;
+}
+
+html.pk-warm-glass-active .pk-hub-hero__vibe-chip,
+.pk-warm-glass-stage .pk-hub-hero__vibe-chip {
+  border-color: rgba(255, 195, 150, 0.18) !important;
+  background: color-mix(in srgb, var(--warm-pigment-orange) 8%, transparent) !important;
+  color: rgba(255, 240, 225, 0.9) !important;
+}
+
+html.pk-warm-glass-active .pk-hub-hero__card--spotlight,
+.pk-warm-glass-stage .pk-hub-hero__card--spotlight {
+  border-color: color-mix(in srgb, var(--warm-pigment-orange) 28%, transparent) !important;
+}
+
+html.pk-warm-glass-active .pk-hub-hero__card--empty,
+.pk-warm-glass-stage .pk-hub-hero__card--empty {
+  border-color: color-mix(in srgb, var(--warm-pigment-orange) 30%, transparent) !important;
+  background: color-mix(in srgb, var(--warm-pigment-orange) 8%, transparent) !important;
+}
+
+html.pk-warm-glass-active .pk-hub-pulse,
+.pk-warm-glass-stage .pk-hub-pulse {
+  border-color: color-mix(in srgb, var(--warm-pigment-orange) 26%, transparent) !important;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--warm-pigment-orange) 12%, transparent),
+    color-mix(in srgb, var(--warm-pigment-rose) 10%, transparent)
+  ) !important;
+}
+
+html.pk-warm-glass-active .pk-hub-pulse__item,
+.pk-warm-glass-stage .pk-hub-pulse__item {
+  color: rgba(255, 235, 220, 0.86) !important;
+}
+
+html.pk-warm-glass-active .pk-hub-pulse__item--link:hover,
+.pk-warm-glass-stage .pk-hub-pulse__item--link:hover {
+  color: var(--warm-accent-honey) !important;
+}
+
+html.pk-warm-glass-active .pk-hub-pulse__dots span.is-active,
+.pk-warm-glass-stage .pk-hub-pulse__dots span.is-active {
+  background: var(--warm-pigment-orange) !important;
+  box-shadow: 0 0 8px color-mix(in srgb, var(--warm-pigment-orange) 55%, transparent) !important;
+}
+
+html.pk-warm-glass-active .pk-gen-activity-pill__card,
+.pk-warm-glass-stage .pk-gen-activity-pill__card {
+  border-color: color-mix(in srgb, var(--warm-pigment-orange) 32%, transparent) !important;
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--warm-glass-surface-elevated) 94%, transparent),
+    color-mix(in srgb, rgba(48, 22, 14, 0.88) 92%, transparent)
+  ) !important;
+  box-shadow:
+    0 16px 48px rgba(8, 6, 12, 0.35),
+    inset 0 1px 0 rgba(255, 220, 180, 0.08) !important;
+}
+
+html.pk-warm-glass-active .pk-gen-activity-pill__card:hover,
+.pk-warm-glass-stage .pk-gen-activity-pill__card:hover {
+  border-color: color-mix(in srgb, var(--warm-pigment-orange) 48%, transparent) !important;
+  box-shadow:
+    0 20px 56px color-mix(in srgb, var(--warm-pigment-rose) 14%, transparent),
+    inset 0 1px 0 rgba(255, 220, 180, 0.1) !important;
+}
+
+html.pk-warm-glass-active .pk-gen-activity-pill__icon,
+.pk-warm-glass-stage .pk-gen-activity-pill__icon {
+  border-color: color-mix(in srgb, var(--warm-pigment-orange) 38%, transparent) !important;
+  background: color-mix(in srgb, var(--warm-pigment-orange) 14%, transparent) !important;
+  color: var(--warm-accent-honey) !important;
+}
+
+html.pk-warm-glass-active .pk-gen-activity-pill__progress-fill,
+.pk-warm-glass-stage .pk-gen-activity-pill__progress-fill {
+  background: var(--warm-accent-gradient-progress) !important;
+  box-shadow: 0 0 10px var(--warm-accent-glow) !important;
+}
+
+html.pk-warm-glass-active .pk-gen-activity-pill__icon--done,
+.pk-warm-glass-stage .pk-gen-activity-pill__icon--done {
+  border-color: color-mix(in srgb, var(--warm-accent-honey) 42%, transparent) !important;
+  background: color-mix(in srgb, var(--warm-accent-gold) 16%, transparent) !important;
+  color: var(--warm-accent-honey) !important;
+}
+
+html.pk-warm-glass-active .pk-gen-activity-pill__ready,
+.pk-warm-glass-stage .pk-gen-activity-pill__ready {
+  color: var(--warm-accent-honey) !important;
+}
+
+html.pk-warm-glass-active .pk-accent-link,
+.pk-warm-glass-stage .pk-accent-link {
+  color: rgba(255, 235, 220, 0.52) !important;
+}
+
+html.pk-warm-glass-active .pk-accent-link:hover,
+.pk-warm-glass-stage .pk-accent-link:hover {
+  color: var(--warm-accent-honey) !important;
+}
+
+html.pk-warm-glass-active .pk-accent-link--bright,
+.pk-warm-glass-stage .pk-accent-link--bright {
+  color: color-mix(in srgb, var(--warm-accent-honey) 88%, transparent) !important;
+}
+
+html.pk-warm-glass-active .pk-accent-badge,
+.pk-warm-glass-stage .pk-accent-badge {
+  border-color: color-mix(in srgb, var(--warm-pigment-orange) 38%, transparent) !important;
+  background: color-mix(in srgb, var(--warm-pigment-orange) 18%, transparent) !important;
+  color: rgba(255, 235, 210, 0.94) !important;
+}
+
+html.pk-warm-glass-active .pk-community-card__remix-btn:hover,
+.pk-warm-glass-stage .pk-community-card__remix-btn:hover {
+  border-color: color-mix(in srgb, var(--warm-pigment-orange) 32%, transparent) !important;
+}
+
+html.pk-warm-glass-active .pk-community-card__remix-icon,
+.pk-warm-glass-stage .pk-community-card__remix-icon {
+  color: var(--warm-accent-honey) !important;
+}
+
+html.pk-warm-glass-active .pk-hub-hero__card--empty-icon,
+.pk-warm-glass-stage .pk-hub-hero__card--empty-icon {
+  color: color-mix(in srgb, var(--warm-pigment-orange) 62%, transparent) !important;
+}
+
 html.pk-warm-glass-active .pk-community-card:hover,
 .pk-warm-glass-stage .pk-community-card:hover {
   border-color: color-mix(in srgb, var(--warm-pigment-orange) 32%, transparent) !important;
@@ -2819,6 +3029,21 @@ html.pk-warm-glass-active .pk-loop-retention-label,
 html.pk-warm-glass-active .pk-loop-retention-label--expired,
 .pk-warm-glass-stage .pk-loop-retention-label--expired {
   color: rgba(255, 200, 150, 0.42) !important;
+}
+
+html.pk-warm-glass-active .pk-loop-card-hint,
+.pk-warm-glass-stage .pk-loop-card-hint {
+  color: color-mix(in srgb, var(--warm-accent-honey) 88%, white) !important;
+}
+
+html.pk-warm-glass-active .pk-loop-card-hint--public,
+.pk-warm-glass-stage .pk-loop-card-hint--public {
+  color: color-mix(in srgb, #86efac 85%, var(--warm-accent-honey)) !important;
+}
+
+html.pk-warm-glass-active .pk-loop-card-hint--stems,
+.pk-warm-glass-stage .pk-loop-card-hint--stems {
+  color: color-mix(in srgb, var(--warm-accent-rose) 75%, white) !important;
 }
 
 /* Dictée vocale — thème Warm Glass */
@@ -2919,6 +3144,8 @@ html.pk-warm-glass-active .pk-gen-hint:focus-visible,
 .pk-warm-glass-stage.pk-prism-dashboard .pk-gen-loading-card,
 .pk-warm-glass-stage.pk-prism-dashboard .pk-hub-hero,
 .pk-warm-glass-stage.pk-prism-dashboard .pk-hub-hero__card,
+.pk-warm-glass-stage.pk-prism-dashboard .pk-hub-pulse,
+.pk-warm-glass-stage.pk-prism-dashboard .pk-gen-activity-pill__card,
 .pk-warm-glass-stage.pk-prism-dashboard .pk-hub-nav,
 .pk-warm-glass-stage.pk-prism-dashboard .pk-hub-vibe-tile,
 .pk-warm-glass-stage.pk-prism-dashboard .pk-community-card {

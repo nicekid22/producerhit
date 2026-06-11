@@ -8,6 +8,7 @@ import { ThemeBootstrap } from "@/components/ThemeBootstrap";
 import { AppToaster } from "@/components/AppToaster";
 import { LootRevealModal } from "@/components/growth/LootRevealModal";
 import { GrowthUpsellHost } from "@/components/growth/GrowthUpsellHost";
+import { GenerationActivityPill } from "@/components/generation/GenerationActivityPill";
 import { ReferralReferrerWatcher } from "@/components/growth/ReferralReferrerWatcher";
 import { SeoBootstrap } from "@/components/SeoBootstrap";
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
@@ -25,6 +26,7 @@ const HomePage = lazy(() => import("@/pages/Home"));
 const ComparePage = lazy(() => import("@/pages/ComparePage"));
 const BlogPage = lazy(() => import("@/pages/Blog"));
 const ExplorePage = lazy(() => import("@/pages/Explore"));
+const CommunityTrendingPage = lazy(() => import("@/pages/CommunityTrending"));
 const PublicLoopPage = lazy(() => import("@/pages/PublicLoop"));
 const CreatorProfilePage = lazy(() => import("@/pages/CreatorProfile"));
 const BlogPostPage = lazy(() => import("@/pages/BlogPost"));
@@ -74,7 +76,9 @@ export default function App() {
                   <Route path="/" element={<LandingPage />} />
                   <Route path="/home" element={<Navigate to="/" replace />} />
                   <Route path="/explore" element={<ExplorePage />} />
+                  <Route path="/community/vibe/:vibeId" element={<ExplorePage />} />
                   <Route path="/community" element={<ExplorePage />} />
+                  <Route path="/trending" element={<CommunityTrendingPage />} />
                   <Route path="/loop/:id" element={<PublicLoopPage />} />
                   <Route path="/u/:username" element={<CreatorProfilePage />} />
                   <Route path="/blog" element={<BlogPage />} />
@@ -103,6 +107,7 @@ export default function App() {
               </Suspense>
             </RouteFade>
             <AudioPlayer />
+            <GenerationActivityPill />
             <SiteTextureVeil />
             <GrowthUpsellHost />
           </LoopsBootstrap>

@@ -24,9 +24,11 @@ function setLink(rel: string, href: string, extra?: Record<string, string>) {
   const selector =
     rel === "alternate" && extras.hreflang
       ? `link[rel="alternate"][hreflang="${extras.hreflang}"]`
-      : rel === "canonical"
-        ? `link[rel="canonical"]`
-        : `link[rel="${rel}"]`;
+      : rel === "alternate" && extras.type
+        ? `link[rel="alternate"][type="${extras.type}"]`
+        : rel === "canonical"
+          ? `link[rel="canonical"]`
+          : `link[rel="${rel}"]`;
   let el = document.head.querySelector(selector) as HTMLLinkElement | null;
   if (!el) {
     el = document.createElement("link");
@@ -52,6 +54,8 @@ function slugKeyFromPath(pathname: string): string {
   if (pathname === "/") return "home";
   if (pathname === "/blog") return "blog";
   if (pathname.startsWith("/blog/")) return "blog-post";
+  if (pathname.startsWith("/community/vibe/")) return "community-vibe";
+  if (pathname === "/trending") return "trending";
   if (pathname === "/explore" || pathname === "/community") return "explore";
   if (pathname.startsWith("/loop/")) return "loop";
   if (pathname === "/pricing") return "pricing";
@@ -135,6 +139,10 @@ export function SeoBootstrap() {
 
       const slugKey = slugKeyFromPath(pathname);
 
+      if (slugKey === "community-vibe" || slugKey === "trending") {
+        return;
+      }
+
       const t = (en: string, fr: string) => (locale === "fr" ? fr : en);
 
       const title = (() => {
@@ -147,7 +155,11 @@ export function SeoBootstrap() {
           );
         if (slugKey === "blog") return t("Blog — ProducerHit", "Blog — ProducerHit");
         if (slugKey === "blog-post") return t("Blog — ProducerHit", "Blog — ProducerHit");
-        if (slugKey === "explore") return t("Discover — ProducerHit", "Découvrir — ProducerHit");
+        if (slugKey === "explore")
+          return t(
+            "Community AI beats — listen, remix & create | ProducerHit",
+            "Beats IA communauté — écoute, remixe & crée | ProducerHit",
+          );
         if (slugKey === "loop") return t("Track — ProducerHit", "Track — ProducerHit");
         if (slugKey === "pricing") return t("Pricing — ProducerHit", "Tarifs — ProducerHit");
         if (slugKey === "auth") return t("Sign Up Free — ProducerHit", "Inscription gratuite — ProducerHit");
@@ -214,8 +226,8 @@ export function SeoBootstrap() {
           );
         if (slugKey === "explore")
           return t(
-            "Explore public AI beats and songs on ProducerHit. Find prompt inspiration and remix ideas.",
-            "Explore des beats et songs IA publics sur ProducerHit. Trouve de l’inspiration et remix des idées.",
+            "Stream public AI beats on ProducerHit: community feed, ratings, comments, remix workflows, and vibe pages (Trap, Lo-Fi, R&B…).",
+            "Écoute des beats IA publics sur ProducerHit : flux communautaire, notes, commentaires, remix et pages vibes (Trap, Lo-Fi, R&B…).",
           );
         if (slugKey === "loop")
           return t(
@@ -286,6 +298,7 @@ export function SeoBootstrap() {
       setMeta("twitter:image", ogImageUrl, "name");
 
       setLink("canonical", effectiveCanonicalUrl);
+      setLink("alternate", `${origin}/rss.xml`, { type: "application/rss+xml", title: "ProducerHit Blog RSS" });
       if (comparisonPage) {
         setLink("alternate", `${origin}${comparisonPage.path}`, { hreflang: "en" });
         setLink("alternate", `${origin}${comparisonPage.pathFr}`, { hreflang: "fr" });
@@ -413,8 +426,12 @@ export function SeoBootstrap() {
           {
             "@context": "https://schema.org",
             "@type": "CollectionPage",
-            name: "ProducerHit Explore",
-            url: `${origin}/explore`,
+            name: locale === "fr" ? "Flux communauté ProducerHit" : "ProducerHit Community Feed",
+            url: `${origin}/community`,
+            description:
+              locale === "fr"
+                ? "Beats IA publics, remix et vibes communautaires"
+                : "Public AI beats, remix culture, and community vibes",
           },
         ]);
         return;

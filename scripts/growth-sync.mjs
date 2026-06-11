@@ -88,7 +88,7 @@ async function fetchPublicLoopIds() {
     console.warn(`growth-sync: Supabase ${res.status}`);
     return [];
   }
-  const rows = (await res.json()) as Array<{ id?: string; updated_at?: string; created_at?: string }>;
+  const rows = await res.json();
   return rows.filter((r) => typeof r.id === "string").map((r) => ({ id: r.id, ts: r.updated_at || r.created_at }));
 }
 
@@ -168,7 +168,10 @@ async function submitIndexNow(urls) {
 }
 
 async function collectIndexNowUrls(loopRows) {
-  const urls = [`${ORIGIN}/`, `${ORIGIN}/community`, `${ORIGIN}/blog`, `${ORIGIN}/pricing`];
+  const urls = [`${ORIGIN}/`, `${ORIGIN}/community`, `${ORIGIN}/trending`, `${ORIGIN}/blog`, `${ORIGIN}/pricing`];
+  for (const vibe of ["bedroom", "night-drive", "club", "hiphop", "lofi", "cinematic"]) {
+    urls.push(`${ORIGIN}/community/vibe/${vibe}`);
+  }
   for (const p of GENRE_SEO_PATHS) urls.push(`${ORIGIN}${p}`);
   for (const p of COMPARISON_SEO_PATHS) urls.push(`${ORIGIN}${p}`);
   for (const r of loopRows) urls.push(`${ORIGIN}/loop/${encodeURIComponent(r.id)}`);

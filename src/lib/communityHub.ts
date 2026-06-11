@@ -1,4 +1,5 @@
 import type { PublicLoopRow } from "@/lib/publicLoops";
+import { sortPublicLoopsByNewest } from "@/lib/publicLoops";
 
 export const COMMUNITY_HUB_NAV = {
   fr: "Découvrir",
@@ -7,11 +8,19 @@ export const COMMUNITY_HUB_NAV = {
 
 export const COMMUNITY_HUB_PAGE = {
   title: { fr: "Le Flux", en: "The Feed" },
-  tagline: {
-    fr: "Écoute, explore par vibe et remixe — comme une plateforme de streaming, alimentée par la communauté.",
-    en: "Listen, browse by vibe, and remix — streaming-style, powered by the community.",
+  hook: {
+    fr: "Streaming IA par le peuple, pour le peuple.",
+    en: "AI streaming by the people, for the people.",
   },
+  tagline: {
+    fr: "Des beats drop par la commu. Écoute, commente, remix — c'est ton tour. Pas une app corporate : un flux qui vit.",
+    en: "Beats dropped by the community. Listen, comment, remix — your turn. Not corporate fluff: a feed that actually moves.",
+  },
+  ctaPrimary: { fr: "Drop ton son", en: "Drop your track" },
+  ctaShuffle: { fr: "Surprends-moi", en: "Surprise me" },
 } as const;
+
+export const DISCOVER_RAIL_ID = "discover";
 
 export type CommunityVibeCategory = {
   id: string;
@@ -53,7 +62,7 @@ export const COMMUNITY_VIBE_CATEGORIES: CommunityVibeCategory[] = [
     title: { fr: "Hip-Hop Lab", en: "Hip-Hop Lab" },
     subtitle: { fr: "Trap, drill, boom bap & beats", en: "Trap, drill, boom bap & beats" },
     accent: "linear-gradient(135deg, #f59e0b 0%, #ef4444 45%, #a855f7 100%)",
-    genreMatchers: ["hip hop", "hip-hop", "trap", "drill", "boom bap", "boom-bap", "grime", "jersey", "lo-fi", "lofi"],
+    genreMatchers: ["hip hop", "hip-hop", "trap", "drill", "boom bap", "boom-bap", "grime", "jersey"],
     moodMatchers: ["hard", "aggressive", "street"],
   },
   {
@@ -61,7 +70,7 @@ export const COMMUNITY_VIBE_CATEGORIES: CommunityVibeCategory[] = [
     title: { fr: "Lo-Fi & Chill", en: "Lo-Fi & Chill" },
     subtitle: { fr: "Études, pluie & café", en: "Study, rain & coffee" },
     accent: "linear-gradient(135deg, #34d399 0%, #2dd4bf 50%, #38bdf8 100%)",
-    genreMatchers: ["lo-fi", "lofi", "chillhop", "jazz hop", "ambient", "downtempo"],
+    genreMatchers: ["lo-fi", "lofi", "chillhop", "jazz hop", "downtempo"],
     moodMatchers: ["chill", "relaxed", "calm", "cozy"],
   },
   {
@@ -78,6 +87,197 @@ function haystack(row: PublicLoopRow): string {
   return `${row.genre ?? ""} ${row.mood ?? ""} ${row.influence ?? ""} ${row.name ?? ""} ${row.prompt ?? ""}`.toLowerCase();
 }
 
+export type CommunityRailSort = "love" | "newest" | "plays" | "comments" | "shuffle";
+
+export type CommunitySortContext = {
+  ratingsById: Record<string, { sum: number; count: number }>;
+  playsById?: Record<string, number>;
+  commentsById?: Record<string, number>;
+};
+
+/** Tri dédié à chaque vibe — évite le même ordre partout. */
+export const CATEGORY_RAIL_SORT: Record<string, CommunityRailSort> = {
+  bedroom: "love",
+  "night-drive": "newest",
+  club: "plays",
+  hiphop: "love",
+  lofi: "newest",
+  cinematic: "comments",
+};
+
+function hashSeed(input: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < input.length; i++) {
+    h ^= input.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+export function seededShuffleRows<T extends { id: string }>(rows: T[], seed: string): T[] {
+  const copy = rows.slice();
+  let state = hashSeed(seed) || 1;
+  const rand = () => {
+    state = (Math.imul(1664525, state) + 1013904223) >>> 0;
+    return state / 4294967296;
+  };
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+export function scoreCategoryMatch(row: PublicLoopRow, cat: CommunityVibeCategory): number {
+  const h = haystack(row);
+  const genre = (row.genre ?? "").toLowerCase();
+  const mood = (row.mood ?? "").toLowerCase();
+  let score = 0;
+
+  for (const matcher of cat.genreMatchers) {
+    const m = matcher.toLowerCase();
+    if (genre.includes(m)) score += 100 + m.length;
+    else if (h.includes(m)) score += 10 + m.length;
+  }
+  for (const matcher of cat.moodMatchers ?? []) {
+    const m = matcher.toLowerCase();
+    if (mood.includes(m)) score += 40 + m.length;
+    else if (h.includes(m)) score += 5 + m.length;
+  }
+  return score;
+}
+
+export function assignPrimaryCategory(row: PublicLoopRow): CommunityVibeCategory | null {
+  let best: { cat: CommunityVibeCategory; score: number } | null = null;
+  for (const cat of COMMUNITY_VIBE_CATEGORIES) {
+    const score = scoreCategoryMatch(row, cat);
+    if (score <= 0) continue;
+    if (!best || score > best.score || (score === best.score && cat.id < best.cat.id)) {
+      best = { cat, score };
+    }
+  }
+  return best?.cat ?? null;
+}
+
+export function sortByCommentBuzz(
+  rows: PublicLoopRow[],
+  commentsById: Record<string, number> = {},
+  ratingsById: Record<string, { sum: number; count: number }> = {},
+): PublicLoopRow[] {
+  return rows.slice().sort((a, b) => {
+    const ca = commentsById[a.id] ?? 0;
+    const cb = commentsById[b.id] ?? 0;
+    if (cb !== ca) return cb - ca;
+    return sortByCommunityLove([a, b], ratingsById)[0]?.id === a.id ? -1 : 1;
+  });
+}
+
+export function sortCommunityRail(
+  rows: PublicLoopRow[],
+  mode: CommunityRailSort,
+  ctx: CommunitySortContext,
+  shuffleSeed = "community",
+): PublicLoopRow[] {
+  const ratingsById = ctx.ratingsById;
+  const playsById = ctx.playsById ?? {};
+  const commentsById = ctx.commentsById ?? {};
+
+  switch (mode) {
+    case "newest":
+      return sortPublicLoopsByNewest(rows);
+    case "plays":
+      return rows.slice().sort((a, b) => {
+        const pa = playsById[a.id] ?? 0;
+        const pb = playsById[b.id] ?? 0;
+        if (pb !== pa) return pb - pa;
+        return sortByCommunityLove([a, b], ratingsById, playsById)[0]?.id === a.id ? -1 : 1;
+      });
+    case "comments":
+      return sortByCommentBuzz(rows, commentsById, ratingsById);
+    case "shuffle":
+      return seededShuffleRows(rows, shuffleSeed);
+    case "love":
+    default:
+      return sortByCommunityLove(rows, ratingsById, playsById);
+  }
+}
+
+/** Préfère des cartes uniques ; complète si le pool est petit. */
+export function takeUniqueRailItems(
+  sorted: PublicLoopRow[],
+  limit: number,
+  usedIds: Set<string>,
+  preferFresh = true,
+): PublicLoopRow[] {
+  const out: PublicLoopRow[] = [];
+  const pass = preferFresh ? [true, false] : [false];
+  for (const freshOnly of pass) {
+    for (const row of sorted) {
+      if (out.length >= limit) break;
+      if (freshOnly && usedIds.has(row.id)) continue;
+      if (out.some((x) => x.id === row.id)) continue;
+      out.push(row);
+      usedIds.add(row.id);
+    }
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
+export type CommunityHubRailPlan = {
+  id: string;
+  category: CommunityVibeCategory;
+  sort: CommunityRailSort;
+  tracks: PublicLoopRow[];
+};
+
+export function buildCategoryRailPlans(
+  rows: PublicLoopRow[],
+  ctx: CommunitySortContext,
+  options: { limit?: number; shuffleSeed?: string; usedIds?: Set<string> } = {},
+): CommunityHubRailPlan[] {
+  const limit = options.limit ?? 10;
+  const usedIds = options.usedIds ?? new Set<string>();
+  const shuffleSeed = options.shuffleSeed ?? "community";
+  const byCategory = new Map<string, PublicLoopRow[]>();
+
+  for (const row of rows) {
+    const cat = assignPrimaryCategory(row);
+    if (!cat) continue;
+    const bucket = byCategory.get(cat.id) ?? [];
+    bucket.push(row);
+    byCategory.set(cat.id, bucket);
+  }
+
+  return COMMUNITY_VIBE_CATEGORIES.map((category) => {
+    const pool = byCategory.get(category.id) ?? [];
+    if (!pool.length) return null;
+    const sort = CATEGORY_RAIL_SORT[category.id] ?? "love";
+    const sorted = sortCommunityRail(pool, sort, ctx, `${shuffleSeed}:${category.id}`);
+    const tracks = takeUniqueRailItems(sorted, limit, usedIds);
+    if (!tracks.length) return null;
+    return { id: category.id, category, sort, tracks };
+  }).filter((x): x is CommunityHubRailPlan => x !== null);
+}
+
+export function tracksWithoutPrimaryCategory(rows: PublicLoopRow[]): PublicLoopRow[] {
+  return rows.filter((r) => !assignPrimaryCategory(r));
+}
+
+export function buildDiscoverRailItems(
+  rows: PublicLoopRow[],
+  ctx: CommunitySortContext,
+  options: { limit?: number; shuffleSeed?: string; usedIds?: Set<string> } = {},
+): PublicLoopRow[] {
+  const limit = options.limit ?? 10;
+  const usedIds = options.usedIds ?? new Set<string>();
+  const shuffleSeed = options.shuffleSeed ?? "community";
+  const pool = tracksWithoutPrimaryCategory(rows);
+  if (!pool.length) return [];
+  const sorted = sortCommunityRail(pool, "shuffle", ctx, `${shuffleSeed}:${DISCOVER_RAIL_ID}`);
+  return takeUniqueRailItems(sorted, limit, usedIds);
+}
+
 export function rowMatchesVibeCategory(row: PublicLoopRow, cat: CommunityVibeCategory): boolean {
   const h = haystack(row);
   if (cat.genreMatchers.some((m) => h.includes(m.toLowerCase()))) return true;
@@ -85,7 +285,10 @@ export function rowMatchesVibeCategory(row: PublicLoopRow, cat: CommunityVibeCat
   return false;
 }
 
-export function tracksForCategory(rows: PublicLoopRow[], cat: CommunityVibeCategory): PublicLoopRow[] {
+export function tracksForCategory(rows: PublicLoopRow[], cat: CommunityVibeCategory, exclusive = false): PublicLoopRow[] {
+  if (exclusive) {
+    return rows.filter((r) => assignPrimaryCategory(r)?.id === cat.id);
+  }
   return rows.filter((r) => rowMatchesVibeCategory(r, cat));
 }
 
@@ -141,9 +344,10 @@ export function pickSpotlight(
 
 export function categoriesWithTracks(
   rows: PublicLoopRow[],
+  exclusive = true,
 ): Array<{ category: CommunityVibeCategory; tracks: PublicLoopRow[] }> {
   return COMMUNITY_VIBE_CATEGORIES.map((category) => ({
     category,
-    tracks: tracksForCategory(rows, category),
+    tracks: tracksForCategory(rows, category, exclusive),
   })).filter((x) => x.tracks.length > 0);
 }

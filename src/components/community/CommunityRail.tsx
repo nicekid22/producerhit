@@ -7,6 +7,7 @@ type RatingStats = { sum: number; count: number; myRating: number | null };
 
 type Props = {
   title: string;
+  subtitle?: string;
   icon?: ReactNode;
   items: PublicLoopRow[];
   isFr: boolean;
@@ -14,6 +15,7 @@ type Props = {
   isPlaying: boolean;
   resolvingId: string | null;
   ratingsById: Record<string, RatingStats>;
+  commentsById: Record<string, number>;
   isNew: (createdAt: string) => boolean;
   isMineRow?: (row: PublicLoopRow) => boolean;
   onPlay: (row: PublicLoopRow, index: number) => void;
@@ -24,6 +26,7 @@ type Props = {
 
 export function CommunityRail({
   title,
+  subtitle,
   icon,
   items,
   isFr,
@@ -31,6 +34,7 @@ export function CommunityRail({
   isPlaying,
   resolvingId,
   ratingsById,
+  commentsById,
   isNew,
   isMineRow,
   onPlay,
@@ -43,15 +47,18 @@ export function CommunityRail({
   return (
     <section className="pk-community-rail">
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-base font-semibold text-white">
-          {icon}
-          {title}
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-base font-semibold text-white">
+            {icon}
+            {title}
+          </div>
+          {subtitle ? <p className="mt-0.5 text-[11px] font-medium text-white/40">{subtitle}</p> : null}
         </div>
         {onSeeAll ? (
           <button
             type="button"
             onClick={onSeeAll}
-            className="inline-flex items-center gap-1 text-xs font-semibold text-cyan-300/90 transition-colors hover:text-cyan-200"
+            className="pk-accent-link pk-accent-link--bright inline-flex items-center gap-1 text-xs font-semibold"
           >
             {isFr ? "Tout voir" : "See all"}
             <ChevronRight className="h-3.5 w-3.5" />
@@ -69,6 +76,7 @@ export function CommunityRail({
             isPlaying={isPlaying}
             resolving={resolvingId === row.id}
             rating={ratingsById[row.id]}
+            commentCount={commentsById[row.id] ?? 0}
             isNew={row.created_at ? isNew(row.created_at) : false}
             isMine={isMineRow?.(row)}
             onPlay={() => onPlay(row, idx)}

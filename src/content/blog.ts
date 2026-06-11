@@ -787,6 +787,227 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
   },
+  {
+    slug: "community-ai-music-streaming-platform",
+    title: "Community AI music streaming: how ProducerHit’s Feed works (listen, rate, remix)",
+    description:
+      "ProducerHit is a community-built AI music streaming feed: public beats, ratings, comments, remix workflows, and SEO-friendly discovery — built for creators, not corporations.",
+    keywords: [
+      "community music streaming",
+      "AI music platform",
+      "community beats",
+      "AI beat generator",
+      "remix beats online",
+      "ProducerHit community",
+    ],
+    publishedAt: "2026-06-05",
+    updatedAt: "2026-06-05",
+    blocks: [
+      {
+        type: "p",
+        text: "Most AI music tools feel like solo software: you generate, you export, you leave. ProducerHit’s Community Feed (The Feed) is different — it’s a public streaming surface where creators drop beats, listeners react, and remix culture actually happens.",
+      },
+      {
+        type: "callout",
+        variant: "cta",
+        title: "Jump into the Feed",
+        text: "Browse public AI beats, star-rate tracks, leave feedback, and remix a vibe in one click → /community",
+      },
+      { type: "h2", text: "Streaming logic, community supply" },
+      {
+        type: "ul",
+        items: [
+          "Public loops enter the feed when creators publish — the catalog grows without a central editor",
+          "Ratings + comments create social proof (like a lightweight SoundCloud/TikTok hybrid)",
+          "Remix this vibe sends metadata + style back into the studio",
+          "Category rails (Bedroom, Hip-Hop Lab, Lo-Fi…) organize discovery without killing surprise",
+        ],
+      },
+      { type: "h2", text: "Why this matters for SEO and culture" },
+      {
+        type: "p",
+        text: "Every public track can become a landing page (/loop/:id). Blog guides + genre SEO pages link back to real community audio — not stock demos. That’s how the platform feeds itself: creators publish → pages index → new listeners join → more creators publish.",
+      },
+      { type: "h2", text: "How to participate (30 seconds)" },
+      {
+        type: "ul",
+        items: [
+          "Generate a beat in the studio",
+          "Toggle public on a finished loop",
+          "Share your /loop link or let the Feed spotlight surface it",
+          "Comment on other tracks — the feed stays alive when people talk",
+        ],
+      },
+      {
+        type: "links",
+        items: [
+          { labelEn: "Open the Feed", labelFr: "Ouvrir le Flux", href: "/community" },
+          { labelEn: "AI beat generator", labelFr: "Générateur beats IA", href: "/ai-beat-generator" },
+          { labelEn: "Pricing", labelFr: "Tarifs", href: "/pricing" },
+        ],
+      },
+    ],
+  },
+  {
+    slug: "producerhit-community-feed-guide",
+    title: "Le Flux ProducerHit : plateforme streaming IA par la commu (guide FR)",
+    description:
+      "Guide complet du Flux communautaire ProducerHit : écoute publique, notes, commentaires, remix, vibes, SEO — une plateforme streaming créée par la communauté pour la communauté.",
+    keywords: [
+      "flux communautaire",
+      "streaming IA",
+      "beats communauté",
+      "ProducerHit",
+      "générateur beats IA",
+      "musique IA communautaire",
+    ],
+    publishedAt: "2026-06-05",
+    updatedAt: "2026-06-05",
+    blocks: [
+      {
+        type: "p",
+        text: "Le Flux, c’est le cœur social de ProducerHit : un feed public de beats IA où la commu écoute, note, commente et remixe. Pas un catalogue figé — un truc qui grossit quand les gens publient.",
+      },
+      {
+        type: "callout",
+        variant: "tip",
+        title: "En une phrase",
+        text: "Streaming IA + culture remix + pages publiques = une plateforme qui s’auto-alimente.",
+      },
+      { type: "h2", text: "Comment le Flux se développe tout seul" },
+      {
+        type: "ul",
+        items: [
+          "Nouveaux drops publics → rails « Fraîchement sortis »",
+          "Notes & écoutes → rail « Les plus kiffés »",
+          "Commentaires → preuve sociale + pages /loop indexables",
+          "Vibes (Bedroom, Club, Hip-Hop…) → exploration par mood, pas par algorithme opaque",
+          "Découvertes → sons hors catégorie, sélection surprise",
+        ],
+      },
+      { type: "h2", text: "Ton rôle dans la boucle" },
+      {
+        type: "p",
+        text: "Publie en public, réponds aux commentaires, remixe une vibe qui t’inspire. Chaque action nourrit le feed pour les suivants — c’est littéralement « by the people, for the people ».",
+      },
+      { type: "h2", text: "SEO : pourquoi Google aime ce modèle" },
+      {
+        type: "p",
+        text: "Des pages uniques par beat + des articles blog qui expliquent les workflows = du contenu frais lié à de l’audio réel. C’est plus crédible qu’un landing statique — et ça pousse de nouveaux créateurs vers le studio.",
+      },
+      {
+        type: "links",
+        items: [
+          { labelEn: "Community Feed", labelFr: "Le Flux", href: "/community" },
+          { labelEn: "Community streaming guide (EN)", labelFr: "Guide streaming commu (EN)", href: "/blog/community-ai-music-streaming-platform" },
+          { labelEn: "Create a beat", labelFr: "Créer un beat", href: "/dashboard" },
+        ],
+      },
+    ],
+  },
+  {
+    slug: "trending-ai-beats-remix-tiktok-2026",
+    title: "Trending AI beats 2026: remix TikTok vibes before they peak on Google",
+    description:
+      "How to ride trending AI beat searches in 2026: community trending pages, remix workflows, and SEO beats static « best AI generator » listicles.",
+    keywords: [
+      "trending AI beats 2026",
+      "TikTok AI beat",
+      "remix trending beat",
+      "AI beat generator",
+      "viral type beat IA",
+      "ProducerHit trending",
+    ],
+    publishedAt: "2026-06-05",
+    updatedAt: "2026-06-05",
+    blocks: [
+      {
+        type: "p",
+        text: "In 2026, the fastest organic traffic for AI music tools isn’t another « 9 best generators » post — it’s **live audio** tied to search intent: trending trap, phonk, lo-fi study beats, and remix-ready community drops.",
+      },
+      {
+        type: "callout",
+        variant: "cta",
+        title: "Stream trending now",
+        text: "ProducerHit /trending ranks public community tracks by love, plays, and comments — real audio, not stock demos → /trending",
+      },
+      { type: "h2", text: "The 2026 SEO hack: programmatic + UGC" },
+      {
+        type: "ul",
+        items: [
+          "Each public track = indexable /loop/:id page with MusicRecording schema",
+          "Vibe hubs (/community/vibe/hiphop, /lofi…) capture long-tail genre searches",
+          "Trending page refreshes with community signals — freshness Google rewards",
+          "Remix CTA converts listeners into studio users (not just blog readers)",
+        ],
+      },
+      { type: "h2", text: "Remix workflow that beats listicles" },
+      {
+        type: "p",
+        text: "Find a trending track → open its public page → hit Remix this vibe → iterate in the studio with seed variations. You ship faster than someone reading a comparison table.",
+      },
+      {
+        type: "links",
+        items: [
+          { labelEn: "Trending feed", labelFr: "Trending", href: "/trending" },
+          { labelEn: "Hip-Hop Lab vibe", labelFr: "Vibe Hip-Hop", href: "/community/vibe/hiphop" },
+          { labelEn: "AI remix guide", labelFr: "Guide remix IA", href: "/remix-cover-ai" },
+          { labelEn: "Suno alternatives", labelFr: "Alternatives Suno", href: "/suno-alternatives" },
+        ],
+      },
+    ],
+  },
+  {
+    slug: "beat-listicles-vs-community-audio-seo-2026",
+    title: "Why community audio pages beat « 9 best AI music generators » listicles in 2026",
+    description:
+      "Static comparison blogs plateau. ProducerHit’s community feed + vibe pages + loop URLs create fresh, linkable audio SEO that outruns generic AI generator rankings.",
+    keywords: [
+      "best AI music generator 2026",
+      "AI beat generator comparison",
+      "community AI music SEO",
+      "type beat generator",
+      "ProducerHit vs Suno",
+      "organic traffic AI music",
+    ],
+    publishedAt: "2026-06-05",
+    updatedAt: "2026-06-05",
+    blocks: [
+      {
+        type: "p",
+        text: "Listicles rank until everyone publishes the same table. The edge in 2026 is **unique playable URLs** + internal links between vibes, trending rails, and comparison pages — a mesh competitors can’t copy without real UGC.",
+      },
+      { type: "h2", text: "What listicles miss" },
+      {
+        type: "ul",
+        items: [
+          "No audio proof — readers bounce to YouTube",
+          "No remix path — zero product activation",
+          "Stale dates — Google sees duplicate intent",
+          "No comment/social proof layer",
+        ],
+      },
+      { type: "h2", text: "What ProducerHit adds" },
+      {
+        type: "ul",
+        items: [
+          "Community cards with ratings + comments (E-E-A-T signals)",
+          "Programmatic vibe pages per genre cluster",
+          "Blog samplers linking to /loop/:id (internal PageRank to UGC)",
+          "Comparison pages + community audio cross-linked",
+        ],
+      },
+      {
+        type: "links",
+        items: [
+          { labelEn: "Community feed", labelFr: "Flux communauté", href: "/community" },
+          { labelEn: "AI comparison 2026", labelFr: "Comparatif IA 2026", href: "/ai-music-generator-comparison-2026" },
+          { labelEn: "Best beat generator", labelFr: "Meilleur générateur beats", href: "/best-ai-beat-generator-for-producers" },
+          { labelEn: "Lo-Fi vibe page", labelFr: "Page vibe Lo-Fi", href: "/community/vibe/lofi" },
+        ],
+      },
+    ],
+  },
 ];
 
 export function getBlogPostBySlug(slug: string): BlogPost | null {
