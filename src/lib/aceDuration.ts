@@ -33,16 +33,37 @@ export function computeAceRequestedDurationSec(input: {
   return null;
 }
 
-/** Estimation barre de % — plus courte si durée non imposée. */
-export function estimateGenerationDurationMs(mode: "song" | "beat", durationSec?: number | null): number {
+/** Durée ACE (s) estimée à partir des paroles manuelles — évite un morceau trop court ou un timeout. */
+export function estimateSongDurationFromLyrics(lyrics: string): number {
+  const text = lyrics.trim();
+  if (!text) return 60;
+  const words = text.split(/\s+/).filter(Boolean).length;
+  const lines = text.split(/\n/).filter((l) => l.trim().length > 0).length;
+  const fromWords = words * 2.4;
+  const fromLines = lines * 3.5;
+  return Math.min(240, Math.max(45, Math.round(Math.max(fromWords, fromLines) + 15)));
+}
+
+/** Estimation barre de % — plus longue si paroles manuelles (génération vocale plus lente). */
+export function estimateGenerationDurationMs(
+  mode: "song" | "beat",
+  durationSec?: number | null,
+  lyricsText?: string | null,
+): number {
   const raw = import.meta.env.VITE_GEN_ESTIMATE_MS;
   if (raw !== "" && raw != null) {
     const n = Number(raw);
-    if (Number.isFinite(n) && n >= 15_000) return Math.min(n, 180_000);
+    if (Number.isFinite(n) && n >= 15_000) return Math.min(n, 240_000);
   }
   if (mode === "beat") return 72_000;
-  if (typeof durationSec === "number" && durationSec > 0) {
-    return Math.min(180_000, Math.max(35_000, durationSec * 900 + 20_000));
+  const resolvedDurationSec =
+    typeof durationSec === "number" && durationSec > 0
+      ? durationSec
+      : lyricsText?.trim()
+        ? estimateSongDurationFromLyrics(lyricsText)
+        : null;
+  if (typeof resolvedDurationSec === "number" && resolvedDurationSec > 0) {
+    return Math.min(240_000, Math.max(55_000, resolvedDurationSec * 1_100 + 50_000));
   }
-  return 72_000;
+  return 95_000;
 }

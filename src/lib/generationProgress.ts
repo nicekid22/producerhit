@@ -1,8 +1,12 @@
 import { estimateGenerationDurationMs as estimateFromAceDuration } from "@/lib/aceDuration";
 
 /** Durée typique attendue (pas un vrai % serveur ACE). */
-export function estimateGenerationDurationMs(mode: "song" | "beat", durationSec?: number | null): number {
-  return estimateFromAceDuration(mode, durationSec);
+export function estimateGenerationDurationMs(
+  mode: "song" | "beat",
+  durationSec?: number | null,
+  lyricsText?: string | null,
+): number {
+  return estimateFromAceDuration(mode, durationSec, lyricsText);
 }
 
 /**

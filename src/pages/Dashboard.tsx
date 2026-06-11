@@ -30,6 +30,7 @@ import {
   type DualGenerationMode,
 } from "@/lib/generationStrategy";
 import { estimateGenerationDurationMs, simulatedGenerationPercent } from "@/lib/generationProgress";
+import { estimateSongDurationFromLyrics } from "@/lib/aceDuration";
 import {
   formatGenerationErrorMessage,
   generationRetryDelayMs,
@@ -1125,13 +1126,12 @@ export default function Dashboard() {
       return;
     }
     if (generating) return;
+    let effectiveLyricsMode = lyricsMode;
+    let effectiveSongLyrics = songLyrics;
     if (mode === "song" && lyricsMode === "manual" && !songLyrics) {
-      toast.error(
-        locale === "fr"
-          ? "Ajoute tes paroles dans la section « Paroles », ou passe en mode « IA écrit »."
-          : "Add your lyrics in the Lyrics section, or switch to AI writes mode.",
-      );
-      return;
+      effectiveLyricsMode = "ai";
+      effectiveSongLyrics = "";
+      setLyricsMode("ai");
     }
     const sessionId = ++generateSessionRef.current;
     unlockAudioPlaybackFromGesture();
@@ -1313,15 +1313,24 @@ export default function Dashboard() {
 
       const buildOptions = (seed?: number, slotIdx?: 1 | 2) => {
         const aceKeyPreferIndex = aceKeyPreferIndexForSlot(slotIdx, effectiveVersions);
+        const hasManualLyrics = effectiveLyricsMode === "manual" && effectiveSongLyrics.length > 0;
+        const songAceDuration =
+          manualSongDuration ??
+          (hasManualLyrics ? estimateSongDurationFromLyrics(effectiveSongLyrics) : undefined);
         const base = isSong
           ? {
               instrumental: false,
-              lyrics: songLyrics,
-              vocalLanguage: detectedLang,
+              lyrics: effectiveSongLyrics,
+              vocalLanguage:
+                songVocalLanguageMode === "manual"
+                  ? manualVocalLanguage
+                  : effectiveLyricsMode === "manual"
+                    ? detectLanguage(effectiveSongLyrics)
+                    : "en",
               autoMeta: autoMetaEnabled,
               thinking: true,
-              useFormat: true,
-              duration: manualSongDuration,
+              useFormat: !hasManualLyrics,
+              duration: songAceDuration,
               timeSignature: manualSongTimeSignature || undefined,
               isSong: true,
               audioFormat: effectiveAudioFormat,
@@ -1390,7 +1399,7 @@ export default function Dashboard() {
           details: result.meta
             ? {
                 caption: result.meta.prompt ?? storedPrompt,
-                lyrics: isSong && lyricsMode === "manual" && songLyrics ? songLyrics : (result.meta.lyrics ?? ""),
+                lyrics: isSong && effectiveLyricsMode === "manual" && effectiveSongLyrics ? effectiveSongLyrics : (result.meta.lyrics ?? ""),
                 bpm: result.meta.bpm ?? null,
                 duration: result.meta.duration ?? null,
                 keyScale: result.meta.keyScale ?? "",
@@ -1594,6 +1603,7 @@ export default function Dashboard() {
         const expectedMs = estimateGenerationDurationMs(
           mode === "song" ? "song" : "beat",
           mode === "song" ? manualSongDuration ?? null : null,
+          mode === "song" ? effectiveSongLyrics : null,
         );
         const slotStartedAt = Date.now();
         let progressTick: number | undefined;
@@ -1768,6 +1778,7 @@ export default function Dashboard() {
         const expectedMs = estimateGenerationDurationMs(
           mode === "song" ? "song" : "beat",
           mode === "song" ? manualSongDuration ?? null : null,
+          mode === "song" ? effectiveSongLyrics : null,
         );
         const batchStartedAt = Date.now();
         let progressTick: number | undefined;

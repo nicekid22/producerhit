@@ -35,6 +35,25 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/** Chanson avec paroles manuelles — ACE met plus longtemps ; évite abort à ~150s (barre ~95%). */
+function aceRequestTimeoutMs(input: { instrumental: boolean; isSong?: boolean; lyrics?: string }): number {
+  const base = 150_000;
+  if (input.instrumental) return base;
+  const lyrics = (input.lyrics ?? "").trim();
+  if (!lyrics || lyrics === "[Instrumental]") return base;
+  if (input.isSong !== true) return base;
+  const extra = Math.min(120_000, lyrics.length * 30);
+  return Math.min(300_000, base + extra);
+}
+
+function estimateSongDurationFromLyrics(lyrics: string): number {
+  const text = lyrics.trim();
+  if (!text) return 60;
+  const words = text.split(/\s+/).filter(Boolean).length;
+  const lines = text.split(/\n/).filter((l) => l.trim().length > 0).length;
+  return Math.min(240, Math.max(45, Math.round(Math.max(words * 2.4, lines * 3.5) + 15)));
+}
+
 function asString(v: unknown) {
   return typeof v === "string" ? v : "";
 }
@@ -1322,6 +1341,15 @@ serve(async (req) => {
         });
       }
 
+      const isSongJob = p.isSong === true;
+      const songDurationRaw =
+        duration && duration > 0
+          ? duration
+          : !instrumental && isSongJob && effectiveLyrics.length > 0
+            ? estimateSongDurationFromLyrics(effectiveLyrics)
+            : null;
+      const aceTimeoutMs = aceRequestTimeoutMs({ instrumental, isSong: isSongJob, lyrics: effectiveLyrics });
+
       const generationKey = job.generation_key ?? "";
       const aceKeyPreferIndex = asNumber(p.aceKeyPreferIndex);
       const seedKey = generationKey || requestId;
@@ -1338,7 +1366,7 @@ serve(async (req) => {
       const quality = resolveAceQualityFlags({ thinking, useFormat, sampleMode });
       const requestedDuration = computeRequestedDurationSec({
         instrumental,
-        durationRaw: duration && duration > 0 ? duration : null,
+        durationRaw: songDurationRaw,
         bpm,
         bars: loopLengthBars,
       });
@@ -1402,7 +1430,7 @@ serve(async (req) => {
       }
 
       const controller = new AbortController();
-      const requestTimeoutMs = 150_000;
+      const requestTimeoutMs = aceTimeoutMs;
       const timer = setTimeout(() => controller.abort(), requestTimeoutMs);
       try {
         let audioUrl = "";
@@ -1859,6 +1887,15 @@ serve(async (req) => {
     const effectivePrompt = (sampleMode ? (sampleQuery.trim() || caption) : caption).trim();
     if (!effectivePrompt) throw new Error("Missing caption");
 
+    const isSongRequest = body?.isSong === true;
+    const songDurationRaw =
+      duration && duration > 0
+        ? duration
+        : !instrumental && isSongRequest && effectiveLyrics.length > 0
+          ? estimateSongDurationFromLyrics(effectiveLyrics)
+          : null;
+    const aceTimeoutMs = aceRequestTimeoutMs({ instrumental, isSong: isSongRequest, lyrics: effectiveLyrics });
+
     const dualBatch = body?.dualBatch === true;
     const dualSeedsParsed = (() => {
       const raw = body?.dualSeeds;
@@ -1924,7 +1961,7 @@ serve(async (req) => {
         scale: asString(body?.scale),
         requestedDuration: computeRequestedDurationSec({
           instrumental,
-          durationRaw: duration && duration > 0 ? duration : null,
+          durationRaw: songDurationRaw,
           bpm,
           bars: loopLengthBars,
         }),
@@ -1938,7 +1975,7 @@ serve(async (req) => {
       };
 
       const controller = new AbortController();
-      const requestTimeoutMs = 150_000;
+      const requestTimeoutMs = aceTimeoutMs;
       const timer = setTimeout(() => controller.abort(), requestTimeoutMs);
 
       try {
@@ -2070,7 +2107,7 @@ serve(async (req) => {
     const scale = asString(body?.scale);
     const requestedDuration = computeRequestedDurationSec({
       instrumental,
-      durationRaw: duration && duration > 0 ? duration : null,
+      durationRaw: songDurationRaw,
       bpm,
       bars: loopLengthBars,
     });
@@ -2129,7 +2166,7 @@ serve(async (req) => {
     };
 
     const controller = new AbortController();
-    const requestTimeoutMs = 150_000;
+    const requestTimeoutMs = aceTimeoutMs;
     const timer = setTimeout(() => controller.abort(), requestTimeoutMs);
 
     let audioUrl = "";
