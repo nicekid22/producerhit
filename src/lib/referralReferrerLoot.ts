@@ -1,5 +1,5 @@
 import toast from "react-hot-toast";
-import { REFERRAL_REFERRER_PLUS_BONUS } from "@/lib/referralConfig";
+import { REFERRAL_REFERRER_SIGNUP_BONUS } from "@/lib/referralConfig";
 import { trackClientEvent } from "@/lib/supabaseClient";
 import { useLootRevealStore } from "@/stores/lootRevealStore";
 
@@ -78,8 +78,8 @@ export function notifyReferrerReferralBonusIfIncreased(
 
   toast.success(
     locale === "fr"
-      ? `Filleul Plus — +${delta} gen (parrainage${delta === REFERRAL_REFERRER_PLUS_BONUS ? "" : `, total +${delta}`}) !`
-      : `Referral went Plus — +${delta} gens unlocked!`,
+      ? `Nouveau filleul — +${delta} gen (parrainage${delta === REFERRAL_REFERRER_SIGNUP_BONUS ? "" : `, total +${delta}`}) !`
+      : `New referral signup — +${delta} gens unlocked!`,
     { duration: 4200 },
   );
 }

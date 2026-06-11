@@ -1,5 +1,4 @@
--- Parrainage : +20 au parrain à l'inscription du filleul (plus de bonus au passage Plus)
--- À exécuter dans SQL Editor ou via supabase db push
+-- Referral: +20 au parrain dès l'inscription du filleul (plus de bonus au passage Plus).
 
 comment on table public.referral_plus_rewards is
   'Legacy ledger for Plus-upgrade referrer rewards (pre-2026-06). New rewards use claim_referral at signup.';

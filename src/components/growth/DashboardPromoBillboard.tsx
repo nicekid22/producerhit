@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import {
   REFERRAL_REFEREE_START_TOTAL,
-  REFERRAL_REFERRER_PLUS_BONUS,
+  REFERRAL_REFERRER_SIGNUP_BONUS,
 } from "@/lib/referralConfig";
 import { canClaimDailyBonus, loadGamification } from "@/lib/gamification";
 import { trackClientEvent } from "@/lib/supabaseClient";
@@ -189,8 +189,8 @@ export function DashboardPromoBillboard({
         tag: isFr ? "Crew" : "Crew",
         headline: isFr ? "Invite ton crew" : "Invite your crew",
         subline: isFr
-          ? `+${REFERRAL_REFERRER_PLUS_BONUS} gen pour toi · ${REFERRAL_REFEREE_START_TOTAL} pour lui`
-          : `+${REFERRAL_REFERRER_PLUS_BONUS} gen for you · ${REFERRAL_REFEREE_START_TOTAL} for them`,
+          ? `+${REFERRAL_REFERRER_SIGNUP_BONUS} gen pour toi à l'inscription · ${REFERRAL_REFEREE_START_TOTAL} pour lui`
+          : `+${REFERRAL_REFERRER_SIGNUP_BONUS} gen for you on signup · ${REFERRAL_REFEREE_START_TOTAL} for them`,
         cta: isFr ? "Inviter" : "Invite",
         icon: Users,
         onClick: onReferral,

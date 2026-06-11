@@ -23,7 +23,7 @@ import {
   REFERRAL_FREE_BASE,
   REFERRAL_REFEREE_BONUS,
   REFERRAL_REFEREE_START_TOTAL,
-  REFERRAL_REFERRER_PLUS_BONUS,
+  REFERRAL_REFERRER_SIGNUP_BONUS,
 } from "@/lib/referralConfig";
 import { Button } from "@/components/ui/Button";
 import { Dropdown } from "@/components/ui/Dropdown";
@@ -431,8 +431,8 @@ export default function Settings() {
                 <div className="text-lg font-semibold">{isFr ? "Parrainage" : "Referral program"}</div>
                 <div className="text-xs text-pk-muted">
                   {isFr
-                    ? `Offre inratable — ${REFERRAL_REFEREE_START_TOTAL} gen pour eux, +${REFERRAL_REFERRER_PLUS_BONUS} pour toi quand ils passent Plus.`
-                    : `Unbeatable offer — ${REFERRAL_REFEREE_START_TOTAL} gens for them, +${REFERRAL_REFERRER_PLUS_BONUS} for you when they go Plus.`}
+                    ? `Offre inratable — ${REFERRAL_REFEREE_START_TOTAL} gen pour eux, +${REFERRAL_REFERRER_SIGNUP_BONUS} pour toi dès leur inscription.`
+                    : `Unbeatable offer — ${REFERRAL_REFEREE_START_TOTAL} gens for them, +${REFERRAL_REFERRER_SIGNUP_BONUS} for you when they sign up.`}
                 </div>
               </div>
             </div>
@@ -448,8 +448,8 @@ export default function Settings() {
                 </li>
                 <li>
                   {isFr
-                    ? `2. Quand ton filleul passe au plan Plus, tu reçois +${REFERRAL_REFERRER_PLUS_BONUS} générations automatiquement.`
-                    : `2. When your referral upgrades to Plus, you automatically get +${REFERRAL_REFERRER_PLUS_BONUS} generations.`}
+                    ? `2. Dès qu'un filleul s'inscrit via ton lien, tu reçois +${REFERRAL_REFERRER_SIGNUP_BONUS} générations automatiquement.`
+                    : `2. When someone signs up with your link, you automatically get +${REFERRAL_REFERRER_SIGNUP_BONUS} generations.`}
                 </li>
                 <li>
                   {isFr

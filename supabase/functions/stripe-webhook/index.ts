@@ -163,17 +163,6 @@ serve(async (req) => {
         .eq("id", userId);
       if (checkoutUpdateError) throw checkoutUpdateError;
 
-      if (plan === "plus") {
-        const { data: referralResult, error: referralError } = await supabase.rpc("grant_referral_plus_bonus", {
-          p_referee_id: userId,
-        });
-        if (referralError) {
-          console.error("grant_referral_plus_bonus:", referralError.message);
-        } else if (referralResult && typeof referralResult === "object" && (referralResult as { ok?: boolean }).ok) {
-          console.log("referral plus bonus granted", referralResult);
-        }
-      }
-
       return new Response("ok");
     }
 
@@ -212,17 +201,6 @@ serve(async (req) => {
         })
         .eq("id", userId);
       if (subscriptionUpdateError) throw subscriptionUpdateError;
-
-      if (active && plan === "plus") {
-        const { data: referralResult, error: referralError } = await supabase.rpc("grant_referral_plus_bonus", {
-          p_referee_id: userId,
-        });
-        if (referralError) {
-          console.error("grant_referral_plus_bonus:", referralError.message);
-        } else if (referralResult && typeof referralResult === "object" && (referralResult as { ok?: boolean }).ok) {
-          console.log("referral plus bonus granted", referralResult);
-        }
-      }
 
       return new Response("ok");
     }

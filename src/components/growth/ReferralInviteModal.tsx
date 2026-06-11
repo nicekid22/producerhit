@@ -4,8 +4,8 @@ import { Copy, Gift, Sparkles, Users, X, Zap } from "lucide-react";
 import toast from "react-hot-toast";
 import {
   REFERRAL_REFEREE_BONUS,
-  REFERRAL_REFERRER_PLUS_BONUS,
   REFERRAL_REFEREE_START_TOTAL,
+  REFERRAL_REFERRER_SIGNUP_BONUS,
 } from "@/lib/referralConfig";
 import { buildReferralInviteUrl } from "@/lib/referral";
 import { trackClientEvent } from "@/lib/supabaseClient";
@@ -65,8 +65,8 @@ export function ReferralInviteModal({ open, onClose, locale, referralCode }: Pro
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-white/55">
             {isFr
-              ? `Inratable : ils démarrent avec ${REFERRAL_REFEREE_START_TOTAL} générations. Tu gagnes +${REFERRAL_REFERRER_PLUS_BONUS} quand ils passent Plus.`
-              : `Unbeatable: they start with ${REFERRAL_REFEREE_START_TOTAL} generations. You earn +${REFERRAL_REFERRER_PLUS_BONUS} when they go Plus.`}
+              ? `Inratable : ils démarrent avec ${REFERRAL_REFEREE_START_TOTAL} générations. Tu gagnes +${REFERRAL_REFERRER_SIGNUP_BONUS} dès qu'ils s'inscrivent via ton lien.`
+              : `Unbeatable: they start with ${REFERRAL_REFEREE_START_TOTAL} generations. You earn +${REFERRAL_REFERRER_SIGNUP_BONUS} as soon as they sign up with your link.`}
           </p>
         </div>
 
@@ -88,8 +88,8 @@ export function ReferralInviteModal({ open, onClose, locale, referralCode }: Pro
               <span className="font-semibold text-white">{isFr ? "Pour toi" : "For you"}</span>
               <div className="mt-1 text-white/60">
                 {isFr
-                  ? `+${REFERRAL_REFERRER_PLUS_BONUS} générations quand ton filleul passe au plan Plus`
-                  : `+${REFERRAL_REFERRER_PLUS_BONUS} generations when your referral upgrades to Plus`}
+                  ? `+${REFERRAL_REFERRER_SIGNUP_BONUS} générations dès qu'un filleul s'inscrit via ton lien`
+                  : `+${REFERRAL_REFERRER_SIGNUP_BONUS} generations when someone signs up with your link`}
               </div>
             </div>
           </div>
