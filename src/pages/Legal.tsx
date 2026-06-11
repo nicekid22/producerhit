@@ -9,13 +9,14 @@ export default function Legal() {
   const title = isFr ? "Mentions légales & politiques" : "Legal & Policies";
   const email = "info.producermarket@gmail.com";
 
-  const updatedAt = "2026-05-14";
+  const updatedAt = "2026-06-05";
 
   const labels = {
     toc: isFr ? "Accès rapide" : "Quick links",
     updatedAt: isFr ? "Dernière mise à jour" : "Last updated",
     privacy: isFr ? "Politique de confidentialité" : "Privacy Policy",
     terms: isFr ? "Conditions d’utilisation" : "Terms of Service",
+    commercialLicense: isFr ? "Licence commerciale & droits" : "Commercial license & rights",
     cookies: isFr ? "Politique cookies" : "Cookie Policy",
     refunds: isFr ? "Paiements & remboursements" : "Payments & Refunds",
     acceptableUse: isFr ? "Règles d’usage (Acceptable Use)" : "Acceptable Use",
@@ -80,8 +81,11 @@ export default function Legal() {
             <li>Tu ne dois pas utiliser le service pour générer du contenu illégal, haineux, harcelant ou portant atteinte aux droits d’autrui.</li>
             <li>Le service peut produire des résultats imparfaits (artefacts, erreurs, incohérences). Il n’y a aucune garantie de résultat.</li>
             <li>
-              Les droits et usages commerciaux peuvent dépendre des conditions des fournisseurs de modèles et des plateformes. Vérifie toujours les règles
-              applicables avant une release.
+              Les droits et usages commerciaux dépendent de ton plan ProducerHit et des conditions des fournisseurs de modèles (voir{" "}
+              <a className="font-semibold text-pk-accent hover:underline" href="#commercial-license">
+                Licence commerciale
+              </a>
+              ).
             </li>
           </ul>
           <p className="mt-3">
@@ -96,10 +100,148 @@ export default function Legal() {
             <li>You must not use the service to generate illegal, hateful, harassing, or rights-infringing content.</li>
             <li>The service may produce imperfect results (artifacts, errors, inconsistencies). No output quality guarantee is provided.</li>
             <li>
-              Rights and commercial use may depend on model/provider terms and platform rules. Always verify applicable terms before releasing commercially.
+              Rights and commercial use depend on your ProducerHit plan and model provider terms (see{" "}
+              <a className="font-semibold text-pk-accent hover:underline" href="#commercial-license">
+                Commercial license
+              </a>
+              ).
             </li>
           </ul>
           <p className="mt-3">ProducerHit may suspend accounts for abuse, fraud, limit circumvention, or violations of these rules.</p>
+        </>
+      ),
+    },
+    {
+      id: "commercial-license",
+      title: labels.commercialLicense,
+      body: isFr ? (
+        <>
+          <p>
+            ProducerHit te permet de générer de la musique IA et de l’exporter selon ton abonnement. Cette section clarifie ce que tu peux faire
+            commercialement avec tes exports — sans remplacer les règles des plateformes (Spotify, YouTube, BeatStars, etc.) ni celles du moteur IA sous-jacent
+            (ACE Step).
+          </p>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[520px] border-collapse text-left text-sm">
+              <thead>
+                <tr className="border-b border-pk-border">
+                  <th className="py-2 pr-4 font-semibold text-pk-text">Plan</th>
+                  <th className="py-2 pr-4 font-semibold text-pk-text">Usage commercial</th>
+                  <th className="py-2 pr-4 font-semibold text-pk-text">Exports</th>
+                  <th className="py-2 font-semibold text-pk-text">Stems (ZIP)</th>
+                </tr>
+              </thead>
+              <tbody className="text-pk-muted">
+                <tr className="border-b border-pk-border/60">
+                  <td className="py-2 pr-4">Free</td>
+                  <td className="py-2 pr-4">Usage personnel / démo uniquement</td>
+                  <td className="py-2 pr-4">MP3</td>
+                  <td className="py-2">Non</td>
+                </tr>
+                <tr className="border-b border-pk-border/60">
+                  <td className="py-2 pr-4">Pro</td>
+                  <td className="py-2 pr-4">Oui — royalty-free pour tes projets (vidéos, beats, streaming)</td>
+                  <td className="py-2 pr-4">MP3 + WAV</td>
+                  <td className="py-2">Non</td>
+                </tr>
+                <tr className="border-b border-pk-border/60">
+                  <td className="py-2 pr-4">Studio</td>
+                  <td className="py-2 pr-4">Oui — idem Pro + mastering complet</td>
+                  <td className="py-2 pr-4">MP3 + WAV</td>
+                  <td className="py-2">Non</td>
+                </tr>
+                <tr>
+                  <td className="py-2 pr-4">Plus</td>
+                  <td className="py-2 pr-4">Oui — idem Pro/Studio</td>
+                  <td className="py-2 pr-4">MP3 + WAV + pistes séparées (ZIP)</td>
+                  <td className="py-2">Oui (si le moteur les fournit)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <ul className="mt-4 list-disc space-y-2 pl-5">
+            <li>
+              <strong className="text-pk-text">Royalty-free</strong> signifie que ProducerHit ne te facture pas de redevances supplémentaires sur les exports
+              inclus dans ton plan. Cela ne garantit pas l’enregistrement automatique auprès d’une société de gestion (SACEM, ASCAP, etc.).
+            </li>
+            <li>
+              Tu restes responsable du contenu de tes prompts (samples, noms d’artistes, paroles) et du respect des règles des plateformes de distribution.
+            </li>
+            <li>
+              Les fichiers stems (vocals, drums, etc.) sont disponibles sur le plan Plus lorsque le moteur ACE les génère ; leur absence ponctuelle n’ouvre pas
+              droit à remboursement automatique.
+            </li>
+            <li>
+              En cas de doute avant une release majeure (label, sync TV, pub), contacte{" "}
+              <a className="font-semibold text-pk-accent hover:underline" href={`mailto:${email}`}>
+                {email}
+              </a>
+              .
+            </li>
+          </ul>
+        </>
+      ) : (
+        <>
+          <p>
+            ProducerHit lets you generate AI music and export it according to your subscription. This section clarifies what you may do commercially with your
+            exports — without replacing platform rules (Spotify, YouTube, BeatStars, etc.) or the underlying AI engine terms (ACE Step).
+          </p>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[520px] border-collapse text-left text-sm">
+              <thead>
+                <tr className="border-b border-pk-border">
+                  <th className="py-2 pr-4 font-semibold text-pk-text">Plan</th>
+                  <th className="py-2 pr-4 font-semibold text-pk-text">Commercial use</th>
+                  <th className="py-2 pr-4 font-semibold text-pk-text">Exports</th>
+                  <th className="py-2 font-semibold text-pk-text">Stems (ZIP)</th>
+                </tr>
+              </thead>
+              <tbody className="text-pk-muted">
+                <tr className="border-b border-pk-border/60">
+                  <td className="py-2 pr-4">Free</td>
+                  <td className="py-2 pr-4">Personal / demo only</td>
+                  <td className="py-2 pr-4">MP3</td>
+                  <td className="py-2">No</td>
+                </tr>
+                <tr className="border-b border-pk-border/60">
+                  <td className="py-2 pr-4">Pro</td>
+                  <td className="py-2 pr-4">Yes — royalty-free for your projects (videos, beats, streaming)</td>
+                  <td className="py-2 pr-4">MP3 + WAV</td>
+                  <td className="py-2">No</td>
+                </tr>
+                <tr className="border-b border-pk-border/60">
+                  <td className="py-2 pr-4">Studio</td>
+                  <td className="py-2 pr-4">Yes — same as Pro + full mastering</td>
+                  <td className="py-2 pr-4">MP3 + WAV</td>
+                  <td className="py-2">No</td>
+                </tr>
+                <tr>
+                  <td className="py-2 pr-4">Plus</td>
+                  <td className="py-2 pr-4">Yes — same as Pro/Studio</td>
+                  <td className="py-2 pr-4">MP3 + WAV + separate stems (ZIP)</td>
+                  <td className="py-2">Yes (when the engine provides them)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <ul className="mt-4 list-disc space-y-2 pl-5">
+            <li>
+              <strong className="text-pk-text">Royalty-free</strong> means ProducerHit does not charge additional royalties on exports included in your plan. It
+              does not guarantee automatic registration with a PRO (SACEM, ASCAP, etc.).
+            </li>
+            <li>You remain responsible for prompt content (samples, artist names, lyrics) and platform distribution rules.</li>
+            <li>
+              Stem files (vocals, drums, etc.) are available on Plus when the ACE engine generates them; occasional unavailability is not grounds for automatic
+              refund.
+            </li>
+            <li>
+              For major releases (label, TV sync, ads), contact{" "}
+              <a className="font-semibold text-pk-accent hover:underline" href={`mailto:${email}`}>
+                {email}
+              </a>{" "}
+              if unsure.
+            </li>
+          </ul>
         </>
       ),
     },

@@ -11,7 +11,7 @@ import { useLazyPinterestCover } from "@/hooks/useLazyPinterestCover";
 import { StoredLoopCover } from "@/components/cover/StoredLoopCover";
 import { CoverMedia } from "@/components/CoverMedia";
 import { buildCoverPromptSnapshot, cn, COVER_SURFACE_CLASS } from "@/lib/utils";
-import { loopCardClass, loopCoverClass, loopPlayButtonClass, loopPublicButtonClass, loopToggleButtonClass } from "@/lib/loopCardUi";
+import { loopCardClass, loopCoverClass, loopPlayButtonClass, loopPublicButtonClass, loopToggleButtonClass, getLoopCardFooterHint } from "@/lib/loopCardUi";
 import { useAuthStore } from "@/stores/authStore";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -24,7 +24,6 @@ import { playLoopInContext, usePlayerStore } from "@/stores/playerStore";
 import { useLocaleStore } from "@/stores/localeStore";
 import type { Loop } from "@/types/loop";
 import { prepareLoopVariantGeneration, variantResultTitle } from "@/lib/loopVariantGeneration";
-import { getLoopAudioRetentionCardLabel, type LoopAudioRetentionContext } from "@/lib/loopAudioRetention";
 import { extractLoopVocalLanguage, formatVocalLanguageLabel, isSongLoop } from "@/lib/vocalLanguages";
 import { canDownloadStems } from "@/lib/planEntitlements";
 import { useGrowthUpsellStore } from "@/stores/growthUpsellStore";
@@ -72,8 +71,6 @@ export const LoopCardItem = memo(function LoopCardItem({
   queueLoops,
   queueSource = "workspace",
   onOpenMaster,
-  showRetentionCountdown = false,
-  audioRetention,
 }: {
   loop: Loop;
   onDelete?: () => void;
@@ -91,8 +88,6 @@ export const LoopCardItem = memo(function LoopCardItem({
   queueLoops?: Loop[];
   queueSource?: string;
   onOpenMaster?: (loop: Loop) => void;
-  showRetentionCountdown?: boolean;
-  audioRetention?: LoopAudioRetentionContext;
 }) {
   const locale = useLocaleStore((s) => s.locale);
   const plan = (() => {
@@ -724,28 +719,21 @@ export const LoopCardItem = memo(function LoopCardItem({
       <div className="mt-2 flex items-center justify-between gap-2 text-xs text-pk-muted">
         <div>{loop.loopLength}</div>
         <div className="flex shrink-0 items-center gap-2">
-          {showRetentionCountdown && loop.createdAt ? (
-            (() => {
-              const retentionLabel = getLoopAudioRetentionCardLabel(loop.createdAt, locale, audioRetention);
-              if (!retentionLabel) return null;
-              const expired = retentionLabel === "Expiré" || retentionLabel === "Expired";
-              return (
-                <span
-                  className={cn(
-                    "pk-loop-retention-label text-[10px] font-medium tabular-nums",
-                    expired && "pk-loop-retention-label--expired",
-                  )}
-                  title={
-                    locale === "fr"
-                      ? "Audio hébergé 7 jours puis supprimé automatiquement"
-                      : "Audio hosted 7 days, then removed automatically"
-                  }
-                >
-                  {retentionLabel}
-                </span>
-              );
-            })()
-          ) : null}
+          {(() => {
+            const hint = getLoopCardFooterHint(loop, locale);
+            if (!hint) return null;
+            return (
+              <span
+                className={cn(
+                  "pk-loop-card-hint text-[10px] font-medium",
+                  hint.variant === "public" && "pk-loop-card-hint--public",
+                  hint.variant === "stems" && "pk-loop-card-hint--stems",
+                )}
+              >
+                {hint.label}
+              </span>
+            );
+          })()}
           <div>{durationLabel}</div>
         </div>
       </div>

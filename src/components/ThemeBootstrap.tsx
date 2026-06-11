@@ -88,6 +88,11 @@ export function ThemeBootstrap({ children }: { children: React.ReactNode }) {
       }
     }
 
+    const faviconSvg = document.querySelector('link[rel="icon"][type="image/svg+xml"]');
+    if (faviconSvg) {
+      faviconSvg.setAttribute("href", warmGlass ? "/favicon-warm.svg" : "/favicon.svg");
+    }
+
     return () => {
       body.dataset.pkTheme = "";
       delete body.dataset.pkWarmGlass;
@@ -95,6 +100,7 @@ export function ThemeBootstrap({ children }: { children: React.ReactNode }) {
       body.style.background = "";
       body.style.backgroundAttachment = "";
       body.style.color = "";
+      if (faviconSvg) faviconSvg.setAttribute("href", "/favicon.svg");
     };
   }, [marketing, warmGlass]);
 

@@ -10,6 +10,11 @@ export type GrowthDashboard = {
     signups: number;
     generations: number;
     checkouts: number;
+    subscriptions: number;
+    upgrade_prompts: number;
+    signup_to_gen_pct: number;
+    gen_to_checkout_pct: number;
+    checkout_to_paid_pct: number;
   };
   referrals: {
     referred_users: number;

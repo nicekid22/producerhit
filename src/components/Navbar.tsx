@@ -6,6 +6,8 @@ import { useLocaleStore } from "@/stores/localeStore";
 import { useAuthStore } from "@/stores/authStore";
 import { HeroCtaButton } from "@/components/landing/HeroCtaButton";
 import { ThemeToggleButton } from "@/components/ThemeToggleButton";
+import { BrandLogo } from "@/components/landing/BrandLogo";
+import { discordCommunityUrl } from "@/lib/discordConfig";
 
 export function Navbar({ variant }: { variant: "marketing" | "auth" }) {
   const locale = useLocaleStore((s) => s.locale);
@@ -22,10 +24,7 @@ export function Navbar({ variant }: { variant: "marketing" | "auth" }) {
       ].join(" ")}
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-        <Link to="/" className="text-base font-semibold tracking-tight text-pk-text">
-          <span className="lowercase text-pk-text/90">producer</span>
-          <span className="pk-navbar-logo-hit lowercase bg-gradient-to-r from-[#a78bfa] via-[#7c3aed] to-[#22d3ee] bg-clip-text text-transparent">hit</span>
-        </Link>
+        <BrandLogo compact />
         {variant === "marketing" ? (
           <nav className="hidden items-center gap-7 text-sm text-pk-muted md:flex">
             <Link to="/#how" className="hover:text-pk-text">
@@ -40,6 +39,14 @@ export function Navbar({ variant }: { variant: "marketing" | "auth" }) {
             <Link to="/community" className="hover:text-pk-text">
               {locale === "fr" ? "Communauté" : "Community"}
             </Link>
+            <a
+              href={discordCommunityUrl("navbar")}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-pk-text"
+            >
+              Discord
+            </a>
             <Link to="/blog" className="hover:text-pk-text">
               {locale === "fr" ? "Blog" : "Blog"}
             </Link>
@@ -122,6 +129,15 @@ export function Navbar({ variant }: { variant: "marketing" | "auth" }) {
             <Link to="/community" className="rounded-xl px-3 py-2.5 text-sm font-semibold text-pk-text hover:bg-white/5" onClick={() => setMobileOpen(false)}>
               {isFr ? "Communauté" : "Community"}
             </Link>
+            <a
+              href={discordCommunityUrl("navbar_mobile")}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-xl px-3 py-2.5 text-sm font-semibold text-pk-text hover:bg-white/5"
+              onClick={() => setMobileOpen(false)}
+            >
+              Discord
+            </a>
             <Link to="/pricing" className="rounded-xl px-3 py-2.5 text-sm font-semibold text-pk-text hover:bg-white/5" onClick={() => setMobileOpen(false)}>
               {isFr ? "Tarifs" : "Pricing"}
             </Link>

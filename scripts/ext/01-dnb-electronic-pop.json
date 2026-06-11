@@ -1,0 +1,134 @@
+{
+  "Liquid DnB": {
+    "prompt": "liquid drum and bass, smooth rolling breakbeats, warm sub bass slides, lush pad stacks, melodic reese layers, liquid harmonic swells, sidechain breath, flowing 174 groove",
+    "aceTags": "liquid dnb, rolling breaks, warm sub, lush pads, melodic reese"
+  },
+  "Jungle": {
+    "prompt": "jungle, classic breakbeat science, chopped amen breaks, heavy sub bass, ragga vocal chop textures, Reese stab layers, raw UK rave energy, warehouse MC-ready tension",
+    "aceTags": "jungle, amen breaks, sub bass, ragga chops, UK rave energy"
+  },
+  "Breakcore": {
+    "prompt": "breakcore, extreme chopped breakbeats, distorted bass hits, chaotic bar-to-bar edits, high BPM intensity, industrial noise bursts, experimental hardcore adrenaline, relentless edit frenzy",
+    "aceTags": "breakcore, extreme breaks, distorted bass, chaotic edits, high energy"
+  },
+  "Future Bass": {
+    "prompt": "future bass, bright supersaw chord stacks, sidechain pump groove, emotional topline space, crisp trap-influenced drums, wide stereo lead layers, euphoric festival drop lift",
+    "aceTags": "future bass, supersaw chords, sidechain pump, emotional leads, festival drop"
+  },
+  "Melodic Dubstep": {
+    "prompt": "melodic dubstep, emotional minor chord progression, soft sidechain pads, tasteful wobble bass motion, half-time snare pattern, cinematic drop swells, bittersweet lead hook space",
+    "aceTags": "melodic dubstep, emotional chords, half-time drums, wobble bass, cinematic drops"
+  },
+  "EDM Festival": {
+    "prompt": "EDM festival anthem, big room chord stabs, massive build-up risers and drops, sidechain pump kick, crowd-ready energy, wide supersaw lead hooks, mainstage peak-hour drive",
+    "aceTags": "EDM festival, big room, build-ups and drops, sidechain, crowd energy"
+  },
+  "Tech House": {
+    "prompt": "tech house, driving four-on-the-floor kick, hypnotic rolling bass groove, minimal percussion layers, hi-hat shuffle swing, warehouse club tension, Berlin tech-house pulse",
+    "aceTags": "tech house, four-on-the-floor, hypnotic bass, minimal percussion, club"
+  },
+  "Minimal Techno": {
+    "prompt": "minimal techno, stripped hypnotic groove, tight kick thump, subtle hi-hat ticks, evolving filter textures, warehouse atmosphere drones, late-night Berlin pulse restraint",
+    "aceTags": "minimal techno, hypnotic groove, stripped drums, warehouse vibe"
+  },
+  "Hard Techno": {
+    "prompt": "hard techno, pounding distorted kick, industrial metal textures, relentless four-on-the-floor drive, dark warehouse rave tension, aggressive synth stabs, peak-hour endurance energy",
+    "aceTags": "hard techno, pounding kick, industrial textures, relentless rave energy"
+  },
+  "Trance": {
+    "prompt": "trance, uplifting arpeggiated sequences, emotional supersaw lead lines, rolling kick pattern, euphoric build and breakdown arcs, wide stereo delay tails, hands-up festival lift",
+    "aceTags": "trance, uplifting arps, supersaw leads, euphoric energy"
+  },
+  "Psytrance": {
+    "prompt": "psytrance, rolling bassline pulse, psychedelic synth sequence layers, triplet hi-hat feel, hypnotic festival drive, bright squelchy lead motifs, forest-party twilight energy",
+    "aceTags": "psytrance, rolling bass, psychedelic synths, hypnotic festival"
+  },
+  "Deep House": {
+    "prompt": "deep house, warm seventh chord pads, groovy bassline pocket, soft open hi-hats, soulful deep club swing, late-night vinyl warmth, understated vocal chop space",
+    "aceTags": "deep house, warm chords, groovy bass, soulful club groove"
+  },
+  "Tropical House": {
+    "prompt": "tropical house, bright marimba or pluck melody, relaxed four-on-the-floor kick, sunny major chord lift, gentle shaker rhythm, summer beach sunset groove, breezy topline hooks",
+    "aceTags": "tropical house, bright plucks, relaxed groove, sunny summer vibe"
+  },
+  "Organic House": {
+    "prompt": "organic house, live percussion layers, warm analog chord voicings, earthy shaker and conga groove, natural woodblock accents, deep club pulse, hand-played rhythm human feel",
+    "aceTags": "organic house, live percussion, warm chords, earthy groove"
+  },
+  "Soulful House": {
+    "prompt": "soulful house, gospel-influenced chord movement, warm round bass, swung hi-hat pattern, emotional vocal sample chops, classic Chicago house piano stabs, joyful dancefloor lift",
+    "aceTags": "soulful house, gospel chords, warm bass, vocal chops, classic house"
+  },
+  "French Touch": {
+    "prompt": "french touch, filtered disco sample chops, sidechain pump groove, funky octave bass line, Daft Punk-inspired filter sweeps, chic Paris club bounce, vocoder hook space optional",
+    "aceTags": "french touch, filtered disco, sidechain, funky bass, chic club"
+  },
+  "Electro Funk": {
+    "prompt": "electro funk, syncopated synth bass riff, talkbox-style lead space, tight drum machine groove, neon 80s-influenced chord stabs, robotic clap pattern, dancefloor funk swagger",
+    "aceTags": "electro funk, synth bass, tight drums, neon 80s groove"
+  },
+  "Synth Pop": {
+    "prompt": "synth pop, catchy hook melody, bright analog synth layers, punchy gated snare drums, 80s-inspired chorus chords, modern sheen arps, radio-friendly topline energy",
+    "aceTags": "synth pop, catchy hook, analog synths, punchy drums, 80s sheen"
+  },
+  "Chill Electronic": {
+    "prompt": "chill electronic, soft sidechain pad washes, gentle beat pocket, warm sub bass hum, relaxed texture layers, easy listening groove sway, sunset headphone calm atmosphere",
+    "aceTags": "chill electronic, soft pads, gentle beat, relaxed textures"
+  },
+  "Experimental Electronic": {
+    "prompt": "experimental electronic, unconventional sound design bursts, evolving granular textures, irregular rhythm fractures, futuristic art-forward timbres, aleatoric percussion clusters, gallery-installation spatial depth",
+    "aceTags": "experimental electronic, sound design, evolving textures, irregular rhythms"
+  },
+  "Underground Club": {
+    "prompt": "underground club, dark warehouse groove, heavy kick thump, minimal synth stab accents, raw late-night energy, basement reverb tails, stripped hypnotic tension build",
+    "aceTags": "underground club, warehouse groove, heavy kick, dark minimal"
+  },
+  "Cyberpunk": {
+    "prompt": "cyberpunk electronic, neon synth bass pulse, dystopian pad atmosphere, glitch texture hits, rain-soaked futuristic city vibe, distorted industrial drums, blade-runner night alley tension",
+    "aceTags": "cyberpunk, neon synths, dystopian, glitch textures, futuristic"
+  },
+  "Y2K Pop": {
+    "prompt": "Y2K pop, glossy 2000s synth layers, catchy hook melody, punchy TR-909-style drums, nostalgic futuristic chord stacks, flip-phone era sparkle, bright major-key dance energy",
+    "aceTags": "Y2K pop, glossy 2000s synths, catchy hook, nostalgic futuristic"
+  },
+  "Bedroom Pop": {
+    "prompt": "bedroom pop, intimate lo-fi drum pocket, soft acoustic or synth layers, warm close-mic room tone, dreamy minor chord sway, whisper vocal space, late-night diary intimacy",
+    "aceTags": "bedroom pop, intimate lo-fi, soft drums, dreamy close feel"
+  },
+  "Shoegaze": {
+    "prompt": "shoegaze, wall of reverb-drenched guitars, hazy chorus textures, slow driving drum groove, dreamy blurred atmosphere, buried vocal wash, melancholic noise-pop immersion",
+    "aceTags": "shoegaze, reverb guitars, hazy textures, dreamy blurred vibe"
+  },
+  "Indie Rock": {
+    "prompt": "indie rock, jangly clean guitar arpeggios, live drum groove pocket, catchy but raw chord movement, modern alternative energy, bass-driven verse lift, festival-ready hook space",
+    "aceTags": "indie rock, jangly guitars, live drums, alternative energy"
+  },
+  "Psychedelic Rock": {
+    "prompt": "psychedelic rock, swirling guitar delays, trippy phaser textures, driving groove pocket, vintage rock organ swells, mind-expanding chord colors, 60s revival atmosphere with weight",
+    "aceTags": "psychedelic rock, swirling guitars, trippy delays, vintage rock"
+  },
+  "Alternative Rock": {
+    "prompt": "alternative rock, gritty distorted guitar riffs, punchy live snare drums, emotional chord movement, arena-ready dynamic range, 2000s alt-rock angst, anthemic chorus hook lift",
+    "aceTags": "alternative rock, gritty guitars, punchy drums, emotional chords"
+  },
+  "Acoustic Indie": {
+    "prompt": "acoustic indie, fingerpicked nylon or steel guitar, soft brushed percussion, warm intimate room tone, heartfelt melodic motif, gentle vocal storytelling space, campfire sincerity",
+    "aceTags": "acoustic indie, fingerpicked guitar, soft percussion, intimate room"
+  },
+  "J-Pop": {
+    "prompt": "J-pop, bright layered synth stacks, catchy hook melody, energetic four-on-the-floor drums, polished Tokyo pop chord voicings, kawaii sparkle optional, anime-opening lift energy",
+    "aceTags": "J-pop, bright synths, catchy hook, polished Tokyo pop"
+  },
+  "K-R&B": {
+    "prompt": "K-R&B, sleek modern R&B chord voicings, tight trap-influenced drums, glossy synth texture layers, Seoul night vibe bass glide, smooth falsetto topline space, understated luxury sway",
+    "aceTags": "K-R&B, sleek R&B chords, glossy synths, Seoul night vibe"
+  },
+  "Future Funk": {
+    "prompt": "future funk, disco sample chops, funky octave bass groove, sidechain pump swing, neon 80s nostalgia chords, upbeat dance energy, vocoder hook accents, roller-rink bounce",
+    "aceTags": "future funk, disco chops, funky bass, neon 80s nostalgia"
+  },
+  "AI Generated Pop": {
+    "prompt": "AI-generated pop aesthetic, futuristic clean synth textures, catchy algorithmic hook contour, hyper-digital chord stacks, synthetic vocal shimmer space, uncanny valley pop sheen, tomorrow-morning radio feel",
+    "aceTags": "AI pop, futuristic synths, catchy hook, hyper-modern sheen"
+  }
+}

@@ -1,0 +1,730 @@
+{
+  "Liquid DnB": {
+    "prompt": "liquid drum and bass, smooth rolling breakbeats, warm sub bass slides, lush pad stacks, melodic reese layers, liquid harmonic swells, sidechain breath, flowing 174 groove",
+    "aceTags": "liquid dnb, rolling breaks, warm sub, lush pads, melodic reese"
+  },
+  "Jungle": {
+    "prompt": "jungle, classic breakbeat science, chopped amen breaks, heavy sub bass, ragga vocal chop textures, Reese stab layers, raw UK rave energy, warehouse MC-ready tension",
+    "aceTags": "jungle, amen breaks, sub bass, ragga chops, UK rave energy"
+  },
+  "Breakcore": {
+    "prompt": "breakcore, extreme chopped breakbeats, distorted bass hits, chaotic bar-to-bar edits, high BPM intensity, industrial noise bursts, experimental hardcore adrenaline, relentless edit frenzy",
+    "aceTags": "breakcore, extreme breaks, distorted bass, chaotic edits, high energy"
+  },
+  "Future Bass": {
+    "prompt": "future bass, bright supersaw chord stacks, sidechain pump groove, emotional topline space, crisp trap-influenced drums, wide stereo lead layers, euphoric festival drop lift",
+    "aceTags": "future bass, supersaw chords, sidechain pump, emotional leads, festival drop"
+  },
+  "Melodic Dubstep": {
+    "prompt": "melodic dubstep, emotional minor chord progression, soft sidechain pads, tasteful wobble bass motion, half-time snare pattern, cinematic drop swells, bittersweet lead hook space",
+    "aceTags": "melodic dubstep, emotional chords, half-time drums, wobble bass, cinematic drops"
+  },
+  "EDM Festival": {
+    "prompt": "EDM festival anthem, big room chord stabs, massive build-up risers and drops, sidechain pump kick, crowd-ready energy, wide supersaw lead hooks, mainstage peak-hour drive",
+    "aceTags": "EDM festival, big room, build-ups and drops, sidechain, crowd energy"
+  },
+  "Tech House": {
+    "prompt": "tech house, driving four-on-the-floor kick, hypnotic rolling bass groove, minimal percussion layers, hi-hat shuffle swing, warehouse club tension, Berlin tech-house pulse",
+    "aceTags": "tech house, four-on-the-floor, hypnotic bass, minimal percussion, club"
+  },
+  "Minimal Techno": {
+    "prompt": "minimal techno, stripped hypnotic groove, tight kick thump, subtle hi-hat ticks, evolving filter textures, warehouse atmosphere drones, late-night Berlin pulse restraint",
+    "aceTags": "minimal techno, hypnotic groove, stripped drums, warehouse vibe"
+  },
+  "Hard Techno": {
+    "prompt": "hard techno, pounding distorted kick, industrial metal textures, relentless four-on-the-floor drive, dark warehouse rave tension, aggressive synth stabs, peak-hour endurance energy",
+    "aceTags": "hard techno, pounding kick, industrial textures, relentless rave energy"
+  },
+  "Trance": {
+    "prompt": "trance, uplifting arpeggiated sequences, emotional supersaw lead lines, rolling kick pattern, euphoric build and breakdown arcs, wide stereo delay tails, hands-up festival lift",
+    "aceTags": "trance, uplifting arps, supersaw leads, euphoric energy"
+  },
+  "Psytrance": {
+    "prompt": "psytrance, rolling bassline pulse, psychedelic synth sequence layers, triplet hi-hat feel, hypnotic festival drive, bright squelchy lead motifs, forest-party twilight energy",
+    "aceTags": "psytrance, rolling bass, psychedelic synths, hypnotic festival"
+  },
+  "Deep House": {
+    "prompt": "deep house, warm seventh chord pads, groovy bassline pocket, soft open hi-hats, soulful deep club swing, late-night vinyl warmth, understated vocal chop space",
+    "aceTags": "deep house, warm chords, groovy bass, soulful club groove"
+  },
+  "Tropical House": {
+    "prompt": "tropical house, bright marimba or pluck melody, relaxed four-on-the-floor kick, sunny major chord lift, gentle shaker rhythm, summer beach sunset groove, breezy topline hooks",
+    "aceTags": "tropical house, bright plucks, relaxed groove, sunny summer vibe"
+  },
+  "Organic House": {
+    "prompt": "organic house, live percussion layers, warm analog chord voicings, earthy shaker and conga groove, natural woodblock accents, deep club pulse, hand-played rhythm human feel",
+    "aceTags": "organic house, live percussion, warm chords, earthy groove"
+  },
+  "Soulful House": {
+    "prompt": "soulful house, gospel-influenced chord movement, warm round bass, swung hi-hat pattern, emotional vocal sample chops, classic Chicago house piano stabs, joyful dancefloor lift",
+    "aceTags": "soulful house, gospel chords, warm bass, vocal chops, classic house"
+  },
+  "French Touch": {
+    "prompt": "french touch, filtered disco sample chops, sidechain pump groove, funky octave bass line, Daft Punk-inspired filter sweeps, chic Paris club bounce, vocoder hook space optional",
+    "aceTags": "french touch, filtered disco, sidechain, funky bass, chic club"
+  },
+  "Electro Funk": {
+    "prompt": "electro funk, syncopated synth bass riff, talkbox-style lead space, tight drum machine groove, neon 80s-influenced chord stabs, robotic clap pattern, dancefloor funk swagger",
+    "aceTags": "electro funk, synth bass, tight drums, neon 80s groove"
+  },
+  "Synth Pop": {
+    "prompt": "synth pop, catchy hook melody, bright analog synth layers, punchy gated snare drums, 80s-inspired chorus chords, modern sheen arps, radio-friendly topline energy",
+    "aceTags": "synth pop, catchy hook, analog synths, punchy drums, 80s sheen"
+  },
+  "Chill Electronic": {
+    "prompt": "chill electronic, soft sidechain pad washes, gentle beat pocket, warm sub bass hum, relaxed texture layers, easy listening groove sway, sunset headphone calm atmosphere",
+    "aceTags": "chill electronic, soft pads, gentle beat, relaxed textures"
+  },
+  "Experimental Electronic": {
+    "prompt": "experimental electronic, unconventional sound design bursts, evolving granular textures, irregular rhythm fractures, futuristic art-forward timbres, aleatoric percussion clusters, gallery-installation spatial depth",
+    "aceTags": "experimental electronic, sound design, evolving textures, irregular rhythms"
+  },
+  "Underground Club": {
+    "prompt": "underground club, dark warehouse groove, heavy kick thump, minimal synth stab accents, raw late-night energy, basement reverb tails, stripped hypnotic tension build",
+    "aceTags": "underground club, warehouse groove, heavy kick, dark minimal"
+  },
+  "Cyberpunk": {
+    "prompt": "cyberpunk electronic, neon synth bass pulse, dystopian pad atmosphere, glitch texture hits, rain-soaked futuristic city vibe, distorted industrial drums, blade-runner night alley tension",
+    "aceTags": "cyberpunk, neon synths, dystopian, glitch textures, futuristic"
+  },
+  "Y2K Pop": {
+    "prompt": "Y2K pop, glossy 2000s synth layers, catchy hook melody, punchy TR-909-style drums, nostalgic futuristic chord stacks, flip-phone era sparkle, bright major-key dance energy",
+    "aceTags": "Y2K pop, glossy 2000s synths, catchy hook, nostalgic futuristic"
+  },
+  "Bedroom Pop": {
+    "prompt": "bedroom pop, intimate lo-fi drum pocket, soft acoustic or synth layers, warm close-mic room tone, dreamy minor chord sway, whisper vocal space, late-night diary intimacy",
+    "aceTags": "bedroom pop, intimate lo-fi, soft drums, dreamy close feel"
+  },
+  "Shoegaze": {
+    "prompt": "shoegaze, wall of reverb-drenched guitars, hazy chorus textures, slow driving drum groove, dreamy blurred atmosphere, buried vocal wash, melancholic noise-pop immersion",
+    "aceTags": "shoegaze, reverb guitars, hazy textures, dreamy blurred vibe"
+  },
+  "Indie Rock": {
+    "prompt": "indie rock, jangly clean guitar arpeggios, live drum groove pocket, catchy but raw chord movement, modern alternative energy, bass-driven verse lift, festival-ready hook space",
+    "aceTags": "indie rock, jangly guitars, live drums, alternative energy"
+  },
+  "Psychedelic Rock": {
+    "prompt": "psychedelic rock, swirling guitar delays, trippy phaser textures, driving groove pocket, vintage rock organ swells, mind-expanding chord colors, 60s revival atmosphere with weight",
+    "aceTags": "psychedelic rock, swirling guitars, trippy delays, vintage rock"
+  },
+  "Alternative Rock": {
+    "prompt": "alternative rock, gritty distorted guitar riffs, punchy live snare drums, emotional chord movement, arena-ready dynamic range, 2000s alt-rock angst, anthemic chorus hook lift",
+    "aceTags": "alternative rock, gritty guitars, punchy drums, emotional chords"
+  },
+  "Acoustic Indie": {
+    "prompt": "acoustic indie, fingerpicked nylon or steel guitar, soft brushed percussion, warm intimate room tone, heartfelt melodic motif, gentle vocal storytelling space, campfire sincerity",
+    "aceTags": "acoustic indie, fingerpicked guitar, soft percussion, intimate room"
+  },
+  "J-Pop": {
+    "prompt": "J-pop, bright layered synth stacks, catchy hook melody, energetic four-on-the-floor drums, polished Tokyo pop chord voicings, kawaii sparkle optional, anime-opening lift energy",
+    "aceTags": "J-pop, bright synths, catchy hook, polished Tokyo pop"
+  },
+  "K-R&B": {
+    "prompt": "K-R&B, sleek modern R&B chord voicings, tight trap-influenced drums, glossy synth texture layers, Seoul night vibe bass glide, smooth falsetto topline space, understated luxury sway",
+    "aceTags": "K-R&B, sleek R&B chords, glossy synths, Seoul night vibe"
+  },
+  "Future Funk": {
+    "prompt": "future funk, disco sample chops, funky octave bass groove, sidechain pump swing, neon 80s nostalgia chords, upbeat dance energy, vocoder hook accents, roller-rink bounce",
+    "aceTags": "future funk, disco chops, funky bass, neon 80s nostalgia"
+  },
+  "AI Generated Pop": {
+    "prompt": "AI-generated pop aesthetic, futuristic clean synth textures, catchy algorithmic hook contour, hyper-digital chord stacks, synthetic vocal shimmer space, uncanny valley pop sheen, tomorrow-morning radio feel",
+    "aceTags": "AI pop, futuristic synths, catchy hook, hyper-modern sheen"
+  },
+  "Cinematic Ambient": {
+    "prompt": "cinematic ambient, evolving orchestral pad layers, wide hall reverb tails, slow emotional harmonic movement, film-score atmosphere drones, sparse piano accents, intimate blockbuster stillness",
+    "aceTags": "cinematic ambient, orchestral pads, wide reverb, film-score feel"
+  },
+  "Dark Ambient": {
+    "prompt": "dark ambient, ominous low drones, sparse metallic textures, deep sub rumble undertow, horror-tinged wide spatial void, slow evolving dread, candle-extinguish silence pockets",
+    "aceTags": "dark ambient, ominous drones, sparse textures, deep sub"
+  },
+  "Atmospheric": {
+    "prompt": "atmospheric instrumental, wide pad washes, gentle pulse undertone, immersive spatial depth, emotional but minimal rhythm, breath-like dynamics, horizon-gazing stillness, slow evolving calm",
+    "aceTags": "atmospheric, wide pads, gentle pulse, immersive space"
+  },
+  "Meditation": {
+    "prompt": "meditation music, soft healing drones, gentle singing bowl or bell accents, slow harmonic shifts, calming breath-paced evolution, temple quietude, mindful single-note focus",
+    "aceTags": "meditation, soft drones, gentle bells, calming healing vibe"
+  },
+  "Sleep Music": {
+    "prompt": "sleep music, ultra-soft texture blankets, minimal or absent percussion, warm low drone hum, deeply calming nocturnal atmosphere, delta-wave slow pulse, pillow-close intimacy",
+    "aceTags": "sleep music, ultra-soft textures, warm drones, calming"
+  },
+  "Nature Soundscape": {
+    "prompt": "nature soundscape, organic field-recording bed, gentle melodic undertones, forest bird or stream ambience, peaceful harmonic stillness, dawn meadow openness, earth-tone pad warmth",
+    "aceTags": "nature soundscape, organic ambience, forest or water feel, peaceful"
+  },
+  "Fantasy Soundtrack": {
+    "prompt": "fantasy soundtrack, orchestral strings and choir pads, magical harp or flute motifs, epic but intimate adventure atmosphere, heroic brass swells restrained, enchanted forest harmonic color",
+    "aceTags": "fantasy soundtrack, orchestral strings, magical motifs, adventure"
+  },
+  "Anime OST": {
+    "prompt": "anime OST, emotional piano and string interplay, bright melodic hook phrases, J-anime drama energy swells, polished cinematic dynamics, bittersweet schoolyard chord turns, opening-theme lift",
+    "aceTags": "anime OST, emotional piano, strings, bright melodic hooks"
+  },
+  "Video Game OST": {
+    "prompt": "video game OST, loop-friendly catchy motif, chiptune or modern synth layer stacks, level-music energy contour, punchy drum accents, exploration-zone wonder, boss-fight tension optional",
+    "aceTags": "video game OST, catchy motif, chiptune or synth layers, loop-friendly"
+  },
+  "Epic Trailer Music": {
+    "prompt": "epic trailer music, huge orchestral hit accents, rising brass and taiko percussion, dramatic tension crescendo, blockbuster impact swells, heartbeat pulse undertow, final-reveal chord slam",
+    "aceTags": "epic trailer, orchestral hits, rising brass, dramatic tension"
+  },
+  "Orchestral Hybrid": {
+    "prompt": "orchestral hybrid, live string section blended with modern synth bass and drums, cinematic epic groove pocket, wide dynamic range arcs, trailer-meets-club crossover energy, brass stab punctuation",
+    "aceTags": "orchestral hybrid, strings plus synths, cinematic epic groove"
+  },
+  "Dark Cinematic": {
+    "prompt": "dark cinematic, low brass and string clusters, tense drone undertones, slow-building dread atmosphere, trailer-like shadow space, dissonant cluster resolutions, noir investigation pulse",
+    "aceTags": "dark cinematic, low brass, tense drones, shadow atmosphere"
+  },
+  "Sci-Fi Atmosphere": {
+    "prompt": "sci-fi atmosphere, alien synth texture layers, wide space reverb fields, pulsing sub undertone, futuristic exploratory mood, ion-drive arpeggios, starship corridor humming stillness",
+    "aceTags": "sci-fi atmosphere, alien synths, wide space, futuristic mood"
+  },
+  "Apocalyptic Ambient": {
+    "prompt": "apocalyptic ambient, desolate wind drones, distant industrial rumble textures, post-collapse wide spatial void, bleak beauty harmonic minor, ash-fall silence, ruined-city horizon stillness",
+    "aceTags": "apocalyptic ambient, desolate drones, industrial rumble, bleak"
+  },
+  "Space Ambient": {
+    "prompt": "space ambient, cosmic pad evolution, slow stellar texture blooms, deep nebula reverb tails, weightless exploration feel, satellite ping accents sparse, infinite dark-sky drift",
+    "aceTags": "space ambient, cosmic pads, stellar reverb, weightless feel"
+  },
+  "Ocean Dreamscape": {
+    "prompt": "ocean dreamscape, liquid pad motion, gentle wave-like rhythmic sway, underwater reverb blur, serene blue atmosphere chords, distant whale-tone undertones, tidal breathing dynamics",
+    "aceTags": "ocean dreamscape, liquid pads, underwater reverb, serene"
+  },
+  "Piano Ambient": {
+    "prompt": "piano ambient, sparse expressive piano notes, long reverb decay tails, minimal soft pulse undertone, intimate emotional harmonic space, felt-hammer warmth, solitary room reflection",
+    "aceTags": "piano ambient, sparse piano, long reverb, intimate emotional"
+  },
+  "Spiritual Ambient": {
+    "prompt": "spiritual ambient, healing pad layers, gentle choir texture swells, sacred calm atmosphere, slow harmonic bloom arcs, incense-room stillness, devotional breath-paced evolution",
+    "aceTags": "spiritual ambient, healing pads, choir textures, sacred calm"
+  },
+  "Cosmic Synths": {
+    "prompt": "cosmic synths, arpeggiated space sequences, analog warmth oscillator layers, retro-future stellar groove pulse, nebula filter sweeps, orbital bass undertone, 80s sci-fi optimism",
+    "aceTags": "cosmic synths, arpeggiated sequences, analog warmth, retro-future"
+  },
+  "Floating Dreamscape": {
+    "prompt": "floating dreamscape, weightless pad suspension, soft glitter texture sparkles, slow heartbeat pulse, surreal peaceful immersion, cloud-walk harmonic drift, lucid sleep border atmosphere",
+    "aceTags": "floating dreamscape, weightless pads, soft glitter, surreal peace"
+  },
+  "Jazzhop": {
+    "prompt": "jazzhop, jazzy seventh chord sample chops, boom bap or lo-fi drum pocket, warm upright bass tone, smoky late-night café groove, muted trumpet accent optional, study-session head-nod swing",
+    "aceTags": "jazzhop, jazzy chords, lo-fi drums, late-night café groove"
+  },
+  "City Pop": {
+    "prompt": "city pop, 80s Japanese-inspired groove pocket, funky slap bass line, bright major-ninth chord stacks, slick production sheen, sunset urban nostalgia, coastal highway synth pads",
+    "aceTags": "city pop, 80s Japanese groove, funky bass, sunset nostalgia"
+  },
+  "Bossa Nova": {
+    "prompt": "bossa nova, nylon guitar syncopated rhythm pattern, soft brushed snare swing, warm round bass tone, Brazilian relaxed bossa feel, sunny intimate major-seventh chords, beach café breeze",
+    "aceTags": "bossa nova, nylon guitar, brushed drums, Brazilian swing"
+  },
+  "Funk Carioca": {
+    "prompt": "funk carioca, Brazilian baile funk energy, pounding tamborzão kick pattern, MC-ready drop accents, raw Rio party groove, tamborim shuffle layers, favela block-party intensity",
+    "aceTags": "funk carioca, baile funk energy, pounding kick, Rio party"
+  },
+  "Lo-Fi Jazz": {
+    "prompt": "lo-fi jazz, dusty jazz chord voicings, mellow swung drum pocket, vinyl crackle warmth bed, study-night smoky atmosphere, upright bass thump, muted piano comping phrases",
+    "aceTags": "lo-fi jazz, dusty chords, mellow drums, vinyl warmth"
+  },
+  "Gospel Soul": {
+    "prompt": "gospel soul, uplifting chord movement arcs, Hammond organ textures, powerful rhythmic drive, joyful spiritual energy, choir call-response space, handclap gospel pocket lift",
+    "aceTags": "gospel soul, organ textures, uplifting chords, spiritual energy"
+  },
+  "Retro Disco": {
+    "prompt": "retro disco, four-on-the-floor kick groove, funky octave bass line, orchestral string stab hits, 70s dancefloor nostalgia chords, hi-hat open shimmer, mirror-ball Saturday night lift",
+    "aceTags": "retro disco, four-on-the-floor, funky bass, 70s dancefloor"
+  },
+  "HexD": {
+    "prompt": "hexd, distorted digital rap-adjacent energy, bitcrushed drum bursts, chaotic detuned synth stabs, hyper-aggressive internet sound design, clipped 808 undertones, glitch-core edit frenzy",
+    "aceTags": "hexd, bitcrushed drums, chaotic synths, hyper-aggressive digital"
+  },
+  "Nightdrive": {
+    "prompt": "nightdrive synthwave, driving analog bass pulse, neon arpeggiated lead lines, 80s highway atmosphere pads, retro-futuristic four-on-the-floor groove, dashboard glow reverb, midnight coastal road",
+    "aceTags": "nightdrive, synthwave, neon arps, 80s highway retro-future"
+  },
+  "Mallsoft": {
+    "prompt": "mallsoft vaporwave, washed nostalgic muzak Rhodes loops, slow dreamy groove sway, empty mall PA reverb ambience, hazy fluorescent pad wash, food-court echo stillness, escalator drift",
+    "aceTags": "mallsoft, vaporwave, nostalgic muzak, empty mall ambience"
+  },
+  "Sigilkore": {
+    "prompt": "sigilkore, dark internet rap aesthetic, distorted 808 sub hits, occult atmospheric texture drones, underground digital energy, ritualistic chant space, basement cipher dread pulse",
+    "aceTags": "sigilkore, distorted 808s, occult textures, underground digital"
+  },
+  "Dreamcore": {
+    "prompt": "dreamcore, surreal nostalgic pad textures, soft unsettling music-box motifs, liminal melody loops, hazy memory-like reverb hall, dissociative corridor atmosphere, sleepwalk harmonic blur",
+    "aceTags": "dreamcore, surreal nostalgic, liminal melody, hazy memory"
+  },
+  "Weirdcore": {
+    "prompt": "weirdcore, uncanny nostalgic sound design, glitchy childlike motif stabs, unsettling but playful digital vibe, detuned circus organ accents, wrong-speed tape wobble, surreal valley pocket",
+    "aceTags": "weirdcore, uncanny nostalgic, glitchy motifs, unsettling playful"
+  },
+  "Liminal": {
+    "prompt": "liminal ambient, empty transitional space feeling, soft reverb corridor tails, uncanny calm stillness, backrooms-like atmosphere drones, fluorescent hum undertone, no-exit hallway drift",
+    "aceTags": "liminal ambient, empty space feeling, uncanny calm, soft reverb"
+  },
+  "Analog Horror": {
+    "prompt": "analog horror, degraded tape texture warble, unsettling low drones, VHS tracking hiss layer, creepy retro broadcast tone, emergency-alert undertone, found-footage basement dread",
+    "aceTags": "analog horror, degraded tape, VHS hiss, creepy retro broadcast"
+  },
+  "Nostalgic 2000s": {
+    "prompt": "nostalgic 2000s, glossy pop-trap crossover synth layers, bright major chord hooks, early internet era emotional vibe, flip-phone notification blips, MySpace glitter arp accents, AIM-era warmth",
+    "aceTags": "nostalgic 2000s, glossy synths, early internet emotional vibe"
+  },
+  "Retro Futuristic": {
+    "prompt": "retro futuristic, 80s analog synth chord stacks, contemporary drum programming pocket, neon arpeggio lead lines, chrome atmosphere pads, optimistic sci-fi tone, gated reverb snare accent",
+    "aceTags": "retro futuristic, 80s synth, neon arps, optimistic sci-fi"
+  },
+  "Nostalgic VHS": {
+    "prompt": "nostalgic VHS aesthetic, magnetic tape warble drift, lo-fi drum machine pocket, warm saturated chord stacks, home-video memory vibe, tracking-line wobble bass, Blockbuster Friday-night feel",
+    "aceTags": "nostalgic VHS, tape warble, warm saturated chords, memory vibe"
+  },
+  "Dreamy Cassette": {
+    "prompt": "dreamy cassette, warbled tape pitch flutter, soft brushed drum pocket, intimate bedroom texture warmth, faded photo nostalgia chords, four-track hiss bed, diary-page melodic motif",
+    "aceTags": "dreamy cassette, warbled tape, soft drums, faded nostalgia"
+  },
+  "Vintage Radio": {
+    "prompt": "vintage radio, AM bandwidth warmth filter, crackle and hiss texture bed, old broadcast jazz or pop chord tint, nostalgic mono narrow image, dial-tuning static sweeps, living-room evening glow",
+    "aceTags": "vintage radio, AM warmth, crackle hiss, old broadcast nostalgia"
+  },
+  "Internet Nostalgia": {
+    "prompt": "internet nostalgia, early web aesthetic texture layers, bitcrushed warmth harmonic bed, emotional digital memory atmosphere, dial-up handshake undertone, GeoCities MIDI chord stab accents",
+    "aceTags": "internet nostalgia, early web aesthetic, bitcrushed warmth, digital memory"
+  },
+  "Digital Dreamworld": {
+    "prompt": "digital dreamworld, surreal synth landscape pads, glitter texture sparkle layers, floating rhythm pulse, hyper-real internet fantasy vibe, cloud-render choir washes, lucid screensaver drift",
+    "aceTags": "digital dreamworld, surreal synths, glitter pads, internet fantasy"
+  },
+  "Luxury Lounge": {
+    "prompt": "luxury lounge, velvet Rhodes seventh chords, brushed jazz ride sway, upright bass pizzicato, champagne-room sub warmth, soft shaker groove, penthouse candlelight pads, understated wealth vocal space",
+    "aceTags": "luxury lounge, Rhodes sevenths, brushed ride, upright bass, penthouse pads"
+  },
+  "Fashion Runway": {
+    "prompt": "fashion runway, minimalist Roland drum machine click, catwalk four-on-the-floor under slick 808, glossy synth pads, model-walk tempo swagger, editorial shutter FX, monochrome couture melody pocket",
+    "aceTags": "fashion runway, drum machine, catwalk 808, glossy pads, shutter FX"
+  },
+  "Gym Phonk": {
+    "prompt": "gym phonk, pounding kick-forward phonk drums, cowbell hook stabs, distorted Memphis sub slides, military snare rolls, pre-drop silence gaps, pump-up montage aggression, alpha-edit bass weight",
+    "aceTags": "gym phonk, cowbell, Memphis sub, military snares, pump-up drop"
+  },
+  "Rainy Night": {
+    "prompt": "rainy night, soft Rhodes minor chords under rainstick percussion, distant thunder FX bed, deep round sub pulse, vinyl crackle haze, melancholic nylon guitar droplets, umbrella-sway slow groove",
+    "aceTags": "rainy night, Rhodes minor, rainstick, thunder FX, vinyl crackle"
+  },
+  "Late Night Drive": {
+    "prompt": "late night drive, neon synth lead over trap hat rolls, highway reverb tail, sliding 808 glide, dashboard glow pad wash, midnight minor chord loop, open-road melancholy pocket",
+    "aceTags": "late night drive, neon synth, sliding 808, highway reverb, midnight chords"
+  },
+  "Sunset Vibes": {
+    "prompt": "sunset vibes, golden-hour nylon guitar arps, warm Rhodes sevenths, lazy boom-bap kick, amber pad glow, west-coast slow bounce, fading light shaker rhythm, coastal drift melody",
+    "aceTags": "sunset vibes, nylon arps, Rhodes sevenths, amber pads, boom-bap kick"
+  },
+  "Futuristic Lounge": {
+    "prompt": "futuristic lounge, chrome-dipped synth arps, gated luxury 808, holographic pad sheen, orbital Rhodes voicings, soft robotic hat ticks, tomorrow-city lounge pulse, diamond-cut digital warmth",
+    "aceTags": "futuristic lounge, chrome arps, holographic pads, orbital Rhodes, gated 808"
+  },
+  "Luxury Trap": {
+    "prompt": "luxury trap, silk-string sample loop, crisp hi-end 808 sparkle, boutique minor chord voicings, cash-register coin FX, velvet bass glide, penthouse night-club swagger, branded-logo synth blips",
+    "aceTags": "luxury trap, silk strings, crisp 808, boutique chords, velvet glide"
+  },
+  "Viral Edit Audio": {
+    "prompt": "viral edit audio, razor-sharp hook stabs over tight trap claps, dramatic half-bar stops, impact risers, punchy 808 drops, fifteen-second clip-cut pockets, finger-snap bounce groove",
+    "aceTags": "viral edit audio, hook stabs, trap claps, impact risers, clip-cut 808"
+  },
+  "Sad Piano": {
+    "prompt": "sad piano, sparse felt piano arpeggios, room reverb tail, gentle string pad swells, slow four-four rimclick pulse, minor ninth voicings, tearful melody space, intimate heartbreak drift",
+    "aceTags": "sad piano, felt arps, string swells, rimclicks, minor ninths"
+  },
+  "Emotional Guitar": {
+    "prompt": "emotional guitar, clean nylon fingerpicking motif, chorus-washed electric swells, soft brush snare sway, warm round bass, bittersweet major-seventh resolution, sunset confession vocal room",
+    "aceTags": "emotional guitar, nylon picking, chorus swells, brush snare, major sevenths"
+  },
+  "Ethereal Vocals": {
+    "prompt": "ethereal vocals, angelic choir pad layers, floating vocoder harmony stacks, airy reverb hall, soft sub drone bed, crystalline bell arp accents, weightless slow tempo halo, celestial topline space",
+    "aceTags": "ethereal vocals, choir pads, vocoder stacks, reverb hall, bell arps"
+  },
+  "Tokyo Nightlife": {
+    "prompt": "tokyo nightlife, bright city-pop synth brass, tight electronic snare pocket, funky slap bass pops, neon Shibuya chord stabs, eighties-future bounce, izakaya alley reverb, midnight train-platform energy",
+    "aceTags": "tokyo nightlife, city-pop brass, slap bass, neon chords, Shibuya energy"
+  },
+  "Seoul Aesthetic": {
+    "prompt": "seoul aesthetic, glossy K-pop synth plucks, skippy two-step hats, minor Rhodes stabs, chopped vocal accent chops, sleek sub slides, Gangnam night pulse, pastel chrome melody lead",
+    "aceTags": "seoul aesthetic, K-pop plucks, two-step hats, Rhodes stabs, vocal chops"
+  },
+  "Miami Neon": {
+    "prompt": "miami neon, tropical house marimba hook, four-on-the-floor kick under trap hats, palm-tree synth pads, coral sunset chord voicings, ocean breeze shaker groove, South Beach neon bass slide",
+    "aceTags": "miami neon, marimba hook, tropical kick, palm pads, South Beach bass"
+  },
+  "Paris Fashion Night": {
+    "prompt": "paris fashion night, couture harp plucks over slick trap hats, champagne bubble FX, velvet bass glide, front-row minor-key melody, accordion breath sample accents, midnight couture pocket swagger",
+    "aceTags": "paris fashion night, harp plucks, champagne FX, velvet 808, accordion accents"
+  },
+  "Desert Sunset": {
+    "prompt": "desert sunset, dusty nylon guitar licks, warm tabla percussion accents, amber pad horizon glow, slow hypnotic shaker loop, Phrygian minor chord colors, mirage reverb tail, sand-dune drift groove",
+    "aceTags": "desert sunset, nylon licks, tabla accents, amber pads, Phrygian minor"
+  },
+  "Rainy Cyber City": {
+    "prompt": "rainy cyber city, neon synth bass grid, holographic pad drizzle, glitch hat ticks, wet pavement reverb, dystopian minor chord loop, chrome rain FX layers, blade-runner night pulse",
+    "aceTags": "rainy cyber city, neon bass, holographic pads, glitch hats, blade-runner pulse"
+  },
+  "Surreal Luxury": {
+    "prompt": "surreal luxury, detuned music-box melody over velvet 808, dreamlike harp glissandos, gold-leaf brass stabs, uncanny lounge Rhodes, chandelier sparkle hats, baroque-trap aristocratic haze pocket",
+    "aceTags": "surreal luxury, music-box, velvet 808, harp gliss, brass stabs"
+  },
+  "Emotional Future": {
+    "prompt": "emotional future, glossy FM bell chords, tight electronic drums, warm sine sub bass, shimmering arp layers, minor ninth voicings, neon pulse bounce, vocal-forward heartbreak hooks",
+    "aceTags": "emotional future, FM bells, electronic drums, sine sub, shimmer arps"
+  },
+  "Soft Chaos": {
+    "prompt": "soft chaos, gentle glitch percussion bursts, sidechain-warped pad swells, broken music-box motif, hazy detuned synth chords, whisper trap hats, controlled disorder pocket, bittersweet entropy melody",
+    "aceTags": "soft chaos, glitch percussion, sidechain pads, broken music-box, whisper hats"
+  },
+  "Hyperpop 2.0": {
+    "prompt": "hyperpop 2.0, detuned supersaw chords, bitcrushed 808 distortion, sped vocal chop stutters, maximal sidechain pump, glitter synth arp frenzy, ADHD hook chaos, candy-rave trap fusion",
+    "aceTags": "hyperpop 2.0, supersaw, bitcrush 808, vocal chops, sidechain pump"
+  },
+  "Krushclub": {
+    "prompt": "krushclub, blown-out kick saturation, industrial noise snare hits, crushed sub sine tail, warehouse distortion layers, Berlin basement pulse, concrete reverb slam, brutalist club destruction groove",
+    "aceTags": "krushclub, blown kick, industrial snare, crushed sub, warehouse distortion"
+  },
+  "Webcore": {
+    "prompt": "webcore, dial-up modem scrape texture, GeoCities MIDI chord stab, early GIF-era synth blips, homepage guestbook 808 bounce, hyperlinked percussion clicks, hypertext nostalgia pocket groove",
+    "aceTags": "webcore, modem scrape, MIDI stab, GIF synth, homepage 808"
+  },
+  "Cybercore": {
+    "prompt": "cybercore, laser-grid synth bass, orbital pad atmospheres, robotic vocoder chant pockets, ion-drive kick pattern, space-station corridor reverb, tomorrow-city hi-tech percussion grid",
+    "aceTags": "cybercore, laser bass, orbital pads, vocoder chant, ion-drive kick"
+  },
+  "Scene Revival": {
+    "prompt": "scene revival, distorted power-chord guitar stabs, double-kick blast accents, emo scream vocal space, breakdown half-time trap drop, MySpace-era synth lead, mall-goth energy pocket",
+    "aceTags": "scene revival, power chords, double kick, emo scream, trap breakdown"
+  },
+  "Emo Electronic": {
+    "prompt": "emo electronic, minor piano chord loop, sidechain synth pad pump, trap hat rolls under four-on-floor kick, heart-on-sleeve melody lead, glitch tear-drop FX, bedroom catharsis bounce",
+    "aceTags": "emo electronic, minor piano, sidechain pads, trap hats, glitch tears"
+  },
+  "Hypertrap": {
+    "prompt": "hypertrap, machine-gun hi-hat bursts at double tempo, squealing rage synth lead, distorted 808 chaos, moshing trap drums, ear-splitting drop impact, sped adrenaline hook frenzy",
+    "aceTags": "hypertrap, machine-gun hats, rage synth, distorted 808, mosh drums"
+  },
+  "Hyperrage": {
+    "prompt": "hyperrage, ear-splitting rage synth squeal, moshpit trap drum pattern, crowd-noise layer bed, sub-destroyer 808 tail, pre-drop silence choke, edit aggression chaos, machine-gun percussion bursts",
+    "aceTags": "hyperrage, rage synth squeal, moshpit drums, crowd noise, sub-destroyer 808"
+  },
+  "Terror Plugg": {
+    "prompt": "terror plugg, detuned bell pluck loop, blown 808 sub rumble, horror-movie sting FX, creepy nursery-rhyme motif, lo-fi tape warble hats, unsettling pluggnb pocket, basement dread bounce",
+    "aceTags": "terror plugg, detuned bells, blown 808, horror sting, nursery motif"
+  },
+  "Diary Plugg": {
+    "prompt": "diary plugg, soft bell pluck melody, bedroom 808 warmth, diary-page flip FX, whispered vocal space, rainy-window pad wash, intimate pluggnb sway, confessional minor chord loop",
+    "aceTags": "diary plugg, bell plucks, bedroom 808, diary FX, rainy pads"
+  },
+  "Ambient Plugg": {
+    "prompt": "ambient plugg, floating bell pad drones, submerged 808 pulse, reverb-soaked pluck echoes, nocturnal pluggnb drift, sparse hat whispers, dream-state bass warmth, liminal bedroom haze",
+    "aceTags": "ambient plugg, bell drones, submerged 808, reverb plucks, liminal haze"
+  },
+  "Dark Plugg": {
+    "prompt": "dark plugg, minor bell pluck motif, shadowed 808 sub slides, noir pad undercurrent, late-night pluggnb pocket, muted trap hat ticks, candlelit basement melancholy, velvet dread groove",
+    "aceTags": "dark plugg, minor bells, shadow 808, noir pads, basement melancholy"
+  },
+  "Balloon Plugg": {
+    "prompt": "balloon plugg, bouncy detuned bell lead, helium-pitched vocal feel, playful 808 bounce, circus-tent synth blips, candy-colored chord stabs, whimsical pluggnb pocket, cartoon energy sway",
+    "aceTags": "balloon plugg, bouncy bells, helium vocals, playful 808, circus synth"
+  },
+  "Jerk": {
+    "prompt": "jerk, off-kilter clap pattern, jerky stop-start drum fills, detuned synth stab hooks, Memphis sample chop accents, bounce-heavy 808 slides, viral dance-move pocket, staccato groove fractures",
+    "aceTags": "jerk, off-kilter claps, stop-start fills, detuned stabs, Memphis chop"
+  },
+  "Glo": {
+    "prompt": "glo, murky sub-bass drone, dusty vinyl crackle bed, minimal snare crack, hazy minor synth pad fog, Chicago drill-adjacent hat rolls, street-corner numb pocket, smoked-out late-night sway",
+    "aceTags": "glo, murky sub, vinyl crackle, minor pads, drill hats"
+  },
+  "Ragewave": {
+    "prompt": "ragewave, distorted supersaw rage lead, warehouse kick slam, sidechain pump drops every bar, industrial noise percussion, moshpit edit aggression, fluorescent rage synth chaos, basement destruction pulse",
+    "aceTags": "ragewave, rage supersaw, warehouse kick, sidechain pump, industrial percussion"
+  },
+  "Hyperdrill": {
+    "prompt": "hyperdrill, sliding 808 glides at double tempo, rapid triplet hi-hat rolls, dark minor piano stabs, UK drill slide pattern sped, menacing sub weight, hyper-aggressive street pocket",
+    "aceTags": "hyperdrill, sliding 808, triplet hats, minor piano, UK drill slide"
+  },
+  "Trap Metal": {
+    "prompt": "trap metal, distorted guitar power-chord riffs, blast-beat trap hybrid drums, screaming vocal space, breakdown half-time 808 drop, mosh-pit aggression layers, industrial metal-trap crossover pocket",
+    "aceTags": "trap metal, guitar riffs, blast-beat drums, scream vocals, half-time 808"
+  },
+  "Drainwave": {
+    "prompt": "drainwave, blown-out lo-fi compression, murky detuned synth wash, submerged 808 rumble, drain-gang aesthetic hiss, numb minor chord fog, basement tape degradation, dissociative slow sway",
+    "aceTags": "drainwave, lo-fi compression, detuned wash, submerged 808, tape hiss"
+  },
+  "Sadboy Aesthetic": {
+    "prompt": "sadboy aesthetic, emo guitar arpeggio loop, trap hat rolls under soft kick, heartbreak minor piano, autotune vocal space, bedroom reverb haze, Tumblr-era melancholy pocket, tear-stained bounce",
+    "aceTags": "sadboy aesthetic, emo guitar, trap hats, minor piano, autotune space"
+  },
+  "Doomtrap": {
+    "prompt": "doomtrap, downtuned guitar drone under trap 808, funeral-doom tempo half-time, ominous church organ swells, apocalyptic snare cracks, end-times bass weight, catastrophic minor chord descent",
+    "aceTags": "doomtrap, downtuned guitar, half-time 808, church organ, apocalyptic snare"
+  },
+  "Digital Punk": {
+    "prompt": "digital punk, bitcrushed power-chord synth stabs, punk drum velocity bursts, glitch bass distortion, cyber riot vocal shout space, anti-corporate noise layers, hacked-system rebellion pocket",
+    "aceTags": "digital punk, bitcrush chords, punk drums, glitch bass, riot vocals"
+  },
+  "Drift Phonk": {
+    "prompt": "drift phonk, drifting cowbell melody over sliding 808 glide, tire-screech FX layers, night highway trap groove, Brazilian phonk swing, car edit energy, smoky bass weight",
+    "aceTags": "drift phonk, cowbell glide, 808 slides, tire screech, car edit"
+  },
+  "Edit Audio": {
+    "prompt": "edit audio, razor-sharp hook stabs over tight trap claps, dramatic half-bar stops for meme edits, impact risers, punchy 808 drops built for fifteen-second clip cuts",
+    "aceTags": "edit audio, hook stabs, trap claps, impact risers, clip cuts"
+  },
+  "TikTok Sad Edit": {
+    "prompt": "tiktok sad edit, time-stretched vocal texture, cathedral reverb wash over deep 808 pulse, vinyl crackle bed, mournful piano droplets, dreamy half-speed heartbreak edit groove",
+    "aceTags": "tiktok sad edit, stretched vocals, deep 808, vinyl piano, heartbreak"
+  },
+  "Viral Speed Up": {
+    "prompt": "viral speed up, sped-up pitched vocal feel, bright supersaw chords, fast hi-hat rolls at rave tempo, trance-pop trap fusion, euphoric chip-tune arp layer, instant recall hook",
+    "aceTags": "viral speed up, pitched vocals, supersaw, fast hats, chip arp"
+  },
+  "Slowed + Reverb": {
+    "prompt": "slowed + reverb, time-stretched vocal texture, cathedral reverb wash over deep 808 pulse, vinyl crackle bed, mournful piano droplets, dreamy half-speed heartbreak edit groove",
+    "aceTags": "slowed reverb, stretched vocals, cathedral wash, deep 808, vinyl piano"
+  },
+  "Nightcore": {
+    "prompt": "nightcore, sped-up pitched vocal feel, bright supersaw chords, fast hi-hat rolls at rave tempo, trance-pop fusion, anime adrenaline rush, euphoric chip-tune arp layer",
+    "aceTags": "nightcore, pitched vocals, supersaw, fast hats, chip arp"
+  },
+  "Atmospheric Trap": {
+    "prompt": "atmospheric trap, wide reverb synth pad washes, sparse rimclick drums, deep round sub, silver pad glow, whispered minor romance, nocturnal slow sway, cinematic trap pocket",
+    "aceTags": "atmospheric trap, reverb pads, rimclicks, round sub, nocturnal sway"
+  },
+  "Sigma Edit Music": {
+    "prompt": "sigma edit music, distorted cowbell lead, Memphis sub slides, military snare rolls, motivational hard-trap drums, gym montage swagger, alpha-edit phonk undertones, chant-ready hook pockets",
+    "aceTags": "sigma edit, cowbell, Memphis sub, military snares, gym phonk"
+  },
+  "Drift House": {
+    "prompt": "drift house, four-on-the-floor kick under cowbell hook, phonk-meets-house bass slide, night-drive synth pads, tire-screech FX accents, highway edit energy, smoky club-phonk crossover",
+    "aceTags": "drift house, four-on-floor, cowbell hook, phonk bass, highway pads"
+  },
+  "Aggressive Bass": {
+    "prompt": "aggressive bass, sub-destroyer sine 808 tail, clipped low-end saturation, meme-edit loud kick thump, distorted bass wobble, ear-rattling sub octaves, minimal midrange pocket",
+    "aceTags": "aggressive bass, saturated 808, sub wobble, loud kick, clipped low-end"
+  },
+  "Moshpit Rage": {
+    "prompt": "moshpit rage, squealing rage synth lead, moshing trap drums, crowd noise layers, distorted 808 chaos, mosh-pit edit aggression, machine-gun hi-hat bursts, ear-splitting drop impact",
+    "aceTags": "moshpit rage, rage synth, crowd noise, distorted 808, machine-gun hats"
+  },
+  "Midnight Drive": {
+    "prompt": "midnight drive, neon synth lead over trap hat rolls, highway reverb tail, sliding 808 glide, dashboard glow pad wash, midnight minor chord loop, open-road melancholy pocket",
+    "aceTags": "midnight drive, neon synth, sliding 808, highway reverb, dashboard pads"
+  },
+  "Anime Edit Core": {
+    "prompt": "anime edit core, emotional minor piano chords, orchestral string swells over trap hats, J-rock guitar flick accents, dramatic AMV build, supersaw drop release, bittersweet melody lead",
+    "aceTags": "anime edit core, piano strings, trap hats, J-rock guitar, AMV build"
+  },
+  "Cinematic Edit Audio": {
+    "prompt": "cinematic edit audio, taiko drum hits blended with trap 808, brass fanfare stabs, trailer whoosh transitions, epic strings under mumbled rap pocket, movie recap crescendo energy",
+    "aceTags": "cinematic edit, taiko drums, brass stabs, trailer whoosh, epic strings"
+  },
+  "Bass Boosted": {
+    "prompt": "bass boosted, sub-destroyer sine 808 tail, clipped low-end saturation, loud kick thump, distorted bass wobble, ear-rattling sub octaves, minimal midrange pocket, meme-edit loudness",
+    "aceTags": "bass boosted, saturated 808, sub wobble, loud kick, clipped low-end"
+  },
+  "VHS Nostalgia": {
+    "prompt": "vhs nostalgia, magnetic tape wow-flutter drums, warm CRT hiss layer, tracking-line wobble bass, Blockbuster-era chord sample, degraded tracking-head 808, home-video nostalgic pocket",
+    "aceTags": "VHS nostalgia, tape wow-flutter, CRT hiss, tracking wobble, home-video 808"
+  },
+  "2000s Internet": {
+    "prompt": "2000s internet, AIM doorbell sample hook, dial-up handshake intro texture, MySpace glitter synth arp, LAN-party 808 bounce, pixel-art melody lead, forum nostalgia pocket",
+    "aceTags": "2000s internet, AIM bell, dial-up, MySpace arp, LAN-party 808"
+  },
+  "Drum & Bass Revival": {
+    "prompt": "drum & bass revival, amen break chop pattern, Reese bass wobble, rapid two-step snare rolls, rave pad stabs, 174 BPM jungle energy, modern DnB edit crossover, sub-rattler drop",
+    "aceTags": "drum bass revival, amen break, Reese bass, two-step snare, rave pads"
+  },
+  "Jungle Revival": {
+    "prompt": "jungle revival, ragga toast vocal chops, chopped breakbeat layers, sub-bass Reese wobble, dub siren FX, 160 BPM ragga-jungle swing, warehouse revival energy, amen chop frenzy",
+    "aceTags": "jungle revival, ragga chops, breakbeat layers, Reese wobble, dub siren"
+  },
+  "Melodic Techno": {
+    "prompt": "melodic techno, hypnotic arp sequence loop, four-on-the-floor kick drive, warm analog pad swells, minor melodic hook lead, Berlin afterhours pulse, euphoric breakdown release",
+    "aceTags": "melodic techno, arp loop, four-on-floor, analog pads, Berlin pulse"
+  },
+  "Hard Groove": {
+    "prompt": "hard groove, punchy four-on-the-floor kick, funky acid-tinged bass line, disco clap pattern, soul chord stabs, neon club pulse, dancefloor bounce, vocoder topline space",
+    "aceTags": "hard groove, four-on-floor, acid bass, disco claps, soul stabs"
+  },
+  "Trance Revival": {
+    "prompt": "trance revival, supersaw chord stacks, rolling bassline drive, gated reverb snare lift, uplifting major progression, 138 BPM euphoric build, hands-up breakdown, rave nostalgia lead",
+    "aceTags": "trance revival, supersaw stacks, rolling bass, gated snare, euphoric build"
+  },
+  "Future Garage": {
+    "prompt": "future garage, skippy two-step drums, chopped vocal texture stabs, warm sub bass slides, shuffled percussion swing, UK garage chord stabs, late-night urban pulse, intimate vocal chop space",
+    "aceTags": "future garage, two-step drums, vocal chops, sub slides, UK chords"
+  },
+  "Latin Trap": {
+    "prompt": "latin trap, dembow rhythm pattern, reggaeton kick bounce, minor brass stab accents, tropical percussion layers, Spanish vocal chant space, club-ready 808 slides, Caribbean night energy",
+    "aceTags": "latin trap, dembow rhythm, reggaeton kick, brass stabs, tropical percussion"
+  },
+  "Corridos Tumbados": {
+    "prompt": "corridos tumbados, nylon guitar arpeggio loop, tuba bass line accents, trap hat rolls under corrido rhythm, melancholic minor melody, Mexican regional autotune space, tumbado 808 bounce",
+    "aceTags": "corridos tumbados, nylon guitar, tuba bass, trap hats, regional autotune"
+  },
+  "City Pop Revival": {
+    "prompt": "city pop revival, bright synth brass stabs, funky slap bass pops, glossy electric piano chords, four-on-the-floor groove, eighties Japanese sunset melody, coastal cruise bounce",
+    "aceTags": "city pop revival, synth brass, slap bass, electric piano, sunset melody"
+  },
+  "Nostalgic Future": {
+    "prompt": "nostalgic future, AI-smoothed tape hiss, synthetic memory-loop piano, fake-vintage vinyl crackle bed, algorithmic sunset chord progression, simulated childhood 808 warmth, fabricated yesterday pocket",
+    "aceTags": "nostalgic future, tape hiss, memory piano, vinyl crackle, sunset chords"
+  },
+  "Dreamwave": {
+    "prompt": "dreamwave, analog synth wave chords, slow four-four groove, chorus Rhodes, liquid bass glide, retro drum machine ticks, dreamy pad layers, intimate late-night sway",
+    "aceTags": "dreamwave, synth wave, chorus Rhodes, liquid bass, dreamy pads"
+  },
+  "Ocean Ambient": {
+    "prompt": "ocean ambient, wide chorus-pad tides, gentle surf percussion, rolling sub bass waves, suspended chord swells, breezy nylon picking, tranquil tidal groove, coastal drift atmosphere",
+    "aceTags": "ocean ambient, chorus pads, surf percussion, rolling sub, suspended chords"
+  },
+  "Underground Tunnel": {
+    "prompt": "underground tunnel, damp concrete reverb tail, distant train-rumble sub drone, sparse echo percussion, flickering fluorescent hum pad, claustrophobic minor chord loop, subway passage drift",
+    "aceTags": "underground tunnel, concrete reverb, train rumble, echo percussion, fluorescent hum"
+  },
+  "Neon City": {
+    "prompt": "neon city, bright synth brass stabs, gated reverb snare, purple neon chord glow, funky slap bass pops, city-night pulse, eighties-future bounce, electric avenue energy",
+    "aceTags": "neon city, synth brass, gated snare, neon chords, slap bass"
+  },
+  "Seoul Nightlife": {
+    "prompt": "seoul nightlife, glossy K-pop synth plucks, skippy two-step hats, minor Rhodes stabs, chopped vocal accent chops, sleek sub slides, Gangnam night pulse, pastel chrome melody lead",
+    "aceTags": "seoul nightlife, K-pop plucks, two-step hats, Rhodes stabs, Gangnam pulse"
+  },
+  "Fashion Week Soundtrack": {
+    "prompt": "fashion week soundtrack, couture harp plucks over slick trap hats, champagne bubble FX, velvet bass glide, front-row minor-key melody, editorial camera-shutter FX, curator-approved pocket",
+    "aceTags": "fashion week, harp plucks, champagne FX, velvet 808, shutter FX"
+  },
+  "Cyber Y2K": {
+    "prompt": "cyber Y2K, translucent plastic synth chords, frosted-glass digital bell lead, flip-phone notification blips, frosted chrome 808, futuristic 2000s revival pocket, glossy cyber sparkle hats",
+    "aceTags": "cyber Y2K, plastic synth, digital bells, flip-phone FX, chrome 808"
+  },
+  "VHS Dream": {
+    "prompt": "vhs dream, magnetic tape wow-flutter drums, warm CRT hiss layer, tracking-line wobble bass, dreamcore chord haze, degraded tracking-head 808, liminal home-video nostalgic pocket",
+    "aceTags": "VHS dream, tape wow-flutter, CRT hiss, tracking wobble, liminal 808"
+  },
+  "Digital Nostalgia": {
+    "prompt": "digital nostalgia, dial-up modem scrape texture, GeoCities MIDI chord stab, early GIF-era synth blips, homepage guestbook 808 bounce, hyperlinked percussion clicks, hypertext pocket groove",
+    "aceTags": "digital nostalgia, modem scrape, MIDI stab, GIF synth, homepage 808"
+  },
+  "Artificial Nostalgia": {
+    "prompt": "artificial nostalgia, AI-smoothed tape hiss, synthetic memory-loop piano, fake-vintage vinyl crackle bed, algorithmic sunset chord progression, simulated childhood warmth, fabricated yesterday pocket",
+    "aceTags": "artificial nostalgia, AI tape hiss, memory piano, vinyl crackle, sunset chords"
+  },
+  "Internet Dreamscape": {
+    "prompt": "internet dreamscape, cloud-render synth choir, sleep-mode soft 808 pulse, screensaver fractal arp layers, lucid pixel-dream melody, floating notification chime accents, reverie trap pocket",
+    "aceTags": "internet dreamscape, synth choir, fractal arp, lucid melody, notification chimes"
+  },
+  "Sleep Ambient": {
+    "prompt": "sleep ambient, soft drone pad layers, barely audible pulse texture, delta-wave sub hum, no percussion, lullaby music-box motif, weightless slow tempo, deep REM drift atmosphere",
+    "aceTags": "sleep ambient, drone pads, pulse texture, delta hum, music-box motif"
+  },
+  "Meditation Soundscape": {
+    "prompt": "meditation soundscape, singing bowl resonance tones, gentle bamboo flute breath, slow pad swells, Tibetan bell accents, breath-synced rhythm space, mindful silence pockets, zen garden calm",
+    "aceTags": "meditation soundscape, singing bowl, bamboo flute, pad swells, Tibetan bells"
+  },
+  "Piano Atmosphere": {
+    "prompt": "piano atmosphere, sparse felt piano arpeggios, room reverb tail, gentle string pad swells, slow four-four pulse, suspended minor voicings, contemplative melody drift, intimate stillness",
+    "aceTags": "piano atmosphere, felt arps, string swells, suspended minor, stillness"
+  },
+  "Coffee Shop Lo-Fi": {
+    "prompt": "coffee shop lo-fi, dusty vinyl crackle bed, mellow Rhodes loop, lazy boom-bap kick, brushed snare sway, warm round bass, espresso-steam pad haze, study-session pocket groove",
+    "aceTags": "coffee shop lo-fi, vinyl crackle, Rhodes loop, boom-bap kick, espresso pads"
+  },
+  "Focus Music": {
+    "prompt": "focus music, minimal marimba motif loop, soft pulse kick at low volume, neutral major chord bed, white-noise texture layer, steady four-four tick, distraction-free concentration pocket",
+    "aceTags": "focus music, marimba motif, soft pulse kick, major chord bed, white noise"
+  },
+  "Deep Focus": {
+    "prompt": "deep focus, binaural drone pad layers, subliminal pulse texture, no melodic distraction, brown-noise bed, ultra-slow tempo drift, flow-state concentration atmosphere, cognitive tunnel groove",
+    "aceTags": "deep focus, binaural drones, pulse texture, brown noise, flow-state"
+  },
+  "Spa Ambient": {
+    "prompt": "spa ambient, crystal singing bowl tones, gentle water-drop percussion, warm pad swells, bamboo flute breath accents, eucalyptus steam atmosphere, slow breath-synced pulse, wellness sanctuary calm",
+    "aceTags": "spa ambient, singing bowl, water drops, bamboo flute, wellness calm"
+  },
+  "Cozy Rain": {
+    "prompt": "cozy rain, rainstick percussion bed, soft Rhodes minor chords, fireplace crackle FX layer, warm blanket sub pulse, hearth-side shaker groove, hygge comfort atmosphere, rainy-window pad wash",
+    "aceTags": "cozy rain, rainstick, Rhodes minor, fireplace crackle, hygge pads"
+  },
+  "Fireplace Lo-Fi": {
+    "prompt": "fireplace lo-fi, crackling fire sample texture, mellow upright bass, lazy jazz brush snare, warm Rhodes sevenths, amber pad glow, winter-evening study pocket, hearth-side vinyl haze",
+    "aceTags": "fireplace lo-fi, fire crackle, upright bass, brush snare, amber pads"
+  },
+  "Reading Music": {
+    "prompt": "reading music, gentle nylon guitar arpeggios, soft string pad swells, barely-there kick pulse, major-seventh chord warmth, page-turn whisper FX, library-quiet concentration atmosphere",
+    "aceTags": "reading music, nylon arps, string swells, major sevenths, library quiet"
+  },
+  "Coding Music": {
+    "prompt": "coding music, steady electronic tick groove, neutral synth pad bed, subtle arp sequence loop, low-distraction minor chords, terminal-glow atmosphere, keyboard-click percussion accents, flow-state pocket",
+    "aceTags": "coding music, electronic tick, synth pad bed, arp loop, terminal glow"
+  },
+  "Chill Gaming": {
+    "prompt": "chill gaming, retro console menu pad loop, soft 808 pulse, controller-button click hats, loading-screen orchestral stab, memory-card chime melody, gaming-lounge relaxed pocket groove",
+    "aceTags": "chill gaming, menu pads, soft 808, controller clicks, chime melody"
+  },
+  "Opium": {
+    "prompt": "opium, dark luxury trap, mahogany Rhodes minor chords, noir saxophone breath samples, shadowed velvet sub, late-night penthouse rain FX, black-tie ominous trap pocket, candlelit melancholy",
+    "aceTags": "opium, minor Rhodes, noir sax, velvet sub, penthouse rain"
+  },
+  "Underground Rage": {
+    "prompt": "underground rage, blown-out warehouse kick, industrial noise snare hits, crushed sub sine tail, basement distortion layers, concrete reverb slam, brutalist destruction groove, moshpit aggression",
+    "aceTags": "underground rage, warehouse kick, industrial snare, crushed sub, concrete reverb"
+  },
+  "Fashion Trap": {
+    "prompt": "fashion trap, couture harp plucks over slick trap hats, champagne bubble FX, velvet bass glide, runway minor-key melody, designer-logo synth blips, exclusive night-club swagger pocket",
+    "aceTags": "fashion trap, harp plucks, champagne FX, velvet 808, runway melody"
+  },
+  "Dark Fashion": {
+    "prompt": "dark fashion, noir harp clusters, shadowed velvet 808 sustain, black-tie brass stabs, editorial shutter trap hats, gothic couture minor chords, midnight runway dread pocket",
+    "aceTags": "dark fashion, noir harp, velvet 808, gothic chords, runway dread"
+  },
+  "Avant Pop": {
+    "prompt": "avant pop, prepared piano clangs, aleatoric percussion clusters, dissonant harp over sub pulse, gallery-installation spatial delays, unconventional bar lengths, experimental pop rhythmic fractures",
+    "aceTags": "avant pop, prepared piano, aleatoric percussion, dissonant harp, experimental bars"
+  },
+  "Experimental Pop": {
+    "prompt": "experimental pop, granular vocal texture chops, unconventional synth timbres, polymetric drum patterns, microtonal chord colors, art-pop hook subversion, gallery-ready sonic collage pocket",
+    "aceTags": "experimental pop, granular vocals, microtonal chords, polymetric drums, art-pop"
+  },
+  "Indie Sleaze Revival": {
+    "prompt": "indie sleaze revival, dirty garage guitar fuzz, blown-out drum room, party-rock bass drive, reckless energy stomp, 2010s indie sleaze chord stabs, basement house-party bounce",
+    "aceTags": "indie sleaze revival, garage fuzz, blown drums, party bass, basement bounce"
+  },
+  "Neo Soul Future": {
+    "prompt": "neo soul future, glossy FM bell chords, tight electronic drums, warm sine sub bass, shimmering arp layers, minor ninth voicings, neon pulse bounce, vocal-forward soul hooks",
+    "aceTags": "neo soul future, FM bells, electronic drums, sine sub, shimmer arps"
+  },
+  "Sad R&B": {
+    "prompt": "sad r&b, soft piano arpeggios, sparse rimclick drums, deep round sub, silver synth pad glow, whispered minor romance, nocturnal slow sway, tear-stained vocal space",
+    "aceTags": "sad r&b, piano arps, rimclicks, round sub, minor romance"
+  },
+  "Atmospheric R&B": {
+    "prompt": "atmospheric r&b, wide reverb synth washes, airy choir pads, soft rimshot groove, suspended minor chords, slow tempo drift, floating topline halo, sleepwalk bounce",
+    "aceTags": "atmospheric r&b, reverb washes, choir pads, suspended chords, slow drift"
+  },
+  "Futuristic Soul": {
+    "prompt": "futuristic soul, glossy FM bell chords, tight electronic drums, warm sine sub bass, shimmering arp layers, minor ninth voicings, neon pulse bounce, vocal-forward hooks",
+    "aceTags": "futuristic soul, FM bells, electronic drums, sine sub, minor ninths"
+  },
+  "Shoegaze Revival": {
+    "prompt": "shoegaze revival, wall-of-sound guitar wash, blown-out reverb drums, buried vocal melody haze, dreamy major chord fog, tremolo pick layers, MBV-inspired texture swirl, slow tidal sway",
+    "aceTags": "shoegaze revival, guitar wash, reverb drums, tremolo picks, MBV texture"
+  },
+  "Alternative Indie": {
+    "prompt": "alternative indie, jangly clean guitar arpeggios, organic live drum pocket, melodic bass line, bittersweet major-minor chord shifts, bedroom-studio warmth, introspective vocal-forward hook space",
+    "aceTags": "alternative indie, jangly guitar, live drums, melodic bass, bittersweet chords"
+  },
+  "Psychedelic Trap": {
+    "prompt": "psychedelic trap, trippy phaser synth swirls, reversed 808 tail, sitar-tinted melody accents, hallucinogenic pad layers, warped vocal chant space, mind-bend trap hat rolls, cosmic sub drift",
+    "aceTags": "psychedelic trap, phaser synths, reversed 808, sitar accents, cosmic sub"
+  }
+}

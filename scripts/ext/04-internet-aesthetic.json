@@ -1,0 +1,62 @@
+{
+  "HexD": {
+    "prompt": "hexd, distorted digital rap-adjacent energy, bitcrushed drum bursts, chaotic detuned synth stabs, hyper-aggressive internet sound design, clipped 808 undertones, glitch-core edit frenzy",
+    "aceTags": "hexd, bitcrushed drums, chaotic synths, hyper-aggressive digital"
+  },
+  "Nightdrive": {
+    "prompt": "nightdrive synthwave, driving analog bass pulse, neon arpeggiated lead lines, 80s highway atmosphere pads, retro-futuristic four-on-the-floor groove, dashboard glow reverb, midnight coastal road",
+    "aceTags": "nightdrive, synthwave, neon arps, 80s highway retro-future"
+  },
+  "Mallsoft": {
+    "prompt": "mallsoft vaporwave, washed nostalgic muzak Rhodes loops, slow dreamy groove sway, empty mall PA reverb ambience, hazy fluorescent pad wash, food-court echo stillness, escalator drift",
+    "aceTags": "mallsoft, vaporwave, nostalgic muzak, empty mall ambience"
+  },
+  "Sigilkore": {
+    "prompt": "sigilkore, dark internet rap aesthetic, distorted 808 sub hits, occult atmospheric texture drones, underground digital energy, ritualistic chant space, basement cipher dread pulse",
+    "aceTags": "sigilkore, distorted 808s, occult textures, underground digital"
+  },
+  "Dreamcore": {
+    "prompt": "dreamcore, surreal nostalgic pad textures, soft unsettling music-box motifs, liminal melody loops, hazy memory-like reverb hall, dissociative corridor atmosphere, sleepwalk harmonic blur",
+    "aceTags": "dreamcore, surreal nostalgic, liminal melody, hazy memory"
+  },
+  "Weirdcore": {
+    "prompt": "weirdcore, uncanny nostalgic sound design, glitchy childlike motif stabs, unsettling but playful digital vibe, detuned circus organ accents, wrong-speed tape wobble, surreal valley pocket",
+    "aceTags": "weirdcore, uncanny nostalgic, glitchy motifs, unsettling playful"
+  },
+  "Liminal": {
+    "prompt": "liminal ambient, empty transitional space feeling, soft reverb corridor tails, uncanny calm stillness, backrooms-like atmosphere drones, fluorescent hum undertone, no-exit hallway drift",
+    "aceTags": "liminal ambient, empty space feeling, uncanny calm, soft reverb"
+  },
+  "Analog Horror": {
+    "prompt": "analog horror, degraded tape texture warble, unsettling low drones, VHS tracking hiss layer, creepy retro broadcast tone, emergency-alert undertone, found-footage basement dread",
+    "aceTags": "analog horror, degraded tape, VHS hiss, creepy retro broadcast"
+  },
+  "Nostalgic 2000s": {
+    "prompt": "nostalgic 2000s, glossy pop-trap crossover synth layers, bright major chord hooks, early internet era emotional vibe, flip-phone notification blips, MySpace glitter arp accents, AIM-era warmth",
+    "aceTags": "nostalgic 2000s, glossy synths, early internet emotional vibe"
+  },
+  "Retro Futuristic": {
+    "prompt": "retro futuristic, 80s analog synth chord stacks, contemporary drum programming pocket, neon arpeggio lead lines, chrome atmosphere pads, optimistic sci-fi tone, gated reverb snare accent",
+    "aceTags": "retro futuristic, 80s synth, neon arps, optimistic sci-fi"
+  },
+  "Nostalgic VHS": {
+    "prompt": "nostalgic VHS aesthetic, magnetic tape warble drift, lo-fi drum machine pocket, warm saturated chord stacks, home-video memory vibe, tracking-line wobble bass, Blockbuster Friday-night feel",
+    "aceTags": "nostalgic VHS, tape warble, warm saturated chords, memory vibe"
+  },
+  "Dreamy Cassette": {
+    "prompt": "dreamy cassette, warbled tape pitch flutter, soft brushed drum pocket, intimate bedroom texture warmth, faded photo nostalgia chords, four-track hiss bed, diary-page melodic motif",
+    "aceTags": "dreamy cassette, warbled tape, soft drums, faded nostalgia"
+  },
+  "Vintage Radio": {
+    "prompt": "vintage radio, AM bandwidth warmth filter, crackle and hiss texture bed, old broadcast jazz or pop chord tint, nostalgic mono narrow image, dial-tuning static sweeps, living-room evening glow",
+    "aceTags": "vintage radio, AM warmth, crackle hiss, old broadcast nostalgia"
+  },
+  "Internet Nostalgia": {
+    "prompt": "internet nostalgia, early web aesthetic texture layers, bitcrushed warmth harmonic bed, emotional digital memory atmosphere, dial-up handshake undertone, GeoCities MIDI chord stab accents",
+    "aceTags": "internet nostalgia, early web aesthetic, bitcrushed warmth, digital memory"
+  },
+  "Digital Dreamworld": {
+    "prompt": "digital dreamworld, surreal synth landscape pads, glitter texture sparkle layers, floating rhythm pulse, hyper-real internet fantasy vibe, cloud-render choir washes, lucid screensaver drift",
+    "aceTags": "digital dreamworld, surreal synths, glitter pads, internet fantasy"
+  }
+}

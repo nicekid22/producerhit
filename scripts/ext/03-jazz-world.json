@@ -1,0 +1,30 @@
+{
+  "Jazzhop": {
+    "prompt": "jazzhop, jazzy seventh chord sample chops, boom bap or lo-fi drum pocket, warm upright bass tone, smoky late-night café groove, muted trumpet accent optional, study-session head-nod swing",
+    "aceTags": "jazzhop, jazzy chords, lo-fi drums, late-night café groove"
+  },
+  "City Pop": {
+    "prompt": "city pop, 80s Japanese-inspired groove pocket, funky slap bass line, bright major-ninth chord stacks, slick production sheen, sunset urban nostalgia, coastal highway synth pads",
+    "aceTags": "city pop, 80s Japanese groove, funky bass, sunset nostalgia"
+  },
+  "Bossa Nova": {
+    "prompt": "bossa nova, nylon guitar syncopated rhythm pattern, soft brushed snare swing, warm round bass tone, Brazilian relaxed bossa feel, sunny intimate major-seventh chords, beach café breeze",
+    "aceTags": "bossa nova, nylon guitar, brushed drums, Brazilian swing"
+  },
+  "Funk Carioca": {
+    "prompt": "funk carioca, Brazilian baile funk energy, pounding tamborzão kick pattern, MC-ready drop accents, raw Rio party groove, tamborim shuffle layers, favela block-party intensity",
+    "aceTags": "funk carioca, baile funk energy, pounding kick, Rio party"
+  },
+  "Lo-Fi Jazz": {
+    "prompt": "lo-fi jazz, dusty jazz chord voicings, mellow swung drum pocket, vinyl crackle warmth bed, study-night smoky atmosphere, upright bass thump, muted piano comping phrases",
+    "aceTags": "lo-fi jazz, dusty chords, mellow drums, vinyl warmth"
+  },
+  "Gospel Soul": {
+    "prompt": "gospel soul, uplifting chord movement arcs, Hammond organ textures, powerful rhythmic drive, joyful spiritual energy, choir call-response space, handclap gospel pocket lift",
+    "aceTags": "gospel soul, organ textures, uplifting chords, spiritual energy"
+  },
+  "Retro Disco": {
+    "prompt": "retro disco, four-on-the-floor kick groove, funky octave bass line, orchestral string stab hits, 70s dancefloor nostalgia chords, hi-hat open shimmer, mirror-ball Saturday night lift",
+    "aceTags": "retro disco, four-on-the-floor, funky bass, 70s dancefloor"
+  }
+}

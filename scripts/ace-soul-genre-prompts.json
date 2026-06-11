@@ -1,0 +1,250 @@
+{
+  "Vapor Soul": {
+    "prompt": "vapor soul, hazy detuned synth pads, sidechain-warped minor chords, soft 707 drums, tape-saturated Rhodes, slow swung groove, muted sub, breathy vocal space",
+    "aceTags": "vapor soul, hazy pads, sidechain chords, tape Rhodes, soft drums, muted sub"
+  },
+  "Future Soul": {
+    "prompt": "future soul, glossy FM bell chords, tight electronic drums, warm sine sub bass, shimmering arp layers, minor ninth voicings, neon pulse bounce, vocal-forward hooks",
+    "aceTags": "future soul, FM bells, electronic drums, sine sub, shimmer arps, minor ninths"
+  },
+  "Afro Soul": {
+    "prompt": "afro soul, talking drum patterns, warm nylon guitar licks, soulful seventh chords, deep round bass, shakers and congas, call-response melody space, sunset groove",
+    "aceTags": "afro soul, talking drums, nylon guitar, seventh chords, congas, call-response"
+  },
+  "UK Soul": {
+    "prompt": "uk soul, skippy two-step drums, fat sub bass slides, minor Rhodes stabs, chopped vocal accents, syncopated hi-hat swings, London night pulse, garage-soul bounce",
+    "aceTags": "uk soul, two-step drums, sub slides, Rhodes stabs, vocal chops, syncopated hats"
+  },
+  "Soul Pop": {
+    "prompt": "soul pop, major-seven hook chords, bright clap-snare pocket, melodic bass line, brass stab accents, upbeat soul bounce, catchy topline space, hook-forward energy",
+    "aceTags": "soul pop, major sevenths, clap snare, melodic bass, brass stabs, upbeat bounce"
+  },
+  "Soulwave": {
+    "prompt": "soulwave, analog synth wave chords, slow four-four groove, chorus Rhodes, liquid bass glide, retro drum machine ticks, dreamy pad layers, intimate late-night sway",
+    "aceTags": "soulwave, synth wave, chorus Rhodes, liquid bass, drum machine, dreamy pads"
+  },
+  "Dreamwave R&B": {
+    "prompt": "dreamwave r&b, wide reverb synth washes, airy choir pads, soft rimshot groove, suspended minor chords, slow tempo drift, floating topline halo, sleepwalk bounce",
+    "aceTags": "dreamwave r&b, reverb washes, choir pads, rimshots, suspended chords, slow drift"
+  },
+  "Soultronica": {
+    "prompt": "soultronica, broken beat drums, filtered soul sample chops, warm Moog bass, bitcrushed Rhodes, glitch percussion hits, hypnotic chord loop, electronic soul pocket",
+    "aceTags": "soultronica, broken beat, sample chops, Moog bass, bitcrush Rhodes, glitch percussion"
+  },
+  "Electro Soul": {
+    "prompt": "electro soul, punchy four-on-four kick, acid-tinged synth bass, disco clap pattern, soul chord stabs, vocoder topline space, neon club pulse, dancefloor soul bounce",
+    "aceTags": "electro soul, four-on-four kick, acid bass, disco claps, chord stabs, vocoder space"
+  },
+  "Deep Soul": {
+    "prompt": "deep soul, low-register Rhodes voicings, round upright bass, brushed snare swing, gospel organ swells, minor seventh progressions, slow sensual pocket, heartfelt vocal room",
+    "aceTags": "deep soul, low Rhodes, upright bass, brushed snare, organ swells, minor sevenths"
+  },
+  "Velvet Nights": {
+    "prompt": "velvet nights, dark plush Rhodes chords, muted trumpet phrases, brushed ride cymbal sway, midnight minor groove, smokey bass warmth, candlelit lounge soul atmosphere",
+    "aceTags": "velvet nights, plush Rhodes, muted trumpet, brushed ride, midnight minor, smokey bass"
+  },
+  "Sunset Soul": {
+    "prompt": "sunset soul, golden-hour nylon guitar arps, warm Rhodes sevenths, lazy boom-bap kick, shaker rhythm, amber pad glow, west-coast slow bounce, fading light groove",
+    "aceTags": "sunset soul, nylon arps, Rhodes sevenths, boom-bap kick, shakers, amber pads"
+  },
+  "Ocean Soul": {
+    "prompt": "ocean soul, wide chorus-pad tides, gentle surf percussion, rolling sub bass waves, suspended chord swells, breezy nylon picking, tranquil tidal groove, coastal drift",
+    "aceTags": "ocean soul, chorus pads, surf percussion, rolling sub, suspended chords, nylon picking"
+  },
+  "Moonlight R&B": {
+    "prompt": "moonlight r&b, soft piano arpeggios, sparse rimclick drums, deep round sub, silver synth pad glow, whispered minor romance, nocturnal slow sway, lunar vocal space",
+    "aceTags": "moonlight r&b, piano arps, rimclicks, round sub, silver pads, minor romance"
+  },
+  "Neon Soul": {
+    "prompt": "neon soul, bright synth brass stabs, gated reverb snare, purple neon chord glow, funky slap bass pops, city-night pulse, eighties-future soul bounce, electric avenue energy",
+    "aceTags": "neon soul, synth brass, gated snare, neon chords, slap bass, city pulse"
+  },
+  "Liquid Soul": {
+    "prompt": "liquid soul, cascading Rhodes runs, fluid 808 glide bass, watery chorus pads, triplet hi-hat rolls, seamless seventh voicings, pouring groove, melt-flow soul bounce",
+    "aceTags": "liquid soul, Rhodes runs, 808 glide, chorus pads, triplet hats, seventh voicings"
+  },
+  "Floating Soul": {
+    "prompt": "floating soul, ethereal string pad lift, weightless kickless pulse, soft cloud snare taps, drifting suspended chords, zero-gravity melody space, ambient soul drift, airy bounce",
+    "aceTags": "floating soul, string pads, kickless pulse, cloud snares, suspended chords, ambient drift"
+  },
+  "Digital Romance": {
+    "prompt": "digital romance, pixel-soft synth plucks, chat-notification percussion ticks, warm DM chord buzz, modem-crunch texture, smartphone glow pads, intimate online heart pulse, screen-lit sway",
+    "aceTags": "digital romance, synth plucks, notification ticks, DM chords, modem crunch, glow pads"
+  },
+  "Heartbreak Soul": {
+    "prompt": "heartbreak soul, tearful minor piano, cracking vocal reverb tail, sparse kick and rim, descending chord sighs, lonely Rhodes cry, slow ache pocket, wounded soul sway",
+    "aceTags": "heartbreak soul, minor piano, vocal reverb, sparse kick, descending chords, lonely Rhodes"
+  },
+  "After Hours R&B": {
+    "prompt": "after hours r&b, dim bar Rhodes chords, soft hi-hat shuffle, upright bass walk, brushed snare hush, whiskey-glass reverb, 2am closing-time soul sway, last-call groove",
+    "aceTags": "after hours r&b, bar Rhodes, hi-hat shuffle, upright bass, brushed snare, 2am sway"
+  },
+  "Lounge R&B": {
+    "prompt": "lounge r&b, cocktail piano comping, upright bass thump, brushed ride swing, muted trumpet grace notes, plush velvet chord voicings, sophisticated late-lounge groove, martini sway",
+    "aceTags": "lounge r&b, cocktail piano, upright bass, brushed ride, muted trumpet, velvet chords"
+  },
+  "Late Drive Soul": {
+    "prompt": "late drive soul, highway synth pad sweep, steady cruise kick, dashboard Rhodes glow, passing-car hi-hat flicker, open-road minor chords, midnight windshield bounce, freeway sway",
+    "aceTags": "late drive soul, highway pads, cruise kick, dashboard Rhodes, open-road minor, freeway bounce"
+  },
+  "Motel Soul": {
+    "prompt": "motel soul, cheap-TV static hum, neon-sign buzz bass, worn Rhodes keys, slow door-slam kick, roadside minor sevenths, lonely highway night groove, vacancy-sign sway",
+    "aceTags": "motel soul, TV static, neon buzz bass, worn Rhodes, door-slam kick, roadside minor"
+  },
+  "Luxury Hotel R&B": {
+    "prompt": "luxury hotel r&b, marble-hall Rhodes sparkle, champagne-cork snare pops, silk-string overlays, gold-major chord plush, concierge bass glide, penthouse midnight elegance, five-star sway",
+    "aceTags": "luxury hotel r&b, marble Rhodes, champagne snare, silk strings, gold major, concierge bass"
+  },
+  "Paris Night Soul": {
+    "prompt": "paris night soul, accordion-flavored chord color, café upright bass, soft brush waltz sway, streetlamp synth glow, Left Bank minor romance, cobblestone late stroll, Seine-night bounce",
+    "aceTags": "paris night soul, accordion chords, café bass, brush waltz, streetlamp synth, Left Bank minor"
+  },
+  "Tokyo Soul": {
+    "prompt": "tokyo soul, crisp electronic hi-hats, city-pop synth sparkle, tight four-on-floor pocket, kawaii chord brightness, neon Shibuya bounce, polished urban night pulse, Shinjuku sway",
+    "aceTags": "tokyo soul, electronic hats, city-pop synth, four-on-floor, kawaii chords, Shibuya bounce"
+  },
+  "Seoul Midnight R&B": {
+    "prompt": "seoul midnight r&b, K-R&B glossy synth layers, trap-soft drums, emotional minor topline space, glassy chord stacks, han river night sway, soft 808 sub, midnight city glow",
+    "aceTags": "seoul midnight r&b, glossy synths, trap-soft drums, glassy chords, 808 sub, han river sway"
+  },
+  "Miami Sunset Soul": {
+    "prompt": "miami sunset soul, pastel synth chords, disco-funk bass slap, Latin shaker groove, ocean-breeze pad wash, Art Deco major bounce, palm-tree twilight sway, South Beach glow",
+    "aceTags": "miami sunset soul, pastel synths, funk bass slap, Latin shakers, ocean pads, Art Deco bounce"
+  },
+  "Cigarette Break Soul": {
+    "prompt": "cigarette break soul, solo Rhodes exhale chords, lazy rimshot inhale, smoky pad haze, porch-light minor glow, unhurried pause groove, ash-tray silence space, balcony sway",
+    "aceTags": "cigarette break soul, Rhodes exhale, lazy rimshot, smoky pads, porch-light minor, pause groove"
+  },
+  "Bedroom Confession R&B": {
+    "prompt": "bedroom confession r&b, close-mic piano whispers, pillow-soft kick thump, tape-saturated warmth, intimate headphone chords, diary-page melody space, late-night whisper groove, secret sway",
+    "aceTags": "bedroom confession r&b, close piano, pillow kick, tape warmth, headphone chords, whisper groove"
+  },
+  "Slow Motion Soul": {
+    "prompt": "slow motion soul, half-time dragged drums, stretched Rhodes chords, floating time-stretch pads, heavy legato bass, cinematic slow sway, suspended moment groove, time-dilated bounce",
+    "aceTags": "slow motion soul, half-time drums, stretched Rhodes, time-stretch pads, legato bass, cinematic sway"
+  },
+  "Emotional Luxury": {
+    "prompt": "emotional luxury, plush string orchestra swells, designer-brand minor chords, crystal hi-hat shimmer, silk bass contour, couture sadness bounce, high-end tear sparkle, runway grief sway",
+    "aceTags": "emotional luxury, string swells, designer minor, crystal hats, silk bass, couture sadness"
+  },
+  "Soft Chaos Soul": {
+    "prompt": "soft chaos soul, gentle dissonant chord clusters, unpredictable hi-hat accents, cozy Rhodes warmth underneath, controlled noise texture, tender turmoil bounce, organized beautiful mess, gentle storm sway",
+    "aceTags": "soft chaos soul, dissonant clusters, unpredictable hats, cozy Rhodes, controlled noise, tender turmoil"
+  },
+  "Introspective R&B": {
+    "prompt": "introspective r&b, journal-page piano motifs, minimal kick pulse, thoughtful minor progressions, inward melody holes, quiet snare brushes, reflective late-night sway, inner monologue groove",
+    "aceTags": "introspective r&b, journal piano, minimal kick, minor progressions, quiet brushes, reflective sway"
+  },
+  "Vulnerable Nights": {
+    "prompt": "vulnerable nights, fragile piano single notes, exposed vocal reverb, thin kick heartbeat, quivering string pad, open wound minor chords, tender midnight confessional groove, raw night sway",
+    "aceTags": "vulnerable nights, fragile piano, exposed reverb, thin kick, quivering strings, open wound minor"
+  },
+  "Crying in Designer Clothes": {
+    "prompt": "crying in designer clothes, glossy synth tears, couture minor progressions, expensive reverb sobs, runway drum march, luxury sadness sparkle, high-fashion heartbreak pulse, boutique ache sway",
+    "aceTags": "crying in designer clothes, glossy synths, couture minor, expensive reverb, runway drums, fashion heartbreak"
+  },
+  "Nostalgic Romance": {
+    "prompt": "nostalgic romance, VHS-warm tape hiss, retro chorus Rhodes, old-love melody fragments, analog drum machine sway, faded-photo chord glow, bittersweet memory drift, rewind romance bounce",
+    "aceTags": "nostalgic romance, VHS hiss, retro Rhodes, analog drums, faded-photo chords, memory drift"
+  },
+  "Rain on Windows R&B": {
+    "prompt": "rain on windows r&b, rainstick percussion texture, gray pad wash, melancholic piano drops, windshield-wiper hi-hats, stormy minor chords, indoor cozy ache groove, stormglass sway",
+    "aceTags": "rain on windows r&b, rainstick, gray pads, melancholic piano, wiper hats, stormy minor"
+  },
+  "Floating Memories Soul": {
+    "prompt": "floating memories soul, reversed piano echoes, memory-flash synth stabs, soft cloud drums, déjà-vu chord cycles, nostalgic pad drift, dream-recall soul sway, echo-chamber bounce",
+    "aceTags": "floating memories soul, reversed piano, memory stabs, cloud drums, déjà-vu chords, nostalgic pads"
+  },
+  "Dream Apartment R&B": {
+    "prompt": "dream apartment r&b, loft-reverb Rhodes, skyline synth view, cozy kick cushion, sun-through-blinds pad glow, aspirational major chords, penthouse daydream bounce, lease-to-love sway",
+    "aceTags": "dream apartment r&b, loft Rhodes, skyline synth, cozy kick, blinds pads, aspirational major"
+  },
+  "Silk Soul": {
+    "prompt": "silk soul, smooth legato Rhodes glide, satin-string pad sheen, feather-light snare brush, flowing bass ribbon, seamless seventh voicings, luxury fabric groove, whisper-soft bounce",
+    "aceTags": "silk soul, legato Rhodes, satin strings, feather snare, flowing bass, seventh voicings"
+  },
+  "Satin R&B": {
+    "prompt": "satin r&b, slippery synth glide chords, soft glossy snare sheen, lingerie-mood minor warmth, brushed hi-hat whisper, sensual slow body sway, bedroom silk pulse, skin-close groove",
+    "aceTags": "satin r&b, slippery synths, glossy snare, lingerie minor, brushed hats, sensual sway"
+  },
+  "Velvet Rain": {
+    "prompt": "velvet rain, plush pad rainfall, deep suede Rhodes, muffled kick through raincoat, stormy minor romance, soaked reverb tail, rainy velvet night groove, downpour soul sway",
+    "aceTags": "velvet rain, plush pads, suede Rhodes, muffled kick, stormy minor, soaked reverb"
+  },
+  "Chrome Tears": {
+    "prompt": "chrome tears, metallic synth cry leads, mirror-shine hi-hats, chrome-plated minor chords, robotic emotion bass, futuristic sadness glare, polished digital weep pulse, reflective ache bounce",
+    "aceTags": "chrome tears, metallic synths, mirror hats, chrome minor, robotic bass, digital weep"
+  },
+  "Neon Heartbreak": {
+    "prompt": "neon heartbreak, pink-blue synth sign flicker, crying LED pad glow, broken-neon bass buzz, strobe snare ache, city-night tear bounce, luminous sadness pulse, sign-out soul sway",
+    "aceTags": "neon heartbreak, pink-blue synth, LED pads, broken-neon bass, strobe snare, luminous sadness"
+  },
+  "Emotional Futurism": {
+    "prompt": "emotional futurism, AI-era synth chord stacks, holographic pad shimmer, deep sub emotion weight, glitch-accent soul drums, tomorrow-tear melody space, sci-fi feeling groove, future-grief bounce",
+    "aceTags": "emotional futurism, AI synth stacks, holographic pads, deep sub, glitch drums, sci-fi feeling"
+  },
+  "Artificial Romance": {
+    "prompt": "artificial romance, synthetic voice-pad romance, algorithmic chord patterns, plastic heart bass throb, chatbot affection arps, fake-intimacy groove pulse, digital love simulation sway, bot-heart bounce",
+    "aceTags": "artificial romance, synthetic pads, algorithmic chords, plastic bass, chatbot arps, fake intimacy"
+  },
+  "Digital Heartbreak": {
+    "prompt": "digital heartbreak, pixel-crushed Rhodes sob, error-message percussion, disconnected sub bass, notification ping sadness, corrupted file chord ache, online breakup pulse, buffer-overflow sway",
+    "aceTags": "digital heartbreak, pixel Rhodes, error percussion, disconnected sub, notification pings, corrupted chords"
+  },
+  "Midnight Confessions": {
+    "prompt": "midnight confessions, whisper Rhodes in darkness, confessional snare rim, secret minor chords, candle-flicker pad, 3am truth-telling groove, intimate shadow bounce, confession-booth sway",
+    "aceTags": "midnight confessions, whisper Rhodes, confessional rim, secret minor, candle pads, 3am truth"
+  },
+  "Purple Lights R&B": {
+    "prompt": "purple lights r&b, violet synth pad wash, indigo Rhodes glow, nightclub purple haze, moody minor chord mist, slow body-sway pulse, late-party soul shimmer, ultraviolet bounce",
+    "aceTags": "purple lights r&b, violet pads, indigo Rhodes, purple haze, minor mist, body-sway pulse"
+  },
+  "Soft Neon Soul": {
+    "prompt": "soft neon soul, gentle pastel synth chords, diffused neon pad glow, tender trap-soft drums, muted sub warmth, blush-colored night bounce, understated city sparkle, low-watt soul sway",
+    "aceTags": "soft neon soul, pastel synths, diffused neon, trap-soft drums, muted sub, blush bounce"
+  },
+  "Late Text Message Soul": {
+    "prompt": "late text message soul, phone-screen glow pads, typing-indicator percussion ticks, unanswered minor chords, notification anxiety bass, 2am draft melody space, read-receipt soul sway, unsent bounce",
+    "aceTags": "late text message soul, screen glow pads, typing ticks, unanswered minor, notification bass, 2am draft"
+  },
+  "Emotional Trap Soul": {
+    "prompt": "emotional trap soul, cinematic minor Rhodes, melodic 808 glides, crisp trap hi-hats, soulful chord swells, Bryson Tiller pocket, heartfelt late-night bounce, vulnerable trap-soul sway",
+    "aceTags": "emotional trap soul, minor Rhodes, 808 glides, trap hats, chord swells, Bryson pocket"
+  },
+  "Ambient Trap Soul": {
+    "prompt": "ambient trap soul, wide reverb soul pads, sparse trap kick punch, deep 808 sub drones, airy vocal space, hypnotic slow pulse, cloud-heavy emotional sway, fogged trap-soul drift",
+    "aceTags": "ambient trap soul, wide pads, sparse kick, 808 drones, airy vocals, hypnotic pulse"
+  },
+  "Dark Trap Soul": {
+    "prompt": "dark trap soul, menacing minor synth stabs, hard distorted 808, trap snare crack, moody Rhodes underneath, nocturnal danger chords, sinister soul-trap pulse, shadowed late-night sway",
+    "aceTags": "dark trap soul, minor stabs, distorted 808, trap snare, moody Rhodes, sinister pulse"
+  },
+  "Neo Trap Soul": {
+    "prompt": "neo trap soul, jazzy seventh chord stacks, modern trap drum bounce, warm 808 sine glide, fresh R&B melody holes, contemporary soul-trap hybrid sway, new-wave emotional pocket",
+    "aceTags": "neo trap soul, jazzy sevenths, trap bounce, 808 glide, R&B melody, hybrid sway"
+  },
+  "Atmospheric Trap Soul": {
+    "prompt": "atmospheric trap soul, foggy pad atmosphere, rolling 808 bass waves, spaced trap percussion, emotional chord haze, wide stereo drift, cinematic trap-soul depth, clouded heart sway",
+    "aceTags": "atmospheric trap soul, foggy pads, rolling 808, spaced percussion, chord haze, wide stereo"
+  },
+  "Sad Trap Soul": {
+    "prompt": "sad trap soul, weeping Rhodes minor keys, tearful 808 slides, damp trap snare thuds, lonely pad rainfall, heartbroken pocket sway, melancholic soul-trap ache, rainy-night bounce",
+    "aceTags": "sad trap soul, weeping Rhodes, 808 slides, damp snare, lonely pads, heartbroken sway"
+  },
+  "Luxury Trap Soul": {
+    "prompt": "luxury trap soul, champagne synth sparkle, plush soul chord stacks, clean trap hi-hat rolls, smooth deep 808, designer-night bounce, upscale emotional trap pulse, penthouse ache sway",
+    "aceTags": "luxury trap soul, champagne synth, plush chords, clean hats, deep 808, designer bounce"
+  },
+  "Lo-Fi Trap Soul": {
+    "prompt": "lo-fi trap soul, dusty vinyl crackle layer, muffled trap kick thump, warm tape Rhodes, crunchy 808 sub, nostalgic headphone groove, bedroom soul-trap haze, cassette-night sway",
+    "aceTags": "lo-fi trap soul, vinyl crackle, muffled kick, tape Rhodes, crunchy 808, bedroom haze"
+  },
+  "Midnight Trap Soul": {
+    "prompt": "midnight trap soul, moonlit soul chord glow, hard-soft trap drums, rolling 808 under stars, nocturnal hi-hat shimmer, dark hour emotional bounce, witching-hour trap-soul sway",
+    "aceTags": "midnight trap soul, moonlit chords, trap drums, rolling 808, nocturnal hats, dark hour bounce"
+  },
+  "Rainy Trap Soul": {
+    "prompt": "rainy trap soul, rain percussion on trap hats, gloomy soul Rhodes drip, wet 808 sub puddles, storm-window pad wash, melancholic soul-trap storm groove, thunderheart sway",
+    "aceTags": "rainy trap soul, rain hats, gloomy Rhodes, wet 808, storm pads, melancholic storm"
+  }
+}

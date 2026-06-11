@@ -1,4 +1,28 @@
 import { cn } from "@/lib/utils";
+import type { Loop } from "@/types/loop";
+
+export type LoopCardFooterHint = {
+  label: string;
+  variant: "public" | "stems";
+};
+
+/** Info positive en bas de carte (remplace le countdown d’expiration). */
+export function getLoopCardFooterHint(loop: Loop, locale: "fr" | "en"): LoopCardFooterHint | null {
+  if (loop.isPublic) {
+    return {
+      label: locale === "fr" ? "En ligne · Communauté" : "Live · Community",
+      variant: "public",
+    };
+  }
+  const stems = loop.stemsUrl;
+  if (stems && typeof stems === "object" && Object.keys(stems).length > 0) {
+    return {
+      label: locale === "fr" ? "Stems prêts" : "Stems ready",
+      variant: "stems",
+    };
+  }
+  return null;
+}
 
 /** Play/Pause — états selected (track courante) et playing (lecture active). */
 export function loopPlayButtonClass(active: boolean, playing: boolean, extra?: string) {

@@ -18,6 +18,8 @@ import {
   type PlanTier,
 } from "@/lib/billing";
 import { PricingPlanButton } from "@/components/pricing/PricingPlanButton";
+import { discordCommunityUrl } from "@/lib/discordConfig";
+import { trackClientEvent } from "@/lib/supabaseClient";
 
 type PlanCard = {
   tier: PlanTier;
@@ -220,6 +222,8 @@ export default function Pricing() {
 
       if (meta.disabled) return;
 
+      trackClientEvent("pricing_cta_click", { tier, kind: meta.kind, current_plan: currentPlan });
+
       if (meta.kind === "start_free") {
         window.location.href = user ? "/dashboard" : "/auth";
         return;
@@ -244,6 +248,13 @@ export default function Pricing() {
     },
     [currentPlan, isFr, locale, openPortal, user],
   );
+
+  useEffect(() => {
+    trackClientEvent("pricing_page_view", {
+      plan_hint: searchParams.get("plan") ?? null,
+      logged_in: !!user,
+    });
+  }, [searchParams, user]);
 
   useEffect(() => {
     if (autoStarted) return;
@@ -424,6 +435,17 @@ export default function Pricing() {
             <Link to="/legal#terms" className="transition-colors hover:text-white">
               {isFr ? "Conditions" : "Terms"}
             </Link>
+            <Link to="/legal#commercial-license" className="transition-colors hover:text-white">
+              {isFr ? "Licence commerciale" : "Commercial license"}
+            </Link>
+            <a
+              href={discordCommunityUrl("pricing_footer")}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition-colors hover:text-white"
+            >
+              Discord
+            </a>
             <Link to="/legal#refunds" className="transition-colors hover:text-white">
               {isFr ? "Paiements & remboursements" : "Payments & Refunds"}
             </Link>

@@ -8,8 +8,8 @@
     </linearGradient>
     <linearGradient id="wave" x1="6" y1="8" x2="26" y2="24" gradientUnits="userSpaceOnUse">
       <stop stop-color="#67c3ff"/>
-      <stop offset="0.55" stop-color="#9d7cff"/>
-      <stop offset="1" stop-color="#ff4fd8"/>
+      <stop offset="0.45" stop-color="#9d7cff"/>
+      <stop offset="1" stop-color="#cbd5e1"/>
     </linearGradient>
   </defs>
   <g stroke="url(#wave)" stroke-width="2.1" stroke-linecap="round" transform="translate(4 5.5)">

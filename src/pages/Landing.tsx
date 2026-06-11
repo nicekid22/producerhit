@@ -48,6 +48,7 @@ import { WarmGlassBackdrop } from "@/components/WarmGlassBackdrop";
 import { useVisualThemeStore, isWarmGlassTheme } from "@/stores/visualThemeStore";
 import { landingCopy, landingFeatureCards, landingFlowSectionClass, landingSectionClass } from "@/lib/landingContent";
 import { saveLandingPendingGeneration } from "@/lib/landingPendingGeneration";
+import { handoffRemixToDashboard } from "@/lib/remixHandoff";
 import { buildAuthUrl } from "@/lib/authRoutes";
 import { cn } from "@/lib/utils";
 import { PLAN_LIMITS } from "@/lib/planLimits";
@@ -187,6 +188,10 @@ export default function Landing() {
   const copy = useMemo(() => landingCopy(locale), [locale]);
   const isMobileViewport = useMediaQuery("(max-width: 767px)");
   const mobileLandingFocus = LANDING_MOBILE_V2 && isMobileViewport;
+
+  useEffect(() => {
+    trackClientEvent("landing_view", { locale });
+  }, [locale]);
 
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -478,6 +483,37 @@ export default function Landing() {
     }
     trackClientEvent("landing_generate_click", { mode });
     navigate(`/dashboard?prompt=${encodeURIComponent(promptValue)}&mode=${mode}`);
+  };
+
+  const remixFromLandingTrack = (track: PublicTrack) => {
+    trackClientEvent("landing_trending_remix", { mode: track.kind, loop_id: track.id, handoff: "dashboard_remix" });
+    void (async () => {
+      const result = await handoffRemixToDashboard(
+        {
+          id: track.id,
+          name: track.name,
+          prompt: track.prompt,
+          genre: track.genre,
+          mood: track.mood,
+          bpm: track.bpm,
+          audioUrl: track.audioUrl,
+          stemsUrl: track.stemsUrl ?? null,
+        },
+        "landing",
+      );
+      if (!result.ok) {
+        toast.error(
+          locale === "fr" ? "Remix indisponible — prompt copié dans le générateur" : "Remix unavailable — prompt copied to generator",
+        );
+        applyTrackPrompt(track.prompt, track.kind);
+        return;
+      }
+      if (!user) {
+        navigate(buildAuthUrl({ next: "/dashboard?remix=1" }));
+        return;
+      }
+      navigate("/dashboard?remix=1");
+    })();
   };
 
   const applyTrackPrompt = (nextPrompt: string, nextMode: CreateMode) => {
@@ -1398,7 +1434,7 @@ export default function Landing() {
             activeTrackId={current?.id ?? null}
             isPlaying={isPlaying}
             onPlay={handlePlay}
-            onRemix={(t) => applyTrackPrompt(t.prompt, t.kind)}
+            onRemix={remixFromLandingTrack}
             onRefresh={() => setTrendingRefreshKey((k) => k + 1)}
             footer={
               !trendingLoading && (trendingError || trendingTimedOut || typeof repairFixedCount === "number") ? (

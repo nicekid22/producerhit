@@ -1,38 +1,45 @@
 import { useId } from "react";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { cn } from "@/lib/utils";
 
 type Props = {
   className?: string;
-  /** Warm Glass : dégradé jaune → orange → rose */
-  warm?: boolean;
+  /** Désactive l’animation shimmer (ex. reduced motion). */
+  static?: boolean;
 };
 
-/** Marque ProducerHit (barres waveform du favicon) — distincte de l’icône IA (Sparkles). */
-export function ThemeBrandMark({ className, warm = false }: Props) {
+/** Marque ProducerHit — waveform aligné sur le dégradé holo de « hit ». */
+export function ThemeBrandMark({ className, static: staticMark = false }: Props) {
+  const reducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const uid = useId().replace(/:/g, "");
-  const gradId = warm ? `ph-mark-w-${uid}` : `ph-mark-p-${uid}`;
+  const gradId = `ph-mark-${uid}`;
+  const animate = !staticMark && !reducedMotion;
 
   return (
     <svg
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className={cn("shrink-0", className)}
+      className={cn("pk-brand-mark shrink-0", className)}
       aria-hidden
     >
       <defs>
-        <linearGradient id={gradId} x1="4" y1="4" x2="20" y2="20" gradientUnits="userSpaceOnUse">
-          {warm ? (
+        <linearGradient
+          id={gradId}
+          gradientUnits="userSpaceOnUse"
+          x1="-8"
+          y1="4"
+          x2="32"
+          y2="20"
+        >
+          <stop offset="0%" stopColor="var(--ph-mark-0, #e2e8f0)" />
+          <stop offset="28%" stopColor="var(--ph-mark-1, #67c3ff)" />
+          <stop offset="58%" stopColor="var(--ph-mark-2, #9d7cff)" />
+          <stop offset="100%" stopColor="var(--ph-mark-3, #cbd5e1)" />
+          {!animate ? null : (
             <>
-              <stop stopColor="#e8a830" />
-              <stop offset="0.45" stopColor="#e07028" />
-              <stop offset="1" stopColor="#c84858" />
-            </>
-          ) : (
-            <>
-              <stop stopColor="#67c3ff" />
-              <stop offset="0.55" stopColor="#9d7cff" />
-              <stop offset="1" stopColor="#ff4fd8" />
+              <animate attributeName="x1" values="-8;6;-8" dur="12s" repeatCount="indefinite" />
+              <animate attributeName="x2" values="18;32;18" dur="12s" repeatCount="indefinite" />
             </>
           )}
         </linearGradient>

@@ -31,6 +31,7 @@ import { Modal } from "@/components/ui/Modal";
 import { useLocaleStore } from "@/stores/localeStore";
 import { CreditCard, Palette, Shield, Sparkles, UserRound, Zap } from "lucide-react";
 import { ThemeToggleButton } from "@/components/ThemeToggleButton";
+import { discordCommunityUrl } from "@/lib/discordConfig";
 import { useVisualThemeStore } from "@/stores/visualThemeStore";
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
 import { hasEmailPassword, hasGoogleAuth, mapAuthError } from "@/lib/authProviders";
@@ -419,6 +420,35 @@ export default function Settings() {
               >
                 {isFr ? "Sauvegarder le profil" : "Save profile"}
               </Button>
+            </div>
+          </div>
+
+          <div id="pk-settings-discord" className="pk-prism-section-card lg:col-span-2">
+            <div className="pk-prism-section-head">
+              <div className="pk-prism-section-head__icon">
+                <UserRound className="h-4 w-4" />
+              </div>
+              <div>
+                <div className="text-lg font-semibold">Discord</div>
+                <div className="text-xs text-pk-muted">
+                  {isFr
+                    ? "Communauté globale — EN par défaut, salons FR/ES/PT · challenges + crédits bonus."
+                    : "Global community — English default, FR/ES/PT lounges · weekly challenges & bonus credits."}
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <a
+                href={discordCommunityUrl("settings")}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="pk-prism-btn inline-flex h-10 items-center justify-center rounded-full px-5 text-sm font-semibold"
+              >
+                {isFr ? "Rejoindre Discord" : "Join Discord"}
+              </a>
+              <Link to="/community" className="pk-glass-btn inline-flex h-10 items-center justify-center rounded-full px-5 text-sm font-semibold">
+                {isFr ? "Hub communauté" : "Community hub"}
+              </Link>
             </div>
           </div>
 

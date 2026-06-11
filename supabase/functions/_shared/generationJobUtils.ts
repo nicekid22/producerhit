@@ -70,6 +70,169 @@ async function readTextSafe(res: Response) {
   return await res.text().catch(() => "");
 }
 
+function toAbsoluteAceUrl(baseUrl: string, maybePath: string) {
+  const t = maybePath.trim();
+  if (!t) return "";
+  if (t.startsWith("http://") || t.startsWith("https://")) return t;
+  const base = baseUrl.replace(/\/$/, "");
+  if (t.startsWith("/")) return `${base}${t}`;
+  return `${base}/${t}`;
+}
+
+export function pickStemsZipUrl(
+  baseUrl: string,
+  firstObj: Record<string, unknown> | null,
+  metasObj: Record<string, unknown> | null,
+): string {
+  const candidates: unknown[] = [];
+  if (firstObj) {
+    candidates.push(
+      firstObj.stemsZipUrl,
+      firstObj.stems_zip_url,
+      firstObj.stems_zip,
+      firstObj.stems_url,
+      firstObj.stemsUrl,
+      firstObj.zipUrl,
+      firstObj.zip_url,
+      firstObj.zip,
+      firstObj.archiveUrl,
+      firstObj.archive_url,
+      firstObj.archive,
+    );
+  }
+  if (metasObj) {
+    candidates.push(
+      metasObj.stemsZipUrl,
+      metasObj.stems_zip_url,
+      metasObj.stems_zip,
+      metasObj.stems_url,
+      metasObj.stemsUrl,
+      metasObj.zipUrl,
+      metasObj.zip_url,
+      metasObj.zip,
+      metasObj.archiveUrl,
+      metasObj.archive_url,
+      metasObj.archive,
+    );
+  }
+
+  for (const c of candidates) {
+    if (typeof c !== "string") continue;
+    const abs = toAbsoluteAceUrl(baseUrl, c);
+    if (!abs) continue;
+    const lower = abs.toLowerCase();
+    if (lower.includes(".zip") || lower.includes("stem") || lower.includes("stems")) return abs;
+  }
+  for (const c of candidates) {
+    if (typeof c !== "string") continue;
+    const abs = toAbsoluteAceUrl(baseUrl, c);
+    if (abs.startsWith("http://") || abs.startsWith("https://")) return abs;
+  }
+  return "";
+}
+
+function pickStemsZipUrlFromAceJson(baseUrl: string, json: unknown): string {
+  const root = json && typeof json === "object" ? (json as Record<string, unknown>) : null;
+  if (!root) return "";
+  const fromRoot = pickStemsZipUrl(baseUrl, root, null);
+  if (fromRoot) return fromRoot;
+
+  const choices = root.choices;
+  const firstChoice = Array.isArray(choices) ? choices[0] : null;
+  const msg =
+    firstChoice && typeof firstChoice === "object" && firstChoice !== null
+      ? ((firstChoice as { message?: unknown }).message as Record<string, unknown> | null)
+      : null;
+  if (msg) {
+    const fromMsg = pickStemsZipUrl(baseUrl, msg, null);
+    if (fromMsg) return fromMsg;
+    const audioArr = Array.isArray(msg.audio) ? msg.audio : [];
+    for (const item of audioArr) {
+      if (!item || typeof item !== "object") continue;
+      const fromAudio = pickStemsZipUrl(baseUrl, item as Record<string, unknown>, null);
+      if (fromAudio) return fromAudio;
+    }
+  }
+  return "";
+}
+
+/** Poll ACE query_result pour récupérer stemsZipUrl après chat/completions (plan Plus). */
+export async function resolveAceStemsZipUrl(args: {
+  baseUrl: string;
+  apiKey: string;
+  taskId: string;
+  chatJson?: unknown;
+  signal?: AbortSignal;
+  maxWaitMs?: number;
+}): Promise<string> {
+  const fromChat = args.chatJson ? pickStemsZipUrlFromAceJson(args.baseUrl, args.chatJson) : "";
+  if (fromChat) return fromChat;
+  if (!args.taskId.trim()) return "";
+
+  const deadline = Date.now() + (args.maxWaitMs ?? 45_000);
+  const base = args.baseUrl.replace(/\/$/, "");
+  while (Date.now() < deadline) {
+    const pollParams = new URLSearchParams();
+    pollParams.append("ai_token", args.apiKey);
+    pollParams.append("task_id_list", JSON.stringify([args.taskId.trim()]));
+    pollParams.append("app", "studio-web");
+    const pollRes = await fetch(`${base}/query_result`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Accept: "application/json",
+      },
+      body: pollParams,
+      signal: args.signal,
+    });
+    const pollText = await readTextSafe(pollRes);
+    if (!pollRes.ok) {
+      await new Promise((r) => setTimeout(r, 2000));
+      continue;
+    }
+    let pollJson: unknown;
+    try {
+      pollJson = JSON.parse(pollText);
+    } catch {
+      await new Promise((r) => setTimeout(r, 2000));
+      continue;
+    }
+    const item = Array.isArray((pollJson as { data?: unknown } | null)?.data)
+      ? (pollJson as { data: unknown[] }).data[0]
+      : null;
+    const statusNum =
+      item && typeof (item as { status?: unknown }).status === "number"
+        ? ((item as { status: number }).status as number)
+        : 0;
+    if (statusNum === 2) break;
+    if (statusNum !== 1) {
+      await new Promise((r) => setTimeout(r, 2000));
+      continue;
+    }
+    const resultStr =
+      typeof (item as { result?: unknown } | null)?.result === "string"
+        ? ((item as { result: string }).result as string)
+        : "";
+    if (!resultStr) break;
+    let results: unknown;
+    try {
+      results = JSON.parse(resultStr);
+    } catch {
+      break;
+    }
+    const first = Array.isArray(results) ? results[0] : null;
+    const firstObj = first && typeof first === "object" && first !== null ? (first as Record<string, unknown>) : null;
+    const metasObj =
+      firstObj && typeof firstObj.metas === "object" && firstObj.metas !== null
+        ? (firstObj.metas as Record<string, unknown>)
+        : null;
+    const stemsZipUrl = pickStemsZipUrl(args.baseUrl, firstObj, metasObj);
+    if (stemsZipUrl) return stemsZipUrl;
+    break;
+  }
+  return "";
+}
+
 export type AcePollResult =
   | { status: "pending" }
   | { status: "failed"; error: string }
@@ -152,6 +315,7 @@ export async function pollAceTaskOnce(args: {
       : null;
   const lyricsFromResult =
     firstObj && typeof firstObj.lyrics === "string" ? (firstObj.lyrics as string) : "";
+  const stemsZipUrl = pickStemsZipUrl(args.baseUrl, firstObj, metasObj);
   const meta: Record<string, unknown> = {
     taskId: args.taskId,
     task_id: args.taskId,
@@ -168,6 +332,7 @@ export async function pollAceTaskOnce(args: {
     timeSignature: args.timeSignature.trim() || null,
     audioFormat: args.audioFormat,
     seed: args.seed,
+    ...(stemsZipUrl ? { stemsZipUrl } : {}),
     httpAudioUrl: audioUrl.startsWith("http") ? audioUrl : null,
     sessionOnly: false,
     asyncJob: true,

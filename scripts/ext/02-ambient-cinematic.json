@@ -1,0 +1,82 @@
+{
+  "Cinematic Ambient": {
+    "prompt": "cinematic ambient, evolving orchestral pad layers, wide hall reverb tails, slow emotional harmonic movement, film-score atmosphere drones, sparse piano accents, intimate blockbuster stillness",
+    "aceTags": "cinematic ambient, orchestral pads, wide reverb, film-score feel"
+  },
+  "Dark Ambient": {
+    "prompt": "dark ambient, ominous low drones, sparse metallic textures, deep sub rumble undertow, horror-tinged wide spatial void, slow evolving dread, candle-extinguish silence pockets",
+    "aceTags": "dark ambient, ominous drones, sparse textures, deep sub"
+  },
+  "Atmospheric": {
+    "prompt": "atmospheric instrumental, wide pad washes, gentle pulse undertone, immersive spatial depth, emotional but minimal rhythm, breath-like dynamics, horizon-gazing stillness, slow evolving calm",
+    "aceTags": "atmospheric, wide pads, gentle pulse, immersive space"
+  },
+  "Meditation": {
+    "prompt": "meditation music, soft healing drones, gentle singing bowl or bell accents, slow harmonic shifts, calming breath-paced evolution, temple quietude, mindful single-note focus",
+    "aceTags": "meditation, soft drones, gentle bells, calming healing vibe"
+  },
+  "Sleep Music": {
+    "prompt": "sleep music, ultra-soft texture blankets, minimal or absent percussion, warm low drone hum, deeply calming nocturnal atmosphere, delta-wave slow pulse, pillow-close intimacy",
+    "aceTags": "sleep music, ultra-soft textures, warm drones, calming"
+  },
+  "Nature Soundscape": {
+    "prompt": "nature soundscape, organic field-recording bed, gentle melodic undertones, forest bird or stream ambience, peaceful harmonic stillness, dawn meadow openness, earth-tone pad warmth",
+    "aceTags": "nature soundscape, organic ambience, forest or water feel, peaceful"
+  },
+  "Fantasy Soundtrack": {
+    "prompt": "fantasy soundtrack, orchestral strings and choir pads, magical harp or flute motifs, epic but intimate adventure atmosphere, heroic brass swells restrained, enchanted forest harmonic color",
+    "aceTags": "fantasy soundtrack, orchestral strings, magical motifs, adventure"
+  },
+  "Anime OST": {
+    "prompt": "anime OST, emotional piano and string interplay, bright melodic hook phrases, J-anime drama energy swells, polished cinematic dynamics, bittersweet schoolyard chord turns, opening-theme lift",
+    "aceTags": "anime OST, emotional piano, strings, bright melodic hooks"
+  },
+  "Video Game OST": {
+    "prompt": "video game OST, loop-friendly catchy motif, chiptune or modern synth layer stacks, level-music energy contour, punchy drum accents, exploration-zone wonder, boss-fight tension optional",
+    "aceTags": "video game OST, catchy motif, chiptune or synth layers, loop-friendly"
+  },
+  "Epic Trailer Music": {
+    "prompt": "epic trailer music, huge orchestral hit accents, rising brass and taiko percussion, dramatic tension crescendo, blockbuster impact swells, heartbeat pulse undertow, final-reveal chord slam",
+    "aceTags": "epic trailer, orchestral hits, rising brass, dramatic tension"
+  },
+  "Orchestral Hybrid": {
+    "prompt": "orchestral hybrid, live string section blended with modern synth bass and drums, cinematic epic groove pocket, wide dynamic range arcs, trailer-meets-club crossover energy, brass stab punctuation",
+    "aceTags": "orchestral hybrid, strings plus synths, cinematic epic groove"
+  },
+  "Dark Cinematic": {
+    "prompt": "dark cinematic, low brass and string clusters, tense drone undertones, slow-building dread atmosphere, trailer-like shadow space, dissonant cluster resolutions, noir investigation pulse",
+    "aceTags": "dark cinematic, low brass, tense drones, shadow atmosphere"
+  },
+  "Sci-Fi Atmosphere": {
+    "prompt": "sci-fi atmosphere, alien synth texture layers, wide space reverb fields, pulsing sub undertone, futuristic exploratory mood, ion-drive arpeggios, starship corridor humming stillness",
+    "aceTags": "sci-fi atmosphere, alien synths, wide space, futuristic mood"
+  },
+  "Apocalyptic Ambient": {
+    "prompt": "apocalyptic ambient, desolate wind drones, distant industrial rumble textures, post-collapse wide spatial void, bleak beauty harmonic minor, ash-fall silence, ruined-city horizon stillness",
+    "aceTags": "apocalyptic ambient, desolate drones, industrial rumble, bleak"
+  },
+  "Space Ambient": {
+    "prompt": "space ambient, cosmic pad evolution, slow stellar texture blooms, deep nebula reverb tails, weightless exploration feel, satellite ping accents sparse, infinite dark-sky drift",
+    "aceTags": "space ambient, cosmic pads, stellar reverb, weightless feel"
+  },
+  "Ocean Dreamscape": {
+    "prompt": "ocean dreamscape, liquid pad motion, gentle wave-like rhythmic sway, underwater reverb blur, serene blue atmosphere chords, distant whale-tone undertones, tidal breathing dynamics",
+    "aceTags": "ocean dreamscape, liquid pads, underwater reverb, serene"
+  },
+  "Piano Ambient": {
+    "prompt": "piano ambient, sparse expressive piano notes, long reverb decay tails, minimal soft pulse undertone, intimate emotional harmonic space, felt-hammer warmth, solitary room reflection",
+    "aceTags": "piano ambient, sparse piano, long reverb, intimate emotional"
+  },
+  "Spiritual Ambient": {
+    "prompt": "spiritual ambient, healing pad layers, gentle choir texture swells, sacred calm atmosphere, slow harmonic bloom arcs, incense-room stillness, devotional breath-paced evolution",
+    "aceTags": "spiritual ambient, healing pads, choir textures, sacred calm"
+  },
+  "Cosmic Synths": {
+    "prompt": "cosmic synths, arpeggiated space sequences, analog warmth oscillator layers, retro-future stellar groove pulse, nebula filter sweeps, orbital bass undertone, 80s sci-fi optimism",
+    "aceTags": "cosmic synths, arpeggiated sequences, analog warmth, retro-future"
+  },
+  "Floating Dreamscape": {
+    "prompt": "floating dreamscape, weightless pad suspension, soft glitter texture sparkles, slow heartbeat pulse, surreal peaceful immersion, cloud-walk harmonic drift, lucid sleep border atmosphere",
+    "aceTags": "floating dreamscape, weightless pads, soft glitter, surreal peace"
+  }
+}

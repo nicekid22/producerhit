@@ -26,33 +26,22 @@ function genreTag(genre: string): string {
 
 export function buildTikTokHashtags(loop: Loop): string[] {
   const tags = new Set<string>([...BASE_HASHTAGS, genreTag(loop.genre || ""), ...moodTags(loop.mood || "")]);
-  return Array.from(tags).slice(0, 8);
+  return Array.from(tags).slice(0, 5);
 }
 
 export function buildTikTokCaption(loop: Loop, locale: "en" | "fr"): string {
   const name = (loop.name || "Untitled").trim();
-  const genre = (loop.genre || "").trim();
-  const mood = (loop.mood || "").trim();
   const bpm = loop.bpm && loop.bpm > 0 ? `${loop.bpm} BPM` : null;
   const tags = buildTikTokHashtags(loop).join(" ");
+  const line1 = bpm ? `${name} · ${bpm}` : name;
+  return `${line1}\nProducerHit\n${tags}`;
+}
 
-  if (locale === "fr") {
-    const vibe = [mood, genre].filter(Boolean).join(" · ") || "dreamy";
-    const meta = bpm ? ` · ${bpm}` : "";
-    return `${name} — ${vibe}${meta}\nmade with ProducerHit ✨\n${tags}`;
-  }
-
-  const vibe = [mood, genre].filter(Boolean).join(" · ") || "dreamy";
-  const meta = bpm ? ` · ${bpm}` : "";
-  return `${name} — ${vibe}${meta}\nmade with ProducerHit ✨\n${tags}`;
+/** Caption + lien — prêt à coller dans TikTok / Reels. */
+export function buildSocialKitText(caption: string, shareUrl: string): string {
+  return `${caption.trim()}\n\n${shareUrl.trim()}`;
 }
 
 export function buildShareMomentTitle(locale: "en" | "fr"): string {
-  return locale === "fr" ? "Ton morceau est prêt à voyager." : "Share the void";
-}
-
-export function buildShareMomentSubtitle(locale: "en" | "fr"): string {
-  return locale === "fr"
-    ? "Crée instantanément un visuel unique à partir de ton morceau et publie-le sur tes réseaux. 🚀"
-    : "A track from your library — visual already rendered. Mysterious export for social.";
+  return locale === "fr" ? "Partager" : "Share";
 }

@@ -72,12 +72,31 @@ export default function GrowthAdmin() {
 
         {data ? (
           <>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <StatCard icon={TrendingUp} label="Landing / pages" value={data.funnel.landing_clicks} />
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+              <StatCard icon={TrendingUp} label="Landing" value={data.funnel.landing_clicks} />
               <StatCard icon={Users} label="Inscriptions" value={data.funnel.signups} />
               <StatCard icon={BarChart3} label="Générations" value={data.funnel.generations} />
               <StatCard icon={BarChart3} label="Checkouts" value={data.funnel.checkouts} />
+              <StatCard icon={BarChart3} label="Abonnements" value={data.funnel.subscriptions ?? 0} />
+              <StatCard icon={TrendingUp} label="Upsell prompts" value={data.funnel.upgrade_prompts ?? 0} />
             </div>
+
+            <Panel title="Taux de conversion (période)">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-xl bg-white/[0.03] p-4">
+                  <div className="text-xs text-white/50">Signup → Gen</div>
+                  <div className="mt-1 text-2xl font-semibold text-white">{data.funnel.signup_to_gen_pct ?? 0}%</div>
+                </div>
+                <div className="rounded-xl bg-white/[0.03] p-4">
+                  <div className="text-xs text-white/50">Gen → Checkout</div>
+                  <div className="mt-1 text-2xl font-semibold text-white">{data.funnel.gen_to_checkout_pct ?? 0}%</div>
+                </div>
+                <div className="rounded-xl bg-white/[0.03] p-4">
+                  <div className="text-xs text-white/50">Checkout → Payé</div>
+                  <div className="mt-1 text-2xl font-semibold text-white">{data.funnel.checkout_to_paid_pct ?? 0}%</div>
+                </div>
+              </div>
+            </Panel>
 
             <div className="grid gap-4 lg:grid-cols-2">
               <Panel title="Sources UTM">

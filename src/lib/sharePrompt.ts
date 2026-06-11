@@ -4,8 +4,9 @@ const GEN_SINCE_KEY = "producerhit_share_prompt_gen_since_v2";
 const LAST_SHOWN_KEY = "producerhit_share_prompt_last_shown_v2";
 const HOURLY_KEY = "producerhit_share_prompt_hourly_v2";
 
-/** Minimum successful generations since last share prompt. */
-const MIN_GENERATIONS_BETWEEN = 20;
+/** Milestones early growth (gen #1, #3, #8) puis cadence ~8 gen, max 3/h. */
+const EARLY_MILESTONE_GENS = [1, 3, 8];
+const MIN_GENERATIONS_BETWEEN = 8;
 /** Minimum delay between two prompts (20 min → max ~3/h). */
 const MIN_INTERVAL_MS = 20 * 60 * 1000;
 const MAX_PROMPTS_PER_HOUR = 3;
@@ -149,30 +150,31 @@ function recordSharePromptShown(now: number): void {
 }
 
 /**
- * Call after a successful generation/remix. Returns true at most ~3×/hour,
- * every ≥20 generations, with ≥20 min between prompts.
+ * Call after a successful generation/remix.
+ * @param lifetimeGenCount — loops_used_this_month après la génération (free/paid)
  */
-export function shouldShowSharePromptAfterGeneration(): boolean {
+export function shouldShowSharePromptAfterGeneration(lifetimeGenCount?: number): boolean {
   const since = bumpGenerationsSinceLastPrompt();
-  if (since < MIN_GENERATIONS_BETWEEN) return false;
+  const now = Date.now();
+  const lastShownRaw = window.localStorage.getItem(LAST_SHOWN_KEY);
+  const lastShown = lastShownRaw ? Number(lastShownRaw) : 0;
+  const intervalOk = !Number.isFinite(lastShown) || lastShown <= 0 || now - lastShown >= MIN_INTERVAL_MS;
+  const hourly = readHourlyShownTimestamps(now);
+  const hourlyOk = hourly.length < MAX_PROMPTS_PER_HOUR;
 
-  try {
-    const now = Date.now();
-    const lastShownRaw = window.localStorage.getItem(LAST_SHOWN_KEY);
-    const lastShown = lastShownRaw ? Number(lastShownRaw) : 0;
-    if (Number.isFinite(lastShown) && lastShown > 0 && now - lastShown < MIN_INTERVAL_MS) {
-      return false;
-    }
+  if (!intervalOk || !hourlyOk) return false;
 
-    const hourly = readHourlyShownTimestamps(now);
-    if (hourly.length >= MAX_PROMPTS_PER_HOUR) return false;
-
+  if (typeof lifetimeGenCount === "number" && EARLY_MILESTONE_GENS.includes(lifetimeGenCount)) {
     resetGenerationsSinceLastPrompt();
     recordSharePromptShown(now);
     return true;
-  } catch {
-    return false;
   }
+
+  if (since < MIN_GENERATIONS_BETWEEN) return false;
+
+  resetGenerationsSinceLastPrompt();
+  recordSharePromptShown(now);
+  return true;
 }
 
 export function pickSharePromptCopy(locale: "en" | "fr", seed?: string): SharePromptCopy {

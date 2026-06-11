@@ -308,7 +308,7 @@ export function landingValueBlocks(locale: Locale): LandingValueBlock[] {
         id: "rights",
         eyebrow: "Droits commerciaux",
         title: "Tes exports, tes règles (plans payants)",
-        body: "Les abonnés Pro et Studio bénéficient d'exports MP3/WAV royalty-free pour un usage commercial — vidéos, BeatStars, streaming — selon les conditions plateforme et provider.",
+        body: "Les abonnés Pro, Studio et Plus bénéficient d'exports MP3/WAV royalty-free pour un usage commercial — vidéos, BeatStars, streaming. Détails par plan : /legal#commercial-license.",
       },
       {
         id: "workspace",
@@ -348,7 +348,7 @@ export function landingValueBlocks(locale: Locale): LandingValueBlock[] {
       id: "rights",
       eyebrow: "Commercial rights",
       title: "Your exports, your rules (paid plans)",
-      body: "Pro and Studio subscribers get royalty-free MP3/WAV exports for commercial use — videos, BeatStars, streaming — subject to platform and provider terms.",
+      body: "Pro, Studio, and Plus subscribers get royalty-free MP3/WAV exports for commercial use — videos, BeatStars, streaming. Plan details: /legal#commercial-license.",
     },
     {
       id: "workspace",

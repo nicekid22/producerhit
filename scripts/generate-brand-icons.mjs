@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -12,6 +12,7 @@ async function main() {
     ["public/apple-touch-icon.png", 180],
     ["public/icon-192.png", 192],
     ["public/icon-512.png", 512],
+    ["public/favicon-32.png", 32],
   ];
 
   for (const [file, size] of sizes) {

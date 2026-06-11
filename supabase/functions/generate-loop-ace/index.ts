@@ -9,6 +9,7 @@ import {
   jobResponsePayload,
   loadGenerationJob,
   pollAceTaskOnce,
+  resolveAceStemsZipUrl,
   scheduleRunJob,
   updateGenerationJob,
 } from "../_shared/generationJobUtils.ts";
@@ -158,6 +159,43 @@ function toAbsoluteUrl(baseUrl: string, maybePath: string) {
 function isHttpUrl(v: unknown): v is string {
   const s = typeof v === "string" ? v.trim() : "";
   return !!s && (s.startsWith("https://") || s.startsWith("http://"));
+}
+
+function canStemsPlan(plan: keyof typeof LIMITS): boolean {
+  return plan === "plus";
+}
+
+async function enrichPlusStemsMeta(
+  meta: Record<string, unknown> | null,
+  plan: keyof typeof LIMITS,
+  aceTargets: Array<{ apiKey: string; baseUrl: string; keyIndex: number }>,
+  chatJson: unknown | null,
+  signal: AbortSignal,
+): Promise<Record<string, unknown> | null> {
+  if (!meta || !canStemsPlan(plan)) return meta;
+  const existing = typeof meta.stemsZipUrl === "string" ? meta.stemsZipUrl.trim() : "";
+  if (existing) return meta;
+
+  const taskId =
+    (typeof meta.taskId === "string" && meta.taskId.trim()) ||
+    (typeof meta.task_id === "string" && meta.task_id.trim()) ||
+    "";
+  if (!taskId && !chatJson) return meta;
+
+  const keyIndex = typeof meta.aceKeyIndex === "number" ? meta.aceKeyIndex : 0;
+  const target = aceTargets.find((t) => t.keyIndex === keyIndex) ?? aceTargets[0];
+  if (!target) return meta;
+
+  const stemsZipUrl = await resolveAceStemsZipUrl({
+    baseUrl: target.baseUrl,
+    apiKey: target.apiKey,
+    taskId,
+    chatJson: chatJson ?? undefined,
+    signal,
+    maxWaitMs: 45_000,
+  });
+  if (!stemsZipUrl) return meta;
+  return { ...meta, stemsZipUrl };
 }
 
 function pickStemsZipUrl(baseUrl: string, firstObj: Record<string, unknown> | null, metasObj: Record<string, unknown> | null) {
@@ -1021,6 +1059,7 @@ async function generateViaChatCompletionsAce(input: {
 
   return {
     audioUrl: parsed.audioUrl,
+    chatJson: json,
     meta: {
       prompt: parsedContent.prompt || input.baseCaption || input.prompt,
       lyrics: input.instrumental ? "" : parsedContent.lyrics || effectiveLyrics || undefined,
@@ -2150,7 +2189,8 @@ serve(async (req) => {
             signal,
           });
           return {
-            ...out,
+            audioUrl: out.audioUrl,
+            chatJson: out.chatJson,
             meta: {
               ...(out.meta ?? {}),
               aceKeyIndex: t.keyIndex,
@@ -2171,6 +2211,7 @@ serve(async (req) => {
 
     let audioUrl = "";
     let meta: Record<string, unknown> | null = null;
+    let chatJsonForStems: unknown | null = null;
 
     try {
       const startedAt = Date.now();
@@ -2181,6 +2222,7 @@ serve(async (req) => {
         const out = await runChatCompletions(controller.signal);
         audioUrl = out.audioUrl;
         meta = out.meta;
+        chatJsonForStems = out.chatJson ?? null;
         if (requirePersistableUrl && audioUrl.startsWith("data:audio")) {
           meta = { ...(meta ?? {}), providerDataUrl: audioUrl, sessionOnly: false, aceKeyCount };
         }
@@ -2189,6 +2231,7 @@ serve(async (req) => {
         const out = await runChatCompletions(controller.signal);
         audioUrl = out.audioUrl;
         meta = out.meta;
+        chatJsonForStems = out.chatJson ?? null;
       } else {
       const keyValueRelease = keyValue;
       const attemptOnce = async (apiKey: string, baseUrl: string) => {
@@ -2391,10 +2434,15 @@ serve(async (req) => {
         const out = await runChatCompletions(controller.signal);
         audioUrl = out.audioUrl;
         meta = out.meta;
+        chatJsonForStems = out.chatJson ?? null;
         lastErr = null;
       }
 
       } // beat / instrumental path
+
+      if (audioUrl && canStemsPlan(authedPlan)) {
+        meta = await enrichPlusStemsMeta(meta, authedPlan, aceTargets, chatJsonForStems, controller.signal);
+      }
 
       if (!audioUrl) {
         const msg = lastErr instanceof Error ? lastErr.message : "ACE generation failed";

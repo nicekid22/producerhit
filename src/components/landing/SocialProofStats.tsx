@@ -12,16 +12,16 @@ export function SocialProofStats({ locale, compact = false }: Props) {
   const stats =
     locale === "fr"
       ? [
-          { icon: Music2, value: "x4 Modes", label: "Song · Beat · Remix · Cover" },
+          { icon: Music2, value: "Studio 3-en-1", label: "Song · Beat · Remix" },
           { icon: ShieldCheck, value: "Royalty-free", label: "Usage commercial" },
           { icon: Waves, value: "MP3 / WAV", label: "Export Spotify Ready" },
-          { icon: Globe2, value: "Communauté", label: "Remix & tracks publics" },
+          { icon: Globe2, value: "Communauté", label: "Remix feed + export TikTok" },
         ]
       : [
-          { icon: Music2, value: "4 modes", label: "Song · Beat · Remix · Cover" },
+          { icon: Music2, value: "3-in-1 studio", label: "Song · Beat · Remix" },
           { icon: ShieldCheck, value: "Royalty-free", label: "Commercial use" },
           { icon: Waves, value: "MP3 / WAV", label: "Spotify Ready export" },
-          { icon: Globe2, value: "Community", label: "Remix & public tracks" },
+          { icon: Globe2, value: "Community", label: "Remix feed + TikTok export" },
         ];
 
   return (
