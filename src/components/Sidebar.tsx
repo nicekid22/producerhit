@@ -72,17 +72,21 @@ export function Sidebar() {
                 ? location.pathname === "/" || location.pathname === "/home"
                 : location.pathname === it.to || (it.to !== "/" && location.pathname.startsWith(it.to + "/"));
             return (
-              <Link
+              <div
                 key={it.to}
-                to={it.to}
+                data-coach={it.to === "/library" ? "nav-library" : undefined}
                 className={cn(
                   "pk-studio-nav-link",
                   mobileNavIconClass,
                   active ? "pk-studio-nav-link--active text-pk-accent" : "text-pk-muted hover:text-pk-text",
                 )}
-                aria-label={it.label}
-                title={it.label}
               >
+                <Link
+                  to={it.to}
+                  className="flex h-full w-full items-center justify-center"
+                  aria-label={it.label}
+                  title={it.label}
+                >
                 <span className="pk-studio-nav-indicator hidden md:block" aria-hidden />
                 {active ? (
                   <span
@@ -91,7 +95,8 @@ export function Sidebar() {
                   />
                 ) : null}
                 {it.icon}
-              </Link>
+                </Link>
+              </div>
             );
           })}
         </div>

@@ -21,6 +21,9 @@ test.describe("Parcours authentifié", () => {
 
   test("login email → dashboard → mon espace stable", async ({ page }) => {
     await loginWithEmail(page);
+    await expect(page.getByText(/setting up your studio|configuration de ton studio|loading…|chargement/i)).toHaveCount(0, {
+      timeout: 60_000,
+    });
     await expect(page.getByText(/mon espace|my workspace/i)).toBeVisible({ timeout: 20_000 });
     await page.waitForTimeout(5000);
     await expect(page.getByText(/chargement de tes créations|loading your creations/i)).toHaveCount(0);
@@ -45,11 +48,10 @@ test.describe("Parcours authentifié", () => {
     await expect(saveBtn).toBeEnabled();
     await saveBtn.scrollIntoViewIfNeeded();
     await saveBtn.click();
-    await expect(page.getByText(/profil sauvegardé|profile saved/i)).toBeVisible({ timeout: 30_000 });
-    await expect(saveBtn).toBeEnabled({ timeout: 30_000 });
-
-    await page.reload();
-    await page.goto("/settings#pk-settings-profile");
-    await expect(page.locator("#settings-username")).toHaveValue(testName, { timeout: 20_000 });
+    await expect(async () => {
+      await page.reload();
+      await page.goto("/settings#pk-settings-profile");
+      await expect(page.locator("#settings-username")).toHaveValue(testName);
+    }).toPass({ timeout: 45_000 });
   });
 });

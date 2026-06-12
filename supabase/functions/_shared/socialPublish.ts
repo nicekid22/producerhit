@@ -210,7 +210,7 @@ export async function postWebhook(payload: SocialPayload): Promise<{ ok: boolean
     body: JSON.stringify({
       source: "producerhit-social-publish",
       ...payload,
-      platforms_hint: ["tiktok", "instagram", "facebook", "youtube", "linkedin", "threads", "bluesky"],
+      platforms_hint: ["tiktok", "instagram", "facebook", "youtube", "linkedin", "threads", "bluesky", "reddit"],
     }),
   });
   if (!res.ok) return { ok: false, error: `webhook_${res.status}` };
@@ -235,6 +235,79 @@ export async function submitIndexNow(loopUrl: string): Promise<{ ok: boolean; er
   });
   if (res.ok || res.status === 202) return { ok: true };
   return { ok: false, error: `indexnow_${res.status}` };
+}
+
+const REDDIT_UA = "ProducerHitBot/1.0 (by u/producerhit)";
+let redditTokenCache: { token: string; expires: number } | null = null;
+
+async function getRedditAccessToken(): Promise<string | null> {
+  const now = Date.now();
+  if (redditTokenCache && redditTokenCache.expires > now + 60_000) return redditTokenCache.token;
+
+  const clientId = (Deno.env.get("REDDIT_CLIENT_ID") ?? "").trim();
+  const clientSecret = (Deno.env.get("REDDIT_CLIENT_SECRET") ?? "").trim();
+  const refreshToken = (Deno.env.get("REDDIT_REFRESH_TOKEN") ?? "").trim();
+  if (!clientId || !clientSecret || !refreshToken) return null;
+
+  const basic = btoa(`${clientId}:${clientSecret}`);
+  const res = await fetch("https://www.reddit.com/api/v1/access_token", {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${basic}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+      "User-Agent": REDDIT_UA,
+    },
+    body: new URLSearchParams({ grant_type: "refresh_token", refresh_token: refreshToken }),
+  });
+  if (!res.ok) return null;
+  const json = (await res.json()) as { access_token?: string; expires_in?: number };
+  if (!json.access_token) return null;
+  redditTokenCache = {
+    token: json.access_token,
+    expires: now + (json.expires_in ?? 3600) * 1000,
+  };
+  return json.access_token;
+}
+
+export async function postReddit(payload: SocialPayload): Promise<{ ok: boolean; id?: string; error?: string }> {
+  const subreddit = (Deno.env.get("REDDIT_SUBREDDIT") ?? "").trim();
+  if (!subreddit) return { ok: false, error: "missing_subreddit" };
+
+  const token = await getRedditAccessToken();
+  if (!token) return { ok: false, error: "missing_reddit_credentials" };
+
+  const title = `${payload.name} — ${payload.genre}${payload.bpm ? ` ${payload.bpm} BPM` : ""} · AI beat on ProducerHit`.slice(
+    0,
+    300,
+  );
+  const body = new URLSearchParams({
+    kind: "link",
+    sr: subreddit.replace(/^r\//i, ""),
+    title,
+    url: payload.share_urls.reddit,
+    resubmit: "false",
+  });
+
+  const res = await fetch("https://oauth.reddit.com/api/submit", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+      "User-Agent": REDDIT_UA,
+    },
+    body,
+  });
+  if (!res.ok) {
+    return { ok: false, error: `reddit_${res.status}:${(await res.text()).slice(0, 200)}` };
+  }
+  const json = (await res.json()) as {
+    json?: { errors?: unknown[]; data?: { id?: string; url?: string } };
+  };
+  const errors = json?.json?.errors;
+  if (errors && errors.length > 0) {
+    return { ok: false, error: `reddit_api:${JSON.stringify(errors).slice(0, 200)}` };
+  }
+  return { ok: true, id: json?.json?.data?.id ?? json?.json?.data?.url };
 }
 
 export async function postTelegram(payload: SocialPayload): Promise<{ ok: boolean; id?: string; error?: string }> {
@@ -369,6 +442,21 @@ export async function publishLoopToPlatforms(
           await logPublish(db, loop.id, platform, "posted", { external_id: res.id });
           results[platform] = { ok: true, id: res.id };
         } else if (res.error === "missing_telegram") {
+          await logPublish(db, loop.id, platform, "skipped", { error: res.error });
+          results[platform] = { skipped: true };
+        } else {
+          await logPublish(db, loop.id, platform, "failed", { error: res.error });
+          results[platform] = { ok: false, error: res.error };
+        }
+        continue;
+      }
+
+      if (platform === "reddit") {
+        const res = await postReddit(payload);
+        if (res.ok) {
+          await logPublish(db, loop.id, platform, "posted", { external_id: res.id, payload: { url: payload.share_urls.reddit } });
+          results[platform] = { ok: true, id: res.id };
+        } else if (res.error === "missing_subreddit" || res.error === "missing_reddit_credentials") {
           await logPublish(db, loop.id, platform, "skipped", { error: res.error });
           results[platform] = { skipped: true };
         } else {

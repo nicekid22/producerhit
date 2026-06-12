@@ -66,20 +66,36 @@ function buildPosts(loop, blog) {
   const posts = [];
   if (loop?.id) {
     const trackUrl = `${ORIGIN}/loop/${encodeURIComponent(loop.id)}?utm_source=twitter&utm_medium=social&utm_campaign=auto_loop`;
+    const redditUrl = `${ORIGIN}/loop/${encodeURIComponent(loop.id)}?utm_source=reddit&utm_medium=social&utm_campaign=auto_loop`;
     posts.push({
       id: `loop-${loop.id}`,
       platform: "twitter",
       text: `New ${loop.genre ?? "AI"} track on ProducerHit — "${loop.name ?? "Untitled"}". Listen: ${trackUrl}`,
       url: trackUrl,
     });
+    posts.push({
+      id: `loop-reddit-${loop.id}`,
+      platform: "reddit",
+      title: `${loop.name ?? "Untitled"} — ${loop.genre ?? "AI"} beat on ProducerHit`,
+      url: redditUrl,
+      text: redditUrl,
+    });
   }
   if (blog?.slug) {
     const blogUrl = `${ORIGIN}/blog/${encodeURIComponent(blog.slug)}?utm_source=twitter&utm_medium=social&utm_campaign=auto_blog`;
+    const redditBlogUrl = `${ORIGIN}/blog/${encodeURIComponent(blog.slug)}?utm_source=reddit&utm_medium=social&utm_campaign=auto_blog`;
     posts.push({
       id: `blog-${blog.slug}`,
       platform: "twitter",
       text: `${blog.title} — read on ProducerHit: ${blogUrl}`,
       url: blogUrl,
+    });
+    posts.push({
+      id: `blog-reddit-${blog.slug}`,
+      platform: "reddit",
+      title: `${blog.title} — ProducerHit`,
+      url: redditBlogUrl,
+      text: redditBlogUrl,
     });
   }
   posts.push({
@@ -133,6 +149,59 @@ async function postWebhook(payload) {
   return { ok: true };
 }
 
+async function postReddit(post) {
+  const clientId = process.env.REDDIT_CLIENT_ID;
+  const clientSecret = process.env.REDDIT_CLIENT_SECRET;
+  const refreshToken = process.env.REDDIT_REFRESH_TOKEN;
+  const subreddit = (process.env.REDDIT_SUBREDDIT ?? "").replace(/^r\//i, "");
+  if (!clientId || !clientSecret || !refreshToken || !subreddit) {
+    return { ok: false, reason: "missing_reddit_credentials" };
+  }
+
+  const basic = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+  const tokenRes = await fetch("https://www.reddit.com/api/v1/access_token", {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${basic}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+      "User-Agent": "ProducerHitBot/1.0 (by u/producerhit)",
+    },
+    body: new URLSearchParams({ grant_type: "refresh_token", refresh_token: refreshToken }),
+  });
+  if (!tokenRes.ok) {
+    return { ok: false, reason: `reddit_token_${tokenRes.status}` };
+  }
+  const tokenJson = await tokenRes.json();
+  const accessToken = tokenJson.access_token;
+  if (!accessToken) return { ok: false, reason: "reddit_no_token" };
+
+  const body = new URLSearchParams({
+    kind: "link",
+    sr: subreddit,
+    title: String(post.title ?? post.text ?? "ProducerHit").slice(0, 300),
+    url: post.url,
+    resubmit: "false",
+  });
+
+  const res = await fetch("https://oauth.reddit.com/api/submit", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+      "User-Agent": "ProducerHitBot/1.0 (by u/producerhit)",
+    },
+    body,
+  });
+  if (!res.ok) {
+    return { ok: false, reason: `reddit_${res.status}`, body: await res.text() };
+  }
+  const json = await res.json();
+  if (json?.json?.errors?.length) {
+    return { ok: false, reason: "reddit_api", errors: json.json.errors };
+  }
+  return { ok: true, id: json?.json?.data?.id ?? json?.json?.data?.url };
+}
+
 async function main() {
   const loop = await fetchLatestPublicLoop();
   const blog = await parseLatestBlogPost();
@@ -144,14 +213,17 @@ async function main() {
     "utf8",
   );
 
-  const pick = posts[0];
-  if (!pick) {
+  if (!posts.length) {
     console.log("auto-social: no posts generated");
     return;
   }
 
+  const pick = posts.find((p) => p.platform === "twitter") ?? posts[0];
+  const redditPick = posts.find((p) => p.platform === "reddit");
+
   const webhookResult = await postWebhook({ source: "producerhit-auto-social", post: pick, all: posts });
   const twitterResult = await postTwitter(pick.text);
+  const redditResult = redditPick ? await postReddit(redditPick) : { ok: false, reason: "no_reddit_post" };
 
   console.log(
     JSON.stringify({
@@ -159,6 +231,7 @@ async function main() {
       picked: pick.id,
       webhook: webhookResult,
       twitter: twitterResult,
+      reddit: redditResult,
     }),
   );
 }

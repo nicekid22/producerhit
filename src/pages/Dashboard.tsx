@@ -87,6 +87,9 @@ import { isRemixVibeRecreateEnabled, REMIX_VIBE_FALLBACK_COPY } from "@/lib/remi
 import { prepareLoopVariantGeneration, variantResultTitle } from "@/lib/loopVariantGeneration";
 import { loopToRemixSource } from "@/lib/remixSourceLoop";
 import { MobileOnboardingSheet, hasSeenMobileOnboarding } from "@/components/dashboard/MobileOnboardingSheet";
+import { OnboardingCoach } from "@/components/onboarding/OnboardingCoach";
+import { shouldShowCoachTour } from "@/lib/onboarding/coachStorage";
+import { useOnboardingCoachStore } from "@/stores/onboardingCoachStore";
 import { useAuthStore } from "@/stores/authStore";
 import { useLocaleStore } from "@/stores/localeStore";
 import { getRemainingBeats, PLAN_LIMITS, FREE_MASTERING_UPSELL_AT, getTotalGenerationLimit } from "@/lib/planLimits";
@@ -790,9 +793,15 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!mobileV2 || !user || hasSeenMobileOnboarding()) return;
+    if (shouldShowCoachTour(user.id, authProfile?.loops_used_this_month ?? 0)) return;
     const timer = window.setTimeout(() => setMobileOnboardingOpen(true), 900);
     return () => window.clearTimeout(timer);
-  }, [mobileV2, user]);
+  }, [authProfile?.loops_used_this_month, mobileV2, user]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    useOnboardingCoachStore.getState().hydrate(user.id, authProfile?.loops_used_this_month ?? 0);
+  }, [authProfile?.loops_used_this_month, user?.id]);
 
   useEffect(() => {
     trackClientEvent("dashboard_view", { source: entrySource });
@@ -1964,6 +1973,7 @@ export default function Dashboard() {
       const isFirstEver = totalGens === successCount && successCount > 0;
       const seed = playableCreated[0]?.id ?? String(Date.now());
       triggerBeatReady(locale, seed, { isFirst: isFirstEver, versionCount: successCount >= 2 ? successCount : 1 });
+      if (isFirstEver) useOnboardingCoachStore.getState().celebrateFirstGeneration();
       if (effectiveVersions === 2 && successCount === 1) {
         toast.error(
           locale === "fr" ? "1 version sur 2 — l'autre a flop, réessaie" : "1 of 2 versions — the other flopped, retry",
@@ -2698,6 +2708,7 @@ export default function Dashboard() {
           >
             <div className={cn("flex items-center gap-2", mobileV2 ? "w-full" : "justify-between")}>
               <div
+                data-coach="mode-rail"
                 className={cn(
                   "flex min-w-0 items-center gap-1",
                   "pk-studio-mode-rail",
@@ -2862,12 +2873,14 @@ export default function Dashboard() {
                     }}
                   />
 
-                  <input
-                    value={form.prompt}
-                    onChange={(e) => setField("prompt", e.target.value)}
-                    className="mt-3 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2 text-sm outline-none placeholder:text-pk-muted focus:border-pk-accent"
-                    placeholder={locale === "fr" ? "ex: dark melodic, smooth 808s" : "e.g. dark melodic, smooth 808s"}
-                  />
+                  <div data-coach="prompt-field">
+                    <input
+                      value={form.prompt}
+                      onChange={(e) => setField("prompt", e.target.value)}
+                      className="mt-3 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2 text-sm outline-none placeholder:text-pk-muted focus:border-pk-accent"
+                      placeholder={locale === "fr" ? "ex: dark melodic, smooth 808s" : "e.g. dark melodic, smooth 808s"}
+                    />
+                  </div>
                 </GeneratorSection>
 
                 <GeneratorSection
@@ -3264,18 +3277,20 @@ export default function Dashboard() {
                     }}
                   />
 
-                  <SpeechDictationField
-                    multiline
-                    locale={locale}
-                    value={songDescription}
-                    onChange={setSongDescription}
-                    rows={2}
-                    placeholder={
-                      locale === "fr"
-                        ? "ex: R&B mélancolique, nuits en ville…"
-                        : "e.g. Melancholic R&B, late nights…"
-                    }
-                  />
+                  <div data-coach="prompt-field">
+                    <SpeechDictationField
+                      multiline
+                      locale={locale}
+                      value={songDescription}
+                      onChange={setSongDescription}
+                      rows={2}
+                      placeholder={
+                        locale === "fr"
+                          ? "ex: R&B mélancolique, nuits en ville…"
+                          : "e.g. Melancholic R&B, late nights…"
+                      }
+                    />
+                  </div>
                 </GeneratorSection>
 
                 <GeneratorSection
@@ -3673,6 +3688,7 @@ export default function Dashboard() {
           </div>
 
           <div
+            data-coach="generate-btn"
             className={cn(
               "flex-shrink-0 border-t border-pk-border/80 p-4",
               mobileV2 ? "pk-dashboard-mobile-footer border-t-white/10 px-3 pt-2.5 pb-2" : "pk-studio-generate-dock",
@@ -4259,6 +4275,7 @@ export default function Dashboard() {
         open={mobileOnboardingOpen}
         onClose={() => setMobileOnboardingOpen(false)}
       />
+      <OnboardingCoach locale={locale} />
       <MasteringUpsellModal
         open={!!masteringUpsellLoop}
         loop={masteringUpsellLoop}
