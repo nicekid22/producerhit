@@ -24,11 +24,16 @@ function readAccountEnv(id: string, suffix: string): string {
 
 export function listYouTubeAccountIds(): string[] {
   const raw = readEnv("YOUTUBE_ACCOUNTS");
-  const ids = (raw || "vibez")
+  const remixRaw = readEnv("TREND_REMIX_YOUTUBE_ACCOUNTS");
+  const main = (raw || "vibez")
     .split(",")
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
-  return [...new Set(ids)];
+  const remix = (remixRaw || "remix1,remix2")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  return [...new Set([...main, ...remix])];
 }
 
 export function loadYouTubeAccount(id: string): YouTubeAccount | null {

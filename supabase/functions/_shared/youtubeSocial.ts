@@ -159,6 +159,51 @@ export function extractViralMeta(stemsUrl: unknown): ViralMeta | null {
   };
 }
 
+export type TrendRemixMeta = {
+  kind?: string;
+  planId?: string;
+  catalogId?: string;
+  originalTitle: string;
+  originalArtist: string;
+  trendKeywords?: string[];
+  searchQueries?: string[];
+  remixGenre: string;
+  preferredAccount?: string;
+  displayTitle?: string;
+  videoFormat?: string;
+  lyricsTheme?: string;
+};
+
+export function extractTrendRemixMeta(stemsUrl: unknown): TrendRemixMeta | null {
+  if (!stemsUrl || typeof stemsUrl !== "object") return null;
+  const ace = (stemsUrl as Record<string, unknown>).ace;
+  if (!ace || typeof ace !== "object") return null;
+  const tr = (ace as Record<string, unknown>).trendRemix;
+  if (!tr || typeof tr !== "object") return null;
+  const t = tr as Record<string, unknown>;
+  if (typeof t.originalTitle !== "string") return null;
+  return {
+    kind: typeof t.kind === "string" ? t.kind : undefined,
+    planId: typeof t.planId === "string" ? t.planId : undefined,
+    catalogId: typeof t.catalogId === "string" ? t.catalogId : undefined,
+    originalTitle: t.originalTitle,
+    originalArtist: typeof t.originalArtist === "string" ? t.originalArtist : "",
+    trendKeywords: Array.isArray(t.trendKeywords) ? (t.trendKeywords as string[]) : [],
+    searchQueries: Array.isArray(t.searchQueries) ? (t.searchQueries as string[]) : [],
+    remixGenre: typeof t.remixGenre === "string" ? t.remixGenre : "AI Remix",
+    preferredAccount: typeof t.preferredAccount === "string" ? t.preferredAccount : undefined,
+    displayTitle: typeof t.displayTitle === "string" ? t.displayTitle : undefined,
+    videoFormat: typeof t.videoFormat === "string" ? t.videoFormat : undefined,
+    lyricsTheme: typeof t.lyricsTheme === "string" ? t.lyricsTheme : undefined,
+  };
+}
+
+/** Full-length trend remix render (landscape, not Shorts). */
+export function youtubeTrendRemixMaxSec(): number {
+  const raw = Number(Deno.env.get("TREND_REMIX_MAX_SEC") ?? Deno.env.get("TREND_REMIX_DURATION_SEC") ?? "120");
+  return Math.max(60, Math.min(180, Number.isFinite(raw) ? Math.floor(raw) : 120));
+}
+
 export function buildViralYouTubeTitle(input: { viral: ViralMeta; name: string }): string {
   const ep = input.viral.episodeNum ? ` Ep.${input.viral.episodeNum}` : "";
   const name = input.name.trim().slice(0, 48);

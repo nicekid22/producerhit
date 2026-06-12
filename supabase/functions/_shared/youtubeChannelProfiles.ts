@@ -3,7 +3,7 @@
  * Each channel = one recognizable format for the algorithm + audience.
  */
 
-export type YouTubeChannelId = "vibez" | "market" | "lowdey" | "producerhitai" | "beatmakerunion";
+export type YouTubeChannelId = "vibez" | "market" | "lowdey" | "producerhitai" | "beatmakerunion" | "remix1" | "remix2";
 
 export type ChannelProfile = {
   id: YouTubeChannelId;
@@ -122,6 +122,42 @@ export const YOUTUBE_CHANNEL_PROFILES: Record<YouTubeChannelId, ChannelProfile> 
       "absurd ai song, funny ai music, ai music generator, text to song, viral ai music, producerhit, ai beat, music meme",
     defaultHashtags: ["#Shorts", "#AIMusic", "#Viral", "#ProducerHit"],
     homeUtmCampaign: "beatmakerunion",
+  },
+  remix1: {
+    id: "remix1",
+    handle: "@ProducerHitRemix1",
+    label: "ProducerHit Remix",
+    primaryKeyword: "AI remix",
+    secondaryKeywords: ["ai cover", "trending song remix", "genre remix", "producerhit"],
+    channelDescription: [
+      "Trending songs reimagined as AI remixes — full tracks, new lyrics, new genres.",
+      "",
+      "Trap, Afrobeats, Drill, R&B… daily AI remix drops inspired by what's trending.",
+      "",
+      "🎧 Create your remix: " + HOME + "?utm_source=youtube&utm_medium=channel&utm_campaign=remix1",
+    ].join("\n"),
+    channelKeywords:
+      "ai remix, ai cover, trending song remix, music remix, ai music, genre remix, producerhit, full song ai",
+    defaultHashtags: ["#AIMusic", "#AIRemix", "#MusicRemix", "#ProducerHit"],
+    homeUtmCampaign: "remix1",
+  },
+  remix2: {
+    id: "remix2",
+    handle: "@ProducerHitRemix2",
+    label: "ProducerHit Remix 2",
+    primaryKeyword: "AI cover remix",
+    secondaryKeywords: ["viral song remix", "ai music cover", "trend remix", "producerhit"],
+    channelDescription: [
+      "Viral hits × unexpected genres — AI remixes with full vocals & lyrics.",
+      "",
+      "Search trending songs, hear them in a completely new style. Made on ProducerHit.",
+      "",
+      "✨ Try it free: " + HOME + "?utm_source=youtube&utm_medium=channel&utm_campaign=remix2",
+    ].join("\n"),
+    channelKeywords:
+      "ai cover, ai remix, viral song cover, trending music remix, ai song generator, producerhit",
+    defaultHashtags: ["#AICover", "#AIRemix", "#Trending", "#ProducerHit"],
+    homeUtmCampaign: "remix2",
   },
 };
 

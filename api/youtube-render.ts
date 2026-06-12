@@ -10,8 +10,9 @@ import { createClient } from "@supabase/supabase-js";
 
 import ffmpegPath from "ffmpeg-static";
 
-import { extractViralMeta, inferTrackKind } from "../lib/youtubeSocial.mjs";
+import { extractViralMeta, inferTrackKind, extractTrendRemixMeta } from "../lib/youtubeSocial.mjs";
 import { buildYoutubeRenderArgs, youtubePreviewSec, youtubeViralPreviewSec } from "../lib/youtubeVideoRender.mjs";
+import { youtubeTrendRemixMaxSec } from "../lib/youtubeLandscapeTemplate.mjs";
 import { resolveLoopCoverPath } from "../lib/youtubeCoverResolve.mjs";
 import { resolveViralVisualAssets } from "../lib/youtubeViralVisual.mjs";
 import { resolveYouTubePreferredAccount } from "../lib/youtubeChannelStrategy.mjs";
@@ -23,7 +24,7 @@ import { playerCardFramePos } from "../lib/youtubePlayerCard.mjs";
 
 export const config = {
 
-  maxDuration: 120,
+  maxDuration: 200,
 
 };
 
@@ -171,8 +172,20 @@ export default async function handler(
 
 
   const viralMeta = extractViralMeta(loop.stems_url);
+  const trendRemixMeta = extractTrendRemixMeta(loop.stems_url);
   const isViral = Boolean(viralMeta?.series);
-  const maxSec = isViral ? youtubeViralPreviewSec() : youtubePreviewSec();
+  const isTrendRemix = Boolean(trendRemixMeta?.originalTitle);
+  const maxSec = isTrendRemix ? youtubeTrendRemixMaxSec() : isViral ? youtubeViralPreviewSec() : youtubePreviewSec();
+  const aceLyrics =
+    loop.stems_url &&
+    typeof loop.stems_url === "object" &&
+    loop.stems_url !== null &&
+    "ace" in loop.stems_url &&
+    loop.stems_url.ace &&
+    typeof loop.stems_url.ace === "object" &&
+    "lyrics" in loop.stems_url.ace
+      ? String((loop.stems_url.ace as { lyrics?: string }).lyrics ?? "")
+      : "";
 
   const work = await fs.mkdtemp(join(tmpdir(), "yt-render-"));
 
@@ -181,7 +194,7 @@ export default async function handler(
   const outPath = join(work, "out.mp4");
 
   const trackKind = inferTrackKind(loop.stems_url, loop.name ?? "");
-  const account = resolveYouTubePreferredAccount({ viralMeta, trackKind });
+  const account = resolveYouTubePreferredAccount({ viralMeta, trendRemixMeta, trackKind });
   const theme = playerThemeForAccount(account);
 
 
@@ -213,7 +226,7 @@ export default async function handler(
       if (!coverPath) {
         return res.status(500).json({ error: "community_cover_unavailable" });
       }
-      if (communityTemplateMode() === "player") {
+      if (!isTrendRemix && communityTemplateMode() === "player") {
         cardPath = join(work, "player-card.png");
         const themeId = theme;
         await renderPlayerCardPng({
@@ -262,6 +275,8 @@ export default async function handler(
         viralMeta,
 
         playerTheme: theme,
+
+        lyrics: aceLyrics,
 
       }),
 

@@ -23,8 +23,12 @@ export function preferredCommunityYouTubeAccount(trackKind: string): YouTubeChan
 
 export function resolveYouTubePreferredAccount(input: {
   viralMeta?: { series?: string; preferredAccount?: string } | null;
+  trendRemixMeta?: { preferredAccount?: string } | null;
   trackKind: string;
 }): string {
+  if (input.trendRemixMeta?.preferredAccount?.trim()) {
+    return input.trendRemixMeta.preferredAccount.trim().toLowerCase();
+  }
   if (input.viralMeta?.preferredAccount?.trim()) return input.viralMeta.preferredAccount.trim().toLowerCase();
   if (input.viralMeta?.series) return preferredYouTubeAccountForSeries(input.viralMeta.series);
   return preferredCommunityYouTubeAccount(input.trackKind);

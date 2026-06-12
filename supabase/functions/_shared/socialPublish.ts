@@ -9,15 +9,18 @@ import {
   buildYouTubeHashtags,
   buildViralYouTubeDescription,
   extractViralMeta,
+  extractTrendRemixMeta,
   inferTrackKind,
   socialPublishQueueBatch,
   youtubeGlobalMinIntervalSec,
   youtubeMaxDailyPerAccount,
   youtubeMinIntervalSec,
   type TrackKind,
+  type TrendRemixMeta,
   type ViralMeta,
 } from "./youtubeSocial.ts";
 import { buildYouTubeUploadMetadata, type YouTubeUploadMetadata } from "./youtubeMetadata.ts";
+import { buildTrendRemixUploadMetadata } from "./youtubeTrendRemixMetadata.ts";
 import { homeUrlForChannel } from "./youtubeChannelProfiles.ts";
 import { resolveYouTubePreferredAccount } from "./youtubeChannelStrategy.ts";
 
@@ -58,6 +61,7 @@ export type SocialPayload = {
   hashtags: string[];
   published_at: string;
   viral_meta?: ViralMeta | null;
+  trend_remix_meta?: TrendRemixMeta | null;
 };
 
 export function verifySocialCronSecret(req: Request): boolean {
@@ -82,12 +86,13 @@ export function buildShareUrl(loopId: string, channel: string): string {
   return url.toString();
 }
 
-/** YouTube Shorts link with channel-specific campaign for analytics. */
+/** YouTube link with channel-specific campaign for analytics. */
 export function buildYouTubeShareUrl(loopId: string, accountId: string): string {
   const campaign = accountId.trim().toLowerCase();
+  const medium = campaign.startsWith("remix") ? "remix" : "shorts";
   const url = new URL(`${PRODUCERHIT_SITE}/loop/${encodeURIComponent(loopId)}`);
   url.searchParams.set("utm_source", "youtube");
-  url.searchParams.set("utm_medium", "shorts");
+  url.searchParams.set("utm_medium", medium);
   url.searchParams.set("utm_campaign", campaign);
   url.searchParams.set("utm_content", loopId.slice(0, 8));
   return url.toString();
@@ -138,6 +143,7 @@ export function buildSocialPayload(loop: SocialLoopRow): SocialPayload {
   const keyLine = [loop.key, loop.scale].filter(Boolean).join(" ").trim();
   const track_kind = inferTrackKind(loop.stems_url, name);
   const viral_meta = extractViralMeta(loop.stems_url);
+  const trend_remix_meta = extractTrendRemixMeta(loop.stems_url);
   const hashtags = buildHashtags(loop, track_kind);
   const tagLine = hashtags.join(" ");
   const kindNoun =
@@ -150,7 +156,7 @@ export function buildSocialPayload(loop: SocialLoopRow): SocialPayload {
     tiktok: buildShareUrl(loop.id, "tiktok"),
     instagram: buildShareUrl(loop.id, "instagram"),
     facebook: buildShareUrl(loop.id, "facebook"),
-    youtube: buildShareUrl(loop.id, "youtube"),
+    youtube: buildShareUrl(loop.id, trend_remix_meta ? "youtube_remix" : "youtube"),
     reddit: buildShareUrl(loop.id, "reddit"),
     telegram: buildShareUrl(loop.id, "telegram"),
     whatsapp: buildShareUrl(loop.id, "whatsapp"),
@@ -198,6 +204,7 @@ export function buildSocialPayload(loop: SocialLoopRow): SocialPayload {
     hashtags,
     published_at: loop.created_at ?? new Date().toISOString(),
     viral_meta,
+    trend_remix_meta,
   };
 }
 
@@ -777,6 +784,27 @@ async function resolveYouTubeVideo(
 }
 
 function youtubeUploadMetadata(payload: SocialPayload, accountId: string): YouTubeUploadMetadata {
+  if (payload.trend_remix_meta) {
+    const tr = payload.trend_remix_meta;
+    const trend = buildTrendRemixUploadMetadata({
+      loopId: payload.loop_id,
+      originalTitle: tr.originalTitle,
+      originalArtist: tr.originalArtist,
+      remixGenre: tr.remixGenre,
+      displayTitle: tr.displayTitle ?? payload.name,
+      shareUrl: buildYouTubeShareUrl(payload.loop_id, accountId),
+      accountId,
+      trendKeywords: tr.trendKeywords ?? [],
+      bpm: payload.bpm,
+      key: payload.key,
+    });
+    return {
+      title: trend.title,
+      description: trend.description,
+      tags: trend.tags,
+      ab: trend.ab,
+    };
+  }
   return buildYouTubeUploadMetadata({
     loopId: payload.loop_id,
     name: payload.name,
@@ -794,6 +822,10 @@ function buildYouTubeEngagementComment(accountId: string, payload: SocialPayload
   const trackUrl = buildYouTubeShareUrl(payload.loop_id, accountId);
   const home = homeUrlForChannel(accountId);
   const viral = payload.viral_meta?.series;
+  const trend = payload.trend_remix_meta;
+  if (trend?.originalTitle) {
+    return `🎧 Full AI remix: ${trackUrl}\n✨ Make your own on ProducerHit: ${home}\n🔥 ${trend.originalTitle} × ${trend.remixGenre}`;
+  }
   if (viral === "guess_prompt") {
     return `👇 Drop your guess!\n🎧 Full track: ${trackUrl}\n✨ Make your own: ${home}`;
   }
@@ -934,6 +966,7 @@ export async function postYouTube(
   const picked = await pickYouTubeAccount(db, {
     preferredId: resolveYouTubePreferredAccount({
       viralMeta: payload.viral_meta,
+      trendRemixMeta: payload.trend_remix_meta,
       trackKind: payload.track_kind,
     }),
   });
@@ -1199,6 +1232,12 @@ export async function publishLoopToPlatforms(
           if (payload.viral_meta) {
             await db
               .from("viral_content_plans")
+              .update({ status: "published", updated_at: new Date().toISOString() })
+              .eq("loop_id", loop.id);
+          }
+          if (payload.trend_remix_meta) {
+            await db
+              .from("trend_remix_plans")
               .update({ status: "published", updated_at: new Date().toISOString() })
               .eq("loop_id", loop.id);
           }
