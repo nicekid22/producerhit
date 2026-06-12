@@ -2,12 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { AppShell } from "@/components/AppShell";
-import { AppShellAsideHeader } from "@/components/AppShellAsideHeader";
 import { LoopDetailsPanel } from "@/components/dashboard/LoopDetailsPanel";
 import { LoopDetailsSheet, LoopDetailsSheetHeader } from "@/components/dashboard/LoopDetailsSheet";
 import { PrismFilterPill } from "@/components/prism/PrismFilterPill";
-import { PrismPageHero } from "@/components/prism/PrismPageHero";
-import { PrismStat } from "@/components/prism/PrismStat";
 import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -15,20 +12,14 @@ import { useLoopsStore } from "@/stores/loopsStore";
 import { LoopCardItem } from "@/components/LoopCardItem";
 import { useLocaleStore } from "@/stores/localeStore";
 import { useMobileUiV2 } from "@/hooks/useMobileUiV2";
-import { Bookmark, Disc3, Layers, Music2, Search, Sparkles, X } from "lucide-react";
+import { Music2, Search, X } from "lucide-react";
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
 import { dedupeLoopsById } from "@/lib/loopWorkspaceUtils";
 import { genreCoverGradient } from "@/lib/genreCoverStyle";
 import { cn } from "@/lib/utils";
+import { LibraryVaultHero } from "@/components/library/LibraryVaultHero";
 
 type Filter = "all" | "genre" | "key" | "bpm";
-
-function formatTime(sec: number) {
-  const s = Math.max(0, Math.floor(sec));
-  const m = Math.floor(s / 60);
-  const r = s % 60;
-  return `${m}:${String(r).padStart(2, "0")}`;
-}
 
 export default function Library() {
   const locale = useLocaleStore((s) => s.locale);
@@ -117,86 +108,17 @@ export default function Library() {
   const isFr = locale === "fr";
 
   return (
-    <AppShell
-      theme="prism"
-      variant={mobileUiV2 ? "single" : "split"}
-      left={mobileUiV2 ? undefined : 
-        <AppShellAsideHeader
-          icon={Disc3}
-          eyebrow={isFr ? "VAULT CRÉATIF" : "CREATIVE VAULT"}
-          title={isFr ? "Bibliothèque" : "Library"}
-          subtitle={
-            isFr
-              ? "Toutes tes créations, prêtes à être rejouées, remixées ou partagées."
-              : "All your creations — ready to replay, remix, or share."
-          }
-          stats={[
-            { label: isFr ? "Total" : "Total", value: libraryTotalCount },
-            { label: isFr ? "Sauvés" : "Saved", value: savedCount },
-            { label: isFr ? "Genres" : "Genres", value: genreCount },
-            { label: isFr ? "Résultats" : "Showing", value: filtered.length },
-          ]}
-        >
-          {topGenres.length ? (
-            <div>
-              <div className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-white/40">
-                {isFr ? "Top vibes" : "Top vibes"}
-              </div>
-              <div className="pk-prism-chip-cloud mt-2">
-                {topGenres.map(([g, n]) => (
-                  <button
-                    key={g}
-                    type="button"
-                    className="pk-prism-vibe-chip transition-opacity hover:opacity-90"
-                    onClick={() => {
-                      setGenreFilter((prev) => (prev === g ? null : g));
-                      setQ("");
-                    }}
-                  >
-                    {g} · {n}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : null}
-          <Link
-            to="/dashboard"
-            className="pk-prism-btn mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-2.5 text-xs font-bold uppercase tracking-[0.12em]"
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            {isFr ? "Nouveau beat" : "New beat"}
-          </Link>
-        </AppShellAsideHeader>
-      }
-    >
-      <div className="pk-library-page h-full space-y-5 px-4 pt-6">
-        <PrismPageHero
-          className="pk-library-hero"
-          eyebrow={isFr ? "ARCHIVE PREMIUM" : "PREMIUM ARCHIVE"}
-          title={<span className="pk-prism-holo-text">{isFr ? "Ta bibliothèque sonore" : "Your sound library"}</span>}
-          description={
-            isFr
-              ? "Retrouve chaque beat généré, filtre par vibe, et ouvre les détails en un clic."
-              : "Find every generated beat, filter by vibe, and open details in one click."
-          }
-          actions={
-            <Link to="/dashboard">
-              <Button variant="primary" size="sm">
-                <Sparkles className="h-4 w-4" />
-                {isFr ? "Créer" : "Create"}
-              </Button>
-            </Link>
-          }
-        >
-          <div className="pk-prism-stat-grid">
-            <PrismStat label={isFr ? "Beats" : "Beats"} value={libraryTotalCount} icon={<Disc3 className="h-4 w-4" />} accent="cyan" />
-            <PrismStat label={isFr ? "Favoris" : "Saved"} value={savedCount} icon={<Bookmark className="h-4 w-4" />} accent="violet" />
-            <PrismStat label={isFr ? "Genres" : "Genres"} value={genreCount} icon={<Layers className="h-4 w-4" />} />
-            <PrismStat label={isFr ? "Affichés" : "Visible"} value={filtered.length} icon={<Search className="h-4 w-4" />} />
-          </div>
-        </PrismPageHero>
+    <AppShell theme="prism" variant="single">
+      <div className="pk-library-page h-full space-y-4 px-4 pb-6 pt-4 md:pb-24 md:pt-6">
+        <LibraryVaultHero
+          isFr={isFr}
+          totalCount={libraryTotalCount}
+          savedCount={savedCount}
+          genreCount={genreCount}
+          visibleCount={filtered.length}
+        />
 
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
           {loopsSyncError ? (
             <div className="rounded-pk pk-prism-card-soft p-4">
               <div className="text-sm font-semibold">{locale === "fr" ? "Sync en problème" : "Sync issue"}</div>
@@ -226,7 +148,7 @@ export default function Library() {
               </div>
             </div>
           ) : loopsLoading ? (
-            <div className="flex justify-center rounded-pk pk-prism-card-soft p-8">
+            <div className="flex justify-center rounded-pk pk-prism-card-soft p-6">
               <PkIconLoader
                 icon="library"
                 size="md"
@@ -284,7 +206,7 @@ export default function Library() {
           ) : null}
 
           <div className="pk-prism-section-card pk-library-toolbar">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="flex flex-wrap gap-2 pk-chip-scroll md:overflow-visible">
                 <PrismFilterPill active={filter === "all"} onClick={() => setFilter("all")}>
                   {isFr ? "Tout" : "All"}
@@ -300,7 +222,7 @@ export default function Library() {
                 </PrismFilterPill>
               </div>
 
-              <div className="pk-prism-input-shell md:max-w-sm md:flex-1">
+              <div className="pk-prism-input-shell md:max-w-xs md:flex-1">
                 <Search />
                 <input
                   value={q}
@@ -312,7 +234,7 @@ export default function Library() {
           </div>
 
           {filter === "bpm" ? (
-            <div className="pk-prism-section-card grid gap-3 md:grid-cols-2">
+            <div className="pk-prism-section-card grid gap-3 px-4 py-3 md:grid-cols-2">
               <div>
                 <div className="text-xs text-pk-muted">{locale === "fr" ? "BPM min" : "Min BPM"}</div>
                 <input
@@ -339,56 +261,14 @@ export default function Library() {
           ) : null}
         </div>
 
-        <div className="mt-5">
+        <div className="mt-2">
           {filtered.length === 0 ? (
             <EmptyState
-              title={locale === "fr" ? "Aucun beat pour l’instant" : "No beats yet"}
+              title={locale === "fr" ? "Aucun beat pour l'instant" : "No beats yet"}
               description={locale === "fr" ? "Génère ton premier beat pour démarrer." : "Generate your first beat to get started."}
             />
-          ) : (
-            detailsLoop && !mobileUiV2 ? (
-              <div className="md:grid md:grid-cols-[minmax(0,1fr)_420px] md:gap-4">
-                <div>
-                  <div className="pk-library-grid">
-                    {filtered.map((l) => (
-                      <LoopCardItem
-                        key={l.id}
-                        loop={l}
-                        cardVariant="library"
-                        compact={mobileUiV2}
-                        queueLoops={filtered}
-                        queueSource="library"
-                        onDelete={() => setConfirmId(l.id)}
-                        onOpenDetails={(loop) => setDetailsId((prev) => (prev === loop.id ? null : loop.id))}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <div className="hidden md:block">
-                  <div className="sticky top-6 max-h-[calc(100vh-32px)] overflow-y-auto">
-                    <div className="pk-library-detail-panel pk-studio-detail-panel relative overflow-hidden rounded-2xl p-5 backdrop-blur">
-                      <div className="pk-prism-panel-glow" />
-                      <LoopDetailsSheetHeader
-                        title={detailsLoop.name}
-                        subtitle={detailsLoop.genre}
-                        onClose={() => setDetailsId(null)}
-                        closeLabel={isFr ? "Fermer" : "Close"}
-                      />
-                      <LoopDetailsPanel
-                        loop={detailsLoop}
-                        locale={locale}
-                        detailsTitle={detailsTitle}
-                        onDetailsTitleChange={setDetailsTitle}
-                        savingDetailsTitle={savingDetailsTitle}
-                        onSaveTitle={saveDetailsTitle}
-                        durationSec={durationsSecById[detailsLoop.id]}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
+          ) : detailsLoop && !mobileUiV2 ? (
+            <div className="md:grid md:grid-cols-[minmax(0,1fr)_400px] md:gap-4">
               <div className="pk-library-grid">
                 {filtered.map((l) => (
                   <LoopCardItem
@@ -397,17 +277,53 @@ export default function Library() {
                     cardVariant="library"
                     compact={mobileUiV2}
                     queueLoops={filtered}
+                    queueSource="library"
                     onDelete={() => setConfirmId(l.id)}
-                    onOpenDetails={(loop) => setDetailsId(loop.id)}
+                    onOpenDetails={(loop) => setDetailsId((prev) => (prev === loop.id ? null : loop.id))}
                   />
                 ))}
               </div>
-            )
+
+              <div className="hidden md:block">
+                <div className="sticky top-6 max-h-[calc(100vh-32px)] overflow-y-auto">
+                  <div className="pk-library-detail-panel pk-studio-detail-panel relative overflow-hidden rounded-2xl p-5 backdrop-blur">
+                    <div className="pk-prism-panel-glow" />
+                    <LoopDetailsSheetHeader
+                      title={detailsLoop.name}
+                      subtitle={detailsLoop.genre}
+                      onClose={() => setDetailsId(null)}
+                      closeLabel={isFr ? "Fermer" : "Close"}
+                    />
+                    <LoopDetailsPanel
+                      loop={detailsLoop}
+                      locale={locale}
+                      detailsTitle={detailsTitle}
+                      onDetailsTitleChange={setDetailsTitle}
+                      savingDetailsTitle={savingDetailsTitle}
+                      onSaveTitle={saveDetailsTitle}
+                      durationSec={durationsSecById[detailsLoop.id]}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="pk-library-grid">
+              {filtered.map((l) => (
+                <LoopCardItem
+                  key={l.id}
+                  loop={l}
+                  cardVariant="library"
+                  compact={mobileUiV2}
+                  queueLoops={filtered}
+                  onDelete={() => setConfirmId(l.id)}
+                  onOpenDetails={(loop) => setDetailsId(loop.id)}
+                />
+              ))}
+            </div>
           )}
         </div>
       </div>
-
-      
 
       {mobileUiV2 && detailsLoop ? (
         <LoopDetailsSheet
@@ -430,7 +346,7 @@ export default function Library() {
         </LoopDetailsSheet>
       ) : null}
 
-            <Modal
+      <Modal
         open={!!confirmId}
         title="Delete beat"
         description="Cette action est irréversible."

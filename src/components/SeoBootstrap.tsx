@@ -299,6 +299,7 @@ export function SeoBootstrap() {
 
       setLink("canonical", effectiveCanonicalUrl);
       setLink("alternate", `${origin}/rss.xml`, { type: "application/rss+xml", title: "ProducerHit Blog RSS" });
+      setLink("alternate", `${origin}/rss-tracks.xml`, { type: "application/rss+xml", title: "ProducerHit Public Tracks" });
       if (comparisonPage) {
         setLink("alternate", `${origin}${comparisonPage.path}`, { hreflang: "en" });
         setLink("alternate", `${origin}${comparisonPage.pathFr}`, { hreflang: "fr" });

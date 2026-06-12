@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
 import toast from "react-hot-toast";
 import {
   coverImageKeyFromLoop,
@@ -46,6 +46,7 @@ import {
   RefreshCcw,
   Share2,
   Sparkles,
+  Trash2,
   X,
 } from "lucide-react";
 
@@ -467,9 +468,359 @@ export const LoopCardItem = memo(function LoopCardItem({
     return Math.max(12, Math.min(maxTop, Math.floor(rawTop)));
   }, []);
 
+  const handlePlayToggle = useCallback(
+    (e?: ReactMouseEvent) => {
+      e?.stopPropagation();
+      unlockAudioPlaybackFromGesture();
+      void (async () => {
+        if (active) {
+          if (activePlaying) markPausedPlayback();
+          setPlaying(!activePlaying);
+          return;
+        }
+        let url = "";
+        try {
+          const raw = typeof loop.audioUrl === "string" ? loop.audioUrl.trim() : "";
+          url = raw ? await resolvePlaybackUrlForLoop(loop.id, raw) : await ensureAudioReady(loop.id);
+        } catch {
+          url = "";
+        }
+        if (!url) {
+          toast.error(
+            locale === "fr" ? "Audio indisponible — réessaie dans un instant" : "Audio unavailable — try again in a moment",
+          );
+          return;
+        }
+        const fresh = useLoopsStore.getState().loops.find((l) => l.id === loop.id) ?? loop;
+        startPlayback({ ...fresh, audioUrl: url }, true);
+      })();
+    },
+    [active, activePlaying, ensureAudioReady, locale, loop, markPausedPlayback, setPlaying, startPlayback],
+  );
+
+  const handleDownloadBeat = useCallback(() => {
+    void (async () => {
+      if (!loop.audioUrl || isDownloading) return;
+      setIsDownloading(true);
+      try {
+        const response = await fetch(loop.audioUrl);
+        const blob = await response.blob();
+        const formatHint = (loop.details?.audioFormat || "").toLowerCase();
+        const type = (blob.type || "").toLowerCase();
+        const ext =
+          formatHint === "wav" || formatHint === "wav32"
+            ? "wav"
+            : formatHint === "flac"
+              ? "flac"
+              : formatHint === "opus"
+                ? "opus"
+                : formatHint === "aac"
+                  ? "aac"
+                  : type.includes("wav")
+                    ? "wav"
+                    : type.includes("flac")
+                      ? "flac"
+                      : type.includes("opus")
+                        ? "opus"
+                        : type.includes("aac")
+                          ? "aac"
+                          : "mp3";
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        const cleanName = loop.name.replace(/[^a-zA-Z0-9\s-]/g, "").replace(/\s+/g, "-").toLowerCase();
+        a.download = `${cleanName}-producerhit.${ext}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        toast.success("Beat downloaded!");
+      } catch {
+        toast.error("Download failed — try again");
+      } finally {
+        setIsDownloading(false);
+      }
+    })();
+  }, [isDownloading, loop.audioUrl, loop.details?.audioFormat, loop.name]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onDoc = (e: Event) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [menuOpen]);
+
   const songCard = isSongLoop(loop);
   const vocalLangCode = songCard ? extractLoopVocalLanguage(loop) : null;
   const vocalLangLabel = vocalLangCode ? formatVocalLanguageLabel(vocalLangCode, locale) : null;
+  const footerHint = getLoopCardFooterHint(loop, locale);
+
+  const libraryMenu = (
+    <>
+      <button
+        type="button"
+        className="pk-library-card__menu-item"
+        disabled={!loop.audioUrl || isDownloading}
+        onClick={(e) => {
+          e.stopPropagation();
+          setMenuOpen(false);
+          handleDownloadBeat();
+        }}
+      >
+        {isDownloading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+        {locale === "fr" ? "Télécharger" : "Download"}
+      </button>
+      {stemsDownloadUrl ? (
+        <button
+          type="button"
+          className="pk-library-card__menu-item"
+          disabled={isDownloadingStems}
+          onClick={(e) => {
+            e.stopPropagation();
+            setMenuOpen(false);
+            if (!canDownloadStems(plan)) {
+              toast(locale === "fr" ? "Stems ZIP : plan Plus" : "Stems ZIP: Plus plan");
+              window.location.href = "/pricing?plan=plus&checkout=1";
+              return;
+            }
+            setIsDownloadingStems(true);
+            try {
+              const a = document.createElement("a");
+              a.href = stemsDownloadUrl;
+              a.target = "_blank";
+              a.rel = "noopener noreferrer";
+              a.click();
+            } finally {
+              setIsDownloadingStems(false);
+            }
+          }}
+        >
+          {isDownloadingStems ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Layers className="h-3.5 w-3.5" />}
+          Stems
+        </button>
+      ) : null}
+      {canRerollCover ? (
+        <button
+          type="button"
+          className="pk-library-card__menu-item"
+          disabled={isRerollingCover}
+          onClick={(e) => {
+            e.stopPropagation();
+            setMenuOpen(false);
+            handleRerollCover();
+          }}
+        >
+          {isRerollingCover ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCcw className="h-3.5 w-3.5" />}
+          {locale === "fr" ? "Autre cover" : "New cover"}
+        </button>
+      ) : null}
+      <button
+        type="button"
+        className="pk-library-card__menu-item"
+        disabled={isVarying}
+        onClick={(e) => {
+          e.stopPropagation();
+          setMenuOpen(false);
+          runVariant("variation");
+        }}
+      >
+        <RefreshCcw className="h-3.5 w-3.5" />
+        Variation
+      </button>
+      <button
+        type="button"
+        className="pk-library-card__menu-item"
+        disabled={isVarying}
+        onClick={(e) => {
+          e.stopPropagation();
+          setMenuOpen(false);
+          runVariant("remix");
+        }}
+      >
+        <Sparkles className="h-3.5 w-3.5" />
+        Remix
+      </button>
+      {onOpenMaster ? (
+        <button
+          type="button"
+          className="pk-library-card__menu-item"
+          onClick={(e) => {
+            e.stopPropagation();
+            setMenuOpen(false);
+            onOpenMaster(loop);
+          }}
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          Mastering
+        </button>
+      ) : null}
+      {onDelete ? (
+        <button
+          type="button"
+          className="pk-library-card__menu-item pk-library-card__menu-item--danger"
+          onClick={(e) => {
+            e.stopPropagation();
+            setMenuOpen(false);
+            onDelete();
+          }}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+          {locale === "fr" ? "Supprimer" : "Delete"}
+        </button>
+      ) : null}
+    </>
+  );
+
+  if (isLibraryCard) {
+    return (
+      <div
+        data-loop-card
+        ref={(node) => {
+          cardRef.current = node;
+          coverLazyRef.current = node;
+        }}
+        className={cn("pk-library-card group", loopCardClass(active, activePlaying))}
+        onClick={() => {
+          if (!onOpenDetails) return;
+          onOpenDetails(loop, computeAnchorTop());
+        }}
+        role={onOpenDetails ? "button" : undefined}
+        tabIndex={onOpenDetails ? 0 : undefined}
+        onKeyDown={(e) => {
+          if (!onOpenDetails) return;
+          if (e.key !== "Enter" && e.key !== " ") return;
+          e.preventDefault();
+          onOpenDetails(loop, computeAnchorTop());
+        }}
+      >
+        <div className={cn("pk-library-card__cover-wrap", loopCoverClass(active, activePlaying))}>
+          <StoredLoopCover
+            key={`${coverKey}:${bannerCoverUrl}`}
+            coverUrl={bannerCoverUrl}
+            className="pk-library-card__cover"
+            loading="lazy"
+          />
+          <div className="pk-library-card__shade" aria-hidden />
+          <span className="pk-library-card__genre">{loop.genre}</span>
+          {footerHint ? (
+            <span
+              className={cn(
+                "pk-library-card__hint",
+                footerHint.variant === "public" && "pk-library-card__hint--public",
+                footerHint.variant === "stems" && "pk-library-card__hint--stems",
+              )}
+            >
+              {footerHint.label}
+            </span>
+          ) : null}
+          <button
+            type="button"
+            className={cn("pk-library-card__play", loopPlayButtonClass(active, activePlaying))}
+            onClick={handlePlayToggle}
+            aria-label={activePlaying ? "Pause" : "Play"}
+            title={activePlaying ? "Pause" : "Play"}
+            disabled={!canPlay}
+          >
+            {activePlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+          </button>
+        </div>
+
+        <div className="pk-library-card__body">
+          <h3 className="pk-library-card__title">{loop.name}</h3>
+          <p className="pk-library-card__meta">
+            {[
+              loop.bpm && loop.bpm > 0 ? `${loop.bpm} BPM` : null,
+              loop.key || loop.scale ? `${loop.key} ${loop.scale}`.trim() : null,
+              songCard && vocalLangLabel ? vocalLangLabel : loop.mood || null,
+              durationLabel,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
+          {active ? (
+            <div className="pk-library-card__progress" aria-hidden>
+              <div className="pk-library-card__progress-fill" style={{ width: `${Math.min(100, Math.max(0, progress * 100))}%` }} />
+            </div>
+          ) : null}
+
+          <div className="pk-library-card__toolbar" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className={cn("pk-library-card__icon-btn", loop.isSaved && "pk-library-card__icon-btn--on")}
+              onClick={() => {
+                void toggleSavedRemote(loop.id)
+                  .then((next) => toast.success(next ? "Sauvegardé" : "Retiré de la bibliothèque"))
+                  .catch((err) => toast.error(err instanceof Error ? err.message : "Erreur"));
+              }}
+              title={loop.isSaved ? (locale === "fr" ? "Retirer" : "Unsave") : "Save"}
+              aria-pressed={loop.isSaved}
+            >
+              <Bookmark className={cn("h-4 w-4", loop.isSaved && "fill-current")} />
+            </button>
+            <button
+              type="button"
+              className={cn("pk-library-card__icon-btn", loop.isPublic && "pk-library-card__icon-btn--public")}
+              onClick={() => {
+                void togglePublicRemote(loop.id)
+                  .then((next) => toast.success(next ? "Public" : "Private"))
+                  .catch((err) => toast.error(err instanceof Error ? err.message : "Erreur"));
+              }}
+              title={loop.isPublic ? (locale === "fr" ? "Passer privé" : "Make private") : locale === "fr" ? "Rendre public" : "Make public"}
+              aria-pressed={loop.isPublic}
+            >
+              <Globe className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              className="pk-library-card__icon-btn"
+              onClick={() => setShareOpen(true)}
+              title={locale === "fr" ? "Partager" : "Share"}
+            >
+              <Share2 className="h-4 w-4" />
+            </button>
+            <div className="relative" ref={menuRef}>
+              <button
+                type="button"
+                className="pk-library-card__icon-btn"
+                onClick={() => setMenuOpen((v) => !v)}
+                aria-label={locale === "fr" ? "Plus d'actions" : "More actions"}
+                aria-expanded={menuOpen}
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </button>
+              {menuOpen ? (
+                <div className="pk-library-card__menu">{libraryMenu}</div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+
+        <ShareMomentModal
+          open={shareOpen}
+          onClose={() => setShareOpen(false)}
+          loop={shareLoop}
+          locale={locale}
+          plan={plan}
+          onMakePublic={
+            !shareLoop.isPublic
+              ? () => {
+                  void (async () => {
+                    try {
+                      await togglePublicRemote(shareLoop.id);
+                      toast.success(locale === "fr" ? "Track publique — lien actif" : "Track public — link live");
+                    } catch (err) {
+                      toast.error(err instanceof Error ? err.message : locale === "fr" ? "Erreur" : "Error");
+                    }
+                  })();
+                }
+              : undefined
+          }
+        />
+      </div>
+    );
+  }
 
   return (
     <div

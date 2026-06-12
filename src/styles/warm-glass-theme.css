@@ -2966,6 +2966,61 @@ html.pk-warm-glass-active .pk-community-card__play--active,
 }
 
 /* Bibliothèque — warm */
+html.pk-warm-glass-active .pk-library-hero,
+.pk-warm-glass-stage .pk-library-hero {
+  border-color: var(--warm-glass-border) !important;
+  background:
+    radial-gradient(560px circle at 0% 0%, rgba(255, 180, 100, 0.14), transparent 55%),
+    radial-gradient(480px circle at 100% 100%, rgba(220, 90, 100, 0.1), transparent 52%),
+    linear-gradient(168deg, var(--warm-glass-surface-elevated), var(--warm-glass-surface)) !important;
+  box-shadow:
+    inset 0 1px 0 var(--warm-glass-highlight),
+    0 24px 64px rgba(40, 16, 8, 0.28) !important;
+}
+
+html.pk-warm-glass-active .pk-library-hero__orb--a,
+.pk-warm-glass-stage .pk-library-hero__orb--a {
+  background: rgba(255, 160, 80, 0.22);
+}
+
+html.pk-warm-glass-active .pk-library-hero__orb--b,
+.pk-warm-glass-stage .pk-library-hero__orb--b {
+  background: rgba(220, 90, 100, 0.14);
+}
+
+html.pk-warm-glass-active .pk-library-hero__title,
+.pk-warm-glass-stage .pk-library-hero__title {
+  background: linear-gradient(135deg, rgba(255, 240, 220, 0.98), rgba(255, 160, 80, 0.9));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+html.pk-warm-glass-active .pk-library-stat-pill__icon,
+.pk-warm-glass-stage .pk-library-stat-pill__icon {
+  color: var(--warm-accent-gold);
+}
+
+html.pk-warm-glass-active .pk-library-genre-pill--active,
+.pk-warm-glass-stage .pk-library-genre-pill--active {
+  border-color: rgba(255, 180, 100, 0.32);
+  background: rgba(255, 160, 80, 0.12);
+  color: rgba(255, 220, 180, 0.98);
+}
+
+html.pk-warm-glass-active .pk-library-hero__cta,
+.pk-warm-glass-stage .pk-library-hero__cta {
+  border-color: rgba(255, 180, 100, 0.32);
+  background: linear-gradient(135deg, rgba(255, 160, 80, 0.22), rgba(220, 90, 100, 0.14));
+  box-shadow: 0 8px 28px rgba(255, 120, 60, 0.14);
+}
+
+html.pk-warm-glass-active .pk-library-hero__cta:hover,
+.pk-warm-glass-stage .pk-library-hero__cta:hover {
+  border-color: rgba(255, 180, 100, 0.45);
+  box-shadow: 0 12px 36px rgba(255, 120, 60, 0.2);
+}
+
 html.pk-warm-glass-active .pk-library-genre-tile--active,
 .pk-warm-glass-stage .pk-library-genre-tile--active {
   border-color: color-mix(in srgb, var(--warm-pigment-orange) 50%, transparent) !important;
@@ -2976,6 +3031,34 @@ html.pk-warm-glass-active .pk-library-active-filter,
 .pk-warm-glass-stage .pk-library-active-filter {
   border-color: color-mix(in srgb, var(--warm-pigment-orange) 35%, transparent) !important;
   background: color-mix(in srgb, var(--warm-pigment-orange) 10%, transparent) !important;
+}
+
+html.pk-warm-glass-active .pk-library-card:hover,
+.pk-warm-glass-stage .pk-library-card:hover {
+  border-color: color-mix(in srgb, var(--warm-pigment-orange) 32%, transparent) !important;
+  box-shadow: 0 18px 52px color-mix(in srgb, var(--warm-pigment-rose) 12%, transparent) !important;
+}
+
+html.pk-warm-glass-active .pk-library-card__play,
+.pk-warm-glass-stage .pk-library-card__play {
+  border-color: rgba(255, 200, 140, 0.22);
+  background: rgba(28, 14, 10, 0.58);
+}
+
+html.pk-warm-glass-active .pk-library-card__icon-btn--on,
+.pk-warm-glass-stage .pk-library-card__icon-btn--on {
+  color: var(--warm-accent-gold);
+}
+
+html.pk-warm-glass-active .pk-library-card__progress-fill,
+.pk-warm-glass-stage .pk-library-card__progress-fill {
+  background: linear-gradient(90deg, var(--warm-accent-gold), rgba(220, 90, 100, 0.9));
+}
+
+html.pk-warm-glass-active .pk-library-card__menu,
+.pk-warm-glass-stage .pk-library-card__menu {
+  border-color: color-mix(in srgb, var(--warm-pigment-orange) 22%, transparent) !important;
+  background: rgba(28, 14, 10, 0.96) !important;
 }
 
 html.pk-warm-glass-active .pk-loop-card--library:hover,
@@ -3797,5 +3880,71 @@ html.pk-warm-glass-active:has(.pk-dashboard-generator) .pk-loop-details-sheet .b
   margin-top: -1px;
   border-top-left-radius: inherit;
   border-top-right-radius: inherit;
+}
+
+/* Settings — warm glass */
+.pk-warm-glass-stage .pk-settings-hero {
+  border-color: var(--warm-glass-border) !important;
+  background:
+    radial-gradient(560px circle at 0% 0%, rgba(255, 180, 100, 0.14), transparent 55%),
+    radial-gradient(480px circle at 100% 100%, rgba(220, 90, 100, 0.1), transparent 52%),
+    linear-gradient(168deg, var(--warm-glass-surface-elevated), var(--warm-glass-surface)) !important;
+  box-shadow:
+    inset 0 1px 0 var(--warm-glass-highlight),
+    0 24px 64px rgba(40, 16, 8, 0.28) !important;
+}
+
+.pk-warm-glass-stage .pk-settings-hero__orb--a {
+  background: rgba(255, 160, 80, 0.22);
+}
+
+.pk-warm-glass-stage .pk-settings-hero__orb--b {
+  background: rgba(220, 90, 100, 0.14);
+}
+
+.pk-warm-glass-stage .pk-settings-hero__avatar {
+  border-color: rgba(255, 200, 140, 0.22);
+  background:
+    linear-gradient(145deg, rgba(255, 180, 100, 0.22), rgba(220, 90, 100, 0.12)),
+    rgba(255, 255, 255, 0.04);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 180, 0.2),
+    0 12px 32px rgba(40, 16, 8, 0.22);
+}
+
+.pk-warm-glass-stage .pk-settings-hero__link,
+.pk-warm-glass-stage .pk-settings-hero__upgrade {
+  color: var(--warm-accent-gold);
+  border-color: rgba(255, 180, 100, 0.28);
+  background: rgba(255, 160, 80, 0.08);
+}
+
+.pk-warm-glass-stage .pk-settings-hero__upgrade:hover {
+  background: rgba(255, 160, 80, 0.14);
+  border-color: rgba(255, 180, 100, 0.4);
+}
+
+.pk-warm-glass-stage .pk-settings-quota-ring {
+  background: conic-gradient(
+    from 210deg,
+    var(--warm-accent-gold) calc(var(--pk-quota-pct) * 1),
+    rgba(255, 255, 255, 0.07) 0
+  );
+  box-shadow: 0 0 24px rgba(255, 160, 80, 0.14);
+}
+
+.pk-warm-glass-stage .pk-settings-quota-ring__inner {
+  background: rgba(28, 14, 10, 0.88);
+}
+
+.pk-warm-glass-stage .pk-settings-nav__pill--active {
+  border-color: rgba(255, 180, 100, 0.32);
+  background: rgba(255, 160, 80, 0.12);
+  color: rgba(255, 220, 180, 0.98);
+}
+
+.pk-warm-glass-stage .pk-settings-referral-highlight {
+  border-color: rgba(255, 160, 80, 0.2);
+  background: linear-gradient(145deg, rgba(255, 160, 80, 0.08), rgba(255, 255, 255, 0.02));
 }
 

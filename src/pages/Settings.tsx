@@ -1,8 +1,5 @@
 import { AppShell } from "@/components/AppShell";
-import { AppShellAsideHeader } from "@/components/AppShellAsideHeader";
-import { PrismPageHero } from "@/components/prism/PrismPageHero";
-import { PrismStat } from "@/components/prism/PrismStat";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
@@ -17,11 +14,9 @@ import {
   type CreatorType,
 } from "@/lib/creatorProfile";
 import { useAuthStore } from "@/stores/authStore";
-import { PLAN_LIMITS, getRemainingBeats, getTotalGenerationLimit } from "@/lib/planLimits";
+import { getRemainingBeats, getTotalGenerationLimit } from "@/lib/planLimits";
 import { buildReferralInviteUrl, ensureReferralCode } from "@/lib/referral";
 import {
-  REFERRAL_FREE_BASE,
-  REFERRAL_REFEREE_BONUS,
   REFERRAL_REFEREE_START_TOTAL,
   REFERRAL_REFERRER_SIGNUP_BONUS,
 } from "@/lib/referralConfig";
@@ -29,14 +24,14 @@ import { Button } from "@/components/ui/Button";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { Modal } from "@/components/ui/Modal";
 import { useLocaleStore } from "@/stores/localeStore";
-import { CreditCard, Palette, Shield, Sparkles, UserRound, Zap } from "lucide-react";
+import { CreditCard, LogOut, Palette, Shield, Sparkles, UserRound, Users } from "lucide-react";
 import { ThemeToggleButton } from "@/components/ThemeToggleButton";
 import { discordCommunityUrl } from "@/lib/discordConfig";
 import { useVisualThemeStore } from "@/stores/visualThemeStore";
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
 import { hasEmailPassword, hasGoogleAuth, mapAuthError } from "@/lib/authProviders";
-import { useMobileUiV2 } from "@/hooks/useMobileUiV2";
 import { SettingsGrowthExtras } from "@/components/settings/SettingsGrowthExtras";
+import { SettingsIdentityHero } from "@/components/settings/SettingsIdentityHero";
 
 function tierClass(plan: string) {
   if (plan === "plus") return "pk-prism-tier-badge--plus";
@@ -59,12 +54,12 @@ export default function Settings() {
   const locale = useLocaleStore((s) => s.locale);
   const visualTheme = useVisualThemeStore((s) => s.theme);
   const isFr = locale === "fr";
-  const mobileUiV2 = useMobileUiV2();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [activeSection, setActiveSection] = useState("pk-settings-profile");
 
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
@@ -100,7 +95,7 @@ export default function Settings() {
     return src.slice(0, 2).toUpperCase();
   }, [username, user?.email]);
   const publicProfileUrl = username.trim().length >= 3 ? profilePath(username.trim()) : null;
-  const profileDisplay = username.trim() || (isFr ? "Non défini" : "Not set");
+  const displayName = username.trim() || user?.email?.split("@")[0] || (isFr ? "Producer" : "Producer");
   const creatorTypeOptions = useMemo(
     () =>
       CREATOR_TYPE_OPTIONS.map((opt) => ({
@@ -109,6 +104,24 @@ export default function Settings() {
       })),
     [isFr],
   );
+
+  const navItems = useMemo(
+    () => [
+      { id: "pk-settings-profile", label: isFr ? "Profil" : "Profile" },
+      { id: "pk-settings-progression", label: isFr ? "Progression" : "Progress" },
+      { id: "pk-settings-referral", label: isFr ? "Parrainage" : "Referral" },
+      { id: "pk-settings-plan", label: isFr ? "Plan" : "Plan" },
+      { id: "pk-settings-security", label: isFr ? "Sécurité" : "Security" },
+    ],
+    [isFr],
+  );
+
+  const scrollToSection = useCallback((id: string) => {
+    setActiveSection(id);
+    window.setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+  }, []);
 
   useEffect(() => {
     if (authStatus !== "ready" || !user) {
@@ -157,45 +170,8 @@ export default function Settings() {
   }, [authStatus, loading, referralCode, refreshProfile, user?.id]);
 
   return (
-    <AppShell
-      theme="prism"
-      variant={mobileUiV2 ? "single" : "split"}
-      left={
-        mobileUiV2 ? undefined : (
-        <AppShellAsideHeader
-          eyebrow={isFr ? "CENTRE DE CONTRÔLE" : "CONTROL CENTER"}
-          title={isFr ? "Paramètres" : "Settings"}
-          subtitle={user?.email ?? (isFr ? "Connecte-toi pour gérer ton compte." : "Sign in to manage your account.")}
-          avatarInitials={initials}
-          stats={[
-            { label: "Plan", value: plan },
-            { label: isFr ? "Utilisés" : "Used", value: `${usedThisMonth}/${limit}` },
-            { label: isFr ? "Restants" : "Left", value: remaining },
-            { label: isFr ? "Quota" : "Quota", value: `${Math.round(pct)}%` },
-          ]}
-        >
-          <div className={`pk-prism-tier-badge ${tierClass(plan)}`}>
-            <Sparkles className="h-3 w-3" />
-            {plan}
-          </div>
-          <div className="mt-4 pk-prism-progress-track">
-            <div className="pk-prism-progress-fill" style={{ width: `${pct}%` }} />
-          </div>
-          <div className="mt-3 flex items-center justify-between text-xs text-pk-muted">
-            <span>
-              {isFr
-                ? `${remaining} génération${remaining !== 1 ? "s" : ""} restante${remaining !== 1 ? "s" : ""}`
-                : `${remaining} beat${remaining !== 1 ? "s" : ""} left`}
-            </span>
-            <Link to="/pricing" className="pk-prism-holo-text hover:opacity-90">
-              Upgrade
-            </Link>
-          </div>
-        </AppShellAsideHeader>
-        )
-      }
-    >
-      <div className="h-full space-y-5 px-4 pb-6 pt-6 md:pb-24">
+    <AppShell theme="prism" variant="single">
+      <div className="pk-settings-page h-full space-y-5 px-4 pb-6 pt-4 md:pb-24 md:pt-6">
         {loading ? (
           <div className="flex min-h-[40vh] items-center justify-center">
             <PkIconLoader
@@ -206,61 +182,27 @@ export default function Settings() {
           </div>
         ) : (
           <>
-        <PrismPageHero
-          eyebrow={isFr ? "COMPTE PRODUCER" : "PRODUCER ACCOUNT"}
-          title={<span className="pk-prism-holo-text">{isFr ? "Ton espace personnel" : "Your personal space"}</span>}
-          description={
-            isFr
-              ? "Profil, abonnement et sécurité — tout est centralisé ici."
-              : "Profile, subscription, and security — all in one place."
-          }
-          actions={
-            <Link to="/pricing">
-              <Button variant="primary" size="sm">
-                <Zap className="h-4 w-4" />
-                {isFr ? "Voir les plans" : "View plans"}
-              </Button>
-            </Link>
-          }
-        >
-          <div className="pk-prism-stat-grid">
-            <PrismStat label="Plan" value={plan} icon={<CreditCard className="h-4 w-4" />} accent="violet" />
-            <PrismStat label={isFr ? "Ce mois" : "This month"} value={`${usedThisMonth}/${limit}`} icon={<Zap className="h-4 w-4" />} accent="cyan" />
-            <PrismStat label={isFr ? "Restants" : "Remaining"} value={remaining} icon={<Sparkles className="h-4 w-4" />} />
-            <PrismStat label={isFr ? "Profil" : "Profile"} value={profileDisplay} icon={<UserRound className="h-4 w-4" />} />
-          </div>
-        </PrismPageHero>
+            <SettingsIdentityHero
+              isFr={isFr}
+              initials={initials}
+              displayName={displayName}
+              email={user?.email ?? ""}
+              plan={plan}
+              planClass={tierClass(plan)}
+              usedThisMonth={usedThisMonth}
+              limit={limit}
+              remaining={remaining}
+              pct={pct}
+              publicProfileUrl={publicProfileUrl}
+              navItems={navItems}
+              activeSection={activeSection}
+              onNav={scrollToSection}
+            />
 
-        <SettingsGrowthExtras locale={locale} plan={plan} />
+            <SettingsGrowthExtras locale={locale} plan={plan} compact />
 
-        <div className="pk-prism-section-card">
-          <div className="pk-prism-section-head">
-            <div className="pk-prism-section-head__icon">
-              <Palette className="h-4 w-4" />
-            </div>
-            <div>
-              <div className="text-lg font-semibold">{isFr ? "Apparence" : "Appearance"}</div>
-              <div className="text-xs text-pk-muted">
-                {isFr ? "Thème de l’espace studio (Dashboard, Bibliothèque…)" : "Studio shell theme (Dashboard, Library…)"}
-              </div>
-            </div>
-          </div>
-          <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="text-sm text-pk-muted">
-              {visualTheme === "warm-glass"
-                ? isFr
-                  ? "Warm Glass — dégradés orange, rose et jaune, effet liquid glass."
-                  : "Warm Glass — orange, pink and yellow gradients with liquid glass."
-                : isFr
-                  ? "Prism — cyan, violet et chrome (thème principal)."
-                  : "Prism — cyan, violet and chrome (default theme)."}
-            </div>
-            <ThemeToggleButton variant="segmented" />
-          </div>
-        </div>
-
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div id="pk-settings-profile" className="pk-prism-section-card">
+            <div className="pk-settings-bento">
+              <div id="pk-settings-profile" className="pk-prism-section-card pk-settings-section">
             <div className="pk-prism-section-head">
               <div className="pk-prism-section-head__icon">
                 <UserRound className="h-4 w-4" />
@@ -423,328 +365,321 @@ export default function Settings() {
             </div>
           </div>
 
-          <div id="pk-settings-discord" className="pk-prism-section-card lg:col-span-2">
-            <div className="pk-prism-section-head">
-              <div className="pk-prism-section-head__icon">
-                <UserRound className="h-4 w-4" />
-              </div>
-              <div>
-                <div className="text-lg font-semibold">Discord</div>
-                <div className="text-xs text-pk-muted">
-                  {isFr
-                    ? "Communauté globale — EN par défaut, salons FR/ES/PT · challenges + crédits bonus."
-                    : "Global community — English default, FR/ES/PT lounges · weekly challenges & bonus credits."}
+              <div className="pk-settings-bento__stack">
+                <div id="pk-settings-appearance" className="pk-prism-section-card pk-settings-section pk-settings-section--compact">
+                  <div className="pk-prism-section-head">
+                    <div className="pk-prism-section-head__icon">
+                      <Palette className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-base font-semibold">{isFr ? "Apparence" : "Appearance"}</div>
+                      <div className="text-xs text-pk-muted">
+                        {isFr ? "Thème studio" : "Studio theme"}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-xs leading-relaxed text-pk-muted">
+                      {visualTheme === "warm-glass"
+                        ? isFr
+                          ? "Warm Glass — or, rose, liquid glass."
+                          : "Warm Glass — gold, pink, liquid glass."
+                        : isFr
+                          ? "Prism — cyan, violet, chrome."
+                          : "Prism — cyan, violet, chrome."}
+                    </p>
+                    <ThemeToggleButton variant="segmented" />
+                  </div>
+                </div>
+
+                <div id="pk-settings-plan" className="pk-prism-section-card pk-settings-section pk-settings-section--compact">
+                  <div className="pk-prism-section-head">
+                    <div className="pk-prism-section-head__icon">
+                      <CreditCard className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-base font-semibold">{isFr ? "Abonnement" : "Subscription"}</div>
+                      <div className="text-xs text-pk-muted">{isFr ? "Plan & facturation" : "Plan & billing"}</div>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                    <span className={`pk-prism-tier-badge ${tierClass(plan)}`}>
+                      <Sparkles className="h-3 w-3" />
+                      {plan}
+                    </span>
+                  </div>
+                  <div className="pk-prism-chip-cloud mt-3">
+                    <span className="pk-prism-vibe-chip">{isFr ? "Exports HD" : "HD exports"}</span>
+                    <span className="pk-prism-vibe-chip">{isFr ? "Cloud" : "Cloud"}</span>
+                    <span className="pk-prism-vibe-chip">{isFr ? "Communauté" : "Community"}</span>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Link to="/pricing">
+                      <Button variant="primary" size="sm">{isFr ? "Upgrade" : "Upgrade"}</Button>
+                    </Link>
+                    {plan !== "free" ? (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        disabled={portalLoading}
+                        onClick={async () => {
+                          setPortalLoading(true);
+                          try {
+                            const { data, error } = await supabase.functions.invoke("create-portal", {
+                              body: { returnUrl: window.location.origin + "/settings" },
+                            });
+                            if (error) throw error;
+                            const url = (data as { url?: string } | null)?.url;
+                            if (!url) throw new Error("Missing portal URL");
+                            window.location.href = url;
+                          } catch (err) {
+                            const message = err instanceof Error ? err.message : "Portal error";
+                            toast.error(message);
+                          } finally {
+                            setPortalLoading(false);
+                          }
+                        }}
+                      >
+                        {portalLoading ? (isFr ? "Chargement…" : "Loading…") : isFr ? "Gérer" : "Manage"}
+                      </Button>
+                    ) : null}
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="mt-4 flex flex-wrap gap-3">
-              <a
-                href={discordCommunityUrl("settings")}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="pk-prism-btn inline-flex h-10 items-center justify-center rounded-full px-5 text-sm font-semibold"
-              >
-                {isFr ? "Rejoindre Discord" : "Join Discord"}
-              </a>
-              <Link to="/community" className="pk-glass-btn inline-flex h-10 items-center justify-center rounded-full px-5 text-sm font-semibold">
-                {isFr ? "Hub communauté" : "Community hub"}
-              </Link>
-            </div>
-          </div>
 
-          <div id="pk-settings-referral" className="pk-prism-section-card lg:col-span-2">
-            <div className="pk-prism-section-head">
-              <div className="pk-prism-section-head__icon">
-                <Sparkles className="h-4 w-4" />
-              </div>
-              <div>
-                <div className="text-lg font-semibold">{isFr ? "Parrainage" : "Referral program"}</div>
-                <div className="text-xs text-pk-muted">
-                  {isFr
-                    ? `Offre inratable — ${REFERRAL_REFEREE_START_TOTAL} gen pour eux, +${REFERRAL_REFERRER_SIGNUP_BONUS} pour toi dès leur inscription.`
-                    : `Unbeatable offer — ${REFERRAL_REFEREE_START_TOTAL} gens for them, +${REFERRAL_REFERRER_SIGNUP_BONUS} for you when they sign up.`}
+              <div id="pk-settings-referral" className="pk-prism-section-card pk-settings-section pk-settings-bento__full">
+                <div className="pk-prism-section-head">
+                  <div className="pk-prism-section-head__icon">
+                    <Sparkles className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <div className="text-lg font-semibold">{isFr ? "Parrainage" : "Referral program"}</div>
+                    <div className="text-xs text-pk-muted">
+                      {isFr
+                        ? `+${REFERRAL_REFERRER_SIGNUP_BONUS} gen pour toi · ${REFERRAL_REFEREE_START_TOTAL} gen pour eux`
+                        : `+${REFERRAL_REFERRER_SIGNUP_BONUS} for you · ${REFERRAL_REFEREE_START_TOTAL} for them`}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-            <div className="mt-4 rounded-2xl border border-violet-400/20 bg-violet-500/[0.06] p-4 text-sm leading-relaxed text-white/75">
-              <p className="font-semibold text-white">
-                {isFr ? "Comment ça marche" : "How it works"}
-              </p>
-              <ul className="mt-2 space-y-2 text-xs sm:text-sm">
-                <li>
-                  {isFr
-                    ? `1. Envoie ton lien — ton pote s'inscrit et obtient ${REFERRAL_REFEREE_START_TOTAL} générations dès le départ (${REFERRAL_FREE_BASE} free + ${REFERRAL_REFEREE_BONUS} bonus lien).`
-                    : `1. Send your link — your friend signs up and starts with ${REFERRAL_REFEREE_START_TOTAL} generations (${REFERRAL_FREE_BASE} free + ${REFERRAL_REFEREE_BONUS} link bonus).`}
-                </li>
-                <li>
-                  {isFr
-                    ? `2. Dès qu'un filleul s'inscrit via ton lien, tu reçois +${REFERRAL_REFERRER_SIGNUP_BONUS} générations automatiquement.`
-                    : `2. When someone signs up with your link, you automatically get +${REFERRAL_REFERRER_SIGNUP_BONUS} generations.`}
-                </li>
-                <li>
-                  {isFr
-                    ? "3. Loot daily, niveaux, streaks — les bonus s'enchaînent."
-                    : "3. Daily loot, levels, streaks — bonuses keep stacking."}
-                </li>
-              </ul>
-            </div>
-            {referralBonus > 0 || levelBonus > 0 || dailyBonusMonth > 0 ? (
-              <div className="mt-4 space-y-1 text-sm text-[var(--prism-cyan)]">
-                {referralBonus > 0 ? (
-                  <div>{isFr ? `Parrainage : +${referralBonus} gen` : `Referral: +${referralBonus} gen`}</div>
+                <div className="pk-settings-referral-highlight text-sm leading-relaxed text-white/75">
+                  <p className="font-semibold text-white">{isFr ? "Comment ça marche" : "How it works"}</p>
+                  <ul className="mt-2 space-y-1.5 text-xs sm:text-sm">
+                    <li>
+                      {isFr
+                        ? `Envoie ton lien — ${REFERRAL_REFEREE_START_TOTAL} générations dès l'inscription.`
+                        : `Share your link — ${REFERRAL_REFEREE_START_TOTAL} generations on signup.`}
+                    </li>
+                    <li>
+                      {isFr
+                        ? `Tu reçois +${REFERRAL_REFERRER_SIGNUP_BONUS} gen par filleul inscrit.`
+                        : `You get +${REFERRAL_REFERRER_SIGNUP_BONUS} gen per signup.`}
+                    </li>
+                  </ul>
+                </div>
+                {referralBonus > 0 || levelBonus > 0 || dailyBonusMonth > 0 ? (
+                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[var(--prism-cyan)]">
+                    {referralBonus > 0 ? (
+                      <span>{isFr ? `Parrainage +${referralBonus}` : `Referral +${referralBonus}`}</span>
+                    ) : null}
+                    {levelBonus > 0 ? (
+                      <span>{isFr ? `Niveaux +${levelBonus}` : `Levels +${levelBonus}`}</span>
+                    ) : null}
+                    {dailyBonusMonth > 0 ? (
+                      <span>{isFr ? `Daily +${dailyBonusMonth}` : `Daily +${dailyBonusMonth}`}</span>
+                    ) : null}
+                  </div>
                 ) : null}
-                {levelBonus > 0 ? (
-                  <div>{isFr ? `Niveaux : +${levelBonus} gen` : `Levels: +${levelBonus} gen`}</div>
-                ) : null}
-                {dailyBonusMonth > 0 ? (
-                  <div>{isFr ? `Bonus daily ce mois : +${dailyBonusMonth} gen` : `Daily bonus this month: +${dailyBonusMonth} gen`}</div>
-                ) : null}
-              </div>
-            ) : null}
-            <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
-              <div>
-                <div className="text-xs text-pk-muted">{isFr ? "Ton lien d’invitation" : "Your invite link"}</div>
-                <input
-                  value={referralLinkLoading ? (isFr ? "Génération du lien…" : "Generating link…") : referralLink}
-                  readOnly
-                  className="mt-2 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm text-pk-muted outline-none"
-                />
-              </div>
-              <Button
-                variant="secondary"
-                disabled={!referralLink || referralLinkLoading}
-                onClick={() => {
-                  void navigator.clipboard.writeText(referralLink).then(() => {
-                    toast.success(isFr ? "Lien copié" : "Link copied");
-                  });
-                }}
-              >
-                {isFr ? "Copier" : "Copy"}
-              </Button>
-            </div>
-            {referralCode ? (
-              <div className="mt-3 text-xs text-pk-muted">
-                {isFr ? "Code" : "Code"}: <span className="font-semibold text-white">{referralCode}</span>
-              </div>
-            ) : null}
-          </div>
-
-          <div className="pk-prism-section-card">
-            <div className="pk-prism-section-head">
-              <div className="pk-prism-section-head__icon">
-                <CreditCard className="h-4 w-4" />
-              </div>
-              <div>
-                <div className="text-lg font-semibold">{isFr ? "Abonnement" : "Subscription"}</div>
-                <div className="text-xs text-pk-muted">{isFr ? "Quota mensuel & upgrade" : "Monthly quota & upgrades"}</div>
-              </div>
-            </div>
-            <div className="mt-5 flex flex-wrap items-center gap-2">
-              <span className={`pk-prism-tier-badge ${tierClass(plan)}`}>{plan}</span>
-              <span className="text-sm text-pk-muted">
-                {usedThisMonth} / {limit} {isFr ? "générations" : "generations"}
-              </span>
-            </div>
-            <div className="mt-4 pk-prism-progress-track">
-              <div className="pk-prism-progress-fill" style={{ width: `${pct}%` }} />
-            </div>
-            <div className="pk-prism-chip-cloud mt-4">
-              <span className="pk-prism-vibe-chip">{isFr ? "Exports HD" : "HD exports"}</span>
-              <span className="pk-prism-vibe-chip">{isFr ? "Historique cloud" : "Cloud history"}</span>
-              <span className="pk-prism-vibe-chip">{isFr ? "Communauté" : "Community"}</span>
-            </div>
-            <div className="mt-5 flex flex-wrap gap-2">
-              <Link to="/pricing">
-                <Button variant="primary">{isFr ? "Upgrade" : "Upgrade Plan"}</Button>
-              </Link>
-              {plan !== "free" ? (
-                <Button
-                  variant="secondary"
-                  disabled={portalLoading}
-                  onClick={async () => {
-                    setPortalLoading(true);
-                    try {
-                      const { data, error } = await supabase.functions.invoke("create-portal", {
-                        body: { returnUrl: window.location.origin + "/settings" },
+                <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+                  <div>
+                    <div className="text-xs text-pk-muted">{isFr ? "Lien d'invitation" : "Invite link"}</div>
+                    <input
+                      value={referralLinkLoading ? (isFr ? "Génération…" : "Generating…") : referralLink}
+                      readOnly
+                      className="mt-2 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm text-pk-muted outline-none"
+                    />
+                  </div>
+                  <Button
+                    variant="secondary"
+                    disabled={!referralLink || referralLinkLoading}
+                    onClick={() => {
+                      void navigator.clipboard.writeText(referralLink).then(() => {
+                        toast.success(isFr ? "Lien copié" : "Link copied");
                       });
-                      if (error) throw error;
-                      const url = (data as { url?: string } | null)?.url;
-                      if (!url) throw new Error("Missing portal URL");
-                      window.location.href = url;
-                    } catch (err) {
-                      const message = err instanceof Error ? err.message : "Portal error";
-                      toast.error(message);
-                    } finally {
-                      setPortalLoading(false);
-                    }
-                  }}
-                >
-                  {portalLoading ? (isFr ? "Chargement…" : "Loading…") : isFr ? "Gérer l’abonnement" : "Manage subscription"}
-                </Button>
-              ) : null}
-            </div>
-          </div>
-
-          <div className="pk-prism-section-card">
-            <div className="pk-prism-section-head">
-              <div className="pk-prism-section-head__icon">
-                <Shield className="h-4 w-4" />
+                    }}
+                  >
+                    {isFr ? "Copier" : "Copy"}
+                  </Button>
+                </div>
+                {referralCode ? (
+                  <div className="mt-2 text-xs text-pk-muted">
+                    {isFr ? "Code" : "Code"}: <span className="font-semibold text-white">{referralCode}</span>
+                  </div>
+                ) : null}
               </div>
-              <div>
-                <div className="text-lg font-semibold">{isFr ? "Connexion au compte" : "Account sign-in"}</div>
-                <div className="text-xs text-pk-muted">
-                  {isFr ? "Email, Google — un seul compte ProducerHit" : "Email, Google — one ProducerHit account"}
+
+              <div id="pk-settings-discord" className="pk-prism-section-card pk-settings-section">
+                <div className="pk-prism-section-head">
+                  <div className="pk-prism-section-head__icon">
+                    <Users className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <div className="text-lg font-semibold">Discord</div>
+                    <div className="text-xs text-pk-muted">
+                      {isFr ? "Challenges · crédits bonus · salons FR/ES/PT" : "Challenges · bonus credits · FR/ES/PT lounges"}
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <a
+                    href={discordCommunityUrl("settings")}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="pk-prism-btn inline-flex h-9 items-center justify-center rounded-full px-4 text-sm font-semibold"
+                  >
+                    {isFr ? "Rejoindre" : "Join"}
+                  </a>
+                  <Link to="/community" className="pk-glass-btn inline-flex h-9 items-center justify-center rounded-full px-4 text-sm font-semibold">
+                    {isFr ? "Hub" : "Hub"}
+                  </Link>
+                </div>
+              </div>
+
+              <div id="pk-settings-security" className="pk-prism-section-card pk-settings-section">
+                <div className="pk-prism-section-head">
+                  <div className="pk-prism-section-head__icon">
+                    <Shield className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <div className="text-lg font-semibold">{isFr ? "Compte & sécurité" : "Account & security"}</div>
+                    <div className="text-xs text-pk-muted">
+                      {isFr ? "Connexion, mot de passe, session" : "Sign-in, password, session"}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pk-settings-security-block">
+                  <div className="flex flex-wrap gap-2">
+                    <span
+                      className={[
+                        "rounded-full px-3 py-1 text-[11px] font-semibold",
+                        emailLinked ? "bg-emerald-500/15 text-emerald-200" : "bg-white/5 text-pk-muted",
+                      ].join(" ")}
+                    >
+                      {isFr ? "Email" : "Email"} {emailLinked ? "✓" : "—"}
+                    </span>
+                    <span
+                      className={[
+                        "rounded-full px-3 py-1 text-[11px] font-semibold",
+                        googleLinked ? "bg-emerald-500/15 text-emerald-200" : "bg-white/5 text-pk-muted",
+                      ].join(" ")}
+                    >
+                      Google {googleLinked ? "✓" : "—"}
+                    </span>
+                  </div>
+                  {!googleLinked ? (
+                    <div className="mt-3">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        disabled={linkingGoogle}
+                        onClick={async () => {
+                          setLinkingGoogle(true);
+                          try {
+                            await linkGoogle("/settings");
+                          } catch (err) {
+                            toast.error(mapAuthError(err, locale, "link"));
+                            setLinkingGoogle(false);
+                          }
+                        }}
+                      >
+                        {linkingGoogle ? (isFr ? "Redirection…" : "Redirecting…") : isFr ? "Lier Google" : "Link Google"}
+                      </Button>
+                    </div>
+                  ) : null}
+                  {!emailLinked ? (
+                    <div className="mt-3 space-y-3 rounded-pk border border-pk-border/80 bg-white/[0.02] p-3">
+                      <p className="text-xs text-pk-muted">
+                        {isFr ? "Définis un mot de passe pour te connecter sans Google." : "Set a password to sign in without Google."}
+                      </p>
+                      <input
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        minLength={6}
+                        placeholder={isFr ? "Mot de passe (6+ car.)" : "Password (6+ chars)"}
+                        className="w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2 text-sm outline-none focus:border-pk-accent"
+                      />
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        disabled={savingPassword || newPassword.length < 6}
+                        onClick={async () => {
+                          setSavingPassword(true);
+                          try {
+                            await setPassword(newPassword);
+                            setNewPassword("");
+                            toast.success(isFr ? "Mot de passe enregistré" : "Password saved");
+                          } catch (err) {
+                            toast.error(mapAuthError(err, locale, "password"));
+                          } finally {
+                            setSavingPassword(false);
+                          }
+                        }}
+                      >
+                        {savingPassword ? (isFr ? "Enregistrement…" : "Saving…") : isFr ? "Créer mot de passe" : "Set password"}
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="pk-settings-security-block">
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={!user?.email}
+                      onClick={async () => {
+                        const email = user?.email;
+                        if (!email) return;
+                        try {
+                          await resetPassword(email);
+                          toast.success(
+                            isFr ? "Email envoyé" : "Email sent",
+                          );
+                        } catch (err) {
+                          toast.error(mapAuthError(err, locale, "password"));
+                        }
+                      }}
+                    >
+                      {isFr ? "Changer mot de passe" : "Change password"}
+                    </Button>
+                    <Button variant="danger" size="sm" onClick={() => setConfirmDelete(true)}>
+                      {isFr ? "Supprimer compte" : "Delete account"}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          await signOut();
+                          toast.success(isFr ? "Déconnecté" : "Signed out");
+                          navigate("/auth", { replace: true });
+                        } catch (err) {
+                          const message = err instanceof Error ? err.message : "Sign out failed";
+                          toast.error(message);
+                        }
+                      }}
+                    >
+                      <LogOut className="h-3.5 w-3.5" />
+                      {isFr ? "Déconnexion" : "Sign out"}
+                    </Button>
+                  </div>
+                  <p className="mt-2 text-[11px] text-pk-muted">
+                    {isFr ? "Suppression de compte gérée manuellement (MVP)." : "Account deletion is manual (MVP)."}
+                  </p>
                 </div>
               </div>
             </div>
-
-            <div className="mt-4 flex flex-wrap gap-2">
-              <span
-                className={[
-                  "rounded-full px-3 py-1 text-[11px] font-semibold",
-                  emailLinked ? "bg-emerald-500/15 text-emerald-200" : "bg-white/5 text-pk-muted",
-                ].join(" ")}
-              >
-                {isFr ? "Email / mot de passe" : "Email / password"} {emailLinked ? "✓" : "—"}
-              </span>
-              <span
-                className={[
-                  "rounded-full px-3 py-1 text-[11px] font-semibold",
-                  googleLinked ? "bg-emerald-500/15 text-emerald-200" : "bg-white/5 text-pk-muted",
-                ].join(" ")}
-              >
-                Google {googleLinked ? "✓" : "—"}
-              </span>
-            </div>
-
-            {!googleLinked ? (
-              <div className="mt-4">
-                <Button
-                  variant="secondary"
-                  disabled={linkingGoogle}
-                  onClick={async () => {
-                    setLinkingGoogle(true);
-                    try {
-                      await linkGoogle("/settings");
-                    } catch (err) {
-                      toast.error(mapAuthError(err, locale, "link"));
-                      setLinkingGoogle(false);
-                    }
-                  }}
-                >
-                  {linkingGoogle ? (isFr ? "Redirection…" : "Redirecting…") : isFr ? "Lier Google" : "Link Google"}
-                </Button>
-              </div>
-            ) : null}
-
-            {!emailLinked ? (
-              <div className="mt-4 space-y-3 rounded-pk border border-pk-border/80 bg-white/[0.02] p-4">
-                <p className="text-xs text-pk-muted">
-                  {isFr
-                    ? "Compte créé avec Google ? Définis un mot de passe pour te connecter sans Google."
-                    : "Signed up with Google? Set a password to sign in without Google."}
-                </p>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  minLength={6}
-                  placeholder={isFr ? "Nouveau mot de passe (6+ caractères)" : "New password (6+ chars)"}
-                  className="w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm outline-none focus:border-pk-accent"
-                />
-                <Button
-                  variant="primary"
-                  disabled={savingPassword || newPassword.length < 6}
-                  onClick={async () => {
-                    setSavingPassword(true);
-                    try {
-                      await setPassword(newPassword);
-                      setNewPassword("");
-                      toast.success(isFr ? "Mot de passe enregistré" : "Password saved");
-                    } catch (err) {
-                      toast.error(mapAuthError(err, locale, "password"));
-                    } finally {
-                      setSavingPassword(false);
-                    }
-                  }}
-                >
-                  {savingPassword ? (isFr ? "Enregistrement…" : "Saving…") : isFr ? "Créer un mot de passe" : "Set password"}
-                </Button>
-              </div>
-            ) : null}
-          </div>
-
-          <div className="pk-prism-section-card">
-            <div className="pk-prism-section-head">
-              <div className="pk-prism-section-head__icon">
-                <Shield className="h-4 w-4" />
-              </div>
-              <div>
-                <div className="text-lg font-semibold">{isFr ? "Sécurité" : "Security"}</div>
-                <div className="text-xs text-pk-muted">{isFr ? "Mot de passe & suppression" : "Password & deletion"}</div>
-              </div>
-            </div>
-            <div className="mt-5 flex flex-wrap gap-2">
-              <Button
-                variant="secondary"
-                disabled={!user?.email}
-                onClick={async () => {
-                  const email = user?.email;
-                  if (!email) return;
-                  try {
-                    await resetPassword(email);
-                    toast.success(
-                      isFr
-                        ? "Email envoyé — réinitialise ou crée ton mot de passe"
-                        : "Email sent — reset or create your password",
-                    );
-                  } catch (err) {
-                    toast.error(mapAuthError(err, locale, "password"));
-                  }
-                }}
-              >
-                {isFr ? "Changer le mot de passe" : "Change Password"}
-              </Button>
-              <Button variant="danger" onClick={() => setConfirmDelete(true)}>
-                {isFr ? "Supprimer le compte" : "Delete Account"}
-              </Button>
-            </div>
-            <div className="mt-3 text-xs text-pk-muted">
-              {isFr
-                ? "La suppression de compte est gérée manuellement pour le MVP."
-                : "Account deletion is manual in the MVP."}
-            </div>
-          </div>
-
-          <div className="pk-prism-section-card">
-            <div className="pk-prism-section-head">
-              <div className="pk-prism-section-head__icon">
-                <Shield className="h-4 w-4" />
-              </div>
-              <div>
-                <div className="text-lg font-semibold">Session</div>
-                <div className="text-xs text-pk-muted">{isFr ? "Déconnexion rapide" : "Quick sign out"}</div>
-              </div>
-            </div>
-            <div className="mt-5">
-              <Button
-                variant="secondary"
-                onClick={async () => {
-                  try {
-                    await signOut();
-                    toast.success(isFr ? "Déconnecté" : "Signed out");
-                    navigate("/auth", { replace: true });
-                  } catch (err) {
-                    const message = err instanceof Error ? err.message : "Sign out failed";
-                    toast.error(message);
-                  }
-                }}
-              >
-                {isFr ? "Se déconnecter" : "Sign out"}
-              </Button>
-            </div>
-          </div>
-        </div>
           </>
         )}
       </div>

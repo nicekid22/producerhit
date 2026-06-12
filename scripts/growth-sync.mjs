@@ -77,7 +77,7 @@ async function fetchPublicLoopIds() {
     return [];
   }
 
-  const endpoint = `${url.replace(/\/$/, "")}/rest/v1/loops?select=id,updated_at,created_at,audio_url&is_public=eq.true&audio_url=not.is.null&order=created_at.desc&limit=500`;
+  const endpoint = `${url.replace(/\/$/, "")}/rest/v1/loops?select=id,created_at&is_public=eq.true&audio_url=not.is.null&order=created_at.desc&limit=500`;
   const res = await fetch(endpoint, {
     headers: {
       apikey: key,
@@ -89,7 +89,7 @@ async function fetchPublicLoopIds() {
     return [];
   }
   const rows = await res.json();
-  return rows.filter((r) => typeof r.id === "string").map((r) => ({ id: r.id, ts: r.updated_at || r.created_at }));
+  return rows.filter((r) => typeof r.id === "string").map((r) => ({ id: r.id, ts: r.created_at }));
 }
 
 async function ensureGenreUrlsInMainSitemap() {
@@ -105,6 +105,10 @@ async function ensureGenreUrlsInMainSitemap() {
 }
 
 async function writeLoopsSitemap(rows) {
+  if (!rows.length) {
+    console.warn("growth-sync: no public loops — keeping existing sitemap-loops.xml");
+    return;
+  }
   const body = rows
     .map((r) => urlNode(`${ORIGIN}/loop/${encodeURIComponent(r.id)}`, "0.55", "monthly"))
     .join("\n");

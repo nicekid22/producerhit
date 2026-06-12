@@ -15,6 +15,8 @@ import { trackClientEvent } from "@/lib/supabaseClient";
 type Props = {
   locale: "en" | "fr";
   plan: string;
+  /** Masque le billboard promo — garde uniquement la progression. */
+  compact?: boolean;
 };
 
 function scrollToId(id: string) {
@@ -24,7 +26,7 @@ function scrollToId(id: string) {
 }
 
 /** Spotlight + progression — déplacés hors du dashboard mobile. */
-export function SettingsGrowthExtras({ locale, plan }: Props) {
+export function SettingsGrowthExtras({ locale, plan, compact = false }: Props) {
   const navigate = useNavigate();
   const isFr = locale === "fr";
   const user = useAuthStore((s) => s.user);
@@ -52,26 +54,28 @@ export function SettingsGrowthExtras({ locale, plan }: Props) {
   }, [isFr, refreshProfile]);
 
   return (
-    <div className="mb-6 space-y-4">
-      <DashboardPromoBillboard
-        locale={locale}
-        plan={plan}
-        onShare={() => {
-          toast(isFr ? "Génère une track depuis le studio, puis partage-la." : "Generate a track in the studio, then share it.");
-          navigate("/dashboard");
-        }}
-        onReferral={() => void onReferral()}
-        onCommunity={() => navigate("/community")}
-        onMastering={() => navigate("/dashboard")}
-        onProgress={() => {
-          progressionRef.current?.expand();
-          scrollToId("pk-settings-progression");
-          trackClientEvent("dashboard_billboard_progress", { source: "settings" });
-        }}
-        onPricing={() => navigate("/pricing?plan=plus")}
-        onProfile={() => scrollToId("pk-settings-profile")}
-        onCreate={() => navigate("/dashboard")}
-      />
+    <div className="pk-settings-growth space-y-4">
+      {!compact ? (
+        <DashboardPromoBillboard
+          locale={locale}
+          plan={plan}
+          onShare={() => {
+            toast(isFr ? "Génère une track depuis le studio, puis partage-la." : "Generate a track in the studio, then share it.");
+            navigate("/dashboard");
+          }}
+          onReferral={() => void onReferral()}
+          onCommunity={() => navigate("/community")}
+          onMastering={() => navigate("/dashboard")}
+          onProgress={() => {
+            progressionRef.current?.expand();
+            scrollToId("pk-settings-progression");
+            trackClientEvent("dashboard_billboard_progress", { source: "settings" });
+          }}
+          onPricing={() => navigate("/pricing?plan=plus")}
+          onProfile={() => scrollToId("pk-settings-profile")}
+          onCreate={() => navigate("/dashboard")}
+        />
+      ) : null}
 
       <div id="pk-settings-progression">
         <DashboardGamingPanelShell

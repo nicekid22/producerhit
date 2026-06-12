@@ -1,0 +1,40 @@
+name: Social publish cron
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Process social publish queue
+        env:
+          SOCIAL_PUBLISH_CRON_SECRET: ${{ secrets.SOCIAL_PUBLISH_CRON_SECRET }}
+        run: |
+          curl -sS -f -X POST \
+            "https://pmfnzenqemnonpglmjqx.supabase.co/functions/v1/social-publish-cron" \
+            -H "Content-Type: application/json" \
+            -H "x-social-cron-secret: ${SOCIAL_PUBLISH_CRON_SECRET}" \
+            -d '{"action":"process_queue","limit":8}'
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Generate rss-tracks.xml
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: node scripts/sync-rss-tracks.mjs
+
+      - name: Commit RSS tracks feed
+        run: |
+          git config user.name "producerhit-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add public/rss-tracks.xml public/robots.txt
+          git diff --staged --quiet || git commit -m "Growth: sync public tracks RSS"
+          git push || true
