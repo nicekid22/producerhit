@@ -130,6 +130,7 @@ import { triggerBeatReady } from "@/lib/delight/moments";
 import { loadGamification } from "@/lib/gamification";
 import { profileLoadErrorMessage, readProfileCache, shouldShowProfileLoadToast, syncProfileCache, type UserProfileRow } from "@/lib/profileBootstrap";
 import { beatAmbianceDropdownOptions } from "@/lib/beatAmbiance";
+import { beatEnergyDropdownOptions } from "@/lib/beatEnergy";
 import { beatInfluenceDropdownOptions } from "@/lib/beatInfluence";
 
 function formatTime(sec: number) {
@@ -376,6 +377,7 @@ export default function Dashboard() {
   const authProfileError = useAuthStore((s) => s.lastError);
   const locale = useLocaleStore((s) => s.locale);
   const ambianceDropdownOptions = useMemo(() => beatAmbianceDropdownOptions(locale), [locale]);
+  const energyDropdownOptions = useMemo(() => beatEnergyDropdownOptions(locale), [locale]);
   const influenceDropdownOptions = useMemo(() => beatInfluenceDropdownOptions(locale), [locale]);
   const isDesktop = useIsDesktop();
   const compactMobile = useIsCompactMobileViewport();
@@ -847,6 +849,13 @@ export default function Dashboard() {
     }
     return "Auto";
   }, [form.genre, genrePickMode, lastRandomGenre, locale]);
+
+  const prevChipGenreRef = useRef(chipGenre);
+  useEffect(() => {
+    if (prevChipGenreRef.current === chipGenre) return;
+    prevChipGenreRef.current = chipGenre;
+    setActiveChips([]);
+  }, [chipGenre]);
 
   const genreReady = genrePickMode === "auto" || (form.genre.length > 0 && form.genre !== "Auto");
 
@@ -2820,6 +2829,14 @@ export default function Dashboard() {
                       value={form.mood}
                       onChange={(v) => setField("mood", v)}
                       options={ambianceDropdownOptions}
+                    />
+
+                    <Dropdown
+                      label={locale === "fr" ? "Énergie" : "Energy"}
+                      menuTitle={locale === "fr" ? "Énergie" : "Energy"}
+                      value={form.energyLevel}
+                      onChange={(v) => setField("energyLevel", v)}
+                      options={energyDropdownOptions}
                     />
 
                     <Dropdown

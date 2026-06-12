@@ -8,5 +8,4 @@ Disallow: /auth
 
 Sitemap: https://www.producerhit.com/sitemap.xml
 Sitemap: https://www.producerhit.com/sitemap-loops.xml
-# Public tracks RSS (auto-sync)
-Sitemap: https://www.producerhit.com/rss-tracks.xml
+# Public tracks RSS feed: https://www.producerhit.com/rss-tracks.xml

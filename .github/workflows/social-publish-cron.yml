@@ -9,6 +9,12 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - name: Process social publish queue
         env:
           SOCIAL_PUBLISH_CRON_SECRET: ${{ secrets.SOCIAL_PUBLISH_CRON_SECRET }}
@@ -18,12 +24,6 @@ jobs:
             -H "Content-Type: application/json" \
             -H "x-social-cron-secret: ${SOCIAL_PUBLISH_CRON_SECRET}" \
             -d '{"action":"process_queue","limit":8}'
-
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
 
       - name: Generate rss-tracks.xml
         env:

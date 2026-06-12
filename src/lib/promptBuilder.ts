@@ -175,6 +175,8 @@ const energyMap: Record<string, string> = {
   Confident: "confident bold swagger, self-assured groove, effortless cool",
   Nostalgic: "nostalgic warm feeling, throwback emotion, bittersweet memory",
   Hype: "high energy hype, club ready, adrenaline rush, crowd energy",
+  Medium: "balanced moderate energy, steady groove, controlled intensity",
+  High: "high energy hype, club ready, adrenaline rush, crowd energy",
 };
 
 const reverbMap: Record<string, string> = {

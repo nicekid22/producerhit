@@ -29,7 +29,7 @@ async function fetchPublicLoops() {
   }
 
   const endpoint =
-    `${url.replace(/\/$/, "")}/rest/v1/loops?select=id,name,genre,mood,bpm,cover_url,created_at,updated_at` +
+    `${url.replace(/\/$/, "")}/rest/v1/loops?select=id,name,genre,mood,bpm,cover_url,created_at` +
     `&is_public=eq.true&audio_url=not.is.null&order=created_at.desc&limit=100`;
   const res = await fetch(endpoint, {
     headers: { apikey: key, Authorization: `Bearer ${key}` },
@@ -42,12 +42,11 @@ async function fetchPublicLoops() {
 }
 
 async function ensureRobotsFeed() {
-  const line = `Sitemap: ${ORIGIN}/rss-tracks.xml`;
+  const comment = `# Public tracks RSS feed: ${ORIGIN}/rss-tracks.xml`;
   let robots = await fs.readFile(robotsFile, "utf8");
-  if (!robots.includes(line)) {
-    robots = `${robots.trim()}\n# Public tracks RSS (auto-sync)\n${line}\n`;
-    await fs.writeFile(robotsFile, robots, "utf8");
-  }
+  if (robots.includes(`${ORIGIN}/rss-tracks.xml`)) return;
+  robots = `${robots.trim()}\n${comment}\n`;
+  await fs.writeFile(robotsFile, robots, "utf8");
 }
 
 async function main() {
@@ -60,7 +59,7 @@ async function main() {
       const mood = escapeXml(loop.mood || "");
       const bpm = loop.bpm && loop.bpm > 0 ? `${loop.bpm} BPM` : "";
       const desc = [genre, mood, bpm].filter(Boolean).join(" · ");
-      const pub = loop.updated_at || loop.created_at;
+      const pub = loop.created_at;
       const enclosure = loop.cover_url?.startsWith("http")
         ? `\n      <enclosure url="${escapeXml(loop.cover_url)}" type="image/jpeg" />`
         : "";

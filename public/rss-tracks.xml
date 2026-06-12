@@ -6,7 +6,806 @@
     <description>Latest AI beats and songs published on ProducerHit — royalty-free, remix-ready.</description>
     <language>en</language>
     <atom:link href="https://www.producerhit.com/rss-tracks.xml" rel="self" type="application/rss+xml" />
-    <lastBuildDate>Thu, 11 Jun 2026 23:59:50 GMT</lastBuildDate>
-
+    <lastBuildDate>Fri, 12 Jun 2026 00:16:43 GMT</lastBuildDate>
+    <item>
+      <title>Velvet Nights #01</title>
+      <link>https://www.producerhit.com/loop/9f9dfbdb-27ef-4779-802b-20a7dd0282ad</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/9f9dfbdb-27ef-4779-802b-20a7dd0282ad</guid>
+      <pubDate>Fri, 12 Jun 2026 00:09:22 GMT</pubDate>
+      <description><![CDATA[Velvet Nights · 88 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/9f9dfbdb-27ef-4779-802b-20a7dd0282ad.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Deep House #01</title>
+      <link>https://www.producerhit.com/loop/eaae4ce3-8ff6-4d6a-b601-210fe73fac47</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/eaae4ce3-8ff6-4d6a-b601-210fe73fac47</guid>
+      <pubDate>Fri, 12 Jun 2026 00:04:30 GMT</pubDate>
+      <description><![CDATA[Deep House · 120 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/eaae4ce3-8ff6-4d6a-b601-210fe73fac47.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Psychedelic Rock #01</title>
+      <link>https://www.producerhit.com/loop/353fb5ee-d901-4a87-9014-c20e43641cfa</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/353fb5ee-d901-4a87-9014-c20e43641cfa</guid>
+      <pubDate>Fri, 12 Jun 2026 00:03:32 GMT</pubDate>
+      <description><![CDATA[Psychedelic Rock · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/353fb5ee-d901-4a87-9014-c20e43641cfa.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Orchestral Drill #01</title>
+      <link>https://www.producerhit.com/loop/af1b4532-5b90-4186-bd9c-489b75166066</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/af1b4532-5b90-4186-bd9c-489b75166066</guid>
+      <pubDate>Fri, 12 Jun 2026 00:01:34 GMT</pubDate>
+      <description><![CDATA[Orchestral Drill · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/af1b4532-5b90-4186-bd9c-489b75166066-c60ae97f2c2b12cc.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Lo-fi Boom Bap #01</title>
+      <link>https://www.producerhit.com/loop/da298c29-8012-41c6-9fb6-f4c3a8f81eeb</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/da298c29-8012-41c6-9fb6-f4c3a8f81eeb</guid>
+      <pubDate>Fri, 12 Jun 2026 00:00:24 GMT</pubDate>
+      <description><![CDATA[Lo-Fi Boom Bap · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/da298c29-8012-41c6-9fb6-f4c3a8f81eeb-aace6cc84366e099.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Internet Dreamscape #01</title>
+      <link>https://www.producerhit.com/loop/fcf771b9-a829-44eb-a112-267c99107212</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/fcf771b9-a829-44eb-a112-267c99107212</guid>
+      <pubDate>Thu, 11 Jun 2026 23:58:58 GMT</pubDate>
+      <description><![CDATA[Internet Dreamscape · 103 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/fcf771b9-a829-44eb-a112-267c99107212.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Uk Drill #01</title>
+      <link>https://www.producerhit.com/loop/79a1566a-6054-44e7-9065-bb485c398d9f</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/79a1566a-6054-44e7-9065-bb485c398d9f</guid>
+      <pubDate>Thu, 11 Jun 2026 23:57:25 GMT</pubDate>
+      <description><![CDATA[UK Drill · 200 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/79a1566a-6054-44e7-9065-bb485c398d9f.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Cinematic Edit Rap #01</title>
+      <link>https://www.producerhit.com/loop/192e030b-48f5-4e57-844d-08d5e577985a</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/192e030b-48f5-4e57-844d-08d5e577985a</guid>
+      <pubDate>Thu, 11 Jun 2026 23:28:04 GMT</pubDate>
+      <description><![CDATA[Cinematic Edit Rap · 86 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/192e030b-48f5-4e57-844d-08d5e577985a-6d92c76c4c7464ad.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Rage + Ambient #01</title>
+      <link>https://www.producerhit.com/loop/98c1696f-90f2-4388-ad94-b02c346883c9</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/98c1696f-90f2-4388-ad94-b02c346883c9</guid>
+      <pubDate>Thu, 11 Jun 2026 23:12:09 GMT</pubDate>
+      <description><![CDATA[Rage + Ambient · 167 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/98c1696f-90f2-4388-ad94-b02c346883c9.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Blog Era Soul #03</title>
+      <link>https://www.producerhit.com/loop/58d4335a-5982-4cf2-b05c-59b8e0c96380</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/58d4335a-5982-4cf2-b05c-59b8e0c96380</guid>
+      <pubDate>Thu, 11 Jun 2026 23:05:04 GMT</pubDate>
+      <description><![CDATA[Blog Era Soul · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/58d4335a-5982-4cf2-b05c-59b8e0c96380.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Alien Trap #02</title>
+      <link>https://www.producerhit.com/loop/19ca1ae7-4d18-4f60-a19a-2aef87bae761</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/19ca1ae7-4d18-4f60-a19a-2aef87bae761</guid>
+      <pubDate>Thu, 11 Jun 2026 23:03:15 GMT</pubDate>
+      <description><![CDATA[Alien Trap · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/19ca1ae7-4d18-4f60-a19a-2aef87bae761.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Emotional Rap #01</title>
+      <link>https://www.producerhit.com/loop/8f4063c5-1a6e-478e-927b-55b53d05d86e</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/8f4063c5-1a6e-478e-927b-55b53d05d86e</guid>
+      <pubDate>Thu, 11 Jun 2026 23:02:12 GMT</pubDate>
+      <description><![CDATA[Emotional Rap · 65 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/8f4063c5-1a6e-478e-927b-55b53d05d86e.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Contemporary Rap #01</title>
+      <link>https://www.producerhit.com/loop/1e779ab3-ceeb-4195-b842-030d924511f7</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/1e779ab3-ceeb-4195-b842-030d924511f7</guid>
+      <pubDate>Thu, 11 Jun 2026 23:00:06 GMT</pubDate>
+      <description><![CDATA[Contemporary Rap · 97 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/1e779ab3-ceeb-4195-b842-030d924511f7.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Miami Sunset Soul #01</title>
+      <link>https://www.producerhit.com/loop/fb0d0e5c-86db-403c-9a64-30d337448253</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/fb0d0e5c-86db-403c-9a64-30d337448253</guid>
+      <pubDate>Thu, 11 Jun 2026 22:58:10 GMT</pubDate>
+      <description><![CDATA[Miami Sunset Soul · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/fb0d0e5c-86db-403c-9a64-30d337448253.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Ai-assisted Pop #01</title>
+      <link>https://www.producerhit.com/loop/eb921cbd-9c31-4a2f-8fcd-66a7e80aeb4d</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/eb921cbd-9c31-4a2f-8fcd-66a7e80aeb4d</guid>
+      <pubDate>Thu, 11 Jun 2026 22:52:03 GMT</pubDate>
+      <description><![CDATA[AI-assisted Pop · 97 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/eb921cbd-9c31-4a2f-8fcd-66a7e80aeb4d.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Floating Soul #02</title>
+      <link>https://www.producerhit.com/loop/11c5655d-d93c-4861-896d-774614588c53</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/11c5655d-d93c-4861-896d-774614588c53</guid>
+      <pubDate>Thu, 11 Jun 2026 22:50:40 GMT</pubDate>
+      <description><![CDATA[Floating Soul · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/11c5655d-d93c-4861-896d-774614588c53.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Ethereal R&amp;b #01</title>
+      <link>https://www.producerhit.com/loop/2b60d438-5860-4783-bb51-b1428fa689c0</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/2b60d438-5860-4783-bb51-b1428fa689c0</guid>
+      <pubDate>Thu, 11 Jun 2026 22:49:05 GMT</pubDate>
+      <description><![CDATA[Ethereal R&amp;B · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/2b60d438-5860-4783-bb51-b1428fa689c0.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Southern Hip Hop #01</title>
+      <link>https://www.producerhit.com/loop/1a8787b0-7dd4-46ef-b2ab-d708ec3bfb25</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/1a8787b0-7dd4-46ef-b2ab-d708ec3bfb25</guid>
+      <pubDate>Thu, 11 Jun 2026 22:48:03 GMT</pubDate>
+      <description><![CDATA[Southern Hip Hop · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/1a8787b0-7dd4-46ef-b2ab-d708ec3bfb25.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Psychedelic Rap #01</title>
+      <link>https://www.producerhit.com/loop/1b64cfbb-ca1c-4ce3-9929-65d8f00f92ac</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/1b64cfbb-ca1c-4ce3-9929-65d8f00f92ac</guid>
+      <pubDate>Thu, 11 Jun 2026 22:47:03 GMT</pubDate>
+      <description><![CDATA[Psychedelic Rap · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/1b64cfbb-ca1c-4ce3-9929-65d8f00f92ac-0d05a26ee1bfa5de.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Digital Heartbreak #01</title>
+      <link>https://www.producerhit.com/loop/3972d901-569f-477a-82ce-14926b111a8c</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/3972d901-569f-477a-82ce-14926b111a8c</guid>
+      <pubDate>Thu, 11 Jun 2026 22:45:50 GMT</pubDate>
+      <description><![CDATA[Digital Heartbreak · 88 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/3972d901-569f-477a-82ce-14926b111a8c.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Neo Lounge Soul #01</title>
+      <link>https://www.producerhit.com/loop/920ae161-40ea-4742-980c-f71a56ba80f1</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/920ae161-40ea-4742-980c-f71a56ba80f1</guid>
+      <pubDate>Thu, 11 Jun 2026 22:42:38 GMT</pubDate>
+      <description><![CDATA[Neo Lounge Soul · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/920ae161-40ea-4742-980c-f71a56ba80f1.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Detroit Rap #01</title>
+      <link>https://www.producerhit.com/loop/bbcc1cbe-1e32-4508-a290-99b4037ca860</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/bbcc1cbe-1e32-4508-a290-99b4037ca860</guid>
+      <pubDate>Thu, 11 Jun 2026 22:38:23 GMT</pubDate>
+      <description><![CDATA[Detroit Rap · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/bbcc1cbe-1e32-4508-a290-99b4037ca860-27ff5d3b57d06379.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Cloud R&amp;b #01</title>
+      <link>https://www.producerhit.com/loop/0b84369f-6cb0-438a-92d6-a9328fdaf5c8</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/0b84369f-6cb0-438a-92d6-a9328fdaf5c8</guid>
+      <pubDate>Thu, 11 Jun 2026 22:31:59 GMT</pubDate>
+      <description><![CDATA[Cloud R&amp;B · 68 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/0b84369f-6cb0-438a-92d6-a9328fdaf5c8.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Psychedelic Soul #01</title>
+      <link>https://www.producerhit.com/loop/73b55cae-0f16-49ee-aabe-ca5251fdb083</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/73b55cae-0f16-49ee-aabe-ca5251fdb083</guid>
+      <pubDate>Thu, 11 Jun 2026 22:26:52 GMT</pubDate>
+      <description><![CDATA[Psychedelic Soul · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/73b55cae-0f16-49ee-aabe-ca5251fdb083.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Neon Soul #02</title>
+      <link>https://www.producerhit.com/loop/5bf22d76-bf43-4860-9c68-d071cc0d1400</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/5bf22d76-bf43-4860-9c68-d071cc0d1400</guid>
+      <pubDate>Thu, 11 Jun 2026 22:25:12 GMT</pubDate>
+      <description><![CDATA[Neon Soul · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/5bf22d76-bf43-4860-9c68-d071cc0d1400.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>yooo</title>
+      <link>https://www.producerhit.com/loop/0ae05e2a-c925-4f2b-b5d3-0f39cb205821</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/0ae05e2a-c925-4f2b-b5d3-0f39cb205821</guid>
+      <pubDate>Thu, 11 Jun 2026 22:23:10 GMT</pubDate>
+      <description><![CDATA[Jazzhop · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/0ae05e2a-c925-4f2b-b5d3-0f39cb205821.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Sleep Music #02</title>
+      <link>https://www.producerhit.com/loop/3e5f712b-4268-4b21-aadc-5bab70f61dea</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/3e5f712b-4268-4b21-aadc-5bab70f61dea</guid>
+      <pubDate>Thu, 11 Jun 2026 22:17:43 GMT</pubDate>
+      <description><![CDATA[Sleep Music · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/3e5f712b-4268-4b21-aadc-5bab70f61dea-7c60f4668473cf53.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Jersey Drill #02</title>
+      <link>https://www.producerhit.com/loop/24369d0d-2cf1-4f92-a35e-8f5e9f5fa8d0</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/24369d0d-2cf1-4f92-a35e-8f5e9f5fa8d0</guid>
+      <pubDate>Thu, 11 Jun 2026 22:14:18 GMT</pubDate>
+      <description><![CDATA[Jersey Drill · 143 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/24369d0d-2cf1-4f92-a35e-8f5e9f5fa8d0.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Emotional Trap Soul #02</title>
+      <link>https://www.producerhit.com/loop/d0119729-3ff2-484c-99c6-869d156728a4</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/d0119729-3ff2-484c-99c6-869d156728a4</guid>
+      <pubDate>Thu, 11 Jun 2026 22:11:47 GMT</pubDate>
+      <description><![CDATA[Emotional Trap Soul · 77 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/d0119729-3ff2-484c-99c6-869d156728a4-3db389a6e6638605.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Opera #01</title>
+      <link>https://www.producerhit.com/loop/84ffb15d-fa68-419a-99aa-b0b7daf91476</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/84ffb15d-fa68-419a-99aa-b0b7daf91476</guid>
+      <pubDate>Thu, 11 Jun 2026 22:10:25 GMT</pubDate>
+      <description><![CDATA[Opera · 107 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/84ffb15d-fa68-419a-99aa-b0b7daf91476-149da90ef60f1720.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Glitchcore #01</title>
+      <link>https://www.producerhit.com/loop/b1fca1af-a606-4c39-93bf-6103d4e949dc</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/b1fca1af-a606-4c39-93bf-6103d4e949dc</guid>
+      <pubDate>Thu, 11 Jun 2026 22:08:15 GMT</pubDate>
+      <description><![CDATA[Glitchcore · 100 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/b1fca1af-a606-4c39-93bf-6103d4e949dc.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Emotional Trap Soul #01</title>
+      <link>https://www.producerhit.com/loop/3ca3433c-a259-4f22-b30d-720e045d0e39</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/3ca3433c-a259-4f22-b30d-720e045d0e39</guid>
+      <pubDate>Thu, 11 Jun 2026 22:07:25 GMT</pubDate>
+      <description><![CDATA[Emotional Trap Soul · 77 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/3ca3433c-a259-4f22-b30d-720e045d0e39.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Cassette Soul #02</title>
+      <link>https://www.producerhit.com/loop/0f2d6582-a040-474b-aa38-ceea64bf00aa</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/0f2d6582-a040-474b-aa38-ceea64bf00aa</guid>
+      <pubDate>Thu, 11 Jun 2026 22:03:54 GMT</pubDate>
+      <description><![CDATA[Cassette Soul · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/0f2d6582-a040-474b-aa38-ceea64bf00aa.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Coding Music #01</title>
+      <link>https://www.producerhit.com/loop/c843b7a4-f08e-46a5-9170-9ec99a00c5f0</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/c843b7a4-f08e-46a5-9170-9ec99a00c5f0</guid>
+      <pubDate>Thu, 11 Jun 2026 21:57:37 GMT</pubDate>
+      <description><![CDATA[Coding Music · 200 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/c843b7a4-f08e-46a5-9170-9ec99a00c5f0.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Orchestral Trap #01</title>
+      <link>https://www.producerhit.com/loop/44d230b9-dd0b-4671-b5ed-469b9d63e4d4</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/44d230b9-dd0b-4671-b5ed-469b9d63e4d4</guid>
+      <pubDate>Thu, 11 Jun 2026 21:56:40 GMT</pubDate>
+      <description><![CDATA[Orchestral Trap · 75 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/44d230b9-dd0b-4671-b5ed-469b9d63e4d4.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Ocean Soul #01</title>
+      <link>https://www.producerhit.com/loop/3d34dcfd-bdd4-493e-a15b-4c90c0d5925a</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/3d34dcfd-bdd4-493e-a15b-4c90c0d5925a</guid>
+      <pubDate>Thu, 11 Jun 2026 21:55:25 GMT</pubDate>
+      <description><![CDATA[Ocean Soul · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/3d34dcfd-bdd4-493e-a15b-4c90c0d5925a.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Seductive R&amp;b #01</title>
+      <link>https://www.producerhit.com/loop/dc99c8ab-1080-4702-8917-33726437b916</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/dc99c8ab-1080-4702-8917-33726437b916</guid>
+      <pubDate>Thu, 11 Jun 2026 21:54:23 GMT</pubDate>
+      <description><![CDATA[Seductive R&amp;B · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/dc99c8ab-1080-4702-8917-33726437b916.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Chopped &amp; Screwed #01</title>
+      <link>https://www.producerhit.com/loop/15625013-0727-41c8-8d12-7ff3cbb0e740</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/15625013-0727-41c8-8d12-7ff3cbb0e740</guid>
+      <pubDate>Thu, 11 Jun 2026 21:53:11 GMT</pubDate>
+      <description><![CDATA[Chopped &amp; Screwed · 136 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/15625013-0727-41c8-8d12-7ff3cbb0e740.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>West Coast Rap #01</title>
+      <link>https://www.producerhit.com/loop/8f926e82-c2f1-44fd-bfa7-cd413cc7dab6</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/8f926e82-c2f1-44fd-bfa7-cd413cc7dab6</guid>
+      <pubDate>Thu, 11 Jun 2026 21:48:30 GMT</pubDate>
+      <description><![CDATA[West Coast Rap · 97 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/8f926e82-c2f1-44fd-bfa7-cd413cc7dab6.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Ethereal Trap #01</title>
+      <link>https://www.producerhit.com/loop/1c75fff8-3984-4c15-81c9-636e3133a71d</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/1c75fff8-3984-4c15-81c9-636e3133a71d</guid>
+      <pubDate>Thu, 11 Jun 2026 21:46:26 GMT</pubDate>
+      <description><![CDATA[Ethereal Trap · 71 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/1c75fff8-3984-4c15-81c9-636e3133a71d.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Edit Audio Rap #01</title>
+      <link>https://www.producerhit.com/loop/b7cdd3a4-5566-4d08-abb1-60200eae9917</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/b7cdd3a4-5566-4d08-abb1-60200eae9917</guid>
+      <pubDate>Thu, 11 Jun 2026 21:43:36 GMT</pubDate>
+      <description><![CDATA[Edit Audio Rap · 65 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/b7cdd3a4-5566-4d08-abb1-60200eae9917-1b33447697efdbff.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Chrome Tears #01</title>
+      <link>https://www.producerhit.com/loop/e1e668e5-f704-4a23-bec9-f9ee1953cce0</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/e1e668e5-f704-4a23-bec9-f9ee1953cce0</guid>
+      <pubDate>Thu, 11 Jun 2026 21:38:32 GMT</pubDate>
+      <description><![CDATA[Chrome Tears · 176 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/e1e668e5-f704-4a23-bec9-f9ee1953cce0.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Jerk #01</title>
+      <link>https://www.producerhit.com/loop/980ee703-d211-4acc-94d4-0d63ab778478</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/980ee703-d211-4acc-94d4-0d63ab778478</guid>
+      <pubDate>Thu, 11 Jun 2026 21:36:46 GMT</pubDate>
+      <description><![CDATA[Jerk · 97 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/980ee703-d211-4acc-94d4-0d63ab778478-360ff6bbc0d333c8.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Space Rap #01</title>
+      <link>https://www.producerhit.com/loop/ab6a3d4d-ffa1-494d-bb11-924735196c61</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/ab6a3d4d-ffa1-494d-bb11-924735196c61</guid>
+      <pubDate>Thu, 11 Jun 2026 21:32:09 GMT</pubDate>
+      <description><![CDATA[Space Rap · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/ab6a3d4d-ffa1-494d-bb11-924735196c61.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Neon Soul #01</title>
+      <link>https://www.producerhit.com/loop/9bd5b8dc-b13f-4565-ba70-841ce67b956e</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/9bd5b8dc-b13f-4565-ba70-841ce67b956e</guid>
+      <pubDate>Thu, 11 Jun 2026 21:29:39 GMT</pubDate>
+      <description><![CDATA[Neon Soul · Smooth · 88 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/9bd5b8dc-b13f-4565-ba70-841ce67b956e.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Nostalgic Vhs #01</title>
+      <link>https://www.producerhit.com/loop/2c7c2c40-03f8-4501-a8e6-5fcfbfbfe9a5</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/2c7c2c40-03f8-4501-a8e6-5fcfbfbfe9a5</guid>
+      <pubDate>Thu, 11 Jun 2026 21:25:01 GMT</pubDate>
+      <description><![CDATA[Nostalgic VHS · Smooth · 88 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/2c7c2c40-03f8-4501-a8e6-5fcfbfbfe9a5.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Emo Electronic #01</title>
+      <link>https://www.producerhit.com/loop/dddc2114-4947-4a4c-bedb-c34498a88fab</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/dddc2114-4947-4a4c-bedb-c34498a88fab</guid>
+      <pubDate>Thu, 11 Jun 2026 21:23:51 GMT</pubDate>
+      <description><![CDATA[Emo Electronic · Smooth · 86 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/dddc2114-4947-4a4c-bedb-c34498a88fab.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Trance Revival #01</title>
+      <link>https://www.producerhit.com/loop/4dd1312a-b5f2-4067-9a75-3745e1c1de50</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/4dd1312a-b5f2-4067-9a75-3745e1c1de50</guid>
+      <pubDate>Thu, 11 Jun 2026 21:22:18 GMT</pubDate>
+      <description><![CDATA[Trance Revival · Smooth · 136 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/4dd1312a-b5f2-4067-9a75-3745e1c1de50.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Guitar Acoustic Live #03</title>
+      <link>https://www.producerhit.com/loop/ba1eb4e6-e021-4013-b171-05eb385430bc</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/ba1eb4e6-e021-4013-b171-05eb385430bc</guid>
+      <pubDate>Thu, 11 Jun 2026 20:14:44 GMT</pubDate>
+      <description><![CDATA[Guitar Acoustic Live · Smooth · 88 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/ba1eb4e6-e021-4013-b171-05eb385430bc.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Blog Era Soul #02</title>
+      <link>https://www.producerhit.com/loop/f7de4286-69bc-43a8-bfc7-2b63a4a1ccaf</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/f7de4286-69bc-43a8-bfc7-2b63a4a1ccaf</guid>
+      <pubDate>Thu, 11 Jun 2026 19:15:13 GMT</pubDate>
+      <description><![CDATA[Blog Era Soul · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/f7de4286-69bc-43a8-bfc7-2b63a4a1ccaf.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Digital Dream Rap #01</title>
+      <link>https://www.producerhit.com/loop/845c8380-f1c1-4679-bf44-b3a20c601642</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/845c8380-f1c1-4679-bf44-b3a20c601642</guid>
+      <pubDate>Thu, 11 Jun 2026 13:56:34 GMT</pubDate>
+      <description><![CDATA[Digital Dream Rap · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/845c8380-f1c1-4679-bf44-b3a20c601642.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Lounge R&amp;b #03</title>
+      <link>https://www.producerhit.com/loop/18b516a9-a3ea-407c-a474-61fab0e6ee60</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/18b516a9-a3ea-407c-a474-61fab0e6ee60</guid>
+      <pubDate>Thu, 11 Jun 2026 12:30:11 GMT</pubDate>
+      <description><![CDATA[Lounge R&amp;B · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/7ce66a37-8b7e-49a4-a38b-a120a5074b71/covers/18b516a9-a3ea-407c-a474-61fab0e6ee60.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Cybercore #01</title>
+      <link>https://www.producerhit.com/loop/2a348f74-5c0e-4bc8-b1ad-739210d0dd9a</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/2a348f74-5c0e-4bc8-b1ad-739210d0dd9a</guid>
+      <pubDate>Thu, 11 Jun 2026 12:24:38 GMT</pubDate>
+      <description><![CDATA[Cybercore · 150 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/7ce66a37-8b7e-49a4-a38b-a120a5074b71/covers/2a348f74-5c0e-4bc8-b1ad-739210d0dd9a.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Jerk #01</title>
+      <link>https://www.producerhit.com/loop/0486c736-f0c8-4ad1-ac69-540e2e87c060</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/0486c736-f0c8-4ad1-ac69-540e2e87c060</guid>
+      <pubDate>Thu, 11 Jun 2026 12:23:28 GMT</pubDate>
+      <description><![CDATA[Jerk · 143 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/7ce66a37-8b7e-49a4-a38b-a120a5074b71/covers/0486c736-f0c8-4ad1-ac69-540e2e87c060.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Crying In Designer Clothes #01</title>
+      <link>https://www.producerhit.com/loop/7f0df943-ed10-4775-9e58-ea8e4b489035</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/7f0df943-ed10-4775-9e58-ea8e4b489035</guid>
+      <pubDate>Thu, 11 Jun 2026 12:21:08 GMT</pubDate>
+      <description><![CDATA[Crying in Designer Clothes · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/7ce66a37-8b7e-49a4-a38b-a120a5074b71/covers/7f0df943-ed10-4775-9e58-ea8e4b489035.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Underground Boom Bap #01</title>
+      <link>https://www.producerhit.com/loop/83031be1-c409-4b45-adbf-12199264bd02</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/83031be1-c409-4b45-adbf-12199264bd02</guid>
+      <pubDate>Thu, 11 Jun 2026 12:15:31 GMT</pubDate>
+      <description><![CDATA[Underground Boom Bap · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/7ce66a37-8b7e-49a4-a38b-a120a5074b71/covers/83031be1-c409-4b45-adbf-12199264bd02.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Edm Festival #01</title>
+      <link>https://www.producerhit.com/loop/243b973a-3f6d-42a0-b72c-8e3cd1e5150f</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/243b973a-3f6d-42a0-b72c-8e3cd1e5150f</guid>
+      <pubDate>Thu, 11 Jun 2026 12:11:19 GMT</pubDate>
+      <description><![CDATA[EDM Festival · 130 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/7ce66a37-8b7e-49a4-a38b-a120a5074b71/covers/243b973a-3f6d-42a0-b72c-8e3cd1e5150f.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Vinyl Soul #03</title>
+      <link>https://www.producerhit.com/loop/dbb73f17-1244-421b-b211-bca8a8c0f0d0</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/dbb73f17-1244-421b-b211-bca8a8c0f0d0</guid>
+      <pubDate>Thu, 11 Jun 2026 11:12:30 GMT</pubDate>
+      <description><![CDATA[Vinyl Soul · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/dbb73f17-1244-421b-b211-bca8a8c0f0d0.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Fashion Week Soundtrack #01</title>
+      <link>https://www.producerhit.com/loop/6f35a2e4-c33f-4c3c-bc04-6df73252088e</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/6f35a2e4-c33f-4c3c-bc04-6df73252088e</guid>
+      <pubDate>Thu, 11 Jun 2026 10:53:02 GMT</pubDate>
+      <description><![CDATA[Fashion Week Soundtrack · 88 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/6f35a2e4-c33f-4c3c-bc04-6df73252088e.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Cybercore #01</title>
+      <link>https://www.producerhit.com/loop/ec4ffff1-85a5-4ee4-922d-458273067eec</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/ec4ffff1-85a5-4ee4-922d-458273067eec</guid>
+      <pubDate>Thu, 11 Jun 2026 10:51:32 GMT</pubDate>
+      <description><![CDATA[Cybercore · 200 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/ec4ffff1-85a5-4ee4-922d-458273067eec.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Uk Rap #01</title>
+      <link>https://www.producerhit.com/loop/d5e0cbfd-6c18-426d-b1f1-58c49d6f2ca8</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/d5e0cbfd-6c18-426d-b1f1-58c49d6f2ca8</guid>
+      <pubDate>Thu, 11 Jun 2026 10:50:10 GMT</pubDate>
+      <description><![CDATA[UK Rap · 143 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/d5e0cbfd-6c18-426d-b1f1-58c49d6f2ca8.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Nostalgic Future #01</title>
+      <link>https://www.producerhit.com/loop/84efe172-ffe6-4864-b01a-064a46f15349</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/84efe172-ffe6-4864-b01a-064a46f15349</guid>
+      <pubDate>Thu, 11 Jun 2026 10:46:36 GMT</pubDate>
+      <description><![CDATA[Nostalgic Future · 47 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/84efe172-ffe6-4864-b01a-064a46f15349.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Sad R&amp;b #01</title>
+      <link>https://www.producerhit.com/loop/04e9d267-5ac2-4b1b-9ce0-44608809d979</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/04e9d267-5ac2-4b1b-9ce0-44608809d979</guid>
+      <pubDate>Thu, 11 Jun 2026 10:28:33 GMT</pubDate>
+      <description><![CDATA[Sad R&amp;B · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/04e9d267-5ac2-4b1b-9ce0-44608809d979-d6b9c9e465140e93.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>90s Slow Jam #01</title>
+      <link>https://www.producerhit.com/loop/0c6c33e4-29d6-479a-a9f9-a466e7714673</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/0c6c33e4-29d6-479a-a9f9-a466e7714673</guid>
+      <pubDate>Thu, 11 Jun 2026 10:16:39 GMT</pubDate>
+      <description><![CDATA[90s Slow Jam · 60 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/0c6c33e4-29d6-479a-a9f9-a466e7714673.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Alien Trap #01</title>
+      <link>https://www.producerhit.com/loop/7a43bbf8-a036-416e-ab5a-8f7e033fb63b</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/7a43bbf8-a036-416e-ab5a-8f7e033fb63b</guid>
+      <pubDate>Thu, 11 Jun 2026 10:10:49 GMT</pubDate>
+      <description><![CDATA[Alien Trap · 65 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/7a43bbf8-a036-416e-ab5a-8f7e033fb63b.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Vaporwave #01</title>
+      <link>https://www.producerhit.com/loop/04487ea1-3944-4527-8d80-b64ed20c485e</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/04487ea1-3944-4527-8d80-b64ed20c485e</guid>
+      <pubDate>Thu, 11 Jun 2026 10:03:58 GMT</pubDate>
+      <description><![CDATA[Vaporwave · 111 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/04487ea1-3944-4527-8d80-b64ed20c485e.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Dance Pop #01</title>
+      <link>https://www.producerhit.com/loop/7afae777-32f0-43ae-bf38-5003a59b7f0a</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/7afae777-32f0-43ae-bf38-5003a59b7f0a</guid>
+      <pubDate>Thu, 11 Jun 2026 10:02:52 GMT</pubDate>
+      <description><![CDATA[Dance Pop · 97 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/7afae777-32f0-43ae-bf38-5003a59b7f0a.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Bass Boosted #01</title>
+      <link>https://www.producerhit.com/loop/c794295f-5ca4-461c-9ef1-fd503bf674e4</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/c794295f-5ca4-461c-9ef1-fd503bf674e4</guid>
+      <pubDate>Thu, 11 Jun 2026 10:01:30 GMT</pubDate>
+      <description><![CDATA[Bass Boosted · 88 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/c794295f-5ca4-461c-9ef1-fd503bf674e4.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Paris Fashion Night #01</title>
+      <link>https://www.producerhit.com/loop/52052e52-3610-495e-9841-5816f59f18ed</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/52052e52-3610-495e-9841-5816f59f18ed</guid>
+      <pubDate>Thu, 11 Jun 2026 09:57:36 GMT</pubDate>
+      <description><![CDATA[Paris Fashion Night · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/52052e52-3610-495e-9841-5816f59f18ed.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Flint Rap #01</title>
+      <link>https://www.producerhit.com/loop/d01f51a0-1809-4bc6-8456-4e3db98658df</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/d01f51a0-1809-4bc6-8456-4e3db98658df</guid>
+      <pubDate>Thu, 11 Jun 2026 09:54:45 GMT</pubDate>
+      <description><![CDATA[Flint Rap · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/d01f51a0-1809-4bc6-8456-4e3db98658df.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>She goes by Denver #06</title>
+      <link>https://www.producerhit.com/loop/9fc31e9f-3b9f-414d-aaf6-781d285aae15</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/9fc31e9f-3b9f-414d-aaf6-781d285aae15</guid>
+      <pubDate>Thu, 11 Jun 2026 09:53:46 GMT</pubDate>
+      <description><![CDATA[Melodic Trap — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/9fc31e9f-3b9f-414d-aaf6-781d285aae15.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>She goes by Denver #05</title>
+      <link>https://www.producerhit.com/loop/07fddcdc-26d3-4e05-8c03-8b689def620d</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/07fddcdc-26d3-4e05-8c03-8b689def620d</guid>
+      <pubDate>Thu, 11 Jun 2026 09:51:59 GMT</pubDate>
+      <description><![CDATA[90s R&amp;B — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/07fddcdc-26d3-4e05-8c03-8b689def620d.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>She goes by Denver #04</title>
+      <link>https://www.producerhit.com/loop/1c2b3486-11eb-4579-b9f7-ee51f22e58bd</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/1c2b3486-11eb-4579-b9f7-ee51f22e58bd</guid>
+      <pubDate>Thu, 11 Jun 2026 09:48:57 GMT</pubDate>
+      <description><![CDATA[Rainy Night R&amp;B — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/1c2b3486-11eb-4579-b9f7-ee51f22e58bd.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>She goes by Denver #03</title>
+      <link>https://www.producerhit.com/loop/4ed56c85-a01a-4a89-945d-53bff1c64143</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/4ed56c85-a01a-4a89-945d-53bff1c64143</guid>
+      <pubDate>Thu, 11 Jun 2026 09:47:46 GMT</pubDate>
+      <description><![CDATA[Soft Neon Soul — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/4ed56c85-a01a-4a89-945d-53bff1c64143.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>She goes by Denver #02</title>
+      <link>https://www.producerhit.com/loop/eab3d25c-70e5-4cde-91d3-9e08e855c0b1</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/eab3d25c-70e5-4cde-91d3-9e08e855c0b1</guid>
+      <pubDate>Thu, 11 Jun 2026 09:45:14 GMT</pubDate>
+      <description><![CDATA[Melodic Trap — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/eab3d25c-70e5-4cde-91d3-9e08e855c0b1.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>She goes by Denver #01</title>
+      <link>https://www.producerhit.com/loop/de9da3f9-4c53-4cae-9c1e-53ed74da19f3</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/de9da3f9-4c53-4cae-9c1e-53ed74da19f3</guid>
+      <pubDate>Thu, 11 Jun 2026 09:44:18 GMT</pubDate>
+      <description><![CDATA[Melodic Trap — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/de9da3f9-4c53-4cae-9c1e-53ed74da19f3.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Melodic Trap #03</title>
+      <link>https://www.producerhit.com/loop/e3115a4c-3e85-4519-817b-04354d155e4c</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/e3115a4c-3e85-4519-817b-04354d155e4c</guid>
+      <pubDate>Thu, 11 Jun 2026 09:34:45 GMT</pubDate>
+      <description><![CDATA[Melodic Trap — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/e3115a4c-3e85-4519-817b-04354d155e4c.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Floating Soul #01</title>
+      <link>https://www.producerhit.com/loop/8d72663e-cd7f-4770-834a-915f568c0028</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/8d72663e-cd7f-4770-834a-915f568c0028</guid>
+      <pubDate>Thu, 11 Jun 2026 09:30:15 GMT</pubDate>
+      <description><![CDATA[Floating Soul — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/8d72663e-cd7f-4770-834a-915f568c0028.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Cassette Soul #01</title>
+      <link>https://www.producerhit.com/loop/f4ac0596-9667-43cb-b1e1-d7754954edc8</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/f4ac0596-9667-43cb-b1e1-d7754954edc8</guid>
+      <pubDate>Thu, 11 Jun 2026 09:23:46 GMT</pubDate>
+      <description><![CDATA[Cassette Soul — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/f4ac0596-9667-43cb-b1e1-d7754954edc8.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Blog Era Soul #01</title>
+      <link>https://www.producerhit.com/loop/524521d9-0b68-46bb-892f-e28dab2691a5</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/524521d9-0b68-46bb-892f-e28dab2691a5</guid>
+      <pubDate>Thu, 11 Jun 2026 09:21:49 GMT</pubDate>
+      <description><![CDATA[Blog Era Soul — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/524521d9-0b68-46bb-892f-e28dab2691a5.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Écris Moi Chanson Pute #02</title>
+      <link>https://www.producerhit.com/loop/031c4513-562e-4558-8783-fa459deebab8</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/031c4513-562e-4558-8783-fa459deebab8</guid>
+      <pubDate>Thu, 11 Jun 2026 08:02:30 GMT</pubDate>
+      <description><![CDATA[Dark Trap · 61 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/d8f1fecb-98c6-424a-991b-095d65f1e478/covers/031c4513-562e-4558-8783-fa459deebab8.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Écris Moi Chanson Pute #01</title>
+      <link>https://www.producerhit.com/loop/4cc0f4cb-cda3-4663-939a-77021a046586</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/4cc0f4cb-cda3-4663-939a-77021a046586</guid>
+      <pubDate>Thu, 11 Jun 2026 08:01:08 GMT</pubDate>
+      <description><![CDATA[Pop · 120 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/d8f1fecb-98c6-424a-991b-095d65f1e478/covers/4cc0f4cb-cda3-4663-939a-77021a046586.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Chanson Douce #03</title>
+      <link>https://www.producerhit.com/loop/4116d86d-0af0-4bb9-a297-109b4d0f3370</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/4116d86d-0af0-4bb9-a297-109b4d0f3370</guid>
+      <pubDate>Tue, 09 Jun 2026 12:02:33 GMT</pubDate>
+      <description><![CDATA[90s R&amp;B · 94 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/7ce66a37-8b7e-49a4-a38b-a120a5074b71/covers/4116d86d-0af0-4bb9-a297-109b4d0f3370.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Chanson Douce #02</title>
+      <link>https://www.producerhit.com/loop/82390480-3601-4f8c-9535-71d95fc5f6bf</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/82390480-3601-4f8c-9535-71d95fc5f6bf</guid>
+      <pubDate>Tue, 09 Jun 2026 12:01:04 GMT</pubDate>
+      <description><![CDATA[Piano Atmosphere · 65 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/7ce66a37-8b7e-49a4-a38b-a120a5074b71/covers/82390480-3601-4f8c-9535-71d95fc5f6bf.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Chanson Douce #01</title>
+      <link>https://www.producerhit.com/loop/c3f0b3ee-1610-4438-9c58-17d57b9e37ef</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/c3f0b3ee-1610-4438-9c58-17d57b9e37ef</guid>
+      <pubDate>Tue, 09 Jun 2026 11:59:56 GMT</pubDate>
+      <description><![CDATA[Pop · 120 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/7ce66a37-8b7e-49a4-a38b-a120a5074b71/covers/c3f0b3ee-1610-4438-9c58-17d57b9e37ef.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Luxury Trap #01</title>
+      <link>https://www.producerhit.com/loop/47ba3484-1237-490d-b756-2ad087d56395</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/47ba3484-1237-490d-b756-2ad087d56395</guid>
+      <pubDate>Tue, 09 Jun 2026 10:50:17 GMT</pubDate>
+      <description><![CDATA[Luxury Trap · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/7ce66a37-8b7e-49a4-a38b-a120a5074b71/covers/47ba3484-1237-490d-b756-2ad087d56395.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Uk Garage #09</title>
+      <link>https://www.producerhit.com/loop/f4cda0f3-c315-404d-b065-5c1e354199bd</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/f4cda0f3-c315-404d-b065-5c1e354199bd</guid>
+      <pubDate>Mon, 08 Jun 2026 13:08:39 GMT</pubDate>
+      <description><![CDATA[UK Garage · 130 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/7ce66a37-8b7e-49a4-a38b-a120a5074b71/covers/f4cda0f3-c315-404d-b065-5c1e354199bd.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Neo Soul #01</title>
+      <link>https://www.producerhit.com/loop/b036a94d-0546-40f7-bf6e-38adba940cb8</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/b036a94d-0546-40f7-bf6e-38adba940cb8</guid>
+      <pubDate>Mon, 08 Jun 2026 13:01:13 GMT</pubDate>
+      <description><![CDATA[Neo Soul · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/7ce66a37-8b7e-49a4-a38b-a120a5074b71/covers/b036a94d-0546-40f7-bf6e-38adba940cb8.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Dreamcore Hip Hop #01</title>
+      <link>https://www.producerhit.com/loop/b955ce0e-0ab6-4542-86df-6748c1ea9c75</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/b955ce0e-0ab6-4542-86df-6748c1ea9c75</guid>
+      <pubDate>Mon, 08 Jun 2026 12:44:13 GMT</pubDate>
+      <description><![CDATA[Dreamcore Hip Hop · 81 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/7ce66a37-8b7e-49a4-a38b-a120a5074b71/covers/b955ce0e-0ab6-4542-86df-6748c1ea9c75.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Future Bass #01</title>
+      <link>https://www.producerhit.com/loop/7028e546-8658-48d1-bf04-8d062b6eb570</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/7028e546-8658-48d1-bf04-8d062b6eb570</guid>
+      <pubDate>Mon, 08 Jun 2026 12:41:53 GMT</pubDate>
+      <description><![CDATA[Future Bass · 150 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/7ce66a37-8b7e-49a4-a38b-a120a5074b71/covers/7028e546-8658-48d1-bf04-8d062b6eb570.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Balloon Plugg #01</title>
+      <link>https://www.producerhit.com/loop/4d1663b7-2d69-46d8-bac0-57400cc42701</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/4d1663b7-2d69-46d8-bac0-57400cc42701</guid>
+      <pubDate>Mon, 08 Jun 2026 12:24:32 GMT</pubDate>
+      <description><![CDATA[Balloon Plugg · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/7ce66a37-8b7e-49a4-a38b-a120a5074b71/covers/4d1663b7-2d69-46d8-bac0-57400cc42701.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>90s Slow Jam #01</title>
+      <link>https://www.producerhit.com/loop/ce0d38ca-e71a-4774-a5e4-67f000f66735</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/ce0d38ca-e71a-4774-a5e4-67f000f66735</guid>
+      <pubDate>Mon, 08 Jun 2026 12:11:04 GMT</pubDate>
+      <description><![CDATA[90s Slow Jam · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/7ce66a37-8b7e-49a4-a38b-a120a5074b71/covers/ce0d38ca-e71a-4774-a5e4-67f000f66735.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Gothic Trap #01</title>
+      <link>https://www.producerhit.com/loop/b81608c0-906e-41d1-937e-cf55725929ff</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/b81608c0-906e-41d1-937e-cf55725929ff</guid>
+      <pubDate>Mon, 08 Jun 2026 11:02:11 GMT</pubDate>
+      <description><![CDATA[Gothic Trap · 68 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/b81608c0-906e-41d1-937e-cf55725929ff.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Melodic Trap #02</title>
+      <link>https://www.producerhit.com/loop/c4e15d8a-4179-4b86-a8dc-6685a2655851</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/c4e15d8a-4179-4b86-a8dc-6685a2655851</guid>
+      <pubDate>Mon, 08 Jun 2026 10:42:06 GMT</pubDate>
+      <description><![CDATA[Melodic Trap · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/8d10382c-3858-4609-aa06-79d98c704e00/covers/c4e15d8a-4179-4b86-a8dc-6685a2655851.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Afro R&amp;b #16</title>
+      <link>https://www.producerhit.com/loop/dc89a0ac-6508-4a56-8a72-e92f619ed1ed</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/dc89a0ac-6508-4a56-8a72-e92f619ed1ed</guid>
+      <pubDate>Mon, 08 Jun 2026 07:41:35 GMT</pubDate>
+      <description><![CDATA[Afro R&amp;B · 73 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/7ce66a37-8b7e-49a4-a38b-a120a5074b71/covers/dc89a0ac-6508-4a56-8a72-e92f619ed1ed.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>90s R&amp;b #30</title>
+      <link>https://www.producerhit.com/loop/f77be8c5-58b2-4108-8727-7f25559dbd6b</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/f77be8c5-58b2-4108-8727-7f25559dbd6b</guid>
+      <pubDate>Mon, 08 Jun 2026 07:38:15 GMT</pubDate>
+      <description><![CDATA[90s R&amp;B · 94 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/7ce66a37-8b7e-49a4-a38b-a120a5074b71/covers/f77be8c5-58b2-4108-8727-7f25559dbd6b.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>90s #01</title>
+      <link>https://www.producerhit.com/loop/a4d732d6-bd83-4c80-877b-18cba38f10af</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/a4d732d6-bd83-4c80-877b-18cba38f10af</guid>
+      <pubDate>Mon, 08 Jun 2026 07:36:35 GMT</pubDate>
+      <description><![CDATA[90s R&amp;B · Smooth · 94 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/7ce66a37-8b7e-49a4-a38b-a120a5074b71/covers/a4d732d6-bd83-4c80-877b-18cba38f10af.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Melodic Trap #02</title>
+      <link>https://www.producerhit.com/loop/d8ad6aed-65bb-4c41-89be-82df8162c230</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/d8ad6aed-65bb-4c41-89be-82df8162c230</guid>
+      <pubDate>Mon, 08 Jun 2026 07:35:05 GMT</pubDate>
+      <description><![CDATA[Melodic Trap · Smooth · 81 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/7ce66a37-8b7e-49a4-a38b-a120a5074b71/covers/d8ad6aed-65bb-4c41-89be-82df8162c230.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Mellow</title>
+      <link>https://www.producerhit.com/loop/11480653-9093-4bd5-8d42-a17fc1d78227</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/11480653-9093-4bd5-8d42-a17fc1d78227</guid>
+      <pubDate>Mon, 08 Jun 2026 07:33:37 GMT</pubDate>
+      <description><![CDATA[Melodic Trap · Smooth · 81 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/7ce66a37-8b7e-49a4-a38b-a120a5074b71/covers/11480653-9093-4bd5-8d42-a17fc1d78227.jpg" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Smooth Soul #01</title>
+      <link>https://www.producerhit.com/loop/a08a1aea-eaff-4bcd-b893-73129daa2b0e</link>
+      <guid isPermaLink="true">https://www.producerhit.com/loop/a08a1aea-eaff-4bcd-b893-73129daa2b0e</guid>
+      <pubDate>Mon, 08 Jun 2026 05:48:10 GMT</pubDate>
+      <description><![CDATA[Smooth Soul · 91 BPM — Listen on ProducerHit]]></description>
+      <enclosure url="https://pmfnzenqemnonpglmjqx.supabase.co/storage/v1/object/public/loop-covers/7ce66a37-8b7e-49a4-a38b-a120a5074b71/covers/a08a1aea-eaff-4bcd-b893-73129daa2b0e.jpg" type="image/jpeg" />
+    </item>
   </channel>
 </rss>
