@@ -22,7 +22,7 @@ export function hasPriorityGeneration(plan: string | null | undefined): boolean 
   return normalizePlanId(plan) === "plus";
 }
 
-/** Plus : liens audio hébergés sans expiration 7j (tant que l’abonnement Plus est actif). */
+/** Plus : liens audio hébergés sans expiration (tant que l’abonnement Plus est actif). Free/Pro 3j, Studio 7j. */
 export function hasPermanentHostedAudio(plan: string | null | undefined): boolean {
   return normalizePlanId(plan) === "plus";
 }

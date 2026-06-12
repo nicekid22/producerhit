@@ -67,6 +67,7 @@ import { LoopCardSkeleton } from "@/components/LoopCardSkeleton";
 import { SpeechDictationField } from "@/components/SpeechDictationField";
 import { AlertTriangle, Copy, Search, SlidersHorizontal, X } from "lucide-react";
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
+import { trackDashboardReady } from "@/lib/growthFunnelEvents";
 import { ShareMomentModal } from "@/components/growth/ShareMomentModal";
 import { ReferralInviteModal } from "@/components/growth/ReferralInviteModal";
 import { MasteringUpsellModal } from "@/components/growth/MasteringUpsellModal";
@@ -88,13 +89,15 @@ import { prepareLoopVariantGeneration, variantResultTitle } from "@/lib/loopVari
 import { loopToRemixSource } from "@/lib/remixSourceLoop";
 import { MobileOnboardingSheet, hasSeenMobileOnboarding } from "@/components/dashboard/MobileOnboardingSheet";
 import { OnboardingCoach } from "@/components/onboarding/OnboardingCoach";
+import { WavFormatCoach } from "@/components/onboarding/WavFormatCoach";
 import { shouldShowCoachTour } from "@/lib/onboarding/coachStorage";
 import { useOnboardingCoachStore } from "@/stores/onboardingCoachStore";
+import { useWavFormatCoachStore } from "@/stores/wavFormatCoachStore";
 import { useAuthStore } from "@/stores/authStore";
 import { useLocaleStore } from "@/stores/localeStore";
 import { getRemainingBeats, PLAN_LIMITS, FREE_MASTERING_UPSELL_AT, getTotalGenerationLimit } from "@/lib/planLimits";
 import { planPriceLabel } from "@/lib/planPricing";
-import { canDualGeneration } from "@/lib/planEntitlements";
+import { canDualGeneration, canExportWav } from "@/lib/planEntitlements";
 import {
   creditsBlockedReason,
   markExhaustedCreditsPromptShown,
@@ -371,8 +374,6 @@ export default function Dashboard() {
   const migrateAudioCache = useLoopsStore((s) => s.migrateAudioCache);
   const renameLoopRemote = useLoopsStore((s) => s.renameLoopRemote);
   const togglePublicRemote = useLoopsStore((s) => s.togglePublicRemote);
-  const playerCurrent = usePlayerStore((s) => s.current);
-  const playerIsPlaying = usePlayerStore((s) => s.isPlaying);
   const user = useAuthStore((s) => s.user);
   const authStatus = useAuthStore((s) => s.status);
   const authProfile = useAuthStore((s) => s.profile);
@@ -412,6 +413,9 @@ export default function Dashboard() {
   const pendingReferralAfterShareRef = useRef(false);
   const generateSessionRef = useRef(0);
   const referralPromptTimerRef = useRef<number | null>(null);
+  const dashboardMountedAtRef = useRef(Date.now());
+  const generationAbandonTrackedRef = useRef(false);
+  const generationStartedAtRef = useRef<number | null>(null);
 
   const hydrateGenerationFromStore = useCallback(() => {
     const snap = useGenerationSessionStore.getState();
@@ -724,6 +728,7 @@ export default function Dashboard() {
           const nextPlan = fromStore?.plan ?? (await refreshProfile());
           if (nextPlan && nextPlan !== "free") {
             toast.success(locale === "fr" ? `Plan activé : ${nextPlan}` : `Plan activated: ${nextPlan}`);
+            if (user?.id) useWavFormatCoachStore.getState().scheduleProTip(user.id, 6_000);
             return;
           }
           await new Promise((r) => setTimeout(r, 1200));
@@ -731,7 +736,7 @@ export default function Dashboard() {
         toast(locale === "fr" ? "Plan en cours d'activation — rafraîchis dans quelques secondes." : "Plan activating — refresh in a few seconds.");
       })();
     }
-  }, [locale, refreshAuthProfile, refreshProfile]);
+  }, [locale, refreshAuthProfile, refreshProfile, user?.id]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -808,6 +813,17 @@ export default function Dashboard() {
   useEffect(() => {
     trackClientEvent("dashboard_view", { source: entrySource });
   }, [entrySource]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    if (!loopsHydrated || loopsLoading) return;
+    trackDashboardReady({
+      load_ms: Date.now() - dashboardMountedAtRef.current,
+      loops_count: loops.length,
+      source: entrySource,
+      mobile_v2: mobileV2,
+    });
+  }, [user?.id, loopsHydrated, loopsLoading, loops.length, entrySource, mobileV2]);
 
   useEffect(() => {
     window.localStorage.setItem("producerhit_mode", mode);
@@ -979,6 +995,39 @@ export default function Dashboard() {
     trackClientEvent("mastering_upgrade_click", { plan, source: "dashboard" });
     promptPlanUpsell("wav_export");
   }, [plan, promptPlanUpsell]);
+
+  const prepareWavCoachTarget = useCallback(() => {
+    if (mode === "song" && songUiMode !== "custom") setSongUiMode("custom");
+    else if (mode === "beat" && !advancedOpen) setAdvancedOpen(true);
+  }, [advancedOpen, mode, songUiMode]);
+
+  const handleWavFormatClick = useCallback(() => {
+    if (canExportWav(plan)) {
+      setAudioFormatPref("wav");
+      return;
+    }
+    const uid = user?.id;
+    if (!uid) {
+      promptPlanUpsell("feature_wav_format");
+      return;
+    }
+    const showedCoach = useWavFormatCoachStore.getState().triggerFreeClick(uid);
+    if (!showedCoach) promptPlanUpsell("feature_wav_format");
+  }, [plan, promptPlanUpsell, user?.id]);
+
+  useEffect(() => {
+    if (profileBusy || !user?.id) return;
+    const store = useWavFormatCoachStore.getState();
+    store.cancelPending();
+    const tourPending = shouldShowCoachTour(user.id, authProfile?.loops_used_this_month ?? 0);
+    const delayBoost = tourPending ? 12_000 : 0;
+    if (canExportWav(plan)) {
+      store.scheduleProTip(user.id, 14_000 + delayBoost);
+    } else {
+      store.scheduleFreeTease(user.id, 22_000 + delayBoost);
+    }
+    return () => store.cancelPending();
+  }, [authProfile?.loops_used_this_month, plan, profileBusy, user?.id]);
   const inferGenreFromPrompt = useCallback((p: string) => {
     const s = p.toLowerCase();
     if (s.includes("pluggnb") || s.includes("pluggn")) return "PluggnB";
@@ -1079,6 +1128,52 @@ export default function Dashboard() {
     if (!active.length) return undefined;
     return Math.max(0, ...active.map((s) => s.progressPct ?? 0));
   }, [visibleGenerationSlots]);
+
+  useEffect(() => {
+    if (generating) {
+      if (generationStartedAtRef.current === null) {
+        generationStartedAtRef.current = Date.now();
+        generationAbandonTrackedRef.current = false;
+      }
+      return;
+    }
+    generationStartedAtRef.current = null;
+    generationAbandonTrackedRef.current = false;
+  }, [generating]);
+
+  useEffect(() => {
+    if (!generating) return;
+
+    const fireAbandon = (reason: string) => {
+      if (generationAbandonTrackedRef.current) return;
+      generationAbandonTrackedRef.current = true;
+      const started = generationStartedAtRef.current ?? Date.now();
+      trackClientEvent("generation_abandon", {
+        reason,
+        elapsed_ms: Date.now() - started,
+        progress_pct: generationProgressPct,
+        mode,
+        plan,
+      });
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") fireAbandon("visibility_hidden");
+    };
+    const onPageHide = () => fireAbandon("pagehide");
+
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pagehide", onPageHide);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", onPageHide);
+    };
+  }, [generating, generationProgressPct, mode, plan]);
+
+  const sortedVisibleGenerationSlots = useMemo(
+    () => [...visibleGenerationSlots].sort((a, b) => b.idx - a.idx),
+    [visibleGenerationSlots],
+  );
 
   const mobileGenActive = generating || mobileResultsBadge > 0;
   const mobileGenerationsAnchorRef = useRef<HTMLDivElement>(null);
@@ -1680,6 +1775,7 @@ export default function Dashboard() {
           mode === "song" ? effectiveSongLyrics : null,
         );
         const slotStartedAt = Date.now();
+        let lastProgressPct = -1;
         let progressTick: number | undefined;
         const stopProgressTick = () => {
           if (progressTick !== undefined) window.clearInterval(progressTick);
@@ -1702,8 +1798,10 @@ export default function Dashboard() {
             return;
           }
           const pct = simulatedGenerationPercent(Date.now() - slotStartedAt, expectedMs);
+          if (pct === lastProgressPct) return;
+          lastProgressPct = pct;
           setSlot(idx, { progressPct: pct });
-        }, 400);
+        }, 900);
 
         try {
           for (let attempt = 0; attempt < 2; attempt++) {
@@ -1855,6 +1953,7 @@ export default function Dashboard() {
           mode === "song" ? effectiveSongLyrics : null,
         );
         const batchStartedAt = Date.now();
+        let lastProgressPct = -1;
         let progressTick: number | undefined;
         const stopProgressTick = () => {
           if (progressTick !== undefined) window.clearInterval(progressTick);
@@ -1866,9 +1965,11 @@ export default function Dashboard() {
             return;
           }
           const pct = simulatedGenerationPercent(Date.now() - batchStartedAt, expectedMs * 1.35);
+          if (pct === lastProgressPct) return;
+          lastProgressPct = pct;
           setSlot(1, { progressPct: pct });
           setSlot(2, { progressPct: pct });
-        }, 400);
+        }, 900);
 
         try {
           const rows = await generateBeatDualBatch(inputParams, effectiveEngine, {
@@ -2631,6 +2732,10 @@ export default function Dashboard() {
     [goMaster, mobileV2],
   );
 
+  const handleLoopOpenDetails = useCallback((loop: Loop) => {
+    setDetailsId((prev) => (prev === loop.id ? null : loop.id));
+  }, []);
+
   const showMasterWorkspace = mobileV2 ? mobileTab === "master" : workspaceView === "master";
 
   type RemixMobileDock = {
@@ -3136,7 +3241,7 @@ export default function Dashboard() {
                         options={reverbOptions}
                       />
 
-                      <div>
+                      <div data-coach="audio-format">
                         <div className="flex items-center justify-between mb-2">
                           <div className="text-xs text-pk-muted">{locale === "fr" ? "Format audio" : "Audio Format"}</div>
                           <div className="flex bg-pk-bg rounded-full p-0.5 border border-pk-border">
@@ -3151,8 +3256,7 @@ export default function Dashboard() {
                             </button>
                             <button
                               type="button"
-                              onClick={() => setAudioFormatPref("wav")}
-                              disabled={plan === "free"}
+                              onClick={handleWavFormatClick}
                               className={`rounded-full px-2 py-0.5 text-[10px] transition-colors ${
                                 effectiveAudioFormat === "wav" ? "bg-pk-accent text-white" : "text-pk-muted"
                               } ${plan === "free" ? "opacity-50" : ""}`}
@@ -3163,11 +3267,11 @@ export default function Dashboard() {
                         </div>
                         {plan === "free" ? (
                           <div className="text-[10px] text-pk-muted italic">
-                            {locale === "fr" ? "WAV est disponible sur Pro/Studio." : "WAV is available on Pro/Studio."}
+                            {locale === "fr" ? "WAV se débloque avec Pro — tap pour voir." : "WAV unlocks with Pro — tap to peek."}
                           </div>
                         ) : (
                           <div className="text-[10px] text-pk-muted italic">
-                            {locale === "fr" ? "Pro/Studio : WAV par défaut." : "Pro/Studio: WAV by default."}
+                            {locale === "fr" ? "Pro+ : toggle MP3 ou WAV à chaque gen." : "Pro+: toggle MP3 or WAV each gen."}
                           </div>
                         )}
                       </div>
@@ -3510,7 +3614,7 @@ export default function Dashboard() {
                         )}
                       </div>
 
-                      <div>
+                      <div data-coach="audio-format">
                         <div className="flex items-center justify-between mb-2">
                           <div className="text-xs text-pk-muted">{locale === "fr" ? "Format audio" : "Audio Format"}</div>
                           <div className="flex bg-pk-bg rounded-full p-0.5 border border-pk-border">
@@ -3525,8 +3629,7 @@ export default function Dashboard() {
                             </button>
                             <button
                               type="button"
-                              onClick={() => setAudioFormatPref("wav")}
-                              disabled={plan === "free"}
+                              onClick={handleWavFormatClick}
                               className={`rounded-full px-2 py-0.5 text-[10px] transition-colors ${
                                 effectiveAudioFormat === "wav" ? "bg-pk-accent text-white" : "text-pk-muted"
                               } ${plan === "free" ? "opacity-50" : ""}`}
@@ -3537,11 +3640,11 @@ export default function Dashboard() {
                         </div>
                         {plan === "free" ? (
                           <div className="text-[10px] text-pk-muted italic">
-                            {locale === "fr" ? "WAV est disponible sur Pro/Studio." : "WAV is available on Pro/Studio."}
+                            {locale === "fr" ? "WAV se débloque avec Pro — tap pour voir." : "WAV unlocks with Pro — tap to peek."}
                           </div>
                         ) : (
                           <div className="text-[10px] text-pk-muted italic">
-                            {locale === "fr" ? "Pro/Studio : WAV par défaut." : "Pro/Studio: WAV by default."}
+                            {locale === "fr" ? "Pro+ : toggle MP3 ou WAV à chaque gen." : "Pro+: toggle MP3 or WAV each gen."}
                           </div>
                         )}
                       </div>
@@ -3999,10 +4102,7 @@ export default function Dashboard() {
           ) : null}
           {visibleGenerationSlots.length ? (
             <div className="space-y-2">
-              {visibleGenerationSlots
-                .slice()
-                .sort((a, b) => b.idx - a.idx)
-                .map((slot) => {
+              {sortedVisibleGenerationSlots.map((slot) => {
                   if (slot.visible && slot.status === "queued") {
                     return (
                       <LoopCardSkeleton
@@ -4160,12 +4260,12 @@ export default function Dashboard() {
                       slotIndex={loopIdx}
                       compact={mobileV2}
                       queueLoops={displayedLoops}
-                      onOpenDetails={(loop) => setDetailsId((prev) => (prev === loop.id ? null : loop.id))}
+                      onOpenDetails={handleLoopOpenDetails}
                       onGenerationUsed={consumeCredit}
                       onCoverRerollUsed={consumeCredit}
                       creditsRemaining={remaining}
                       onNeedCredits={handleNeedCredits}
-                      onStartWorkspaceJob={(title, sub) => startWorkspaceJob(title, sub)}
+                      onStartWorkspaceJob={startWorkspaceJob}
                       onOpenMaster={openMaster}
                     />
                   </div>
@@ -4191,7 +4291,6 @@ export default function Dashboard() {
                       onSaveTitle={saveDetailsTitle}
                       durationSec={durationsSecById[detailsLoop.id]}
                       className="px-0"
-                      isPlayingCover={playerCurrent?.id === detailsLoop.id && playerIsPlaying}
                     />
                   </div>
                 </div>
@@ -4206,12 +4305,12 @@ export default function Dashboard() {
                     slotIndex={loopIdx}
                     compact={mobileV2}
                     queueLoops={displayedLoops}
-                    onOpenDetails={(loop) => setDetailsId((prev) => (prev === loop.id ? null : loop.id))}
+                    onOpenDetails={handleLoopOpenDetails}
                     onGenerationUsed={consumeCredit}
                     onCoverRerollUsed={consumeCredit}
                     creditsRemaining={remaining}
                     onNeedCredits={handleNeedCredits}
-                    onStartWorkspaceJob={(title, sub) => startWorkspaceJob(title, sub)}
+                    onStartWorkspaceJob={startWorkspaceJob}
                     onOpenMaster={openMaster}
                   />
                 </div>
@@ -4240,7 +4339,6 @@ export default function Dashboard() {
             durationSec={durationsSecById[detailsLoop.id]}
             className="px-0"
             compact
-            isPlayingCover={playerCurrent?.id === detailsLoop.id && playerIsPlaying}
           />
         </LoopDetailsSheet>
       ) : null}
@@ -4286,6 +4384,12 @@ export default function Dashboard() {
         onClose={() => setMobileOnboardingOpen(false)}
       />
       <OnboardingCoach locale={locale} />
+      <WavFormatCoach
+        locale={locale}
+        onPrepareTarget={prepareWavCoachTarget}
+        onTryWav={() => setAudioFormatPref("wav")}
+        onUpgradePro={() => promptPlanUpsell("feature_wav_format")}
+      />
       <MasteringUpsellModal
         open={!!masteringUpsellLoop}
         loop={masteringUpsellLoop}

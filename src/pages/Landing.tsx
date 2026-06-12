@@ -4,8 +4,9 @@ import { useEffect, useMemo, useRef, useState, useCallback, type MouseEvent as R
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/stores/authStore";
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
+import { trackLandingView } from "@/lib/growthFunnelEvents";
 import { useLocaleStore } from "@/stores/localeStore";
-import { FolderOpen, Keyboard, Menu, Mic2, Sparkles, Video, X, Zap } from "lucide-react";
+import { Menu, Mic2, X } from "lucide-react";
 import { usePlayerStore } from "@/stores/playerStore";
 import {
   findPublicRowIndex,
@@ -33,29 +34,27 @@ import { LandingFooter } from "@/components/landing/LandingFooter";
 import { LogoMarquee } from "@/components/landing/LogoMarquee";
 import { SocialProofStats } from "@/components/landing/SocialProofStats";
 import { TestimonialsStrip } from "@/components/landing/TestimonialsStrip";
-import { LandingSocialFeed } from "@/components/landing/LandingSocialFeed";
 import { LandingCommunityRail } from "@/components/landing/LandingCommunityRail";
+import { LandingBenefits } from "@/components/landing/LandingBenefits";
+import { LandingPricingTeaser } from "@/components/landing/LandingPricingTeaser";
+import { LandingStickyCta } from "@/components/landing/LandingStickyCta";
 import { BackdropTextureVeil } from "@/components/BackdropTextureVeil";
 import { LandingMobileTrendingStrip } from "@/components/landing/LandingMobileTrendingStrip";
 import { LandingGenerator, type GeneratorSideCard } from "@/components/landing/LandingGenerator";
 import { LandingWorkflow } from "@/components/landing/LandingWorkflow";
 import { HeroCtaButton } from "@/components/landing/HeroCtaButton";
 import { HeroTypewriterPrompt } from "@/components/landing/HeroTypewriterPrompt";
-import { LandingValueGrid } from "@/components/landing/LandingValueGrid";
-import { LandingPitchSections } from "@/components/landing/LandingPitchSections";
 import { ThemeToggleButton } from "@/components/ThemeToggleButton";
 import { WarmGlassBackdrop } from "@/components/WarmGlassBackdrop";
 import { useVisualThemeStore, isWarmGlassTheme } from "@/stores/visualThemeStore";
-import { landingCopy, landingFeatureCards, landingFlowSectionClass, landingSectionClass } from "@/lib/landingContent";
+import { landingCopy, landingFlowSectionClass, landingSectionClass } from "@/lib/landingContent";
 import { saveLandingPendingGeneration } from "@/lib/landingPendingGeneration";
 import { handoffRemixToDashboard } from "@/lib/remixHandoff";
 import { buildAuthUrl } from "@/lib/authRoutes";
 import { cn } from "@/lib/utils";
-import { PLAN_LIMITS } from "@/lib/planLimits";
-import { isRecommendedPlan, normalizePlan, pricingCtaHref, pricingCtaMeta } from "@/lib/billing";
-import { plusPermanentAudioBenefit } from "@/lib/loopAudioRetention";
-import { PricingPlanButton } from "@/components/pricing/PricingPlanButton";
-import { COMMERCIAL_RIGHTS_FAQ, planPriceLabel } from "@/lib/planPricing";
+import { normalizePlan } from "@/lib/billing";
+import { hostedAudioRetentionSummary } from "@/lib/loopAudioRetention";
+import { COMMERCIAL_RIGHTS_FAQ } from "@/lib/planPricing";
 import { LANDING_MOBILE_V2 } from "@/lib/featureFlags";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { PublicProfileCard } from "@/lib/creatorProfile";
@@ -191,7 +190,7 @@ export default function Landing() {
   const mobileLandingFocus = LANDING_MOBILE_V2 && isMobileViewport;
 
   useEffect(() => {
-    trackClientEvent("landing_view", { locale });
+    trackLandingView({ locale });
   }, [locale]);
 
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -1000,85 +999,6 @@ export default function Landing() {
     };
   }, [shouldLoadTrending, trendingRefreshKey, locale]);
 
-  const pricing = useMemo(() => {
-    if (locale === "fr") {
-      return [
-        {
-          tier: "free" as const,
-          name: "Free",
-          price: planPriceLabel("free", "fr"),
-          meta: `${PLAN_LIMITS.free} générations / mois`,
-          bullets: [`✓ ${PLAN_LIMITS.free} gen Song + Beat`, "✓ Export MP3 (usage perso)", "✓ Bibliothèque cloud", "✗ Export WAV / stems / commercial"],
-          featured: false,
-        },
-        {
-          tier: "pro" as const,
-          name: "Pro",
-          price: planPriceLabel("pro", "fr", { suffix: true }),
-          meta: "75 générations / mois",
-          bullets: ["✓ Export WAV + MP3", "✓ Cover art + partage pro", "✓ Usage commercial", "✓ 75 gen / mois"],
-          featured: true,
-        },
-        {
-          tier: "studio" as const,
-          name: "Studio",
-          price: planPriceLabel("studio", "fr", { suffix: true }),
-          meta: "250 générations / mois",
-          bullets: ["✓ Tout Pro inclus", "✓ Mastering Studio complet", "✓ Remix ACE + seeds", "✓ 250 gen / mois"],
-          featured: false,
-        },
-        {
-          tier: "plus" as const,
-          name: "Plus",
-          price: planPriceLabel("plus", "fr", { suffix: true }),
-          meta: `${PLAN_LIMITS.plus} générations / mois`,
-          bullets: [`✓ ${PLAN_LIMITS.plus} gen / mois`, "✓ Priorité & rapidité", "✓ Stems ZIP séparés", "✓ Tout Studio inclus"],
-          featured: false,
-        },
-      ];
-    }
-    return [
-      {
-        tier: "free" as const,
-        name: "Free",
-        price: "$0",
-        meta: `${PLAN_LIMITS.free} generations / month`,
-        bullets: [`✓ ${PLAN_LIMITS.free} Song + Beat gens`, "✓ MP3 export (personal use)", "✓ Cloud library", "✗ WAV / stems / commercial"],
-        featured: false,
-      },
-      {
-        tier: "pro" as const,
-        name: "Pro",
-        price: planPriceLabel("pro", "en", { suffix: true }),
-        meta: "75 generations / month",
-        bullets: ["✓ WAV + MP3 export", "✓ Cover art + pro share", "✓ Commercial use", "✓ 75 gen / month"],
-        featured: true,
-      },
-      {
-        tier: "studio" as const,
-        name: "Studio",
-        price: planPriceLabel("studio", "en", { suffix: true }),
-        meta: "250 generations / month",
-        bullets: ["✓ Everything in Pro", "✓ Full Mastering Studio", "✓ Remix ACE + seeds", "✓ 250 gen / month"],
-        featured: false,
-      },
-      {
-        tier: "plus" as const,
-        name: "Plus",
-        price: planPriceLabel("plus", "en", { suffix: true }),
-        meta: `${PLAN_LIMITS.plus} generations / month`,
-        bullets: [
-          `✓ ${PLAN_LIMITS.plus} gen / month`,
-          `✓ ${plusPermanentAudioBenefit("en")}`,
-          "✓ Priority & speed",
-          "✓ Separate stems ZIP",
-          "✓ Everything in Studio",
-        ],
-        featured: false,
-      },
-    ];
-  }, [locale]);
-
   const currentPlan = normalizePlan(profile?.plan);
 
   useEffect(() => {
@@ -1109,6 +1029,10 @@ export default function Landing() {
           q: "Puis-je exporter en WAV ?",
           a: "Oui — l'export WAV est disponible sur les offres Pro, Studio et Plus.",
         },
+        {
+          q: "Les liens audio expirent-ils ?",
+          a: hostedAudioRetentionSummary("fr"),
+        },
       ];
     }
     return [
@@ -1124,10 +1048,14 @@ export default function Landing() {
         q: "Can I download WAV?",
         a: "Yes — WAV export is available on Pro, Studio, and Plus plans.",
       },
+      {
+        q: "Do hosted audio links expire?",
+        a: hostedAudioRetentionSummary("en"),
+      },
     ];
   }, [locale]);
 
-  const [faqOpen, setFaqOpen] = useState<number | null>(0);
+  const [faqOpen, setFaqOpen] = useState<number | null>(null);
 
   return (
     <div
@@ -1136,6 +1064,7 @@ export default function Landing() {
         "relative min-h-screen pk-prism-stage pk-prism-stage--landing text-white",
         warmGlass && "pk-warm-glass-stage",
         mobileLandingFocus && "pk-landing--mobile-focus",
+        !user && "max-sm:pb-24",
       )}
     >
       {warmGlass ? (
@@ -1169,7 +1098,7 @@ export default function Landing() {
             <Link to="/community" className="text-sm font-semibold text-white/70 transition-colors hover:text-white">
               {locale === "fr" ? "Communauté" : "Community"}
             </Link>
-            <Link to="/pricing" className="text-sm font-semibold text-white/70 transition-colors hover:text-white">
+            <Link to="#pricing" className="text-sm font-semibold text-white/70 transition-colors hover:text-white">
               {locale === "fr" ? "Tarifs" : "Pricing"}
             </Link>
             {user ? (
@@ -1254,7 +1183,7 @@ export default function Landing() {
                   {locale === "fr" ? "Communauté" : "Community"}
                 </Link>
                 <Link
-                  to="/pricing"
+                  to="#pricing"
                   className="pk-landing-mobile-nav__item"
                   onClick={() => setMobileOpen(false)}
                 >
@@ -1410,7 +1339,11 @@ export default function Landing() {
                   if (row) handlePlay(row, trending.slice(0, 12));
                 }}
               />
-            ) : null}
+            ) : (
+              <p className="pk-landing-hero-reassurance mx-auto mt-4 max-w-md text-center text-[11px] font-semibold tracking-wide text-white/40">
+                {copy.heroReassurance}
+              </p>
+            )}
           </section>
         </RevealSection>
 
@@ -1481,33 +1414,8 @@ export default function Landing() {
           />
         </RevealSection>
 
-        <RevealSection id="features" className={`${landingSectionClass()} pk-landing-below-fold`}>
-          <div className="pk-landing-section-head">
-            <h2 className="pk-landing-section-head__title">{copy.featuresTitle}</h2>
-            <p className="pk-landing-section-head__lead">{copy.featuresLead}</p>
-          </div>
-          <div className="mt-8 grid gap-3 sm:mt-10 sm:gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {landingFeatureCards(locale).map((x, i) => {
-              const icons = [Mic2, Keyboard, Sparkles, Video, Zap, FolderOpen] as const;
-              const Icon = icons[i] ?? Mic2;
-              return (
-              <div key={x.title} className="pk-prism-card p-6">
-                <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04]">
-                  <Icon className="h-5 w-5 text-[var(--prism-cyan)]" strokeWidth={1.75} />
-                </div>
-                <h3 className="mt-4 text-lg font-semibold text-white">{x.title}</h3>
-                <div className="mt-2 text-sm text-white/55">{x.description}</div>
-              </div>
-              );
-            })}
-          </div>
-        </RevealSection>
-
         <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
-          <div className="grid gap-16 sm:gap-20">
-            <LandingPitchSections locale={locale} user={!!user} />
-            <LandingValueGrid locale={locale} user={!!user} />
-          </div>
+          <LandingBenefits locale={locale} />
         </RevealSection>
 
         <RevealSection id="how" className={`${landingSectionClass()} pk-landing-below-fold`}>
@@ -1515,93 +1423,11 @@ export default function Landing() {
         </RevealSection>
 
         <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
-          <div className="pk-landing-section-head">
-            <h2 className="pk-landing-section-head__title">
-              <span className="pk-prism-holo-text">{locale === "fr" ? "Tarifs" : "Pricing"}</span>
-            </h2>
-            <p className="pk-landing-section-head__lead mt-2 sm:hidden">
-              {locale === "fr" ? "Glisse pour comparer les plans →" : "Swipe to compare plans →"}
-            </p>
-          </div>
-          <div className="pk-pricing-rail mt-8 flex gap-4 overflow-x-auto pb-2 sm:grid sm:grid-cols-2 sm:overflow-visible xl:grid-cols-4 xl:items-stretch">
-            {pricing.map((p) => {
-              const tier = p.tier;
-              const isCurrent = tier === currentPlan;
-              const recommended = isRecommendedPlan(tier, currentPlan);
-              const cta = pricingCtaMeta(tier, currentPlan, locale, { isLoggedIn: !!user });
-              const ctaHref = pricingCtaHref(tier, currentPlan, !!user);
-
-              return (
-              <div
-                key={p.name}
-                className={[
-                  "pk-prism-card flex h-full w-[min(82vw,300px)] flex-shrink-0 snap-center flex-col p-6 sm:w-auto sm:min-w-0 sm:flex-shrink sm:snap-align-none",
-                  "min-h-[380px] sm:min-h-[400px]",
-                  recommended ? "border-[#b968ff]/60 shadow-[0_0_70px_rgba(186,104,255,0.18)]" : "",
-                  isCurrent ? "ring-1 ring-[#7c3aed]/35" : "",
-                ].join(" ")}
-              >
-                <div className="flex min-h-7 items-center justify-between gap-2">
-                  <div className="text-sm font-semibold text-white">{p.name}</div>
-                  {isCurrent ? (
-                    <div className="shrink-0 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-1 text-[10px] font-semibold leading-none text-emerald-300">
-                      {locale === "fr" ? "Actif" : "Active"}
-                    </div>
-                  ) : recommended ? (
-                    <div className="shrink-0 rounded-full border border-[#7c3aed44] bg-[#7c3aed11] px-2 py-1 text-[11px] font-semibold leading-none text-[#a78bfa]">
-                      {locale === "fr" ? "Le plus populaire" : "Most popular"}
-                    </div>
-                  ) : (
-                    <span className="h-6 w-6 shrink-0" aria-hidden />
-                  )}
-                </div>
-                <div className="mt-4 text-3xl font-extrabold leading-none tracking-tight text-white">{p.price}</div>
-                <div className="mt-2 text-sm font-medium leading-snug text-white/55">{p.meta}</div>
-                <div className="mt-5 flex flex-1 flex-col gap-2.5 text-sm leading-snug text-white/55">
-                  {p.bullets.map((b) => (
-                    <div key={b} className="flex items-start gap-2.5">
-                      <span className={`mt-0.5 shrink-0 ${b.startsWith("✓") ? "text-[var(--prism-cyan)]" : "text-white/40"}`}>{b.slice(0, 1)}</span>
-                      <span className={`min-w-0 flex-1 ${b.startsWith("✗") ? "text-white/45" : ""}`}>{b.slice(2)}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-auto pt-5">
-                  <PricingPlanButton
-                    tier={tier}
-                    cta={cta}
-                    disabled={cta.disabled}
-                    to={ctaHref}
-                  />
-                </div>
-              </div>
-              );
-            })}
-          </div>
-          <p className="pk-landing-section-head__lead mt-6 text-center">
-            {locale === "fr" ? (
-              <>
-                Paiement Stripe sécurisé · crédits activés instantanément ·{" "}
-                <Link to="/pricing" className="text-[#a78bfa] hover:underline">
-                  voir tous les détails
-                </Link>
-              </>
-            ) : (
-              <>
-                Secure Stripe checkout · credits unlock instantly ·{" "}
-                <Link to="/pricing" className="text-[#a78bfa] hover:underline">
-                  see full details
-                </Link>
-              </>
-            )}
-          </p>
-        </RevealSection>
-
-        <RevealSection id="social" className={`${landingSectionClass()} pk-landing-below-fold`}>
-          <LandingSocialFeed locale={locale} />
+          <LandingPricingTeaser locale={locale} user={!!user} currentPlan={currentPlan} />
         </RevealSection>
 
         <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
-          <TestimonialsStrip locale={locale} />
+          <TestimonialsStrip locale={locale} compact />
         </RevealSection>
 
         <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
@@ -1653,6 +1479,8 @@ export default function Landing() {
 
         <LandingFooter locale={locale} user={user} />
       </main>
+
+      <LandingStickyCta locale={locale} user={!!user} visible={!mobileLandingFocus} />
     </div>
   );
 }

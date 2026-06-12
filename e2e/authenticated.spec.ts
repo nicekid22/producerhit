@@ -29,6 +29,16 @@ test.describe("Parcours authentifié", () => {
     await expect(page.getByText(/chargement de tes créations|loading your creations/i)).toHaveCount(0);
   });
 
+  test("login → dashboard prêt en moins de 20 s", async ({ page }) => {
+    const started = Date.now();
+    await loginWithEmail(page);
+    await expect(page.getByText(/mon espace|my workspace/i)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/chargement de tes créations|loading your creations|setting up your studio|configuration de ton studio/i)).toHaveCount(0, {
+      timeout: 15_000,
+    });
+    expect(Date.now() - started).toBeLessThan(20_000);
+  });
+
   test("settings — sauvegarde username", async ({ page }) => {
     await loginWithEmail(page);
 

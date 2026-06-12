@@ -1,6 +1,12 @@
 import type { PlanTier } from "@/lib/billing";
 import { PLAN_LIMITS } from "@/lib/planLimits";
-import { LOOP_AUDIO_RETENTION_DAYS, plusPermanentAudioBenefit } from "@/lib/loopAudioRetention";
+import {
+  LOOP_AUDIO_RETENTION_DAYS_FREE,
+  LOOP_AUDIO_RETENTION_DAYS_PRO,
+  LOOP_AUDIO_RETENTION_DAYS_STUDIO,
+  hostedAudioRetentionSummary,
+  plusPermanentAudioBenefit,
+} from "@/lib/loopAudioRetention";
 import { COMMERCIAL_RIGHTS_FAQ, planPriceLabel } from "@/lib/planPricing";
 
 export type PricingPlanContent = {
@@ -36,6 +42,7 @@ export function getPricingPlans(locale: "en" | "fr"): PricingPlanContent[] {
         gen(PLAN_LIMITS.free),
         isFr ? "Export MP3 — usage personnel" : "MP3 export — personal use",
         isFr ? "Bibliothèque cloud + player" : "Cloud library + player",
+        isFr ? `Audio hébergé ${LOOP_AUDIO_RETENTION_DAYS_FREE} jours` : `Hosted audio ${LOOP_AUDIO_RETENTION_DAYS_FREE} days`,
         isFr ? "Pas de droits commerciaux" : "No commercial rights",
       ],
     },
@@ -48,8 +55,9 @@ export function getPricingPlans(locale: "en" | "fr"): PricingPlanContent[] {
         gen(PLAN_LIMITS.pro),
         isFr ? "Export WAV + MP3 Spotify Ready" : "WAV + MP3 Spotify Ready",
         isFr ? "Droits commerciaux inclus" : "Commercial rights included",
+        isFr ? `Audio hébergé ${LOOP_AUDIO_RETENTION_DAYS_PRO} jours` : `Hosted audio ${LOOP_AUDIO_RETENTION_DAYS_PRO} days`,
         isFr ? "Song, Type Beat & Remix" : "Song, Type Beat & Remix",
-        isFr ? "Cover art + partage sans watermark" : "Cover art + watermark-free share",
+        isFr ? "Bibliothèque cloud + liens publics" : "Cloud library + public links",
       ],
     },
     {
@@ -61,6 +69,7 @@ export function getPricingPlans(locale: "en" | "fr"): PricingPlanContent[] {
         gen(PLAN_LIMITS.studio),
         isFr ? "Tout Pro + mastering complet" : "Everything in Pro + full mastering",
         isFr ? "Versions ×2 en parallèle" : "Parallel ×2 versions",
+        isFr ? `Audio hébergé ${LOOP_AUDIO_RETENTION_DAYS_STUDIO} jours` : `Hosted audio ${LOOP_AUDIO_RETENTION_DAYS_STUDIO} days`,
         isFr ? "Export vidéo vertical" : "Vertical video export",
         isFr ? "Idéal releases & clients" : "Built for releases & clients",
       ],
@@ -152,9 +161,9 @@ export function getPricingCompareRows(locale: "en" | "fr"): PricingCompareRow[] 
     },
     {
       label: isFr ? "Audio hébergé" : "Hosted audio",
-      free: `${LOOP_AUDIO_RETENTION_DAYS}${isFr ? " j" : "d"}`,
-      pro: `${LOOP_AUDIO_RETENTION_DAYS}${isFr ? " j" : "d"}`,
-      studio: `${LOOP_AUDIO_RETENTION_DAYS}${isFr ? " j" : "d"}`,
+      free: `${LOOP_AUDIO_RETENTION_DAYS_FREE}${isFr ? " j" : "d"}`,
+      pro: `${LOOP_AUDIO_RETENTION_DAYS_PRO}${isFr ? " j" : "d"}`,
+      studio: `${LOOP_AUDIO_RETENTION_DAYS_STUDIO}${isFr ? " j" : "d"}`,
       plus: isFr ? "Permanent" : "Permanent",
     },
   ];
@@ -171,10 +180,10 @@ export function getPricingFaqs(locale: "en" | "fr") {
         : "Immediately after Stripe payment. Plan and quota update within seconds.",
     },
     {
-      q: isFr ? "Changer de plan ?" : "Switch plans?",
+      q: isFr ? "Passer à un plan supérieur ?" : "Upgrade to a higher plan?",
       a: isFr
-        ? "Upgrade instantané avec proration. Downgrade via le portail Stripe (Paramètres)."
-        : "Instant upgrade with proration. Downgrade via Stripe billing portal (Settings).",
+        ? "Un clic sur « Passer Pro / Studio / Plus » — paiement Stripe sécurisé, crédits activés immédiatement, facturation au prorata. Annulation possible à tout moment depuis Paramètres."
+        : "One click on « Upgrade to Pro / Studio / Plus » — secure Stripe checkout, credits unlock instantly, prorated billing. Cancel anytime from Settings.",
     },
     {
       q: isFr ? "Export stems (Plus)" : "Stems export (Plus)",
@@ -184,9 +193,7 @@ export function getPricingFaqs(locale: "en" | "fr") {
     },
     {
       q: isFr ? "Les liens audio expirent-ils ?" : "Do hosted audio links expire?",
-      a: isFr
-        ? `Free, Pro et Studio : ${LOOP_AUDIO_RETENTION_DAYS} jours. Plus : liens actifs tant que tu es abonné.`
-        : `Free, Pro, Studio: ${LOOP_AUDIO_RETENTION_DAYS} days. Plus: links stay active while subscribed.`,
+      a: hostedAudioRetentionSummary(isFr ? "fr" : "en"),
     },
   ];
 }

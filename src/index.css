@@ -112,11 +112,11 @@ body {
     repeating-radial-gradient(circle at 46% 84%, rgba(0, 0, 0, 0.024) 0 0.65px, transparent 0.65px 2.4px);
   --pk-grunge-grain-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   --pk-grunge-grain-size: 180px;
-  --pk-grunge-grain-opacity: 0.032;
+  --pk-grunge-grain-opacity: 0.02;
   --pk-grunge-grain-blend: overlay;
-  --pk-grunge-grain-landing-opacity: 0.038;
-  --pk-grunge-grain-landing-mobile-opacity: 0.062;
-  --pk-grunge-grain-mobile-opacity: 0.062;
+  --pk-grunge-grain-landing-opacity: 0.024;
+  --pk-grunge-grain-landing-mobile-opacity: 0.038;
+  --pk-grunge-grain-mobile-opacity: 0.038;
   --pk-grunge-grain-mobile-blend: overlay;
   --pk-grunge-grain-mobile-size: 132px;
   --pk-grunge-grain-dashboard-warm-opacity: 0.068;
@@ -518,8 +518,8 @@ body {
 
 /* Hero landing — grain scène (ISO backup V4) */
 .pk-prism-grain {
-  opacity: 0.045;
-  mix-blend-mode: overlay;
+  opacity: 0.028;
+  mix-blend-mode: soft-light;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
@@ -1292,11 +1292,11 @@ a.pk-pricing-plan-btn {
 
 .pk-pricing-plan-btn--current {
   pointer-events: none;
-  cursor: not-allowed;
-  opacity: 0.42;
-  background: rgba(255, 255, 255, 0.02);
-  border-color: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.45);
+  cursor: default;
+  opacity: 0.55;
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.5);
   box-shadow: none;
 }
 
@@ -1355,6 +1355,8 @@ a.pk-pricing-plan-btn {
 
 .pk-pricing-tier {
   min-height: 0;
+  position: relative;
+  z-index: 1;
   border-color: rgba(255, 255, 255, 0.09);
   box-shadow:
     0 18px 48px rgba(0, 0, 0, 0.22),
@@ -1393,15 +1395,23 @@ a.pk-pricing-plan-btn {
 }
 
 .pk-pricing-tier__badge {
+  z-index: 4;
   border: 1px solid var(--pk-pricing-accent-border);
   background: linear-gradient(120deg, rgba(124, 58, 237, 0.22), rgba(103, 195, 255, 0.12));
   color: #ddd6fe;
   box-shadow: 0 8px 24px rgba(124, 58, 237, 0.2);
+  white-space: nowrap;
 }
 
 .pk-pricing-tier__active {
+  z-index: 4;
   background: var(--pk-pricing-accent);
   color: #fff;
+  white-space: nowrap;
+}
+
+.pk-pricing-tier__ribbon {
+  width: 100%;
 }
 
 .pk-pricing-tier__check {
@@ -1561,6 +1571,64 @@ a.pk-pricing-plan-btn {
 
 .pk-landing-below-fold {
   contain-intrinsic-size: auto 520px;
+}
+
+/* Landing conversion flow v2 */
+.pk-landing-hero-reassurance {
+  letter-spacing: 0.04em;
+}
+
+.pk-landing-benefits__card {
+  transition:
+    border-color 280ms ease,
+    transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (hover: hover) {
+  .pk-landing-benefits__card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.14);
+  }
+}
+
+.pk-landing-pricing-teaser__card--featured {
+  border-color: var(--pk-pricing-accent-border, rgba(124, 58, 237, 0.42));
+  box-shadow:
+    0 0 0 1px rgba(124, 58, 237, 0.1),
+    0 24px 64px rgba(124, 58, 237, 0.12);
+}
+
+.pk-landing-sticky-cta {
+  animation: pk-landing-sticky-up 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes pk-landing-sticky-up {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pk-landing--mobile-focus:not(:has(.pk-landing-sticky-cta)) {
+  padding-bottom: 0;
+}
+
+.pk-prism-stage--landing:not(:has(.pk-landing-sticky-cta)) {
+  padding-bottom: 0;
+}
+
+@media (max-width: 639px) {
+  .pk-prism-stage--landing:has(.pk-landing-sticky-cta) {
+    padding-bottom: 5.5rem;
+  }
+}
+
+.pk-landing-testimonials--compact .pk-landing-testimonials__card {
+  min-height: 11rem;
 }
 
 .pk-mascot-wrap {
@@ -2037,6 +2105,120 @@ a.pk-pricing-plan-btn {
   }
 }
 
+/* WAV format coach — cartoon chill tip */
+.pk-wav-coach-bubble {
+  position: relative;
+  overflow: visible;
+  border-radius: 1.35rem;
+  border: 2px solid rgba(236, 72, 153, 0.35);
+  background: linear-gradient(165deg, rgba(24, 18, 36, 0.97), rgba(12, 14, 28, 0.96));
+  padding: 1.1rem;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 24px 64px rgba(168, 85, 247, 0.22);
+  animation: pk-wav-coach-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.pk-wav-coach-bubble--free {
+  border-color: rgba(251, 191, 36, 0.35);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 24px 64px rgba(251, 191, 36, 0.12);
+}
+
+.pk-wav-coach-bubble__tail {
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  transform: translateX(-50%) rotate(45deg);
+  border-right: 2px solid rgba(236, 72, 153, 0.35);
+  border-bottom: 2px solid rgba(236, 72, 153, 0.35);
+  background: rgba(18, 16, 28, 0.98);
+}
+
+.pk-wav-coach-bubble--free .pk-wav-coach-bubble__tail {
+  border-color: rgba(251, 191, 36, 0.35);
+}
+
+.pk-wav-coach-mascot {
+  animation: pk-wav-coach-bounce 2.2s ease-in-out infinite;
+}
+
+.pk-wav-coach-toggle__wav--on {
+  animation: pk-wav-coach-glow 1.6s ease-in-out infinite;
+}
+
+.pk-wav-coach-sparkle {
+  position: absolute;
+  top: -6px;
+  right: -4px;
+  font-size: 10px;
+  animation: pk-wav-coach-sparkle 1.2s ease-in-out infinite;
+}
+
+.pk-wav-coach-spotlight {
+  animation: pk-wav-coach-spotlight 1.5s ease-in-out infinite;
+}
+
+.pk-wav-coach-cta {
+  box-shadow: 0 8px 24px rgba(168, 85, 247, 0.28);
+}
+
+@keyframes pk-wav-coach-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.88) translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes pk-wav-coach-bounce {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(2deg);
+  }
+}
+
+@keyframes pk-wav-coach-glow {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.15);
+  }
+}
+
+@keyframes pk-wav-coach-sparkle {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes pk-wav-coach-spotlight {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(236, 72, 153, 0.08);
+  }
+}
+
 @keyframes pk-sheet-up {
   from {
     opacity: 0;
@@ -2440,6 +2622,8 @@ a.pk-pricing-plan-btn {
 .pk-dashboard-results-scroll {
   padding-bottom: 0.75rem;
   scroll-padding-top: 0.5rem;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Split aside (Settings, Library…) — colonne gauche à hauteur contenu, pas viewport entier */

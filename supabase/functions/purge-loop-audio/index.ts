@@ -9,7 +9,7 @@ const corsHeaders = {
 
 const BUCKET = "loop-audio";
 const COVERS_BUCKET = "loop-covers";
-const DEFAULT_RETENTION_DAYS = 7;
+const DEFAULT_RETENTION_DAYS = 7; // legacy param only — SQL uses loop_audio_retention_days(plan)
 const DEFAULT_BATCH = 80;
 
 function retentionDays(): number {

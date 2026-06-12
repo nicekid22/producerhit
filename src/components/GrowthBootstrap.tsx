@@ -4,6 +4,7 @@ import { captureAttributionFromUrl } from "@/lib/attribution";
 import { GA_MEASUREMENT_ID, isGa4ScriptPresent } from "@/lib/googleAnalytics";
 import { scheduleThirdPartyAnalytics } from "@/lib/deferredAnalytics";
 import { flushEventQueue, trackClientEvent } from "@/lib/supabaseClient";
+import { trackLandingView } from "@/lib/growthFunnelEvents";
 
 function loadGa4(id: string) {
   if (typeof window === "undefined") return;
@@ -33,6 +34,9 @@ export function GrowthBootstrap() {
   useEffect(() => {
     captureAttributionFromUrl(search, pathname);
     trackClientEvent("page_view", { page: pathname });
+    if (pathname === "/") {
+      trackLandingView({ via: "router" });
+    }
   }, [pathname, search]);
 
   useEffect(() => {

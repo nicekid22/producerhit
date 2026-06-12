@@ -4,12 +4,12 @@
  */
 
 :root {
-  --pk-veil-backdrop-opacity: 0.055;
+  --pk-veil-backdrop-opacity: 0.038;
   --pk-veil-backdrop-size: 480px;
   --pk-veil-backdrop-blur: 0.45px;
-  --pk-veil-ambient-global: 0.024;
-  --pk-veil-marketing-ambient: 0.024;
-  --pk-veil-panel-grain: 0.026;
+  --pk-veil-ambient-global: 0.015;
+  --pk-veil-marketing-ambient: 0.015;
+  --pk-veil-panel-grain: 0.017;
   --pk-veil-surface-blur: 18px;
   /* Surfaces — transparence : le fond texturé traverse, pas d’effet « collé par-dessus » */
   --pk-veil-surface-focal: rgba(8, 7, 14, 0.36);
@@ -18,18 +18,18 @@
   --pk-veil-surface-ghost: rgba(8, 7, 14, 0.08);
   --pk-veil-gradient-focal: linear-gradient(
     155deg,
-    rgba(255, 255, 255, 0.048) 0%,
-    rgba(255, 255, 255, 0.012) 40%,
+    rgba(255, 255, 255, 0.032) 0%,
+    rgba(255, 255, 255, 0.008) 40%,
     rgba(0, 0, 0, 0.05) 100%
   );
   --pk-veil-gradient-mid: linear-gradient(
     168deg,
-    rgba(255, 255, 255, 0.032) 0%,
+    rgba(255, 255, 255, 0.022) 0%,
     rgba(0, 0, 0, 0.035) 100%
   );
   --pk-veil-gradient-soft: linear-gradient(
     175deg,
-    rgba(255, 255, 255, 0.022) 0%,
+    rgba(255, 255, 255, 0.014) 0%,
     rgba(0, 0, 0, 0.028) 100%
   );
   --pk-veil-shadow-panel: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 10px 36px rgba(0, 0, 0, 0.2);
@@ -53,28 +53,28 @@
 }
 
 body[data-pk-theme="app"] {
-  --pk-veil-backdrop-opacity: 0.09;
+  --pk-veil-backdrop-opacity: 0.058;
   --pk-veil-backdrop-size: 520px;
-  --pk-veil-ambient-global: 0.032;
-  --pk-veil-panel-grain: 0.034;
+  --pk-veil-ambient-global: 0.02;
+  --pk-veil-panel-grain: 0.022;
   --pk-veil-surface-focal: rgba(8, 7, 14, 0.32);
   --pk-veil-surface-mid: rgba(8, 7, 14, 0.2);
   --pk-veil-surface-soft: rgba(8, 7, 14, 0.13);
 }
 
 body[data-pk-theme="marketing"] {
-  --pk-veil-backdrop-opacity: 0.088;
-  --pk-veil-ambient-global: 0.036;
+  --pk-veil-backdrop-opacity: 0.056;
+  --pk-veil-ambient-global: 0.018;
 }
 
 .pk-backdrop-texture-veil--landing {
   position: fixed;
   z-index: 2;
-  --pk-veil-backdrop-opacity: 0.082;
+  --pk-veil-backdrop-opacity: 0.052;
 }
 
 .pk-backdrop-texture-veil--marketing {
-  --pk-veil-backdrop-opacity: 0.078;
+  --pk-veil-backdrop-opacity: 0.05;
 }
 
 /* Voile grain fin — site entier (marketing + app), sous le contenu */
@@ -86,7 +86,7 @@ body[data-pk-theme="marketing"] {
   opacity: var(--pk-veil-ambient-global);
   background-image: url("/textures/prism-landing-veil.png");
   background-repeat: repeat;
-  background-size: 260px 260px;
+  background-size: 320px 320px;
   transform: translate3d(0, 0, 0);
   -webkit-transform: translate3d(0, 0, 0);
 }
@@ -99,21 +99,21 @@ body[data-pk-theme="marketing"] {
 @media (max-width: 767px) {
   :root {
     --pk-veil-backdrop-size: 400px;
-    --pk-veil-ambient-global: 0.036;
+    --pk-veil-ambient-global: 0.018;
   }
 
   body[data-pk-theme="app"] {
-    --pk-veil-backdrop-opacity: 0.082;
-    --pk-veil-ambient-global: 0.034;
+    --pk-veil-backdrop-opacity: 0.052;
+    --pk-veil-ambient-global: 0.017;
   }
 
   .pk-backdrop-texture-veil--landing {
-    --pk-veil-backdrop-opacity: 0.074;
+    --pk-veil-backdrop-opacity: 0.046;
   }
 
   body[data-pk-theme="marketing"] {
-    --pk-veil-backdrop-opacity: 0.08;
-    --pk-veil-ambient-global: 0.038;
+    --pk-veil-backdrop-opacity: 0.05;
+    --pk-veil-ambient-global: 0.019;
   }
 
   /* Landing mobile — cozy backdrop suffit ; évite le voile grain par-dessus le texte */
@@ -124,9 +124,9 @@ body[data-pk-theme="marketing"] {
 
 @media (prefers-reduced-transparency: reduce) {
   :root {
-    --pk-veil-backdrop-opacity: 0.05;
-    --pk-veil-ambient-global: 0.022;
-    --pk-veil-panel-grain: 0.02;
+    --pk-veil-backdrop-opacity: 0.034;
+    --pk-veil-ambient-global: 0.012;
+    --pk-veil-panel-grain: 0.012;
   }
 }
 
@@ -200,7 +200,7 @@ body[data-pk-theme="marketing"] .pk-landing-section:not(.pk-landing-section--tru
   z-index: 0;
   opacity: var(--pk-veil-panel-grain);
   background-image: url("/textures/prism-landing-veil.png");
-  background-size: 220px 220px;
+  background-size: 300px 300px;
 }
 
 /* Cartes latérales hero — tier 3, un peu plus de vie / texture */
@@ -339,7 +339,7 @@ body[data-pk-theme="app"] .pk-app-shell.pk-warm-glass-stage [data-loop-card]::af
   z-index: 0;
   opacity: var(--pk-veil-panel-grain);
   background-image: url("/textures/prism-landing-veil.png");
-  background-size: 220px 220px;
+  background-size: 300px 300px;
 }
 
 /* Contenu au-dessus du micro-grain panneau */
@@ -451,6 +451,46 @@ body[data-pk-theme="marketing"] .pk-auth-panel {
   background-color: rgba(8, 7, 14, 0.66) !important;
 }
 
+body[data-pk-theme="marketing"] .pk-pricing-page .pk-pricing-tier,
+body[data-pk-theme="marketing"] .pk-pricing-page .pk-pricing-hero,
+body[data-pk-theme="marketing"] .pk-pricing-page .pk-pricing-compare,
+body[data-pk-theme="marketing"] .pk-pricing-page .pk-pricing-faq {
+  background-color: rgba(8, 7, 14, 0.88) !important;
+  box-shadow:
+    0 20px 56px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.09) !important;
+}
+
+body[data-pk-theme="marketing"] .pk-pricing-page .pk-pricing-tier--featured,
+body[data-pk-theme="marketing"] .pk-pricing-page .pk-pricing-card--popular {
+  background-color: rgba(10, 8, 18, 0.92) !important;
+}
+
+body[data-pk-theme="marketing"] .pk-pricing-page .pk-pricing-tier::after,
+body[data-pk-theme="marketing"] .pk-pricing-page .pk-pricing-hero::after,
+body[data-pk-theme="marketing"] .pk-pricing-page .pk-pricing-compare::after,
+body[data-pk-theme="marketing"] .pk-pricing-page .pk-pricing-faq::after {
+  opacity: calc(var(--pk-veil-panel-grain, 0.5) * 0.18);
+  z-index: 0;
+}
+
+body[data-pk-theme="marketing"] .pk-pricing-page .pk-pricing-tier > *:not(.pk-pricing-tier__ribbon),
+body[data-pk-theme="marketing"] .pk-pricing-page .pk-pricing-hero > *,
+body[data-pk-theme="marketing"] .pk-pricing-page .pk-pricing-compare > *,
+body[data-pk-theme="marketing"] .pk-pricing-page .pk-pricing-faq > * {
+  position: relative;
+  z-index: 2;
+}
+
+body[data-pk-theme="marketing"] .pk-pricing-page .pk-pricing-tier__ribbon {
+  z-index: 3;
+}
+
+body[data-pk-theme="marketing"] .pk-pricing-page .pk-pricing-tier__badge,
+body[data-pk-theme="marketing"] .pk-pricing-page .pk-pricing-tier__active {
+  position: absolute;
+}
+
 body[data-pk-theme="marketing"] .pk-pricing-tier--featured,
 body[data-pk-theme="marketing"] .pk-pricing-card--popular {
   background-color: rgba(8, 7, 14, 0.58) !important;
@@ -478,7 +518,7 @@ body[data-pk-theme="marketing"] .pk-marketing-page details[class*="rounded"]::af
   z-index: 0;
   opacity: var(--pk-veil-panel-grain);
   background-image: url("/textures/prism-landing-veil.png");
-  background-size: 220px 220px;
+  background-size: 300px 300px;
 }
 
 body[data-pk-theme="marketing"] .pk-auth-panel::after {
@@ -603,7 +643,7 @@ body[data-pk-theme="app"] .pk-studio-generate-dock::after {
   z-index: 0;
   opacity: var(--pk-veil-panel-grain);
   background-image: url("/textures/prism-landing-veil.png");
-  background-size: 220px 220px;
+  background-size: 300px 300px;
 }
 
 body[data-pk-theme="app"] .pk-hub-hero::after {
@@ -819,7 +859,7 @@ body[data-pk-theme="app"] .pk-app-shell-mobile-nav {
   z-index: 0;
   opacity: var(--pk-veil-panel-grain);
   background-image: url("/textures/prism-landing-veil.png");
-  background-size: 220px 220px;
+  background-size: 300px 300px;
 }
 
 /* Contenu au-dessus du grain */

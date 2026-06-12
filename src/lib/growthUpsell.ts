@@ -1,5 +1,6 @@
 import {
   canDualGeneration,
+  canExportWav,
   hasFullMastering,
   hasPriorityGeneration,
   normalizePlanId,
@@ -15,6 +16,7 @@ export type UpsellReason =
   | "post_generation"
   | "limit_reached"
   | "wav_export"
+  | "feature_wav_format"
   | "feature_priority"
   | "feature_dual_generation";
 
@@ -48,6 +50,8 @@ export function shouldShowPlanUpsell(
       return !canDualGeneration(plan);
     case "wav_export":
       return !hasFullMastering(plan);
+    case "feature_wav_format":
+      return !canExportWav(plan);
     case "credits_exhausted":
     case "limit_reached":
       return remaining < 1;
@@ -161,6 +165,21 @@ export function getUpsellCopy(
       ? "Gérer l'abonnement"
       : "Manage subscription";
 
+  if (reason === "feature_wav_format") {
+    return {
+      title: isFr ? "Débloque le mode WAV 🎵" : "Unlock WAV mode 🎵",
+      description: isFr
+        ? "Sur Free, tu génères en MP3. Pro active le toggle WAV — fichiers plus propres pour Spotify, BeatStars et tes clients."
+        : "On Free, you generate MP3. Pro unlocks the WAV toggle — cleaner files for Spotify, BeatStars, and client work.",
+      bullets: isFr
+        ? [`${proLimit} générations / mois`, "Toggle MP3 ↔ WAV à chaque gen", "Droits commerciaux inclus", planPriceUpsellLabel("pro", "fr")]
+        : [`${proLimit} generations / month`, "MP3 ↔ WAV toggle every gen", "Commercial rights included", planPriceUpsellLabel("pro", "en")],
+      primaryLabel: isFr ? `Passer Pro — ${planPriceLabel("pro", "fr", { suffix: true })}` : `Go Pro — ${planPriceLabel("pro", "en", { suffix: true })}`,
+      secondaryLabel: isFr ? "Rester en MP3" : "Stay on MP3",
+      targetPlan: "pro",
+    };
+  }
+
   if (reason === "wav_export") {
     const wavPlan: PaidPlanId = cur === "pro" ? "studio" : "studio";
     return {
@@ -217,10 +236,10 @@ export function getUpsellCopy(
           : `${label} plan (${baseLimit}/month) — ${remaining} generation${remaining !== 1 ? "s" : ""} left.`,
         bullets: isFr
           ? target === "plus"
-            ? [`${PLAN_LIMITS.plus} générations / mois sur Plus`, "Audio hébergé permanent", "Stems & sans watermark"]
+            ? [`${PLAN_LIMITS.plus} générations / mois sur Plus`, "Audio hébergé permanent", "Stems ZIP séparés"]
             : [`${studioLimit} générations / mois sur Studio`, "Export WAV mastering", "Tout Pro inclus"]
           : target === "plus"
-            ? [`${PLAN_LIMITS.plus} generations / month on Plus`, "Permanent hosted audio", "Stems & no watermark"]
+            ? [`${PLAN_LIMITS.plus} generations / month on Plus`, "Permanent hosted audio", "Separate stems ZIP"]
             : [`${studioLimit} generations / month on Studio`, "Mastered WAV export", "Everything in Pro"],
         primaryLabel: target ? primaryForTarget : isFr ? "Voir les tarifs" : "View pricing",
         secondaryLabel: isFr ? "Fermer" : "Close",

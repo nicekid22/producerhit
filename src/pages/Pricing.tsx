@@ -10,7 +10,6 @@ import { getPlanBaseLimit } from "@/lib/planLimits";
 import {
   isRecommendedPlan,
   normalizePlan,
-  openBillingPortal,
   pricingCtaMeta,
   runCheckoutWithAuth,
   type PaidPlan,
@@ -55,7 +54,7 @@ export default function Pricing() {
   const currentPlan = normalizePlan(profile?.plan);
   const [searchParams, setSearchParams] = useSearchParams();
   const [open, setOpen] = useState<number | null>(0);
-  const [loading, setLoading] = useState<PaidPlan | "portal" | null>(null);
+  const [loading, setLoading] = useState<PaidPlan | null>(null);
   const [autoStarted, setAutoStarted] = useState(false);
   const didRefreshProfileRef = useRef(false);
   const userId = user?.id;
@@ -64,37 +63,17 @@ export default function Pricing() {
   const compareRows = useMemo(() => getPricingCompareRows(locale), [locale]);
   const faqs = useMemo(() => getPricingFaqs(locale), [locale]);
 
-  const openPortal = useCallback(async () => {
-    setLoading("portal");
-    try {
-      await openBillingPortal(`${window.location.origin}/pricing`, locale);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : isFr ? "Portail indisponible" : "Portal unavailable");
-    } finally {
-      setLoading(null);
-    }
-  }, [isFr, locale]);
-
   const handlePlanAction = useCallback(
     async (tier: PlanTier) => {
       const meta = pricingCtaMeta(tier, currentPlan, locale, { isLoggedIn: !!user });
-      if (meta.disabled) return;
+      if (meta.disabled || meta.kind !== "upgrade") {
+        if (meta.kind === "start_free") {
+          window.location.href = user ? "/dashboard" : "/auth";
+        }
+        return;
+      }
 
       trackClientEvent("pricing_cta_click", { tier, kind: meta.kind, current_plan: currentPlan });
-
-      if (meta.kind === "start_free") {
-        window.location.href = user ? "/dashboard" : "/auth";
-        return;
-      }
-
-      if (meta.kind === "downgrade") {
-        if (!user) {
-          window.location.href = "/auth";
-          return;
-        }
-        await openPortal();
-        return;
-      }
 
       const paid = tier as PaidPlan;
       setLoading(paid);
@@ -104,7 +83,7 @@ export default function Pricing() {
         setLoading(null);
       }
     },
-    [currentPlan, locale, openPortal, user],
+    [currentPlan, locale, user],
   );
 
   useEffect(() => {
@@ -194,7 +173,7 @@ export default function Pricing() {
             const isCurrent = p.tier === currentPlan;
             const recommended = isRecommendedPlan(p.tier, currentPlan);
             const cta = pricingCtaMeta(p.tier, currentPlan, locale, { isLoggedIn: !!user });
-            const busy = loading === p.tier || (loading === "portal" && cta.kind === "downgrade");
+            const busy = loading === p.tier;
 
             return (
               <article
@@ -205,17 +184,19 @@ export default function Pricing() {
                   isCurrent && "pk-pricing-tier--current",
                 )}
               >
-                {recommended ? (
-                  <div className="pk-pricing-tier__badge absolute -top-3 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em]">
-                    <Sparkles className="h-3 w-3" aria-hidden />
-                    {isFr ? "Recommandé" : "Recommended"}
-                  </div>
-                ) : null}
-                {isCurrent ? (
-                  <div className="pk-pricing-tier__active absolute -top-3 right-4 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide">
-                    {isFr ? "Actif" : "Active"}
-                  </div>
-                ) : null}
+                <div className="pk-pricing-tier__ribbon relative mb-1 min-h-[1.625rem] shrink-0 w-full">
+                  {recommended ? (
+                    <div className="pk-pricing-tier__badge absolute left-1/2 top-0 flex -translate-x-1/2 items-center gap-1 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em]">
+                      <Sparkles className="h-3 w-3" aria-hidden />
+                      {isFr ? "Recommandé" : "Recommended"}
+                    </div>
+                  ) : null}
+                  {isCurrent ? (
+                    <div className="pk-pricing-tier__active absolute right-0 top-0 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                      {isFr ? "Actif" : "Active"}
+                    </div>
+                  ) : null}
+                </div>
 
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -259,16 +240,12 @@ export default function Pricing() {
         </div>
 
         {currentPlan !== "free" ? (
-          <div className="mt-8 text-center">
-            <button
-              type="button"
-              disabled={loading !== null}
-              onClick={() => void openPortal()}
-              className="pk-pricing-plan-btn pk-pricing-plan-btn--muted pk-pricing-plan-btn--inline inline-flex h-10 items-center justify-center rounded-full px-5 text-sm font-semibold disabled:opacity-50"
-            >
-              {isFr ? "Gérer ou annuler via Stripe →" : "Manage or cancel via Stripe →"}
-            </button>
-          </div>
+          <p className="mt-8 text-center text-sm text-white/45">
+            {isFr ? "Abonnement actif — " : "Active subscription — "}
+            <Link to="/settings" className="font-semibold text-[var(--prism-cyan)] hover:text-white">
+              {isFr ? "gérer dans Paramètres" : "manage in Settings"}
+            </Link>
+          </p>
         ) : null}
 
         {/* Comparison table */}

@@ -192,12 +192,13 @@ export function landingFlowSectionClass(extra?: string): string {
 export function landingCopy(locale: Locale) {
   const isFr = locale === "fr";
   return {
-    heroTagline: isFr
-      ? "Créateur de chansons IA · Type beats · Royalty-free"
-      : "AI Song Creator · Type Beats · Royalty-Free",
+    heroTagline: isFr ? "Studio IA · Chansons & type beats" : "AI studio · Songs & type beats",
     heroLead: isFr
-      ? "Song Mode · Type Beat · Remix — royalty-free, Spotify Ready."
-      : "Song Mode · Type Beat · Remix — royalty-free, Spotify Ready.",
+      ? "Décris une vibe → obtiens un morceau en quelques secondes. MP3 gratuit, WAV sur Pro."
+      : "Describe a vibe → get a track in seconds. Free MP3, WAV on Pro.",
+    heroReassurance: isFr
+      ? "Gratuit pour commencer · Sans carte · Export MP3"
+      : "Free to start · No card · MP3 export",
     heroScrollCue: isFr ? "Essayer le générateur" : "Try the generator",
     heroCtaPrimary: isFr ? "Essayer ProducerHit" : "Try ProducerHit",
     heroCtaDashboard: isFr ? "Ouvrir mon studio →" : "Open my studio →",
@@ -236,10 +237,10 @@ export function landingCopy(locale: Locale) {
       ? "De la première idée à l’export Spotify Ready : prompt, génération, itération, mastering et publication — sans quitter le navigateur."
       : "From first idea to Spotify Ready export: prompt, generate, iterate, master, and publish — without leaving your browser.",
 
-    communityTitle: isFr ? "Écoute la communauté en direct" : "Hear the community live",
+    communityTitle: isFr ? "Écoute ce que la communauté sort" : "Hear what creators ship",
     communityLead: isFr
-      ? "Tracks publics royalty-free, covers uniques et remix communautaire — découvre, note et relance une vibe en Remix Studio."
-      : "Royalty-free public tracks, unique covers, and community remix — discover, rate, and relaunch a vibe in Remix Studio.",
+      ? "Tracks publics en direct — écoute, remixe, publie le tien."
+      : "Live public tracks — listen, remix, publish yours.",
 
     partnersLabel: isFr ? "Compatible avec tes plateformes" : "Works with your platforms",
 
@@ -257,10 +258,10 @@ export function landingCopy(locale: Locale) {
       ? "Song Mode, Type Beat, Remix ACE, export MP3/WAV — des workflows concrets, pas des promesses marketing."
       : "Song Mode, Type Beat, Remix, MP3/WAV export — real workflows, not marketing fluff.",
 
-    ctaTitle: isFr ? "Prêt à lancer ta prochaine release ?" : "Ready to ship your next release?",
+    ctaTitle: isFr ? "Ta prochaine idée mérite d’être entendue" : "Your next idea deserves to be heard",
     ctaLead: isFr
-      ? `Commence gratuitement — ${PLAN_LIMITS.free} générations par mois, export MP3 usage perso. Passe Pro (${planPriceLabel("pro", "fr")}/mo) pour le WAV et l'usage commercial.`
-      : `Start free — ${PLAN_LIMITS.free} generations per month, MP3 for personal use. Go Pro (${planPriceLabel("pro", "en")}/mo) for WAV and commercial rights.`,
+      ? `${PLAN_LIMITS.free} générations gratuites / mois. Passe Pro (${planPriceLabel("pro", "fr")}/mo) pour le WAV et l’usage commercial.`
+      : `${PLAN_LIMITS.free} free gens / month. Go Pro (${planPriceLabel("pro", "en")}/mo) for WAV and commercial use.`,
     ctaButton: isFr ? "Essayer ProducerHit gratuitement →" : "Try ProducerHit free →",
 
     freeSpotlightTitle: isFr
@@ -276,6 +277,59 @@ export function landingCopy(locale: Locale) {
       : `Join the community feed: remix, public prompts, type beats, and covers — ${PLAN_LIMITS.free} free generations every month to kick off your next idea.`,
     exploreCtaButton: isFr ? "Découvrir la communauté" : "Explore community",
   };
+}
+
+export type LandingBenefitPillar = {
+  id: string;
+  title: string;
+  body: string;
+  points: string[];
+};
+
+export function landingBenefitPillars(locale: Locale): LandingBenefitPillar[] {
+  const isFr = locale === "fr";
+  if (isFr) {
+    return [
+      {
+        id: "create",
+        title: "Crée en une phrase",
+        body: "Song Mode, Type Beat ou Remix — décris le mood, l’IA structure le morceau.",
+        points: ["Voix + instrumentales", "Remix depuis un audio", "Variations seed ×2"],
+      },
+      {
+        id: "export",
+        title: "Export propre",
+        body: "Bibliothèque cloud, covers auto, fichiers prêts pour ton DAW ou Spotify.",
+        points: ["MP3 gratuit (usage perso)", "WAV sur Pro+", "Mastering Studio inclus"],
+      },
+      {
+        id: "monetize",
+        title: "Monétise sur Pro+",
+        body: "BeatStars, YouTube, clients — droits commerciaux sur les plans payants.",
+        points: ["Usage commercial Pro+", "Liens publics & communauté", "Upgrade sans friction"],
+      },
+    ];
+  }
+  return [
+    {
+      id: "create",
+      title: "Create in one prompt",
+      body: "Song Mode, Type Beat, or Remix — describe the mood, AI structures the track.",
+      points: ["Vocals + instrumentals", "Remix from your audio", "Seed ×2 variations"],
+    },
+    {
+      id: "export",
+      title: "Clean exports",
+      body: "Cloud library, auto covers, files ready for your DAW or Spotify.",
+      points: ["Free MP3 (personal use)", "WAV on Pro+", "Mastering Studio included"],
+    },
+    {
+      id: "monetize",
+      title: "Monetize on Pro+",
+      body: "BeatStars, YouTube, clients — commercial rights on paid plans.",
+      points: ["Commercial use on Pro+", "Public links & community", "Frictionless upgrade"],
+    },
+  ];
 }
 
 export type LandingValueBlock = {

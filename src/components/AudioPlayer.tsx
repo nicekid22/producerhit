@@ -19,6 +19,7 @@ import {
   shouldUseWebAudioGraph,
 } from "@/lib/playableAudio";
 import { getPlayerVisualizerRgb } from "@/lib/waveformThemeColors";
+import { trackFirstAudioPlay } from "@/lib/growthFunnelEvents";
 import { useVisualThemeStore } from "@/stores/visualThemeStore";
 
 function formatTime(sec: number): string {
@@ -465,7 +466,15 @@ export function AudioPlayer() {
     };
     const onWaiting = () => setIsLoading(true);
     const onCanPlay = () => setIsLoading(false);
-    const onPlaying = () => setIsLoading(false);
+    const onPlaying = () => {
+      setIsLoading(false);
+      const state = usePlayerStore.getState();
+      trackFirstAudioPlay({
+        loop_id: state.current?.id,
+        source: state.queueSource ?? "player",
+        page: window.location.pathname,
+      });
+    };
     const onStalled = () => {
       if (audio.readyState < 3) setIsLoading(true);
     };

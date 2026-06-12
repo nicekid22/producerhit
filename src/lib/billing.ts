@@ -163,7 +163,7 @@ export async function openBillingPortal(returnUrl: string, locale: "en" | "fr" =
   window.location.href = url;
 }
 
-export type PricingCtaKind = "current" | "upgrade" | "downgrade" | "start_free";
+export type PricingCtaKind = "current" | "upgrade" | "start_free" | "included";
 
 export type PricingCtaMeta = {
   kind: PricingCtaKind;
@@ -208,10 +208,18 @@ export function pricingCtaMeta(
         isPrimary: false,
       };
     }
+    if (cur !== "free") {
+      return {
+        kind: "included",
+        label: isFr ? "Inclus dans ton plan" : "Included in your plan",
+        disabled: true,
+        isPrimary: false,
+      };
+    }
     return {
-      kind: "downgrade",
-      label: isFr ? "Revenir au plan Free" : "Switch to Free",
-      disabled: false,
+      kind: "current",
+      label: isFr ? "Plan actuel" : "Current plan",
+      disabled: true,
       isPrimary: false,
     };
   }
@@ -227,9 +235,9 @@ export function pricingCtaMeta(
   }
 
   return {
-    kind: "downgrade",
-    label: isFr ? `Downgrader vers ${paidPlanLabel(paid, locale)}` : `Downgrade to ${paidPlanLabel(paid, locale)}`,
-    disabled: false,
+    kind: "included",
+    label: isFr ? "Inclus dans ton plan" : "Included in your plan",
+    disabled: true,
     isPrimary: false,
   };
 }
@@ -250,8 +258,7 @@ export function pricingCtaHref(
 ): string {
   const meta = pricingCtaMeta(tier, currentPlan, "en", { isLoggedIn });
 
-  if (meta.kind === "current") return "/settings";
-  if (meta.kind === "downgrade") return isLoggedIn ? "/pricing" : "/auth";
+  if (meta.kind === "current" || meta.kind === "included") return "/settings";
   if (meta.kind === "start_free") return isLoggedIn ? "/dashboard" : "/auth";
   if (isLoggedIn) return buildPricingUrl(tier as PaidPlan, true);
   return buildAuthNextUrl(tier as PaidPlan);

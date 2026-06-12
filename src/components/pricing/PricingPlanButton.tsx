@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { CreditCard, Crown, Loader2, Sparkles, Zap } from "lucide-react";
+import { Crown, Loader2, Sparkles, Zap } from "lucide-react";
 import type { PlanTier, PricingCtaMeta } from "@/lib/billing";
 import { cn } from "@/lib/utils";
 
@@ -14,8 +14,7 @@ type Props = {
 };
 
 function CtaIcon({ tier, kind }: { tier: PlanTier; kind: PricingCtaMeta["kind"] }) {
-  if (kind !== "upgrade" && kind !== "downgrade") return null;
-  if (kind === "downgrade") return <CreditCard className="h-4 w-4 shrink-0 opacity-90" aria-hidden />;
+  if (kind !== "upgrade") return null;
   if (tier === "plus") return <Crown className="h-4 w-4 shrink-0 opacity-95" aria-hidden />;
   if (tier === "studio") return <Sparkles className="h-4 w-4 shrink-0 opacity-95" aria-hidden />;
   return <Zap className="h-4 w-4 shrink-0 opacity-95" aria-hidden />;
@@ -93,13 +92,16 @@ export function PricingPlanButton({ tier, cta, busy = false, disabled = false, o
     return renderAction(
       "pk-pricing-plan-btn pk-pricing-plan-btn--muted flex h-11 w-full items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold",
       <ButtonContent tier={tier} cta={cta} busy={busy} />,
+      { onClick },
     );
   }
 
   return renderAction(
     cn(
       "pk-pricing-plan-btn flex h-11 w-full items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold",
-      cta.kind === "current" ? "pk-pricing-plan-btn--current" : "pk-pricing-plan-btn--muted",
+      cta.kind === "current" || cta.kind === "included"
+        ? "pk-pricing-plan-btn--current"
+        : "pk-pricing-plan-btn--muted",
     ),
     <ButtonContent tier={tier} cta={cta} busy={busy} />,
   );
