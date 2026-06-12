@@ -1,6 +1,7 @@
 /** Assets & copy landing — remplace les partenaires par de vrais logos SVG quand disponibles. */
 
 import { PLAN_LIMITS } from "@/lib/planLimits";
+import { planPriceLabel } from "@/lib/planPricing";
 
 export const LANDING_PARTNER_NAMES = [
   "Spotify",
@@ -204,16 +205,16 @@ export function landingCopy(locale: Locale) {
     trustEyebrow: isFr ? "Adopté par les meilleurs créateurs" : "Trusted by the creators",
     trustTitle: isFr ? "Une suite complète pour produire, remixer et publier" : "A complete suite to produce, remix, and publish",
     trustLead: isFr
-      ? "Producteurs, artistes indépendants et passionnés utilisent ProducerHit pour passer du prompt au morceau fini — sans studio physique ni workflow fragmenté."
-      : "Producers, indie artists, and hobbyists use ProducerHit to go from prompt to finished track — no physical studio or fragmented workflow required.",
+      ? "Producteurs, artistes indépendants, créateurs de contenus et passionnés utilisent ProducerHit pour passer du prompt au morceau fini — sans studio physique ni workflow fragmenté."
+      : "Producers, indie artists, and content creators use ProducerHit to go from prompt to finished track — no physical studio or fragmented workflow required.",
 
     suiteTitle: isFr ? "Donne vie à tes idées en quelques secondes." : "Bring your creativity to life.",
     suiteLead: isFr
       ? "De la génération IA de chansons aux covers audio, en passant par l’export vidéo vertical et le mastering intégré : tout est réuni pour passer de l’idée à une release royalty-free."
       : "From AI song generation to ACE audio covers, vertical video export, and built-in mastering — everything you need to move from idea to royalty-free release in one place.",
     suitePoints: isFr
-      ? ["Song Mode & Type Beat Mode", "Remix — covers IA depuis ton audio", "Export vidéo, MP3/WAV & mastering", "Usage commercial royalty-free"]
-      : ["Song Mode & Type Beat Mode", "Remix — AI covers from your audio", "Video export, MP3/WAV & mastering", "Royalty-free commercial use"],
+      ? ["Song Mode & Type Beat Mode", "Remix — covers IA depuis ton audio", "Export vidéo, MP3/WAV & mastering", "Usage commercial (Pro, Studio, Plus)"]
+      : ["Song Mode & Type Beat Mode", "Remix — AI covers from your audio", "Video export, MP3/WAV & mastering", "Commercial use (Pro, Studio, Plus)"],
 
     dreamTitle: isFr ? "Imagine. Décris. Écoute." : "Imagine. Describe. Listen.",
     dreamLead: isFr
@@ -258,8 +259,8 @@ export function landingCopy(locale: Locale) {
 
     ctaTitle: isFr ? "Prêt à lancer ta prochaine release ?" : "Ready to ship your next release?",
     ctaLead: isFr
-      ? "Commence gratuitement — 10 générations par mois, exports MP3 royalty-free. Passe Pro pour le WAV, Studio pour le mastering complet."
-      : "Start free — 10 generations per month, royalty-free MP3 exports. Go Pro for WAV, Studio for full mastering.",
+      ? `Commence gratuitement — ${PLAN_LIMITS.free} générations par mois, export MP3 usage perso. Passe Pro (${planPriceLabel("pro", "fr")}/mo) pour le WAV et l'usage commercial.`
+      : `Start free — ${PLAN_LIMITS.free} generations per month, MP3 for personal use. Go Pro (${planPriceLabel("pro", "en")}/mo) for WAV and commercial rights.`,
     ctaButton: isFr ? "Essayer ProducerHit gratuitement →" : "Try ProducerHit free →",
 
     freeSpotlightTitle: isFr
@@ -308,7 +309,7 @@ export function landingValueBlocks(locale: Locale): LandingValueBlock[] {
         id: "rights",
         eyebrow: "Droits commerciaux",
         title: "Tes exports, tes règles (plans payants)",
-        body: "Les abonnés Pro, Studio et Plus bénéficient d'exports MP3/WAV royalty-free pour un usage commercial — vidéos, BeatStars, streaming. Détails par plan : /legal#commercial-license.",
+        body: "Les abonnés Pro, Studio et Plus bénéficient d'exports MP3/WAV pour un usage commercial — vidéos, BeatStars, streaming. Free = usage perso uniquement. Détails : /legal#commercial-license.",
       },
       {
         id: "workspace",
@@ -348,7 +349,7 @@ export function landingValueBlocks(locale: Locale): LandingValueBlock[] {
       id: "rights",
       eyebrow: "Commercial rights",
       title: "Your exports, your rules (paid plans)",
-      body: "Pro, Studio, and Plus subscribers get royalty-free MP3/WAV exports for commercial use — videos, BeatStars, streaming. Plan details: /legal#commercial-license.",
+      body: "Pro, Studio, and Plus subscribers get MP3/WAV exports for commercial use — videos, BeatStars, streaming. Free = personal use only. Details: /legal#commercial-license.",
     },
     {
       id: "workspace",

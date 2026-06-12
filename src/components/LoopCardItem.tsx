@@ -25,6 +25,7 @@ import { useLocaleStore } from "@/stores/localeStore";
 import type { Loop } from "@/types/loop";
 import { prepareLoopVariantGeneration, variantResultTitle } from "@/lib/loopVariantGeneration";
 import { extractLoopVocalLanguage, formatVocalLanguageLabel, isSongLoop } from "@/lib/vocalLanguages";
+import { resolveStemsDownloadUrl } from "@/lib/stemsDownload";
 import { canDownloadStems } from "@/lib/planEntitlements";
 import { useGrowthUpsellStore } from "@/stores/growthUpsellStore";
 import { GenerationCreditAmount } from "@/components/GenerationCreditIcon";
@@ -253,42 +254,7 @@ export const LoopCardItem = memo(function LoopCardItem({
   const canPlay = Boolean(loop.audioUrl);
   const totalLabel = cachedDurationSec > 0 ? formatTime(cachedDurationSec) : "—";
   const durationLabel = active ? formatTime(currentTimeSec) : totalLabel;
-  const stemsDownloadUrl = (() => {
-    const raw = loop.stemsUrl as unknown;
-    if (!raw) return "";
-    if (typeof raw === "string") {
-      const s = raw.trim();
-      return s.startsWith("http://") || s.startsWith("https://") ? s : "";
-    }
-    if (typeof raw !== "object") return "";
-    const obj = raw as Record<string, unknown>;
-    const ace = obj.ace && typeof obj.ace === "object" ? (obj.ace as Record<string, unknown>) : null;
-    const candidates: unknown[] = [
-      obj.stemsZipUrl,
-      obj.stems_zip_url,
-      obj.zipUrl,
-      obj.zip_url,
-      obj.archiveUrl,
-      obj.archive_url,
-      obj.stemsUrl,
-      obj.stems_url,
-      ace?.stemsZipUrl,
-      ace?.stems_zip_url,
-      ace?.zipUrl,
-      ace?.zip_url,
-      ace?.archiveUrl,
-      ace?.archive_url,
-      ace?.stemsUrl,
-      ace?.stems_url,
-    ];
-    for (const c of candidates) {
-      if (typeof c !== "string") continue;
-      const s = c.trim();
-      if (!s) continue;
-      if (s.startsWith("http://") || s.startsWith("https://")) return s;
-    }
-    return "";
-  })();
+  const stemsDownloadUrl = resolveStemsDownloadUrl(loop.stemsUrl);
 
   useEffect(() => {
     if (isEditingTitle) return;

@@ -2,7 +2,7 @@ name: Social publish cron
 
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "*/15 * * * *"
   workflow_dispatch:
 
 jobs:
@@ -15,6 +15,18 @@ jobs:
         with:
           node-version: 22
 
+      - name: Install dependencies (ffmpeg render)
+        run: npm ci
+
+      - name: Pre-render YouTube Shorts for queue
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          YOUTUBE_VIRAL_VISUAL: cover
+          YOUTUBE_COMMUNITY_TEMPLATE: player
+          YOUTUBE_PREVIEW_SEC: "15"
+        run: node scripts/youtube-prerender-queue.mjs
+
       - name: Process social publish queue
         env:
           SOCIAL_PUBLISH_CRON_SECRET: ${{ secrets.SOCIAL_PUBLISH_CRON_SECRET }}
@@ -23,7 +35,7 @@ jobs:
             "https://pmfnzenqemnonpglmjqx.supabase.co/functions/v1/social-publish-cron" \
             -H "Content-Type: application/json" \
             -H "x-social-cron-secret: ${SOCIAL_PUBLISH_CRON_SECRET}" \
-            -d '{"action":"process_queue","limit":8}'
+            -d '{"action":"process_queue","limit":1}'
 
       - name: Generate rss-tracks.xml
         env:

@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import type { Loop } from "@/types/loop";
+import { resolveStemsDownloadUrl } from "@/lib/stemsDownload";
 
 export type LoopCardFooterHint = {
   label: string;
@@ -14,8 +15,8 @@ export function getLoopCardFooterHint(loop: Loop, locale: "fr" | "en"): LoopCard
       variant: "public",
     };
   }
-  const stems = loop.stemsUrl;
-  if (stems && typeof stems === "object" && Object.keys(stems).length > 0) {
+  const stemsZip = resolveStemsDownloadUrl(loop.stemsUrl);
+  if (stemsZip) {
     return {
       label: locale === "fr" ? "Stems prêts" : "Stems ready",
       variant: "stems",

@@ -161,6 +161,10 @@ export default function Legal() {
           </div>
           <ul className="mt-4 list-disc space-y-2 pl-5">
             <li>
+              Les droits commerciaux s&apos;appliquent en général aux morceaux générés pendant l&apos;abonnement actif (Pro, Studio ou Plus), pas rétroactivement
+              aux anciennes générations Free.
+            </li>
+            <li>
               <strong className="text-pk-text">Royalty-free</strong> signifie que ProducerHit ne te facture pas de redevances supplémentaires sur les exports
               inclus dans ton plan. Cela ne garantit pas l’enregistrement automatique auprès d’une société de gestion (SACEM, ASCAP, etc.).
             </li>
@@ -225,6 +229,10 @@ export default function Legal() {
             </table>
           </div>
           <ul className="mt-4 list-disc space-y-2 pl-5">
+            <li>
+              Commercial rights generally apply to tracks generated while your paid subscription (Pro, Studio, or Plus) is active — not retroactively to prior
+              Free-tier generations.
+            </li>
             <li>
               <strong className="text-pk-text">Royalty-free</strong> means ProducerHit does not charge additional royalties on exports included in your plan. It
               does not guarantee automatic registration with a PRO (SACEM, ASCAP, etc.).

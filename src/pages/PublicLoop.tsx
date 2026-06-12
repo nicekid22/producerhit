@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowRight, Loader2, Music2, Pause, Play, Share2, Sparkles, Star, Zap } from "lucide-react";
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
 import toast from "react-hot-toast";
@@ -53,6 +53,7 @@ type LoopRow = {
 
 export default function PublicLoop() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const locale = useLocaleStore((s) => s.locale);
   const isFr = locale === "fr";
@@ -81,6 +82,21 @@ export default function PublicLoop() {
   const coverUrl = useMemo(() => (row ? resolvePublicRowCoverUrl(row, 1024) : ""), [row]);
   const genreSeo = useMemo(() => getGenreSeoLink(row?.genre, locale), [row?.genre, locale]);
   const avgRating = ratingCount > 0 ? ratingSum / ratingCount : null;
+
+  const fromShorts = useMemo(() => {
+    const src = searchParams.get("utm_source")?.toLowerCase() ?? "";
+    const med = searchParams.get("utm_medium")?.toLowerCase() ?? "";
+    return src === "youtube" || src === "tiktok" || med === "shorts" || med === "social";
+  }, [searchParams]);
+
+  const createCtaHref = useMemo(() => {
+    const q = new URLSearchParams(searchParams);
+    q.set("utm_source", searchParams.get("utm_source") ?? "shorts");
+    q.set("utm_medium", "loop_cta");
+    q.set("utm_campaign", searchParams.get("utm_campaign") ?? "viral");
+    if (id) q.set("utm_content", id.slice(0, 8));
+    return `/auth?${q.toString()}`;
+  }, [id, searchParams]);
 
   useEffect(() => {
     if (!row || !id) return;
@@ -423,6 +439,28 @@ export default function PublicLoop() {
           <span className="px-2">/</span>
           <span className="text-pk-text">{row?.name ?? (isFr ? "Track" : "Track")}</span>
         </nav>
+
+        {fromShorts && row ? (
+          <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-pk-accent/30 bg-gradient-to-r from-pk-accent/15 to-transparent p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-pk-accent">
+                {isFr ? "Vu sur Shorts" : "From Shorts"}
+              </p>
+              <p className="mt-1 text-sm font-semibold text-pk-text sm:text-base">
+                {isFr
+                  ? "Ce son a été créé en quelques secondes avec l'IA — fais le tien."
+                  : "This track was made in seconds with AI — make yours."}
+              </p>
+            </div>
+            <Link
+              to={createCtaHref}
+              className="pk-prism-btn inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold"
+            >
+              {isFr ? "Créer gratuitement" : "Create free"}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        ) : null}
 
         {loading || !row ? (
           <div className="mt-16 flex flex-col items-center py-16 text-center">

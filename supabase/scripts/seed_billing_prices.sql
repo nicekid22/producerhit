@@ -3,9 +3,9 @@
 
 insert into public.billing_stripe_prices (plan, stripe_price_id)
 values
-  ('pro', 'price_REPLACE_PRO'),
-  ('studio', 'price_REPLACE_STUDIO'),
-  ('plus', 'price_1Tc9IsJqW5V9MXwgBB0dlFcp')
+  ('pro', 'price_1ThWOlJqW5V9MXwgrnXF3WVC'),
+  ('studio', 'price_1ThWPEJqW5V9MXwgKjYhuoE6'),
+  ('plus', 'price_1ThWPgJqW5V9MXwgLpsf8HrT')
 on conflict (plan) do update
   set stripe_price_id = excluded.stripe_price_id;
 

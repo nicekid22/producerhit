@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useLocaleStore } from "@/stores/localeStore";
 import { PLAN_LIMITS } from "@/lib/planLimits";
+import { COMMERCIAL_RIGHTS_FAQ } from "@/lib/planPricing";
 import {
   COMPARISON_PAGE_PATH_SET,
   SEO_PAGE_PATH_SET,
@@ -510,7 +511,7 @@ export function SeoBootstrap() {
           faq([
             {
               q: "Can I use the generated music commercially?",
-              a: "You can download and use the audio you generate. For commercial releases, always make sure you are comfortable with the underlying model provider terms and your platform rules.",
+              a: COMMERCIAL_RIGHTS_FAQ.en.a,
             },
             {
               q: "Does ProducerHit generate full songs with vocals?",

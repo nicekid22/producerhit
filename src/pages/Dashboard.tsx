@@ -93,6 +93,7 @@ import { useOnboardingCoachStore } from "@/stores/onboardingCoachStore";
 import { useAuthStore } from "@/stores/authStore";
 import { useLocaleStore } from "@/stores/localeStore";
 import { getRemainingBeats, PLAN_LIMITS, FREE_MASTERING_UPSELL_AT, getTotalGenerationLimit } from "@/lib/planLimits";
+import { planPriceLabel } from "@/lib/planPricing";
 import { canDualGeneration } from "@/lib/planEntitlements";
 import {
   creditsBlockedReason,
@@ -518,10 +519,10 @@ export default function Dashboard() {
     toast.dismiss("dashboard-profile-load");
   }, [user?.id]);
 
-  const refreshProfile = useCallback(async () => {
+  const refreshProfile = useCallback(async (opts?: { silent?: boolean }) => {
     if (!user) return planRef.current;
     const userId = user.id;
-    setProfileLoading(true);
+    if (!opts?.silent) setProfileLoading(true);
     try {
       const data = await refreshAuthProfile();
       if (useAuthStore.getState().user?.id !== userId) return planRef.current;
@@ -537,7 +538,7 @@ export default function Dashboard() {
       }
       return planRef.current;
     } finally {
-      setProfileLoading(false);
+      if (!opts?.silent) setProfileLoading(false);
     }
   }, [applyProfile, locale, refreshAuthProfile, user]);
 
@@ -670,6 +671,7 @@ export default function Dashboard() {
 
   const profileSyncing = authStatus === "ready" && !!user && !profileReady;
   const profileBusy = profileLoading || profileSyncing;
+  const quotaReady = !profileSyncing;
 
   const detailsLoop = useMemo(() => {
     if (!detailsId) return null;
@@ -1323,6 +1325,24 @@ export default function Dashboard() {
     syncGenerationStart(sessionId, slots);
 
     let didGenerate = false;
+    let generationUiReleased = false;
+    const releaseGenerationUi = () => {
+      if (generationUiReleased || !isSyncGenerationSessionActive(sessionId)) return;
+      generationUiReleased = true;
+      setGenerating(false);
+      let nextSlots: GenerationSlot[] | null = null;
+      setGenerationSlots((prev) => {
+        if (!prev) return null;
+        const errors = prev.filter((s) => s.visible && s.status === "error");
+        nextSlots = errors.length > 0 ? errors : null;
+        return nextSlots;
+      });
+      syncGenerationFinish(sessionId, {
+        slots: nextSlots,
+        didGenerate,
+        title: slotDisplayTitle,
+      });
+    };
     const slotErrors: Partial<Record<1 | 2, string>> = {};
     try {
       trackClientEvent("generate_start", {
@@ -1918,6 +1938,8 @@ export default function Dashboard() {
         throw allFailed;
       }
 
+      releaseGenerationUi();
+
       const slotOrder = new Map<string, 1 | 2>();
       finishedInOrder.forEach((loop, i) => slotOrder.set(loop.name, (i + 1) as 1 | 2));
       const playableCreated = created
@@ -1998,22 +2020,10 @@ export default function Dashboard() {
       const rawMessage = err instanceof Error ? err.message : "";
       toast.error(formatGenerationErrorMessage(rawMessage, locale, { plan }));
     } finally {
-      if (isSyncGenerationSessionActive(sessionId)) {
-        setGenerating(false);
-        let nextSlots: GenerationSlot[] | null = null;
-        setGenerationSlots((prev) => {
-          if (!prev) return null;
-          const errors = prev.filter((s) => s.visible && s.status === "error");
-          nextSlots = errors.length > 0 ? errors : null;
-          return nextSlots;
-        });
-        syncGenerationFinish(sessionId, {
-          slots: nextSlots,
-          didGenerate,
-          title: slotDisplayTitle,
-        });
+      if (!generationUiReleased && isSyncGenerationSessionActive(sessionId)) {
+        releaseGenerationUi();
       }
-      if (didGenerate && user) void refreshProfile();
+      if (didGenerate && user) void refreshProfile({ silent: true });
       if (didGenerate && plan === "free" && shouldShowPostGenerationPrompt()) {
         promptPlanUpsell("post_generation");
       }
@@ -2186,7 +2196,7 @@ export default function Dashboard() {
             setShareMomentLoop(shareLoop);
           }
         if (mobileV2) goResults();
-        if (user) void refreshProfile();
+        if (user) void refreshProfile({ silent: true });
       } catch (err) {
         const anyErr = err as { limitReached?: boolean };
         if (anyErr?.limitReached) {
@@ -2423,7 +2433,7 @@ export default function Dashboard() {
           setShareMomentLoop(shareLoop);
         }
         if (mobileV2) goResults();
-        if (user) void refreshProfile();
+        if (user) void refreshProfile({ silent: true });
       } catch (err) {
         const anyErr = err as { limitReached?: boolean };
         if (anyErr?.limitReached) {
@@ -2485,7 +2495,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (!pendingLandingRequest) return;
     if (autoLandingGenerateRef.current) return;
-    if (!user || profileBusy || generating) return;
+    if (!user || !quotaReady || generating) return;
     if (!genreReady) return;
 
     if (remaining === 0) {
@@ -2505,7 +2515,7 @@ export default function Dashboard() {
     handleGenerate,
     mobileV2,
     pendingLandingRequest,
-    profileBusy,
+    quotaReady,
     promptPlanUpsell,
     remaining,
     user,
@@ -2572,11 +2582,11 @@ export default function Dashboard() {
   useEffect(() => {
     if (!autoGeneratePending) return;
     if (!user) return;
-    if (generating || profileBusy) return;
+    if (generating || !quotaReady) return;
     if (!genreReady) return;
     setAutoGeneratePending(false);
     void handleGenerate();
-  }, [autoGeneratePending, genreReady, generating, handleGenerate, profileBusy, user]);
+  }, [autoGeneratePending, genreReady, generating, handleGenerate, quotaReady, user]);
 
   useEffect(() => {
     if (!mobileV2) return;
@@ -3707,7 +3717,7 @@ export default function Dashboard() {
                 <DashboardGenerateButton
                   generating={generating}
                   progressPct={generationProgressPct}
-                  disabled={!genreReady || generating || profileBusy}
+                  disabled={!genreReady || generating || !quotaReady}
                   creditBlocked={remaining < versions}
                   idleLabel={
                     mode === "song"
@@ -3812,7 +3822,7 @@ export default function Dashboard() {
                     : `Only ${remaining} generation${remaining !== 1 ? "s" : ""} left this month — go Pro for 75 tracks, priority, and WAV export.`}
                 </span>
                 <Link to="/pricing" className="font-semibold text-amber-200 hover:text-white">
-                  {locale === "fr" ? "Voir Pro — 10€/mo" : "See Pro — $10/mo"}
+                  {locale === "fr" ? `Voir Pro — ${planPriceLabel("pro", "fr", { suffix: true })}` : `See Pro — ${planPriceLabel("pro", "en", { suffix: true })}`}
                 </Link>
               </div>
             ) : null}

@@ -7,6 +7,7 @@ import {
   type PaidPlanId,
 } from "@/lib/planEntitlements";
 import { PLAN_LIMITS, getPlanBaseLimit } from "@/lib/planLimits";
+import { COMMERCIAL_RIGHTS_FAQ, planPriceLabel, planPriceUpsellLabel } from "@/lib/planPricing";
 
 export type UpsellReason =
   | "credits_exhausted"
@@ -236,7 +237,7 @@ export function getUpsellCopy(
       bullets: isFr
         ? [`${proLimit} générations / mois`, "Priorité génération", "Song Mode + Remix", "Export MP3 royalty-free"]
         : [`${proLimit} generations / month`, "Generation priority", "Song Mode + Remix", "Royalty-free MP3 export"],
-      primaryLabel: isFr ? "Passer Pro — 10€/mo" : "Go Pro — $10/mo",
+      primaryLabel: isFr ? `Passer Pro — ${planPriceLabel("pro", "fr", { suffix: true })}` : `Go Pro — ${planPriceLabel("pro", "en", { suffix: true })}`,
       secondaryLabel: isFr ? "Plus tard" : "Not now",
       targetPlan: "pro",
     };
@@ -291,12 +292,12 @@ export function getUpsellCopy(
     bullets:
       target === "pro"
         ? isFr
-          ? [`${proLimit} générations / mois`, "Priorité vs Free", "Song Mode + Remix Studio", "10€ / mois"]
-          : [`${proLimit} generations / month`, "Priority vs Free", "Song Mode + Remix Studio", "$10 / month"]
+          ? [`${proLimit} générations / mois`, "Priorité vs Free", "Song Mode + Remix Studio", planPriceUpsellLabel("pro", "fr")]
+          : [`${proLimit} generations / month`, "Priority vs Free", "Song Mode + Remix Studio", planPriceUpsellLabel("pro", "en")]
         : target === "studio"
           ? isFr
-            ? [`${studioLimit} générations / mois`, "Versions ×2 en parallèle", "Export WAV mastering", "30€ / mois"]
-            : [`${studioLimit} generations / month`, "Parallel ×2 versions", "Mastered WAV export", "$30 / month"]
+            ? [`${studioLimit} générations / mois`, "Versions ×2 en parallèle", "Export WAV mastering", planPriceUpsellLabel("studio", "fr")]
+            : [`${studioLimit} generations / month`, "Parallel ×2 versions", "Mastered WAV export", planPriceUpsellLabel("studio", "en")]
           : target === "plus"
             ? isFr
               ? [

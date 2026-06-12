@@ -11,7 +11,7 @@ if (!secret) {
   process.exit(1);
 }
 
-const body = loopId ? { action: "process_loop", loop_id: loopId } : { action: "process_queue", limit: 10 };
+const body = loopId ? { action: "process_loop", loop_id: loopId } : { action: "process_queue", limit: 1 };
 
 const res = await fetch(`https://${PROJECT}.supabase.co/functions/v1/social-publish-cron`, {
   method: "POST",

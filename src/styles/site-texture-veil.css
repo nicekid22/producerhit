@@ -424,7 +424,10 @@ body[data-pk-theme="app"] .pk-app-shell-mobile-nav {
 /* ═══ MARKETING — auth, tarifs, blog, légal, compare, profil public ═══ */
 
 body[data-pk-theme="marketing"] .pk-auth-panel,
-body[data-pk-theme="marketing"] .pk-pricing-card,
+body[data-pk-theme="marketing"] .pk-pricing-tier,
+body[data-pk-theme="marketing"] .pk-pricing-compare,
+body[data-pk-theme="marketing"] .pk-pricing-faq,
+body[data-pk-theme="marketing"] .pk-pricing-hero,
 body[data-pk-theme="marketing"] .pk-blog-card,
 body[data-pk-theme="marketing"] .pk-blog-listen,
 body[data-pk-theme="marketing"] .pk-public-loop article[class*="rounded"],
@@ -448,11 +451,16 @@ body[data-pk-theme="marketing"] .pk-auth-panel {
   background-color: rgba(8, 7, 14, 0.66) !important;
 }
 
+body[data-pk-theme="marketing"] .pk-pricing-tier--featured,
 body[data-pk-theme="marketing"] .pk-pricing-card--popular {
   background-color: rgba(8, 7, 14, 0.58) !important;
 }
 
 body[data-pk-theme="marketing"] .pk-auth-panel::after,
+body[data-pk-theme="marketing"] .pk-pricing-tier::after,
+body[data-pk-theme="marketing"] .pk-pricing-compare::after,
+body[data-pk-theme="marketing"] .pk-pricing-faq::after,
+body[data-pk-theme="marketing"] .pk-pricing-hero::after,
 body[data-pk-theme="marketing"] .pk-pricing-card::after,
 body[data-pk-theme="marketing"] .pk-blog-card::after,
 body[data-pk-theme="marketing"] .pk-blog-listen::after,
@@ -478,6 +486,10 @@ body[data-pk-theme="marketing"] .pk-auth-panel::after {
 }
 
 body[data-pk-theme="marketing"] .pk-auth-panel > *,
+body[data-pk-theme="marketing"] .pk-pricing-tier > *,
+body[data-pk-theme="marketing"] .pk-pricing-compare > *,
+body[data-pk-theme="marketing"] .pk-pricing-faq > *,
+body[data-pk-theme="marketing"] .pk-pricing-hero > *,
 body[data-pk-theme="marketing"] .pk-pricing-card > *,
 body[data-pk-theme="marketing"] .pk-blog-card > *,
 body[data-pk-theme="marketing"] .pk-public-loop__cta > *,

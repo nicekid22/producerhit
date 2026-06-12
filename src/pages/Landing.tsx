@@ -55,6 +55,7 @@ import { PLAN_LIMITS } from "@/lib/planLimits";
 import { isRecommendedPlan, normalizePlan, pricingCtaHref, pricingCtaMeta } from "@/lib/billing";
 import { plusPermanentAudioBenefit } from "@/lib/loopAudioRetention";
 import { PricingPlanButton } from "@/components/pricing/PricingPlanButton";
+import { COMMERCIAL_RIGHTS_FAQ, planPriceLabel } from "@/lib/planPricing";
 import { LANDING_MOBILE_V2 } from "@/lib/featureFlags";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { PublicProfileCard } from "@/lib/creatorProfile";
@@ -1005,15 +1006,15 @@ export default function Landing() {
         {
           tier: "free" as const,
           name: "Free",
-          price: "0€",
+          price: planPriceLabel("free", "fr"),
           meta: `${PLAN_LIMITS.free} générations / mois`,
-          bullets: [`✓ ${PLAN_LIMITS.free} gen Song + Beat`, "✓ Export MP3 royalty-free", "✓ Bibliothèque cloud", "✗ Export WAV / stems"],
+          bullets: [`✓ ${PLAN_LIMITS.free} gen Song + Beat`, "✓ Export MP3 (usage perso)", "✓ Bibliothèque cloud", "✗ Export WAV / stems / commercial"],
           featured: false,
         },
         {
           tier: "pro" as const,
           name: "Pro",
-          price: "10€/mo",
+          price: planPriceLabel("pro", "fr", { suffix: true }),
           meta: "75 générations / mois",
           bullets: ["✓ Export WAV + MP3", "✓ Cover art + partage pro", "✓ Usage commercial", "✓ 75 gen / mois"],
           featured: true,
@@ -1021,7 +1022,7 @@ export default function Landing() {
         {
           tier: "studio" as const,
           name: "Studio",
-          price: "30€/mo",
+          price: planPriceLabel("studio", "fr", { suffix: true }),
           meta: "250 générations / mois",
           bullets: ["✓ Tout Pro inclus", "✓ Mastering Studio complet", "✓ Remix ACE + seeds", "✓ 250 gen / mois"],
           featured: false,
@@ -1029,7 +1030,7 @@ export default function Landing() {
         {
           tier: "plus" as const,
           name: "Plus",
-          price: "89€/mo",
+          price: planPriceLabel("plus", "fr", { suffix: true }),
           meta: `${PLAN_LIMITS.plus} générations / mois`,
           bullets: [`✓ ${PLAN_LIMITS.plus} gen / mois`, "✓ Priorité & rapidité", "✓ Stems ZIP séparés", "✓ Tout Studio inclus"],
           featured: false,
@@ -1042,13 +1043,13 @@ export default function Landing() {
         name: "Free",
         price: "$0",
         meta: `${PLAN_LIMITS.free} generations / month`,
-        bullets: [`✓ ${PLAN_LIMITS.free} Song + Beat gens`, "✓ Royalty-free MP3", "✓ Cloud library", "✗ WAV / stems export"],
+        bullets: [`✓ ${PLAN_LIMITS.free} Song + Beat gens`, "✓ MP3 export (personal use)", "✓ Cloud library", "✗ WAV / stems / commercial"],
         featured: false,
       },
       {
         tier: "pro" as const,
         name: "Pro",
-        price: "$10/mo",
+        price: planPriceLabel("pro", "en", { suffix: true }),
         meta: "75 generations / month",
         bullets: ["✓ WAV + MP3 export", "✓ Cover art + pro share", "✓ Commercial use", "✓ 75 gen / month"],
         featured: true,
@@ -1056,7 +1057,7 @@ export default function Landing() {
       {
         tier: "studio" as const,
         name: "Studio",
-        price: "$30/mo",
+        price: planPriceLabel("studio", "en", { suffix: true }),
         meta: "250 generations / month",
         bullets: ["✓ Everything in Pro", "✓ Full Mastering Studio", "✓ Remix ACE + seeds", "✓ 250 gen / month"],
         featured: false,
@@ -1064,7 +1065,7 @@ export default function Landing() {
       {
         tier: "plus" as const,
         name: "Plus",
-        price: "$89/mo",
+        price: planPriceLabel("plus", "en", { suffix: true }),
         meta: `${PLAN_LIMITS.plus} generations / month`,
         bullets: [
           `✓ ${PLAN_LIMITS.plus} gen / month`,
@@ -1098,30 +1099,30 @@ export default function Landing() {
       return [
         {
           q: "ProducerHit est-il un générateur de chansons IA royalty-free ?",
-          a: "Oui — tu peux créer, écouter et exporter des morceaux pour tes projets. Pour une release commerciale, respecte les conditions des modèles/providers et les règles des plateformes.",
+          a: "Oui — crée, écoute et exporte pour tes projets perso en Free. Pour monétiser (Spotify, YouTube, clients), passe Pro, Studio ou Plus.",
         },
         {
           q: "Usage commercial & propriété ?",
-          a: "Tu peux télécharger tes générations. Pour une exploitation commerciale, vérifie toujours les termes des services utilisés et les politiques des distributeurs.",
+          a: COMMERCIAL_RIGHTS_FAQ.fr.a,
         },
         {
           q: "Puis-je exporter en WAV ?",
-          a: "Oui — l'export WAV est disponible sur les offres Pro et Studio.",
+          a: "Oui — l'export WAV est disponible sur les offres Pro, Studio et Plus.",
         },
       ];
     }
     return [
       {
         q: "Is ProducerHit a royalty-free AI song creator?",
-        a: "Yes — you can create, preview, and export tracks for your projects. For commercial releases, follow model/provider terms and platform rules.",
+        a: "Yes — create, preview, and export tracks for personal projects on Free. Commercial monetization requires Pro, Studio, or Plus.",
       },
       {
         q: "Commercial use & ownership?",
-        a: "You can download your generations. For commercial use, always follow the model/provider terms and your distributor's policies.",
+        a: COMMERCIAL_RIGHTS_FAQ.en.a,
       },
       {
         q: "Can I download WAV?",
-        a: "Yes — WAV export is available on Pro and Studio plans.",
+        a: "Yes — WAV export is available on Pro, Studio, and Plus plans.",
       },
     ];
   }, [locale]);

@@ -1,4 +1,10 @@
 {
+  "functions": {
+    "api/youtube-render.ts": {
+      "maxDuration": 120,
+      "memory": 1024
+    }
+  },
   "redirects": [
     {
       "source": "/explore",
@@ -68,7 +74,7 @@
       "destination": "/api/seo-prerender?path=/:seoPath"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ]

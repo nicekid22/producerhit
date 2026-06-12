@@ -16,12 +16,12 @@ export function LandingPitchSections({ locale, user }: Props) {
   const qualityItems = isFr
     ? [
         { t: "Mix propre", d: "Sortie structurée, pas un loop aléatoire." },
-        { t: "Royalty-free", d: "Usage commercial sur tes exports." },
+        { t: "Plans payants", d: "Usage commercial sur Pro, Studio & Plus." },
         { t: "Itérations seed", d: "Variations reproductibles en un clic." },
       ]
     : [
         { t: "Clean mix", d: "Structured output, not a random loop." },
-        { t: "Royalty-free", d: "Commercial use on your exports." },
+        { t: "Paid plans", d: "Commercial use on Pro, Studio & Plus." },
         { t: "Seed iterations", d: "Reproducible variations in one click." },
       ];
 

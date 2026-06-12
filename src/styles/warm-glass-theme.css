@@ -2432,6 +2432,59 @@ html.pk-warm-glass-active .pk-icon-loader__sublabel {
   box-shadow: 0 0 40px rgba(220, 90, 50, 0.14);
 }
 
+/* Pricing page v2 — warm glass premium */
+.pk-warm-glass-stage.pk-pricing-page,
+.pk-warm-glass-stage .pk-pricing-page {
+  --pk-pricing-accent: rgba(255, 140, 80, 0.95);
+  --pk-pricing-accent-soft: rgba(255, 120, 60, 0.14);
+  --pk-pricing-accent-border: rgba(255, 160, 80, 0.42);
+}
+
+.pk-warm-glass-stage .pk-pricing-hero {
+  box-shadow: 0 28px 72px rgba(32, 12, 6, 0.42) !important;
+}
+
+.pk-warm-glass-stage .pk-pricing-trust-pill {
+  border-color: var(--warm-glass-border) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: rgba(255, 248, 240, 0.68) !important;
+}
+
+.pk-warm-glass-stage .pk-pricing-current {
+  border-color: rgba(255, 160, 80, 0.35) !important;
+  background: linear-gradient(165deg, rgba(255, 120, 60, 0.14), rgba(48, 22, 14, 0.35)) !important;
+}
+
+.pk-warm-glass-stage .pk-pricing-tier--featured {
+  box-shadow:
+    0 0 0 1px rgba(255, 140, 80, 0.14),
+    0 28px 72px rgba(220, 90, 50, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+.pk-warm-glass-stage .pk-pricing-tier__badge {
+  border-color: rgba(255, 160, 80, 0.42) !important;
+  background: linear-gradient(120deg, rgba(255, 120, 60, 0.24), rgba(255, 180, 90, 0.12)) !important;
+  color: #ffd4a8 !important;
+  box-shadow: 0 8px 24px rgba(220, 90, 50, 0.22) !important;
+}
+
+.pk-warm-glass-stage .pk-pricing-tier__check {
+  color: var(--warm-accent-honey) !important;
+}
+
+.pk-warm-glass-stage .pk-pricing-compare {
+  box-shadow: 0 24px 64px rgba(32, 12, 6, 0.38) !important;
+}
+
+.pk-warm-glass-stage .pk-pricing-compare__yes {
+  background: rgba(120, 200, 120, 0.12) !important;
+}
+
+.pk-warm-glass-stage .pk-pricing-faq:hover {
+  border-color: rgba(255, 160, 80, 0.28) !important;
+}
+
 /* Landing / pricing — textes secondaires lisibles sur fond ambre */
 .pk-warm-glass-stage .pk-prism-card .text-\[\#6b7280\],
 .pk-warm-glass-stage .pk-pricing-card .text-white\/45,
