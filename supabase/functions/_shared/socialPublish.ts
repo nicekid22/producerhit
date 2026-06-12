@@ -310,6 +310,147 @@ export async function postReddit(payload: SocialPayload): Promise<{ ok: boolean;
   return { ok: true, id: json?.json?.data?.id ?? json?.json?.data?.url };
 }
 
+const TIKTOK_API = "https://open.tiktokapis.com";
+let tiktokAccessCache: { token: string; expires: number } | null = null;
+
+type TikTokApiEnvelope<T> = {
+  data?: T;
+  error?: { code?: string; message?: string; log_id?: string };
+};
+
+async function getTikTokAccessToken(): Promise<string | null> {
+  const now = Date.now();
+  if (tiktokAccessCache && tiktokAccessCache.expires > now + 60_000) {
+    return tiktokAccessCache.token;
+  }
+
+  const clientKey = (Deno.env.get("TIKTOK_CLIENT_KEY") ?? Deno.env.get("TIKTOK_CLIENT_ID") ?? "").trim();
+  const clientSecret = (Deno.env.get("TIKTOK_CLIENT_SECRET") ?? "").trim();
+  const refreshToken = (Deno.env.get("TIKTOK_REFRESH_TOKEN") ?? "").trim();
+  if (!clientKey || !clientSecret || !refreshToken) return null;
+
+  const body = new URLSearchParams({
+    client_key: clientKey,
+    client_secret: clientSecret,
+    grant_type: "refresh_token",
+    refresh_token: refreshToken,
+  });
+  const res = await fetch(`${TIKTOK_API}/v2/oauth/token/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+  });
+  const json = (await res.json()) as {
+    access_token?: string;
+    expires_in?: number;
+    refresh_token?: string;
+    error_code?: number;
+    error_description?: string;
+  };
+  if (!res.ok || !json.access_token) return null;
+  tiktokAccessCache = {
+    token: json.access_token,
+    expires: now + (json.expires_in ?? 86400) * 1000,
+  };
+  return json.access_token;
+}
+
+function pickTikTokPrivacy(options: string[] | undefined): string {
+  const list = options ?? [];
+  if (list.includes("PUBLIC_TO_EVERYONE")) return "PUBLIC_TO_EVERYONE";
+  if (list.includes("MUTUAL_FOLLOW_FRIENDS")) return "MUTUAL_FOLLOW_FRIENDS";
+  if (list.includes("FOLLOWER_OF_CREATOR")) return "FOLLOWER_OF_CREATOR";
+  if (list.includes("SELF_ONLY")) return "SELF_ONLY";
+  return list[0] ?? "SELF_ONLY";
+}
+
+async function tiktokPostJson<T>(accessToken: string, path: string, body: unknown): Promise<TikTokApiEnvelope<T>> {
+  const res = await fetch(`${TIKTOK_API}${path}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json; charset=UTF-8",
+    },
+    body: JSON.stringify(body),
+  });
+  return (await res.json()) as TikTokApiEnvelope<T>;
+}
+
+async function pollTikTokPublish(accessToken: string, publishId: string): Promise<{ ok: boolean; status?: string; error?: string }> {
+  for (let i = 0; i < 8; i++) {
+    const json = await tiktokPostJson<{ status?: string; fail_reason?: string }>(
+      accessToken,
+      "/v2/post/publish/status/fetch/",
+      { publish_id: publishId },
+    );
+    if (json.error?.code && json.error.code !== "ok") {
+      return { ok: false, error: `${json.error.code}:${json.error.message ?? ""}` };
+    }
+    const status = json.data?.status ?? "";
+    if (status === "PUBLISH_COMPLETE") return { ok: true, status };
+    if (status === "FAILED") {
+      return { ok: false, error: json.data?.fail_reason ?? "publish_failed" };
+    }
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+  return { ok: true, status: "processing" };
+}
+
+/** Post TikTok — photo carousel (cover) + lien track. Nécessite domaine producerhit.com vérifié dans l'app TikTok. */
+export async function postTikTok(payload: SocialPayload): Promise<{ ok: boolean; id?: string; error?: string }> {
+  const accessToken = await getTikTokAccessToken();
+  if (!accessToken) return { ok: false, error: "missing_tiktok_credentials" };
+
+  const photoUrl = payload.media.cover_url || payload.media.og_image;
+  if (!photoUrl) return { ok: false, error: "missing_cover_image" };
+
+  const creator = await tiktokPostJson<{
+    privacy_level_options?: string[];
+    creator_username?: string;
+  }>(accessToken, "/v2/post/publish/creator_info/query/", {});
+  if (creator.error?.code && creator.error.code !== "ok") {
+    return { ok: false, error: `creator_info:${creator.error.code}` };
+  }
+
+  const privacy = pickTikTokPrivacy(creator.data?.privacy_level_options);
+  const postMode = (Deno.env.get("TIKTOK_POST_MODE") ?? "MEDIA_UPLOAD").trim();
+  const title = payload.name.slice(0, 90);
+  const description = payload.captions.tiktok.slice(0, 4000);
+
+  const init = await tiktokPostJson<{ publish_id?: string }>(accessToken, "/v2/post/publish/content/init/", {
+    post_info: {
+      title,
+      description,
+      privacy_level: privacy,
+      disable_comment: false,
+      auto_add_music: true,
+      brand_content_toggle: false,
+      brand_organic_toggle: true,
+    },
+    source_info: {
+      source: "PULL_FROM_URL",
+      photo_cover_index: 0,
+      photo_images: [photoUrl],
+    },
+    post_mode: postMode,
+    media_type: "PHOTO",
+  });
+
+  if (init.error?.code && init.error.code !== "ok") {
+    return { ok: false, error: `tiktok_init:${init.error.code}:${init.error.message ?? ""}` };
+  }
+  const publishId = init.data?.publish_id;
+  if (!publishId) return { ok: false, error: "tiktok_no_publish_id" };
+
+  if (postMode === "MEDIA_UPLOAD") {
+    return { ok: true, id: publishId };
+  }
+
+  const polled = await pollTikTokPublish(accessToken, publishId);
+  if (!polled.ok) return { ok: false, error: polled.error ?? "tiktok_publish_failed" };
+  return { ok: true, id: publishId };
+}
+
 export async function postTelegram(payload: SocialPayload): Promise<{ ok: boolean; id?: string; error?: string }> {
   const token = (Deno.env.get("TELEGRAM_BOT_TOKEN") ?? "").trim();
   const chatId = (Deno.env.get("TELEGRAM_CHANNEL_ID") ?? "").trim();
@@ -457,6 +598,21 @@ export async function publishLoopToPlatforms(
           await logPublish(db, loop.id, platform, "posted", { external_id: res.id, payload: { url: payload.share_urls.reddit } });
           results[platform] = { ok: true, id: res.id };
         } else if (res.error === "missing_subreddit" || res.error === "missing_reddit_credentials") {
+          await logPublish(db, loop.id, platform, "skipped", { error: res.error });
+          results[platform] = { skipped: true };
+        } else {
+          await logPublish(db, loop.id, platform, "failed", { error: res.error });
+          results[platform] = { ok: false, error: res.error };
+        }
+        continue;
+      }
+
+      if (platform === "tiktok") {
+        const res = await postTikTok(payload);
+        if (res.ok) {
+          await logPublish(db, loop.id, platform, "posted", { external_id: res.id, payload: { mode: Deno.env.get("TIKTOK_POST_MODE") ?? "MEDIA_UPLOAD" } });
+          results[platform] = { ok: true, id: res.id };
+        } else if (res.error === "missing_tiktok_credentials") {
           await logPublish(db, loop.id, platform, "skipped", { error: res.error });
           results[platform] = { skipped: true };
         } else {
