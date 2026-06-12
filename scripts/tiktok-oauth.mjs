@@ -13,7 +13,23 @@
  */
 import crypto from "node:crypto";
 import http from "node:http";
+import { existsSync, readFileSync } from "node:fs";
 import { URL } from "node:url";
+
+function loadDotEnv() {
+  if (!existsSync(".env")) return;
+  for (const line of readFileSync(".env", "utf8").split("\n")) {
+    const t = line.trim();
+    if (!t || t.startsWith("#")) continue;
+    const i = t.indexOf("=");
+    if (i <= 0) continue;
+    const k = t.slice(0, i).trim();
+    const v = t.slice(i + 1).trim();
+    if (!(k in process.env)) process.env[k] = v;
+  }
+}
+
+loadDotEnv();
 
 const CLIENT_KEY = process.env.TIKTOK_CLIENT_KEY ?? process.env.TIKTOK_CLIENT_ID ?? "";
 const CLIENT_SECRET = process.env.TIKTOK_CLIENT_SECRET ?? "";
