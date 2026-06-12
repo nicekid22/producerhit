@@ -355,10 +355,12 @@ export default function Settings() {
                       toast.error(creatorProfileErrorMessage("error" in result ? result.error : "save_failed", isFr));
                       return;
                     }
-                    setUsername(username.trim());
-                    const refreshed = await refreshProfile();
-                    if (refreshed?.username) setUsername(refreshed.username);
+                    const trimmed = username.trim();
+                    setUsername(trimmed);
                     toast.success(isFr ? "Profil sauvegardé" : "Profile saved");
+                    void refreshProfile().then((refreshed) => {
+                      if (refreshed?.username) setUsername(refreshed.username);
+                    });
                   } catch (err) {
                     const message = err instanceof Error ? err.message : "Save failed";
                     toast.error(message);

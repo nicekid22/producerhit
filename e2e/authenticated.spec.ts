@@ -32,20 +32,24 @@ test.describe("Parcours authentifié", () => {
     await page.goto("/settings#pk-settings-profile");
     await expect(page.getByText(/loading profile|chargement du profil/i)).toHaveCount(0, { timeout: 20_000 });
 
-    const usernameField = page
-      .locator("#pk-settings-profile input[placeholder='your_handle'], #pk-settings-profile input[placeholder='ton_pseudo'], #settings-username")
-      .first();
+    const usernameField = page.locator("#settings-username");
     await expect(usernameField).toBeEnabled({ timeout: 20_000 });
 
     const testName = `e2e${Date.now().toString().slice(-8)}`;
-    await usernameField.fill(testName);
+    await usernameField.click();
+    await usernameField.fill("");
+    await usernameField.pressSequentially(testName, { delay: 20 });
+    await expect(usernameField).toHaveValue(testName);
 
     const saveBtn = page.getByRole("button", { name: /sauvegarder le profil|save profile/i });
+    await expect(saveBtn).toBeEnabled();
     await saveBtn.scrollIntoViewIfNeeded();
     await saveBtn.click();
+    await expect(page.getByText(/profil sauvegardé|profile saved/i)).toBeVisible({ timeout: 30_000 });
+    await expect(saveBtn).toBeEnabled({ timeout: 30_000 });
 
     await page.reload();
     await page.goto("/settings#pk-settings-profile");
-    await expect(usernameField).toHaveValue(testName, { timeout: 20_000 });
+    await expect(page.locator("#settings-username")).toHaveValue(testName, { timeout: 20_000 });
   });
 });

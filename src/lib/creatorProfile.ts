@@ -280,8 +280,9 @@ async function saveCreatorProfileDirect(
 }
 
 export async function saveCreatorProfile(draft: CreatorProfileDraft): Promise<{ ok: true } | { ok: false; error: string }> {
-  await supabase.rpc("repair_missing_profile").then(() => undefined, () => undefined);
-  await supabase.rpc("ensure_profile").then(() => undefined, () => undefined);
+  // Ne pas bloquer la sauvegarde — ces RPC sont défensives et peuvent ralentir l'UI (Settings E2E / refresh profil).
+  void supabase.rpc("repair_missing_profile").then(() => undefined, () => undefined);
+  void supabase.rpc("ensure_profile").then(() => undefined, () => undefined);
 
   const payload = {
     username: draft.username.trim() || null,
