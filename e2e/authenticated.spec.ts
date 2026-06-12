@@ -1,56 +1,51 @@
 import { test, expect } from "@playwright/test";
 
 /**
- * Scénario complet — nécessite un compte test (Google ou email).
- * Variables : E2E_TEST_EMAIL, E2E_TEST_PASSWORD (optionnel si session storage pré-rempli).
- *
- * Exemple :
- *   E2E_TEST_EMAIL=test@example.com E2E_TEST_PASSWORD=secret npx playwright test e2e/authenticated.spec.ts
+ * Scénario authentifié — compte test Supabase (email/password).
+ * Variables : E2E_TEST_EMAIL, E2E_TEST_PASSWORD (voir .env)
  */
 const email = process.env.E2E_TEST_EMAIL;
 const password = process.env.E2E_TEST_PASSWORD;
+
+async function loginWithEmail(page: import("@playwright/test").Page) {
+  await page.goto("/auth?mode=login");
+  await page.locator("#auth-email").fill(email!);
+  await page.locator("#auth-password").fill(password!);
+  await expect(page.locator("form button[type='submit']")).toHaveText(/^login$|^connexion$/i);
+  await page.locator("form button[type='submit']").click();
+  await page.waitForURL(/\/dashboard/, { timeout: 30_000 });
+}
 
 test.describe("Parcours authentifié", () => {
   test.skip(!email || !password, "Définir E2E_TEST_EMAIL et E2E_TEST_PASSWORD pour ce test");
 
   test("login email → dashboard → mon espace stable", async ({ page }) => {
-    await page.goto("/auth");
-    const loginTab = page.getByRole("button", { name: /^login$|^connexion$/i });
-    if (await loginTab.isVisible()) await loginTab.click();
-
-    await page.getByLabel(/email/i).fill(email!);
-    await page.getByLabel(/password|mot de passe/i).fill(password!);
-    await page.getByRole("button", { name: /^login$|^connexion$/i }).click();
-
-    await page.waitForURL(/\/dashboard/, { timeout: 30_000 });
-
-    await expect(page.getByText(/mon espace|my space/i)).toBeVisible({ timeout: 20_000 });
-
-    // Pas de boucle skeleton : après 5s, soit empty state soit tracks
+    await loginWithEmail(page);
+    await expect(page.getByText(/mon espace|my workspace/i)).toBeVisible({ timeout: 20_000 });
     await page.waitForTimeout(5000);
-    const loadingCards = page.getByText(/chargement de tes créations|loading your creations/i);
-    await expect(loadingCards).toHaveCount(0);
+    await expect(page.getByText(/chargement de tes créations|loading your creations/i)).toHaveCount(0);
   });
 
   test("settings — sauvegarde username", async ({ page }) => {
-    test.skip(!email || !password, "Credentials requis");
+    await loginWithEmail(page);
 
-    await page.goto("/auth");
-    await page.getByLabel(/email/i).fill(email!);
-    await page.getByLabel(/password|mot de passe/i).fill(password!);
-    await page.getByRole("button", { name: /^login$|^connexion$/i }).click();
-    await page.waitForURL(/\/dashboard/, { timeout: 30_000 });
+    await page.goto("/settings#pk-settings-profile");
+    await expect(page.getByText(/loading profile|chargement du profil/i)).toHaveCount(0, { timeout: 20_000 });
 
-    await page.goto("/settings");
-    await expect(page.getByText(/username|nom d'utilisateur/i).first()).toBeVisible({ timeout: 15_000 });
+    const usernameField = page
+      .locator("#pk-settings-profile input[placeholder='your_handle'], #pk-settings-profile input[placeholder='ton_pseudo'], #settings-username")
+      .first();
+    await expect(usernameField).toBeEnabled({ timeout: 20_000 });
 
-    const usernameInput = page.locator('input').filter({ has: page.locator("xpath=..") }).first();
-    const field = page.getByRole("textbox").nth(1);
-    const testName = `test${Date.now().toString().slice(-6)}`;
-    if (await field.isVisible()) {
-      await field.fill(testName);
-      await page.getByRole("button", { name: /sauvegarder|save profile/i }).click();
-      await expect(page.getByText(/profil sauvegardé|profile saved/i)).toBeVisible({ timeout: 15_000 });
-    }
+    const testName = `e2e${Date.now().toString().slice(-8)}`;
+    await usernameField.fill(testName);
+
+    const saveBtn = page.getByRole("button", { name: /sauvegarder le profil|save profile/i });
+    await saveBtn.scrollIntoViewIfNeeded();
+    await saveBtn.click();
+
+    await page.reload();
+    await page.goto("/settings#pk-settings-profile");
+    await expect(usernameField).toHaveValue(testName, { timeout: 20_000 });
   });
 });

@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/AppShell";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
@@ -79,6 +79,7 @@ export default function Settings() {
   const [newPassword, setNewPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
   const [linkingGoogle, setLinkingGoogle] = useState(false);
+  const profileFormHydratedRef = useRef(false);
 
   const emailLinked = hasEmailPassword(user);
   const googleLinked = hasGoogleAuth(user);
@@ -126,17 +127,21 @@ export default function Settings() {
   useEffect(() => {
     if (authStatus !== "ready" || !user) {
       setLoading(false);
+      profileFormHydratedRef.current = false;
       return;
     }
     if (authProfile) {
-      setUsername(authProfile.username ?? "");
-      setBio(authProfile.bio ?? "");
-      setCreatorType((authProfile.creator_type as CreatorType | null) ?? "");
-      setSocialIg(authProfile.social?.ig ?? "");
-      setSocialTt(authProfile.social?.tt ?? "");
-      setSocialYt(authProfile.social?.yt ?? "");
-      setSocialX(authProfile.social?.x ?? "");
-      setSocialWeb(authProfile.social?.web ?? "");
+      if (!profileFormHydratedRef.current) {
+        profileFormHydratedRef.current = true;
+        setUsername(authProfile.username ?? "");
+        setBio(authProfile.bio ?? "");
+        setCreatorType((authProfile.creator_type as CreatorType | null) ?? "");
+        setSocialIg(authProfile.social?.ig ?? "");
+        setSocialTt(authProfile.social?.tt ?? "");
+        setSocialYt(authProfile.social?.yt ?? "");
+        setSocialX(authProfile.social?.x ?? "");
+        setSocialWeb(authProfile.social?.web ?? "");
+      }
       setPlan(authProfile.plan);
       setUsedThisMonth(authProfile.loops_used_this_month);
       setReferralBonus(authProfile.referral_bonus);
@@ -216,6 +221,8 @@ export default function Settings() {
               <div>
                 <div className="text-xs text-pk-muted">{isFr ? "Username public" : "Public username"}</div>
                 <input
+                  id="settings-username"
+                  aria-label={isFr ? "Username public" : "Public username"}
                   value={username}
                   onChange={(e) => setUsername(e.target.value.replace(/\s/g, ""))}
                   disabled={loading || saving}

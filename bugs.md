@@ -12,7 +12,7 @@ Légende gravité : **P0** bloquant · **P1** majeur · **P2** mineur · **P3** 
 |---------|----------|
 | Deploy prod | ✅ `www.producerhit.com` (fixes flash + profil) |
 | Playwright public | ✅ **9/9** sur prod |
-| Playwright auth | ⏭ skipped sans `E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD` |
+| Playwright auth | ✅ **2/2** avec `test@producerhit.com` (après fix RPC + Settings) |
 
 ---
 
@@ -22,7 +22,7 @@ Légende gravité : **P0** bloquant · **P1** majeur · **P2** mineur · **P3** 
 |----|---------|-------------|-----|
 | BUG-001 | **P1** | Dashboard « Mon espace » : 8 skeletons « Chargement de tes créations… » qui clignotent en boucle | `loopsHydrated` + loader uniquement à la 1re sync ; 2 skeletons max ; suppression du retry `loadMyLoops` dupliqué dans Dashboard |
 | BUG-002 | **P1** | « Chargement du quota… » / Plan… en boucle après login | `profileReady` n’est plus remis à `false` si le profil est déjà chargé ; sync profil en mode `soft` |
-| BUG-003 | **P1** | Impossible de sauvegarder le username (profil DB absent ou RPC échoue) | `repair_missing_profile` avant load/save ; migration 045 (déjà appliquée) |
+| BUG-003 | **P1** | Impossible de sauvegarder le username (profil DB absent ou RPC échoue) | `repair_missing_profile` + migration 057 (`social` ambiguous dans RPC) + Settings form hydration |
 | BUG-004 | **P0** | Google OAuth nouveaux comptes : `Database error saving new user` | Migration `045_handle_new_user_hardening.sql` |
 
 ---
@@ -58,15 +58,16 @@ Légende gravité : **P0** bloquant · **P1** majeur · **P2** mineur · **P3** 
 | rss-tracks.xml | 🔧 fix `updated_at` → `created_at` (feed était vide) |
 | Mode Beat | ✅ dropdown Énergie + reset chips au changement de genre |
 | robots.txt | 🔧 RSS retiré des Sitemap (commentaire à la place) |
-| Social queue | ⏳ 200 pending — secrets Supabase/GitHub à configurer |
+| Social queue | ✅ 200 IndexNow posted — mode `indexnow` actif, secrets Supabase OK |
 
 ### À faire demain (priorité)
 
-1. **GSC** : resoumettre `sitemap-loops.xml`
-2. **Secrets** : `SOCIAL_PUBLISH_CRON_SECRET`, `SOCIAL_WEBHOOK_URL`, Twitter dans Supabase + GitHub
-3. **Social backfill** : garder ou vider les 200 pending (`delete from social_publish_queue where status = 'pending'`)
-4. **E2E auth** : tester avec `E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD`
-5. **Checklist manuelle** bugs.md § scénario E2E complet
+1. ~~**GSC** : resoumettre `sitemap-loops.xml`~~ ✅ 114 + 500 pages (12 juin 2026)
+2. ~~**IndexNow backfill**~~ ✅ 200 tracks pingés — mode `indexnow` actif
+3. **GitHub secret** (optionnel) : `SOCIAL_PUBLISH_CRON_SECRET` pour workflow backup
+4. **Webhook social** : `SOCIAL_WEBHOOK_URL` quand Make/Ayrshare prêt → `SOCIAL_PUBLISH_PLATFORMS=indexnow,webhook`
+5. **E2E auth** : `E2E_TEST_EMAIL` + `E2E_TEST_PASSWORD` dans `.env` puis `npm run test:e2e:auth`
+6. **Checklist manuelle** ci-dessous
 
 
 ```bash
