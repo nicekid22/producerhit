@@ -1,18 +1,14 @@
 /**
  * OAuth TikTok (PKCE) — une fois pour obtenir TIKTOK_REFRESH_TOKEN.
  *
- * Prérequis app TikTok Developers :
- * - Redirect URI : http://localhost:8788/callback (ou celle configurée dans l'app)
- * - Scopes : video.upload,video.publish,user.info.basic
- * - Vérifier le domaine producerhit.com pour PULL_FROM_URL (Content Posting → URL ownership)
+ * TikTok Login Kit exige :
+ * - Redirect URI **HTTPS** (pas localhost:8788)
+ * - Login Kit activé sur l'app + URI enregistrée
+ * - Compte @producerhit ajouté en **utilisateur test** (Sandbox) si app non Live
  *
- * Usage :
- *   node scripts/tiktok-oauth.mjs
- *   # Ouvre l'URL affichée, connecte @producerhit, copie le ?code= de la redirect
- *   node scripts/tiktok-oauth.mjs --code=XXXX
+ * Usage : npm run tiktok:oauth
  */
 import crypto from "node:crypto";
-import http from "node:http";
 import { existsSync, readFileSync } from "node:fs";
 import { URL } from "node:url";
 
@@ -31,9 +27,10 @@ function loadDotEnv() {
 
 loadDotEnv();
 
-const CLIENT_KEY = process.env.TIKTOK_CLIENT_KEY ?? process.env.TIKTOK_CLIENT_ID ?? "";
-const CLIENT_SECRET = process.env.TIKTOK_CLIENT_SECRET ?? "";
-const REDIRECT_URI = process.env.TIKTOK_REDIRECT_URI ?? "http://localhost:8788/callback";
+const CLIENT_KEY = (process.env.TIKTOK_CLIENT_KEY ?? process.env.TIKTOK_CLIENT_ID ?? "").trim();
+const CLIENT_SECRET = (process.env.TIKTOK_CLIENT_SECRET ?? "").trim();
+const REDIRECT_URI =
+  (process.env.TIKTOK_REDIRECT_URI ?? "https://www.producerhit.com/api/tiktok-oauth-callback").trim();
 const SCOPES = (process.env.TIKTOK_SCOPES ?? "video.upload,video.publish,user.info.basic").trim();
 
 function base64Url(buf) {
@@ -44,6 +41,10 @@ function pkcePair() {
   const verifier = base64Url(crypto.randomBytes(32));
   const challenge = base64Url(crypto.createHash("sha256").update(verifier).digest());
   return { verifier, challenge };
+}
+
+function encodeState(verifier) {
+  return base64Url(Buffer.from(JSON.stringify({ v: verifier, n: crypto.randomBytes(8).toString("hex") })));
 }
 
 async function exchangeCode(code, verifier) {
@@ -65,18 +66,19 @@ async function exchangeCode(code, verifier) {
     console.error("Token exchange failed:", json);
     process.exit(1);
   }
-  console.log("\n✅ Tokens obtenus — ajoute dans Supabase secrets + .env local :\n");
+  console.log("\n✅ Tokens obtenus :\n");
   console.log(`TIKTOK_REFRESH_TOKEN=${json.refresh_token}`);
   console.log(`# open_id=${json.open_id}`);
-  console.log(`# access_token (24h)=${json.access_token?.slice(0, 12)}...`);
-  console.log("\nPuis :");
-  console.log("supabase secrets set TIKTOK_CLIENT_KEY=... TIKTOK_CLIENT_SECRET=... TIKTOK_REFRESH_TOKEN=...");
-  console.log("SOCIAL_PUBLISH_PLATFORMS=webhook,twitter,indexnow,tiktok");
 }
 
 async function main() {
   if (!CLIENT_KEY || !CLIENT_SECRET) {
     console.error("Définir TIKTOK_CLIENT_KEY et TIKTOK_CLIENT_SECRET dans .env");
+    process.exit(1);
+  }
+
+  if (!REDIRECT_URI.startsWith("https://")) {
+    console.error("TikTok exige une redirect URI HTTPS. Défaut : https://www.producerhit.com/api/tiktok-oauth-callback");
     process.exit(1);
   }
 
@@ -88,7 +90,7 @@ async function main() {
     return;
   }
 
-  const state = base64Url(crypto.randomBytes(16));
+  const state = encodeState(verifier);
   const authUrl = new URL("https://www.tiktok.com/v2/auth/authorize/");
   authUrl.searchParams.set("client_key", CLIENT_KEY);
   authUrl.searchParams.set("scope", SCOPES);
@@ -98,34 +100,14 @@ async function main() {
   authUrl.searchParams.set("code_challenge", challenge);
   authUrl.searchParams.set("code_challenge_method", "S256");
 
-  console.log("1) Sauvegarde ce code_verifier (session OAuth) :");
-  console.log(`TIKTOK_CODE_VERIFIER=${verifier}\n`);
-  console.log("2) Ouvre cette URL et autorise le compte @producerhit :\n");
+  console.log("Checklist TikTok Developers (developers.tiktok.com) :\n");
+  console.log("  1. Produit « Login Kit » activé sur l'app");
+  console.log(`  2. Redirect URI enregistrée : ${REDIRECT_URI}`);
+  console.log("  3. Sandbox → ajouter @producerhit comme utilisateur test");
+  console.log("  4. Vercel : TIKTOK_CLIENT_KEY + TIKTOK_CLIENT_SECRET (pour le callback)\n");
+  console.log("Ouvre cette URL (compte @producerhit) :\n");
   console.log(authUrl.toString());
-  console.log("\n3) Serveur local en écoute sur http://localhost:8788/callback …\n");
-
-  const server = http.createServer(async (req, res) => {
-    const url = new URL(req.url ?? "/", "http://localhost:8788");
-    if (url.pathname !== "/callback") {
-      res.writeHead(404);
-      res.end("not found");
-      return;
-    }
-    const code = url.searchParams.get("code");
-    if (!code) {
-      res.writeHead(400);
-      res.end("missing code");
-      return;
-    }
-    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-    res.end("<h1>OK — retourne au terminal</h1>");
-    server.close();
-    await exchangeCode(code, verifier);
-  });
-
-  server.listen(8788, () => {
-    console.log("En attente du callback OAuth…");
-  });
+  console.log("\nAprès autorisation, la page producerhit.com affichera TIKTOK_REFRESH_TOKEN.\n");
 }
 
 main().catch((e) => {
