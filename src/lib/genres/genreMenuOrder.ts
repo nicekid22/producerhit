@@ -18,6 +18,11 @@ export const PRIMARY_GENRE_VALUES: readonly string[] = [
   "Amapiano",
   "Pop",
   "Reggaeton",
+  "Bachata",
+  "Salsa",
+  "Kizomba",
+  "Dembow",
+  "Latin Pop",
   "UK Garage",
   "Jersey Club",
   "House",
@@ -25,6 +30,15 @@ export const PRIMARY_GENRE_VALUES: readonly string[] = [
   "Lo-Fi Hip-Hop",
   "Synthwave",
   "Brazilian Phonk",
+  "Country Pop",
+  "Contemporary Country",
+  "Worship Pop",
+  "Bollywood",
+  "Bluegrass",
+  "K-Pop",
+  "Khaleeji",
+  "Arabic Pop",
+  "J-Pop",
 ] as const;
 
 const CORE_GROUP_ORDER: readonly string[] = [

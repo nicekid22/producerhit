@@ -7,7 +7,7 @@
     "vercel:sync-youtube-render-env": "node scripts/vercel-sync-youtube-render-env.mjs",
     "dev:clean": "vite --force",
     "build": "npm run generate:seo && tsc -b && vite build",
-    "generate:seo": "node scripts/generate-seo-prerender.mjs && node scripts/sync-seo-sitemap.mjs && node scripts/sync-community-sitemap.mjs && node scripts/sync-rss.mjs && node scripts/sync-rss-tracks.mjs && node scripts/sync-vercel-seo-prerender.mjs && node scripts/growth-sync.mjs",
+    "generate:seo": "node scripts/generate-seo-prerender.mjs && node scripts/sync-seo-sitemap.mjs && node scripts/sync-blog-sitemap.mjs && node scripts/sync-community-sitemap.mjs && node scripts/sync-rss.mjs && node scripts/sync-rss-tracks.mjs && node scripts/sync-vercel-seo-prerender.mjs && node scripts/growth-sync.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "check": "tsc -b --noEmit",

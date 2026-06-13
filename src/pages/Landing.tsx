@@ -31,6 +31,7 @@ import {
 import { LandingPrismScene } from "@/components/landing/LandingPrismScene";
 import { BrandLogo } from "@/components/landing/BrandLogo";
 import { LandingFooter } from "@/components/landing/LandingFooter";
+import { SeoCompetitiveEdge } from "@/components/seo/SeoCompetitiveEdge";
 import { LogoMarquee } from "@/components/landing/LogoMarquee";
 import { SocialProofStats } from "@/components/landing/SocialProofStats";
 import { TestimonialsStrip } from "@/components/landing/TestimonialsStrip";
@@ -1446,6 +1447,12 @@ export default function Landing() {
                 </HeroCtaButton>
               </div>
             </div>
+          </div>
+        </RevealSection>
+
+        <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
+          <div className="pk-prism-card p-5 sm:p-8">
+            <SeoCompetitiveEdge isFr={locale === "fr"} compact />
           </div>
         </RevealSection>
 

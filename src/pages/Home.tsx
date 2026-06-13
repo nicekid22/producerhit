@@ -4,6 +4,7 @@ import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";
 import { Navbar } from "@/components/Navbar";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { SeoLandingExtras } from "@/components/seo/SeoLandingExtras";
+import { SeoCompetitiveEdge } from "@/components/seo/SeoCompetitiveEdge";
 import { useLocaleStore } from "@/stores/localeStore";
 import { useAuthStore } from "@/stores/authStore";
 import {
@@ -14,7 +15,7 @@ import {
   SEO_PAGES,
 } from "@/lib/seoPages";
 import { getSeoLandingExtras } from "@/lib/seoLandingExtras";
-import { buildGrowthUrl } from "@/lib/growthLinks";
+import { buildSeoLandingCtaHref } from "@/lib/seoCta";
 
 export default function Home() {
   const { pathname } = useLocation();
@@ -62,14 +63,12 @@ export default function Home() {
     return keys
       .map((key) => getSeoPageBySlugKey(key))
       .filter((p): p is NonNullable<typeof p> => Boolean(p))
-      .slice(0, 6);
+      .slice(0, seo.relatedLimit ?? 6);
   }, [pathname, seo]);
 
   const extras = useMemo(() => (seo?.category ? getSeoLandingExtras(seo.category, isFr) : null), [seo, isFr]);
 
-  const ctaHref = user
-    ? "/dashboard"
-    : buildGrowthUrl("/auth", "organic", { campaign: seo?.slugKey ?? "seo-landing", content: pathname.replace(/^\//, "") });
+  const ctaHref = buildSeoLandingCtaHref(seo, { user: Boolean(user), pathname });
 
   return (
     <MarketingPageShell>
@@ -142,6 +141,8 @@ export default function Home() {
         </div>
 
         {extras ? <SeoLandingExtras extras={extras} isFr={isFr} ctaHref={ctaHref} /> : null}
+
+        {seo ? <SeoCompetitiveEdge isFr={isFr} compact /> : null}
 
         {page.faq.length ? (
           <div className="mt-14">

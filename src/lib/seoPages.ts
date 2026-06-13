@@ -1,6 +1,9 @@
 import { EXTRA_BEAT_PAGES, INTENT_MUSIC_PAGES, MUSIC_AI_PAGES } from "@/lib/seoPagesExtended";
+import { LATIN_SEO_PAGES } from "@/lib/seoPagesLatin";
+import { ASIA_SEO_PAGES } from "@/lib/seoPagesAsia";
+import { PILLAR_SEO_PAGES } from "@/lib/seoPagesPillar";
 
-export type SeoPageCategory = "core" | "genre" | "music-ai" | "intent" | "beat";
+export type SeoPageCategory = "core" | "genre" | "music-ai" | "intent" | "beat" | "latin" | "country" | "song" | "hub" | "asia" | "middle-east";
 
 export type SeoPageConfig = {
   path: string;
@@ -9,9 +12,15 @@ export type SeoPageConfig = {
   category?: SeoPageCategory;
   /** Pages liées affichées en bas de page (sinon même catégorie). */
   relatedSlugKeys?: string[];
+  /** Nombre max de liens related (défaut 6, hubs 10–12). */
+  relatedLimit?: number;
   /** Exemple de prompt affiché sur la landing SEO. */
   promptHintEn?: string;
   promptHintFr?: string;
+  /** Pré-sélection Genre précis au clic CTA → dashboard. */
+  prefillGenre?: string;
+  /** Mode dashboard par défaut depuis cette landing (défaut song). */
+  prefillMode?: "song" | "beat";
   titleEn: string;
   titleFr: string;
   descriptionEn: string;
@@ -165,9 +174,9 @@ const CORE_PAGES: SeoPageConfig[] = [
     slugKey: "ai-music-generator",
     titleEn: "AI Music Generator — Generate Songs & Beats | ProducerHit",
     titleFr: "Générateur de musique IA — Songs & beats | ProducerHit",
-    descriptionEn: "AI music generator for songs and type beats. Describe a vibe, generate, iterate with variations, and export your track.",
-    descriptionFr: "Générateur de musique IA pour chansons et type beats. Décris une vibe, génère, itère avec des variations, et exporte ton track.",
-    keywords: ["AI music generator", "AI song generator", "generate music online"],
+    descriptionEn: "AI music generator for songs and type beats. Describe a vibe, generate, iterate with variations, and export your track. 640+ genres — Latin, country, worship, trap.",
+    descriptionFr: "Générateur de musique IA pour chansons et type beats. 640+ genres — Latin, country, louange, trap. Décris une vibe, génère, exporte.",
+    keywords: ["AI music generator", "AI song generator", "AI music generator free", "generate music online", "music AI generator 2026"],
     h1En: "AI Music Generator",
     h1Fr: "Générateur de musique IA",
     leadEn: "Create beats and full songs online with an AI music generator built for producers.",
@@ -217,9 +226,12 @@ const CORE_PAGES: SeoPageConfig[] = [
 
 export const SEO_PAGES: SeoPageConfig[] = [
   ...CORE_PAGES,
+  ...PILLAR_SEO_PAGES,
   ...MUSIC_AI_PAGES,
   ...INTENT_MUSIC_PAGES,
   ...GENRE_PAGES,
+  ...LATIN_SEO_PAGES,
+  ...ASIA_SEO_PAGES,
   ...EXTRA_BEAT_PAGES,
 ];
 
@@ -250,8 +262,25 @@ const GENRE_SEO_HINTS: Array<{ match: RegExp; slugKey: string }> = [
   { match: /afro|amapiano|afrobeats/i, slugKey: "ai-afrobeats-generator" },
   { match: /hip[\s-]?hop|rap|boom bap/i, slugKey: "ai-hip-hop-beat-generator" },
   { match: /pop|hyperpop|synth pop/i, slugKey: "ai-pop-beat-generator" },
-  { match: /phonk|drift/i, slugKey: "ai-phonk-beat-generator" },
+  { match: /phonk|drift|memphis phonk|gym phonk/i, slugKey: "phonk-music-generator" },
   { match: /lo[\s-]?fi|lofi/i, slugKey: "ai-lofi-beat-generator" },
+  { match: /bachata/i, slugKey: "ai-bachata-song-generator" },
+  { match: /reggaeton|perreo/i, slugKey: "ai-reggaeton-generator" },
+  { match: /dembow/i, slugKey: "ai-dembow-beat-generator" },
+  { match: /salsa|timba/i, slugKey: "ai-salsa-music-generator" },
+  { match: /kizomba|zouk/i, slugKey: "ai-kizomba-song-generator" },
+  { match: /cumbia|sonidera/i, slugKey: "ai-cumbia-generator" },
+  { match: /corrido|tumbad|regional mexican|mariachi|banda|norteño/i, slugKey: "ai-corridos-generator" },
+  { match: /latin pop|latin/i, slugKey: "latin-music-generator" },
+  { match: /country|bluegrass|nashville|honky/i, slugKey: "ai-generated-country-song" },
+  { match: /worship|gospel|louange|christian/i, slugKey: "ai-worship-song-generator" },
+  { match: /bollywood|bhangra|kollywood|hindi|punjabi/i, slugKey: "ai-bollywood-music-generator" },
+  { match: /k-pop|kpop|korean pop|k-pop idol/i, slugKey: "ai-k-pop-song-generator" },
+  { match: /j-pop|jpop|anison|anime opening|city pop/i, slugKey: "asia-music-generator" },
+  { match: /khaleeji|gulf pop|gulf trap/i, slugKey: "ai-khaleeji-song-generator" },
+  { match: /arabic pop|arab pop|levant pop/i, slugKey: "ai-arabic-pop-generator" },
+  { match: /mahraganat|shaabi|electro.?shaabi/i, slugKey: "ai-mahraganat-generator" },
+  { match: /dabke|middle east|moyen.?orient|turkish pop|persian pop|farsi/i, slugKey: "middle-east-music-generator" },
   { match: /sleep|sommeil/i, slugKey: "ai-sleep-music-generator" },
   { match: /meditation|méditation/i, slugKey: "ai-meditation-music-generator" },
   { match: /study|étude|focus|concentration/i, slugKey: "ai-study-music-generator" },

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-12T07:13:38.777Z",
+  "generatedAt": "2026-06-13T12:30:01.554Z",
   "pages": {
     "/suno-alternatives": {
       "kind": "comparison",
@@ -4559,7 +4559,7 @@
       "pair": "/generateur-musique-ia",
       "slugKey": "ai-music-generator",
       "title": "AI Music Generator — Generate Songs & Beats | ProducerHit",
-      "description": "AI music generator for songs and type beats. Describe a vibe, generate, iterate with variations, and export your track.",
+      "description": "AI music generator for songs and type beats. Describe a vibe, generate, iterate with variations, and export your track. 640+ genres — Latin, country, worship, trap.",
       "h1": "AI Music Generator",
       "lead": "Create beats and full songs online with an AI music generator built for producers.",
       "bullets": [
@@ -4572,7 +4572,9 @@
       "keywords": [
         "AI music generator",
         "AI song generator",
-        "generate music online"
+        "AI music generator free",
+        "generate music online",
+        "music AI generator 2026"
       ],
       "faq": [
         {
@@ -4587,7 +4589,7 @@
       "pair": "/ai-music-generator",
       "slugKey": "ai-music-generator",
       "title": "Générateur de musique IA — Songs & beats | ProducerHit",
-      "description": "Générateur de musique IA pour chansons et type beats. Décris une vibe, génère, itère avec des variations, et exporte ton track.",
+      "description": "Générateur de musique IA pour chansons et type beats. 640+ genres — Latin, country, louange, trap. Décris une vibe, génère, exporte.",
       "h1": "Générateur de musique IA",
       "lead": "Crée des beats et des chansons en ligne avec un générateur de musique IA pensé pour les producteurs.",
       "bullets": [
@@ -4600,7 +4602,9 @@
       "keywords": [
         "AI music generator",
         "AI song generator",
-        "generate music online"
+        "AI music generator free",
+        "generate music online",
+        "music AI generator 2026"
       ],
       "faq": [
         {
@@ -4718,6 +4722,830 @@
         {
           "q": "C’est vraiment gratuit de générer des beats ?",
           "a": "Oui. Tu peux générer des beats sur le plan gratuit. Upgrade pour plus de crédits et l’export WAV."
+        }
+      ]
+    },
+    "/ai-song-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-chanson-ia",
+      "slugKey": "ai-song-generator",
+      "title": "AI Song Generator — Create Songs With Vocals Online (2026) | ProducerHit",
+      "description": "AI song generator with real vocals, your lyrics or AI lyrics, 640+ genres. Free to start. Better iteration than Suno for producers — Versions×2, seed lock, MP3/WAV export.",
+      "h1": "AI Song Generator",
+      "lead": "ProducerHit is an **AI song generator** built for 2026: full songs with lead vocals, manual or AI lyrics, **640+ genres** (trap, pop, Latin, country, worship), and producer-grade iteration — not one-shot demos.",
+      "bullets": [
+        "Song Mode — vocals + structure",
+        "Manual lyrics (ES/EN/FR/PT) or AI lyrics",
+        "Genre précis — 640+ styles",
+        "Versions×2 · seed variations · MP3 free"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI song generator",
+        "AI song generator free",
+        "AI music generator with vocals",
+        "generate song with AI",
+        "text to song AI",
+        "AI song maker online"
+      ],
+      "faq": [
+        {
+          "q": "AI song generator vs Suno?",
+          "a": "ProducerHit adds genre catalog depth, seed iteration, beat+song in one studio, and community remix — ideal when you refine more than one prompt."
+        },
+        {
+          "q": "Can I use my own lyrics?",
+          "a": "Yes — Song Mode → manual lyrics. Pick Genre précis so the instrumental matches your style."
+        },
+        {
+          "q": "Is the AI song generator free?",
+          "a": "Free plan includes monthly generations and MP3 download. Pro adds WAV and more credits."
+        }
+      ]
+    },
+    "/generateur-chanson-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-song-generator",
+      "slugKey": "ai-song-generator",
+      "title": "Générateur de chanson IA — Chansons avec voix en ligne (2026) | ProducerHit",
+      "description": "Générateur de chanson IA avec vraies voix, tes paroles ou paroles IA, 640+ genres. Gratuit pour commencer. Meilleure itération que Suno — Versions×2, seed, export MP3/WAV.",
+      "h1": "Générateur de chanson IA",
+      "lead": "ProducerHit est un **générateur de chanson IA** pensé pour 2026 : chansons complètes avec voix lead, paroles manuelles ou IA, **640+ genres** (trap, pop, Latin, country, louange), itération niveau producteur.",
+      "bullets": [
+        "Song Mode — voix + structure",
+        "Paroles manuelles (ES/EN/FR/PT) ou IA",
+        "Genre précis — 640+ styles",
+        "Versions×2 · variations seed · MP3 gratuit"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI song generator",
+        "AI song generator free",
+        "AI music generator with vocals",
+        "generate song with AI",
+        "text to song AI",
+        "AI song maker online"
+      ],
+      "faq": [
+        {
+          "q": "Générateur chanson IA vs Suno ?",
+          "a": "ProducerHit ajoute profondeur de genres, iteration seed, beat+chanson, remix communauté — idéal si tu affines plusieurs prompts."
+        },
+        {
+          "q": "Mes propres paroles ?",
+          "a": "Oui — Song Mode → paroles manuelles + Genre précis pour le style instrumental."
+        },
+        {
+          "q": "C'est gratuit ?",
+          "a": "Le plan free inclut des générations mensuelles et MP3. Pro ajoute WAV et plus de crédits."
+        }
+      ]
+    },
+    "/free-ai-song-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-chanson-ia-gratuit",
+      "slugKey": "free-ai-song-generator",
+      "title": "Free AI Song Generator — Start Creating Songs Online | ProducerHit",
+      "description": "Free AI song generator: create songs with vocals online. Monthly free credits, MP3 download, no credit card. Upgrade for WAV and volume.",
+      "h1": "Free AI Song Generator",
+      "lead": "Use ProducerHit as a **free AI song generator**: test Song Mode, generate two takes, download MP3 on the free tier, then scale when you need WAV or higher volume.",
+      "bullets": [
+        "No credit card to start",
+        "Free monthly generations",
+        "MP3 export on Free",
+        "Same studio as paid plans"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "free AI song generator",
+        "AI song generator free",
+        "free song maker AI",
+        "generate songs online free"
+      ],
+      "faq": [
+        {
+          "q": "Free AI song generator forever?",
+          "a": "The free tier stays available with monthly limits. Paid plans add credits, WAV, and priority."
+        },
+        {
+          "q": "Free vs paid quality?",
+          "a": "Same AI engine — paid plans mainly add credits, WAV export, and higher daily volume."
+        }
+      ]
+    },
+    "/generateur-chanson-ia-gratuit": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/free-ai-song-generator",
+      "slugKey": "free-ai-song-generator",
+      "title": "Générateur de chanson IA gratuit — Commencer en ligne | ProducerHit",
+      "description": "Générateur chanson IA gratuit : crée des chansons avec voix en ligne. Crédits mensuels, MP3, sans carte. Upgrade pour WAV et volume.",
+      "h1": "Générateur de chanson IA gratuit",
+      "lead": "Utilise ProducerHit comme **générateur chanson IA gratuit** : teste Song Mode, génère deux versions, télécharge MP3 sur le free, upgrade pour WAV ou plus de volume.",
+      "bullets": [
+        "Sans carte bancaire",
+        "Générations mensuelles gratuites",
+        "Export MP3 sur Free",
+        "Même studio que les plans payants"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "free AI song generator",
+        "AI song generator free",
+        "free song maker AI",
+        "generate songs online free"
+      ],
+      "faq": [
+        {
+          "q": "Gratuit pour toujours ?",
+          "a": "Le plan free reste avec limites mensuelles. Les plans payants ajoutent crédits, WAV et volume."
+        },
+        {
+          "q": "Qualité free vs payant ?",
+          "a": "Même moteur IA — le payant ajoute surtout crédits, WAV et volume."
+        }
+      ]
+    },
+    "/ai-song-generator-with-lyrics": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-chanson-paroles-ia",
+      "slugKey": "ai-song-generator-with-lyrics",
+      "title": "AI Song Generator With Lyrics — Your Words, AI Vocals | ProducerHit",
+      "description": "AI song generator with lyrics: paste your words, pick a genre, get full vocals. Manual lyrics + Genre précis = style control Suno can't match.",
+      "h1": "AI Song Generator With Lyrics",
+      "lead": "Paste your lyrics, choose **Genre précis**, generate. ProducerHit keeps your words intact (useFormat off for manual lyrics) while the AI performs in trap, pop, Latin, country, or worship styles.",
+      "bullets": [
+        "Manual lyrics mode",
+        "Genre drives instrumental",
+        "Auto language detect",
+        "Song duration from lyrics"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI song generator with lyrics",
+        "AI music with custom lyrics",
+        "generate song from lyrics AI",
+        "text to song with vocals"
+      ],
+      "faq": [
+        {
+          "q": "Will AI rewrite my lyrics?",
+          "a": "Manual lyrics mode preserves your text. AI lyrics mode generates new words."
+        }
+      ]
+    },
+    "/generateur-chanson-paroles-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-song-generator-with-lyrics",
+      "slugKey": "ai-song-generator-with-lyrics",
+      "title": "Générateur chanson IA avec paroles — Tes textes, voix IA | ProducerHit",
+      "description": "Générateur chanson IA avec paroles : colle tes textes, choisis un genre, obtiens des voix complètes. Paroles manuelles + Genre précis.",
+      "h1": "Générateur chanson IA avec paroles",
+      "lead": "Colle tes paroles, choisis **Genre précis**, génère. ProducerHit garde ton texte intact tout en jouant trap, pop, Latin, country ou louange.",
+      "bullets": [
+        "Mode paroles manuelles",
+        "Le genre pilote l'instrumental",
+        "Détection langue auto",
+        "Durée adaptée aux paroles"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI song generator with lyrics",
+        "AI music with custom lyrics",
+        "generate song from lyrics AI",
+        "text to song with vocals"
+      ],
+      "faq": [
+        {
+          "q": "L'IA réécrit mes paroles ?",
+          "a": "Le mode paroles manuelles préserve ton texte. Le mode paroles IA génère de nouveaux mots."
+        }
+      ]
+    },
+    "/ai-generated-country-song": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/chanson-country-ia",
+      "slugKey": "ai-generated-country-song",
+      "title": "AI Generated Country Song AI Generator — Create Country Songs Online (2026) | ProducerHit",
+      "description": "Generate AI generated country song with AI. Acoustic storytelling, Nashville hooks, English vocals. Free AI country song generator — MP3 export.",
+      "h1": "AI Generated Country Song AI Generator",
+      "lead": "The fastest **AI generated country song** workflow in 2026: select **Contemporary Country** (or Country Pop / Contemporary Country), Song Mode, English lyrics, Versions×2. Beats Suno for iteration speed and producer controls.",
+      "bullets": [
+        "Genre précis: Country · Country Pop · Bluegrass",
+        "Song Mode + manual English lyrics",
+        "Seed variations lock the chorus",
+        "Free tier — upgrade for WAV"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI generated country song",
+        "AI country song generator",
+        "free AI country song generator",
+        "AI generated country song AI",
+        "country music maker online"
+      ],
+      "faq": [
+        {
+          "q": "Is AI generated country song allowed on Spotify?",
+          "a": "Policies evolve — export MP3/WAV and follow each distributor's AI disclosure rules."
+        },
+        {
+          "q": "Can I make Morgan Wallen-style country?",
+          "a": "Describe era and mood (neo-traditional, stadium country) — don't paste artist names in prompts."
+        }
+      ]
+    },
+    "/chanson-country-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-generated-country-song",
+      "slugKey": "ai-generated-country-song",
+      "title": "Chanson country IA IA — Chansons country en ligne (2026) | ProducerHit",
+      "description": "Génère de la chanson country IA avec l'IA. Storytelling acoustique, hooks Nashville, voix anglaises. Générateur country IA gratuit — export MP3.",
+      "h1": "Générateur Chanson country IA IA",
+      "lead": "Workflow **chanson country IA** le plus rapide en 2026 : sélectionne **Contemporary Country**, Song Mode, paroles anglaises, Versions×2. Bat Suno sur l'itération et les contrôles producteur.",
+      "bullets": [
+        "Genre précis : Country · Country Pop · Bluegrass",
+        "Song Mode + paroles anglaises manuelles",
+        "Variations seed pour verrouiller le refrain",
+        "Plan free — upgrade pour WAV"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI generated country song",
+        "AI country song generator",
+        "free AI country song generator",
+        "AI generated country song AI",
+        "country music maker online"
+      ],
+      "faq": [
+        {
+          "q": "Une chanson country IA est autorisée sur Spotify ?",
+          "a": "Les règles évoluent — exporte MP3/WAV et suis la politique AI de chaque distributeur."
+        },
+        {
+          "q": "Je peux viser un country radio moderne ?",
+          "a": "Décris l'ère et le mood (neo-trad, stadium country) — évite les noms d'artistes dans les prompts."
+        }
+      ]
+    },
+    "/ai-country-song-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-country-ia",
+      "slugKey": "ai-country-song-generator",
+      "title": "AI Country Song Generator AI Generator — Create Country Songs Online (2026) | ProducerHit",
+      "description": "Generate country song with AI. Acoustic storytelling, Nashville hooks, English vocals. Free AI country song generator — MP3 export.",
+      "h1": "AI Country Song Generator AI Generator",
+      "lead": "The fastest **AI generated country song** workflow in 2026: select **Country Pop** (or Country Pop / Contemporary Country), Song Mode, English lyrics, Versions×2. Beats Suno for iteration speed and producer controls.",
+      "bullets": [
+        "Genre précis: Country · Country Pop · Bluegrass",
+        "Song Mode + manual English lyrics",
+        "Seed variations lock the chorus",
+        "Free tier — upgrade for WAV"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI generated country song",
+        "AI country song generator",
+        "free AI country song generator",
+        "country song AI",
+        "country music maker online"
+      ],
+      "faq": [
+        {
+          "q": "Is AI generated country song allowed on Spotify?",
+          "a": "Policies evolve — export MP3/WAV and follow each distributor's AI disclosure rules."
+        },
+        {
+          "q": "Can I make Morgan Wallen-style country?",
+          "a": "Describe era and mood (neo-traditional, stadium country) — don't paste artist names in prompts."
+        }
+      ]
+    },
+    "/generateur-country-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-country-song-generator",
+      "slugKey": "ai-country-song-generator",
+      "title": "Country song generator IA — Chansons country en ligne (2026) | ProducerHit",
+      "description": "Génère de la chanson country avec l'IA. Storytelling acoustique, hooks Nashville, voix anglaises. Générateur country IA gratuit — export MP3.",
+      "h1": "Générateur Country song generator IA",
+      "lead": "Workflow **chanson country IA** le plus rapide en 2026 : sélectionne **Country Pop**, Song Mode, paroles anglaises, Versions×2. Bat Suno sur l'itération et les contrôles producteur.",
+      "bullets": [
+        "Genre précis : Country · Country Pop · Bluegrass",
+        "Song Mode + paroles anglaises manuelles",
+        "Variations seed pour verrouiller le refrain",
+        "Plan free — upgrade pour WAV"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI generated country song",
+        "AI country song generator",
+        "free AI country song generator",
+        "country song AI",
+        "country music maker online"
+      ],
+      "faq": [
+        {
+          "q": "Une chanson country IA est autorisée sur Spotify ?",
+          "a": "Les règles évoluent — exporte MP3/WAV et suis la politique AI de chaque distributeur."
+        },
+        {
+          "q": "Je peux viser un country radio moderne ?",
+          "a": "Décris l'ère et le mood (neo-trad, stadium country) — évite les noms d'artistes dans les prompts."
+        }
+      ]
+    },
+    "/contemporary-country-ai-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-country-contemporain-ia",
+      "slugKey": "contemporary-country-ai-generator",
+      "title": "Contemporary Country AI Generator — Nashville & Radio Ready | ProducerHit",
+      "description": "Contemporary country AI generator: Nashville pop-country, outlaw twang, acoustic hooks. Song Mode + English vocals.",
+      "h1": "Contemporary Country AI Generator",
+      "lead": "Target the **+23% country streaming growth** with Genre précis: Contemporary Country, Country Pop, Outlaw Country, Bluegrass — all in one studio.",
+      "bullets": [
+        "4 country genres in catalog",
+        "Song + beat modes",
+        "English vocal focus",
+        "Free MP3 start"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "contemporary country AI",
+        "Nashville country generator AI",
+        "modern country song AI",
+        "country pop AI generator"
+      ],
+      "faq": [
+        {
+          "q": "Country beat or full song?",
+          "a": "Beat mode for type beats; Song Mode for vocals and chorus structure."
+        }
+      ]
+    },
+    "/generateur-country-contemporain-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/contemporary-country-ai-generator",
+      "slugKey": "contemporary-country-ai-generator",
+      "title": "Country contemporain IA — Nashville & radio ready | ProducerHit",
+      "description": "Générateur country contemporain IA : pop-country Nashville, twang outlaw, hooks acoustiques. Song Mode + voix anglaises.",
+      "h1": "Générateur country contemporain IA",
+      "lead": "Cible la **croissance country +23% streaming** avec Genre précis : Contemporary Country, Country Pop, Outlaw Country, Bluegrass.",
+      "bullets": [
+        "4 genres country au catalogue",
+        "Modes chanson + beat",
+        "Focus voix anglaises",
+        "Départ MP3 gratuit"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "contemporary country AI",
+        "Nashville country generator AI",
+        "modern country song AI",
+        "country pop AI generator"
+      ],
+      "faq": [
+        {
+          "q": "Beat country ou chanson ?",
+          "a": "Beat pour type beats ; Song Mode pour voix et refrain."
+        }
+      ]
+    },
+    "/ai-bluegrass-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-bluegrass-ia",
+      "slugKey": "ai-bluegrass-generator",
+      "title": "AI Bluegrass Generator — Banjo, Fiddle & Fast Picking | ProducerHit",
+      "description": "AI bluegrass generator: banjo rolls, mandolin, fiddle at 140 BPM. Instrumentals or vocal harmony space.",
+      "h1": "AI Bluegrass Generator",
+      "lead": "Authentic **bluegrass** prompts — banjo, mandolin chop, fiddle breaks — from ProducerHit's 640-genre catalog.",
+      "bullets": [
+        "~140 BPM default",
+        "Appalachian folk adjacent",
+        "Instrumental-first workflow",
+        "Seed variations"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI bluegrass generator",
+        "bluegrass AI music",
+        "banjo AI generator",
+        "bluegrass song maker"
+      ],
+      "faq": [
+        {
+          "q": "Bluegrass vocals?",
+          "a": "Song Mode supports harmony-style vocal space — describe 'bluegrass vocal trio' in your prompt."
+        }
+      ]
+    },
+    "/generateur-bluegrass-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-bluegrass-generator",
+      "slugKey": "ai-bluegrass-generator",
+      "title": "Générateur bluegrass IA — Banjo, fiddle & picking rapide | ProducerHit",
+      "description": "Générateur bluegrass IA : banjo rolls, mandolin, fiddle à 140 BPM. Instrumentaux ou harmonies vocales.",
+      "h1": "Générateur bluegrass IA",
+      "lead": "Prompts **bluegrass** authentiques — banjo, mandolin chop, breaks fiddle — depuis le catalogue 640 genres.",
+      "bullets": [
+        "~140 BPM par défaut",
+        "Adjacent Appalachian folk",
+        "Workflow instrumental",
+        "Variations seed"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI bluegrass generator",
+        "bluegrass AI music",
+        "banjo AI generator",
+        "bluegrass song maker"
+      ],
+      "faq": [
+        {
+          "q": "Voix bluegrass ?",
+          "a": "Song Mode supporte les harmonies — décris « trio vocal bluegrass » dans ton prompt."
+        }
+      ]
+    },
+    "/ai-song-generator-by-genre": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-chanson-ia-par-genre",
+      "slugKey": "ai-song-generator-by-genre",
+      "title": "AI Song Generator by Genre — 640+ Styles (2026) | ProducerHit",
+      "description": "AI song generator by genre: trap, drill, Latin, country, worship, phonk, pop, Bollywood & 640+ more. One studio — Song Mode + Genre précis.",
+      "h1": "AI Song Generator by Genre",
+      "lead": "One **AI song generator**, **640+ genres** — from Melodic Trap to Bachata, Contemporary Country to Worship Pop. Pick Genre précis, Song Mode, iterate with seed. This hub links every major genre landing page.",
+      "bullets": [
+        "640+ ACE-tuned genres",
+        "Latin · Country · Hip-hop · Worship hubs",
+        "Song + Beat modes",
+        "Internal links for SEO + UX"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI song generator by genre",
+        "AI music generator genres",
+        "generate song by genre AI",
+        "AI beat generator by genre"
+      ],
+      "faq": [
+        {
+          "q": "How many genres?",
+          "a": "640+ including extended catalog: Latin dance, phonk, Afro, rock, wellness, cinematic."
+        },
+        {
+          "q": "Best genre for TikTok?",
+          "a": "Try Viral TikTok, Phonk, Reggaeton, or Melodic Trap — generate short first."
+        }
+      ]
+    },
+    "/generateur-chanson-ia-par-genre": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-song-generator-by-genre",
+      "slugKey": "ai-song-generator-by-genre",
+      "title": "Générateur chanson IA par genre — 640+ styles (2026) | ProducerHit",
+      "description": "Générateur chanson IA par genre : trap, drill, Latin, country, louange, phonk, pop, Bollywood & 640+ styles. Un studio — Song Mode + Genre précis.",
+      "h1": "Générateur chanson IA par genre",
+      "lead": "Un **générateur chanson IA**, **640+ genres** — du Melodic Trap à la Bachata, du Contemporary Country au Worship Pop. Genre précis, Song Mode, seed. Ce hub relie toutes les landing genres.",
+      "bullets": [
+        "640+ genres ACE",
+        "Hubs Latin · Country · Hip-hop · Louange",
+        "Modes Song + Beat",
+        "Maillage SEO + UX"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI song generator by genre",
+        "AI music generator genres",
+        "generate song by genre AI",
+        "AI beat generator by genre"
+      ],
+      "faq": [
+        {
+          "q": "Combien de genres ?",
+          "a": "640+ incluant Latin, phonk, Afro, rock, wellness, cinématique."
+        },
+        {
+          "q": "Meilleur genre TikTok ?",
+          "a": "Essaie Viral TikTok, Phonk, Reggaeton ou Melodic Trap — génère court d'abord."
+        }
+      ]
+    },
+    "/latin-music-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-musique-latine-ia",
+      "slugKey": "latin-music-generator",
+      "title": "Latin Music Generator — Reggaeton, Bachata, Salsa & More | ProducerHit",
+      "description": "Latin music generator AI: reggaeton, bachata, salsa, kizomba, dembow, cumbia, corridos — 33+ Latin genres. Songs with vocals or beats. Free to start.",
+      "h1": "Latin Music Generator",
+      "lead": "The most complete **Latin music generator** in 2026 — **33+ dedicated genres** (not one generic « tropical loop »). Bachata, reggaeton, salsa, kizomba, dembow, cumbia, regional Mexican, worship crossover — Song Mode with Spanish/Portuguese vocals.",
+      "bullets": [
+        "33+ Latin genres (wave 1+2 catalog)",
+        "Competitors: 5–8 Latin styles · ProducerHit: 33+",
+        "Perreo · Dembow · Bachata Sensual",
+        "Song Mode + manual Spanish lyrics"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Latin music generator",
+        "AI Latin music generator",
+        "reggaeton AI generator",
+        "bachata AI generator",
+        "Latin song generator AI",
+        "free Latin music AI"
+      ],
+      "faq": [
+        {
+          "q": "Latin music generator vs generic AI?",
+          "a": "Each genre has ACE-tuned prompts (clave, dembow, bongo tumbao) — not a single « Latin » preset."
+        },
+        {
+          "q": "Spanish or English vocals?",
+          "a": "Both — manual lyrics auto-detect language; pick vocal language in Song Mode advanced."
+        }
+      ]
+    },
+    "/generateur-musique-latine-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/latin-music-generator",
+      "slugKey": "latin-music-generator",
+      "title": "Générateur musique latine IA — Reggaeton, Bachata, Salsa & plus | ProducerHit",
+      "description": "Générateur musique latine IA : reggaeton, bachata, salsa, kizomba, dembow, cumbia, corridos — 33+ genres Latin. Chansons ou beats. Gratuit pour commencer.",
+      "h1": "Générateur musique latine IA",
+      "lead": "Le **générateur musique latine IA** le plus complet en 2026 — **33+ genres dédiés** (pas une boucle « tropical » générique). Bachata, reggaeton, salsa, kizomba, dembow, cumbia, regional Mexican — Song Mode voix ES/PT.",
+      "bullets": [
+        "33+ genres Latin (catalogue vague 1+2)",
+        "Concurrents : 5–8 styles · ProducerHit : 33+",
+        "Perreo · Dembow · Bachata Sensual",
+        "Song Mode + paroles espagnoles manuelles"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Latin music generator",
+        "AI Latin music generator",
+        "reggaeton AI generator",
+        "bachata AI generator",
+        "Latin song generator AI",
+        "free Latin music AI"
+      ],
+      "faq": [
+        {
+          "q": "Générateur Latin vs IA générique ?",
+          "a": "Chaque genre a des prompts ACE (clave, dembow, bongo) — pas un preset « Latin » unique."
+        },
+        {
+          "q": "Voix espagnoles ou anglaises ?",
+          "a": "Les deux — paroles manuelles avec détection auto ; langue vocale en Song Mode avancé."
+        }
+      ]
+    },
+    "/ai-worship-song-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-louange-ia",
+      "slugKey": "ai-worship-song-generator",
+      "title": "AI Worship Song Generator — Christian & Gospel Pop (2026) | ProducerHit",
+      "description": "AI worship song generator: +18.5% streaming growth genre. Worship Pop, Gospel Worship. English vocals, anthemic choruses. Free to start.",
+      "h1": "AI Worship Song Generator",
+      "lead": "Ride the **fastest-growing US genre** with Worship Pop & Gospel Worship — Song Mode, English lyrics, major-key anthem structure.",
+      "bullets": [
+        "Worship Pop + Gospel Worship genres",
+        "TikTok-friendly worship trend",
+        "Congregational chorus space",
+        "Afrobeats Gospel crossover"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI worship song generator",
+        "Christian music AI generator",
+        "gospel song generator AI",
+        "worship music maker online"
+      ],
+      "faq": [
+        {
+          "q": "Church CCLI licensing?",
+          "a": "AI output is your draft — verify licensing with your church workflow before live worship."
+        }
+      ]
+    },
+    "/generateur-louange-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-worship-song-generator",
+      "slugKey": "ai-worship-song-generator",
+      "title": "Générateur louange IA — Worship & gospel pop (2026) | ProducerHit",
+      "description": "Générateur louange IA : genre en croissance +18,5% streaming. Worship Pop, Gospel Worship. Voix anglaises, refrains anthemiques. Gratuit pour commencer.",
+      "h1": "Générateur louange IA",
+      "lead": "Surfe sur le **genre US le plus en croissance** avec Worship Pop & Gospel Worship — Song Mode, paroles anglaises, structure anthemique.",
+      "bullets": [
+        "Genres Worship Pop + Gospel Worship",
+        "Trend worship TikTok",
+        "Espace refrain congregational",
+        "Crossover Afrobeats Gospel"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI worship song generator",
+        "Christian music AI generator",
+        "gospel song generator AI",
+        "worship music maker online"
+      ],
+      "faq": [
+        {
+          "q": "Licence CCLI église ?",
+          "a": "La sortie IA est un brouillon — vérifie la licence avec ton workflow église avant le culte live."
+        }
+      ]
+    },
+    "/ai-bollywood-music-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-bollywood-ia",
+      "slugKey": "ai-bollywood-music-generator",
+      "title": "AI Bollywood Music Generator — Filmi Songs & Beats | ProducerHit",
+      "description": "AI Bollywood music generator: sitar, tabla, filmi orchestration. Hindi vocal space. Also Bhangra & Kollywood in catalog.",
+      "h1": "AI Bollywood Music Generator",
+      "lead": "Generate **Bollywood** and **Bhangra** with dedicated genres — not western pop with a sitar emoji.",
+      "bullets": [
+        "Bollywood · Bhangra · Kollywood",
+        "Hindi/Tamil vocal space",
+        "Song Mode",
+        "640+ genre hub"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI Bollywood music generator",
+        "Bollywood song generator AI",
+        "Hindi song AI maker",
+        "filmi music AI"
+      ],
+      "faq": [
+        {
+          "q": "Hindi lyrics?",
+          "a": "Paste Hindi in manual lyrics mode — language auto-detect handles Devanagari script."
+        }
+      ]
+    },
+    "/generateur-bollywood-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-bollywood-music-generator",
+      "slugKey": "ai-bollywood-music-generator",
+      "title": "Générateur Bollywood IA — Chansons filmi & beats | ProducerHit",
+      "description": "Générateur Bollywood IA : sitar, tabla, orchestration filmi. Voix Hindi. Bhangra & Kollywood au catalogue.",
+      "h1": "Générateur Bollywood IA",
+      "lead": "Génère **Bollywood** et **Bhangra** avec genres dédiés — pas de la pop occidentale avec un emoji sitar.",
+      "bullets": [
+        "Bollywood · Bhangra · Kollywood",
+        "Voix Hindi/Tamil",
+        "Song Mode",
+        "Hub 640+ genres"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI Bollywood music generator",
+        "Bollywood song generator AI",
+        "Hindi song AI maker",
+        "filmi music AI"
+      ],
+      "faq": [
+        {
+          "q": "Paroles Hindi ?",
+          "a": "Colle du Hindi en paroles manuelles — détection auto Devanagari."
+        }
+      ]
+    },
+    "/ai-bhangra-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-bhangra-ia",
+      "slugKey": "ai-bhangra-generator",
+      "title": "AI Bhangra Generator — Punjabi Dhol & Wedding Energy | ProducerHit",
+      "description": "AI Bhangra generator: dhol drums, tumbi, Punjabi wedding bounce. Song Mode with Punjabi vocal hooks.",
+      "h1": "AI Bhangra Generator",
+      "lead": "Dedicated **Bhangra** genre with dhol tumbao, tumbi accents, and 125 BPM wedding energy.",
+      "bullets": [
+        "125 BPM default",
+        "Wedding & festival use",
+        "Pairs with Bollywood hub",
+        "Manual Punjabi lyrics"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI bhangra generator",
+        "Punjabi music AI",
+        "bhangra beat maker AI",
+        "dhol AI music"
+      ],
+      "faq": [
+        {
+          "q": "Bhangra vs Bollywood?",
+          "a": "Bhangra = Punjabi dhol dance; Bollywood = Hindi filmi orchestration. Both in catalog."
+        }
+      ]
+    },
+    "/generateur-bhangra-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-bhangra-generator",
+      "slugKey": "ai-bhangra-generator",
+      "title": "Générateur Bhangra IA — Dhol Punjabi & énergie mariage | ProducerHit",
+      "description": "Générateur Bhangra IA : dhol, tumbi, bounce mariage Punjabi. Song Mode hooks vocaux Punjabi.",
+      "h1": "Générateur Bhangra IA",
+      "lead": "Genre **Bhangra** dédié avec tumbao dhol, accents tumbi, énergie mariage 125 BPM.",
+      "bullets": [
+        "125 BPM par défaut",
+        "Mariages & festivals",
+        "Hub Bollywood",
+        "Paroles Punjabi manuelles"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI bhangra generator",
+        "Punjabi music AI",
+        "bhangra beat maker AI",
+        "dhol AI music"
+      ],
+      "faq": [
+        {
+          "q": "Bhangra vs Bollywood ?",
+          "a": "Bhangra = danse dhol Punjabi ; Bollywood = orchestration filmi Hindi. Les deux au catalogue."
+        }
+      ]
+    },
+    "/phonk-music-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-phonk-complet-ia",
+      "slugKey": "phonk-music-generator",
+      "title": "Phonk Music Generator — Drift, Memphis, Brazilian & Gym | ProducerHit",
+      "description": "Phonk music generator: drift phonk, Memphis phonk, Brazilian phonk, gym phonk, house phonk, atmospheric phonk. Cowbell + 808 workflow.",
+      "h1": "Phonk Music Generator",
+      "lead": "Six **phonk** subgenres in one studio — Drift, Memphis, Brazilian, Gym, House, Aggressive — each ACE-tuned. Beat competitors' single « phonk » slider.",
+      "bullets": [
+        "6 phonk subgenres",
+        "Cowbell + distorted 808 prompts",
+        "TikTok / car edit ready",
+        "Seed variation loop"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "phonk music generator",
+        "drift phonk AI",
+        "Memphis phonk generator",
+        "Brazilian phonk AI",
+        "gym phonk maker"
+      ],
+      "faq": [
+        {
+          "q": "Drift vs Memphis phonk?",
+          "a": "Drift = cowbell glide + car-edit energy; Memphis = dusty samples + lo-fi breaks."
+        }
+      ]
+    },
+    "/generateur-phonk-complet-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/phonk-music-generator",
+      "slugKey": "phonk-music-generator",
+      "title": "Générateur phonk IA — Drift, Memphis, Brazilian & Gym | ProducerHit",
+      "description": "Générateur phonk IA : drift, Memphis, Brazilian, gym, house, atmospheric phonk. Workflow cowbell + 808.",
+      "h1": "Générateur phonk IA complet",
+      "lead": "Six sous-genres **phonk** — Drift, Memphis, Brazilian, Gym, House, Aggressive — chacun ACE. Bat le slider « phonk » unique des concurrents.",
+      "bullets": [
+        "6 sous-genres phonk",
+        "Prompts cowbell + 808 disto",
+        "Prêt TikTok / car edit",
+        "Boucle variation seed"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "phonk music generator",
+        "drift phonk AI",
+        "Memphis phonk generator",
+        "Brazilian phonk AI",
+        "gym phonk maker"
+      ],
+      "faq": [
+        {
+          "q": "Drift vs Memphis phonk ?",
+          "a": "Drift = glide cowbell + car edit ; Memphis = samples dusty + breaks lo-fi."
         }
       ]
     },
@@ -5952,6 +6780,2112 @@
         {
           "q": "Je peux exporter pour le streaming ?",
           "a": "Télécharge MP3 (Free) ou WAV (Pro) et vérifie les règles plateformes pour le contenu IA."
+        }
+      ]
+    },
+    "/ai-bachata-song-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-bachata-ia",
+      "slugKey": "ai-bachata-song-generator",
+      "title": "Bachata AI Generator — Songs & Beats Online (2026) | ProducerHit",
+      "description": "Generate bachata with AI: requinto guitar, bongo, güira, romantic Dominican groove. Song Mode with Spanish/Portuguese vocals or instrumental beats. Free to start — MP3 export.",
+      "h1": "Bachata AI Generator",
+      "lead": "ProducerHit generates authentic bachata from text — pick **Bachata** in Genre précis, use Song Mode for vocals or Beat mode for instrumentals. Typical BPM ~130. Versions×2 + seed variations beat generic « latin loop » tools.",
+      "bullets": [
+        "Catalog genre: Bachata (~130 BPM)",
+        "Song Mode — your lyrics or AI lyrics (ES/PT/FR)",
+        "Beat mode for dembow, perreo & dance edits",
+        "640+ genres · royalty-free MP3 on Free plan"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "bachata AI generator",
+        "AI bachata generator",
+        "free bachata generator",
+        "bachata song generator AI",
+        "bachata beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Can I use my own lyrics for Bachata?",
+          "a": "Yes — Song Mode → manual lyrics. Genre précis keeps the instrumental style while preserving your text."
+        },
+        {
+          "q": "Is it royalty-free?",
+          "a": "Downloads on your plan are for your content workflows. Check platform rules for AI music on streaming services."
+        },
+        {
+          "q": "Best BPM for Bachata?",
+          "a": "Start near 130 BPM in your prompt. Use auto tempo in Song Mode or set Genre précis for consistent groove."
+        }
+      ]
+    },
+    "/generateur-bachata-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-bachata-song-generator",
+      "slugKey": "ai-bachata-song-generator",
+      "title": "Générateur Bachata IA — Chansons & beats en ligne (2026) | ProducerHit",
+      "description": "Génère de la bachata avec l'IA : guitare requinto, bongo, güira, groove romantique dominicain. Song Mode voix ES/PT ou beats instrumentaux. Gratuit pour commencer — export MP3.",
+      "h1": "Générateur Bachata IA",
+      "lead": "ProducerHit génère de la bachata authentique depuis un texte — choisis **Bachata** en Genre précis, Song Mode pour les voix ou Beat pour l'instrumental. BPM typique ~130. Versions×2 + variations seed — mieux qu'une boucle « latin » générique.",
+      "bullets": [
+        "Genre catalogue : Bachata (~130 BPM)",
+        "Song Mode — tes paroles ou paroles IA (ES/PT/FR)",
+        "Mode Beat pour dembow, perreo & edits danse",
+        "640+ genres · MP3 royalty-free sur le plan Free"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "bachata AI generator",
+        "AI bachata generator",
+        "free bachata generator",
+        "bachata song generator AI",
+        "bachata beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Je peux utiliser mes paroles en Bachata ?",
+          "a": "Oui — Song Mode → paroles manuelles. Genre précis garde le style instrumental tout en respectant ton texte."
+        },
+        {
+          "q": "C'est royalty-free ?",
+          "a": "Les téléchargements suivent ton plan pour tes workflows contenu. Vérifie les règles plateformes pour la musique IA en streaming."
+        },
+        {
+          "q": "Quel BPM pour Bachata ?",
+          "a": "Commence autour de 130 BPM dans ton prompt. Tempo auto en Song Mode ou Genre précis pour un groove cohérent."
+        }
+      ]
+    },
+    "/ai-bachata-sensual-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-bachata-sensual-ia",
+      "slugKey": "ai-bachata-sensual-generator",
+      "title": "Bachata Sensual AI Generator — Partner Dance Songs | ProducerHit",
+      "description": "Bachata sensual AI generator: legato guitar, body-wave pulse, TikTok dance trend. Song Mode Spanish vocals.",
+      "h1": "Bachata Sensual AI Generator",
+      "lead": "#BachataSensual trend — generate sensual bachata with legato guitar and close-embrace pulse, not generic Latin pop.",
+      "bullets": [
+        "125 BPM sensual pocket",
+        "TikTok dance ready",
+        "Distinct from classic Bachata genre",
+        "Manual Spanish lyrics"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "bachata sensual AI generator",
+        "bachata sensual song AI",
+        "AI bachata dance music"
+      ],
+      "faq": [
+        {
+          "q": "Sensual vs classic bachata?",
+          "a": "Pick Bachata Sensual genre for legato guitar & slower pulse; Bachata for traditional requinto."
+        }
+      ]
+    },
+    "/generateur-bachata-sensual-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-bachata-sensual-generator",
+      "slugKey": "ai-bachata-sensual-generator",
+      "title": "Générateur Bachata Sensual IA — Chansons danse couple | ProducerHit",
+      "description": "Générateur bachata sensual IA : guitare legato, pulse body-wave, trend danse TikTok. Song Mode voix espagnoles.",
+      "h1": "Générateur Bachata Sensual IA",
+      "lead": "Trend #BachataSensual — génère bachata sensual avec guitare legato et pulse close-embrace, pas pop Latin générique.",
+      "bullets": [
+        "Pocket sensuel 125 BPM",
+        "Prêt danse TikTok",
+        "Distinct de Bachata classique",
+        "Paroles espagnoles manuelles"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "bachata sensual AI generator",
+        "bachata sensual song AI",
+        "AI bachata dance music"
+      ],
+      "faq": [
+        {
+          "q": "Sensual vs bachata classique ?",
+          "a": "Choisis Bachata Sensual pour guitare legato ; Bachata pour requinto traditionnel."
+        }
+      ]
+    },
+    "/ai-reggaeton-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-reggaeton-ia",
+      "slugKey": "ai-reggaeton-generator",
+      "title": "Reggaeton AI Generator — Songs & Beats Online (2026) | ProducerHit",
+      "description": "Generate reggaeton with AI: dembow rhythm, 808 sub, perreo club bounce. Song Mode with Spanish/Portuguese vocals or instrumental beats. Free to start — MP3 export.",
+      "h1": "Reggaeton AI Generator",
+      "lead": "ProducerHit generates authentic reggaeton from text — pick **Reggaeton** in Genre précis, use Song Mode for vocals or Beat mode for instrumentals. Typical BPM ~92. Versions×2 + seed variations beat generic « latin loop » tools.",
+      "bullets": [
+        "Catalog genre: Reggaeton (~92 BPM)",
+        "Song Mode — your lyrics or AI lyrics (ES/PT/FR)",
+        "Beat mode for dembow, perreo & dance edits",
+        "640+ genres · royalty-free MP3 on Free plan"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "reggaeton AI generator",
+        "AI reggaeton generator",
+        "free reggaeton generator",
+        "reggaeton song generator AI",
+        "reggaeton beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Can I use my own lyrics for Reggaeton?",
+          "a": "Yes — Song Mode → manual lyrics. Genre précis keeps the instrumental style while preserving your text."
+        },
+        {
+          "q": "Is it royalty-free?",
+          "a": "Downloads on your plan are for your content workflows. Check platform rules for AI music on streaming services."
+        },
+        {
+          "q": "Best BPM for Reggaeton?",
+          "a": "Start near 92 BPM in your prompt. Use auto tempo in Song Mode or set Genre précis for consistent groove."
+        }
+      ]
+    },
+    "/generateur-reggaeton-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-reggaeton-generator",
+      "slugKey": "ai-reggaeton-generator",
+      "title": "Générateur Reggaeton IA — Chansons & beats en ligne (2026) | ProducerHit",
+      "description": "Génère de la reggaeton avec l'IA : rythme dembow, sub 808, bounce club perreo. Song Mode voix ES/PT ou beats instrumentaux. Gratuit pour commencer — export MP3.",
+      "h1": "Générateur Reggaeton IA",
+      "lead": "ProducerHit génère de la reggaeton authentique depuis un texte — choisis **Reggaeton** en Genre précis, Song Mode pour les voix ou Beat pour l'instrumental. BPM typique ~92. Versions×2 + variations seed — mieux qu'une boucle « latin » générique.",
+      "bullets": [
+        "Genre catalogue : Reggaeton (~92 BPM)",
+        "Song Mode — tes paroles ou paroles IA (ES/PT/FR)",
+        "Mode Beat pour dembow, perreo & edits danse",
+        "640+ genres · MP3 royalty-free sur le plan Free"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "reggaeton AI generator",
+        "AI reggaeton generator",
+        "free reggaeton generator",
+        "reggaeton song generator AI",
+        "reggaeton beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Je peux utiliser mes paroles en Reggaeton ?",
+          "a": "Oui — Song Mode → paroles manuelles. Genre précis garde le style instrumental tout en respectant ton texte."
+        },
+        {
+          "q": "C'est royalty-free ?",
+          "a": "Les téléchargements suivent ton plan pour tes workflows contenu. Vérifie les règles plateformes pour la musique IA en streaming."
+        },
+        {
+          "q": "Quel BPM pour Reggaeton ?",
+          "a": "Commence autour de 92 BPM dans ton prompt. Tempo auto en Song Mode ou Genre précis pour un groove cohérent."
+        }
+      ]
+    },
+    "/ai-reggaeton-beat-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-beat-reggaeton-ia",
+      "slugKey": "ai-reggaeton-beat-generator",
+      "title": "AI Reggaeton Beat Generator — Dembow Instrumentals | ProducerHit",
+      "description": "AI reggaeton beat generator: dembow riddim, 808 subs, perreo instrumentals. Beat mode — no vocals.",
+      "h1": "AI Reggaeton Beat Generator",
+      "lead": "Instrumental **reggaeton beats** for freestyle, content, and lease demos — dembow pocket without generic trap drums.",
+      "bullets": [
+        "Beat mode instrumental",
+        "Dembow + 808 focus",
+        "Pairs with reggaeton song page",
+        "Versions×2"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI reggaeton beat generator",
+        "reggaeton type beat AI",
+        "dembow beat maker",
+        "perreo instrumental AI"
+      ],
+      "faq": [
+        {
+          "q": "Reggaeton beat vs Latin trap?",
+          "a": "Reggaeton = dembow riddim; Latin Trap = trap drums + Spanish urban — both in catalog."
+        }
+      ]
+    },
+    "/generateur-beat-reggaeton-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-reggaeton-beat-generator",
+      "slugKey": "ai-reggaeton-beat-generator",
+      "title": "Générateur beat reggaeton IA — Instrumentaux dembow | ProducerHit",
+      "description": "Générateur beat reggaeton IA : riddim dembow, subs 808, instrumentaux perreo. Mode Beat — sans voix.",
+      "h1": "Générateur beat reggaeton IA",
+      "lead": "**Beats reggaeton** instrumentaux pour freestyle, contenu et démos — pocket dembow sans drums trap génériques.",
+      "bullets": [
+        "Mode Beat instrumental",
+        "Focus dembow + 808",
+        "Lié page chanson reggaeton",
+        "Versions×2"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI reggaeton beat generator",
+        "reggaeton type beat AI",
+        "dembow beat maker",
+        "perreo instrumental AI"
+      ],
+      "faq": [
+        {
+          "q": "Beat reggaeton vs Latin trap ?",
+          "a": "Reggaeton = riddim dembow ; Latin Trap = drums trap + urbano espagnol."
+        }
+      ]
+    },
+    "/ai-dembow-beat-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-dembow-ia",
+      "slugKey": "ai-dembow-beat-generator",
+      "title": "Dembow AI Generator — Songs & Beats Online (2026) | ProducerHit",
+      "description": "Generate dembow with AI: Dominican dembow riddim, 808 slides, perreo energy. Song Mode with Spanish/Portuguese vocals or instrumental beats. Free to start — MP3 export.",
+      "h1": "Dembow AI Generator",
+      "lead": "ProducerHit generates authentic dembow from text — pick **Dembow** in Genre précis, use Song Mode for vocals or Beat mode for instrumentals. Typical BPM ~103. Versions×2 + seed variations beat generic « latin loop » tools.",
+      "bullets": [
+        "Catalog genre: Dembow (~103 BPM)",
+        "Song Mode — your lyrics or AI lyrics (ES/PT/FR)",
+        "Beat mode for dembow, perreo & dance edits",
+        "640+ genres · royalty-free MP3 on Free plan"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "dembow AI generator",
+        "AI dembow generator",
+        "free dembow generator",
+        "dembow song generator AI",
+        "dembow beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Can I use my own lyrics for Dembow?",
+          "a": "Yes — Song Mode → manual lyrics. Genre précis keeps the instrumental style while preserving your text."
+        },
+        {
+          "q": "Is it royalty-free?",
+          "a": "Downloads on your plan are for your content workflows. Check platform rules for AI music on streaming services."
+        },
+        {
+          "q": "Best BPM for Dembow?",
+          "a": "Start near 103 BPM in your prompt. Use auto tempo in Song Mode or set Genre précis for consistent groove."
+        }
+      ]
+    },
+    "/generateur-dembow-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-dembow-beat-generator",
+      "slugKey": "ai-dembow-beat-generator",
+      "title": "Générateur Dembow IA — Chansons & beats en ligne (2026) | ProducerHit",
+      "description": "Génère de la dembow avec l'IA : riddim dembow dominicain, slides 808, énergie perreo. Song Mode voix ES/PT ou beats instrumentaux. Gratuit pour commencer — export MP3.",
+      "h1": "Générateur Dembow IA",
+      "lead": "ProducerHit génère de la dembow authentique depuis un texte — choisis **Dembow** en Genre précis, Song Mode pour les voix ou Beat pour l'instrumental. BPM typique ~103. Versions×2 + variations seed — mieux qu'une boucle « latin » générique.",
+      "bullets": [
+        "Genre catalogue : Dembow (~103 BPM)",
+        "Song Mode — tes paroles ou paroles IA (ES/PT/FR)",
+        "Mode Beat pour dembow, perreo & edits danse",
+        "640+ genres · MP3 royalty-free sur le plan Free"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "dembow AI generator",
+        "AI dembow generator",
+        "free dembow generator",
+        "dembow song generator AI",
+        "dembow beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Je peux utiliser mes paroles en Dembow ?",
+          "a": "Oui — Song Mode → paroles manuelles. Genre précis garde le style instrumental tout en respectant ton texte."
+        },
+        {
+          "q": "C'est royalty-free ?",
+          "a": "Les téléchargements suivent ton plan pour tes workflows contenu. Vérifie les règles plateformes pour la musique IA en streaming."
+        },
+        {
+          "q": "Quel BPM pour Dembow ?",
+          "a": "Commence autour de 103 BPM dans ton prompt. Tempo auto en Song Mode ou Genre précis pour un groove cohérent."
+        }
+      ]
+    },
+    "/ai-salsa-music-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-salsa-ia",
+      "slugKey": "ai-salsa-music-generator",
+      "title": "Salsa AI Generator — Songs & Beats Online (2026) | ProducerHit",
+      "description": "Generate salsa with AI: clave, montuno piano, congas, timbales, brass. Song Mode with Spanish/Portuguese vocals or instrumental beats. Free to start — MP3 export.",
+      "h1": "Salsa AI Generator",
+      "lead": "ProducerHit generates authentic salsa from text — pick **Salsa** in Genre précis, use Song Mode for vocals or Beat mode for instrumentals. Typical BPM ~180. Versions×2 + seed variations beat generic « latin loop » tools.",
+      "bullets": [
+        "Catalog genre: Salsa (~180 BPM)",
+        "Song Mode — your lyrics or AI lyrics (ES/PT/FR)",
+        "Beat mode for dembow, perreo & dance edits",
+        "640+ genres · royalty-free MP3 on Free plan"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "salsa AI generator",
+        "AI salsa generator",
+        "free salsa generator",
+        "salsa song generator AI",
+        "salsa beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Can I use my own lyrics for Salsa?",
+          "a": "Yes — Song Mode → manual lyrics. Genre précis keeps the instrumental style while preserving your text."
+        },
+        {
+          "q": "Is it royalty-free?",
+          "a": "Downloads on your plan are for your content workflows. Check platform rules for AI music on streaming services."
+        },
+        {
+          "q": "Best BPM for Salsa?",
+          "a": "Start near 180 BPM in your prompt. Use auto tempo in Song Mode or set Genre précis for consistent groove."
+        }
+      ]
+    },
+    "/generateur-salsa-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-salsa-music-generator",
+      "slugKey": "ai-salsa-music-generator",
+      "title": "Générateur Salsa IA — Chansons & beats en ligne (2026) | ProducerHit",
+      "description": "Génère de la salsa avec l'IA : clave, piano montuno, congas, timbales, cuivres. Song Mode voix ES/PT ou beats instrumentaux. Gratuit pour commencer — export MP3.",
+      "h1": "Générateur Salsa IA",
+      "lead": "ProducerHit génère de la salsa authentique depuis un texte — choisis **Salsa** en Genre précis, Song Mode pour les voix ou Beat pour l'instrumental. BPM typique ~180. Versions×2 + variations seed — mieux qu'une boucle « latin » générique.",
+      "bullets": [
+        "Genre catalogue : Salsa (~180 BPM)",
+        "Song Mode — tes paroles ou paroles IA (ES/PT/FR)",
+        "Mode Beat pour dembow, perreo & edits danse",
+        "640+ genres · MP3 royalty-free sur le plan Free"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "salsa AI generator",
+        "AI salsa generator",
+        "free salsa generator",
+        "salsa song generator AI",
+        "salsa beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Je peux utiliser mes paroles en Salsa ?",
+          "a": "Oui — Song Mode → paroles manuelles. Genre précis garde le style instrumental tout en respectant ton texte."
+        },
+        {
+          "q": "C'est royalty-free ?",
+          "a": "Les téléchargements suivent ton plan pour tes workflows contenu. Vérifie les règles plateformes pour la musique IA en streaming."
+        },
+        {
+          "q": "Quel BPM pour Salsa ?",
+          "a": "Commence autour de 180 BPM dans ton prompt. Tempo auto en Song Mode ou Genre précis pour un groove cohérent."
+        }
+      ]
+    },
+    "/ai-timba-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-timba-ia",
+      "slugKey": "ai-timba-generator",
+      "title": "AI Timba Generator — Cuban Salsa Fusion | ProducerHit",
+      "description": "AI timba generator: Cuban timba — faster than salsa, horn hits, montuno piano. 190 BPM dance energy.",
+      "h1": "AI Timba Generator",
+      "lead": "**Timba** — Cuba's high-energy salsa fusion — dedicated genre with horn stabs and 190 BPM drive.",
+      "bullets": [
+        "190 BPM timba pocket",
+        "Cuban dancefloor",
+        "Beyond generic salsa",
+        "Song Mode coro space"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI timba generator",
+        "timba music AI",
+        "Cuban timba AI",
+        "salsa cubana AI"
+      ],
+      "faq": [
+        {
+          "q": "Timba vs salsa?",
+          "a": "Timba is faster, more aggressive horns — pick Timba genre vs Salsa for classic clave feel."
+        }
+      ]
+    },
+    "/generateur-timba-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-timba-generator",
+      "slugKey": "ai-timba-generator",
+      "title": "Générateur Timba IA — Fusion salsa cubaine | ProducerHit",
+      "description": "Générateur timba IA : timba cubaine — plus rapide que salsa, cuivres, piano montuno. Énergie danse 190 BPM.",
+      "h1": "Générateur Timba IA",
+      "lead": "**Timba** — fusion salsa haute énergie de Cuba — genre dédié cuivres et drive 190 BPM.",
+      "bullets": [
+        "Pocket timba 190 BPM",
+        "Dancefloor cubain",
+        "Au-delà salsa générique",
+        "Espace coro Song Mode"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI timba generator",
+        "timba music AI",
+        "Cuban timba AI",
+        "salsa cubana AI"
+      ],
+      "faq": [
+        {
+          "q": "Timba vs salsa ?",
+          "a": "Timba plus rapide, cuivres agressifs — genre Timba vs Salsa pour clave classique."
+        }
+      ]
+    },
+    "/ai-kizomba-song-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-kizomba-ia",
+      "slugKey": "ai-kizomba-song-generator",
+      "title": "Kizomba AI Generator — Songs & Beats Online (2026) | ProducerHit",
+      "description": "Generate kizomba with AI: slow sensual pulse, romantic chords, Portuguese vocal space. Song Mode with Spanish/Portuguese vocals or instrumental beats. Free to start — MP3 export.",
+      "h1": "Kizomba AI Generator",
+      "lead": "ProducerHit generates authentic kizomba from text — pick **Kizomba** in Genre précis, use Song Mode for vocals or Beat mode for instrumentals. Typical BPM ~95. Versions×2 + seed variations beat generic « latin loop » tools.",
+      "bullets": [
+        "Catalog genre: Kizomba (~95 BPM)",
+        "Song Mode — your lyrics or AI lyrics (ES/PT/FR)",
+        "Beat mode for dembow, perreo & dance edits",
+        "640+ genres · royalty-free MP3 on Free plan"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "kizomba AI generator",
+        "AI kizomba generator",
+        "free kizomba generator",
+        "kizomba song generator AI",
+        "kizomba beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Can I use my own lyrics for Kizomba?",
+          "a": "Yes — Song Mode → manual lyrics. Genre précis keeps the instrumental style while preserving your text."
+        },
+        {
+          "q": "Is it royalty-free?",
+          "a": "Downloads on your plan are for your content workflows. Check platform rules for AI music on streaming services."
+        },
+        {
+          "q": "Best BPM for Kizomba?",
+          "a": "Start near 95 BPM in your prompt. Use auto tempo in Song Mode or set Genre précis for consistent groove."
+        }
+      ]
+    },
+    "/generateur-kizomba-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-kizomba-song-generator",
+      "slugKey": "ai-kizomba-song-generator",
+      "title": "Générateur Kizomba IA — Chansons & beats en ligne (2026) | ProducerHit",
+      "description": "Génère de la kizomba avec l'IA : pulse sensuelle lente, accords romantiques, voix portugaises. Song Mode voix ES/PT ou beats instrumentaux. Gratuit pour commencer — export MP3.",
+      "h1": "Générateur Kizomba IA",
+      "lead": "ProducerHit génère de la kizomba authentique depuis un texte — choisis **Kizomba** en Genre précis, Song Mode pour les voix ou Beat pour l'instrumental. BPM typique ~95. Versions×2 + variations seed — mieux qu'une boucle « latin » générique.",
+      "bullets": [
+        "Genre catalogue : Kizomba (~95 BPM)",
+        "Song Mode — tes paroles ou paroles IA (ES/PT/FR)",
+        "Mode Beat pour dembow, perreo & edits danse",
+        "640+ genres · MP3 royalty-free sur le plan Free"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "kizomba AI generator",
+        "AI kizomba generator",
+        "free kizomba generator",
+        "kizomba song generator AI",
+        "kizomba beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Je peux utiliser mes paroles en Kizomba ?",
+          "a": "Oui — Song Mode → paroles manuelles. Genre précis garde le style instrumental tout en respectant ton texte."
+        },
+        {
+          "q": "C'est royalty-free ?",
+          "a": "Les téléchargements suivent ton plan pour tes workflows contenu. Vérifie les règles plateformes pour la musique IA en streaming."
+        },
+        {
+          "q": "Quel BPM pour Kizomba ?",
+          "a": "Commence autour de 95 BPM dans ton prompt. Tempo auto en Song Mode ou Genre précis pour un groove cohérent."
+        }
+      ]
+    },
+    "/ai-zouk-love-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-zouk-love-ia",
+      "slugKey": "ai-zouk-love-generator",
+      "title": "AI Zouk Love Generator — Caribbean Romance | ProducerHit",
+      "description": "AI zouk love generator: Martinique-Guadeloupe bounce, romantic synth brass. Pair with kizomba for dance events.",
+      "h1": "AI Zouk Love Generator",
+      "lead": "**Zouk Love** + **Kizomba** — two dedicated Lusophone/Caribbean dance genres competitors merge into « slow Latin ».",
+      "bullets": [
+        "90 BPM zouk bounce",
+        "Caribbean synth brass",
+        "Pairs with kizomba hub",
+        "French/Creole vocal space"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI zouk love generator",
+        "zouk music AI",
+        "kizomba zouk generator",
+        "French Caribbean music AI"
+      ],
+      "faq": [
+        {
+          "q": "Zouk vs kizomba?",
+          "a": "Zouk = French Caribbean bounce; Kizomba = Angolan slow pulse — both separate genres in ProducerHit."
+        }
+      ]
+    },
+    "/generateur-zouk-love-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-zouk-love-generator",
+      "slugKey": "ai-zouk-love-generator",
+      "title": "Générateur Zouk Love IA — Romance caraïbéenne | ProducerHit",
+      "description": "Générateur zouk love IA : bounce Martinique-Guadeloupe, synth brass romantique. Associe kizomba pour events danse.",
+      "h1": "Générateur Zouk Love IA",
+      "lead": "**Zouk Love** + **Kizomba** — deux genres danse dédiés que les concurrents fusionnent en « Latin slow ».",
+      "bullets": [
+        "Bounce zouk 90 BPM",
+        "Synth brass Caraïbes",
+        "Hub kizomba",
+        "Voix français/créole"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI zouk love generator",
+        "zouk music AI",
+        "kizomba zouk generator",
+        "French Caribbean music AI"
+      ],
+      "faq": [
+        {
+          "q": "Zouk vs kizomba ?",
+          "a": "Zouk = bounce Caraïbes ; Kizomba = pulse angolais — deux genres séparés."
+        }
+      ]
+    },
+    "/ai-cumbia-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-cumbia-ia",
+      "slugKey": "ai-cumbia-generator",
+      "title": "Cumbia AI Generator — Songs & Beats Online (2026) | ProducerHit",
+      "description": "Generate cumbia with AI: guïro, tambora, accordion lead, Colombian shuffle. Song Mode with Spanish/Portuguese vocals or instrumental beats. Free to start — MP3 export.",
+      "h1": "Cumbia AI Generator",
+      "lead": "ProducerHit generates authentic cumbia from text — pick **Cumbia** in Genre précis, use Song Mode for vocals or Beat mode for instrumentals. Typical BPM ~110. Versions×2 + seed variations beat generic « latin loop » tools.",
+      "bullets": [
+        "Catalog genre: Cumbia (~110 BPM)",
+        "Song Mode — your lyrics or AI lyrics (ES/PT/FR)",
+        "Beat mode for dembow, perreo & dance edits",
+        "640+ genres · royalty-free MP3 on Free plan"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "cumbia AI generator",
+        "AI cumbia generator",
+        "free cumbia generator",
+        "cumbia song generator AI",
+        "cumbia beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Can I use my own lyrics for Cumbia?",
+          "a": "Yes — Song Mode → manual lyrics. Genre précis keeps the instrumental style while preserving your text."
+        },
+        {
+          "q": "Is it royalty-free?",
+          "a": "Downloads on your plan are for your content workflows. Check platform rules for AI music on streaming services."
+        },
+        {
+          "q": "Best BPM for Cumbia?",
+          "a": "Start near 110 BPM in your prompt. Use auto tempo in Song Mode or set Genre précis for consistent groove."
+        }
+      ]
+    },
+    "/generateur-cumbia-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-cumbia-generator",
+      "slugKey": "ai-cumbia-generator",
+      "title": "Générateur Cumbia IA — Chansons & beats en ligne (2026) | ProducerHit",
+      "description": "Génère de la cumbia avec l'IA : guïro, tambora, accordéon lead, shuffle colombien. Song Mode voix ES/PT ou beats instrumentaux. Gratuit pour commencer — export MP3.",
+      "h1": "Générateur Cumbia IA",
+      "lead": "ProducerHit génère de la cumbia authentique depuis un texte — choisis **Cumbia** en Genre précis, Song Mode pour les voix ou Beat pour l'instrumental. BPM typique ~110. Versions×2 + variations seed — mieux qu'une boucle « latin » générique.",
+      "bullets": [
+        "Genre catalogue : Cumbia (~110 BPM)",
+        "Song Mode — tes paroles ou paroles IA (ES/PT/FR)",
+        "Mode Beat pour dembow, perreo & edits danse",
+        "640+ genres · MP3 royalty-free sur le plan Free"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "cumbia AI generator",
+        "AI cumbia generator",
+        "free cumbia generator",
+        "cumbia song generator AI",
+        "cumbia beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Je peux utiliser mes paroles en Cumbia ?",
+          "a": "Oui — Song Mode → paroles manuelles. Genre précis garde le style instrumental tout en respectant ton texte."
+        },
+        {
+          "q": "C'est royalty-free ?",
+          "a": "Les téléchargements suivent ton plan pour tes workflows contenu. Vérifie les règles plateformes pour la musique IA en streaming."
+        },
+        {
+          "q": "Quel BPM pour Cumbia ?",
+          "a": "Commence autour de 110 BPM dans ton prompt. Tempo auto en Song Mode ou Genre précis pour un groove cohérent."
+        }
+      ]
+    },
+    "/ai-cumbia-sonidera-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-cumbia-sonidera-ia",
+      "slugKey": "ai-cumbia-sonidera-generator",
+      "title": "AI Cumbia Sonidera Generator — Mexico City Party Sound | ProducerHit",
+      "description": "AI cumbia sonidera generator: sonidero reverb organ, loudspeaker party bass, Mexico-Colombia diaspora sound.",
+      "h1": "AI Cumbia Sonidera Generator",
+      "lead": "**Cumbia Sonidera** — distinct from Colombian cumbia — for sonidero parties and Mexican diaspora content.",
+      "bullets": [
+        "108 BPM sonidero",
+        "Reverb organ texture",
+        "Separate from Cumbia genre",
+        "Spanish shout hooks"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "cumbia sonidera AI",
+        "sonidero music generator",
+        "Mexican cumbia AI"
+      ],
+      "faq": [
+        {
+          "q": "Sonidera vs cumbia?",
+          "a": "Use Cumbia Sonidera for Mexican sonidero; Cumbia for Colombian coastal shuffle."
+        }
+      ]
+    },
+    "/generateur-cumbia-sonidera-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-cumbia-sonidera-generator",
+      "slugKey": "ai-cumbia-sonidera-generator",
+      "title": "Générateur Cumbia Sonidera IA — Son party Mexico City | ProducerHit",
+      "description": "Générateur cumbia sonidera IA : organ reverb sonidero, basse party, son diaspora Mexico-Colombie.",
+      "h1": "Générateur Cumbia Sonidera IA",
+      "lead": "**Cumbia Sonidera** — distincte de la cumbia colombienne — pour sonideros et contenu diaspora mexicaine.",
+      "bullets": [
+        "108 BPM sonidero",
+        "Texture organ reverb",
+        "Séparé du genre Cumbia",
+        "Hooks shout espagnols"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "cumbia sonidera AI",
+        "sonidero music generator",
+        "Mexican cumbia AI"
+      ],
+      "faq": [
+        {
+          "q": "Sonidera vs cumbia ?",
+          "a": "Cumbia Sonidera pour sonidero mexicain ; Cumbia pour shuffle colombien."
+        }
+      ]
+    },
+    "/ai-corridos-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-corridos-ia",
+      "slugKey": "ai-corridos-generator",
+      "title": "Corridos AI Generator — Songs & Beats Online (2026) | ProducerHit",
+      "description": "Generate corridos with AI: nylon guitar narrative, tuba bass, regional Mexican storytelling. Song Mode with Spanish/Portuguese vocals or instrumental beats. Free to start — MP3 export.",
+      "h1": "Corridos AI Generator",
+      "lead": "ProducerHit generates authentic corridos from text — pick **Corridos** in Genre précis, use Song Mode for vocals or Beat mode for instrumentals. Typical BPM ~120. Versions×2 + seed variations beat generic « latin loop » tools.",
+      "bullets": [
+        "Catalog genre: Corridos (~120 BPM)",
+        "Song Mode — your lyrics or AI lyrics (ES/PT/FR)",
+        "Beat mode for dembow, perreo & dance edits",
+        "640+ genres · royalty-free MP3 on Free plan"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "corridos AI generator",
+        "AI corridos generator",
+        "free corridos generator",
+        "corridos song generator AI",
+        "corridos beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Can I use my own lyrics for Corridos?",
+          "a": "Yes — Song Mode → manual lyrics. Genre précis keeps the instrumental style while preserving your text."
+        },
+        {
+          "q": "Is it royalty-free?",
+          "a": "Downloads on your plan are for your content workflows. Check platform rules for AI music on streaming services."
+        },
+        {
+          "q": "Best BPM for Corridos?",
+          "a": "Start near 120 BPM in your prompt. Use auto tempo in Song Mode or set Genre précis for consistent groove."
+        }
+      ]
+    },
+    "/generateur-corridos-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-corridos-generator",
+      "slugKey": "ai-corridos-generator",
+      "title": "Générateur Corridos IA — Chansons & beats en ligne (2026) | ProducerHit",
+      "description": "Génère de la corridos avec l'IA : guitare nylon narrative, basse tuba, storytelling regional Mexican. Song Mode voix ES/PT ou beats instrumentaux. Gratuit pour commencer — export MP3.",
+      "h1": "Générateur Corridos IA",
+      "lead": "ProducerHit génère de la corridos authentique depuis un texte — choisis **Corridos** en Genre précis, Song Mode pour les voix ou Beat pour l'instrumental. BPM typique ~120. Versions×2 + variations seed — mieux qu'une boucle « latin » générique.",
+      "bullets": [
+        "Genre catalogue : Corridos (~120 BPM)",
+        "Song Mode — tes paroles ou paroles IA (ES/PT/FR)",
+        "Mode Beat pour dembow, perreo & edits danse",
+        "640+ genres · MP3 royalty-free sur le plan Free"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "corridos AI generator",
+        "AI corridos generator",
+        "free corridos generator",
+        "corridos song generator AI",
+        "corridos beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Je peux utiliser mes paroles en Corridos ?",
+          "a": "Oui — Song Mode → paroles manuelles. Genre précis garde le style instrumental tout en respectant ton texte."
+        },
+        {
+          "q": "C'est royalty-free ?",
+          "a": "Les téléchargements suivent ton plan pour tes workflows contenu. Vérifie les règles plateformes pour la musique IA en streaming."
+        },
+        {
+          "q": "Quel BPM pour Corridos ?",
+          "a": "Commence autour de 120 BPM dans ton prompt. Tempo auto en Song Mode ou Genre précis pour un groove cohérent."
+        }
+      ]
+    },
+    "/ai-corridos-tumbados-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-corridos-tumbados-ia",
+      "slugKey": "ai-corridos-tumbados-generator",
+      "title": "AI Corridos Tumbados Generator — Peso Pluma Style Fusion | ProducerHit",
+      "description": "AI corridos tumbados generator: regional Mexican meets trap. Fastest-growing Latin subgenre. 88 BPM tumbado bounce.",
+      "h1": "AI Corridos Tumbados Generator",
+      "lead": "Separate **Corridos** (classic) and **Corridos Tumbados** (trap fusion) — two genres, two SEO intents, two sounds.",
+      "bullets": [
+        "88 BPM tumbado",
+        "Trap hats + tuba",
+        "Fastest-growing Latin niche",
+        "Spanish narrative vocals"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "corridos tumbados AI",
+        "AI corridos generator",
+        "regional Mexican trap AI",
+        "tumbados music maker"
+      ],
+      "faq": [
+        {
+          "q": "Tumbados vs corridos?",
+          "a": "Corridos = classic norteño narrative; Corridos Tumbados adds trap drums and 808 bounce."
+        }
+      ]
+    },
+    "/generateur-corridos-tumbados-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-corridos-tumbados-generator",
+      "slugKey": "ai-corridos-tumbados-generator",
+      "title": "Générateur Corridos Tumbados IA — Fusion style Peso Pluma | ProducerHit",
+      "description": "Générateur corridos tumbados IA : regional Mexican meets trap. Sous-genre Latin fastest-growing. Bounce tumbado 88 BPM.",
+      "h1": "Générateur Corridos Tumbados IA",
+      "lead": "Sépare **Corridos** (classique) et **Corridos Tumbados** (fusion trap) — deux genres, deux intents SEO, deux sons.",
+      "bullets": [
+        "88 BPM tumbado",
+        "Hats trap + tuba",
+        "Niche Latin fastest-growing",
+        "Voix narrative espagnoles"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "corridos tumbados AI",
+        "AI corridos generator",
+        "regional Mexican trap AI",
+        "tumbados music maker"
+      ],
+      "faq": [
+        {
+          "q": "Tumbados vs corridos ?",
+          "a": "Corridos = narrative norteño classique ; Tumbados ajoute drums trap et bounce 808."
+        }
+      ]
+    },
+    "/ai-regional-mexican-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-regional-mexican-ia",
+      "slugKey": "ai-regional-mexican-generator",
+      "title": "AI Regional Mexican Generator — Banda & Norteño | ProducerHit",
+      "description": "AI regional Mexican generator: +30% streaming growth. Bajo sexto, tuba, accordion. Corridos & banda adjacent.",
+      "h1": "AI Regional Mexican Generator",
+      "lead": "Capture **regional Mexican** search intent — broader than corridos alone — with bajo sexto, tuba, and banda energy.",
+      "bullets": [
+        "+30% regional Mexican growth",
+        "Links to corridos pages",
+        "Banda genre also in catalog",
+        "Spanish storytelling"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "regional Mexican AI generator",
+        "banda music AI",
+        "norteño AI generator",
+        "Mexican music AI"
+      ],
+      "faq": [
+        {
+          "q": "Regional Mexican vs mariachi?",
+          "a": "Regional Mexican = norteño/banda; Mariachi = trumpet ensemble — both available."
+        }
+      ]
+    },
+    "/generateur-regional-mexican-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-regional-mexican-generator",
+      "slugKey": "ai-regional-mexican-generator",
+      "title": "Générateur Regional Mexican IA — Banda & norteño | ProducerHit",
+      "description": "Générateur regional Mexican IA : croissance streaming +30%. Bajo sexto, tuba, accordéon. Adjacent corridos & banda.",
+      "h1": "Générateur Regional Mexican IA",
+      "lead": "Capture l'intent **regional Mexican** — plus large que corridos seul — avec bajo sexto, tuba et énergie banda.",
+      "bullets": [
+        "Croissance regional Mexican +30%",
+        "Liens pages corridos",
+        "Genre Banda au catalogue",
+        "Storytelling espagnol"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "regional Mexican AI generator",
+        "banda music AI",
+        "norteño AI generator",
+        "Mexican music AI"
+      ],
+      "faq": [
+        {
+          "q": "Regional Mexican vs mariachi ?",
+          "a": "Regional Mexican = norteño/banda ; Mariachi = ensemble trompettes — les deux disponibles."
+        }
+      ]
+    },
+    "/latin-pop-ai-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-latin-pop-ia",
+      "slugKey": "latin-pop-ai-generator",
+      "title": "Latin Pop AI Generator — Songs & Beats Online (2026) | ProducerHit",
+      "description": "Generate Latin pop with AI: bilingual chorus, urbano crossover hooks, glossy pop production. Song Mode with Spanish/Portuguese vocals or instrumental beats. Free to start — MP3 export.",
+      "h1": "Latin Pop AI Generator",
+      "lead": "ProducerHit generates authentic Latin pop from text — pick **Latin Pop** in Genre précis, use Song Mode for vocals or Beat mode for instrumentals. Typical BPM ~105. Versions×2 + seed variations beat generic « latin loop » tools.",
+      "bullets": [
+        "Catalog genre: Latin Pop (~105 BPM)",
+        "Song Mode — your lyrics or AI lyrics (ES/PT/FR)",
+        "Beat mode for dembow, perreo & dance edits",
+        "640+ genres · royalty-free MP3 on Free plan"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Latin pop AI generator",
+        "AI Latin pop generator",
+        "free Latin pop generator",
+        "latin pop song generator AI",
+        "latin pop beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Can I use my own lyrics for Latin Pop?",
+          "a": "Yes — Song Mode → manual lyrics. Genre précis keeps the instrumental style while preserving your text."
+        },
+        {
+          "q": "Is it royalty-free?",
+          "a": "Downloads on your plan are for your content workflows. Check platform rules for AI music on streaming services."
+        },
+        {
+          "q": "Best BPM for Latin Pop?",
+          "a": "Start near 105 BPM in your prompt. Use auto tempo in Song Mode or set Genre précis for consistent groove."
+        }
+      ]
+    },
+    "/generateur-latin-pop-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/latin-pop-ai-generator",
+      "slugKey": "latin-pop-ai-generator",
+      "title": "Générateur Latin Pop IA — Chansons & beats en ligne (2026) | ProducerHit",
+      "description": "Génère de la Latin pop avec l'IA : refrain bilingue, hooks crossover urbano, production pop glossy. Song Mode voix ES/PT ou beats instrumentaux. Gratuit pour commencer — export MP3.",
+      "h1": "Générateur Latin Pop IA",
+      "lead": "ProducerHit génère de la Latin pop authentique depuis un texte — choisis **Latin Pop** en Genre précis, Song Mode pour les voix ou Beat pour l'instrumental. BPM typique ~105. Versions×2 + variations seed — mieux qu'une boucle « latin » générique.",
+      "bullets": [
+        "Genre catalogue : Latin Pop (~105 BPM)",
+        "Song Mode — tes paroles ou paroles IA (ES/PT/FR)",
+        "Mode Beat pour dembow, perreo & edits danse",
+        "640+ genres · MP3 royalty-free sur le plan Free"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Latin pop AI generator",
+        "AI Latin pop generator",
+        "free Latin pop generator",
+        "latin pop song generator AI",
+        "latin pop beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Je peux utiliser mes paroles en Latin Pop ?",
+          "a": "Oui — Song Mode → paroles manuelles. Genre précis garde le style instrumental tout en respectant ton texte."
+        },
+        {
+          "q": "C'est royalty-free ?",
+          "a": "Les téléchargements suivent ton plan pour tes workflows contenu. Vérifie les règles plateformes pour la musique IA en streaming."
+        },
+        {
+          "q": "Quel BPM pour Latin Pop ?",
+          "a": "Commence autour de 105 BPM dans ton prompt. Tempo auto en Song Mode ou Genre précis pour un groove cohérent."
+        }
+      ]
+    },
+    "/asia-music-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-musique-asie-ia",
+      "slugKey": "asia-music-generator",
+      "title": "Asia Music Generator — K-Pop, J-Pop, Bollywood & More | ProducerHit",
+      "description": "Asia music generator AI: K-Pop, J-Pop, Bollywood, Bhangra, City Pop, Anison — 25+ dedicated genres. Song Mode with Korean, Japanese, Hindi vocals. Beats Suno's generic « Asian » preset.",
+      "h1": "Asia Music Generator",
+      "lead": "The most complete **Asia music generator** in 2026 — **K-Pop Idol**, **J-Pop**, **City Pop**, **Anison**, **Bollywood**, **Bhangra** and more. Not one « Oriental » slider like Suno/Udio.",
+      "bullets": [
+        "25+ Asia genres (wave 2+3 catalog)",
+        "Suno/Udio: ~5 Asian styles · ProducerHit: 25+",
+        "K-Pop Idol · Ballad · K-Indie · K-Rock",
+        "Seed iteration + Versions×2"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Asia music generator AI",
+        "K-Pop AI generator",
+        "J-Pop AI generator",
+        "Bollywood AI music",
+        "Asian song generator AI"
+      ],
+      "faq": [
+        {
+          "q": "K-Pop AI generator vs Suno?",
+          "a": "ProducerHit has K-Pop Idol, K-Pop Ballad, K-Hip-Hop as separate ACE genres — plus seed iteration and beat mode in one studio."
+        },
+        {
+          "q": "Hindi or Korean lyrics?",
+          "a": "Manual lyrics mode auto-detects script. Pick vocal language in Song Mode advanced."
+        }
+      ]
+    },
+    "/generateur-musique-asie-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/asia-music-generator",
+      "slugKey": "asia-music-generator",
+      "title": "Générateur musique Asie IA — K-Pop, J-Pop, Bollywood & plus | ProducerHit",
+      "description": "Générateur musique Asie IA : K-Pop, J-Pop, Bollywood, Bhangra, City Pop, Anison — 25+ genres dédiés. Song Mode voix coréennes, japonaises, hindi.",
+      "h1": "Générateur musique Asie IA",
+      "lead": "Le **générateur musique Asie IA** le plus complet en 2026 — **K-Pop Idol**, **J-Pop**, **City Pop**, **Anison**, **Bollywood**, **Bhangra**. Pas un slider « Oriental » comme Suno/Udio.",
+      "bullets": [
+        "25+ genres Asie (catalogue vague 2+3)",
+        "Suno/Udio : ~5 styles · ProducerHit : 25+",
+        "K-Pop Idol · Ballad · K-Indie · K-Rock",
+        "Iteration seed + Versions×2"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Asia music generator AI",
+        "K-Pop AI generator",
+        "J-Pop AI generator",
+        "Bollywood AI music",
+        "Asian song generator AI"
+      ],
+      "faq": [
+        {
+          "q": "K-Pop IA vs Suno ?",
+          "a": "ProducerHit a K-Pop Idol, Ballad, K-Hip-Hop comme genres ACE séparés — plus seed et beat mode."
+        },
+        {
+          "q": "Paroles hindi ou coréennes ?",
+          "a": "Paroles manuelles avec détection auto. Langue vocale en Song Mode avancé."
+        }
+      ]
+    },
+    "/middle-east-music-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-musique-moyen-orient-ia",
+      "slugKey": "middle-east-music-generator",
+      "title": "Middle East Music Generator — Khaleeji, Arabic Pop, Mahraganat | ProducerHit",
+      "description": "Middle East music generator: Khaleeji, Arabic Pop, Mahraganat, Dabke, Gulf Trap, Persian Pop, Turkish Pop — 13+ ACE genres. Arabic vocals. Free MP3.",
+      "h1": "Middle East Music Generator",
+      "lead": "**13+ Middle East genres** — Khaleeji, Arabic Pop, Mahraganat, Shaabi, Dabke, Gulf Trap — each with darbuka, quarter-tone, and regional groove prompts. Competitors collapse this into « Middle Eastern ».",
+      "bullets": [
+        "13+ Gulf & Levant genres",
+        "Mahraganat · Shaabi · Dabke niche",
+        "Arabic manual lyrics supported",
+        "680+ total genre catalog"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Middle East music generator AI",
+        "Khaleeji AI generator",
+        "Arabic pop AI generator",
+        "Mahraganat AI generator",
+        "Arabic song generator AI"
+      ],
+      "faq": [
+        {
+          "q": "Khaleeji vs Arabic Pop?",
+          "a": "Khaleeji = Gulf romantic groove; Arabic Pop = Levant-Egypt radio crossover — separate genres in catalog."
+        },
+        {
+          "q": "Persian or Turkish?",
+          "a": "Persian Pop and Turkish Pop are dedicated genres with santur/bağlama prompts."
+        }
+      ]
+    },
+    "/generateur-musique-moyen-orient-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/middle-east-music-generator",
+      "slugKey": "middle-east-music-generator",
+      "title": "Générateur musique Moyen-Orient IA — Khaleeji, Arabic Pop, Mahraganat | ProducerHit",
+      "description": "Générateur musique Moyen-Orient : Khaleeji, Arabic Pop, Mahraganat, Dabke, Gulf Trap, Persian Pop, Turkish Pop — 13+ genres ACE. Voix arabes. MP3 gratuit.",
+      "h1": "Générateur musique Moyen-Orient IA",
+      "lead": "**13+ genres Moyen-Orient** — Khaleeji, Arabic Pop, Mahraganat, Shaabi, Dabke, Gulf Trap — prompts darbuka et quarter-tone. Les concurrents fusionnent en « Middle Eastern ».",
+      "bullets": [
+        "13+ genres Golfe & Levant",
+        "Niche Mahraganat · Shaabi · Dabke",
+        "Paroles arabes manuelles",
+        "Catalogue 680+ genres total"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Middle East music generator AI",
+        "Khaleeji AI generator",
+        "Arabic pop AI generator",
+        "Mahraganat AI generator",
+        "Arabic song generator AI"
+      ],
+      "faq": [
+        {
+          "q": "Khaleeji vs Arabic Pop ?",
+          "a": "Khaleeji = groove romantique Golfe ; Arabic Pop = crossover Levant-Égypte — genres séparés."
+        },
+        {
+          "q": "Persan ou turc ?",
+          "a": "Persian Pop et Turkish Pop sont des genres dédiés avec prompts santur/bağlama."
+        }
+      ]
+    },
+    "/ai-k-pop-song-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-k-pop-ia",
+      "slugKey": "ai-k-pop-song-generator",
+      "title": "AI K-Pop Song Generator — Idol Hooks & Korean Vocals (2026) | ProducerHit",
+      "description": "AI K-Pop song generator: K-Pop Idol, K-Pop Ballad, K-Indie, K-Rock, K-Hip-Hop. Song Mode with Korean lyrics. Versions×2 beats generic AI pop.",
+      "h1": "AI K-Pop Song Generator",
+      "lead": "Generate **K-Pop** with dedicated subgenres — Idol, Ballad, K-Indie, K-Rock — not western pop with Hangul pasted on. **680+ genres**, seed lock, community remix.",
+      "bullets": [
+        "K-Pop Idol default genre",
+        "K-Pop Ballad · K-Indie · K-Rock",
+        "Manual Korean lyrics",
+        "Beat + Song one studio"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI K-Pop song generator",
+        "K-Pop AI generator",
+        "Korean song AI maker",
+        "K-Pop idol AI music"
+      ],
+      "faq": [
+        {
+          "q": "K-Pop vs K-Pop Idol genre?",
+          "a": "Core K-Pop for general use; K-Pop Idol for stacked harmonies and music-show production."
+        },
+        {
+          "q": "Better than Suno for K-Pop?",
+          "a": "More subgenres, seed iteration, beat mode, and 680+ catalog vs Suno's single style picker."
+        }
+      ]
+    },
+    "/generateur-k-pop-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-k-pop-song-generator",
+      "slugKey": "ai-k-pop-song-generator",
+      "title": "Générateur K-Pop IA — Hooks idol & voix coréennes (2026) | ProducerHit",
+      "description": "Générateur chanson K-Pop IA : K-Pop Idol, Ballad, K-Indie, K-Rock, K-Hip-Hop. Song Mode paroles coréennes. Versions×2 bat la pop IA générique.",
+      "h1": "Générateur K-Pop IA",
+      "lead": "Génère du **K-Pop** avec sous-genres dédiés — Idol, Ballad, K-Indie, K-Rock — pas de la pop occidentale avec du Hangul. **680+ genres**, seed, remix communauté.",
+      "bullets": [
+        "Genre par défaut K-Pop Idol",
+        "K-Pop Ballad · K-Indie · K-Rock",
+        "Paroles coréennes manuelles",
+        "Beat + Song un studio"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "AI K-Pop song generator",
+        "K-Pop AI generator",
+        "Korean song AI maker",
+        "K-Pop idol AI music"
+      ],
+      "faq": [
+        {
+          "q": "K-Pop vs K-Pop Idol ?",
+          "a": "K-Pop core pour usage général ; K-Pop Idol pour harmonies stackées et prod music-show."
+        },
+        {
+          "q": "Mieux que Suno pour K-Pop ?",
+          "a": "Plus de sous-genres, seed, beat mode, 680+ catalogue vs un seul picker Suno."
+        }
+      ]
+    },
+    "/ai-khaleeji-song-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-khaleeji-ia",
+      "slugKey": "ai-khaleeji-song-generator",
+      "title": "Khaleeji AI Generator — Songs & Beats Online (2026) | ProducerHit",
+      "description": "Generate khaleeji with AI: oud melody, darbuka riq, Gulf romantic melisma. Song Mode with Arabic Gulf vocals. ACE-tuned genre — not a generic preset. Free MP3 export.",
+      "h1": "Khaleeji AI Generator",
+      "lead": "ProducerHit generates authentic khaleeji — pick **Khaleeji** in Genre précis, Song Mode for vocals or Beat for instrumentals. ~98 BPM. Versions×2 beats generic « world music » presets.",
+      "bullets": [
+        "ACE genre: Khaleeji (~98 BPM)",
+        "Song Mode — manual or AI lyrics (Arabic Gulf vocals)",
+        "680+ genres · seed iteration · community remix",
+        "Free MP3 · WAV on Pro"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "khaleeji AI generator",
+        "AI khaleeji generator",
+        "free khaleeji generator",
+        "khaleeji song generator AI",
+        "khaleeji beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Can I use my own lyrics for Khaleeji?",
+          "a": "Yes — Song Mode → manual lyrics. Genre précis keeps the instrumental style while preserving your text."
+        },
+        {
+          "q": "ProducerHit vs Suno for this genre?",
+          "a": "Dedicated ACE prompts per subgenre, Versions×2, seed lock, and beat+song in one studio — Suno offers fewer regional genres and less iteration control."
+        },
+        {
+          "q": "Best BPM for Khaleeji?",
+          "a": "Start near 98 BPM. Genre précis sets the default groove."
+        }
+      ]
+    },
+    "/generateur-khaleeji-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-khaleeji-song-generator",
+      "slugKey": "ai-khaleeji-song-generator",
+      "title": "Générateur Khaleeji IA — Chansons & beats en ligne (2026) | ProducerHit",
+      "description": "Génère de la khaleeji avec l'IA : mélodie oud, darbuka riq, melisma romantique Golfe. Song Mode voix arabes du Golfe. Genre ACE — pas un preset générique. Export MP3 gratuit.",
+      "h1": "Générateur Khaleeji IA",
+      "lead": "ProducerHit génère de la khaleeji authentique — **Khaleeji** en Genre précis, Song Mode ou Beat. ~98 BPM. Versions×2 bat presets « world music » génériques.",
+      "bullets": [
+        "Genre ACE : Khaleeji (~98 BPM)",
+        "Song Mode — paroles manuelles ou IA (voix arabes du Golfe)",
+        "680+ genres · iteration seed · remix communauté",
+        "MP3 gratuit · WAV sur Pro"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "khaleeji AI generator",
+        "AI khaleeji generator",
+        "free khaleeji generator",
+        "khaleeji song generator AI",
+        "khaleeji beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Mes paroles en Khaleeji ?",
+          "a": "Oui — Song Mode → paroles manuelles + Genre précis pour le style instrumental."
+        },
+        {
+          "q": "ProducerHit vs Suno pour ce genre ?",
+          "a": "Prompts ACE dédiés, Versions×2, seed, beat+chanson — Suno a moins de genres régionaux et moins de contrôle d'itération."
+        },
+        {
+          "q": "BPM pour Khaleeji ?",
+          "a": "Commence autour de 98 BPM avec Genre précis."
+        }
+      ]
+    },
+    "/ai-arabic-pop-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-arabic-pop-ia",
+      "slugKey": "ai-arabic-pop-generator",
+      "title": "Arabic Pop AI Generator — Songs & Beats Online (2026) | ProducerHit",
+      "description": "Generate Arabic pop with AI: quarter-tone hooks, synth brass, Cairo-Beirut crossover. Song Mode with Arabic vocals. ACE-tuned genre — not a generic preset. Free MP3 export.",
+      "h1": "Arabic Pop AI Generator",
+      "lead": "ProducerHit generates authentic Arabic pop — pick **Arabic Pop** in Genre précis, Song Mode for vocals or Beat for instrumentals. ~102 BPM. Versions×2 beats generic « world music » presets.",
+      "bullets": [
+        "ACE genre: Arabic Pop (~102 BPM)",
+        "Song Mode — manual or AI lyrics (Arabic vocals)",
+        "680+ genres · seed iteration · community remix",
+        "Free MP3 · WAV on Pro"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Arabic pop AI generator",
+        "AI Arabic pop generator",
+        "free Arabic pop generator",
+        "arabic pop song generator AI",
+        "arabic pop beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Can I use my own lyrics for Arabic Pop?",
+          "a": "Yes — Song Mode → manual lyrics. Genre précis keeps the instrumental style while preserving your text."
+        },
+        {
+          "q": "ProducerHit vs Suno for this genre?",
+          "a": "Dedicated ACE prompts per subgenre, Versions×2, seed lock, and beat+song in one studio — Suno offers fewer regional genres and less iteration control."
+        },
+        {
+          "q": "Best BPM for Arabic Pop?",
+          "a": "Start near 102 BPM. Genre précis sets the default groove."
+        }
+      ]
+    },
+    "/generateur-arabic-pop-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-arabic-pop-generator",
+      "slugKey": "ai-arabic-pop-generator",
+      "title": "Générateur Arabic Pop IA — Chansons & beats en ligne (2026) | ProducerHit",
+      "description": "Génère de la pop arabe avec l'IA : hooks quarter-tone, synth brass, crossover Caire-Beyrouth. Song Mode voix arabes. Genre ACE — pas un preset générique. Export MP3 gratuit.",
+      "h1": "Générateur Arabic Pop IA",
+      "lead": "ProducerHit génère de la pop arabe authentique — **Arabic Pop** en Genre précis, Song Mode ou Beat. ~102 BPM. Versions×2 bat presets « world music » génériques.",
+      "bullets": [
+        "Genre ACE : Arabic Pop (~102 BPM)",
+        "Song Mode — paroles manuelles ou IA (voix arabes)",
+        "680+ genres · iteration seed · remix communauté",
+        "MP3 gratuit · WAV sur Pro"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Arabic pop AI generator",
+        "AI Arabic pop generator",
+        "free Arabic pop generator",
+        "arabic pop song generator AI",
+        "arabic pop beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Mes paroles en Arabic Pop ?",
+          "a": "Oui — Song Mode → paroles manuelles + Genre précis pour le style instrumental."
+        },
+        {
+          "q": "ProducerHit vs Suno pour ce genre ?",
+          "a": "Prompts ACE dédiés, Versions×2, seed, beat+chanson — Suno a moins de genres régionaux et moins de contrôle d'itération."
+        },
+        {
+          "q": "BPM pour Arabic Pop ?",
+          "a": "Commence autour de 102 BPM avec Genre précis."
+        }
+      ]
+    },
+    "/ai-mahraganat-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-mahraganat-ia",
+      "slugKey": "ai-mahraganat-generator",
+      "title": "Mahraganat AI Generator — Songs & Beats Online (2026) | ProducerHit",
+      "description": "Generate mahraganat with AI: electro-shaabi synth stabs, heavy kick, Cairo street party. Song Mode with auto-tuned Arabic vocals. ACE-tuned genre — not a generic preset. Free MP3 export.",
+      "h1": "Mahraganat AI Generator",
+      "lead": "ProducerHit generates authentic mahraganat — pick **Mahraganat** in Genre précis, Song Mode for vocals or Beat for instrumentals. ~128 BPM. Versions×2 beats generic « world music » presets.",
+      "bullets": [
+        "ACE genre: Mahraganat (~128 BPM)",
+        "Song Mode — manual or AI lyrics (auto-tuned Arabic vocals)",
+        "680+ genres · seed iteration · community remix",
+        "Free MP3 · WAV on Pro"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "mahraganat AI generator",
+        "AI mahraganat generator",
+        "free mahraganat generator",
+        "mahraganat song generator AI",
+        "mahraganat beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Can I use my own lyrics for Mahraganat?",
+          "a": "Yes — Song Mode → manual lyrics. Genre précis keeps the instrumental style while preserving your text."
+        },
+        {
+          "q": "ProducerHit vs Suno for this genre?",
+          "a": "Dedicated ACE prompts per subgenre, Versions×2, seed lock, and beat+song in one studio — Suno offers fewer regional genres and less iteration control."
+        },
+        {
+          "q": "Best BPM for Mahraganat?",
+          "a": "Start near 128 BPM. Genre précis sets the default groove."
+        }
+      ]
+    },
+    "/generateur-mahraganat-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-mahraganat-generator",
+      "slugKey": "ai-mahraganat-generator",
+      "title": "Générateur Mahraganat IA — Chansons & beats en ligne (2026) | ProducerHit",
+      "description": "Génère de la mahraganat avec l'IA : stabs electro-shaabi, kick lourd, fête rue Caire. Song Mode voix arabes auto-tune. Genre ACE — pas un preset générique. Export MP3 gratuit.",
+      "h1": "Générateur Mahraganat IA",
+      "lead": "ProducerHit génère de la mahraganat authentique — **Mahraganat** en Genre précis, Song Mode ou Beat. ~128 BPM. Versions×2 bat presets « world music » génériques.",
+      "bullets": [
+        "Genre ACE : Mahraganat (~128 BPM)",
+        "Song Mode — paroles manuelles ou IA (voix arabes auto-tune)",
+        "680+ genres · iteration seed · remix communauté",
+        "MP3 gratuit · WAV sur Pro"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "mahraganat AI generator",
+        "AI mahraganat generator",
+        "free mahraganat generator",
+        "mahraganat song generator AI",
+        "mahraganat beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Mes paroles en Mahraganat ?",
+          "a": "Oui — Song Mode → paroles manuelles + Genre précis pour le style instrumental."
+        },
+        {
+          "q": "ProducerHit vs Suno pour ce genre ?",
+          "a": "Prompts ACE dédiés, Versions×2, seed, beat+chanson — Suno a moins de genres régionaux et moins de contrôle d'itération."
+        },
+        {
+          "q": "BPM pour Mahraganat ?",
+          "a": "Commence autour de 128 BPM avec Genre précis."
+        }
+      ]
+    },
+    "/ai-dabke-music-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-dabke-ia",
+      "slugKey": "ai-dabke-music-generator",
+      "title": "Dabke AI Generator — Songs & Beats Online (2026) | ProducerHit",
+      "description": "Generate dabke with AI: mijwiz reed, darbuka stomp-clap, Levant wedding pulse. Song Mode with Arabic group chant vocals. ACE-tuned genre — not a generic preset. Free MP3 export.",
+      "h1": "Dabke AI Generator",
+      "lead": "ProducerHit generates authentic dabke — pick **Dabke** in Genre précis, Song Mode for vocals or Beat for instrumentals. ~120 BPM. Versions×2 beats generic « world music » presets.",
+      "bullets": [
+        "ACE genre: Dabke (~120 BPM)",
+        "Song Mode — manual or AI lyrics (Arabic group chant vocals)",
+        "680+ genres · seed iteration · community remix",
+        "Free MP3 · WAV on Pro"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "dabke AI generator",
+        "AI dabke generator",
+        "free dabke generator",
+        "dabke song generator AI",
+        "dabke beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Can I use my own lyrics for Dabke?",
+          "a": "Yes — Song Mode → manual lyrics. Genre précis keeps the instrumental style while preserving your text."
+        },
+        {
+          "q": "ProducerHit vs Suno for this genre?",
+          "a": "Dedicated ACE prompts per subgenre, Versions×2, seed lock, and beat+song in one studio — Suno offers fewer regional genres and less iteration control."
+        },
+        {
+          "q": "Best BPM for Dabke?",
+          "a": "Start near 120 BPM. Genre précis sets the default groove."
+        }
+      ]
+    },
+    "/generateur-dabke-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-dabke-music-generator",
+      "slugKey": "ai-dabke-music-generator",
+      "title": "Générateur Dabke IA — Chansons & beats en ligne (2026) | ProducerHit",
+      "description": "Génère de la dabke avec l'IA : anche mijwiz, stomp-clap darbuka, pulse mariage Levant. Song Mode chants de groupe arabes. Genre ACE — pas un preset générique. Export MP3 gratuit.",
+      "h1": "Générateur Dabke IA",
+      "lead": "ProducerHit génère de la dabke authentique — **Dabke** en Genre précis, Song Mode ou Beat. ~120 BPM. Versions×2 bat presets « world music » génériques.",
+      "bullets": [
+        "Genre ACE : Dabke (~120 BPM)",
+        "Song Mode — paroles manuelles ou IA (chants de groupe arabes)",
+        "680+ genres · iteration seed · remix communauté",
+        "MP3 gratuit · WAV sur Pro"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "dabke AI generator",
+        "AI dabke generator",
+        "free dabke generator",
+        "dabke song generator AI",
+        "dabke beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Mes paroles en Dabke ?",
+          "a": "Oui — Song Mode → paroles manuelles + Genre précis pour le style instrumental."
+        },
+        {
+          "q": "ProducerHit vs Suno pour ce genre ?",
+          "a": "Prompts ACE dédiés, Versions×2, seed, beat+chanson — Suno a moins de genres régionaux et moins de contrôle d'itération."
+        },
+        {
+          "q": "BPM pour Dabke ?",
+          "a": "Commence autour de 120 BPM avec Genre précis."
+        }
+      ]
+    },
+    "/ai-turkish-pop-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-turkish-pop-ia",
+      "slugKey": "ai-turkish-pop-generator",
+      "title": "Turkish Pop AI Generator — Songs & Beats Online (2026) | ProducerHit",
+      "description": "Generate Turkish pop with AI: bağlama arpeggios, darbuka drums, Istanbul radio chorus. Song Mode with Turkish vocals. ACE-tuned genre — not a generic preset. Free MP3 export.",
+      "h1": "Turkish Pop AI Generator",
+      "lead": "ProducerHit generates authentic Turkish pop — pick **Turkish Pop** in Genre précis, Song Mode for vocals or Beat for instrumentals. ~108 BPM. Versions×2 beats generic « world music » presets.",
+      "bullets": [
+        "ACE genre: Turkish Pop (~108 BPM)",
+        "Song Mode — manual or AI lyrics (Turkish vocals)",
+        "680+ genres · seed iteration · community remix",
+        "Free MP3 · WAV on Pro"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Turkish pop AI generator",
+        "AI Turkish pop generator",
+        "free Turkish pop generator",
+        "turkish pop song generator AI",
+        "turkish pop beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Can I use my own lyrics for Turkish Pop?",
+          "a": "Yes — Song Mode → manual lyrics. Genre précis keeps the instrumental style while preserving your text."
+        },
+        {
+          "q": "ProducerHit vs Suno for this genre?",
+          "a": "Dedicated ACE prompts per subgenre, Versions×2, seed lock, and beat+song in one studio — Suno offers fewer regional genres and less iteration control."
+        },
+        {
+          "q": "Best BPM for Turkish Pop?",
+          "a": "Start near 108 BPM. Genre précis sets the default groove."
+        }
+      ]
+    },
+    "/generateur-turkish-pop-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-turkish-pop-generator",
+      "slugKey": "ai-turkish-pop-generator",
+      "title": "Générateur Turkish Pop IA — Chansons & beats en ligne (2026) | ProducerHit",
+      "description": "Génère de la pop turque avec l'IA : arpèges bağlama, darbuka, refrain radio Istanbul. Song Mode voix turques. Genre ACE — pas un preset générique. Export MP3 gratuit.",
+      "h1": "Générateur Turkish Pop IA",
+      "lead": "ProducerHit génère de la pop turque authentique — **Turkish Pop** en Genre précis, Song Mode ou Beat. ~108 BPM. Versions×2 bat presets « world music » génériques.",
+      "bullets": [
+        "Genre ACE : Turkish Pop (~108 BPM)",
+        "Song Mode — paroles manuelles ou IA (voix turques)",
+        "680+ genres · iteration seed · remix communauté",
+        "MP3 gratuit · WAV sur Pro"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Turkish pop AI generator",
+        "AI Turkish pop generator",
+        "free Turkish pop generator",
+        "turkish pop song generator AI",
+        "turkish pop beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Mes paroles en Turkish Pop ?",
+          "a": "Oui — Song Mode → paroles manuelles + Genre précis pour le style instrumental."
+        },
+        {
+          "q": "ProducerHit vs Suno pour ce genre ?",
+          "a": "Prompts ACE dédiés, Versions×2, seed, beat+chanson — Suno a moins de genres régionaux et moins de contrôle d'itération."
+        },
+        {
+          "q": "BPM pour Turkish Pop ?",
+          "a": "Commence autour de 108 BPM avec Genre précis."
+        }
+      ]
+    },
+    "/ai-persian-pop-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-persian-pop-ia",
+      "slugKey": "ai-persian-pop-generator",
+      "title": "Persian Pop AI Generator — Songs & Beats Online (2026) | ProducerHit",
+      "description": "Generate Persian pop with AI: santur tar pluck, daf groove, Tehran ballad lift. Song Mode with Farsi vocals. ACE-tuned genre — not a generic preset. Free MP3 export.",
+      "h1": "Persian Pop AI Generator",
+      "lead": "ProducerHit generates authentic Persian pop — pick **Persian Pop** in Genre précis, Song Mode for vocals or Beat for instrumentals. ~92 BPM. Versions×2 beats generic « world music » presets.",
+      "bullets": [
+        "ACE genre: Persian Pop (~92 BPM)",
+        "Song Mode — manual or AI lyrics (Farsi vocals)",
+        "680+ genres · seed iteration · community remix",
+        "Free MP3 · WAV on Pro"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Persian pop AI generator",
+        "AI Persian pop generator",
+        "free Persian pop generator",
+        "persian pop song generator AI",
+        "persian pop beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Can I use my own lyrics for Persian Pop?",
+          "a": "Yes — Song Mode → manual lyrics. Genre précis keeps the instrumental style while preserving your text."
+        },
+        {
+          "q": "ProducerHit vs Suno for this genre?",
+          "a": "Dedicated ACE prompts per subgenre, Versions×2, seed lock, and beat+song in one studio — Suno offers fewer regional genres and less iteration control."
+        },
+        {
+          "q": "Best BPM for Persian Pop?",
+          "a": "Start near 92 BPM. Genre précis sets the default groove."
+        }
+      ]
+    },
+    "/generateur-persian-pop-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-persian-pop-generator",
+      "slugKey": "ai-persian-pop-generator",
+      "title": "Générateur Persian Pop IA — Chansons & beats en ligne (2026) | ProducerHit",
+      "description": "Génère de la pop persane avec l'IA : pluck santur tar, groove daf, lift ballade Téhéran. Song Mode voix farsi. Genre ACE — pas un preset générique. Export MP3 gratuit.",
+      "h1": "Générateur Persian Pop IA",
+      "lead": "ProducerHit génère de la pop persane authentique — **Persian Pop** en Genre précis, Song Mode ou Beat. ~92 BPM. Versions×2 bat presets « world music » génériques.",
+      "bullets": [
+        "Genre ACE : Persian Pop (~92 BPM)",
+        "Song Mode — paroles manuelles ou IA (voix farsi)",
+        "680+ genres · iteration seed · remix communauté",
+        "MP3 gratuit · WAV sur Pro"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Persian pop AI generator",
+        "AI Persian pop generator",
+        "free Persian pop generator",
+        "persian pop song generator AI",
+        "persian pop beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Mes paroles en Persian Pop ?",
+          "a": "Oui — Song Mode → paroles manuelles + Genre précis pour le style instrumental."
+        },
+        {
+          "q": "ProducerHit vs Suno pour ce genre ?",
+          "a": "Prompts ACE dédiés, Versions×2, seed, beat+chanson — Suno a moins de genres régionaux et moins de contrôle d'itération."
+        },
+        {
+          "q": "BPM pour Persian Pop ?",
+          "a": "Commence autour de 92 BPM avec Genre précis."
+        }
+      ]
+    },
+    "/ai-j-pop-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-j-pop-ia",
+      "slugKey": "ai-j-pop-generator",
+      "title": "J-Pop AI Generator — Songs & Beats Online (2026) | ProducerHit",
+      "description": "Generate J-pop with AI: bright Tokyo synth stacks, catchy hooks, anime-opening lift optional. Song Mode with Japanese vocals. ACE-tuned genre — not a generic preset. Free MP3 export.",
+      "h1": "J-Pop AI Generator",
+      "lead": "ProducerHit generates authentic J-pop — pick **J-Pop** in Genre précis, Song Mode for vocals or Beat for instrumentals. ~128 BPM. Versions×2 beats generic « world music » presets.",
+      "bullets": [
+        "ACE genre: J-Pop (~128 BPM)",
+        "Song Mode — manual or AI lyrics (Japanese vocals)",
+        "680+ genres · seed iteration · community remix",
+        "Free MP3 · WAV on Pro"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "J-pop AI generator",
+        "AI J-pop generator",
+        "free J-pop generator",
+        "j-pop song generator AI",
+        "j-pop beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Can I use my own lyrics for J-Pop?",
+          "a": "Yes — Song Mode → manual lyrics. Genre précis keeps the instrumental style while preserving your text."
+        },
+        {
+          "q": "ProducerHit vs Suno for this genre?",
+          "a": "Dedicated ACE prompts per subgenre, Versions×2, seed lock, and beat+song in one studio — Suno offers fewer regional genres and less iteration control."
+        },
+        {
+          "q": "Best BPM for J-Pop?",
+          "a": "Start near 128 BPM. Genre précis sets the default groove."
+        }
+      ]
+    },
+    "/generateur-j-pop-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-j-pop-generator",
+      "slugKey": "ai-j-pop-generator",
+      "title": "Générateur J-Pop IA — Chansons & beats en ligne (2026) | ProducerHit",
+      "description": "Génère de la J-pop avec l'IA : stacks synth Tokyo bright, hooks catchy, lift opening anime optionnel. Song Mode voix japonaises. Genre ACE — pas un preset générique. Export MP3 gratuit.",
+      "h1": "Générateur J-Pop IA",
+      "lead": "ProducerHit génère de la J-pop authentique — **J-Pop** en Genre précis, Song Mode ou Beat. ~128 BPM. Versions×2 bat presets « world music » génériques.",
+      "bullets": [
+        "Genre ACE : J-Pop (~128 BPM)",
+        "Song Mode — paroles manuelles ou IA (voix japonaises)",
+        "680+ genres · iteration seed · remix communauté",
+        "MP3 gratuit · WAV sur Pro"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "J-pop AI generator",
+        "AI J-pop generator",
+        "free J-pop generator",
+        "j-pop song generator AI",
+        "j-pop beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Mes paroles en J-Pop ?",
+          "a": "Oui — Song Mode → paroles manuelles + Genre précis pour le style instrumental."
+        },
+        {
+          "q": "ProducerHit vs Suno pour ce genre ?",
+          "a": "Prompts ACE dédiés, Versions×2, seed, beat+chanson — Suno a moins de genres régionaux et moins de contrôle d'itération."
+        },
+        {
+          "q": "BPM pour J-Pop ?",
+          "a": "Commence autour de 128 BPM avec Genre précis."
+        }
+      ]
+    },
+    "/ai-anison-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-anison-ia",
+      "slugKey": "ai-anison-generator",
+      "title": "AI Anison Generator — Anime Opening Songs & J-Rock Energy | ProducerHit",
+      "description": "AI anison generator: anime opening song production, heroic chorus, orchestral hits. Dedicated Anison genre — not generic J-Pop.",
+      "h1": "AI Anison Generator",
+      "lead": "Dedicated **Anison** genre for anime-opening energy — fast drums, heroic chorus, orchestral accents. Separate from J-Pop in the 680+ catalog.",
+      "bullets": [
+        "~160 BPM default",
+        "Anime OP / TikTok AMV",
+        "Pairs with J-Pop hub",
+        "Manual Japanese lyrics"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "anison AI generator",
+        "anime opening song AI",
+        "anime music generator AI",
+        "J-anime song maker"
+      ],
+      "faq": [
+        {
+          "q": "Anison vs J-Pop?",
+          "a": "Anison = anime opening double-time energy; J-Pop = general Tokyo radio pop."
+        }
+      ]
+    },
+    "/generateur-anison-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-anison-generator",
+      "slugKey": "ai-anison-generator",
+      "title": "Générateur Anison IA — Openings anime & énergie J-Rock | ProducerHit",
+      "description": "Générateur anison IA : prod opening anime, refrain héroïque, hits orchestraux. Genre Anison dédié — pas J-Pop générique.",
+      "h1": "Générateur Anison IA",
+      "lead": "Genre **Anison** dédié pour l'énergie opening anime — drums rapides, refrain héroïque, accents orchestraux. Séparé du J-Pop dans le catalogue 680+.",
+      "bullets": [
+        "~160 BPM par défaut",
+        "OP anime / TikTok AMV",
+        "Hub J-Pop",
+        "Paroles japonaises manuelles"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "anison AI generator",
+        "anime opening song AI",
+        "anime music generator AI",
+        "J-anime song maker"
+      ],
+      "faq": [
+        {
+          "q": "Anison vs J-Pop ?",
+          "a": "Anison = énergie opening double-time ; J-Pop = pop radio Tokyo générale."
+        }
+      ]
+    },
+    "/ai-city-pop-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-city-pop-ia",
+      "slugKey": "ai-city-pop-generator",
+      "title": "City Pop AI Generator — Songs & Beats Online (2026) | ProducerHit",
+      "description": "Generate city pop with AI: funky bass, synth brass, 80s Tokyo night-drive nostalgia. Song Mode with Japanese or English vocals. ACE-tuned genre — not a generic preset. Free MP3 export.",
+      "h1": "City Pop AI Generator",
+      "lead": "ProducerHit generates authentic city pop — pick **City Pop** in Genre précis, Song Mode for vocals or Beat for instrumentals. ~115 BPM. Versions×2 beats generic « world music » presets.",
+      "bullets": [
+        "ACE genre: City Pop (~115 BPM)",
+        "Song Mode — manual or AI lyrics (Japanese or English vocals)",
+        "680+ genres · seed iteration · community remix",
+        "Free MP3 · WAV on Pro"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "city pop AI generator",
+        "AI city pop generator",
+        "free city pop generator",
+        "city pop song generator AI",
+        "city pop beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Can I use my own lyrics for City Pop?",
+          "a": "Yes — Song Mode → manual lyrics. Genre précis keeps the instrumental style while preserving your text."
+        },
+        {
+          "q": "ProducerHit vs Suno for this genre?",
+          "a": "Dedicated ACE prompts per subgenre, Versions×2, seed lock, and beat+song in one studio — Suno offers fewer regional genres and less iteration control."
+        },
+        {
+          "q": "Best BPM for City Pop?",
+          "a": "Start near 115 BPM. Genre précis sets the default groove."
+        }
+      ]
+    },
+    "/generateur-city-pop-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-city-pop-generator",
+      "slugKey": "ai-city-pop-generator",
+      "title": "Générateur City Pop IA — Chansons & beats en ligne (2026) | ProducerHit",
+      "description": "Génère de la city pop avec l'IA : basse funky, synth brass, nostalgie night-drive Tokyo 80s. Song Mode voix japonaises ou anglaises. Genre ACE — pas un preset générique. Export MP3 gratuit.",
+      "h1": "Générateur City Pop IA",
+      "lead": "ProducerHit génère de la city pop authentique — **City Pop** en Genre précis, Song Mode ou Beat. ~115 BPM. Versions×2 bat presets « world music » génériques.",
+      "bullets": [
+        "Genre ACE : City Pop (~115 BPM)",
+        "Song Mode — paroles manuelles ou IA (voix japonaises ou anglaises)",
+        "680+ genres · iteration seed · remix communauté",
+        "MP3 gratuit · WAV sur Pro"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "city pop AI generator",
+        "AI city pop generator",
+        "free city pop generator",
+        "city pop song generator AI",
+        "city pop beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Mes paroles en City Pop ?",
+          "a": "Oui — Song Mode → paroles manuelles + Genre précis pour le style instrumental."
+        },
+        {
+          "q": "ProducerHit vs Suno pour ce genre ?",
+          "a": "Prompts ACE dédiés, Versions×2, seed, beat+chanson — Suno a moins de genres régionaux et moins de contrôle d'itération."
+        },
+        {
+          "q": "BPM pour City Pop ?",
+          "a": "Commence autour de 115 BPM avec Genre précis."
+        }
+      ]
+    },
+    "/ai-gulf-trap-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-gulf-trap-ia",
+      "slugKey": "ai-gulf-trap-generator",
+      "title": "Gulf Trap AI Generator — Songs & Beats Online (2026) | ProducerHit",
+      "description": "Generate Gulf trap with AI: 808 slides, Arabic scale synth, Dubai night-drive. Song Mode with Gulf Arabic rap flow. ACE-tuned genre — not a generic preset. Free MP3 export.",
+      "h1": "Gulf Trap AI Generator",
+      "lead": "ProducerHit generates authentic Gulf trap — pick **Gulf Trap** in Genre précis, Song Mode for vocals or Beat for instrumentals. ~130 BPM. Versions×2 beats generic « world music » presets.",
+      "bullets": [
+        "ACE genre: Gulf Trap (~130 BPM)",
+        "Song Mode — manual or AI lyrics (Gulf Arabic rap flow)",
+        "680+ genres · seed iteration · community remix",
+        "Free MP3 · WAV on Pro"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Gulf trap AI generator",
+        "AI Gulf trap generator",
+        "free Gulf trap generator",
+        "gulf trap song generator AI",
+        "gulf trap beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Can I use my own lyrics for Gulf Trap?",
+          "a": "Yes — Song Mode → manual lyrics. Genre précis keeps the instrumental style while preserving your text."
+        },
+        {
+          "q": "ProducerHit vs Suno for this genre?",
+          "a": "Dedicated ACE prompts per subgenre, Versions×2, seed lock, and beat+song in one studio — Suno offers fewer regional genres and less iteration control."
+        },
+        {
+          "q": "Best BPM for Gulf Trap?",
+          "a": "Start near 130 BPM. Genre précis sets the default groove."
+        }
+      ]
+    },
+    "/generateur-gulf-trap-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-gulf-trap-generator",
+      "slugKey": "ai-gulf-trap-generator",
+      "title": "Générateur Gulf Trap IA — Chansons & beats en ligne (2026) | ProducerHit",
+      "description": "Génère de la Gulf trap avec l'IA : slides 808, synth échelle arabe, night-drive Dubai. Song Mode flow rap arabe du Golfe. Genre ACE — pas un preset générique. Export MP3 gratuit.",
+      "h1": "Générateur Gulf Trap IA",
+      "lead": "ProducerHit génère de la Gulf trap authentique — **Gulf Trap** en Genre précis, Song Mode ou Beat. ~130 BPM. Versions×2 bat presets « world music » génériques.",
+      "bullets": [
+        "Genre ACE : Gulf Trap (~130 BPM)",
+        "Song Mode — paroles manuelles ou IA (flow rap arabe du Golfe)",
+        "680+ genres · iteration seed · remix communauté",
+        "MP3 gratuit · WAV sur Pro"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Gulf trap AI generator",
+        "AI Gulf trap generator",
+        "free Gulf trap generator",
+        "gulf trap song generator AI",
+        "gulf trap beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Mes paroles en Gulf Trap ?",
+          "a": "Oui — Song Mode → paroles manuelles + Genre précis pour le style instrumental."
+        },
+        {
+          "q": "ProducerHit vs Suno pour ce genre ?",
+          "a": "Prompts ACE dédiés, Versions×2, seed, beat+chanson — Suno a moins de genres régionaux et moins de contrôle d'itération."
+        },
+        {
+          "q": "BPM pour Gulf Trap ?",
+          "a": "Commence autour de 130 BPM avec Genre précis."
+        }
+      ]
+    },
+    "/ai-shaabi-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-shaabi-ia",
+      "slugKey": "ai-shaabi-generator",
+      "title": "Shaabi AI Generator — Songs & Beats Online (2026) | ProducerHit",
+      "description": "Generate Egyptian shaabi with AI: accordion lead, tabla darbuka, Cairo street party. Song Mode with Arabic call-response vocals. ACE-tuned genre — not a generic preset. Free MP3 export.",
+      "h1": "Shaabi AI Generator",
+      "lead": "ProducerHit generates authentic Egyptian shaabi — pick **Shaabi** in Genre précis, Song Mode for vocals or Beat for instrumentals. ~115 BPM. Versions×2 beats generic « world music » presets.",
+      "bullets": [
+        "ACE genre: Shaabi (~115 BPM)",
+        "Song Mode — manual or AI lyrics (Arabic call-response vocals)",
+        "680+ genres · seed iteration · community remix",
+        "Free MP3 · WAV on Pro"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Egyptian shaabi AI generator",
+        "AI Egyptian shaabi generator",
+        "free Egyptian shaabi generator",
+        "shaabi song generator AI",
+        "shaabi beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Can I use my own lyrics for Shaabi?",
+          "a": "Yes — Song Mode → manual lyrics. Genre précis keeps the instrumental style while preserving your text."
+        },
+        {
+          "q": "ProducerHit vs Suno for this genre?",
+          "a": "Dedicated ACE prompts per subgenre, Versions×2, seed lock, and beat+song in one studio — Suno offers fewer regional genres and less iteration control."
+        },
+        {
+          "q": "Best BPM for Shaabi?",
+          "a": "Start near 115 BPM. Genre précis sets the default groove."
+        }
+      ]
+    },
+    "/generateur-shaabi-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-shaabi-generator",
+      "slugKey": "ai-shaabi-generator",
+      "title": "Générateur Shaabi IA — Chansons & beats en ligne (2026) | ProducerHit",
+      "description": "Génère de la shaabi égyptien avec l'IA : lead accordéon, tabla darbuka, fête rue Caire. Song Mode voix call-response arabes. Genre ACE — pas un preset générique. Export MP3 gratuit.",
+      "h1": "Générateur Shaabi IA",
+      "lead": "ProducerHit génère de la shaabi égyptien authentique — **Shaabi** en Genre précis, Song Mode ou Beat. ~115 BPM. Versions×2 bat presets « world music » génériques.",
+      "bullets": [
+        "Genre ACE : Shaabi (~115 BPM)",
+        "Song Mode — paroles manuelles ou IA (voix call-response arabes)",
+        "680+ genres · iteration seed · remix communauté",
+        "MP3 gratuit · WAV sur Pro"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Egyptian shaabi AI generator",
+        "AI Egyptian shaabi generator",
+        "free Egyptian shaabi generator",
+        "shaabi song generator AI",
+        "shaabi beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Mes paroles en Shaabi ?",
+          "a": "Oui — Song Mode → paroles manuelles + Genre précis pour le style instrumental."
+        },
+        {
+          "q": "ProducerHit vs Suno pour ce genre ?",
+          "a": "Prompts ACE dédiés, Versions×2, seed, beat+chanson — Suno a moins de genres régionaux et moins de contrôle d'itération."
+        },
+        {
+          "q": "BPM pour Shaabi ?",
+          "a": "Commence autour de 115 BPM avec Genre précis."
+        }
+      ]
+    },
+    "/ai-levant-pop-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-levant-pop-ia",
+      "slugKey": "ai-levant-pop-generator",
+      "title": "Levant Pop AI Generator — Songs & Beats Online (2026) | ProducerHit",
+      "description": "Generate Levant pop with AI: piano string pads, soft darbuka, Beirut ballad intimacy. Song Mode with Arabic storytelling vocals. ACE-tuned genre — not a generic preset. Free MP3 export.",
+      "h1": "Levant Pop AI Generator",
+      "lead": "ProducerHit generates authentic Levant pop — pick **Levant Pop** in Genre précis, Song Mode for vocals or Beat for instrumentals. ~88 BPM. Versions×2 beats generic « world music » presets.",
+      "bullets": [
+        "ACE genre: Levant Pop (~88 BPM)",
+        "Song Mode — manual or AI lyrics (Arabic storytelling vocals)",
+        "680+ genres · seed iteration · community remix",
+        "Free MP3 · WAV on Pro"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Levant pop AI generator",
+        "AI Levant pop generator",
+        "free Levant pop generator",
+        "levant pop song generator AI",
+        "levant pop beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Can I use my own lyrics for Levant Pop?",
+          "a": "Yes — Song Mode → manual lyrics. Genre précis keeps the instrumental style while preserving your text."
+        },
+        {
+          "q": "ProducerHit vs Suno for this genre?",
+          "a": "Dedicated ACE prompts per subgenre, Versions×2, seed lock, and beat+song in one studio — Suno offers fewer regional genres and less iteration control."
+        },
+        {
+          "q": "Best BPM for Levant Pop?",
+          "a": "Start near 88 BPM. Genre précis sets the default groove."
+        }
+      ]
+    },
+    "/generateur-levant-pop-ia": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/ai-levant-pop-generator",
+      "slugKey": "ai-levant-pop-generator",
+      "title": "Générateur Levant Pop IA — Chansons & beats en ligne (2026) | ProducerHit",
+      "description": "Génère de la pop levantine avec l'IA : pads piano cordes, darbuka soft, intimité ballade Beyrouth. Song Mode voix storytelling arabes. Genre ACE — pas un preset générique. Export MP3 gratuit.",
+      "h1": "Générateur Levant Pop IA",
+      "lead": "ProducerHit génère de la pop levantine authentique — **Levant Pop** en Genre précis, Song Mode ou Beat. ~88 BPM. Versions×2 bat presets « world music » génériques.",
+      "bullets": [
+        "Genre ACE : Levant Pop (~88 BPM)",
+        "Song Mode — paroles manuelles ou IA (voix storytelling arabes)",
+        "680+ genres · iteration seed · remix communauté",
+        "MP3 gratuit · WAV sur Pro"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "Levant pop AI generator",
+        "AI Levant pop generator",
+        "free Levant pop generator",
+        "levant pop song generator AI",
+        "levant pop beat maker online"
+      ],
+      "faq": [
+        {
+          "q": "Mes paroles en Levant Pop ?",
+          "a": "Oui — Song Mode → paroles manuelles + Genre précis pour le style instrumental."
+        },
+        {
+          "q": "ProducerHit vs Suno pour ce genre ?",
+          "a": "Prompts ACE dédiés, Versions×2, seed, beat+chanson — Suno a moins de genres régionaux et moins de contrôle d'itération."
+        },
+        {
+          "q": "BPM pour Levant Pop ?",
+          "a": "Commence autour de 88 BPM avec Genre précis."
         }
       ]
     },

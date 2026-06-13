@@ -1,5 +1,8 @@
 /** Extended genre catalog — ACE-Step XL 1.5 prompts (musicological). */
 import { HIP_HOP_SOUL_GENRES } from "@/lib/genres/hipHopSoulCatalog";
+import { LATIN_WORLD_GENRES } from "@/lib/genres/latinWorldCatalog";
+import { WORLD_WAVE2_GENRES } from "@/lib/genres/worldWave2Catalog";
+import { WORLD_WAVE3_GENRES } from "@/lib/genres/worldWave3Catalog";
 
 export type ExtendedGenreDef = {
   value: string;
@@ -1506,6 +1509,9 @@ export const EXTENDED_GENRES: ExtendedGenreDef[] = [
     135,
     ["trap", "atmospheric", "2020s"],
   ),
+  ...LATIN_WORLD_GENRES,
+  ...WORLD_WAVE2_GENRES,
+  ...WORLD_WAVE3_GENRES,
   ...HIP_HOP_SOUL_GENRES,
 ];
 

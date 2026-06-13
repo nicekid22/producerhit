@@ -795,7 +795,17 @@ export default function Dashboard() {
     }
 
     if (urlSeed !== null && Number.isFinite(urlSeed)) setExternalSeed(urlSeed);
+
+    const urlGenre = params.get("genre")?.trim();
+    if (urlGenre && !pendingRemix && !remixParam) {
+      setGenrePickMode("custom");
+      setField("genre", urlGenre);
+      const rawMode = params.get("mode");
+      if (rawMode === "beat" || rawMode === "song" || rawMode === "remix") setMode(rawMode);
+    }
+
     if (urlPrompt) window.history.replaceState({}, "", "/dashboard");
+    else if (urlGenre) window.history.replaceState({}, "", "/dashboard");
   }, []);
 
   useEffect(() => {
