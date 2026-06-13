@@ -7,14 +7,14 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: "seed | run | run-all | seed-week"
+        description: "seed | run | run-all | catch-up | repair | seed-week"
         required: false
         default: "run-all"
 
 jobs:
   youtube-daily:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -29,9 +29,11 @@ jobs:
           YOUTUBE_PREVIEW_SEC: "45"
           YOUTUBE_MAX_DAILY_PER_ACCOUNT: "7"
           YOUTUBE_DAILY_AUTO_PUBLISH: "1"
-          YOUTUBE_DAILY_BATCH: "7"
+          COMMUNITY_YOUTUBE_AUTO_PUBLISH: "1"
+          YOUTUBE_DAILY_BATCH: "5"
+          YOUTUBE_DAILY_CATCHUP_BATCHES: "3"
           COMMUNITY_LANDSCAPE_PINTEREST_VIDEO: "1"
           TREND_REMIX_LANDSCAPE_THEME: "cinematic-glow"
         run: |
           node scripts/youtube-daily-run.mjs repair
-          node scripts/youtube-daily-run.mjs "${{ github.event.inputs.action || 'run-all' }}"
+          node scripts/youtube-daily-run.mjs "${{ github.event.inputs.action || 'catch-up' }}"
