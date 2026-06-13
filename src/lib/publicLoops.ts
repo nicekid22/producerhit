@@ -82,9 +82,8 @@ export function isHttpAudioUrl(url: unknown): url is string {
 export function isPlayablePublicLoop(
   audioUrl: unknown,
   stemsUrl?: unknown,
-  createdAt?: string | null,
+  _createdAt?: string | null,
 ): boolean {
-  if (createdAt && !isLoopAudioPlayableByAge(createdAt, audioUrl)) return false;
   if (isPlayablePublicAudioUrl(audioUrl)) return true;
   return extractAceTaskId(stemsUrl).length > 0;
 }
@@ -210,18 +209,14 @@ export async function fetchPublicLoops(options?: {
   const loadFromDb = async (): Promise<PublicLoopRow[]> => {
     let lastError: unknown = null;
     let data: PublicLoopRow[] | null = null;
+    const fetchLimit = playableOnly ? Math.max(limit * 3, 120) : limit;
     for (const sel of PUBLIC_LOOP_SELECT_ATTEMPTS) {
-      let query = supabase
+      const query = supabase
         .from("loops")
         .select(sel)
         .eq("is_public", true)
-        .order("created_at", { ascending: false });
-
-      if (playableOnly) {
-        query = query.not("audio_url", "is", null);
-      }
-
-      query = query.limit(limit);
+        .order("created_at", { ascending: false })
+        .limit(fetchLimit);
 
       const result = (await Promise.race([
         query,
