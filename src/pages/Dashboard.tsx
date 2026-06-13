@@ -2848,7 +2848,7 @@ export default function Dashboard() {
           <div
             className={cn(
               "flex-shrink-0",
-              mobileV2 ? "px-3 pb-2 pt-2" : "border-b border-pk-border p-4 md:border-white/10",
+              mobileV2 ? "px-3 pb-1.5 pt-1.5" : "border-b border-pk-border p-4 md:border-white/10",
             )}
           >
             <div className={cn("flex items-center gap-2", mobileV2 ? "w-full" : "justify-between")}>
@@ -2864,9 +2864,13 @@ export default function Dashboard() {
                   type="button"
                   onClick={() => setMode("song")}
                   className={cn(
-                    "rounded-xl px-3 py-2 text-xs font-semibold transition-all",
-                    mobileV2 && "min-w-0 flex-1 text-center",
-                    mode === "song" ? "pk-prism-pill-active" : "text-white/50 hover:text-white",
+                    "rounded-xl px-3 py-2 text-xs font-semibold transition-all active:scale-[0.98]",
+                    mobileV2 && "min-h-11 min-w-0 flex-1 text-center",
+                    mode === "song"
+                      ? "pk-prism-pill-active"
+                      : mobileV2
+                        ? "text-white/65 hover:text-white"
+                        : "text-white/50 hover:text-white",
                   )}
                 >
                   {locale === "fr" ? "Chanson" : "Song"}
@@ -2875,9 +2879,13 @@ export default function Dashboard() {
                   type="button"
                   onClick={() => setMode("beat")}
                   className={cn(
-                    "rounded-xl px-3 py-2 text-xs font-semibold transition-all",
-                    mobileV2 && "min-w-0 flex-1 text-center",
-                    mode === "beat" ? "pk-prism-pill-active" : "text-white/50 hover:text-white",
+                    "rounded-xl px-3 py-2 text-xs font-semibold transition-all active:scale-[0.98]",
+                    mobileV2 && "min-h-11 min-w-0 flex-1 text-center",
+                    mode === "beat"
+                      ? "pk-prism-pill-active"
+                      : mobileV2
+                        ? "text-white/65 hover:text-white"
+                        : "text-white/50 hover:text-white",
                   )}
                 >
                   Beat
@@ -2886,9 +2894,13 @@ export default function Dashboard() {
                   type="button"
                   onClick={() => setMode("remix")}
                   className={cn(
-                    "rounded-xl px-3 py-2 text-xs font-semibold transition-all",
-                    mobileV2 && "min-w-0 flex-1 text-center",
-                    mode === "remix" ? "pk-prism-pill-active" : "text-white/50 hover:text-white",
+                    "rounded-xl px-3 py-2 text-xs font-semibold transition-all active:scale-[0.98]",
+                    mobileV2 && "min-h-11 min-w-0 flex-1 text-center",
+                    mode === "remix"
+                      ? "pk-prism-pill-active"
+                      : mobileV2
+                        ? "text-white/65 hover:text-white"
+                        : "text-white/50 hover:text-white",
                   )}
                 >
                   {isRemixVibeRecreateEnabled() ? (locale === "fr" ? "Recréer" : "Recreate") : "Remix"}
@@ -2903,10 +2915,10 @@ export default function Dashboard() {
                       else setAdvancedOpen((v) => !v);
                     }}
                     className={cn(
-                      "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all",
+                      "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-all active:scale-[0.95]",
                       (mode === "song" ? songUiMode === "custom" : advancedOpen)
                         ? "pk-prism-pill-active"
-                        : "text-white/50 hover:text-white",
+                        : "text-white/65 hover:text-white",
                     )}
                   >
                     <SlidersHorizontal className="h-4 w-4" aria-hidden />

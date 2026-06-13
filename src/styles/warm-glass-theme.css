@@ -1117,31 +1117,24 @@ html.pk-warm-glass-active .pk-glass-btn:hover:not(:disabled),
       linear-gradient(165deg, rgba(48, 22, 14, 0.84), rgba(38, 16, 10, 0.9));
   }
 
-  /* Génération mobile — verre gris (pas brun) */
+  /* Génération mobile — panneaux solides (détails : bloc « Mobile dashboard iOS » en fin de fichier) */
   .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) {
-    --warm-mobile-panel: rgba(22, 20, 28, 0.86);
-    --warm-mobile-panel-border: rgba(255, 255, 255, 0.12);
-    --warm-mobile-panel-inset: rgba(255, 255, 255, 0.06);
-    --warm-mobile-panel-bg:
-      radial-gradient(680px circle at 100% 0%, rgba(255, 255, 255, 0.04), transparent 58%),
-      radial-gradient(520px circle at 0% 100%, rgba(255, 255, 255, 0.025), transparent 52%),
-      linear-gradient(165deg, rgba(28, 26, 34, 0.8), rgba(20, 18, 26, 0.86));
+    --warm-mobile-panel: rgba(24, 22, 30, 0.94);
+    --warm-mobile-panel-border: rgba(255, 255, 255, 0.14);
+    --warm-mobile-panel-inset: rgba(255, 255, 255, 0.08);
+    --warm-mobile-panel-bg: linear-gradient(165deg, rgba(28, 26, 34, 0.94), rgba(20, 18, 26, 0.96));
+    --warm-dash-glass: rgba(24, 22, 30, 0.94);
+    --warm-dash-glass-soft: rgba(28, 26, 34, 0.92);
+    --warm-dash-chrome-solid: rgba(18, 16, 24, 0.97);
+    --warm-dash-chrome-solid-soft: rgba(22, 20, 28, 0.95);
   }
 
   .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-mobile-dashboard-chrome {
-    background:
-      radial-gradient(480px circle at 0% 0%, rgba(255, 255, 255, 0.04), transparent 55%),
-      linear-gradient(165deg, rgba(28, 26, 34, 0.78), rgba(20, 18, 26, 0.84)) !important;
-    border-color: rgba(255, 255, 255, 0.11) !important;
+    background: rgba(22, 20, 28, 0.96) !important;
+    border-color: rgba(255, 255, 255, 0.13) !important;
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.06),
-      0 8px 28px rgba(8, 6, 12, 0.2) !important;
-  }
-
-  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-mobile-create-scroll .pk-studio-section {
-    background: var(--warm-dash-glass-soft) !important;
-    border-color: var(--warm-dash-chrome-border) !important;
-    box-shadow: inset 0 1px 0 var(--warm-dash-chrome-highlight) !important;
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 4px 16px rgba(0, 0, 0, 0.18) !important;
   }
 
   .pk-warm-glass-stage .pk-mobile-dashboard-chrome {
@@ -4031,25 +4024,9 @@ html.pk-warm-glass-active:has(.pk-dashboard-generator) .pk-loop-details-sheet .b
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Mobile dashboard iOS — lisibilité, panneaux solides, moins de voile grain
+   Mobile dashboard iOS — grains atténués + polish (vars solides : bloc ~1120)
    ═══════════════════════════════════════════════════════════════════════════ */
 @media (max-width: 767px) {
-  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) {
-    --warm-dash-glass: rgba(24, 22, 30, 0.94);
-    --warm-dash-glass-soft: rgba(28, 26, 34, 0.92);
-    --warm-dash-chrome-solid: rgba(18, 16, 24, 0.97);
-    --warm-dash-chrome-solid-soft: rgba(22, 20, 28, 0.95);
-    --warm-glass-surface-elevated: rgba(32, 30, 38, 0.92);
-    --warm-field-placeholder: rgba(255, 248, 240, 0.58);
-    --warm-dash-field-fill: rgba(255, 255, 255, 0.08);
-    --warm-dash-field-fill-focus: rgba(255, 255, 255, 0.11);
-    --warm-dash-dock-fill: linear-gradient(
-      180deg,
-      rgba(18, 16, 24, 0.98) 0%,
-      rgba(14, 12, 18, 0.99) 100%
-    );
-  }
-
   .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator):not(.pk-prism-stage--landing)
     > .pk-warm-backdrop
     .pk-warm-pigment-grain-coarse {

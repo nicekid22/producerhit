@@ -38,10 +38,10 @@ export function DashboardMobileTabs({
             aria-selected={active}
             onClick={() => onChange(item.id)}
             className={cn(
-              "relative flex flex-1 items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-[11px] font-semibold tracking-wide transition-all sm:px-3 sm:text-xs",
+              "relative flex flex-1 items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-[11px] font-semibold tracking-wide transition-[background-color,color,box-shadow,transform] duration-200 ease-out active:scale-[0.98] sm:px-3 sm:text-xs",
               active
                 ? "pk-prism-pill-active pk-mobile-tab-active"
-                : "text-white/45 hover:bg-white/[0.04] hover:text-white/80",
+                : "text-white/55 hover:bg-white/[0.06] hover:text-white/85",
             )}
           >
             {item.label}

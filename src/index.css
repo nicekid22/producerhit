@@ -2480,7 +2480,7 @@ a.pk-pricing-plan-btn {
   }
 
   .pk-mobile-app-shell .flex.flex-1.flex-col.gap-3 {
-    gap: 0.375rem;
+    gap: 0.25rem;
   }
 
   .pk-dashboard-generator > .flex-shrink-0:first-of-type {
@@ -2489,21 +2489,9 @@ a.pk-pricing-plan-btn {
   }
 
   .pk-mobile-dashboard-chrome {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 0.375rem;
-    padding: 0.375rem 0.625rem !important;
-  }
-
-  .pk-mobile-dashboard-chrome > div:first-child {
-    display: none;
-  }
-
-  .pk-mobile-dashboard-chrome > div:last-child {
-    margin-top: 0 !important;
-    flex: 1 1 auto;
-    min-width: 0;
+    display: block;
+    width: 100%;
+    padding: 0.5rem 0.625rem !important;
   }
 
   .pk-dashboard-mobile-tabs button {
@@ -2512,6 +2500,70 @@ a.pk-pricing-plan-btn {
     min-height: 44px;
     font-size: 0.6875rem;
     font-weight: 600;
+  }
+
+  .pk-prism-dashboard:has(.pk-dashboard-generator) .pk-dashboard-mobile-tabs {
+    padding: 3px !important;
+    gap: 2px !important;
+    border-radius: 0.875rem !important;
+  }
+
+  .pk-prism-dashboard:has(.pk-dashboard-generator) .pk-dashboard-mobile-tabs button {
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      box-shadow 0.2s ease,
+      transform 0.12s ease;
+  }
+
+  .pk-prism-dashboard:has(.pk-dashboard-generator) .pk-dashboard-mobile-tabs button:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  .pk-prism-dashboard:has(.pk-dashboard-generator) .pk-studio-mode-rail button {
+    min-height: 44px;
+  }
+
+  .pk-prism-dashboard:has(.pk-dashboard-generator) .pk-mobile-create-scroll .pk-studio-section {
+    border-radius: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .pk-prism-dashboard:not(.pk-warm-glass-stage):has(.pk-dashboard-generator) .pk-mobile-create-scroll .pk-studio-section {
+    background: rgba(16, 14, 32, 0.96) !important;
+    border-color: rgba(157, 124, 255, 0.14) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 4px 16px rgba(0, 0, 0, 0.2) !important;
+  }
+
+  .pk-prism-dashboard:not(.pk-warm-glass-stage):has(.pk-dashboard-generator) .pk-dashboard-generator .pk-studio-section__title {
+    color: rgba(255, 252, 255, 0.92) !important;
+  }
+
+  .pk-prism-dashboard:not(.pk-warm-glass-stage):has(.pk-dashboard-generator) .text-white\/50,
+  .pk-prism-dashboard:not(.pk-warm-glass-stage):has(.pk-dashboard-generator) .text-white\/45 {
+    color: rgba(255, 255, 255, 0.72) !important;
+  }
+
+  .pk-prism-dashboard:not(.pk-warm-glass-stage):has(.pk-dashboard-generator) .pk-mobile-dashboard-chrome {
+    background: rgba(12, 10, 28, 0.96) !important;
+    border-color: rgba(157, 124, 255, 0.14) !important;
+  }
+
+  .pk-prism-dashboard:not(.pk-warm-glass-stage):has(.pk-dashboard-generator) .pk-studio-console {
+    background: rgba(12, 10, 28, 0.94) !important;
+    border-color: rgba(157, 124, 255, 0.12) !important;
+  }
+
+  .pk-prism-dashboard:has(.pk-dashboard-generator) .pk-dashboard-mobile-footer__quota-row,
+  .pk-prism-dashboard:has(.pk-dashboard-generator) .pk-dashboard-mobile-footer .text-white\/50 {
+    color: rgba(255, 255, 255, 0.78) !important;
+    font-size: 0.75rem !important;
+  }
+
+  .pk-prism-dashboard:has(.pk-dashboard-generator) .pk-dashboard-mobile-footer__plan {
+    color: rgba(255, 255, 255, 0.62) !important;
   }
 
   .pk-studio-mode-rail button {

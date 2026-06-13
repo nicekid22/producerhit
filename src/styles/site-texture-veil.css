@@ -127,6 +127,22 @@ body[data-pk-theme="marketing"] {
     --pk-veil-backdrop-opacity: 0.028;
     --pk-veil-panel-grain: 0.008;
   }
+
+  body[data-pk-theme="app"] .pk-prism-dashboard:not(.pk-warm-glass-stage):has(.pk-dashboard-generator) {
+    --pk-veil-surface-focal: rgba(14, 12, 28, 0.94);
+    --pk-veil-surface-mid: rgba(12, 10, 26, 0.92);
+    --pk-veil-surface-soft: rgba(16, 14, 32, 0.9);
+    --pk-veil-panel-grain: 0.006;
+  }
+
+  body[data-pk-theme="app"] .pk-prism-dashboard:not(.pk-warm-glass-stage):has(.pk-dashboard-generator) :is(
+      .pk-studio-console,
+      .pk-mobile-dashboard-chrome,
+      .pk-studio-workspace,
+      [data-loop-card]
+    )::after {
+    opacity: 0.04 !important;
+  }
 }
 
 @media (prefers-reduced-transparency: reduce) {

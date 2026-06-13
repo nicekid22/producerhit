@@ -120,14 +120,11 @@ export function AppShell({
               {mobileLayoutV2 && mobileTabs ? (
                 <div
                   className={cn(
-                    "pk-mobile-dashboard-chrome flex-shrink-0 md:hidden rounded-2xl border px-3 py-2.5 backdrop-blur",
+                    "pk-mobile-dashboard-chrome flex-shrink-0 md:hidden rounded-2xl border px-2.5 py-2 backdrop-blur",
                     isPrism ? "pk-prism-glass border-white/10 bg-white/[0.04]" : "border-pk-border/70 bg-pk-panel/70",
                   )}
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    {isPrism ? <BrandLogo className="scale-90 origin-left" /> : <div className="text-sm font-semibold">ProducerHit</div>}
-                  </div>
-                  <div className="mt-2.5">{mobileTabs}</div>
+                  {mobileTabs}
                 </div>
               ) : null}
 

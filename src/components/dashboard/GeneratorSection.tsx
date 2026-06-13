@@ -46,7 +46,7 @@ export function GeneratorSection({
   return (
     <div
       className={cn(
-        "pk-studio-section mx-3 mb-3 min-w-0 max-w-[calc(100%-1.5rem)] overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.025]",
+        "pk-studio-section mx-3 mb-3 min-w-0 max-w-[calc(100%-1.5rem)] overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.04]",
         "md:mx-0 md:mb-0 md:max-w-none md:overflow-visible md:rounded-none md:border-0 md:border-b md:border-pk-border md:bg-transparent",
         "md:px-6 md:py-4",
         className,
@@ -54,7 +54,7 @@ export function GeneratorSection({
     >
       <button
         type="button"
-        className="flex w-full min-w-0 items-center justify-between gap-3 px-3.5 py-3.5 md:pointer-events-none md:cursor-default md:border-0 md:bg-transparent md:p-0"
+        className="flex w-full min-h-11 min-w-0 items-center justify-between gap-3 px-3.5 py-3 md:pointer-events-none md:min-h-0 md:cursor-default md:border-0 md:bg-transparent md:p-0"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
       >
