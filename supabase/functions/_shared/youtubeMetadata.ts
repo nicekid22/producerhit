@@ -4,7 +4,7 @@
 
 import { fillTemplate, pickAbVariant } from "./youtubeAbTesting.ts";
 import { getChannelProfile, homeUrlForChannel } from "./youtubeChannelProfiles.ts";
-import type { TrackKind, ViralMeta } from "./youtubeSocial.ts";
+import { buildYouTubeLongTitle, type TrackKind, type ViralMeta } from "./youtubeSocial.ts";
 
 export type YouTubeAbMeta = {
   account: string;
@@ -27,6 +27,8 @@ type DescVariant = { id: string; build: (ctx: DescCtx) => string };
 type DescCtx = {
   hookOpen: string;
   sourceQuote: string;
+  lyricBlock: string;
+  commentCta: string;
   shareUrl: string;
   homeUrl: string;
   cta: string;
@@ -60,18 +62,28 @@ function vars(input: {
 function standardTitleVariants(accountId: string, kind: TrackKind): TitleVariant[] {
   const id = accountId.trim().toLowerCase();
 
+  if (id === "vibez") {
+    return [
+      { id: "A", template: '"{name}" — {genre} AI Song 🎧 #Shorts' },
+      { id: "B", template: "This {genre} AI song hits different #Shorts" },
+      { id: "C", template: "{genre} vibes · AI song with vocals #Shorts" },
+      { id: "D", template: "POV: you found a {genre} song that slaps #Shorts" },
+    ];
+  }
   if (id === "market") {
     return [
-      { id: "A", template: "[FREE] {genre} Type Beat — {name}{bpm} #Shorts" },
-      { id: "B", template: "Would you rap on this {genre} beat? #Shorts" },
-      { id: "C", template: "{genre} AI Beat | {name}{bpm} #Shorts" },
+      { id: "A", template: '[FREE] {genre} Type Beat "{name}"{bpm} #Shorts' },
+      { id: "B", template: "Would you rap on this {genre} beat? 🔥 #Shorts" },
+      { id: "C", template: "{genre} type beat — free to listen #Shorts" },
+      { id: "D", template: "Producers: this {genre} beat goes crazy{bpm} #Shorts" },
     ];
   }
   if (id === "lowdey") {
     return [
-      { id: "A", template: "Guess this {genre} AI music prompt #Shorts" },
-      { id: "B", template: "What prompt made this {genre} song? #Shorts" },
-      { id: "C", template: "Can you guess the AI prompt? {genre} #Shorts" },
+      { id: "A", template: '"{name}" — {genre} AI track #Shorts' },
+      { id: "B", template: "Community drop · {genre} AI music #Shorts" },
+      { id: "C", template: "This {genre} song wasn't here yesterday #Shorts" },
+      { id: "D", template: "{genre} AI song · full vocals #Shorts" },
     ];
   }
   if (id === "producerhitai") {
@@ -83,9 +95,10 @@ function standardTitleVariants(accountId: string, kind: TrackKind): TitleVariant
   }
   if (id === "beatmakerunion") {
     return [
-      { id: "A", template: "This shouldn't be a {genre} song — {name} #Shorts" },
-      { id: "B", template: "Absurd {genre} AI music 😭 #Shorts" },
-      { id: "C", template: "Things that shouldn't be songs — {name} #Shorts" },
+      { id: "A", template: '[FREE] {genre} Type Beat · "{name}"{bpm} #Shorts' },
+      { id: "B", template: "Beatmakers — would you use this {genre} beat? #Shorts" },
+      { id: "C", template: "{genre} AI beat · no DAW needed #Shorts" },
+      { id: "D", template: "Session skipped · {genre} type beat{bpm} #Shorts" },
     ];
   }
   if (kind === "instrumental") {
@@ -144,12 +157,13 @@ const DESC_VARIANTS: DescVariant[] = [
     build: (c) =>
       [
         c.hookOpen,
-        c.sourceQuote,
-        c.meta ? `\n${c.meta}` : "",
-        "\n\n🎧 Full track:\n",
+        c.lyricBlock ? `\n\n📝 Lyrics:\n${c.lyricBlock}` : c.sourceQuote,
+        c.meta ? `\n\n🎚 ${c.meta}` : "",
+        "\n\n🎧 Full track (free):\n",
         c.shareUrl,
         `\n\n✨ ${c.cta}\n`,
         c.homeUrl,
+        `\n\n${c.commentCta}`,
         `\n\n${c.hashtags}`,
         `\n\n${AI_DISCLOSURE}`,
       ].join(""),
@@ -159,13 +173,14 @@ const DESC_VARIANTS: DescVariant[] = [
     build: (c) =>
       [
         `${c.primaryKeyword} — ${c.hookOpen}`,
-        c.sourceQuote,
-        c.meta ? `\n${c.meta}` : "",
+        c.lyricBlock ? `\n\n📝 Lyrics:\n${c.lyricBlock}` : c.sourceQuote,
+        c.meta ? `\n\n🎚 ${c.meta}` : "",
         "\n\nListen free:\n",
         c.shareUrl,
         "\n\nMake your own AI music:\n",
         c.homeUrl,
         `\n\n${c.cta}`,
+        `\n\n${c.commentCta}`,
         `\n\n${c.hashtags}`,
         `\n\n${AI_DISCLOSURE}`,
       ].join(""),
@@ -176,12 +191,13 @@ const DESC_VARIANTS: DescVariant[] = [
       [
         c.cta,
         c.hookOpen,
-        c.sourceQuote,
-        c.meta ? `\n${c.meta}` : "",
+        c.lyricBlock ? `\n\n📝 Lyrics:\n${c.lyricBlock}` : c.sourceQuote,
+        c.meta ? `\n\n🎚 ${c.meta}` : "",
         "\n\n🎧 Track:\n",
         c.shareUrl,
         "\n\nTry ProducerHit:\n",
         c.homeUrl,
+        `\n\n${c.commentCta}`,
         `\n\n${c.hashtags}`,
         `\n\n${AI_DISCLOSURE}`,
       ].join(""),
@@ -190,15 +206,52 @@ const DESC_VARIANTS: DescVariant[] = [
 
 function buildStandardHook(kind: TrackKind, genre: string, name: string, accountId?: string): string {
   const id = (accountId ?? "").trim().toLowerCase();
+  const n = name ? `"${name}"` : "this track";
+  const g = genre || "AI";
   if (id === "vibez" && kind === "song") {
-    return `Someone made this ${genre} AI song on ProducerHit — "${name}".`;
+    return `${g} AI song with full vocals — ${n}. From the ProducerHit community feed.`;
   }
-  if (id === "market" && (kind === "type_beat" || kind === "instrumental")) {
-    return `Community ${genre} beat — "${name}". Made with AI, sounds like hours in the studio.`;
+  if (id === "vibez" && kind === "type_beat") {
+    return `Community ${g} beat — ${n}. Would you rap on this?`;
   }
-  if (kind === "song") return `New ${genre} AI song with vocals — "${name}".`;
-  if (kind === "instrumental") return `${genre} instrumental — "${name}".`;
-  return `Free ${genre} type beat — "${name}".`;
+  if ((id === "market" || id === "beatmakerunion") && (kind === "type_beat" || kind === "instrumental")) {
+    return `Free ${g} type beat — ${n}. Made with AI in minutes, not hours in the studio.`;
+  }
+  if (id === "market" || id === "beatmakerunion") {
+    return `${g} AI track — ${n}. Listen free, then make your own.`;
+  }
+  if (id === "producerhitai" && kind === "song") {
+    return `Full AI song with vocals — ${g} · ${n}. Generated on ProducerHit.`;
+  }
+  if (kind === "song") return `New ${g} AI song with vocals — ${n}.`;
+  if (kind === "instrumental") return `${g} instrumental — ${n}.`;
+  return `Free ${g} type beat — ${n}.`;
+}
+
+function lyricExcerptFromAce(lyrics: string | null | undefined, maxLines = 4): string {
+  const lines = String(lyrics ?? "")
+    .split(/\r?\n/)
+    .map((l) =>
+      l
+        .replace(/\[[^\]]*\]/g, " ")
+        .replace(/\([^)]*\)/g, " ")
+        .trim(),
+    )
+    .filter((l) => l.length >= 4 && l.length <= 90);
+  if (!lines.length) return "";
+  return lines.slice(0, maxLines).map((l) => `"${l}"`).join("\n");
+}
+
+function commentEngagementCta(accountId: string, kind: TrackKind): string {
+  const id = accountId.trim().toLowerCase();
+  if (id === "market" || id === "beatmakerunion") {
+    return kind === "type_beat"
+      ? "💬 Comment the artist you'd send this beat to 👇"
+      : "💬 Would you rap or sing on this? Comment below 👇";
+  }
+  if (id === "vibez") return "💬 Comment 🔥 if you'd add this to your playlist 👇";
+  if (id === "lowdey") return "💬 What genre does this feel like? Comment below 👇";
+  return "💬 Comment if you'd make something like this on ProducerHit 👇";
 }
 
 function buildViralHook(viral: ViralMeta, profileKeyword: string): string {
@@ -248,6 +301,8 @@ export function buildYouTubeUploadMetadata(input: {
   shareUrl: string;
   accountId: string;
   viralMeta?: ViralMeta | null;
+  format?: "short" | "long";
+  lyrics?: string | null;
 }): YouTubeUploadMetadata {
   const accountId = input.accountId.trim().toLowerCase();
   const profile = getChannelProfile(accountId);
@@ -266,11 +321,20 @@ export function buildYouTubeUploadMetadata(input: {
     ? viralTitleVariants(input.viralMeta.series)
     : standardTitleVariants(accountId, input.kind);
   const titleVar = pickAbVariant(input.loopId, `title:${accountId}`, titlePool);
-  const title = fillTemplate(titleVar.template, v).slice(0, 100);
+  const title =
+    input.format === "long"
+      ? buildYouTubeLongTitle({
+          name: input.name,
+          genre: input.genre,
+          bpm: input.bpm,
+          kind: input.kind,
+        })
+      : fillTemplate(titleVar.template, v).slice(0, 100);
 
+  const lyricBlock = lyricExcerptFromAce(input.lyrics ?? null);
   const sourceQuote = input.viralMeta?.sourceText?.trim()
     ? `\n\n"${input.viralMeta.sourceText.trim().slice(0, 280)}"`
-    : input.name
+    : !lyricBlock && input.name
       ? `\n\n"${input.name.trim().slice(0, 80)}"`
       : "";
 
@@ -294,6 +358,8 @@ export function buildYouTubeUploadMetadata(input: {
       ? buildViralHook(input.viralMeta, profile.primaryKeyword)
       : buildStandardHook(input.kind, input.genre, input.name, accountId),
     sourceQuote,
+    lyricBlock,
+    commentCta: commentEngagementCta(accountId, input.kind),
     shareUrl: input.shareUrl,
     homeUrl,
     cta: defaultCta,

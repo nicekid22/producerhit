@@ -9,7 +9,7 @@ on:
       action:
         description: "seed | run | run-all | catch-up | repair | seed-week"
         required: false
-        default: "run-all"
+        default: "catch-up"
 
 jobs:
   youtube-daily:
