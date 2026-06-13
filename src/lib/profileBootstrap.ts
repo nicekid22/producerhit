@@ -69,9 +69,25 @@ function isBenignProfileSyncError(message: string): boolean {
 export type ProfileCacheSnapshot = {
   plan: string;
   usedThisMonth: number;
+  referralBonus: number;
+  levelBonus: number;
+  dailyBonusMonth: number;
 };
 
 const PROFILE_CACHE_USER_KEY = "producerhit_profile_cache_user";
+const PROFILE_CACHE_REFERRAL_KEY = "producerhit_referral_bonus";
+const PROFILE_CACHE_LEVEL_KEY = "producerhit_level_bonus";
+const PROFILE_CACHE_DAILY_KEY = "producerhit_daily_bonus_month";
+
+function readCachedNumber(key: string): number {
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (raw == null || !Number.isFinite(Number(raw))) return 0;
+    return Math.max(0, Number(raw));
+  } catch {
+    return 0;
+  }
+}
 
 export function readProfileCache(userId: string): ProfileCacheSnapshot | null {
   if (!userId) return null;
@@ -82,7 +98,13 @@ export function readProfileCache(userId: string): ProfileCacheSnapshot | null {
     if (!plan) return null;
     const usedRaw = window.localStorage.getItem("producerhit_used_this_month");
     const usedThisMonth = usedRaw && Number.isFinite(Number(usedRaw)) ? Number(usedRaw) : 0;
-    return { plan, usedThisMonth };
+    return {
+      plan,
+      usedThisMonth,
+      referralBonus: readCachedNumber(PROFILE_CACHE_REFERRAL_KEY),
+      levelBonus: readCachedNumber(PROFILE_CACHE_LEVEL_KEY),
+      dailyBonusMonth: readCachedNumber(PROFILE_CACHE_DAILY_KEY),
+    };
   } catch {
     return null;
   }
@@ -325,11 +347,21 @@ export async function loadUserProfileWithRetry(
   throw lastError ?? new Error("profile_load_failed");
 }
 
-export function syncProfileCache(plan: string, usedThisMonth: number, userId?: string): void {
+export function syncProfileCache(
+  plan: string,
+  usedThisMonth: number,
+  userId?: string,
+  extras?: Pick<UserProfileRow, "referral_bonus" | "level_bonus" | "daily_bonus_month">,
+): void {
   try {
     window.localStorage.setItem("producerhit_plan", plan);
     window.localStorage.setItem("producerhit_used_this_month", String(usedThisMonth));
     if (userId) window.localStorage.setItem(PROFILE_CACHE_USER_KEY, userId);
+    if (extras) {
+      window.localStorage.setItem(PROFILE_CACHE_REFERRAL_KEY, String(extras.referral_bonus ?? 0));
+      window.localStorage.setItem(PROFILE_CACHE_LEVEL_KEY, String(extras.level_bonus ?? 0));
+      window.localStorage.setItem(PROFILE_CACHE_DAILY_KEY, String(extras.daily_bonus_month ?? 0));
+    }
   } catch {
     // ignore
   }

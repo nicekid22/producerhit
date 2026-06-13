@@ -4030,3 +4030,137 @@ html.pk-warm-glass-active:has(.pk-dashboard-generator) .pk-loop-details-sheet .b
   background: var(--warm-accent-copper) !important;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   Mobile dashboard iOS — lisibilité, panneaux solides, moins de voile grain
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) {
+    --warm-dash-glass: rgba(24, 22, 30, 0.94);
+    --warm-dash-glass-soft: rgba(28, 26, 34, 0.92);
+    --warm-dash-chrome-solid: rgba(18, 16, 24, 0.97);
+    --warm-dash-chrome-solid-soft: rgba(22, 20, 28, 0.95);
+    --warm-glass-surface-elevated: rgba(32, 30, 38, 0.92);
+    --warm-field-placeholder: rgba(255, 248, 240, 0.58);
+    --warm-dash-field-fill: rgba(255, 255, 255, 0.08);
+    --warm-dash-field-fill-focus: rgba(255, 255, 255, 0.11);
+    --warm-dash-dock-fill: linear-gradient(
+      180deg,
+      rgba(18, 16, 24, 0.98) 0%,
+      rgba(14, 12, 18, 0.99) 100%
+    );
+  }
+
+  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator):not(.pk-prism-stage--landing)
+    > .pk-warm-backdrop
+    .pk-warm-pigment-grain-coarse {
+    opacity: 0.12 !important;
+  }
+
+  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator):not(.pk-prism-stage--landing)
+    > .pk-warm-backdrop
+    .pk-warm-pigment-grain-fine {
+    opacity: 0.08 !important;
+  }
+
+  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator):not(.pk-prism-stage--landing)
+    > .pk-warm-backdrop
+    .pk-warm-pigment-grain-film {
+    opacity: 0.05 !important;
+  }
+
+  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator):not(.pk-prism-stage--landing)
+    .pk-studio-console::before,
+  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator):not(.pk-prism-stage--landing)
+    .pk-studio-workspace::before,
+  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator):not(.pk-prism-stage--landing)
+    .pk-mobile-dashboard-chrome::before,
+  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator):not(.pk-prism-stage--landing)
+    .pk-mobile-create-scroll
+    .pk-studio-section::before,
+  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator):not(.pk-prism-stage--landing)
+    [data-loop-card]::before,
+  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator):not(.pk-prism-stage--landing)
+    .pk-dashboard-mobile-footer::before {
+    opacity: 0.08 !important;
+  }
+
+  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-mobile-create-scroll .pk-studio-section {
+    background: rgba(30, 28, 36, 0.96) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 4px 16px rgba(0, 0, 0, 0.18) !important;
+  }
+
+  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-dashboard-generator .pk-studio-section__title {
+    color: rgba(255, 252, 248, 0.94) !important;
+    font-weight: 650;
+    letter-spacing: -0.02em;
+  }
+
+  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .text-pk-muted,
+  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .text-white\/55,
+  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .text-white\/50,
+  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .text-white\/45 {
+    color: rgba(255, 248, 240, 0.74) !important;
+  }
+
+  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-dashboard-mobile-tabs {
+    background: rgba(255, 255, 255, 0.08) !important;
+    padding: 3px !important;
+    gap: 2px !important;
+    border-radius: 0.875rem !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-dashboard-mobile-tabs button {
+    min-height: 44px;
+    font-size: 0.6875rem !important;
+    font-weight: 600;
+    border-radius: 0.625rem !important;
+  }
+
+  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-dashboard-mobile-tabs button:not(.pk-mobile-tab-active) {
+    color: rgba(255, 248, 240, 0.68) !important;
+  }
+
+  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-studio-console,
+  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-studio-workspace {
+    backdrop-filter: blur(24px) saturate(1.35) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(1.35) !important;
+  }
+
+  body[data-pk-theme="app"]
+    .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator)
+    .pk-studio-console
+    .pk-dashboard-mobile-footer,
+  body[data-pk-theme="app"]
+    .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator)
+    .pk-studio-console
+    .pk-studio-generate-dock {
+    background: var(--warm-dash-dock-fill) !important;
+  }
+
+  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-dashboard-mobile-footer__quota-row,
+  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-dashboard-mobile-footer .text-white\/50 {
+    color: rgba(255, 248, 240, 0.82) !important;
+    font-size: 0.75rem !important;
+  }
+
+  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-dashboard-mobile-footer__plan {
+    color: rgba(255, 248, 240, 0.68) !important;
+  }
+
+  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-mobile-create-scroll {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-studio-mode-rail button {
+    min-height: 40px;
+    font-weight: 600;
+  }
+}
+

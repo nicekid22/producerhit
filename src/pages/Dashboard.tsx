@@ -518,8 +518,13 @@ export default function Dashboard() {
     setReferralBonus(data.referral_bonus);
     setLevelBonus(data.level_bonus);
     setDailyBonusMonth(data.daily_bonus_month);
-    if (user?.id) syncProfileCache(data.plan, data.loops_used_this_month, user.id);
-    else syncProfileCache(data.plan, data.loops_used_this_month);
+    if (user?.id) {
+      syncProfileCache(data.plan, data.loops_used_this_month, user.id, {
+        referral_bonus: data.referral_bonus,
+        level_bonus: data.level_bonus,
+        daily_bonus_month: data.daily_bonus_month,
+      });
+    } else syncProfileCache(data.plan, data.loops_used_this_month);
     toast.dismiss("dashboard-profile-load");
   }, [user?.id]);
 
@@ -661,6 +666,9 @@ export default function Dashboard() {
     planRef.current = cached.plan;
     setPlan(cached.plan);
     setUsedThisMonth(cached.usedThisMonth);
+    setReferralBonus(cached.referralBonus);
+    setLevelBonus(cached.levelBonus);
+    setDailyBonusMonth(cached.dailyBonusMonth);
   }, [user?.id]);
 
   useEffect(() => {
@@ -675,7 +683,13 @@ export default function Dashboard() {
 
   const profileSyncing = authStatus === "ready" && !!user && !profileReady;
   const profileBusy = profileLoading || profileSyncing;
-  const quotaReady = !profileSyncing;
+  const profileCacheSnapshot = useMemo(
+    () => (user?.id ? readProfileCache(user.id) : null),
+    [user?.id, authProfile, plan, usedThisMonth, referralBonus, levelBonus, dailyBonusMonth],
+  );
+  const hasQuotaSnapshot = Boolean(authProfile || profileCacheSnapshot);
+  const showQuotaLoading = profileBusy && !hasQuotaSnapshot;
+  const quotaReady = !profileSyncing || hasQuotaSnapshot;
 
   const detailsLoop = useMemo(() => {
     if (!detailsId) return null;
@@ -809,16 +823,16 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    if (!mobileV2 || !user || hasSeenMobileOnboarding()) return;
+    if (!mobileV2 || !user || !profileReady || hasSeenMobileOnboarding()) return;
     if (shouldShowCoachTour(user.id, authProfile?.loops_used_this_month ?? 0)) return;
     const timer = window.setTimeout(() => setMobileOnboardingOpen(true), 900);
     return () => window.clearTimeout(timer);
-  }, [authProfile?.loops_used_this_month, mobileV2, user]);
+  }, [authProfile?.loops_used_this_month, mobileV2, profileReady, user]);
 
   useEffect(() => {
-    if (!user?.id) return;
-    useOnboardingCoachStore.getState().hydrate(user.id, authProfile?.loops_used_this_month ?? 0);
-  }, [authProfile?.loops_used_this_month, user?.id]);
+    if (!user?.id || !profileReady) return;
+    useOnboardingCoachStore.getState().hydrate(user.id, authProfile?.loops_used_this_month ?? 0, true);
+  }, [authProfile?.loops_used_this_month, profileReady, user?.id]);
 
   useEffect(() => {
     trackClientEvent("dashboard_view", { source: entrySource });
@@ -913,6 +927,12 @@ export default function Dashboard() {
   const remaining = getRemainingBeats(plan, usedThisMonth, referralBonus, levelBonus, dailyBonusMonth);
   const totalLimit = getTotalGenerationLimit(plan, { referralBonus, levelBonus, dailyBonusMonth });
   const bonusCreditsTotal = referralBonus + levelBonus + dailyBonusMonth;
+  const reserveBonusMetaRow =
+    bonusCreditsTotal > 0 ||
+    Boolean(
+      profileCacheSnapshot &&
+        profileCacheSnapshot.referralBonus + profileCacheSnapshot.levelBonus + profileCacheSnapshot.dailyBonusMonth > 0,
+    );
   const dualGenerationAllowed = canDualGeneration(plan);
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -3885,7 +3905,7 @@ export default function Dashboard() {
                     mobileV2 ? "text-white/50" : "text-gray-500",
                   )}
                 >
-                  {profileBusy ? (
+                  {showQuotaLoading ? (
                     locale === "fr" ? (
                       "Chargement du quota…"
                     ) : (
@@ -3902,7 +3922,7 @@ export default function Dashboard() {
                   )}
                 </span>
                 <span className={mobileV2 ? "pk-dashboard-mobile-footer__plan" : "shrink-0 text-gray-600"}>
-                  {profileBusy
+                  {showQuotaLoading
                     ? locale === "fr"
                       ? "Plan…"
                       : "Plan…"
@@ -3911,6 +3931,13 @@ export default function Dashboard() {
                       : `${plan} plan`}
                 </span>
               </div>
+            <div
+              className={cn(
+                reserveBonusMetaRow ? "min-h-[1.125rem]" : "",
+                bonusCreditsTotal > 0 ? undefined : "invisible",
+              )}
+              aria-hidden={bonusCreditsTotal <= 0}
+            >
             {bonusCreditsTotal > 0 ? (
               <div
                 className={cn(
@@ -3926,6 +3953,7 @@ export default function Dashboard() {
                 </span>
               </div>
             ) : null}
+            </div>
             </div>
             {plan === "free" && remaining > 0 && remaining <= 2 ? (
               <div className="pk-dashboard-mobile-footer__upsell mt-2 flex flex-col gap-2 rounded-lg border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-100/90">

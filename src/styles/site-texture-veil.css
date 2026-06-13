@@ -120,6 +120,13 @@ body[data-pk-theme="marketing"] {
   body[data-pk-theme="marketing"] .pk-site-texture-veil--ambient-global {
     display: none;
   }
+
+  /* Dashboard mobile — moins de voile global pour une UI type app */
+  body[data-pk-theme="app"]:has(.pk-dashboard-generator) {
+    --pk-veil-ambient-global: 0.008;
+    --pk-veil-backdrop-opacity: 0.028;
+    --pk-veil-panel-grain: 0.008;
+  }
 }
 
 @media (prefers-reduced-transparency: reduce) {

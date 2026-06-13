@@ -9,12 +9,20 @@ import { loadCoachProgress, saveCoachProgress } from "@/lib/onboarding/coachStor
 
 type CoachPhase = "idle" | "tour" | "post_gen";
 
+let tourRevealTimer: number | null = null;
+
+function clearTourRevealTimer() {
+  if (tourRevealTimer == null) return;
+  window.clearTimeout(tourRevealTimer);
+  tourRevealTimer = null;
+}
+
 type CoachState = {
   visible: boolean;
   phase: CoachPhase;
   stepIndex: number;
   userId: string | null;
-  hydrate: (userId: string, loopsUsedThisMonth: number) => void;
+  hydrate: (userId: string, loopsUsedThisMonth: number, profileReady?: boolean) => void;
   startTour: () => void;
   celebrateFirstGeneration: () => void;
   next: () => void;
@@ -35,15 +43,21 @@ export const useOnboardingCoachStore = create<CoachState>((set, get) => ({
   stepIndex: 0,
   userId: null,
 
-  hydrate: (userId, loopsUsedThisMonth) => {
+  hydrate: (userId, loopsUsedThisMonth, profileReady = false) => {
+    clearTourRevealTimer();
     const progress = loadCoachProgress(userId);
     if (progress.tourDone && progress.postGenDone) {
       set({ visible: false, phase: "idle", stepIndex: 0, userId });
       return;
     }
+    if (!profileReady) {
+      set({ userId, visible: false, phase: "idle", stepIndex: 0 });
+      return;
+    }
     if (!progress.tourDone && loopsUsedThisMonth <= 0) {
       set({ userId, phase: "tour", stepIndex: 0, visible: false });
-      window.setTimeout(() => {
+      tourRevealTimer = window.setTimeout(() => {
+        tourRevealTimer = null;
         if (get().userId === userId && get().phase === "tour" && !loadCoachProgress(userId).tourDone) {
           set({ visible: true });
         }
@@ -101,6 +115,7 @@ export const useOnboardingCoachStore = create<CoachState>((set, get) => ({
   },
 
   dismissAll: () => {
+    clearTourRevealTimer();
     const userId = get().userId;
     if (!userId) {
       set({ visible: false, phase: "idle", stepIndex: 0 });

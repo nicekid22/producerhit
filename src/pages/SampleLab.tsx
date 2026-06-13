@@ -95,6 +95,9 @@ function SampleLabContent() {
     if (!cached) return;
     setPlan(cached.plan);
     setUsedThisMonth(cached.usedThisMonth);
+    setReferralBonus(cached.referralBonus);
+    setLevelBonus(cached.levelBonus);
+    setDailyBonusMonth(cached.dailyBonusMonth);
   }, [user?.id]);
 
   const remaining = getRemainingBeats(plan, usedThisMonth, referralBonus, levelBonus, dailyBonusMonth);

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
-import { syncProfileCache } from "@/lib/profileBootstrap";
+import { readProfileCache, syncProfileCache } from "@/lib/profileBootstrap";
 import {
   CREATOR_TYPE_OPTIONS,
   creatorProfileErrorMessage,
@@ -148,7 +148,21 @@ export default function Settings() {
       setLevelBonus(authProfile.level_bonus);
       setDailyBonusMonth(authProfile.daily_bonus_month);
       setReferralCode(authProfile.referral_code ?? "");
-      syncProfileCache(authProfile.plan, authProfile.loops_used_this_month, user?.id);
+      syncProfileCache(authProfile.plan, authProfile.loops_used_this_month, user?.id, {
+        referral_bonus: authProfile.referral_bonus,
+        level_bonus: authProfile.level_bonus,
+        daily_bonus_month: authProfile.daily_bonus_month,
+      });
+      setLoading(false);
+      return;
+    }
+    const cached = user?.id ? readProfileCache(user.id) : null;
+    if (cached) {
+      setPlan(cached.plan);
+      setUsedThisMonth(cached.usedThisMonth);
+      setReferralBonus(cached.referralBonus);
+      setLevelBonus(cached.levelBonus);
+      setDailyBonusMonth(cached.dailyBonusMonth);
       setLoading(false);
       return;
     }

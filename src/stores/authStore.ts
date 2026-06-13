@@ -5,6 +5,7 @@ import {
   clearProfileLoadCache,
   extractErrorMessage,
   loadUserProfileWithRetry,
+  readProfileCache,
   type UserProfileRow,
 } from "@/lib/profileBootstrap";
 import { clearReferralBonusTracking, notifyReferrerReferralBonusIfIncreased } from "@/lib/referralReferrerLoot";
@@ -115,6 +116,9 @@ async function syncProfileForSession(
     useAuthStore.setState({ lastError: null });
   } else if (hasProfile && authUserId() === session.user.id) {
     // Refresh en arrière-plan — ne pas masquer le quota / settings déjà affichés.
+    useAuthStore.setState({ lastError: null });
+  } else if (readProfileCache(session.user.id)) {
+    // Quota en cache local — évite le flash « Chargement du quota… » au refresh.
     useAuthStore.setState({ lastError: null });
   } else if (isSessionStillActive(session)) {
     useAuthStore.setState({ profileReady: false, lastError: null });
