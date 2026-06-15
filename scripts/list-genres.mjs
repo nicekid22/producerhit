@@ -11,7 +11,12 @@ function parseCatalog(path) {
   return out;
 }
 
-for (const f of ["src/lib/genres/hipHopSoulCatalog.ts", "src/lib/genres/extendedCatalog.ts"]) {
+for (const f of [
+  "src/lib/genres/latinWorldCatalog.ts",
+  "src/lib/genres/worldWave2Catalog.ts",
+  "src/lib/genres/hipHopSoulCatalog.ts",
+  "src/lib/genres/extendedCatalog.ts",
+]) {
   const items = parseCatalog(f);
   const bad = items.filter((x) =>
     /modern underground|clean mix|radio-ready|authentic|polished mix/i.test(x.prompt),

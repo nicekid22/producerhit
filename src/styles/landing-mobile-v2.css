@@ -583,15 +583,22 @@
     display: none;
   }
 
-  .pk-landing--mobile-focus .pk-landing-trending-strip__card {
+  .pk-landing--mobile-focus .pk-landing-trending-strip__card-wrap {
     flex: 0 0 var(--pk-mobile-card);
     width: var(--pk-mobile-card);
     scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-trending-strip__card {
     border: 0;
     background: transparent;
     padding: 0;
     text-align: left;
     color: inherit;
+    width: 100%;
   }
 
   .pk-landing--mobile-focus .pk-landing-trending-strip__card--skeleton {
@@ -695,6 +702,29 @@
     white-space: nowrap;
     font-size: clamp(9px, 2.4vw, 10px);
     color: rgba(255, 255, 255, 0.42);
+  }
+
+  .pk-landing--mobile-focus .pk-landing-trending-strip__create-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    width: 100%;
+    min-height: 2rem;
+    border-radius: 999px;
+    border: 1px solid rgba(103, 195, 255, 0.22);
+    background: rgba(103, 195, 255, 0.08);
+    padding: 0.35rem 0.55rem;
+    font-size: clamp(10px, 2.6vw, 11px);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: rgba(210, 235, 255, 0.92);
+    transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-trending-strip__create-btn:active {
+    background: rgba(103, 195, 255, 0.16);
+    border-color: rgba(103, 195, 255, 0.34);
   }
 
   .pk-landing--mobile-focus .pk-landing-trending-strip__empty {

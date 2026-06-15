@@ -7,8 +7,18 @@ import { GenerationCreditAmount, GenerationCreditIcon } from "@/components/Gener
 import { Button } from "@/components/ui/Button";
 import { MusicVisualizerPreview } from "@/components/growth/MusicVisualizerPreview";
 import { floatEmojis } from "@/lib/delight/confetti";
-import { buildLoopShareUrl, buildSignupUrl, whatsAppShareUrl } from "@/lib/growthLinks";
-import { buildShareMomentTitle, buildSocialKitText, buildTikTokCaption } from "@/lib/tiktokPack";
+import { whatsAppShareUrl } from "@/lib/growthLinks";
+import { buildShareMomentTitle, buildSocialKitText } from "@/lib/tiktokPack";
+import {
+  buildPlatformCaption,
+  resolvePlatformShareUrl,
+  sharePlatformFallbackHint,
+  sharePlatformHint,
+  sharePlatformLabel,
+  SHARE_PLATFORMS,
+  shareVideoViaSheet,
+  type SharePlatform,
+} from "@/lib/sharePlatform";
 import { canShareWithoutWatermark } from "@/lib/planEntitlements";
 import { downloadShareVideoBlob, exportShareVideo } from "@/lib/shareVideo";
 import {
@@ -40,7 +50,7 @@ type Props = {
 
 type ShareExportMode = "local" | "mood";
 
-const SHARE_PRESETS: VisualizerPresetId[] = ["void", "prism", "vhs"];
+const SHARE_PRESETS: VisualizerPresetId[] = ["sleeve", "void", "prism", "vhs"];
 
 export function ShareMomentModal({ open, onClose, loop, locale, plan = "free", onMakePublic }: Props) {
   const isFr = locale === "fr";
@@ -50,7 +60,8 @@ export function ShareMomentModal({ open, onClose, loop, locale, plan = "free", o
   const [exporting, setExporting] = useState(false);
   const [moodFetching, setMoodFetching] = useState(false);
   const [layout, setLayout] = useState<VisualizerLayout>("story");
-  const [sharePreset, setSharePreset] = useState<VisualizerPresetId>("prism");
+  const [sharePreset, setSharePreset] = useState<VisualizerPresetId>("sleeve");
+  const [sharePlatform, setSharePlatform] = useState<SharePlatform>("tiktok");
   const [previewMuted, setPreviewMuted] = useState(true);
   const [moodImageUrl, setMoodImageUrl] = useState<string | null>(null);
   const [moodSearchQuery, setMoodSearchQuery] = useState("");
@@ -69,10 +80,11 @@ export function ShareMomentModal({ open, onClose, loop, locale, plan = "free", o
 
   useEffect(() => {
     if (!open || !loop) return;
-    setCaption(buildTikTokCaption(loop, locale));
+    setCaption(buildPlatformCaption(loop, "tiktok", locale));
     setExportMode("local");
     setLayout("story");
-    setSharePreset("prism");
+    setSharePreset("sleeve");
+    setSharePlatform("tiktok");
     setPreviewMuted(true);
     setMoodImageUrl(null);
     setMoodSearchQuery(buildMoodBoardSearchQuery(loop));
@@ -91,7 +103,7 @@ export function ShareMomentModal({ open, onClose, loop, locale, plan = "free", o
 
   if (!loop) return null;
 
-  const shareUrl = loop.isPublic ? buildLoopShareUrl(loop.id, "tiktok") : buildSignupUrl("tiktok");
+  const shareUrl = resolvePlatformShareUrl(loop, sharePlatform);
   const creditsRemaining = moodCredits?.remaining ?? null;
   const canAffordMood = creditsRemaining === null || creditsRemaining >= MOOD_VIDEO_CREDIT_COST;
 
@@ -99,13 +111,76 @@ export function ShareMomentModal({ open, onClose, loop, locale, plan = "free", o
     trackClientEvent("growth_share_click", { channel, loop_id: loop.id, public: loop.isPublic, source: "share_moment" });
   };
 
-  const copySocialKit = async () => {
-    trackShare("social_kit");
+  const copySocialKit = async (channel = "social_kit") => {
+    trackShare(channel);
     try {
       await navigator.clipboard.writeText(buildSocialKitText(caption, shareUrl));
       toast.success(isFr ? "Caption + lien copiés" : "Caption + link copied");
+      return true;
     } catch {
       toast.error(isFr ? "Copie impossible" : "Copy failed");
+      return false;
+    }
+  };
+
+  const exportVisualBlob = async () => {
+    if (!loop.audioUrl) throw new Error("missing_audio");
+    return exportShareVideo(loop, {
+      durationSec: 15,
+      preset: sharePreset,
+      layout,
+      showWatermark,
+      watermarkText: "made with ProducerHit",
+    });
+  };
+
+  const shareVisual = async () => {
+    if (!loop.audioUrl) {
+      toast.error(isFr ? "Audio indisponible" : "Audio unavailable");
+      return;
+    }
+    setExporting(true);
+    trackClientEvent("share_moment_share_video", {
+      loop_id: loop.id,
+      preset: sharePreset,
+      layout,
+      platform: sharePlatform,
+      mode: exportMode,
+    });
+    trackShare(sharePlatform);
+    try {
+      const blob = await exportVisualBlob();
+      const result = await shareVideoViaSheet({
+        blob,
+        loop,
+        layout,
+        platform: sharePlatform,
+        caption,
+        shareUrl,
+      });
+
+      if (result === "shared") {
+        toast.success(sharePlatformHint(sharePlatform, locale), { duration: 4200 });
+        return;
+      }
+      if (result === "cancelled") return;
+
+      downloadShareVideoBlob(loop, blob, layout, sharePlatform);
+      await copySocialKit(`${sharePlatform}_fallback`);
+      toast.success(sharePlatformFallbackHint(sharePlatform, locale), { duration: 5200 });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg === "unsupported" || msg === "missing_audio" || msg === "mp4_unsupported") {
+        toast.error(
+          isFr
+            ? "Export MP4 non supporté sur ce navigateur — essaie Chrome ou Safari récent."
+            : "MP4 export not supported on this browser — try recent Chrome or Safari.",
+        );
+      } else {
+        toast.error(isFr ? "Partage échoué — réessaie" : "Share failed — try again");
+      }
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -115,27 +190,38 @@ export function ShareMomentModal({ open, onClose, loop, locale, plan = "free", o
       return;
     }
     setExporting(true);
-    trackClientEvent("share_moment_export_video", { loop_id: loop.id, preset: sharePreset, layout, mode: "local" });
+    trackClientEvent("share_moment_export_video", {
+      loop_id: loop.id,
+      preset: sharePreset,
+      layout,
+      platform: sharePlatform,
+      mode: "local",
+    });
     try {
-      const blob = await exportShareVideo(loop, {
-        durationSec: 15,
-        preset: sharePreset,
-        layout,
-        showWatermark,
-        watermarkText: "made with ProducerHit",
-      });
-      downloadShareVideoBlob(loop, blob, layout);
+      const blob = await exportVisualBlob();
+      downloadShareVideoBlob(loop, blob, layout, sharePlatform);
       toast.success(isFr ? "Vidéo téléchargée" : "Video downloaded");
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      if (msg === "unsupported") {
-        toast.error(isFr ? "Export vidéo non supporté ici" : "Video export not supported here");
+      if (msg === "unsupported" || msg === "missing_audio" || msg === "mp4_unsupported") {
+        toast.error(
+          isFr
+            ? "Export MP4 non supporté sur ce navigateur — essaie Chrome ou Safari récent."
+            : "MP4 export not supported on this browser — try recent Chrome or Safari.",
+        );
       } else {
         toast.error(isFr ? "Export échoué — réessaie" : "Export failed — try again");
       }
     } finally {
       setExporting(false);
     }
+  };
+
+  const selectSharePlatform = (platform: SharePlatform) => {
+    setSharePlatform(platform);
+    setLayout("story");
+    setCaption(buildPlatformCaption(loop, platform, locale));
+    trackClientEvent("share_moment_platform_select", { loop_id: loop.id, platform });
   };
 
   const fetchMoodPhoto = async () => {
@@ -191,6 +277,58 @@ export function ShareMomentModal({ open, onClose, loop, locale, plan = "free", o
     }
   };
 
+  const shareMoodVideo = async () => {
+    if (!moodImageUrl) {
+      toast.error(isFr ? "Trouve d'abord une photo mood" : "Find a mood photo first");
+      return;
+    }
+    if (!loop.audioUrl) {
+      toast.error(isFr ? "Audio indisponible" : "Audio unavailable");
+      return;
+    }
+    setExporting(true);
+    trackClientEvent("share_moment_share_video", { loop_id: loop.id, layout, platform: sharePlatform, mode: "mood" });
+    trackShare(sharePlatform);
+    try {
+      const blob = await exportMoodBoardVideo(loop, moodImageUrl, layout, {
+        durationSec: MOOD_VIDEO_EXPORT_MAX_SEC,
+        showWatermark,
+        locale,
+      });
+      const result = await shareVideoViaSheet({
+        blob,
+        loop,
+        layout,
+        platform: sharePlatform,
+        caption,
+        shareUrl,
+      });
+      if (result === "shared") {
+        toast.success(sharePlatformHint(sharePlatform, locale), { duration: 4200 });
+        return;
+      }
+      if (result === "cancelled") return;
+      downloadMoodBoardVideoBlob(loop, blob, layout);
+      await copySocialKit(`${sharePlatform}_fallback`);
+      toast.success(sharePlatformFallbackHint(sharePlatform, locale), { duration: 5200 });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg === "unsupported" || msg === "mp4_unsupported") {
+        toast.error(
+          isFr
+            ? "Export MP4 non supporté sur ce navigateur — essaie Chrome ou Safari récent."
+            : "MP4 export not supported on this browser — try recent Chrome or Safari.",
+        );
+      } else if (msg.includes("image_load_failed")) {
+        toast.error(isFr ? "Image inaccessible — relance la recherche" : "Image blocked — search again");
+      } else {
+        toast.error(isFr ? "Partage échoué — réessaie" : "Share failed — try again");
+      }
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const exportMoodVideo = async () => {
     if (!moodImageUrl) {
       toast.error(isFr ? "Trouve d'abord une photo mood" : "Find a mood photo first");
@@ -201,7 +339,7 @@ export function ShareMomentModal({ open, onClose, loop, locale, plan = "free", o
       return;
     }
     setExporting(true);
-    trackClientEvent("share_moment_export_video", { loop_id: loop.id, layout, mode: "mood" });
+    trackClientEvent("share_moment_export_video", { loop_id: loop.id, layout, platform: sharePlatform, mode: "mood" });
     try {
       const blob = await exportMoodBoardVideo(loop, moodImageUrl, layout, {
         durationSec: MOOD_VIDEO_EXPORT_MAX_SEC,
@@ -212,8 +350,12 @@ export function ShareMomentModal({ open, onClose, loop, locale, plan = "free", o
       toast.success(isFr ? "Vidéo téléchargée" : "Video downloaded");
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      if (msg === "unsupported") {
-        toast.error(isFr ? "Export vidéo non supporté ici" : "Video export not supported here");
+      if (msg === "unsupported" || msg === "mp4_unsupported") {
+        toast.error(
+          isFr
+            ? "Export MP4 non supporté sur ce navigateur — essaie Chrome ou Safari récent."
+            : "MP4 export not supported on this browser — try recent Chrome or Safari.",
+        );
       } else if (msg.includes("image_load_failed")) {
         toast.error(isFr ? "Image inaccessible — relance la recherche" : "Image blocked — search again");
       } else {
@@ -224,18 +366,18 @@ export function ShareMomentModal({ open, onClose, loop, locale, plan = "free", o
     }
   };
 
-  const nativeShare = async () => {
-    trackShare("native");
+  const nativeShareLink = async () => {
+    trackShare("native_link");
     if (navigator.share) {
       try {
         await navigator.share({ title: loop.name, text: `${caption}\n${shareUrl}`, url: shareUrl });
         return;
       } catch {
-        void copySocialKit();
+        void copySocialKit("native_link_fallback");
         return;
       }
     }
-    void copySocialKit();
+    void copySocialKit("native_link_fallback");
   };
 
   const aspectClass = layout === "square" ? "aspect-square max-h-64" : "aspect-[9/16] max-h-72";
@@ -347,6 +489,29 @@ export function ShareMomentModal({ open, onClose, loop, locale, plan = "free", o
         </div>
 
         <div className="flex gap-2">
+          {SHARE_PLATFORMS.map((platform) => (
+            <button
+              key={platform}
+              type="button"
+              onClick={() => selectSharePlatform(platform)}
+              className={cn(
+                "flex-1 rounded-xl border px-2 py-2 text-[11px] font-semibold",
+                sharePlatform === platform
+                  ? "border-violet-400/40 bg-violet-500/15 text-violet-100"
+                  : "border-white/10 bg-white/[0.02] text-white/45 hover:text-white/70",
+              )}
+            >
+              {sharePlatformLabel(platform, locale)}
+            </button>
+          ))}
+        </div>
+        <p className="text-center text-[10px] text-white/35">
+          {isFr
+            ? "Mobile : MP4 + caption dans le menu Partager."
+            : "Mobile: MP4 + caption in the Share sheet."}
+        </p>
+
+        <div className="flex gap-2">
           <button
             type="button"
             onClick={() => setLayout("story")}
@@ -415,15 +580,19 @@ export function ShareMomentModal({ open, onClose, loop, locale, plan = "free", o
 
         {exportMode === "local" ? (
           <>
-            <Button variant="primary" className="w-full" disabled={exporting} onClick={() => void exportVisual()}>
-              {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Video className="h-4 w-4" />}
+            <Button variant="primary" className="w-full" disabled={exporting} onClick={() => void shareVisual()}>
+              {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
               {exporting
                 ? isFr
-                  ? "Export…"
-                  : "Exporting…"
+                  ? "Préparation…"
+                  : "Preparing…"
                 : isFr
-                  ? `Télécharger · ${layout === "square" ? "1:1" : "9:16"}`
-                  : `Download · ${layout === "square" ? "1:1" : "9:16"}`}
+                  ? `Partager · ${sharePlatformLabel(sharePlatform, locale)}`
+                  : `Share · ${sharePlatformLabel(sharePlatform, locale)}`}
+            </Button>
+            <Button variant="secondary" className="w-full" disabled={exporting} onClick={() => void exportVisual()}>
+              {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Video className="h-4 w-4" />}
+              {isFr ? `Télécharger · ${layout === "square" ? "1:1" : "9:16"}` : `Download · ${layout === "square" ? "1:1" : "9:16"}`}
             </Button>
           </>
         ) : (
@@ -438,19 +607,28 @@ export function ShareMomentModal({ open, onClose, loop, locale, plan = "free", o
               {moodFetching ? (isFr ? "Recherche…" : "Searching…") : isFr ? "Chercher photo" : "Find photo"}
             </Button>
             <Button
+              variant="primary"
+              className="w-full"
+              disabled={exporting || !moodImageUrl}
+              onClick={() => void shareMoodVideo()}
+            >
+              {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
+              {exporting
+                ? isFr
+                  ? "Préparation…"
+                  : "Preparing…"
+                : isFr
+                  ? `Partager · ${sharePlatformLabel(sharePlatform, locale)}`
+                  : `Share · ${sharePlatformLabel(sharePlatform, locale)}`}
+            </Button>
+            <Button
               variant="secondary"
               className="w-full"
               disabled={exporting || !moodImageUrl}
               onClick={() => void exportMoodVideo()}
             >
               {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Video className="h-4 w-4" />}
-              {exporting
-                ? isFr
-                  ? "Export…"
-                  : "Exporting…"
-                : isFr
-                  ? `Télécharger · ${layout === "square" ? "1:1" : "9:16"}`
-                  : `Download · ${layout === "square" ? "1:1" : "9:16"}`}
+              {isFr ? `Télécharger · ${layout === "square" ? "1:1" : "9:16"}` : `Download · ${layout === "square" ? "1:1" : "9:16"}`}
             </Button>
           </>
         )}
@@ -482,9 +660,9 @@ export function ShareMomentModal({ open, onClose, loop, locale, plan = "free", o
           >
             WhatsApp
           </Button>
-          <Button variant="secondary" size="sm" onClick={() => void nativeShare()}>
+          <Button variant="secondary" size="sm" onClick={() => void nativeShareLink()}>
             <Share2 className="h-4 w-4" />
-            {isFr ? "Partager" : "Share"}
+            {isFr ? "Lien seul" : "Link only"}
           </Button>
         </div>
 

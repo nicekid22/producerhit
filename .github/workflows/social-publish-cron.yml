@@ -26,16 +26,26 @@ jobs:
           YOUTUBE_COMMUNITY_TEMPLATE: player
           YOUTUBE_PREVIEW_SEC: "15"
         run: node scripts/youtube-prerender-queue.mjs
+        continue-on-error: true
 
       - name: Process social publish queue
         env:
           SOCIAL_PUBLISH_CRON_SECRET: ${{ secrets.SOCIAL_PUBLISH_CRON_SECRET }}
         run: |
-          curl -sS -f -X POST \
+          if [ -z "$SOCIAL_PUBLISH_CRON_SECRET" ]; then
+            echo "Missing GitHub secret SOCIAL_PUBLISH_CRON_SECRET"
+            exit 1
+          fi
+          HTTP=$(curl -sS -w "%{http_code}" -o /tmp/social-cron.json -X POST \
             "https://pmfnzenqemnonpglmjqx.supabase.co/functions/v1/social-publish-cron" \
             -H "Content-Type: application/json" \
             -H "x-social-cron-secret: ${SOCIAL_PUBLISH_CRON_SECRET}" \
-            -d '{"action":"process_queue","limit":1}'
+            -d '{"action":"process_queue","limit":1}')
+          cat /tmp/social-cron.json
+          if [ "$HTTP" != "200" ]; then
+            echo "social-publish-cron HTTP $HTTP"
+            exit 1
+          fi
 
       - name: Generate rss-tracks.xml
         env:

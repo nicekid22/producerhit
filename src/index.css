@@ -1975,6 +1975,10 @@ a.pk-pricing-plan-btn {
   background: #050508;
 }
 
+.pk-loop-details-sheet-scroll {
+  touch-action: pan-y;
+}
+
 .pk-loop-details-sheet-header {
   background: rgba(5, 5, 8, 0.98);
 }

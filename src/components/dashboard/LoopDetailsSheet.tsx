@@ -50,8 +50,8 @@ export function LoopDetailsSheet({
           "shadow-[0_-24px_80px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.06)]",
         )}
         style={{
+          top: "max(2.5rem, 6vh)",
           bottom: dockBottom,
-          maxHeight: `calc(100dvh - ${dockBottom} - 0.75rem)`,
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -77,7 +77,7 @@ export function LoopDetailsSheet({
         </div>
         <div
           ref={scrollRef}
-          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-2 sm:px-5"
+          className="pk-loop-details-sheet-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(2rem,env(safe-area-inset-bottom,0px))] pt-2 [-webkit-overflow-scrolling:touch] sm:px-5"
         >
           {children}
         </div>

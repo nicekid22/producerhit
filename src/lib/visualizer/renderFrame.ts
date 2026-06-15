@@ -2,6 +2,9 @@ import type { Loop } from "@/types/loop";
 import { hashString } from "@/lib/utils";
 import { bassEnergy } from "@/lib/visualizer/frequencyBars";
 import { ParticleField } from "@/lib/visualizer/particles";
+import { renderSleeveFrame } from "@/lib/visualizer/sleeveFrame";
+import { renderPrismFrame } from "@/lib/visualizer/prismFrame";
+import { renderVhsFrame } from "@/lib/visualizer/vhsFrame";
 import type { RenderFrameContext } from "@/lib/visualizer/types";
 
 const particleFields = new Map<string, ParticleField>();
@@ -389,6 +392,21 @@ export function renderVisualizerFrame(input: RenderFrameContext, dt = 1 / 30): v
     return;
   }
 
+  if (preset === "sleeve") {
+    renderSleeveFrame(input, t);
+    return;
+  }
+
+  if (preset === "prism") {
+    renderPrismFrame(input, t);
+    return;
+  }
+
+  if (preset === "vhs") {
+    renderVhsFrame(input, t);
+    return;
+  }
+
   drawBackground(ctx, w, h, loop, t);
   const coverRect = layoutCoverRect(w, h, layout);
 
@@ -406,12 +424,10 @@ export function renderVisualizerFrame(input: RenderFrameContext, dt = 1 / 30): v
 
   drawCoverArt(ctx, loop, coverBitmap, coverRect, t, preset);
 
-  if (preset === "vhs") drawVhsOverlay(ctx, w, h, t, seed);
-
   if (showMetadata) drawMetadata(ctx, loop, w, h, layout);
   drawAudioBars(ctx, bars, w, h);
 
-  drawFilmGrain(ctx, w, h, seed, t, preset === "vhs" ? 0.14 : 0.08);
+  drawFilmGrain(ctx, w, h, seed, t, 0.08);
 
   if (showWatermark) drawWatermark(ctx, w, h, watermarkText);
 }

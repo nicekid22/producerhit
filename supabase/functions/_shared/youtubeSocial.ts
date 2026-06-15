@@ -95,6 +95,25 @@ export function buildYouTubeHashtags(kind: TrackKind, genre: string): string[] {
   return ["#shorts", "#typebeat", "#freebeat", "#producerhit", genreTag];
 }
 
+/** Long-form YouTube (16:9) — pas de #Shorts. */
+export function buildYouTubeLongTitle(input: {
+  name: string;
+  genre: string;
+  bpm: number | null;
+  kind: TrackKind;
+}): string {
+  const { name, genre, bpm, kind } = input;
+  const bpmSuffix = bpm && bpm > 0 ? ` ${bpm} BPM` : "";
+  const quoted = `"${name}"`;
+  if (kind === "song") {
+    return `${quoted} | ${genre} AI Song (Full Track)`.slice(0, 100);
+  }
+  if (kind === "instrumental") {
+    return `${genre} Instrumental ${quoted}${bpmSuffix} | AI Music`.slice(0, 100);
+  }
+  return `[FREE] ${genre} Type Beat ${quoted}${bpmSuffix} | AI Beat`.slice(0, 100);
+}
+
 /** Shorts preview length (max 59 s for Shorts shelf). */
 export function youtubePreviewSec(): number {
   const raw = Number(Deno.env.get("YOUTUBE_PREVIEW_SEC") ?? "45");
@@ -113,10 +132,10 @@ export function youtubeGlobalMinIntervalSec(): number {
   return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 3600;
 }
 
-/** Hard cap uploads per channel per UTC day (default 6). */
+/** Hard cap uploads per channel per UTC day (default 7 = 5 Shorts + 2 long). */
 export function youtubeMaxDailyPerAccount(): number {
-  const raw = Number(Deno.env.get("YOUTUBE_MAX_DAILY_PER_ACCOUNT") ?? "6");
-  return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 6;
+  const raw = Number(Deno.env.get("YOUTUBE_MAX_DAILY_PER_ACCOUNT") ?? "7");
+  return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 7;
 }
 
 export function socialPublishQueueBatch(): number {

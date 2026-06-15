@@ -2,18 +2,22 @@ name: Trend remix YouTube (landscape)
 
 on:
   schedule:
-    # 10:00 + 18:00 Paris ≈ 09 + 17 UTC
-    - cron: "0 9,17 * * *"
+    # 4 runs/day UTC — ~2 uploads per remix channel (remix1 + remix2)
+    - cron: "0 7 * * *"
+    - cron: "0 11 * * *"
+    - cron: "0 16 * * *"
+    - cron: "0 20 * * *"
   workflow_dispatch:
     inputs:
       action:
-        description: "seed | generate | run | seed-week"
+        description: "run | run-all | seed | seed-week"
         required: false
         default: "run"
 
 jobs:
   trend-remix:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -24,11 +28,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate trend remix + landscape video
+      - name: Trend remix generate + YouTube publish
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SOCIAL_PUBLISH_CRON_SECRET: ${{ secrets.SOCIAL_PUBLISH_CRON_SECRET }}
+          TREND_REMIX_AUTO_PUBLISH: "1"
+          TREND_REMIX_LANDSCAPE_THEME: "cinematic-glow"
           TREND_REMIX_DURATION_SEC: "90"
-          TREND_REMIX_MAX_SEC: "120"
+          TREND_REMIX_MAX_SEC: "600"
+          TREND_REMIX_DAILY_SLOTS: "4"
         run: node scripts/trend-remix-run.mjs "${{ github.event.inputs.action || 'run' }}"

@@ -51,7 +51,7 @@ export function LoopDetailsPanel({
   const usePhotoCover = !isVideoCover && coverUrl.startsWith("http");
 
   return (
-    <div className={cn("pk-loop-details-panel", className)}>
+    <div className={cn("pk-loop-details-panel", compact && "pb-2", className)}>
       <div className={cn("overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.04]", compact ? "mt-1" : "mt-4")}>
         <div
           className={cn(
@@ -106,7 +106,7 @@ export function LoopDetailsPanel({
           <Info className="pk-loop-details-stat-label h-4 w-4" />
           {isFr ? "Détails" : "Details"}
         </div>
-        <div className="mt-2 rounded-xl border border-white/[0.08] bg-white/[0.04] p-3 text-xs text-pk-text">
+        <div className="mt-2 rounded-xl border border-white/[0.08] bg-white/[0.04] p-3 text-xs leading-relaxed text-pk-text break-words whitespace-pre-wrap">
           {loop.details?.caption || loop.prompt || "—"}
         </div>
       </div>

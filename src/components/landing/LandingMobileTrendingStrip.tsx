@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ChevronRight, Pause, Play } from "lucide-react";
+import { ChevronRight, Pause, Play, Sparkles } from "lucide-react";
 import { StoredLoopCover } from "@/components/cover/StoredLoopCover";
 import { publicRowToCoverLoop, resolveLoopDisplayCoverUrl } from "@/lib/coverArt";
 import { cn, COVER_SURFACE_CLASS } from "@/lib/utils";
@@ -12,6 +12,7 @@ type Props = {
   activeTrackId: string | null;
   isPlaying: boolean;
   onPlay: (track: LandingCommunityTrack) => void;
+  onCreateSimilar?: (track: LandingCommunityTrack) => void;
 };
 
 export function LandingMobileTrendingStrip({
@@ -21,6 +22,7 @@ export function LandingMobileTrendingStrip({
   activeTrackId,
   isPlaying,
   onPlay,
+  onCreateSimilar,
 }: Props) {
   const isFr = locale === "fr";
 
@@ -66,39 +68,50 @@ export function LandingMobileTrendingStrip({
                 const coverUrl = track.coverUrl?.trim() || resolveLoopDisplayCoverUrl(loop);
 
                 return (
-                  <button
-                    key={track.id}
-                    type="button"
-                    onClick={() => onPlay(track)}
-                    className={cn("pk-landing-trending-strip__card", playingNow && "is-playing")}
-                    aria-label={
-                      playingNow
-                        ? isFr
-                          ? `Pause ${track.name}`
-                          : `Pause ${track.name}`
-                        : isFr
-                          ? `Écouter ${track.name}`
-                          : `Play ${track.name}`
-                    }
-                  >
-                    <div className={cn("pk-landing-trending-strip__cover", COVER_SURFACE_CLASS, playingNow && "is-playing")}>
-                      <StoredLoopCover
-                        coverUrl={coverUrl}
-                        className="absolute inset-0 h-full w-full"
-                        imageClassName="pk-landing-trending-strip__cover-img h-full w-full object-cover object-center"
-                        loading="eager"
-                      />
-                      <span className="pk-landing-trending-strip__cover-tint" aria-hidden />
-                      <span className="pk-landing-trending-strip__play" aria-hidden>
-                        {playingNow ? <Pause className="h-5 w-5" fill="currentColor" /> : <Play className="ml-0.5 h-5 w-5" fill="currentColor" />}
+                  <div key={track.id} className="pk-landing-trending-strip__card-wrap">
+                    <button
+                      type="button"
+                      onClick={() => onPlay(track)}
+                      className={cn("pk-landing-trending-strip__card", playingNow && "is-playing")}
+                      aria-label={
+                        playingNow
+                          ? isFr
+                            ? `Pause ${track.name}`
+                            : `Pause ${track.name}`
+                          : isFr
+                            ? `Écouter ${track.name}`
+                            : `Play ${track.name}`
+                      }
+                    >
+                      <div className={cn("pk-landing-trending-strip__cover", COVER_SURFACE_CLASS, playingNow && "is-playing")}>
+                        <StoredLoopCover
+                          coverUrl={coverUrl}
+                          className="absolute inset-0 h-full w-full"
+                          imageClassName="pk-landing-trending-strip__cover-img h-full w-full object-cover object-center"
+                          loading="eager"
+                        />
+                        <span className="pk-landing-trending-strip__cover-tint" aria-hidden />
+                        <span className="pk-landing-trending-strip__play" aria-hidden>
+                          {playingNow ? <Pause className="h-5 w-5" fill="currentColor" /> : <Play className="ml-0.5 h-5 w-5" fill="currentColor" />}
+                        </span>
+                        <span className="pk-landing-trending-strip__badge">{track.badge}</span>
+                      </div>
+                      <span className="pk-landing-trending-strip__name">{track.name}</span>
+                      <span className="pk-landing-trending-strip__meta">
+                        {[track.genre, track.mood].filter(Boolean).join(" · ") || (isFr ? "Track public" : "Public track")}
                       </span>
-                      <span className="pk-landing-trending-strip__badge">{track.badge}</span>
-                    </div>
-                    <span className="pk-landing-trending-strip__name">{track.name}</span>
-                    <span className="pk-landing-trending-strip__meta">
-                      {[track.genre, track.mood].filter(Boolean).join(" · ") || (isFr ? "Track public" : "Public track")}
-                    </span>
-                  </button>
+                    </button>
+                    {onCreateSimilar ? (
+                      <button
+                        type="button"
+                        onClick={() => onCreateSimilar(track)}
+                        className="pk-landing-trending-strip__create-btn"
+                      >
+                        <Sparkles className="h-3 w-3" aria-hidden />
+                        {isFr ? "Créer pareil" : "Create similar"}
+                      </button>
+                    ) : null}
+                  </div>
                 );
               })
             : (

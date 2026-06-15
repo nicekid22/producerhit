@@ -62,7 +62,36 @@ export type SocialPayload = {
   published_at: string;
   viral_meta?: ViralMeta | null;
   trend_remix_meta?: TrendRemixMeta | null;
+  ace_lyrics?: string | null;
 };
+
+export type YouTubePublishOpts = {
+  preferredAccount?: string;
+  publishVariant?: string;
+  storagePath?: string | null;
+  format?: "short" | "long";
+  displayTitle?: string;
+};
+
+function extractYoutubePublishMeta(stemsUrl: unknown): {
+  account?: string;
+  format?: string;
+  displayTitle?: string;
+  storagePath?: string;
+} | null {
+  if (!stemsUrl || typeof stemsUrl !== "object") return null;
+  const ace = (stemsUrl as Record<string, unknown>).ace;
+  if (!ace || typeof ace !== "object") return null;
+  const pub = (ace as Record<string, unknown>).youtubePublish;
+  if (!pub || typeof pub !== "object") return null;
+  const p = pub as Record<string, unknown>;
+  return {
+    account: typeof p.account === "string" ? p.account : undefined,
+    format: typeof p.format === "string" ? p.format : undefined,
+    displayTitle: typeof p.displayTitle === "string" ? p.displayTitle : undefined,
+    storagePath: typeof p.storagePath === "string" ? p.storagePath : undefined,
+  };
+}
 
 export function verifySocialCronSecret(req: Request): boolean {
   const expected = (Deno.env.get("SOCIAL_PUBLISH_CRON_SECRET") ?? "").trim();
@@ -144,6 +173,11 @@ export function buildSocialPayload(loop: SocialLoopRow): SocialPayload {
   const track_kind = inferTrackKind(loop.stems_url, name);
   const viral_meta = extractViralMeta(loop.stems_url);
   const trend_remix_meta = extractTrendRemixMeta(loop.stems_url);
+  const aceStems = loop.stems_url && typeof loop.stems_url === "object" ? (loop.stems_url as Record<string, unknown>).ace : null;
+  const ace_lyrics =
+    aceStems && typeof aceStems === "object" && typeof (aceStems as Record<string, unknown>).lyrics === "string"
+      ? String((aceStems as Record<string, unknown>).lyrics)
+      : null;
   const hashtags = buildHashtags(loop, track_kind);
   const tagLine = hashtags.join(" ");
   const kindNoun =
@@ -205,6 +239,7 @@ export function buildSocialPayload(loop: SocialLoopRow): SocialPayload {
     published_at: loop.created_at ?? new Date().toISOString(),
     viral_meta,
     trend_remix_meta,
+    ace_lyrics,
   };
 }
 
@@ -681,26 +716,28 @@ export async function pickYouTubeAccount(
     const hit = ready.find((r) => r.account.id === preferred);
     if (hit) return { ok: true, account: hit.account };
 
-    const prefConfigured = accounts.some((a) => a.id === preferred);
-    if (prefConfigured) {
-      const lastAt = await lastYouTubePostAt(db, preferred);
-      const elapsed = lastAt ? (now - lastAt) / 1000 : minSec;
-      const postsToday = await youtubePostsTodayForAccount(db, preferred);
-      if (postsToday >= maxDaily) {
-        return {
-          ok: false,
-          throttled: true,
-          reason: `youtube_preferred_${preferred}_daily_cap`,
-          retryAfterSec: 3600,
-        };
-      }
+    const prefAccount = accounts.find((a) => a.id === preferred);
+    if (!prefAccount) {
+      return { ok: false, error: `youtube_preferred_${preferred}_missing_credentials` };
+    }
+
+    const lastAt = await lastYouTubePostAt(db, preferred);
+    const elapsed = lastAt ? (now - lastAt) / 1000 : minSec;
+    const postsToday = await youtubePostsTodayForAccount(db, preferred);
+    if (postsToday >= maxDaily) {
       return {
         ok: false,
         throttled: true,
-        reason: `youtube_preferred_${preferred}_wait`,
-        retryAfterSec: Math.ceil(Math.max(0, minSec - elapsed)),
+        reason: `youtube_preferred_${preferred}_daily_cap`,
+        retryAfterSec: 3600,
       };
     }
+    return {
+      ok: false,
+      throttled: true,
+      reason: `youtube_preferred_${preferred}_wait`,
+      retryAfterSec: Math.ceil(Math.max(0, minSec - elapsed)),
+    };
   }
 
   ready.sort((a, b) => a.lastAt - b.lastAt);
@@ -710,8 +747,23 @@ export async function pickYouTubeAccount(
 async function listStoredSocialVideo(
   db: SupabaseClient,
   loop: SocialLoopRow,
+  preferredPath?: string | null,
 ): Promise<{ bytes: Uint8Array; contentType: string } | null> {
   if (!loop.user_id) return null;
+
+  if (preferredPath?.trim()) {
+    const path = preferredPath.trim();
+    const { data, error } = await db.storage.from("social-videos").download(path);
+    if (!error && data) {
+      const bytes = new Uint8Array(await data.arrayBuffer());
+      if (bytes.byteLength >= 8_000) {
+        const lower = path.toLowerCase();
+        const contentType = lower.endsWith(".webm") ? "video/webm" : "video/mp4";
+        return { bytes, contentType };
+      }
+    }
+  }
+
   const folder = `${loop.user_id}/${loop.id}`;
   const { data: files } = await db.storage.from("social-videos").list(folder, {
     limit: 5,
@@ -773,9 +825,10 @@ async function fetchYouTubeRenderedVideo(loopId: string): Promise<{ bytes: Uint8
 async function resolveYouTubeVideo(
   db: SupabaseClient,
   loop: SocialLoopRow,
+  storagePath?: string | null,
 ): Promise<{ bytes: Uint8Array; contentType: string; source: string } | null> {
-  const stored = await listStoredSocialVideo(db, loop);
-  if (stored) return { ...stored, source: "social-videos" };
+  const stored = await listStoredSocialVideo(db, loop, storagePath);
+  if (stored) return { ...stored, source: storagePath ? "social-videos-path" : "social-videos" };
 
   const rendered = await fetchYouTubeRenderedVideo(loop.id);
   if (rendered) return { ...rendered, source: "youtube-render" };
@@ -783,8 +836,14 @@ async function resolveYouTubeVideo(
   return null;
 }
 
-function youtubeUploadMetadata(payload: SocialPayload, accountId: string): YouTubeUploadMetadata {
-  if (payload.trend_remix_meta) {
+function youtubeUploadMetadata(
+  payload: SocialPayload,
+  accountId: string,
+  ytOpts?: YouTubePublishOpts,
+): YouTubeUploadMetadata {
+  const displayName = ytOpts?.displayTitle?.trim() || payload.name;
+  const format: "short" | "long" = ytOpts?.format === "long" ? "long" : "short";
+  if (payload.trend_remix_meta && format === "long") {
     const tr = payload.trend_remix_meta;
     const trend = buildTrendRemixUploadMetadata({
       loopId: payload.loop_id,
@@ -795,8 +854,11 @@ function youtubeUploadMetadata(payload: SocialPayload, accountId: string): YouTu
       shareUrl: buildYouTubeShareUrl(payload.loop_id, accountId),
       accountId,
       trendKeywords: tr.trendKeywords ?? [],
+      searchQueries: tr.searchQueries ?? [],
       bpm: payload.bpm,
       key: payload.key,
+      lyrics: payload.ace_lyrics ?? undefined,
+      lyricsTheme: tr.lyricsTheme,
     });
     return {
       title: trend.title,
@@ -807,7 +869,7 @@ function youtubeUploadMetadata(payload: SocialPayload, accountId: string): YouTu
   }
   return buildYouTubeUploadMetadata({
     loopId: payload.loop_id,
-    name: payload.name,
+    name: displayName,
     genre: payload.genre,
     bpm: payload.bpm,
     key: payload.key,
@@ -815,6 +877,8 @@ function youtubeUploadMetadata(payload: SocialPayload, accountId: string): YouTu
     shareUrl: buildYouTubeShareUrl(payload.loop_id, accountId),
     accountId,
     viralMeta: payload.viral_meta,
+    format: format === "long" ? "long" : "short",
+    lyrics: payload.ace_lyrics,
   });
 }
 
@@ -962,16 +1026,34 @@ export async function postYouTube(
   db: SupabaseClient,
   loop: SocialLoopRow,
   payload: SocialPayload,
-): Promise<{ ok: boolean; id?: string; account?: string; ab?: YouTubeUploadMetadata["ab"]; error?: string }> {
-  const picked = await pickYouTubeAccount(db, {
-    preferredId: resolveYouTubePreferredAccount({
+  ytOpts?: YouTubePublishOpts,
+): Promise<{
+  ok: boolean;
+  id?: string;
+  account?: string;
+  ab?: YouTubeUploadMetadata["ab"];
+  error?: string;
+  throttled?: boolean;
+  retryAfterSec?: number;
+}> {
+  const acePub = extractYoutubePublishMeta(loop.stems_url);
+  const preferred =
+    ytOpts?.preferredAccount?.trim() ||
+    acePub?.account ||
+    resolveYouTubePreferredAccount({
       viralMeta: payload.viral_meta,
       trendRemixMeta: payload.trend_remix_meta,
       trackKind: payload.track_kind,
-    }),
-  });
+    });
+
+  const picked = await pickYouTubeAccount(db, { preferredId: preferred });
   if ("throttled" in picked && picked.throttled) {
-    return { ok: false, error: picked.reason };
+    return {
+      ok: false,
+      throttled: true,
+      error: picked.reason,
+      retryAfterSec: picked.retryAfterSec,
+    };
   }
   if (!picked.ok) return { ok: false, error: picked.error };
 
@@ -979,10 +1061,16 @@ export async function postYouTube(
   const accessToken = await getYouTubeAccessToken(account);
   if (!accessToken) return { ok: false, error: "missing_youtube_credentials" };
 
-  const video = await resolveYouTubeVideo(db, loop);
+  const storagePath = ytOpts?.storagePath ?? acePub?.storagePath ?? null;
+  const video = await resolveYouTubeVideo(db, loop, storagePath);
   if (!video) return { ok: false, error: "youtube_video_unavailable" };
 
-  const uploadMeta = youtubeUploadMetadata(payload, account.id);
+  const mergedOpts: YouTubePublishOpts = {
+    ...ytOpts,
+    format: (ytOpts?.format ?? acePub?.format ?? "short") as "short" | "long",
+    displayTitle: ytOpts?.displayTitle ?? acePub?.displayTitle,
+  };
+  const uploadMeta = youtubeUploadMetadata(payload, account.id, mergedOpts);
   const uploaded = await uploadYouTubeVideo(accessToken, video.bytes, video.contentType, uploadMeta);
   if (!uploaded.ok) return uploaded;
 
@@ -1053,12 +1141,18 @@ export async function postTelegram(payload: SocialPayload): Promise<{ ok: boolea
   return { ok: true, id: json?.result?.message_id != null ? String(json.result.message_id) : undefined };
 }
 
-export async function alreadyPosted(db: SupabaseClient, loopId: string, platform: string): Promise<boolean> {
+export async function alreadyPosted(
+  db: SupabaseClient,
+  loopId: string,
+  platform: string,
+  publishVariant = "default",
+): Promise<boolean> {
   const { data } = await db
     .from("social_publish_log")
     .select("id")
     .eq("loop_id", loopId)
     .eq("platform", platform)
+    .eq("publish_variant", publishVariant)
     .eq("status", "posted")
     .maybeSingle();
   return Boolean(data?.id);
@@ -1069,19 +1163,20 @@ export async function logPublish(
   loopId: string,
   platform: string,
   status: "posted" | "failed" | "skipped",
-  opts?: { external_id?: string; payload?: unknown; error?: string },
+  opts?: { external_id?: string; payload?: unknown; error?: string; publish_variant?: string },
 ) {
   await db.from("social_publish_log").upsert(
     {
       loop_id: loopId,
       platform,
+      publish_variant: opts?.publish_variant ?? "default",
       status,
       external_id: opts?.external_id ?? null,
       payload: opts?.payload ?? null,
       error: opts?.error ?? null,
       created_at: new Date().toISOString(),
     },
-    { onConflict: "loop_id,platform" },
+    { onConflict: "loop_id,platform,publish_variant" },
   );
 }
 
@@ -1106,13 +1201,15 @@ export function enabledPlatforms(): string[] {
 export async function publishLoopToPlatforms(
   db: SupabaseClient,
   loop: SocialLoopRow,
+  ytOpts?: YouTubePublishOpts,
 ): Promise<{ ok: boolean; results: Record<string, unknown> }> {
   const payload = buildSocialPayload(loop);
   const platforms = enabledPlatforms();
   const results: Record<string, unknown> = {};
+  const publishVariant = ytOpts?.publishVariant ?? "default";
 
   for (const platform of platforms) {
-    if (await alreadyPosted(db, loop.id, platform)) {
+    if (await alreadyPosted(db, loop.id, platform, publishVariant)) {
       results[platform] = { skipped: true };
       continue;
     }
@@ -1123,6 +1220,9 @@ export async function publishLoopToPlatforms(
         if (res.ok) {
           await logPublish(db, loop.id, platform, "posted", { external_id: res.id, payload: { text: payload.captions.twitter } });
           results[platform] = { ok: true, id: res.id };
+        } else if (res.error === "missing_twitter_credentials") {
+          await logPublish(db, loop.id, platform, "skipped", { error: res.error });
+          results[platform] = { skipped: true };
         } else {
           await logPublish(db, loop.id, platform, "failed", { error: res.error });
           results[platform] = { ok: false, error: res.error };
@@ -1135,6 +1235,9 @@ export async function publishLoopToPlatforms(
         if (res.ok) {
           await logPublish(db, loop.id, platform, "posted", { payload });
           results[platform] = { ok: true };
+        } else if (res.error === "missing_webhook") {
+          await logPublish(db, loop.id, platform, "skipped", { error: res.error });
+          results[platform] = { skipped: true };
         } else {
           await logPublish(db, loop.id, platform, "failed", { error: res.error });
           results[platform] = { ok: false, error: res.error };
@@ -1214,16 +1317,27 @@ export async function publishLoopToPlatforms(
           continue;
         }
 
-        const res = await postYouTube(db, loop, payload);
+        const res = await postYouTube(db, loop, payload, ytOpts);
+        if (res.throttled) {
+          results[platform] = {
+            skipped: true,
+            throttled: true,
+            reason: res.error,
+            retryAfterSec: res.retryAfterSec,
+          };
+          continue;
+        }
         if (res.ok) {
-          const uploadMeta = res.account ? youtubeUploadMetadata(payload, res.account) : null;
+          const uploadMeta = res.account ? youtubeUploadMetadata(payload, res.account, ytOpts) : null;
           await logPublish(db, loop.id, platform, "posted", {
+            publish_variant: publishVariant,
             external_id: res.id,
             payload: {
               url: res.id ? `https://www.youtube.com/watch?v=${res.id}` : null,
               title: uploadMeta?.title ?? payload.name,
               track_kind: payload.track_kind,
               account: res.account ?? "vibez",
+              format: ytOpts?.format ?? "short",
               viral: payload.viral_meta?.series ?? null,
               ab_title: res.ab?.titleVariant ?? uploadMeta?.ab.titleVariant ?? null,
               ab_desc: res.ab?.descVariant ?? uploadMeta?.ab.descVariant ?? null,
@@ -1241,6 +1355,15 @@ export async function publishLoopToPlatforms(
               .update({ status: "published", updated_at: new Date().toISOString() })
               .eq("loop_id", loop.id);
           }
+          await db
+            .from("youtube_daily_plans")
+            .update({
+              status: "published",
+              youtube_video_id: res.id ?? null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("loop_id", loop.id)
+            .eq("publish_variant", publishVariant);
           results[platform] = { ok: true, id: res.id, account: res.account };
         } else if (res.error === "missing_youtube_credentials") {
           await logPublish(db, loop.id, platform, "skipped", { error: res.error });

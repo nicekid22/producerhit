@@ -2,8 +2,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Loop } from "@/types/loop";
 import { hashString } from "@/lib/utils";
 import { loadCoverBitmap } from "@/lib/visualizer/coverLoader";
+import { loadCdSleeveTexture } from "@/lib/visualizer/cdSleeveOverlay";
 import { animateFakeBars, BAR_COUNT, createBarBuffer, readAnalyserBars } from "@/lib/visualizer/frequencyBars";
 import { renderVisualizerFrame } from "@/lib/visualizer/renderFrame";
+import { primeCdSleeveTexture } from "@/lib/visualizer/sleeveFrame";
 import type { VisualizerLayout, VisualizerPresetId } from "@/lib/visualizer/types";
 import { resolvePlayableAudioUrl, shouldUseWebAudioGraph } from "@/lib/playableAudio";
 import { cn } from "@/lib/utils";
@@ -66,6 +68,20 @@ export function MusicVisualizerPreview({
     } catch {
       graphFailedRef.current = true;
     }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    void loadCdSleeveTexture().then((bitmap) => {
+      if (cancelled) {
+        bitmap?.close?.();
+        return;
+      }
+      primeCdSleeveTexture(bitmap);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {

@@ -12,15 +12,15 @@ export const VISUALIZER_PRESETS: PresetMeta[] = [
     id: "prism",
     labelFr: "Prism",
     labelEn: "Prism",
-    hintFr: "Zoom lent, glow, grain — clean TikTok",
-    hintEn: "Slow zoom, glow, grain — clean TikTok",
+    hintFr: "Mesh animé, cover centrée, waveform cyan",
+    hintEn: "Animated mesh, centered cover, cyan wave",
   },
   {
     id: "vhs",
     labelFr: "VHS",
     labelEn: "VHS",
-    hintFr: "Scanlines, aberration, nostalgia",
-    hintEn: "Scanlines, chromatic drift, nostalgia",
+    hintFr: "Écran camcorder 4:3, REC, scanlines",
+    hintEn: "4:3 camcorder screen, REC, scanlines",
   },
   {
     id: "particles",
@@ -28,6 +28,13 @@ export const VISUALIZER_PRESETS: PresetMeta[] = [
     labelEn: "Particles",
     hintFr: "Particules réactives au bass",
     hintEn: "Bass-reactive floating particles",
+  },
+  {
+    id: "sleeve",
+    labelFr: "Pochette",
+    labelEn: "Sleeve",
+    hintFr: "Cover centrée, fond mood animé, effet CD",
+    hintEn: "Centered cover, animated mood bg, CD case",
   },
 ];
 

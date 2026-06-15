@@ -50,7 +50,7 @@ import { useVisualThemeStore, isWarmGlassTheme } from "@/stores/visualThemeStore
 import { landingCopy, landingFlowSectionClass, landingSectionClass } from "@/lib/landingContent";
 import { saveLandingPendingGeneration } from "@/lib/landingPendingGeneration";
 import { handoffRemixToDashboard } from "@/lib/remixHandoff";
-import { buildAuthUrl } from "@/lib/authRoutes";
+import { buildAuthUrl, resolvePostAuthRedirect } from "@/lib/authRoutes";
 import { cn } from "@/lib/utils";
 import { normalizePlan } from "@/lib/billing";
 import { hostedAudioRetentionSummary } from "@/lib/loopAudioRetention";
@@ -476,13 +476,29 @@ export default function Landing() {
     if (generating) return;
     const promptValue = mode === "beat" ? inferBeatPrompt() : inferSongPrompt();
     saveLandingPendingGeneration({ prompt: promptValue, mode });
+    const dashboardNext = `/dashboard?prompt=${encodeURIComponent(promptValue)}&mode=${mode}`;
     if (!user) {
-      trackClientEvent("landing_generate_click", { mode });
-      navigate(buildAuthUrl());
+      trackClientEvent("landing_generate_click", { mode, auth_required: true });
+      navigate(buildAuthUrl({ next: dashboardNext }));
       return;
     }
-    trackClientEvent("landing_generate_click", { mode });
-    navigate(`/dashboard?prompt=${encodeURIComponent(promptValue)}&mode=${mode}`);
+    trackClientEvent("landing_generate_click", { mode, auth_required: false });
+    navigate(dashboardNext);
+  };
+
+  const startCreateFromTrack = (track: PublicTrack) => {
+    const promptValue =
+      track.prompt?.trim() ||
+      [track.name, track.genre, track.mood, track.bpm ? `${track.bpm} BPM` : ""].filter(Boolean).join(", ");
+    if (!promptValue.trim()) return;
+    saveLandingPendingGeneration({ prompt: promptValue, mode: track.kind });
+    const dashboardNext = `/dashboard?prompt=${encodeURIComponent(promptValue)}&mode=${track.kind}`;
+    trackClientEvent("landing_create_similar", { loop_id: track.id, mode: track.kind });
+    if (!user) {
+      navigate(buildAuthUrl({ next: dashboardNext }));
+      return;
+    }
+    navigate(dashboardNext);
   };
 
   const remixFromLandingTrack = (track: PublicTrack) => {
@@ -1011,7 +1027,7 @@ export default function Landing() {
     const stayHome = new URLSearchParams(location.search).get("home") === "1";
     if (stayHome) return;
     if (!consumeJustAuthenticated() && !hasOAuthCallbackParams()) return;
-    navigate("/dashboard", { replace: true });
+    navigate(resolvePostAuthRedirect("/dashboard"), { replace: true });
   }, [authStatus, location.search, navigate, user]);
 
   const faqs = useMemo(() => {
@@ -1337,6 +1353,10 @@ export default function Landing() {
                 onPlay={(track) => {
                   const row = trending.find((t) => t.id === track.id);
                   if (row) handlePlay(row, trending.slice(0, 12));
+                }}
+                onCreateSimilar={(track) => {
+                  const row = trending.find((t) => t.id === track.id);
+                  if (row) startCreateFromTrack(row);
                 }}
               />
             ) : (

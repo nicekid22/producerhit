@@ -1,21 +1,26 @@
 import type { Loop } from "@/types/loop";
 import { hashString } from "@/lib/utils";
 import { loadCoverBitmap } from "@/lib/visualizer/coverLoader";
-import { BAR_COUNT, createBarBuffer, readAnalyserBars } from "@/lib/visualizer/frequencyBars";
+import { loadCdSleeveTexture } from "@/lib/visualizer/cdSleeveOverlay";
+import { animateFakeBars, BAR_COUNT, createBarBuffer } from "@/lib/visualizer/frequencyBars";
 import { canvasSizeForLayout, renderVisualizerFrame, resolveExportDuration } from "@/lib/visualizer/renderFrame";
+import { exportCanvasToMp4, supportsShareMp4Export } from "@/lib/visualizer/exportShareMp4";
+import { exportCanvasViaMediaRecorder, recorderMimeIsMp4 } from "@/lib/visualizer/exportViaMediaRecorder";
+import { buildShareVideoFilename } from "@/lib/sharePlatform";
+import type { SharePlatform } from "@/lib/sharePlatform";
+import { primeCdSleeveTexture } from "@/lib/visualizer/sleeveFrame";
 import type { VisualizerExportOptions, VisualizerPresetId } from "@/lib/visualizer/types";
-import { resolvePlayableAudioUrl } from "@/lib/playableAudio";
 
-function pickMimeType(): string {
-  if (typeof MediaRecorder === "undefined") return "video/webm";
-  if (MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")) return "video/webm;codecs=vp9,opus";
-  if (MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")) return "video/webm;codecs=vp8,opus";
-  return "video/webm";
-}
+export { supportsShareMp4Export };
 
-export async function exportVisualizerVideo(loop: Loop, options: VisualizerExportOptions = {}): Promise<Blob> {
+export type ShareVideoBlob = {
+  blob: Blob;
+  /** True when the blob is H.264 MP4 (WebCodecs or native recorder). */
+  isMp4: boolean;
+};
+
+export async function exportVisualizerVideo(loop: Loop, options: VisualizerExportOptions = {}): Promise<ShareVideoBlob> {
   if (!loop.audioUrl) throw new Error("missing_audio");
-  if (typeof MediaRecorder === "undefined") throw new Error("unsupported");
 
   const layout = options.layout ?? "story";
   const preset: VisualizerPresetId = options.preset ?? "void";
@@ -26,57 +31,13 @@ export async function exportVisualizerVideo(loop: Loop, options: VisualizerExpor
   const { width: w, height: h } = canvasSizeForLayout(layout);
   const seed = hashString(loop.id);
 
-  const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("canvas");
+  const [coverBitmap, cdTexture] = await Promise.all([loadCoverBitmap(loop, 1024), loadCdSleeveTexture()]);
+  primeCdSleeveTexture(cdTexture);
 
-  const [coverBitmap, audioUrl] = await Promise.all([
-    loadCoverBitmap(loop, 1024),
-    resolvePlayableAudioUrl(loop.audioUrl, loop.id),
-  ]);
-
-  const audio = new Audio();
-  audio.crossOrigin = "anonymous";
-  audio.preload = "auto";
-  audio.src = audioUrl;
-
-  const audioCtx = new AudioContext();
-  const source = audioCtx.createMediaElementSource(audio);
-  const analyser = audioCtx.createAnalyser();
-  analyser.fftSize = 256;
-  analyser.smoothingTimeConstant = 0.82;
-  const dest = audioCtx.createMediaStreamDestination();
-  source.connect(analyser);
-  analyser.connect(dest);
-
-  const freq = new Uint8Array(analyser.frequencyBinCount);
   const bars = createBarBuffer(BAR_COUNT);
 
-  const canvasStream = canvas.captureStream(fps);
-  const out = new MediaStream([...canvasStream.getVideoTracks(), ...dest.stream.getAudioTracks()]);
-  const mime = pickMimeType();
-  const rec = new MediaRecorder(out, { mimeType: mime, videoBitsPerSecond: 6_000_000 });
-  const chunks: BlobPart[] = [];
-  rec.ondataavailable = (e) => {
-    if (e.data?.size) chunks.push(e.data);
-  };
-  const stopPromise = new Promise<Blob>((resolve) => {
-    rec.onstop = () => resolve(new Blob(chunks, { type: mime }));
-  });
-
-  const startTs = performance.now();
-  let lastTs = startTs;
-
-  const tick = () => {
-    const now = performance.now();
-    const t = (now - startTs) / 1000;
-    const dt = Math.min(0.05, (now - lastTs) / 1000);
-    lastTs = now;
-
-    readAnalyserBars(analyser, freq, bars, !audio.paused && !audio.ended);
-
+  const renderFrame = (ctx: CanvasRenderingContext2D, t: number, dt: number) => {
+    animateFakeBars(bars, t);
     renderVisualizerFrame(
       {
         ctx,
@@ -95,40 +56,50 @@ export async function exportVisualizerVideo(loop: Loop, options: VisualizerExpor
       },
       dt,
     );
-
-    if (t < durationSec) requestAnimationFrame(tick);
   };
 
-  rec.start(100);
-  await audioCtx.resume().catch(() => undefined);
-  await audio.play().catch(() => undefined);
-  tick();
-
-  await new Promise<void>((resolve) => {
-    window.setTimeout(resolve, durationSec * 1000);
-  });
-
-  rec.stop();
-  audio.pause();
-  canvasStream.getTracks().forEach((tr) => tr.stop());
-  dest.stream.getTracks().forEach((tr) => tr.stop());
-  await audioCtx.close().catch(() => undefined);
-  coverBitmap?.close?.();
-
-  return stopPromise;
+  try {
+    try {
+      const blob = await exportCanvasToMp4({
+        width: w,
+        height: h,
+        durationSec,
+        fps,
+        audioUrl: loop.audioUrl,
+        loopId: loop.id,
+        renderFrame,
+      });
+      return { blob, isMp4: true };
+    } catch {
+      const blob = await exportCanvasViaMediaRecorder({
+        width: w,
+        height: h,
+        durationSec,
+        fps,
+        audioUrl: loop.audioUrl,
+        loopId: loop.id,
+        renderFrame,
+      });
+      const mime = blob.type || "video/webm";
+      return { blob, isMp4: recorderMimeIsMp4(mime) };
+    }
+  } finally {
+    coverBitmap?.close?.();
+  }
 }
 
-export function downloadVisualizerVideo(loop: Loop, blob: Blob, layout: "story" | "square" = "story"): void {
+export function downloadVisualizerVideo(
+  loop: Loop,
+  blob: Blob,
+  layout: "story" | "square" = "story",
+  platform: SharePlatform = "tiktok",
+): void {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  const cleanName = (loop.name || "producerhit")
-    .replace(/[^a-zA-Z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .toLowerCase()
-    .slice(0, 64);
-  const suffix = layout === "square" ? "visual-square" : "visual-tiktok";
-  a.download = `${cleanName || "producerhit"}-${suffix}.webm`;
+  const baseName = buildShareVideoFilename(loop, layout, platform);
+  const isMp4 = blob.type.includes("mp4") || baseName.endsWith(".mp4");
+  a.download = isMp4 ? baseName : baseName.replace(/\.mp4$/i, ".webm");
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

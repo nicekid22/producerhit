@@ -1,7 +1,8 @@
 import type { Loop } from "@/types/loop";
 import { hashString, resolveCoverArtPrompt, coverImageSeed } from "@/lib/utils";
-import { resolvePlayableAudioUrl } from "@/lib/playableAudio";
 import { canvasSizeForLayout, resolveExportDuration } from "@/lib/visualizer/renderFrame";
+import { exportCanvasToMp4 } from "@/lib/visualizer/exportShareMp4";
+import { exportCanvasViaMediaRecorder } from "@/lib/visualizer/exportViaMediaRecorder";
 import type { VisualizerLayout } from "@/lib/visualizer/types";
 import { supabase } from "@/lib/supabaseClient";
 import { getTotalGenerationLimit } from "@/lib/planLimits";
@@ -118,13 +119,6 @@ export async function fetchMoodBoardImage(
   };
 }
 
-function pickMimeType(): string {
-  if (typeof MediaRecorder === "undefined") return "video/webm";
-  if (MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")) return "video/webm;codecs=vp9,opus";
-  if (MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")) return "video/webm;codecs=vp8,opus";
-  return "video/webm";
-}
-
 async function loadImageBitmap(url: string): Promise<ImageBitmap> {
   const res = await fetch(url, { mode: "cors" });
   if (!res.ok) throw new Error("image_load_failed");
@@ -228,7 +222,7 @@ function drawTrackMeta(ctx: CanvasRenderingContext2D, w: number, h: number, loop
   ctx.restore();
 }
 
-/** Vidéo sociale : photo mood + logo centré + audio (rendu navigateur). */
+/** Vidéo sociale : photo mood + logo centré + audio (MP4 H.264). */
 export async function exportMoodBoardVideo(
   loop: Loop,
   imageUrl: string,
@@ -240,7 +234,6 @@ export async function exportMoodBoardVideo(
   },
 ): Promise<Blob> {
   if (!loop.audioUrl) throw new Error("missing_audio");
-  if (typeof MediaRecorder === "undefined") throw new Error("unsupported");
 
   const exportSec = Math.min(
     MOOD_VIDEO_EXPORT_MAX_SEC,
@@ -250,69 +243,39 @@ export async function exportMoodBoardVideo(
   const seed = hashString(`${loop.id}:mood:${layout}`);
   const isFr = options?.locale === "fr";
 
-  const [bgBitmap, logoBitmap, audioUrl] = await Promise.all([
-    loadImageBitmap(imageUrl),
-    loadLogoBitmap(),
-    resolvePlayableAudioUrl(loop.audioUrl, loop.id),
-  ]);
+  const [bgBitmap, logoBitmap] = await Promise.all([loadImageBitmap(imageUrl), loadLogoBitmap()]);
 
-  const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("canvas");
-
-  const audio = new Audio();
-  audio.crossOrigin = "anonymous";
-  audio.preload = "auto";
-  audio.src = audioUrl;
-
-  const audioCtx = new AudioContext();
-  const source = audioCtx.createMediaElementSource(audio);
-  const dest = audioCtx.createMediaStreamDestination();
-  source.connect(dest);
-
-  const canvasStream = canvas.captureStream(30);
-  const out = new MediaStream([...canvasStream.getVideoTracks(), ...dest.stream.getAudioTracks()]);
-  const mime = pickMimeType();
-  const rec = new MediaRecorder(out, { mimeType: mime, videoBitsPerSecond: 6_000_000 });
-  const chunks: BlobPart[] = [];
-  rec.ondataavailable = (e) => {
-    if (e.data?.size) chunks.push(e.data);
-  };
-  const stopPromise = new Promise<Blob>((resolve) => {
-    rec.onstop = () => resolve(new Blob(chunks, { type: mime }));
-  });
-
-  const startTs = performance.now();
-  let lastTs = startTs;
-
-  const tick = () => {
-    const now = performance.now();
-    const t = (now - startTs) / 1000;
-    lastTs = now;
-
+  const renderFrame = (ctx: CanvasRenderingContext2D, t: number) => {
     drawKenBurnsImage(ctx, bgBitmap, w, h, t, exportSec, seed);
     if (logoBitmap) drawCenterLogo(ctx, w, h, logoBitmap, t);
     if (options?.showWatermark !== false) drawTrackMeta(ctx, w, h, loop, isFr);
-
-    if (t < exportSec) requestAnimationFrame(tick);
   };
 
-  rec.start(100);
-  await audioCtx.resume().catch(() => undefined);
-  await audio.play().catch(() => undefined);
-  tick();
-
-  await new Promise<void>((resolve) => window.setTimeout(resolve, exportSec * 1000));
-
-  rec.stop();
-  audio.pause();
-  canvasStream.getTracks().forEach((tr) => tr.stop());
-  dest.stream.getTracks().forEach((tr) => tr.stop());
-  await audioCtx.close().catch(() => undefined);
-
-  return stopPromise;
+  try {
+    try {
+      return await exportCanvasToMp4({
+        width: w,
+        height: h,
+        durationSec: exportSec,
+        fps: 30,
+        audioUrl: loop.audioUrl,
+        loopId: loop.id,
+        renderFrame,
+      });
+    } catch {
+      return await exportCanvasViaMediaRecorder({
+        width: w,
+        height: h,
+        durationSec: exportSec,
+        fps: 30,
+        audioUrl: loop.audioUrl,
+        loopId: loop.id,
+        renderFrame,
+      });
+    }
+  } finally {
+    bgBitmap.close();
+  }
 }
 
 export function downloadMoodBoardVideoBlob(loop: Loop, blob: Blob, layout: VisualizerLayout): void {
@@ -324,8 +287,9 @@ export function downloadMoodBoardVideoBlob(loop: Loop, blob: Blob, layout: Visua
     .replace(/\s+/g, "-")
     .toLowerCase()
     .slice(0, 64);
-  const suffix = layout === "square" ? "mood-square" : "mood-tiktok";
-  a.download = `${cleanName || "producerhit"}-${suffix}.webm`;
+  const suffix = layout === "square" ? "mood-square" : "mood-9x16";
+  const isMp4 = blob.type.includes("mp4");
+  a.download = isMp4 ? `${cleanName || "producerhit"}-${suffix}.mp4` : `${cleanName || "producerhit"}-${suffix}.webm`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

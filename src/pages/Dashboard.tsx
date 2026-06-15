@@ -795,7 +795,6 @@ export default function Dashboard() {
         mode: landingRequest.mode,
       });
       setEntrySource("landing");
-      clearLandingPendingGeneration();
     } else if (!pendingRemix && !remixParam) {
       try {
         const src = window.localStorage.getItem("producerhit_pending_source");
@@ -2631,19 +2630,39 @@ export default function Dashboard() {
 
     if (remaining === 0) {
       promptPlanUpsell("credits_exhausted");
+      clearLandingPendingGeneration();
       setPendingLandingRequest(null);
       return;
     }
 
+    try {
+      if (window.sessionStorage.getItem("producerhit_landing_autogen_done") === "1") {
+        clearLandingPendingGeneration();
+        setPendingLandingRequest(null);
+        return;
+      }
+      window.sessionStorage.setItem("producerhit_landing_autogen_done", "1");
+    } catch {
+      void 0;
+    }
+
     autoLandingGenerateRef.current = true;
+    clearLandingPendingGeneration();
     setPendingLandingRequest(null);
+    trackClientEvent("landing_auto_generate_start", { entry_source: entrySource, mobile: mobileV2 });
+    toast.success(
+      locale === "fr" ? "Génération lancée — ton idée depuis la landing." : "Generating — starting your landing idea.",
+      { duration: 3200 },
+    );
     if (mobileV2) goResults();
     void handleGenerate();
   }, [
     genreReady,
     generating,
+    entrySource,
     goResults,
     handleGenerate,
+    locale,
     mobileV2,
     pendingLandingRequest,
     quotaReady,

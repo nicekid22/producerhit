@@ -2,7 +2,14 @@
  * YouTube multi-channel routing — viral series vs community music promo.
  */
 
-export type YouTubeChannelId = "vibez" | "market" | "lowdey" | "producerhitai" | "beatmakerunion";
+export type YouTubeChannelId =
+  | "vibez"
+  | "market"
+  | "lowdey"
+  | "producerhitai"
+  | "beatmakerunion"
+  | "remix1"
+  | "remix2";
 
 export const SERIES_YOUTUBE_CHANNEL: Record<string, YouTubeChannelId> = {
   comment_to_song: "producerhitai",
