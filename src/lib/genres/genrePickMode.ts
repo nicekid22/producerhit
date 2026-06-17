@@ -1,16 +1,17 @@
 import { ALL_GENRE_OPTIONS } from "@/lib/genres";
-import { buildPrecisionGenreOptions } from "@/lib/genres/genreMenuOrder";
-import type { DropdownOption } from "@/components/ui/Dropdown";
 
 import type { AppLocale } from "@/i18n/config";
-/** Sentinel: random genre pick inside Custom mode (Genre précis dropdown). */
+
+/** Genre piloté par l'idée — pas d'injection catalogue. */
+export const FROM_IDEA_GENRE_VALUE = "Auto";
+
+/** Tirage catalogue à chaque génération (idée vide). */
 export const RANDOM_GENRE_VALUE = "__random__";
 
-export type GenrePickMode = "auto" | "custom";
-
+/** @deprecated Ancien toggle — migration localStorage uniquement. */
 export const GENRE_PICK_MODE_STORAGE_KEY = "producerhit_genre_pick_mode";
 
-export const CUSTOM_GENRE_OPTIONS = ALL_GENRE_OPTIONS.filter((o) => o.value !== "Auto");
+export const CUSTOM_GENRE_OPTIONS = ALL_GENRE_OPTIONS.filter((o) => o.value !== FROM_IDEA_GENRE_VALUE);
 
 const GENRE_POOL = CUSTOM_GENRE_OPTIONS.map((o) => o.value);
 
@@ -34,44 +35,87 @@ export function isRandomGenreSelection(value: string | null | undefined): boolea
   return value === RANDOM_GENRE_VALUE;
 }
 
-export function normalizeGenrePickMode(value: string | null | undefined): GenrePickMode {
-  if (value === "auto") return "auto";
-  return "custom";
+export function isFromIdeaGenreSelection(value: string | null | undefined): boolean {
+  return !value || value === FROM_IDEA_GENRE_VALUE;
 }
 
-export function precisionGenreOptions(locale: AppLocale): DropdownOption[] {
-  return buildPrecisionGenreOptions(locale);
+export function isCatalogGenreSelection(value: string | null | undefined): boolean {
+  if (!value) return false;
+  return !isFromIdeaGenreSelection(value) && !isRandomGenreSelection(value);
+}
+
+export function defaultGenreForIdea(ideaText: string): string {
+  return ideaText.trim() ? FROM_IDEA_GENRE_VALUE : RANDOM_GENRE_VALUE;
+}
+
+export function landingGenreForHandoff(prompt: string, strategy?: "from_idea" | "random"): string {
+  const resolved = strategy ?? (prompt.trim() ? "from_idea" : "random");
+  return resolved === "from_idea" ? FROM_IDEA_GENRE_VALUE : RANDOM_GENRE_VALUE;
+}
+
+export function shouldPickRandomGenreAtGenerate(formGenre: string, ideaText: string): boolean {
+  const idea = ideaText.trim();
+  if (idea) return false;
+  return isFromIdeaGenreSelection(formGenre) || isRandomGenreSelection(formGenre);
 }
 
 export function resolveGenreForGeneration(
-  mode: GenrePickMode,
   formGenre: string,
+  ideaText: string,
   randomGenre?: string,
 ): { promptGenre: string; displayGenre: string; pickedRandom?: string } {
-  if (mode === "auto") {
-    return { promptGenre: "", displayGenre: "Auto" };
+  const idea = ideaText.trim();
+
+  if (idea && (isFromIdeaGenreSelection(formGenre) || isRandomGenreSelection(formGenre))) {
+    return { promptGenre: "", displayGenre: FROM_IDEA_GENRE_VALUE };
   }
+
+  if (!idea && isFromIdeaGenreSelection(formGenre)) {
+    const picked = randomGenre?.trim() || pickRandomGenreValue();
+    return { promptGenre: picked, displayGenre: picked, pickedRandom: picked };
+  }
+
   if (isRandomGenreSelection(formGenre)) {
     const picked = randomGenre?.trim() || pickRandomGenreValue();
     return { promptGenre: picked, displayGenre: picked, pickedRandom: picked };
   }
-  const g = formGenre && formGenre !== "Auto" ? formGenre : "Melodic Trap";
+
+  const g = isCatalogGenreSelection(formGenre) ? formGenre : "Melodic Trap";
   return { promptGenre: g, displayGenre: g };
 }
 
-export function genrePickModeHint(mode: GenrePickMode, locale: AppLocale, lastRandom?: string): string {
+export function genreSelectionHint(
+  genre: string,
+  locale: AppLocale,
+  ideaFilled: boolean,
+  lastRandom?: string,
+): string {
   const isFr = locale === "fr";
-  if (mode === "auto") {
-    return isFr
-      ? "L’IA choisit le style à partir de ton idée, l’ambiance et les chips — sans genre imposé."
-      : "AI picks the style from your idea, mood, and chips — no fixed genre.";
+  if (isFromIdeaGenreSelection(genre)) {
+    return ideaFilled
+      ? isFr
+        ? "Le style est lu depuis ton idée — aucun genre catalogue ajouté."
+        : "Style comes from your idea — no extra catalog genre."
+      : isFr
+        ? "Remplis l’idée ou choisis Aléatoire / un genre du catalogue."
+        : "Add an idea, or pick Random / a catalog genre.";
   }
-  if (lastRandom) {
+  if (isRandomGenreSelection(genre)) {
+    if (ideaFilled) {
+      return isFr
+        ? "Idée remplie : le style vient de l’idée (pas de second tirage)."
+        : "Idea filled: style comes from your idea (no extra random pick).";
+    }
+    if (lastRandom) {
+      return isFr
+        ? `Dernier tirage : ${lastRandom}. Un genre catalogue est tiré à chaque génération.`
+        : `Last pick: ${lastRandom}. A catalog genre is rolled each generation.`;
+    }
     return isFr
-      ? `Dernier tirage aléatoire : ${lastRandom}. Choisis un genre précis ou laisse Aléatoire.`
-      : `Last random pick: ${lastRandom}. Pick an exact genre or keep Random.`;
+      ? "Un genre du catalogue est tiré à chaque génération."
+      : "A catalog genre is rolled on each generation.";
   }
   return isFr
-    ? "Sélectionne un genre précis du catalogue ou choisit - Aléatoire."
-    : "Exact genre or Random in the list every generation.";
+    ? `Genre fixe : ${genre}. Tu peux le combiner avec ton idée.`
+    : `Fixed genre: ${genre}. You can combine it with your idea.`;
 }

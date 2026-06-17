@@ -10,7 +10,7 @@ import {
   Sparkles,
   type LucideIcon,
 } from "lucide-react";
-import { RANDOM_GENRE_VALUE } from "@/lib/genres/genrePickMode";
+import { FROM_IDEA_GENRE_VALUE, RANDOM_GENRE_VALUE } from "@/lib/genres/genrePickMode";
 
 /** Une icône par catégorie — évite la confusion entre genres voisins. */
 const GROUP_ICON: Record<string, LucideIcon> = {
@@ -52,11 +52,18 @@ export function genreIconClassName(value: string, active?: boolean) {
   if (value === RANDOM_GENRE_VALUE) {
     return active ? "pk-menu-icon-accent h-4 w-4" : "pk-menu-icon-accent h-4 w-4 opacity-90";
   }
+  if (value === FROM_IDEA_GENRE_VALUE) {
+    return active ? "h-4 w-4 text-pk-accent" : "h-4 w-4 text-pk-muted";
+  }
   return active ? "h-4 w-4 text-pk-accent" : "h-4 w-4 text-pk-muted";
 }
 
 export function GenreOptionIcon({ value, group, active }: { value: string; group?: string; active?: boolean }) {
   const Icon =
-    value === RANDOM_GENRE_VALUE ? Shuffle : (GROUP_ICON[(group ?? "").toLowerCase()] ?? Music2);
+    value === RANDOM_GENRE_VALUE
+      ? Shuffle
+      : value === FROM_IDEA_GENRE_VALUE
+        ? Sparkles
+        : (GROUP_ICON[(group ?? "").toLowerCase()] ?? Music2);
   return <Icon className={genreIconClassName(value, active)} aria-hidden />;
 }

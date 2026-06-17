@@ -468,7 +468,7 @@ export default function Landing() {
 
     if (mode === "song" && !userPrompt) {
       trackClientEvent("landing_create_empty", { mode: "song" });
-      clearLandingPendingGeneration();
+      saveLandingPendingGeneration({ prompt: "", mode: "song", genreStrategy: "random" });
       const dashboardNext = "/dashboard?mode=song";
       if (!user) {
         navigate(buildAuthUrl({ next: dashboardNext }));
@@ -480,7 +480,7 @@ export default function Landing() {
 
     const promptValue = mode === "beat" ? userPrompt || inferBeatPrompt() : userPrompt;
     if (!promptValue.trim()) {
-      clearLandingPendingGeneration();
+      saveLandingPendingGeneration({ prompt: "", mode, genreStrategy: "random" });
       const dashboardNext = `/dashboard?mode=${mode}`;
       if (!user) {
         navigate(buildAuthUrl({ next: dashboardNext }));
@@ -490,7 +490,7 @@ export default function Landing() {
       return;
     }
 
-    saveLandingPendingGeneration({ prompt: promptValue, mode });
+    saveLandingPendingGeneration({ prompt: promptValue, mode, genreStrategy: "from_idea" });
     const dashboardNext = `/dashboard?prompt=${encodeURIComponent(promptValue)}&mode=${mode}`;
     if (!user) {
       trackClientEvent("landing_generate_click", { mode, auth_required: true });
@@ -506,7 +506,7 @@ export default function Landing() {
       track.prompt?.trim() ||
       [track.name, track.genre, track.mood, track.bpm ? `${track.bpm} BPM` : ""].filter(Boolean).join(", ");
     if (!promptValue.trim()) return;
-    saveLandingPendingGeneration({ prompt: promptValue, mode: track.kind });
+    saveLandingPendingGeneration({ prompt: promptValue, mode: track.kind, genreStrategy: "from_idea" });
     const dashboardNext = `/dashboard?prompt=${encodeURIComponent(promptValue)}&mode=${track.kind}`;
     trackClientEvent("landing_create_similar", { loop_id: track.id, mode: track.kind });
     if (!user) {

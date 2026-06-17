@@ -1,10 +1,10 @@
 import type { DropdownOption } from "@/components/ui/Dropdown";
 import { ALL_GENRE_OPTIONS } from "@/lib/genres";
 import { EXTENDED_GENRES } from "@/lib/genres/extendedCatalog";
-import { RANDOM_GENRE_VALUE } from "@/lib/genres/genrePickMode";
+import { FROM_IDEA_GENRE_VALUE, RANDOM_GENRE_VALUE } from "@/lib/genres/genrePickMode";
 
 import type { AppLocale } from "@/i18n/config";
-const CUSTOM_GENRE_OPTIONS = ALL_GENRE_OPTIONS.filter((o) => o.value !== "Auto");
+const CUSTOM_GENRE_OPTIONS = ALL_GENRE_OPTIONS.filter((o) => o.value !== FROM_IDEA_GENRE_VALUE);
 
 /** Genres les plus utilisés — affichés en tête du menu (avant les catégories). */
 export const PRIMARY_GENRE_VALUES: readonly string[] = [
@@ -54,8 +54,9 @@ const CORE_GROUP_ORDER: readonly string[] = [
 
 export function buildPrecisionGenreOptions(locale: AppLocale): DropdownOption[] {
   const primaryGroup = locale === "fr" ? "Genres principaux" : "Popular genres";
-  const randomLabel =
-    locale === "fr" ? "Aléatoire" : "Random";
+  const modeGroup = locale === "fr" ? "Mode" : "Mode";
+  const fromIdeaLabel = locale === "fr" ? "Depuis l'idée" : "From your idea";
+  const randomLabel = locale === "fr" ? "Aléatoire" : "Random";
 
   const byValue = new Map(CUSTOM_GENRE_OPTIONS.map((o) => [o.value, o]));
   const used = new Set<string>();
@@ -91,5 +92,11 @@ export function buildPrecisionGenreOptions(locale: AppLocale): DropdownOption[] 
     extended.push({ value: opt.value, label: opt.label, group: opt.group });
   }
 
-  return [{ value: RANDOM_GENRE_VALUE, label: randomLabel }, ...primary, ...coreByGroup, ...extended];
+  return [
+    { value: FROM_IDEA_GENRE_VALUE, label: fromIdeaLabel, group: modeGroup },
+    { value: RANDOM_GENRE_VALUE, label: randomLabel, group: modeGroup },
+    ...primary,
+    ...coreByGroup,
+    ...extended,
+  ];
 }

@@ -4,13 +4,13 @@ import { GeneratorSection } from "@/components/dashboard/GeneratorSection";
 import type { PanelGenerateBridge } from "@/components/dashboard/panelGenerateBridge";
 import { SpeechDictationField } from "@/components/SpeechDictationField";
 import type { AppLocale } from "@/i18n/config";
+import { isCatalogGenreSelection, isFromIdeaGenreSelection, isRandomGenreSelection } from "@/lib/genres/genrePickMode";
 
 const COVER_LYRICS_ROWS = 10;
 
 type Props = {
   locale: AppLocale;
   genre: string;
-  genrePickMode: "auto" | "custom";
   lastRandomGenre: string | null;
   onGenreChange: (genre: string) => void;
   generating: boolean;
@@ -23,7 +23,6 @@ type Props = {
 export function CoverStudioPanel({
   locale,
   genre,
-  genrePickMode,
   lastRandomGenre,
   onGenreChange,
   generating,
@@ -36,7 +35,8 @@ export function CoverStudioPanel({
   const [lyrics, setLyrics] = useState("");
   const [styleHint, setStyleHint] = useState("");
 
-  const genreReady = genrePickMode === "auto" || (genre.length > 0 && genre !== "Auto");
+  const genreReady =
+    isCatalogGenreSelection(genre) || isRandomGenreSelection(genre) || isFromIdeaGenreSelection(genre);
   const lyricsReady = lyrics.trim().length >= 24;
   const canSubmit = genreReady && lyricsReady && remaining > 0 && !generating;
 
@@ -100,10 +100,10 @@ export function CoverStudioPanel({
         <GenrePickControl
           compact
           locale={locale}
-          mode={genrePickMode}
           genre={genre}
           onGenreChange={onGenreChange}
           lastRandomGenre={lastRandomGenre}
+          ideaFilled={styleHint.trim().length > 0}
         />
       </GeneratorSection>
 

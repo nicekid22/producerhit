@@ -3,16 +3,20 @@ import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { AppShell } from "@/components/AppShell";
 import { Dropdown, type DropdownOption } from "@/components/ui/Dropdown";
-import { GenreAutoModeToggle, GenrePickControl } from "@/components/dashboard/GenrePickControl";
+import { GenrePickControl } from "@/components/dashboard/GenrePickControl";
 import {
+  FROM_IDEA_GENRE_VALUE,
   GENRE_PICK_MODE_STORAGE_KEY,
+  isCatalogGenreSelection,
+  isFromIdeaGenreSelection,
   isRandomGenreSelection,
+  landingGenreForHandoff,
   pickRandomGenreValue,
   resolveGenreForGeneration,
   RANDOM_GENRE_VALUE,
-  type GenrePickMode,
+  shouldPickRandomGenreAtGenerate,
 } from "@/lib/genres/genrePickMode";
-import { resolveGenreForLandingPrompt } from "@/lib/genres/matchGenreFromPrompt";
+import { pickRandomPrompt } from "@/lib/randomPromptIdeas";
 import { vocalLanguageAutoOption, vocalLanguageDropdownOptions, resolveSongVocalLanguage } from "@/lib/vocalLanguages";
 import { Slider } from "@/components/ui/Slider";
 import { Button } from "@/components/ui/Button";
@@ -88,6 +92,7 @@ import { ensureReferralCode } from "@/lib/referral";
 import { loadPendingRemix, clearPendingRemix, type PendingRemix } from "@/lib/pendingRemix";
 import {
   clearLandingPendingGeneration,
+  landingGenreStrategyFromPrompt,
   readLandingPendingGeneration,
   type LandingPendingGeneration,
 } from "@/lib/landingPendingGeneration";
@@ -484,14 +489,6 @@ export default function Dashboard() {
   const engine = "ace-step" as const;
   const [lyricsMode, setLyricsMode] = useState<"ai" | "manual">("manual");
   const [songUiMode, setSongUiMode] = useState<"simple" | "custom">("simple");
-  const [genrePickMode, setGenrePickMode] = useState<GenrePickMode>(() => {
-    try {
-      const saved = window.localStorage.getItem(GENRE_PICK_MODE_STORAGE_KEY);
-      return saved === "auto" ? "auto" : "custom";
-    } catch {
-      return "custom";
-    }
-  });
   const [lastRandomGenre, setLastRandomGenre] = useState("");
   const [lyrics, setLyrics] = useState("");
   const [songDescription, setSongDescription] = useState("");
@@ -528,7 +525,12 @@ export default function Dashboard() {
   const landingFormAppliedRef = useRef(false);
   const autoLandingGenerateRef = useRef(false);
   const [landingAutoGenQueued, setLandingAutoGenQueued] = useState(false);
-  type LandingGenerateSnapshot = { prompt: string; mode: "beat" | "song"; genre: string };
+  type LandingGenerateSnapshot = {
+    prompt: string;
+    mode: "beat" | "song";
+    genre: string;
+    genreStrategy: "from_idea" | "random";
+  };
   const landingGenerateSnapshotRef = useRef<LandingGenerateSnapshot | null>(null);
   const debugEnabled = useMemo(() => {
     try {
@@ -814,7 +816,6 @@ export default function Dashboard() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const urlPrompt = params.get("prompt");
-    const urlMode = params.get("mode") === "beat" ? "beat" : "song";
     const urlSeedRaw = params.get("seed");
     const urlSeed = urlSeedRaw && /^\d+$/.test(urlSeedRaw) ? Number(urlSeedRaw) : null;
     const storedLanding = readLandingPendingGeneration();
@@ -828,7 +829,6 @@ export default function Dashboard() {
         clearPendingRemix();
         setEntrySource(pendingRemix.source === "public_loop" ? "public_loop_remix" : "community_remix");
         if (pendingRemix.genre?.trim()) {
-          setGenrePickMode("custom");
           setField("genre", pendingRemix.genre.trim());
         }
         if (pendingRemix.mood?.trim()) setField("mood", pendingRemix.mood.trim());
@@ -838,26 +838,36 @@ export default function Dashboard() {
     }
 
     let landingRequest: LandingPendingGeneration | null = null;
-    if (urlPrompt) {
+    const urlModeParam = params.get("mode");
+    const resolvedUrlMode = urlModeParam === "beat" ? "beat" : "song";
+
+    if (urlPrompt !== null) {
+      let decodedPrompt = urlPrompt;
       try {
-        landingRequest = { prompt: decodeURIComponent(urlPrompt), mode: urlMode };
+        decodedPrompt = decodeURIComponent(urlPrompt);
       } catch {
-        landingRequest = { prompt: urlPrompt, mode: urlMode };
+        decodedPrompt = urlPrompt;
       }
-    } else if (storedLanding && !params.has("mode")) {
+      const trimmed = decodedPrompt.trim();
+      landingRequest = {
+        prompt: trimmed,
+        mode: resolvedUrlMode,
+        genreStrategy: landingGenreStrategyFromPrompt(trimmed),
+      };
+    } else if (storedLanding) {
       landingRequest = storedLanding;
     }
 
-    if (landingRequest?.prompt.trim()) {
-      setPendingLandingRequest({
-        prompt: landingRequest.prompt.trim(),
-        mode: landingRequest.mode,
-      });
+    if (
+      landingRequest &&
+      (landingRequest.prompt.trim().length > 0 || landingRequest.genreStrategy === "random")
+    ) {
+      setPendingLandingRequest(landingRequest);
       setEntrySource("landing");
     } else if (!pendingRemix && !remixParam) {
       const rawMode = params.get("mode");
       if (rawMode === "beat" || rawMode === "song") setMode(rawMode);
-      if (params.has("mode")) clearLandingPendingGeneration();
+      if (params.has("mode") && !storedLanding) clearLandingPendingGeneration();
       try {
         const src = window.localStorage.getItem("producerhit_pending_source");
         if (src) {
@@ -873,7 +883,6 @@ export default function Dashboard() {
 
     const urlGenre = params.get("genre")?.trim();
     if (urlGenre && !pendingRemix && !remixParam) {
-      setGenrePickMode("custom");
       setField("genre", urlGenre);
       const rawMode = params.get("mode");
       if (rawMode === "beat" || rawMode === "song" || rawMode === "remix" || rawMode === "cover") setMode(rawMode);
@@ -928,51 +937,31 @@ export default function Dashboard() {
 
   useEffect(() => {
     try {
-      window.localStorage.setItem(GENRE_PICK_MODE_STORAGE_KEY, genrePickMode);
+      const savedMode = window.localStorage.getItem(GENRE_PICK_MODE_STORAGE_KEY);
+      if (savedMode === "auto") {
+        setField("genre", FROM_IDEA_GENRE_VALUE);
+        window.localStorage.removeItem(GENRE_PICK_MODE_STORAGE_KEY);
+      }
     } catch {
       void 0;
     }
-  }, [genrePickMode]);
-
-  useEffect(() => {
-    if (genrePickMode === "auto") {
-      if (form.genre !== "Auto") setField("genre", "Auto");
-      return;
-    }
-    if (!form.genre || form.genre === "Auto") {
-      setField("genre", RANDOM_GENRE_VALUE);
-    }
-  }, [form.genre, genrePickMode, setField]);
+  }, [setField]);
 
   useEffect(() => {
     usedCountRef.current = usedThisMonth;
   }, [usedThisMonth]);
 
   const chipGenre = useMemo(() => {
-    if (genrePickMode === "custom") {
-      if (isRandomGenreSelection(form.genre)) {
-        return lastRandomGenre || (locale === "fr" ? "Aléatoire" : "Random");
-      }
-      return form.genre !== "Auto" ? form.genre : "Melodic Trap";
+    if (isFromIdeaGenreSelection(form.genre)) {
+      return locale === "fr" ? "Depuis l'idée" : "From idea";
     }
-    return "Auto";
-  }, [form.genre, genrePickMode, lastRandomGenre, locale]);
+    if (isRandomGenreSelection(form.genre)) {
+      return lastRandomGenre || (locale === "fr" ? "Aléatoire" : "Random");
+    }
+    return form.genre;
+  }, [form.genre, lastRandomGenre, locale]);
 
-  const genreReady = genrePickMode === "auto" || (form.genre.length > 0 && form.genre !== "Auto");
-
-  const handleGenrePickModeChange = useCallback(
-    (next: GenrePickMode) => {
-      setGenrePickMode(next);
-      if (next === "auto") {
-        setField("genre", "Auto");
-        return;
-      }
-      if (form.genre === "Auto" || !form.genre) {
-        setField("genre", RANDOM_GENRE_VALUE);
-      }
-    },
-    [form.genre, setField],
-  );
+  const genreReady = true;
 
   const remaining = getRemainingBeats(plan, usedThisMonth, referralBonus, levelBonus, dailyBonusMonth);
   const totalLimit = getTotalGenerationLimit(plan, { referralBonus, levelBonus, dailyBonusMonth });
@@ -1230,6 +1219,21 @@ export default function Dashboard() {
   const isSong = mode === "song";
   const isRemix = mode === "remix";
   const isCover = mode === "cover";
+
+  const dashboardIdeaText = isSong ? songDescription.trim() : (form.prompt?.trim() ?? "");
+
+  useEffect(() => {
+    if (dashboardIdeaText) {
+      if (isFromIdeaGenreSelection(form.genre) || isRandomGenreSelection(form.genre)) {
+        if (form.genre !== FROM_IDEA_GENRE_VALUE) setField("genre", FROM_IDEA_GENRE_VALUE);
+      }
+      return;
+    }
+    if (form.genre === FROM_IDEA_GENRE_VALUE) {
+      setField("genre", RANDOM_GENRE_VALUE);
+    }
+  }, [dashboardIdeaText, form.genre, setField]);
+
   const effectiveEngine = isSong ? "ace-step" : engine;
   const songIsCustom = isSong && songUiMode === "custom";
   /** MP3 par défaut (stockage DB inline ~3–8 Mo vs WAV ~20 Mo). WAV seulement si choisi explicitement. */
@@ -1268,7 +1272,7 @@ export default function Dashboard() {
   const manualSongTimeSignature = songIsCustom && songTimeSignatureMode === "manual" ? songTimeSignature : "";
   const uiPrompt = isSong
     ? [
-        genrePickMode === "custom" && !isRandomGenreSelection(form.genre) && form.genre !== "Auto" ? `${form.genre}` : "",
+        isCatalogGenreSelection(form.genre) ? form.genre : "",
         songDescription.trim(),
         songVocalStyle ? `vocal style: ${songVocalStyle}` : "",
       ]
@@ -1316,14 +1320,35 @@ export default function Dashboard() {
     const landingSnap = landingGenerateSnapshotRef.current;
     if (landingSnap) landingGenerateSnapshotRef.current = null;
     const runAsSong = landingSnap ? landingSnap.mode === "song" : isSong;
-    const runGenrePickMode: GenrePickMode = landingSnap ? "custom" : genrePickMode;
     const runFormGenre = landingSnap?.genre ?? form.genre;
-    const runSongDescription = landingSnap && runAsSong ? landingSnap.prompt : songDescription;
-    const runFormPrompt = landingSnap && !runAsSong ? landingSnap.prompt : form.prompt;
+    let runSongDescription = landingSnap && runAsSong ? landingSnap.prompt : songDescription;
+    let runFormPrompt = landingSnap && !runAsSong ? landingSnap.prompt : form.prompt;
+
+    const ideaProbe = runAsSong ? runSongDescription.trim() : (runFormPrompt?.trim() ?? "");
+    if (!ideaProbe && !isCatalogGenreSelection(runFormGenre)) {
+      const randomPrompt = pickRandomPrompt(
+        runAsSong ? songPromptLocale : beatPromptLocale,
+        runAsSong ? "song" : "beat",
+      );
+      if (randomPrompt.trim()) {
+        if (runAsSong) {
+          runSongDescription = randomPrompt;
+          setSongDescription(randomPrompt);
+        } else {
+          runFormPrompt = randomPrompt;
+          setField("prompt", randomPrompt);
+        }
+      }
+    }
+
+    const ideaTextForGenre = runAsSong ? runSongDescription.trim() : (runFormPrompt?.trim() ?? "");
+
     const runUiPrompt =
       landingSnap != null
         ? runAsSong
-          ? [runFormGenre, landingSnap.prompt.trim()].filter(Boolean).join(", ")
+          ? isCatalogGenreSelection(runFormGenre)
+            ? [runFormGenre, landingSnap.prompt.trim()].filter(Boolean).join(", ")
+            : landingSnap.prompt.trim()
           : landingSnap.prompt.trim()
         : uiPrompt;
 
@@ -1419,18 +1444,11 @@ export default function Dashboard() {
         .replace(/[<>]/g, "")
         .slice(0, 72);
 
-    const randomGenre =
-      !landingSnap &&
-      runGenrePickMode === "custom" &&
-      isRandomGenreSelection(runFormGenre)
-        ? pickRandomGenreValue()
-        : undefined;
+    const randomGenre = shouldPickRandomGenreAtGenerate(runFormGenre, ideaTextForGenre)
+      ? pickRandomGenreValue()
+      : undefined;
     if (randomGenre) setLastRandomGenre(randomGenre);
-    const { promptGenre, displayGenre } = resolveGenreForGeneration(
-      runGenrePickMode,
-      landingSnap ? landingSnap.genre : form.genre,
-      randomGenre,
-    );
+    const { promptGenre, displayGenre } = resolveGenreForGeneration(runFormGenre, ideaTextForGenre, randomGenre);
 
     const normalizedGenreForPrompt = promptGenre;
     const rawTitleSource = (
@@ -1442,7 +1460,7 @@ export default function Dashboard() {
       ? titleCase(inferredWords.join(" "))
       : excerptTitle.length > 0
         ? excerptTitle
-        : titleCase(displayGenre === "Auto" ? (locale === "fr" ? "Nouvelle piste" : "New track") : displayGenre);
+        : titleCase(displayGenre === FROM_IDEA_GENRE_VALUE ? (locale === "fr" ? "Nouvelle piste" : "New track") : displayGenre);
     const baseTitle = normalizeTitle(requestedTitle) || defaultBase;
 
     const titleIndexStart = (() => {
@@ -2250,7 +2268,6 @@ export default function Dashboard() {
     form.bpm,
     form.energyLevel,
     form.genre,
-    genrePickMode,
     form.influence,
     form.key,
     form.loopLength,
@@ -2288,6 +2305,10 @@ export default function Dashboard() {
     user,
     goResults,
     mobileV2,
+    beatPromptLocale,
+    songPromptLocale,
+    setField,
+    setSongDescription,
   ]);
 
   const handleRemixGenerate = useCallback(
@@ -2681,10 +2702,11 @@ export default function Dashboard() {
       setGenerating(true);
       const generationKey =
         typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `cover-${Date.now()}`;
-      const randomGenre =
-        genrePickMode === "custom" && isRandomGenreSelection(form.genre) ? pickRandomGenreValue() : undefined;
+      const randomGenre = shouldPickRandomGenreAtGenerate(form.genre, input.styleHint.trim())
+        ? pickRandomGenreValue()
+        : undefined;
       if (randomGenre) setLastRandomGenre(randomGenre);
-      const { promptGenre, displayGenre } = resolveGenreForGeneration(genrePickMode, form.genre, randomGenre);
+      const { promptGenre, displayGenre } = resolveGenreForGeneration(form.genre, input.styleHint.trim(), randomGenre);
       const title = coverResultTitle(displayGenre, locale);
       const coverSlots: GenerationSlot[] = [
         { idx: 1, status: "generating", title, seed: 0, visible: true, previewReady: false, progressPct: 0 },
@@ -2840,7 +2862,6 @@ export default function Dashboard() {
       form.mood,
       form.reverb,
       generating,
-      genrePickMode,
       goResults,
       locale,
       migrateAudioCache,
@@ -2863,20 +2884,19 @@ export default function Dashboard() {
     if (!pendingLandingRequest || landingFormAppliedRef.current) return;
 
     landingFormAppliedRef.current = true;
-    const { prompt, mode: landingMode } = pendingLandingRequest;
-    const genreHandoff = resolveGenreForLandingPrompt(prompt);
+    const { prompt, mode: landingMode, genreStrategy } = pendingLandingRequest;
+    const handoffGenre = landingGenreForHandoff(prompt, genreStrategy);
 
     landingGenerateSnapshotRef.current = {
       prompt,
       mode: landingMode,
-      genre: genreHandoff.formGenre,
+      genre: handoffGenre,
+      genreStrategy: genreStrategy ?? landingGenreStrategyFromPrompt(prompt),
     };
     setLandingAutoGenQueued(true);
 
     setMode(landingMode);
-    setGenrePickMode("custom");
-    setField("genre", genreHandoff.formGenre);
-    if (!genreHandoff.matchedFromPrompt) setLastRandomGenre(genreHandoff.formGenre);
+    setField("genre", handoffGenre);
 
     if (landingMode === "song") {
       setSongUiMode("simple");
@@ -2885,11 +2905,12 @@ export default function Dashboard() {
       setField("prompt", prompt);
     } else {
       setField("prompt", prompt);
+      if (!prompt.trim()) setSongDescription("");
     }
 
     clearLandingPendingGeneration();
     setPendingLandingRequest(null);
-  }, [pendingLandingRequest, setField, setLastRandomGenre, setLyricsMode, setMode, setSongDescription, setSongUiMode]);
+  }, [pendingLandingRequest, setField, setLyricsMode, setMode, setSongDescription, setSongUiMode]);
 
   useEffect(() => {
     if (!landingAutoGenQueued) return;
@@ -2906,7 +2927,7 @@ export default function Dashboard() {
     }
 
     const snap = landingGenerateSnapshotRef.current;
-    const autogenKey = `${snap.mode}:${snap.prompt.slice(0, 120)}:${snap.genre}`;
+    const autogenKey = `${snap.mode}:${snap.genreStrategy}:${snap.prompt.slice(0, 120)}:${snap.genre}`;
     try {
       const done = window.sessionStorage.getItem("producerhit_landing_autogen_key");
       if (done === autogenKey) {
@@ -2923,7 +2944,13 @@ export default function Dashboard() {
     setLandingAutoGenQueued(false);
     trackClientEvent("landing_auto_generate_start", { entry_source: entrySource, mobile: mobileV2 });
     toast.success(
-      locale === "fr" ? "Génération lancée — ton idée prend forme." : "Generating from your idea.",
+      snap.genreStrategy === "random" || !snap.prompt.trim()
+        ? locale === "fr"
+          ? "Surprise lancée — on tire un style pour toi."
+          : "Surprise started — we're picking a style for you."
+        : locale === "fr"
+          ? "Génération lancée — ton idée prend forme."
+          : "Generating from your idea.",
       { duration: 3200 },
     );
     if (mobileV2) goResults();
@@ -2967,7 +2994,6 @@ export default function Dashboard() {
         lyricsMode?: "ai" | "manual";
         lyrics?: string;
         songUiMode?: "simple" | "custom";
-        genrePickMode?: GenrePickMode;
         songDescription?: string;
         songVocalStyle?: string;
       };
@@ -2988,7 +3014,6 @@ export default function Dashboard() {
       if (pending.lyricsMode) setLyricsMode(pending.lyricsMode);
       if (typeof pending.lyrics === "string") setLyrics(pending.lyrics);
       if (pending.songUiMode) setSongUiMode(pending.songUiMode);
-      if (pending.genrePickMode) setGenrePickMode(pending.genrePickMode);
       if (typeof pending.songDescription === "string") setSongDescription(pending.songDescription);
       if (typeof pending.songVocalStyle === "string") {
         const allowed = VOCAL_STYLE_OPTIONS.some((v) => v.value === pending.songVocalStyle);
@@ -3277,12 +3302,8 @@ export default function Dashboard() {
               <CoverStudioPanel
                 locale={locale}
                 genre={form.genre}
-                genrePickMode={genrePickMode}
                 lastRandomGenre={lastRandomGenre}
-                onGenreChange={(v) => {
-                  setGenrePickMode("custom");
-                  setField("genre", v);
-                }}
+                onGenreChange={(v) => setField("genre", v)}
                 generating={generating}
                 remaining={remaining}
                 compactSections={mobileV2}
@@ -3295,8 +3316,8 @@ export default function Dashboard() {
                   title={locale === "fr" ? "Style & Vibe" : "Style & Vibe"}
                   hint={
                     locale === "fr"
-                      ? "Genre précis ou Aléatoire dans la liste."
-                      : "Pick an exact genre or Random from the list."
+                      ? "Depuis l'idée, Aléatoire ou un genre du catalogue."
+                      : "From your idea, Random, or a catalog genre."
                   }
                   collapsible={mobileV2}
                   defaultOpen={mobileV2 ? mobileSectionDefaultOpen : true}
@@ -3305,12 +3326,9 @@ export default function Dashboard() {
                     <GenrePickControl
                       compact
                       locale={locale}
-                      mode={genrePickMode}
                       genre={form.genre}
-                      onGenreChange={(v) => {
-                        setGenrePickMode("custom");
-                        setField("genre", v);
-                      }}
+                      ideaFilled={dashboardIdeaText.length > 0}
+                      onGenreChange={(v) => setField("genre", v)}
                       lastRandomGenre={lastRandomGenre}
                     />
                     <Dropdown
@@ -3544,7 +3562,6 @@ export default function Dashboard() {
                   <div className={cn("pk-studio-section min-w-0 max-w-full overflow-x-clip border-b border-pk-border bg-pk-bg/30", generatorSectionPad)}>
                     <div className="text-sm font-semibold">{locale === "fr" ? "Avancé" : "Advanced"}</div>
                     <div className="mt-4 grid min-w-0 max-w-full gap-4">
-                      <GenreAutoModeToggle locale={locale} mode={genrePickMode} onModeChange={handleGenrePickModeChange} />
                       <GeneratorAdvancedOutputControls
                         locale={locale}
                         versions={versions}
@@ -3644,7 +3661,6 @@ export default function Dashboard() {
                           key={p.name}
                           type="button"
                           onClick={() => {
-                            setGenrePickMode("custom");
                             setField("genre", p.genre);
                             setField("influence", p.influence);
                             setBpm(p.bpm);
@@ -3673,8 +3689,8 @@ export default function Dashboard() {
                   title={locale === "fr" ? "Le Style" : "The Style"}
                   hint={
                     locale === "fr"
-                      ? "Genre du catalogue ou Aléatoire — complété par ton idée."
-                      : "Catalog genre or Random — combined with your idea."
+                      ? "Depuis l'idée, Aléatoire ou un genre du catalogue."
+                      : "From your idea, Random, or a catalog genre."
                   }
                   collapsible={mobileV2}
                   defaultOpen={mobileV2 ? mobileSectionDefaultOpen : true}
@@ -3682,12 +3698,9 @@ export default function Dashboard() {
                   <GenrePickControl
                     compact
                     locale={locale}
-                    mode={genrePickMode}
                     genre={form.genre}
-                    onGenreChange={(v) => {
-                      setGenrePickMode("custom");
-                      setField("genre", v);
-                    }}
+                    ideaFilled={dashboardIdeaText.length > 0}
+                    onGenreChange={(v) => setField("genre", v)}
                     lastRandomGenre={lastRandomGenre}
                   />
                 </GeneratorSection>
@@ -3847,7 +3860,6 @@ export default function Dashboard() {
                   <div className={cn("pk-studio-section min-w-0 max-w-full overflow-x-clip border-b border-pk-border bg-pk-bg/30", generatorSectionPad)}>
                     <div className="text-sm font-semibold">{locale === "fr" ? "Réglages avancés" : "Advanced Settings"}</div>
                     <div className="mt-4 grid min-w-0 max-w-full gap-4">
-                      <GenreAutoModeToggle locale={locale} mode={genrePickMode} onModeChange={handleGenrePickModeChange} />
                       <GeneratorAdvancedOutputControls
                         locale={locale}
                         versions={versions}
@@ -4233,7 +4245,6 @@ export default function Dashboard() {
                         mode,
                         engine,
                         form,
-                        genrePickMode,
                         lyricsMode,
                         lyrics,
                         songUiMode,

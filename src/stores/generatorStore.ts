@@ -1,8 +1,9 @@
 import { create } from "zustand";
+import { RANDOM_GENRE_VALUE } from "@/lib/genres/genrePickMode";
 import type { GeneratorForm, LoopLength } from "@/types/loop";
 
 const defaultForm: GeneratorForm = {
-  genre: "Auto",
+  genre: RANDOM_GENRE_VALUE,
   influence: "No Influence",
   key: "C",
   scale: "Minor",
