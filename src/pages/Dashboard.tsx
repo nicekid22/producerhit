@@ -99,6 +99,7 @@ import { useOnboardingCoachStore } from "@/stores/onboardingCoachStore";
 import { useWavFormatCoachStore } from "@/stores/wavFormatCoachStore";
 import { useAuthStore } from "@/stores/authStore";
 import { useLocaleStore } from "@/stores/localeStore";
+import { useT } from "@/i18n";
 import { getRemainingBeats, PLAN_LIMITS, FREE_MASTERING_UPSELL_AT, getTotalGenerationLimit } from "@/lib/planLimits";
 import { planPriceLabel } from "@/lib/planPricing";
 import { canDualGeneration, canExportWav } from "@/lib/planEntitlements";
@@ -375,6 +376,7 @@ export default function Dashboard() {
   const refreshAuthProfile = useAuthStore((s) => s.refreshProfile);
   const authProfileError = useAuthStore((s) => s.lastError);
   const locale = useLocaleStore((s) => s.locale);
+  const { m: t } = useT();
   const ambianceDropdownOptions = useMemo(() => beatAmbianceDropdownOptions(locale), [locale]);
   const energyDropdownOptions = useMemo(() => beatEnergyDropdownOptions(locale), [locale]);
   const influenceDropdownOptions = useMemo(() => beatInfluenceDropdownOptions(locale), [locale]);
@@ -2884,9 +2886,9 @@ export default function Dashboard() {
               if (next === "master") setWorkspaceView("master");
               else if (next === "results") setWorkspaceView("tracks");
             }}
-            createLabel={locale === "fr" ? "Créer" : "Create"}
-            resultsLabel={locale === "fr" ? "Résultats" : "Results"}
-            masterLabel={locale === "fr" ? "Studio" : "Studio"}
+            createLabel={t.app.tabCreate}
+            resultsLabel={t.app.tabResults}
+            masterLabel={t.app.tabMaster}
             resultsBadge={mobileResultsBadge}
           />
         ) : undefined
@@ -2926,7 +2928,7 @@ export default function Dashboard() {
                         : "text-white/50 hover:text-white",
                   )}
                 >
-                  {locale === "fr" ? "Chanson" : "Song"}
+                  {t.landing.modeSong}
                 </button>
                 <button
                   type="button"
@@ -2941,7 +2943,7 @@ export default function Dashboard() {
                         : "text-white/50 hover:text-white",
                   )}
                 >
-                  Beat
+                  {t.landing.modeBeat}
                 </button>
                 <button
                   type="button"
@@ -2956,12 +2958,12 @@ export default function Dashboard() {
                         : "text-white/50 hover:text-white",
                   )}
                 >
-                  Remix
+                  {t.app.modeRemix}
                 </button>
                 {mobileV2 && (mode === "song" || mode === "beat") ? (
                   <button
                     type="button"
-                    aria-label={locale === "fr" ? "Réglages avancés" : "Advanced settings"}
+                    aria-label={t.app.advancedSettings}
                     aria-pressed={mode === "song" ? songUiMode === "custom" : advancedOpen}
                     onClick={() => {
                       if (mode === "song") setSongUiMode((v) => (v === "custom" ? "simple" : "custom"));
@@ -2992,7 +2994,7 @@ export default function Dashboard() {
                       : "bg-white/5 text-pk-muted hover:text-pk-text",
                   )}
                 >
-                  {locale === "fr" ? "Avancé" : "Advanced"}
+                  {t.landing.modeAdvanced}
                 </button>
               ) : null}
             </div>

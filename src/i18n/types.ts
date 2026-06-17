@@ -24,6 +24,11 @@ export type MessageCatalog = {
     logout: string;
     signedOut: string;
     signOutFailed: string;
+    tabCreate: string;
+    tabResults: string;
+    tabMaster: string;
+    modeRemix: string;
+    advancedSettings: string;
   };
   seo: {
     homeTitle: string;

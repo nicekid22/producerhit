@@ -77,5 +77,10 @@ export const th: MessageCatalog = {
     logout: "ออกจากระบบ",
     signedOut: "ออกจากระบบแล้ว",
     signOutFailed: "ออกจากระบบไม่ได้",
+    tabCreate: "สร้าง",
+    tabResults: "ผลลัพธ์",
+    tabMaster: "สตูดิโอ",
+    modeRemix: "Remix",
+    advancedSettings: "การตั้งค่าขั้นสูง",
   },
 };

@@ -77,5 +77,10 @@ export const ko: MessageCatalog = {
     logout: "로그아웃",
     signedOut: "로그아웃됨",
     signOutFailed: "로그아웃할 수 없습니다",
+    tabCreate: "만들기",
+    tabResults: "결과",
+    tabMaster: "스튜디오",
+    modeRemix: "Remix",
+    advancedSettings: "고급 설정",
   },
 };

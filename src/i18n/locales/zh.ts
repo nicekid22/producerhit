@@ -77,5 +77,10 @@ export const zh: MessageCatalog = {
     logout: "退出登录",
     signedOut: "已退出",
     signOutFailed: "无法退出登录",
+    tabCreate: "创建",
+    tabResults: "结果",
+    tabMaster: "工作室",
+    modeRemix: "Remix",
+    advancedSettings: "高级设置",
   },
 };

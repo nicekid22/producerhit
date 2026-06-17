@@ -81,5 +81,10 @@ export const en: MessageCatalog = {
     logout: "Logout",
     signedOut: "Signed out",
     signOutFailed: "Could not sign out",
+    tabCreate: "Create",
+    tabResults: "Results",
+    tabMaster: "Studio",
+    modeRemix: "Remix",
+    advancedSettings: "Advanced settings",
   },
 };

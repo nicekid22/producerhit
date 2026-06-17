@@ -77,5 +77,10 @@ export const ja: MessageCatalog = {
     logout: "ログアウト",
     signedOut: "ログアウトしました",
     signOutFailed: "ログアウトできませんでした",
+    tabCreate: "作成",
+    tabResults: "結果",
+    tabMaster: "スタジオ",
+    modeRemix: "Remix",
+    advancedSettings: "詳細設定",
   },
 };

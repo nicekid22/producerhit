@@ -37,6 +37,7 @@ export function AppShell({
   const cloudAccent = useCloudAccentStore((s) => s.accent);
   const warmGlass = isPrism && isWarmGlassTheme(visualTheme);
   const cloud = isPrism && isCloudTheme(visualTheme);
+  const prismFloatingNav = isPrism && !warmGlass && !cloud;
   const dockPb = hasPlayer ? "pk-shell-dock-pb--player" : "pk-shell-dock-pb";
   /** Padding scroll zones — pas sur la colonne création desktop (évite trou sous Versions). */
   /** Scroll workspace : padding géré par margin-bottom colonnes + --pk-player-reserve */
@@ -57,7 +58,7 @@ export function AppShell({
       data-pk-element={cloud ? cloudAccentToElement(cloudAccent) : undefined}
       style={
         {
-          "--pk-mobile-nav-inner-h": cloud || warmGlass ? "62px" : "56px",
+          "--pk-mobile-nav-inner-h": cloud || warmGlass || prismFloatingNav ? "62px" : "56px",
           "--pk-studio-console-width": cloud ? "448px" : "480px",
         } as CSSProperties
       }
@@ -215,13 +216,14 @@ export function AppShell({
           "pk-app-shell-mobile-nav fixed bottom-0 left-0 right-0 z-40 max-w-[100vw] overflow-hidden pb-[env(safe-area-inset-bottom)] md:hidden",
           cloud && "pk-app-shell-mobile-nav--cloud",
           warmGlass && "pk-app-shell-mobile-nav--warm-glass",
+          prismFloatingNav && "pk-app-shell-mobile-nav--prism",
           isPrism ? "border-t border-white/10 bg-[rgba(4,3,10,0.88)] backdrop-blur-xl" : "border-t border-pk-border bg-pk-panel",
         )}
       >
         <div
           className={cn(
             "mx-auto w-full max-w-[100vw] min-w-0 overflow-hidden",
-            cloud || warmGlass ? "h-[var(--pk-mobile-nav-inner-h,62px)]" : "h-14",
+            cloud || warmGlass || prismFloatingNav ? "h-[var(--pk-mobile-nav-inner-h,62px)]" : "h-14",
           )}
         >
           <Sidebar />

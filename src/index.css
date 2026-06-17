@@ -2624,6 +2624,12 @@ a.pk-pricing-plan-btn {
     transform: scale(0.98);
   }
 
+  .pk-dashboard-mobile-tabs button:focus-visible,
+  .pk-studio-mode-rail button:focus-visible {
+    outline: 2px solid rgba(103, 195, 255, 0.5);
+    outline-offset: 2px;
+  }
+
   .pk-prism-dashboard:has(.pk-dashboard-generator) .pk-studio-mode-rail button {
     min-height: 44px;
   }

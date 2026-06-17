@@ -81,5 +81,10 @@ export const de: MessageCatalog = {
     logout: "Abmelden",
     signedOut: "Abgemeldet",
     signOutFailed: "Abmeldung fehlgeschlagen",
+    tabCreate: "Erstellen",
+    tabResults: "Ergebnisse",
+    tabMaster: "Studio",
+    modeRemix: "Remix",
+    advancedSettings: "Erweiterte Einstellungen",
   },
 };

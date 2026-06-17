@@ -81,5 +81,10 @@ export const es: MessageCatalog = {
     logout: "Cerrar sesión",
     signedOut: "Sesión cerrada",
     signOutFailed: "No se pudo cerrar sesión",
+    tabCreate: "Crear",
+    tabResults: "Resultados",
+    tabMaster: "Estudio",
+    modeRemix: "Remix",
+    advancedSettings: "Opciones avanzadas",
   },
 };

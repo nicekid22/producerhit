@@ -81,5 +81,10 @@ export const pt: MessageCatalog = {
     logout: "Sair",
     signedOut: "Desconectado",
     signOutFailed: "Não foi possível sair",
+    tabCreate: "Criar",
+    tabResults: "Resultados",
+    tabMaster: "Estúdio",
+    modeRemix: "Remix",
+    advancedSettings: "Opções avançadas",
   },
 };
