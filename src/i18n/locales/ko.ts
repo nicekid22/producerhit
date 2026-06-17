@@ -1,0 +1,62 @@
+import type { MessageCatalog } from "../types";
+
+export const ko: MessageCatalog = {
+  nav: {
+    howItWorks: "사용 방법",
+    features: "기능",
+    pricing: "요금",
+    community: "커뮤니티",
+    blog: "블로그",
+    login: "로그인",
+    startFree: "무료 시작",
+    openStudio: "스튜디오 열기",
+    homePage: "홈",
+    menu: "내비게이션",
+    mobileMenu: "모바일 메뉴",
+  },
+  seo: {
+    homeTitle: "ProducerHit — AI 노래 제작 & 타입 비트 생성기 | 로열티 프리",
+    homeDescription:
+      "ProducerHit는 AI 노래 제작기이자 타입 비트 생성기입니다. Song Mode, Remix 커버, 로열티 프리 MP3/WAV, 영상, 마스터링 — 프로듀서와 아티스트를 위해.",
+    blogTitle: "블로그 — ProducerHit",
+    blogDescription: "ProducerHit 블로그: AI 비트·음악 생성 가이드, 프롬프트, 워크플로.",
+    exploreTitle: "커뮤니티 AI 비트 — 듣기, 리믹스, 만들기 | ProducerHit",
+    exploreDescription:
+      "ProducerHit에서 공개 AI 비트 스트리밍: 커뮤니티 피드, 평점, 댓글, 리믹스 (Trap, Lo-Fi, R&B…).",
+    loopTitle: "트랙 — ProducerHit",
+    loopDescription: "ProducerHit로 만든 공개 트랙을 듣고 시드 기반 유사 리믹스를 생성하세요.",
+    pricingTitle: "요금 — ProducerHit",
+    pricingDescription: "AI 비트·노래를 위한 간단한 요금. 더 많은 크레딧과 WAV는 업그레이드.",
+    authTitle: "무료 가입 — ProducerHit",
+    dashboardTitle: "내 스튜디오 — ProducerHit",
+    libraryTitle: "내 라이브러리 — ProducerHit",
+    sampleLabTitle: "AI Sample Lab — ProducerHit",
+    settingsTitle: "설정 — ProducerHit",
+    aiBeatGeneratorTitle: "AI 비트 생성기 — 온라인 타입 비트 | ProducerHit",
+    aiBeatGeneratorDescription:
+      "ProducerHit로 AI 비트 생성: 타입 비트, 2버전, 시드 변형, MP3/WAV 내보내기.",
+    aiMusicGeneratorTitle: "AI 음악 생성기 — 노래 & 비트 | ProducerHit",
+    aiMusicGeneratorDescription: "AI 음악 생성기로 노래와 타입 비트. 바이브 입력, 생성, 반복, 내보내기.",
+    typeBeatGeneratorTitle: "타입 비트 AI 생성기 — 프로용 비트 | ProducerHit",
+    typeBeatGeneratorDescription: "프로듀서용 타입 비트 AI: 최신 장르, 깨끗한 믹스, 재현 가능한 시드.",
+    generateBeatsFreeTitle: "무료 온라인 비트 생성 — AI | ProducerHit",
+    generateBeatsFreeDescription:
+      "ProducerHit로 무료 비트 생성. 짧은 클립부터 시작, 최고 버전 선택, 시드로 반복. MP3 무료, WAV는 Pro.",
+    legalTitle: "법적 고지 — ProducerHit",
+    defaultTitle: "ProducerHit — AI 비트 생성기",
+    defaultDescription: "ProducerHit는 온라인 타입 비트용 AI 비트 생성기입니다.",
+    exploreCollectionName: "ProducerHit 커뮤니티 피드",
+    exploreCollectionDescription: "공개 AI 비트, 리믹스 문화, 커뮤니티 바이브",
+  },
+  landing: {
+    heroTagline: "AI 스튜디오 · 노래 & 타입 비트",
+    heroLead: "바이브를 입력 → 몇 초 만에 트랙. 무료 MP3, Pro에서 WAV.",
+    heroReassurance: "무료 시작 · 카드 불필요 · MP3 내보내기",
+    heroScrollCue: "생성기 체험",
+    heroCtaPrimary: "ProducerHit 체험",
+    heroCtaDashboard: "내 스튜디오 열기 →",
+    ctaTitle: "다음 아이디어는 들릴 자격이 있습니다",
+    ctaLead: "월 {{free}}회 무료 생성. Pro ({{proPrice}}/월)로 WAV와 상업적 이용.",
+    ctaButton: "ProducerHit 무료 체험 →",
+  },
+};

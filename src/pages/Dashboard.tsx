@@ -2898,17 +2898,6 @@ export default function Dashboard() {
             mobileV2 && mobileTab === "create" && "pk-mobile-create-shell",
           )}
         >
-          {!mobileV2 ? null : (
-            <div className="pk-dashboard-mobile-head pk-dashboard-mobile-head--themed flex-shrink-0 border-b px-3 pb-1.5 pt-1 md:hidden">
-              <DashboardStudioBrand
-                mode={mode}
-                locale={locale}
-                remixRecreate={isRemixVibeRecreateEnabled()}
-                compact
-                staticMode
-              />
-            </div>
-          )}
           <div
             className={cn(
               "pk-mobile-create-chrome flex-shrink-0",

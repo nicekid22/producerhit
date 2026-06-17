@@ -4,7 +4,8 @@ export type AudioAnalysis = {
   suggestedGainDb: number;
 };
 
-const TARGET_PEAK_DB = -1.2;
+/** Cible streaming (~-1 dBFS) — un peu plus de présence sans clipper. */
+const TARGET_PEAK_DB = -1.0;
 const TARGET_PEAK = 10 ** (TARGET_PEAK_DB / 20);
 
 export function analyzeBuffer(buffer: AudioBuffer): AudioAnalysis {

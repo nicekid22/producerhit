@@ -29,15 +29,27 @@ export function IdeaPromptSection({
     title: legacyEnFr(locale, "The Idea", "L’idée"),
     hint:
       mode === "song"
-        ? legacyEnFr(locale, "Describe vibe, story, or mood", "Décris vibe, histoire ou émotion")
-        : legacyEnFr(locale, "Mood and texture for your beat", "Ambiance et texture du beat"),
-    placeholder:
-      mode === "song"
-        ? legacyEnFr(locale, "e.g. Melancholic R&B, late nights in the city…", "ex: R&B mélancolique, nuits en ville…")
+        ? legacyEnFr(
+            locale,
+            "ACE tags: genre, vocal, instruments, mood (comma-separated)",
+            "Tags ACE : genre, voix, instruments, mood (séparés par des virgules)",
+          )
         : legacyEnFr(
             locale,
-            "e.g. dark melodic trap, smooth 808s, emotional…",
-            "ex: trap mélodique sombre, 808s smooth, émotionnel…",
+            "ACE tags: instruments, timbre, production (comma-separated)",
+            "Tags ACE : instruments, timbre, prod (séparés par des virgules)",
+          ),
+    placeholder:
+      mode === "song"
+        ? legacyEnFr(
+            locale,
+            "e.g. contemporary R&B, breathy female vocal, rhodes piano, heartbreak mood, warm mix",
+            "ex: contemporary R&B, breathy female vocal, rhodes piano, heartbreak mood, warm mix",
+          )
+        : legacyEnFr(
+            locale,
+            "e.g. melodic trap, sliding 808, crisp hi-hats, minor piano, airy pads, polished mix",
+            "ex: melodic trap, sliding 808, crisp hi-hats, minor piano, airy pads, polished mix",
           ),
   };
 

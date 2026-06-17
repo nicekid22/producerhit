@@ -1,0 +1,62 @@
+import type { MessageCatalog } from "../types";
+
+export const ja: MessageCatalog = {
+  nav: {
+    howItWorks: "使い方",
+    features: "機能",
+    pricing: "料金",
+    community: "コミュニティ",
+    blog: "ブログ",
+    login: "ログイン",
+    startFree: "無料で始める",
+    openStudio: "スタジオを開く",
+    homePage: "ホーム",
+    menu: "ナビゲーション",
+    mobileMenu: "モバイルメニュー",
+  },
+  seo: {
+    homeTitle: "ProducerHit — AI楽曲クリエイター＆タイプビート生成 | ロイヤリティフリー",
+    homeDescription:
+      "ProducerHitはAI楽曲クリエイター＆タイプビート生成ツール。Song Mode、Remixカバー、ロイヤリティフリーMP3/WAV、動画、マスタリング — プロデューサー＆アーティスト向け。",
+    blogTitle: "ブログ — ProducerHit",
+    blogDescription: "ProducerHitブログ：AIビート＆音楽生成のガイド、プロンプト、ワークフロー。",
+    exploreTitle: "コミュニティAIビート — 聴く、リミックス、創る | ProducerHit",
+    exploreDescription:
+      "ProducerHitで公開AIビートをストリーム：コミュニティフィード、評価、コメント、リミックス（Trap、Lo-Fi、R&B…）。",
+    loopTitle: "トラック — ProducerHit",
+    loopDescription: "ProducerHitで作られた公開トラックを聴き、シード変化で似たリミックスを生成。",
+    pricingTitle: "料金 — ProducerHit",
+    pricingDescription: "AIビート＆楽曲のシンプルな料金。クレジット増量とWAVエクスポートはアップグレード。",
+    authTitle: "無料登録 — ProducerHit",
+    dashboardTitle: "マイスタジオ — ProducerHit",
+    libraryTitle: "マイライブラリ — ProducerHit",
+    sampleLabTitle: "AI Sample Lab — ProducerHit",
+    settingsTitle: "設定 — ProducerHit",
+    aiBeatGeneratorTitle: "AIビートジェネレーター — オンラインタイプビート | ProducerHit",
+    aiBeatGeneratorDescription:
+      "ProducerHitでAIビートを生成：タイプビート、2バージョン、シード変化、MP3/WAVエクスポート。",
+    aiMusicGeneratorTitle: "AI音楽ジェネレーター — 楽曲＆ビート | ProducerHit",
+    aiMusicGeneratorDescription: "AI音楽ジェネレーターで楽曲とタイプビート。ヴァイブを入力し、生成・反復・エクスポート。",
+    typeBeatGeneratorTitle: "タイプビート生成AI — プロ向けビート | ProducerHit",
+    typeBeatGeneratorDescription: "プロデューサー向けタイプビートAI：最新ジャンル、クリーンミックス、再現可能シード。",
+    generateBeatsFreeTitle: "無料オンラインビート生成 — AI | ProducerHit",
+    generateBeatsFreeDescription:
+      "ProducerHitで無料ビート生成。短いクリップから始め、最良バージョンを選び、シードで反復。MP3無料、WAVはPro。",
+    legalTitle: "法的情報 — ProducerHit",
+    defaultTitle: "ProducerHit — AIビートジェネレーター",
+    defaultDescription: "ProducerHitはオンラインタイプビート用AIビートジェネレーター。",
+    exploreCollectionName: "ProducerHitコミュニティフィード",
+    exploreCollectionDescription: "公開AIビート、リミックス文化、コミュニティヴァイブ",
+  },
+  landing: {
+    heroTagline: "AIスタジオ · 楽曲＆タイプビート",
+    heroLead: "ヴァイブを入力 → 数秒でトラック。無料MP3、ProでWAV。",
+    heroReassurance: "無料で開始 · カード不要 · MP3エクスポート",
+    heroScrollCue: "ジェネレーターを試す",
+    heroCtaPrimary: "ProducerHitを試す",
+    heroCtaDashboard: "マイスタジオを開く →",
+    ctaTitle: "次のアイデアは、世界に届く価値がある",
+    ctaLead: "月{{free}}回無料生成。Pro（{{proPrice}}/月）でWAVと商用利用。",
+    ctaButton: "ProducerHitを無料で試す →",
+  },
+};

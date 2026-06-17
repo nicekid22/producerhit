@@ -2,6 +2,7 @@ import { create } from "zustand";
 import {
   type AppLocale,
   DEFAULT_LOCALE,
+  htmlLangAttribute,
   normalizeLocale as normalizeAppLocale,
 } from "@/i18n/config";
 
@@ -20,7 +21,7 @@ function getInitialLocale(): AppLocale {
 function applyLocale(locale: AppLocale) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem("producerhit_locale", locale);
-  document.documentElement.lang = locale;
+  document.documentElement.lang = htmlLangAttribute(locale);
   const url = new URL(window.location.href);
   url.searchParams.set("lang", locale);
   window.history.replaceState({}, "", url.toString());

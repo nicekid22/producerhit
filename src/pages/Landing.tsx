@@ -6,6 +6,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
 import { trackLandingView } from "@/lib/growthFunnelEvents";
 import { useLocaleStore } from "@/stores/localeStore";
+import { LanguagePicker } from "@/components/LanguagePicker";
 import { Menu, Mic2, X } from "lucide-react";
 import { usePlayerStore } from "@/stores/playerStore";
 import {
@@ -187,7 +188,6 @@ export default function Landing() {
   const profile = useAuthStore((s) => s.profile);
   const refreshProfile = useAuthStore((s) => s.refreshProfile);
   const locale = useLocaleStore((s) => s.locale);
-  const setLocale = useLocaleStore((s) => s.setLocale);
   const visualTheme = useVisualThemeStore((s) => s.theme);
   const warmGlass = isWarmGlassTheme(visualTheme);
   const cloud = isCloudTheme(visualTheme);
@@ -1174,28 +1174,7 @@ export default function Landing() {
               </>
             )}
             <ThemeAndAccentPicker variant="nav-icon" />
-            <div className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] p-1">
-              <button
-                type="button"
-                onClick={() => setLocale("en")}
-                className={[
-                  "h-8 rounded-full px-3 text-xs font-semibold transition-colors",
-                  locale === "en" ? "pk-prism-pill-active" : "text-white/45 hover:text-white",
-                ].join(" ")}
-              >
-                EN
-              </button>
-              <button
-                type="button"
-                onClick={() => setLocale("fr")}
-                className={[
-                  "h-8 rounded-full px-3 text-xs font-semibold transition-colors",
-                  locale === "fr" ? "pk-prism-pill-active" : "text-white/45 hover:text-white",
-                ].join(" ")}
-              >
-                FR
-              </button>
-            </div>
+            <LanguagePicker variant="nav" />
           </nav>
 
           <button
@@ -1270,28 +1249,7 @@ export default function Landing() {
               </nav>
               <div className="pk-landing-mobile-nav__footer">
                 <ThemeAndAccentPicker variant="nav-icon" className="pk-landing-mobile-nav__theme" />
-                <div className="pk-landing-mobile-nav__locale" role="group" aria-label={locale === "fr" ? "Langue" : "Language"}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLocale("en");
-                      setMobileOpen(false);
-                    }}
-                    className={cn("pk-landing-mobile-nav__locale-btn", locale === "en" && "is-active")}
-                  >
-                    EN
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLocale("fr");
-                      setMobileOpen(false);
-                    }}
-                    className={cn("pk-landing-mobile-nav__locale-btn", locale === "fr" && "is-active")}
-                  >
-                    FR
-                  </button>
-                </div>
+                <LanguagePicker variant="mobile" className="pk-landing-mobile-nav__locale" onChange={() => setMobileOpen(false)} />
               </div>
             </div>
           </div>

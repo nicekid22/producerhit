@@ -2,187 +2,237 @@ import type { AppLocale } from "@/i18n/config";
 
 export type PromptMode = "beat" | "song";
 
-/* ——— Chansons EN ——— */
+/**
+ * ACE Step 1.5 XL Turbo — random dice captions.
+ *
+ * Official ACE 1.5 guidance (caption / tags field):
+ * - Comma-separated keywords (≈5–12), not Suno-style prose
+ * - Genre or subgenre first, then mood, 2–3 named instruments, timbre, production
+ * - Specific instruments beat adjectives ("rhodes piano" > "sad")
+ * - Avoid BPM/key here — ProducerHit sends those via autoMeta params
+ * - Avoid "instrumental / no vocals" on beats — buildAceCaption adds them
+ * - No conflicting pairs (lo-fi + hi-fi, aggressive + serene)
+ *
+ * These strings feed `params.prompt` → merged into buildAceCaption (140 char extra cap).
+ */
+export const ACE_DICE_CAPTION_MAX = 140;
+
+export function formatAceDiceCaption(raw: string): string {
+  const t = raw
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/\s*,\s*/g, ", ")
+    .replace(/,\s*,+/g, ", ")
+    .replace(/,\s*$/g, "")
+    .trim();
+  if (t.length <= ACE_DICE_CAPTION_MAX) return t;
+  return t.slice(0, ACE_DICE_CAPTION_MAX).replace(/[,\s]+$/g, "").trim();
+}
+
+/* ——— Songs EN (ACE caption tags — theme as mood, not prose) ——— */
 const SONG_TRENDS_EN = [
-  "TikTok-ready pop hook — 15-second chorus, Gen Z energy, viral potential",
-  "Dark alt-pop like the moody hits dominating streaming right now",
-  "Amapiano x house crossover — log drums, summer club energy",
-  "Latin reggaeton banger — dembow, party at 2am, bilingual hooks",
-  "Hyperpop glitch vocals — chaotic, colorful, internet-native",
-  "Indie sleaze revival — gritty guitars, late-night downtown vibe",
+  "hyperpop, glitchy synth lead, distorted 808, bright female vocal, catchy hook, punchy drums, maximal mix",
+  "dark alt-pop, moody pads, minor-key progression, breathy female vocal, cinematic tension, polished radio mix",
+  "amapiano, log drum bass, jazzy piano stabs, shaker groove, male vocal, summer club energy, warm mix",
+  "reggaeton, dembow rhythm, bright pluck melody, Spanish male vocal, perreo bounce, heavy sub, club-ready",
+  "indie sleaze, gritty electric guitar, live drums, raspy female vocal, late-night downtown vibe, raw mix",
+  "TikTok pop, short catchy chorus hook, glossy synths, Gen Z female vocal, punchy drums, wide stereo",
 ] as const;
 
 const SONG_AI_ARTIST_EN = [
-  "Create an AI pop star anthem — glossy auto-tuned vocals, stadium energy",
-  "Virtual R&B singer — silky runs, heartbreak at midnight, cinematic",
-  "AI drill rapper persona — cold delivery, UK x NYC crossover",
-  "Digital soul artist — neo-soul chords, futuristic production",
-  "Synthetic hyperpop idol — cute-aggressive, anime energy, catchy hook",
+  "modern pop, stacked female harmonies, supersaw chorus, auto-tuned lead, stadium energy, hi-fi polish",
+  "contemporary R&B, silky male vocal runs, rhodes chords, warm sub, heartbreak mood, cinematic mix",
+  "UK drill, cold male rap delivery, sliding 808, sparse piano, 140 BPM feel, dark cinematic strings",
+  "neo soul, smooth female vocal, jazzy rhodes, live bass pocket, futuristic synth layers, intimate mix",
+  "hyperpop, cute-aggressive female vocal, anime energy, glitchy drums, bright leads, compressed modern mix",
+  "melodic rap, emotional male vocal, minor-key guitar, airy pads, sliding 808, hook-forward space",
 ] as const;
 
 const SONG_PERSONAL_EN = [
-  "Make an R&B song about quitting my job",
-  "Write a pop song about me getting ghosted",
-  "An emotional song about my long-distance love",
-  "A melancholic trap about my rainy nights",
-  "A lo-fi song for my all-night study sessions",
-  "Make a house track about me finally moving on",
-  "A neo soul song about me missing the train again",
-  "Pop-punk anthem about burning out and starting over",
+  "contemporary R&B, breathy female vocal, rhodes piano, heartbreak theme, ghosted ex mood, soft drums, warm mix",
+  "melodic trap, introspective male vocal, rainy night mood, minor piano, sliding 808, emotional hook space",
+  "lo-fi R&B, dusty drums, vinyl crackle, study-night theme, mellow male vocal, warm tape saturation",
+  "house pop, four-on-the-floor kick, moving-on theme, uplifting female vocal, bright plucks, summer energy",
+  "neo soul, confident female vocal, funky bass groove, new chapter theme, rhodes chords, cathartic chorus",
+  "pop-punk, distorted guitars, burnout theme, shouted group vocals, fast drums, raw energetic mix",
+  "trap soul, vulnerable male vocal, long-distance love theme, smooth 808, atmospheric pads, late-night vibe",
+  "dance pop, catchy topline, resilience theme, bright female vocal, punchy kick, polished radio mix",
 ] as const;
 
 const SONG_HIPHOP_CULTURE_EN = [
-  "Melodic rap song — pain in the hook, flex in the verse, Metro-type energy",
-  "Freestyle-ready track for my YouTube beat channel intro",
-  "Type beat to song — Travis Scott spacey vibe with my own story",
-  "Drill storytelling — street poetry, 140 BPM, cinematic strings",
-  "Boom bap conscious rap — dusty samples, real talk, 90s soul",
-  "Jersey club vocal flip — chopped hooks, bounce, club edit energy",
+  "melodic rap, pain in the hook, flex in the verse, minor-key piano, sliding 808, Metro-style strings",
+  "boom bap, dusty sample chop, conscious rap theme, male spoken-word vocal, MPC swing, vinyl texture",
+  "melodic trap, Travis Scott style, spacey synth plucks, psychedelic 808, reverb-heavy, autotuned hook vocal",
+  "UK drill, storytelling rap, cold male delivery, cinematic strings, sliding 808, 140 BPM feel, dark mood",
+  "jersey club, chopped vocal hooks, punchy kicks, bounce energy, hype male vocal, club edit feel",
+  "cloud rap, dreamy washed pads, soft 808, floating male vocal, minimal drums, ethereal wide mix",
 ] as const;
 
-/* ——— Chansons FR ——— */
+/* ——— Songs FR (tags ACE en anglais — meilleure adhérence modèle ; noms FR conservés) ——— */
 const SONG_TRENDS_FR = [
-  "Hook pop TikTok — refrain en 15 secondes, énergie Gen Z, potentiel viral",
-  "Dark pop alternative — ambiance des hits moody du moment sur les plateformes",
-  "Crossover amapiano x house — log drums, énergie club d'été",
-  "Banger reggaeton — dembow, soirée à 2h, refrains bilingues",
-  "Hyperpop glitch — voix saturées, chaos coloré, culture internet",
-  "Indie sleaze revival — guitares crades, nuit en ville",
+  "hyperpop, glitchy synth lead, distorted 808, bright female vocal, catchy hook, punchy drums, maximal mix",
+  "dark alt-pop, moody pads, minor-key progression, breathy female vocal, cinematic tension, polished mix",
+  "amapiano, log drum bass, jazzy piano stabs, shaker groove, male vocal, summer club energy, warm mix",
+  "reggaeton, dembow rhythm, bright plucks, Spanish male vocal, perreo bounce, heavy sub, club-ready",
+  "indie sleaze, gritty electric guitar, live drums, raspy female vocal, late-night vibe, raw mix",
+  "TikTok pop, short catchy chorus, glossy synths, Gen Z female vocal, punchy drums, wide stereo",
 ] as const;
 
 const SONG_AI_ARTIST_FR = [
-  "Anthem pop star IA — voix glossy auto-tune, énergie stade",
-  "Chanteuse R&B virtuelle — runs soyeux, heartbreak à minuit, ciné",
-  "Persona rappeur drill IA — delivery froid, crossover UK x NYC",
-  "Artiste soul digital — accords neo-soul, prod futuriste",
-  "Idole hyperpop synthétique — cute-agressive, énergie anime, hook catchy",
+  "modern pop, stacked female harmonies, supersaw chorus, auto-tuned lead, stadium energy, hi-fi polish",
+  "contemporary R&B, silky male vocal runs, rhodes chords, warm sub, heartbreak mood, cinematic mix",
+  "UK drill, cold male rap delivery, sliding 808, sparse piano, dark cinematic strings, aggressive pocket",
+  "neo soul, smooth female vocal, jazzy rhodes, live bass, futuristic synth layers, intimate mix",
+  "hyperpop, cute-aggressive female vocal, anime energy, glitchy drums, bright leads, compressed mix",
+  "melodic rap, emotional male vocal, minor guitar, airy pads, sliding 808, hook-forward space",
 ] as const;
 
 const SONG_PERSONAL_FR = [
-  "Fais un son R&B sur ma démission",
-  "Une chanson pop sur mon ex qui ghost",
-  "Une chanson émotionnelle sur mon amour à distance",
-  "Une trap mélancolique sur mes nuits pluvieuses",
-  "Un song lo-fi pour mes sessions d'étude nocturnes",
-  "Un morceau house sur moi qui tourne enfin la page",
-  "Une chanson neo soul sur mon train raté (encore)",
-  "Anthem pop-punk — burn-out et nouveau départ",
+  "contemporary R&B, breathy female vocal, rhodes piano, heartbreak theme, ghost mood, soft drums, warm mix",
+  "melodic trap, introspective male vocal, rainy night mood, minor piano, sliding 808, emotional hooks",
+  "lo-fi R&B, dusty drums, vinyl crackle, study-night theme, mellow male vocal, tape saturation",
+  "house pop, four-on-the-floor kick, moving-on theme, uplifting female vocal, bright plucks, summer bounce",
+  "neo soul, confident female vocal, funky bass, new chapter theme, rhodes chords, cathartic chorus",
+  "pop-punk, distorted guitars, burnout theme, shouted vocals, fast drums, raw energetic mix",
+  "trap soul, vulnerable male vocal, long-distance theme, smooth 808, atmospheric pads, late-night vibe",
+  "dance pop, catchy topline, resilience theme, bright female vocal, punchy kick, polished radio mix",
 ] as const;
 
 const SONG_HIPHOP_CULTURE_FR = [
-  "Chanson rap mélodique — douleur au refrain, flex au couplet, vibe Metro",
-  "Son prêt pour freestyle sur ma chaîne YouTube de beats",
-  "Du type beat à la chanson — vibe Travis Scott avec mon histoire",
-  "Storytelling drill — poésie de rue, 140 BPM, cordes ciné",
-  "Rap conscious boom bap — samples dusty, vrai talk, soul 90s",
-  "Flip vocal jersey club — hooks chopped, bounce, edit club",
+  "melodic rap, pain in hook, flex in verse, minor piano, sliding 808, Metro-style cinematic strings",
+  "boom bap, dusty sample chop, conscious theme, male spoken-word vocal, MPC swing, vinyl texture",
+  "melodic trap, Travis Scott style, spacey plucks, psychedelic 808, reverb-heavy, autotuned hook vocal",
+  "UK drill, storytelling rap, cold male delivery, cinematic strings, sliding 808, dark mood",
+  "jersey club, chopped vocal hooks, punchy kicks, bounce energy, hype male vocal, club edit",
+  "cloud rap, dreamy pads, soft 808, floating male vocal, minimal drums, ethereal wide mix",
 ] as const;
 
 /* ——— Beats EN ——— */
 const BEAT_TYPE_BEAT_EN = [
-  "Travis Scott type beat — spacey, hard, psychedelic 808s",
-  "Drake x PARTYNEXTDOOR type beat — moody R&B trap, late night",
-  "Playboi Carti rage type beat — distorted 808, chaotic energy",
-  "Metro Boomin dark trap — cinematic strings, sliding 808s",
-  "Central Cee x NYC drill type beat — cold, 142 BPM, minimal",
-  "Future x Southside type beat — toxic melody, hard bounce",
-  "21 Savage x London on da Track — sinister piano, 808 slides",
-  "Lil Uzi vert melodic type beat — spacey plucks, emotional",
-  "Bad Bunny reggaeton type beat — dembow, summer plucks",
-  "Burna Boy afrobeat type beat — log drums, warm chords",
-  "Skread type beat — icy French trap, hard 808 slides",
-  "Kore type beat — sunny melodic trap, Marseille bounce",
-  "DJ Weedim type beat — cloud trap, dreamy French rap",
-  "Wondagurl type beat — dark minimal Travis energy",
-  "J Dilla boom bap — soul sample chop, Dilla swing",
-  "Zaytoven piano trap — Atlanta keys, bouncy 808",
-  "M1OnTheBeat UK drill — cold piano, 140 BPM",
+  "melodic trap, Travis Scott style, spacey synth plucks, psychedelic 808 glides, hard trap drums, wide reverb",
+  "trap soul, Drake x PARTYNEXTDOOR style, moody rhodes, smooth 808, tight hi-hats, late-night R&B trap",
+  "rage trap, Playboi Carti style, distorted 808, chaotic synth lead, aggressive hats, moshpit energy",
+  "dark trap, Metro Boomin style, cinematic strings, sliding 808 bass, crisp snare, minor-key piano",
+  "UK drill, Central Cee style, cold sparse piano, sliding 808, syncopated hats, 140 BPM feel, minimal mix",
+  "melodic trap, Future x Southside style, toxic minor melody, hard bounce 808, punchy drums, dark mood",
+  "dark trap, 21 Savage style, sinister piano stabs, 808 slides, hard drums, menacing low end",
+  "melodic trap, Lil Uzi style, spacey bell plucks, emotional minor chords, bouncy 808, airy pads",
+  "reggaeton, Bad Bunny style, dembow kick pattern, bright pluck lead, warm sub, summer club bounce",
+  "afrobeats, Burna Boy style, log drum groove, rhythmic guitar, warm chords, danceable percussion",
+  "French trap, Skread style, icy minor melody, hard 808 slides, crisp hats, cold Parisian mood",
+  "melodic trap, Kore style, sunny guitar pluck, bouncy 808, Marseille bounce, warm polished mix",
+  "cloud trap, DJ Weedim style, dreamy washed pads, soft 808, minimal drums, floating French rap vibe",
+  "dark trap, Wondagurl style, minimal Travis energy, reverb-heavy plucks, hard 808, sparse arrangement",
+  "boom bap, J Dilla style, chopped soul sample, dusty drums, MPC swing, warm vinyl texture",
+  "piano trap, Zaytoven style, Atlanta keys riff, bouncy 808, crisp snare, melodic bounce",
+  "UK drill, M1OnTheBeat style, cold piano motif, sliding 808, sharp snare, 140 BPM feel",
+  "pop-trap, Nyda style, dembow-influenced bounce, bright plucks, French Aya-type energy, glossy mix",
+  "dark trap, Hazey style, aggressive 808, dark synth stab, hard drums, street energy",
+  "melodic trap, Bazzazian style, emotional piano, smooth 808 glides, crisp hats, heartfelt mood",
+  "French drill, Le Motif style, cold piano, sliding 808, drill hats, cinematic tension",
 ] as const;
 
 const BEAT_HIPHOP_EN = [
-  "Dark melodic trap, smooth 808s, emotional pads",
-  "Hard hitting drill, sliding 808s, cold cinematic mood",
-  "Lo-fi boom bap, dusty drums, warm vinyl texture",
-  "Phonk drift, distorted 808, aggressive energy",
-  "Jersey club flip, punchy kicks, hypnotic loop",
-  "Neo soul groove, rhodes chords, laid-back swing",
-  "UK drill beat — cold, cinematic, 140 BPM, for my freestyle",
-  "Memphis phonk x trap — cowbell, dark cowboys energy",
-  "West coast g-funk flip — talk box, funky bass, sunny haze",
-  "East coast sample drill — chopped soul loop, hard drums",
+  "melodic trap, emotional minor piano, sliding 808 bass, crisp hi-hats, airy pads, hook space, polished mix",
+  "UK drill, dark chromatic piano, sliding 808, syncopated hats, cold atmosphere, hard snare, minimal mix",
+  "boom bap, chopped soul sample, dusty kick-snare, vinyl crackle, warm bass, Dilla swing, lo-fi texture",
+  "phonk, distorted 808, cowbell pattern, dark synth lead, aggressive energy, raw compressed mix",
+  "jersey club, bed-squeak sample, punchy kick clusters, chopped vocal one-shots, bounce groove, club energy",
+  "neo soul, rhodes chords, live bass pocket, brushed drums, laid-back swing, warm analog feel",
+  "Memphis phonk, cowbell hook, dark trap drums, distorted bass, gritty tape saturation, aggressive mood",
+  "g-funk, talk box lead, funky synth bass, crisp drums, west coast sunny haze, polished mix",
+  "sample drill, chopped soul loop, drill 808 slides, hard snare, gritty texture, dark cinematic mood",
+  "cloud rap, washed reverb pads, soft 808, minimal trap drums, dreamy plucks, wide stereo space",
 ] as const;
 
 const BEAT_TRENDING_EN = [
-  "TikTok cinematic trap — short loop, viral edit energy, 150 BPM",
-  "Amapiano log drum beat — percussive, summer, dancefloor",
-  "Afrobeats bounce, bright plucks, summer energy",
-  "R&B slow jam instrumental, silky keys, late-night vibe",
-  "Hyperpop trap hybrid — glitchy, colorful, internet sound",
-  "Ambient drill — reverb-heavy, emotional, streaming-ready",
-  "Beatstars lo-fi pack vibe — dusty, study beats, 85 BPM",
-  "Club edit jersey x house — four-on-the-floor bounce",
+  "cinematic trap, short viral loop hook, hard 808, crisp hats, tension build, TikTok edit energy",
+  "amapiano, log drum bass, percussive shakers, jazzy piano stabs, deep house groove, summer dancefloor",
+  "afrobeats, bright guitar licks, talking drum percussion, warm sub, uplifting bounce, festival energy",
+  "R&B slow jam, silky rhodes, soft kick, warm bass, late-night mood, smooth polished mix",
+  "hyperpop trap, glitchy synth stabs, distorted 808, colorful leads, internet-native sound design",
+  "ambient drill, reverb-heavy pads, sparse drill drums, emotional minor melody, streaming-ready polish",
+  "lo-fi hip-hop, dusty drums, jazz sample chop, vinyl crackle, mellow chords, study beat groove",
+  "jersey club x house, four-on-the-floor kick, chopped stabs, club bounce, edit-ready energy",
 ] as const;
 
 const BEAT_AI_CREATOR_EN = [
-  "AI artist showcase beat — polished, radio-ready, unique signature",
-  "Virtual singer demo instrumental — open verse space, big chorus lift",
-  "YouTube beat channel intro — memorable motif, clean mix",
-  "Sync-ready cinematic beat — tension build, drop at 0:45",
+  "modern pop-trap, radio-ready polish, unique signature synth, tight drums, catchy motif, wide clean mix",
+  "contemporary R&B instrumental, open verse space, big chorus lift chords, smooth 808, vocal-ready mix",
+  "type beat intro, memorable motif hook, clean punchy drums, minimal arrangement, YouTube-ready polish",
+  "cinematic trap, tension riser, orchestral hit, hard drop 808, sync-ready arrangement, trailer energy",
 ] as const;
 
-/* ——— Beats FR ——— */
+/* ——— Beats FR (mêmes tags ACE + refs producteurs FR) ——— */
 const BEAT_TYPE_BEAT_FR = [
-  "Type beat Travis Scott — spatial, hard, 808s psychédéliques",
-  "Type beat Drake x PARTYNEXTDOOR — trap R&B moody, fin de nuit",
-  "Type beat Playboi Carti rage — 808 distordu, énergie chaotique",
-  "Dark trap Metro Boomin — cordes ciné, 808s glissants",
-  "Type beat Central Cee x drill NYC — froid, 142 BPM, minimal",
-  "Type beat Future x Southside — mélodie toxique, bounce hard",
-  "Type beat 21 Savage x London — piano sinistre, slides 808",
-  "Type beat Lil Uzi mélodique — plucks spacey, émotionnel",
-  "Type beat Bad Bunny reggaeton — dembow, plucks d'été",
-  "Type beat Burna Boy afrobeat — log drums, accords chauds",
-  "Type beat Skread — trap FR glacé, 808s hard",
-  "Type beat Kore — mélodique ensoleillé, bounce Marseille",
-  "Type beat DJ Weedim — cloud trap, rap FR dreamy",
-  "Type beat Nyda — pop-trap Aya, dembow FR",
-  "Type beat Hazey — trap dark, bounce agressif",
-  "Type beat Bazzazian — trap mélodique émotionnel",
-  "Type beat Le Motif — drill FR, piano froid",
-  "Type beat Wondagurl — dark minimal Travis",
-  "Type beat J Dilla — boom bap soul, swing Dilla",
-  "Type beat M1OnTheBeat — drill UK, 140 BPM",
+  "melodic trap, Travis Scott style, spacey plucks, psychedelic 808, hard trap drums, wide reverb",
+  "trap soul, Drake x PARTYNEXTDOOR style, moody rhodes, smooth 808, tight hi-hats, late-night vibe",
+  "rage trap, Playboi Carti style, distorted 808, chaotic synth, aggressive hats, moshpit energy",
+  "dark trap, Metro Boomin style, cinematic strings, sliding 808, crisp snare, minor-key piano",
+  "UK drill, Central Cee style, cold sparse piano, sliding 808, syncopated hats, minimal cold mix",
+  "melodic trap, Future style, toxic minor melody, hard bounce 808, punchy drums, dark mood",
+  "dark trap, 21 Savage style, sinister piano, 808 slides, hard drums, menacing low end",
+  "melodic trap, Lil Uzi style, spacey bell plucks, emotional minor chords, bouncy 808, airy pads",
+  "reggaeton, Bad Bunny style, dembow pattern, bright plucks, warm sub, summer club bounce",
+  "afrobeats, Burna Boy style, log drum groove, rhythmic guitar, warm chords, danceable percussion",
+  "French trap, Skread style, icy minor melody, hard 808 slides, crisp hats, cold Paris mood",
+  "melodic trap, Kore style, sunny guitar pluck, bouncy 808, Marseille bounce, warm polished mix",
+  "cloud trap, DJ Weedim style, dreamy pads, soft 808, minimal drums, floating French rap vibe",
+  "pop-trap, Nyda style, dembow bounce, bright plucks, French urban pop-trap, glossy mix",
+  "dark trap, Hazey style, aggressive 808, dark synth stab, hard drums, street energy",
+  "melodic trap, Bazzazian style, emotional piano, smooth 808 glides, crisp hats, heartfelt mood",
+  "French drill, Le Motif style, cold piano, sliding 808, drill hats, cinematic tension",
+  "boom bap, J Dilla style, chopped soul sample, dusty drums, MPC swing, vinyl texture",
+  "UK drill, M1OnTheBeat style, cold piano, sliding 808, 140 BPM feel, sharp snare",
+  "dark trap, Wondagurl style, minimal Travis energy, reverb plucks, hard 808, sparse mix",
 ] as const;
 
 const BEAT_HIPHOP_FR = [
-  "Trap mélodique sombre, 808s smooth, pads émotionnels",
-  "Drill hard, 808s glissants, ambiance froide et ciné",
-  "Boom bap lo-fi, drums dusty, texture vinyle chaude",
-  "Phonk drift, 808 distordu, énergie agressive",
-  "Flip jersey club, kicks punchy, loop hypnotique",
-  "Groove neo soul, accords rhodes, swing détendu",
-  "Beat drill UK — froid, ciné, 140 BPM, pour mon freestyle",
-  "Phonk Memphis x trap — cowbell, énergie dark",
-  "Flip g-funk west coast — talk box, basse funky",
-  "Sample drill east coast — soul loop chopped, drums hard",
+  "melodic trap, emotional minor piano, sliding 808, crisp hi-hats, airy pads, hook space, polished mix",
+  "UK drill, dark chromatic piano, sliding 808, syncopated hats, cold atmosphere, hard snare",
+  "boom bap, chopped soul sample, dusty drums, vinyl crackle, warm bass, Dilla swing",
+  "phonk, distorted 808, cowbell pattern, dark synth lead, aggressive energy, raw mix",
+  "jersey club, bed-squeak, punchy kicks, chopped vocal one-shots, bounce groove, club energy",
+  "neo soul, rhodes chords, live bass pocket, brushed drums, laid-back swing, warm analog",
+  "Memphis phonk, cowbell hook, dark trap drums, distorted bass, gritty tape saturation",
+  "g-funk, talk box lead, funky synth bass, crisp drums, west coast haze, polished mix",
+  "sample drill, chopped soul loop, drill 808 slides, hard snare, gritty dark mood",
+  "cloud rap, washed pads, soft 808, minimal drums, dreamy plucks, wide stereo",
 ] as const;
 
 const BEAT_TRENDING_FR = [
-  "Trap ciné TikTok — loop court, énergie edit viral, 150 BPM",
-  "Beat amapiano log drums — percussif, été, dancefloor",
-  "Afrobeats bounce, plucks lumineux, énergie d'été",
-  "Instrumental slow jam R&B, keys soyeuses, vibe nocturne",
-  "Hybrid hyperpop trap — glitchy, coloré, son internet",
-  "Drill ambient — reverb, émotionnel, prêt streaming",
-  "Vibe pack lo-fi Beatstars — dusty, study beats, 85 BPM",
-  "Edit club jersey x house — bounce four-on-the-floor",
+  "cinematic trap, viral loop hook, hard 808, crisp hats, TikTok edit energy, tension build",
+  "amapiano, log drum bass, shakers, jazzy piano stabs, deep house groove, summer dancefloor",
+  "afrobeats, bright guitar, talking drum, warm sub, uplifting bounce, festival energy",
+  "R&B slow jam, silky rhodes, soft kick, warm bass, late-night mood, smooth polish",
+  "hyperpop trap, glitchy synths, distorted 808, colorful leads, internet sound design",
+  "ambient drill, reverb pads, sparse drill drums, emotional melody, streaming polish",
+  "lo-fi hip-hop, dusty drums, jazz sample, vinyl crackle, mellow chords, study groove",
+  "jersey club x house, four-on-the-floor kick, chopped stabs, club bounce, edit energy",
 ] as const;
 
 const BEAT_AI_CREATOR_FR = [
-  "Beat showcase artiste IA — polish radio, signature unique",
-  "Instrumental démo chanteur virtuel — espace couplet, lift refrain",
-  "Intro chaîne YouTube beats — motif mémorable, mix clean",
-  "Beat ciné sync-ready — montée tension, drop à 0:45",
+  "modern pop-trap, radio-ready polish, signature synth, tight drums, catchy motif, clean mix",
+  "contemporary R&B instrumental, open verse space, chorus lift chords, smooth 808, vocal-ready",
+  "type beat intro, memorable motif, punchy drums, minimal arrangement, YouTube-ready polish",
+  "cinematic trap, tension riser, orchestral hit, hard drop 808, sync-ready, trailer energy",
+] as const;
+
+/** Hero landing typewriter — phrases courtes lisibles (marketing), pas le format dice ACE. */
+export const LANDING_HERO_PROMPTS_EN = [
+  "R&B about quitting my job",
+  "Pop song about getting ghosted",
+  "Melancholic trap for rainy nights",
+  "House track about moving on",
+  "Neo soul about missing the train",
+] as const;
+
+export const LANDING_HERO_PROMPTS_FR = [
+  "Un R&B sur ma démission",
+  "Une pop sur mon ex qui ghost",
+  "Une trap mélancolique pour la pluie",
+  "Une house pour tourner la page",
+  "Une neo soul sur le train raté",
 ] as const;
 
 function songPool(locale: AppLocale): readonly string[] {
@@ -206,12 +256,9 @@ export function getRandomPromptPool(locale: AppLocale, mode: PromptMode): readon
 export function pickRandomPrompt(locale: AppLocale, mode: PromptMode): string {
   const pool = getRandomPromptPool(locale, mode);
   if (pool.length === 0) return "";
-  return pool[Math.floor(Math.random() * pool.length)] ?? pool[0]!;
+  const raw = pool[Math.floor(Math.random() * pool.length)] ?? pool[0]!;
+  return formatAceDiceCaption(raw);
 }
-
-/** Pool hero landing (typewriter) — extrait des chansons les plus accrocheuses */
-export const LANDING_HERO_PROMPTS_EN = SONG_PERSONAL_EN;
-export const LANDING_HERO_PROMPTS_FR = SONG_PERSONAL_FR;
 
 export function pickNextHeroPromptIndex(pool: readonly string[], current: number): number {
   if (pool.length <= 1) return 0;

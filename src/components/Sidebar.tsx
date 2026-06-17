@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { ThemeAndAccentPicker } from "@/components/ThemeAndAccentPicker";
 import { LanguagePicker } from "@/components/LanguagePicker";
+import { ThemeBrandMark } from "@/components/ThemeBrandMark";
 import { isSampleLabEnabled } from "@/lib/sampleLab";
 import { CLOUD_THEME_ENABLED } from "@/lib/featureFlags";
 import toast from "react-hot-toast";
@@ -112,11 +113,31 @@ export function Sidebar() {
     "relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl md:h-10 md:w-10";
 
   const localePicker = <LanguagePicker variant="icon" className="md:hidden" />;
+  const homeActive = location.pathname === "/" || location.pathname === "/home";
+  const homeLabel = locale === "fr" ? "Accueil" : "Home";
 
   return (
     <div className="pk-sidebar-root flex h-full w-full min-w-0 items-center bg-transparent md:h-auto md:w-auto md:flex-col md:justify-between md:px-2 md:py-3">
       <div className="flex min-w-0 flex-1 items-center md:flex-col md:gap-0">
         <div className="pk-mobile-bottom-nav__routes flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto overscroll-x-contain px-1.5 py-1 [-webkit-overflow-scrolling:touch] md:mt-1 md:flex-col md:gap-0.5 md:overflow-visible md:px-0 md:py-0">
+          <Link
+            to="/?home=1"
+            className={cn(
+              "pk-studio-nav-link pk-mobile-home-mark shrink-0 md:hidden",
+              mobileNavIconClass,
+              homeActive ? "pk-studio-nav-link--active text-pk-accent" : "text-pk-muted hover:text-pk-text",
+            )}
+            aria-label={homeLabel}
+            title={homeLabel}
+          >
+            {homeActive ? (
+              <span
+                className="absolute bottom-0 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-pk-accent"
+                aria-hidden
+              />
+            ) : null}
+            <ThemeBrandMark className="h-6 w-6" static />
+          </Link>
           {items.map((it) => {
             const active =
               it.to === "/?home=1"

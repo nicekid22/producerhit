@@ -1,7 +1,6 @@
-export function encodeWavBlob(buffer: AudioBuffer): Blob {
+export function encodeWavBlob(buffer: AudioBuffer, bitDepth: 16 | 24 = 16): Blob {
   const numChannels = buffer.numberOfChannels;
   const sampleRate = buffer.sampleRate;
-  const bitDepth = 16;
   const bytesPerSample = bitDepth / 8;
   const blockAlign = numChannels * bytesPerSample;
   const dataLength = buffer.length * blockAlign;
@@ -30,8 +29,16 @@ export function encodeWavBlob(buffer: AudioBuffer): Blob {
   for (let i = 0; i < buffer.length; i++) {
     for (let c = 0; c < numChannels; c++) {
       const sample = Math.max(-1, Math.min(1, buffer.getChannelData(c)[i] ?? 0));
-      view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
-      offset += 2;
+      if (bitDepth === 24) {
+        const intSample = Math.round(sample * 0x7fffff);
+        view.setUint8(offset, intSample & 0xff);
+        view.setUint8(offset + 1, (intSample >> 8) & 0xff);
+        view.setUint8(offset + 2, (intSample >> 16) & 0xff);
+        offset += 3;
+      } else {
+        view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+        offset += 2;
+      }
     }
   }
 
@@ -39,6 +46,6 @@ export function encodeWavBlob(buffer: AudioBuffer): Blob {
 }
 
 export function audioBufferToBlobUrl(buffer: AudioBuffer): { blob: Blob; url: string } {
-  const blob = encodeWavBlob(buffer);
+  const blob = encodeWavBlob(buffer, 16);
   return { blob, url: URL.createObjectURL(blob) };
 }

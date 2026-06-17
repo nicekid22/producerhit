@@ -1,0 +1,62 @@
+import type { MessageCatalog } from "../types";
+
+export const zh: MessageCatalog = {
+  nav: {
+    howItWorks: "如何使用",
+    features: "功能",
+    pricing: "定价",
+    community: "社区",
+    blog: "博客",
+    login: "登录",
+    startFree: "免费开始",
+    openStudio: "打开工作室",
+    homePage: "首页",
+    menu: "导航菜单",
+    mobileMenu: "移动菜单",
+  },
+  seo: {
+    homeTitle: "ProducerHit — AI 歌曲创作 & Type Beat 生成器 | 免版税",
+    homeDescription:
+      "ProducerHit 是 AI 歌曲创作与 Type Beat 生成工具：Song Mode、Remix 翻唱、免版税 MP3/WAV 导出、视频与母带 — 为制作人与艺术家而生。",
+    blogTitle: "博客 — ProducerHit",
+    blogDescription: "ProducerHit 博客：AI 节拍与音乐生成指南、提示词与工作流。",
+    exploreTitle: "社区 AI 节拍 — 聆听、Remix、创作 | ProducerHit",
+    exploreDescription:
+      "在 ProducerHit 收听公开 AI 节拍：社区动态、评分、评论、Remix 与风格页（Trap、Lo-Fi、R&B…）。",
+    loopTitle: "曲目 — ProducerHit",
+    loopDescription: "收听 ProducerHit 公开曲目，并通过 seed 变体 Remix 相似版本。",
+    pricingTitle: "定价 — ProducerHit",
+    pricingDescription: "AI 节拍与歌曲的简单定价。升级可获得更多额度与 WAV 导出。",
+    authTitle: "免费注册 — ProducerHit",
+    dashboardTitle: "我的工作室 — ProducerHit",
+    libraryTitle: "我的曲库 — ProducerHit",
+    sampleLabTitle: "AI Sample Lab — ProducerHit",
+    settingsTitle: "设置 — ProducerHit",
+    aiBeatGeneratorTitle: "AI 节拍生成器 — 在线 Type Beat | ProducerHit",
+    aiBeatGeneratorDescription:
+      "用 ProducerHit 生成 AI 节拍：Type Beat、双版本、seed 迭代、MP3/WAV 导出。",
+    aiMusicGeneratorTitle: "AI 音乐生成器 — 歌曲与节拍 | ProducerHit",
+    aiMusicGeneratorDescription: "AI 音乐生成器，创作歌曲与 Type Beat。描述氛围，生成、迭代并导出。",
+    typeBeatGeneratorTitle: "Type Beat AI 生成器 — 制作人级节拍 | ProducerHit",
+    typeBeatGeneratorDescription: "为制作人打造的 Type Beat AI：现代流派、干净混音、可复现 seed。",
+    generateBeatsFreeTitle: "免费在线生成节拍 — AI | ProducerHit",
+    generateBeatsFreeDescription:
+      "用 ProducerHit 免费生成节拍。从短片段开始，选最佳版本，seed 迭代。MP3 免费，WAV 需 Pro。",
+    legalTitle: "法律信息 — ProducerHit",
+    defaultTitle: "ProducerHit — AI 节拍生成器",
+    defaultDescription: "ProducerHit 是在线 Type Beat 的 AI 节拍生成器。",
+    exploreCollectionName: "ProducerHit 社区动态",
+    exploreCollectionDescription: "公开 AI 节拍、Remix 文化与社区氛围",
+  },
+  landing: {
+    heroTagline: "AI 工作室 · 歌曲 & Type Beat",
+    heroLead: "描述氛围 → 数秒出曲。免费 MP3，Pro 可导出 WAV。",
+    heroReassurance: "免费开始 · 无需绑卡 · MP3 导出",
+    heroScrollCue: "试用生成器",
+    heroCtaPrimary: "试用 ProducerHit",
+    heroCtaDashboard: "打开我的工作室 →",
+    ctaTitle: "你的下一个灵感值得被听见",
+    ctaLead: "每月 {{free}} 次免费生成。Pro（{{proPrice}}/月）解锁 WAV 与商用。",
+    ctaButton: "免费试用 ProducerHit →",
+  },
+};

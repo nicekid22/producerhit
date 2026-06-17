@@ -1,5 +1,5 @@
 /** Langues avec interface traduite (marketing + app progressive). */
-export const UI_LOCALES = ["en", "fr", "es", "pt", "de", "it"] as const;
+export const UI_LOCALES = ["en", "fr", "es", "pt", "de", "it", "ja", "ko", "zh", "th"] as const;
 
 export type AppLocale = (typeof UI_LOCALES)[number];
 
@@ -15,6 +15,10 @@ export const LOCALE_LABELS: Record<AppLocale, string> = {
   pt: "Português",
   de: "Deutsch",
   it: "Italiano",
+  ja: "日本語",
+  ko: "한국어",
+  zh: "中文",
+  th: "ไทย",
 };
 
 export const LOCALE_SHORT: Record<AppLocale, string> = {
@@ -24,7 +28,20 @@ export const LOCALE_SHORT: Record<AppLocale, string> = {
   pt: "PT",
   de: "DE",
   it: "IT",
+  ja: "JA",
+  ko: "KO",
+  zh: "ZH",
+  th: "TH",
 };
+
+/** Balise HTML lang (SEO / accessibilité). */
+export const HTML_LANG: Partial<Record<AppLocale, string>> = {
+  zh: "zh-Hans",
+};
+
+export function htmlLangAttribute(locale: AppLocale): string {
+  return HTML_LANG[locale] ?? locale;
+}
 
 const LOCALE_PREFIX: Record<string, AppLocale> = {
   en: "en",
@@ -33,6 +50,13 @@ const LOCALE_PREFIX: Record<string, AppLocale> = {
   pt: "pt",
   de: "de",
   it: "it",
+  ja: "ja",
+  jp: "ja",
+  ko: "ko",
+  kr: "ko",
+  zh: "zh",
+  cn: "zh",
+  th: "th",
 };
 
 export function normalizeLocale(input: string | null | undefined): AppLocale | null {

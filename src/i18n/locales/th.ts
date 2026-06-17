@@ -1,0 +1,62 @@
+import type { MessageCatalog } from "../types";
+
+export const th: MessageCatalog = {
+  nav: {
+    howItWorks: "วิธีใช้งาน",
+    features: "ฟีเจอร์",
+    pricing: "ราคา",
+    community: "ชุมชน",
+    blog: "บล็อก",
+    login: "เข้าสู่ระบบ",
+    startFree: "เริ่มฟรี",
+    openStudio: "เปิดสตูดิโอ",
+    homePage: "หน้าแรก",
+    menu: "เมนูนำทาง",
+    mobileMenu: "เมนูมือถือ",
+  },
+  seo: {
+    homeTitle: "ProducerHit — สร้างเพลง AI & Type Beat Generator | ไร้ค่าลิขสิทธิ์",
+    homeDescription:
+      "ProducerHit คือเครื่องมือสร้างเพลง AI และ Type Beat: Song Mode, Remix cover, ส่งออก MP3/WAV ไร้ค่าลิขสิทธิ์, วิดีโอ และมาสเตอร์ — สำหรับโปรดิวเซอร์และศิลปิน",
+    blogTitle: "บล็อก — ProducerHit",
+    blogDescription: "บล็อก ProducerHit: คู่มือ, พรอมpt และเวิร์กโฟลว์สำหรับ AI beat และเพลง",
+    exploreTitle: "AI beat ชุมชน — ฟัง, รีมิกซ์, สร้าง | ProducerHit",
+    exploreDescription:
+      "ฟัง AI beat สาธารณะบน ProducerHit: ฟีดชุมชน, คะแนน, คอมเมนต์, รีมิกซ์ (Trap, Lo-Fi, R&B…)",
+    loopTitle: "แทร็ก — ProducerHit",
+    loopDescription: "ฟังแทร็กสาธารณะจาก ProducerHit แล้วรีมิกซ์เวอร์ชันคล้ายกันด้วย seed",
+    pricingTitle: "ราคา — ProducerHit",
+    pricingDescription: "ราคาง่ายๆ สำหรับ AI beat และเพลง อัปเกรดเพื่อเครดิตมากขึ้นและส่งออก WAV",
+    authTitle: "สมัครฟรี — ProducerHit",
+    dashboardTitle: "สตูดิโอของฉัน — ProducerHit",
+    libraryTitle: "ไลบรารีของฉัน — ProducerHit",
+    sampleLabTitle: "AI Sample Lab — ProducerHit",
+    settingsTitle: "การตั้งค่า — ProducerHit",
+    aiBeatGeneratorTitle: "AI Beat Generator — Type Beat ออนไลน์ | ProducerHit",
+    aiBeatGeneratorDescription:
+      "สร้าง AI beat ด้วย ProducerHit: type beat, 2 เวอร์ชัน, seed variation, ส่งออก MP3/WAV",
+    aiMusicGeneratorTitle: "AI Music Generator — เพลง & beat | ProducerHit",
+    aiMusicGeneratorDescription: "สร้างเพลงและ type beat ด้วย AI อธิบาย vibe, สร้าง, ปรับ, ส่งออก",
+    typeBeatGeneratorTitle: "Type Beat AI Generator — beat ระดับโปร | ProducerHit",
+    typeBeatGeneratorDescription: "Type beat AI สำหรับโปรดิวเซอร์: แนวสมัยใหม่, มิกซ์สะอาด, seed ซ้ำได้",
+    generateBeatsFreeTitle: "สร้าง beat ออนไลน์ฟรี — AI | ProducerHit",
+    generateBeatsFreeDescription:
+      "สร้าง beat ฟรีด้วย ProducerHit เริ่มจากคลิปสั้น เลือกเวอร์ชันที่ดีที่สุด ปรับด้วย seed MP3 ฟรี, WAV ที่ Pro",
+    legalTitle: "ข้อกฎหมาย — ProducerHit",
+    defaultTitle: "ProducerHit — AI Beat Generator",
+    defaultDescription: "ProducerHit คือ AI beat generator สำหรับ type beat ออนไลน์",
+    exploreCollectionName: "ฟีดชุมชน ProducerHit",
+    exploreCollectionDescription: "AI beat สาธารณะ, วัฒนธรรมรีมิกซ์ และ vibe ชุมชน",
+  },
+  landing: {
+    heroTagline: "สตูดิโอ AI · เพลง & type beat",
+    heroLead: "อธิบาย vibe → ได้แทร็กในไม่กี่วินาที MP3 ฟรี, WAV ที่ Pro",
+    heroReassurance: "เริ่มฟรี · ไม่ต้องใส่บัตร · ส่งออก MP3",
+    heroScrollCue: "ลองเครื่องมือสร้าง",
+    heroCtaPrimary: "ลอง ProducerHit",
+    heroCtaDashboard: "เปิดสตูดิโอของฉัน →",
+    ctaTitle: "ไอเดียถัดไปของคุณควรได้ถูกได้ยิน",
+    ctaLead: "สร้างฟรี {{free}} ครั้ง/เดือน อัป Pro ({{proPrice}}/เดือน) สำหรับ WAV และการใช้เชิงพาณิชย์",
+    ctaButton: "ลอง ProducerHit ฟรี →",
+  },
+};

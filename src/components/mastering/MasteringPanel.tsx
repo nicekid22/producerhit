@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { Loader2, Lock, Pause, Play, Search, Sparkles, Wand2, ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2, Lock, Pause, Play, Search, Sparkles, Wand2 } from "lucide-react";
 import { AudioWaveform } from "@/components/WaveformVisualizer";
 import { Button } from "@/components/ui/Button";
 import { audioBufferToBlobUrl, encodeWavBlob } from "@/lib/mastering/export";
@@ -12,8 +12,10 @@ import { notifyGamificationMasteringPreview } from "@/components/growth/Gamifica
 import { useLoopsStore } from "@/stores/loopsStore";
 import { usePlayerStore } from "@/stores/playerStore";
 import type { Loop } from "@/types/loop";
+import { cn } from "@/lib/utils";
 
 import type { AppLocale } from "@/i18n/config";
+
 type Props = {
   locale: AppLocale;
   loops: Loop[];
@@ -26,7 +28,17 @@ type Props = {
   gamificationRefresh?: () => void;
 };
 
-export function MasteringPanel({ locale, loops, selectedLoopId, onSelectLoop, onApplied, onExit, plan = "free", onUpgrade, gamificationRefresh }: Props) {
+export function MasteringPanel({
+  locale,
+  loops,
+  selectedLoopId,
+  onSelectLoop,
+  onApplied,
+  onExit,
+  plan = "free",
+  onUpgrade,
+  gamificationRefresh,
+}: Props) {
   const isFr = locale === "fr";
   const canApply = canApplyMastering(plan);
   const canExport = canExportMastering(plan);
@@ -45,7 +57,6 @@ export function MasteringPanel({ locale, loops, selectedLoopId, onSelectLoop, on
   const [originalUrl, setOriginalUrl] = useState<string | null>(null);
   const [masteredUrl, setMasteredUrl] = useState<string | null>(null);
   const [masteredBlob, setMasteredBlob] = useState<Blob | null>(null);
-  const [analysisLine, setAnalysisLine] = useState<string | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const previewUrlsRef = useRef<string[]>([]);
@@ -104,7 +115,6 @@ export function MasteringPanel({ locale, loops, selectedLoopId, onSelectLoop, on
     setOriginalUrl(null);
     setMasteredUrl(null);
     setMasteredBlob(null);
-    setAnalysisLine(null);
     setCompare("original");
     setPreviewPlaying(false);
     setPreviewProgress(0);
@@ -137,17 +147,19 @@ export function MasteringPanel({ locale, loops, selectedLoopId, onSelectLoop, on
     };
   }, [ensureAudioReady, selected]);
 
-  useEffect(() => () => {
-    revokePreviewUrls();
-    stopLocalPreview();
-  }, [revokePreviewUrls, stopLocalPreview]);
+  useEffect(
+    () => () => {
+      revokePreviewUrls();
+      stopLocalPreview();
+    },
+    [revokePreviewUrls, stopLocalPreview],
+  );
 
-  const activePreviewUrl =
-    compare === "mastered" && masteredUrl ? masteredUrl : originalUrl;
+  const activePreviewUrl = compare === "mastered" && masteredUrl ? masteredUrl : originalUrl;
 
   const switchCompare = (next: "original" | "mastered") => {
     if (next === "mastered" && !masteredUrl) {
-      toast(isFr ? "Lance d’abord le master pour comparer la version studio." : "Run the master first to compare the studio version.");
+      toast(isFr ? "Lance d’abord le master." : "Run the master first.");
       return;
     }
     stopLocalPreview();
@@ -222,18 +234,14 @@ export function MasteringPanel({ locale, loops, selectedLoopId, onSelectLoop, on
       setMasteredUrl(url);
       setCompare("mastered");
       stopLocalPreview();
-      setAnalysisLine(
-        isFr
-          ? "Clarté renforcée · punch affiné · prêt pour le streaming"
-          : "Enhanced clarity · tighter punch · streaming-ready",
-      );
       trackClientEvent("mastering_preview_done", { loop_id: selected.id, preset: presetId, plan, preview_only: previewOnly });
       notifyGamificationMasteringPreview(locale);
       if (previewOnly) {
-        toast.success(isFr ? "Aperçu CLEAN — export réservé Studio / Plus 🔒" : "CLEAN preview — export on Studio / Plus 🔒", {
-          duration: 4000,
-          icon: "✨",
+        toast.success(isFr ? "Aperçu prêt — export sur Studio / Plus" : "Preview ready — export on Studio / Plus", {
+          duration: 3500,
         });
+      } else {
+        toast.success(isFr ? "Master prêt — écoute la version studio" : "Master ready — listen to the studio version");
       }
       gamificationRefresh?.();
     } catch (err) {
@@ -254,7 +262,7 @@ export function MasteringPanel({ locale, loops, selectedLoopId, onSelectLoop, on
     setApplying(true);
     try {
       const updated = await replaceLoopAudioRemote(selected.id, masteredBlob);
-      toast.success(isFr ? "Track mise à jour avec le master studio" : "Track updated with studio master");
+      toast.success(isFr ? "Track mise à jour" : "Track updated with master");
       trackClientEvent("mastering_apply", { loop_id: selected.id, preset: presetId });
       onApplied?.(updated);
       setOriginalUrl(updated.audioUrl);
@@ -268,72 +276,81 @@ export function MasteringPanel({ locale, loops, selectedLoopId, onSelectLoop, on
     }
   };
 
-  const downloadMaster = () => {
+  const downloadMaster = async () => {
     if (!masteredBlob || !selected) return;
     if (!canExport) {
-      toast(isFr ? "Export WAV réservé Pro / Studio" : "WAV export is Pro / Studio only", { icon: "🔒" });
+      toast(isFr ? "Export WAV réservé Studio / Plus" : "WAV export is Studio / Plus only", { icon: "🔒" });
       onUpgrade?.();
       return;
     }
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(masteredBlob);
-    a.download = `${selected.name.replace(/[^a-zA-Z0-9\s-]/g, "").trim() || "track"}-master.wav`;
-    a.click();
-    URL.revokeObjectURL(a.href);
+    try {
+      const input = await loadMasteringSource(selected.id, selected.audioUrl, ensureAudioReady);
+      const output = await masterAudioBuffer(input, preset);
+      const blob = encodeWavBlob(output, 24);
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${selected.name.replace(/[^a-zA-Z0-9\s-]/g, "").trim() || "track"}-master.wav`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(masteredBlob);
+      a.download = `${selected.name.replace(/[^a-zA-Z0-9\s-]/g, "").trim() || "track"}-master.wav`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
   };
 
   return (
-    <div className="space-y-5">
+    <div className="pk-mastering-studio space-y-4 md:space-y-5">
       {onExit ? (
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <Button variant="secondary" size="sm" onClick={onExit}>
-            <ArrowLeft className="h-4 w-4" />
-            {isFr ? "Retour à mon espace" : "Back to workspace"}
-          </Button>
-          <div className="text-xs text-white/45">{isFr ? "Mastering Studio" : "Mastering Studio"}</div>
-        </div>
+        <button
+          type="button"
+          onClick={onExit}
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-pk-muted transition-colors hover:text-pk-text md:hidden"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          {isFr ? "Retour" : "Back"}
+        </button>
       ) : null}
 
-      <div className="relative overflow-hidden rounded-2xl border border-violet-400/20 bg-gradient-to-br from-violet-500/[0.12] via-transparent to-cyan-500/[0.08] p-5">
-        <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-violet-500/20 blur-3xl" aria-hidden />
-        <div className="relative flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <div className="flex items-center gap-2 text-lg font-semibold text-white">
-              <Sparkles className="h-5 w-5 text-violet-300" />
-              <span className="pk-prism-holo-text">{isFr ? "Mastering Studio" : "Mastering Studio"}</span>
-            </div>
-            <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/65">
-              {isFr
-                ? "Le fini pro qui fait la différence : clarté, punch et présence — comme en studio, en quelques secondes."
-                : "The pro finish that makes the difference: clarity, punch, and presence — studio-grade in seconds."}
-            </p>
-          </div>
-          <div className="shrink-0 rounded-full border border-violet-300/25 bg-violet-500/10 px-3 py-1 text-xs font-semibold text-violet-100">
-            {previewOnly
-              ? isFr
-                ? "Aperçu gratuit · écoute illimitée"
-                : "Free preview · unlimited listen"
-              : isFr
-                ? "Inclus · illimité"
-                : "Included · unlimited"}
-          </div>
+      <header className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-pk-border/60 bg-pk-panel/30 p-4 backdrop-blur-sm">
+        <div className="min-w-0">
+          <h2 className="flex items-center gap-2 text-base font-semibold text-pk-text md:text-lg">
+            <Sparkles className="h-4 w-4 shrink-0 text-pk-accent" aria-hidden />
+            Mastering Studio
+          </h2>
+          <p className="mt-1 max-w-md text-xs leading-relaxed text-pk-muted md:text-sm">
+            {isFr
+              ? "Clarté, punch et présence — fini pro en quelques secondes, directement dans le navigateur."
+              : "Clarity, punch, and presence — pro finish in seconds, right in your browser."}
+          </p>
         </div>
-      </div>
+        <span className="shrink-0 rounded-full border border-pk-border/70 bg-pk-panel/50 px-2.5 py-1 text-[11px] font-semibold text-pk-text/80">
+          {previewOnly
+            ? isFr
+              ? "Aperçu gratuit"
+              : "Free preview"
+            : isFr
+              ? "Inclus · illimité"
+              : "Included · unlimited"}
+        </span>
+      </header>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
-        <div className="space-y-3">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-white/40" />
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+        <section className="space-y-2">
+          <label className="relative block">
+            <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-pk-muted" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder={isFr ? "Trouver une track à sublimer…" : "Find a track to polish…"}
-              className="w-full rounded-xl border border-white/10 bg-white/[0.03] py-2 pl-9 pr-3 text-sm outline-none placeholder:text-white/35 focus:border-violet-400/50"
+              placeholder={isFr ? "Chercher une track…" : "Search a track…"}
+              className="w-full rounded-xl border border-pk-border/70 bg-pk-input/80 py-2 pl-9 pr-3 text-sm text-pk-text outline-none placeholder:text-pk-muted focus:border-pk-accent/50"
             />
-          </div>
-          <div className="max-h-[320px] space-y-1 overflow-y-auto rounded-2xl border border-white/10 bg-white/[0.02] p-2">
+          </label>
+          <div className="max-h-[220px] space-y-1 overflow-y-auto rounded-xl border border-pk-border/60 bg-pk-panel/20 p-1.5 sm:max-h-[280px]">
             {filtered.length === 0 ? (
-              <div className="p-4 text-sm text-white/45">{isFr ? "Aucune track avec audio." : "No tracks with audio."}</div>
+              <p className="p-3 text-sm text-pk-muted">{isFr ? "Aucune track avec audio." : "No tracks with audio."}</p>
             ) : (
               filtered.map((loop) => {
                 const active = selected?.id === loop.id;
@@ -342,13 +359,14 @@ export function MasteringPanel({ locale, loops, selectedLoopId, onSelectLoop, on
                     key={loop.id}
                     type="button"
                     onClick={() => onSelectLoop(loop.id)}
-                    className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors ${
-                      active ? "bg-violet-500/15 ring-1 ring-violet-400/30" : "hover:bg-white/[0.04]"
-                    }`}
+                    className={cn(
+                      "flex w-full items-center rounded-lg px-3 py-2.5 text-left transition-colors",
+                      active ? "bg-pk-accent/15 ring-1 ring-pk-accent/35" : "hover:bg-pk-panel/50",
+                    )}
                   >
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-semibold text-white">{loop.name}</div>
-                      <div className="truncate text-xs text-white/45">
+                      <div className="truncate text-sm font-semibold text-pk-text">{loop.name}</div>
+                      <div className="truncate text-xs text-pk-muted">
                         {loop.genre} · {loop.bpm} BPM
                       </div>
                     </div>
@@ -357,158 +375,138 @@ export function MasteringPanel({ locale, loops, selectedLoopId, onSelectLoop, on
               })
             )}
           </div>
-        </div>
+        </section>
 
-        <div className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+        <section className="space-y-4 rounded-2xl border border-pk-border/60 bg-pk-panel/25 p-4">
           {selected ? (
             <>
               <div>
-                <div className="text-sm font-semibold text-white">{selected.name}</div>
-                <div className="mt-0.5 text-xs text-white/45">
-                  {selected.genre} · {selected.mood} · {selected.bpm} BPM
+                <div className="truncate text-sm font-semibold text-pk-text">{selected.name}</div>
+                <div className="mt-0.5 text-xs text-pk-muted">
+                  {selected.genre} · {selected.bpm} BPM
                 </div>
               </div>
 
               <div>
-                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-white/45">
-                  {isFr ? "Style studio" : "Studio style"}
+                <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-pk-muted">
+                  {isFr ? "Style" : "Style"}
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5">
                   {MASTER_PRESET_LIST.map((p) => (
                     <button
                       key={p.id}
                       type="button"
                       onClick={() => setPresetId(p.id)}
-                      className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-                        presetId === p.id ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
-                      }`}
+                      className={cn(
+                        "rounded-full px-3 py-1 text-xs font-semibold transition-colors",
+                        presetId === p.id ? "pk-prism-pill-active" : "bg-pk-panel/60 text-pk-muted hover:text-pk-text",
+                      )}
                     >
                       {isFr ? p.labelFr : p.labelEn}
                     </button>
                   ))}
                 </div>
-                <p className="mt-2 text-xs text-white/45">{isFr ? preset.descriptionFr : preset.descriptionEn}</p>
               </div>
 
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => switchCompare("original")}
-                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                    compare === "original" ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
-                  }`}
-                >
-                  {isFr ? "Original" : "Original"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => switchCompare("mastered")}
-                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                    compare === "mastered" ? "pk-prism-pill-active" : masteredUrl ? "bg-white/5 text-white/50 hover:text-white" : "bg-white/5 text-white/35 hover:text-white/55"
-                  }`}
-                  title={
-                    !masteredUrl
-                      ? isFr
-                        ? "Lance le master pour activer la comparaison studio"
-                        : "Run the master to enable studio comparison"
-                      : undefined
-                  }
-                >
-                  {isFr ? "Studio" : "Studio"}
-                </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="inline-flex rounded-full border border-pk-border/60 bg-pk-panel/40 p-0.5">
+                  {(["original", "mastered"] as const).map((id) => (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => switchCompare(id)}
+                      disabled={id === "mastered" && !masteredUrl}
+                      className={cn(
+                        "rounded-full px-3 py-1 text-xs font-semibold transition-colors",
+                        compare === id ? "pk-prism-pill-active" : "text-pk-muted hover:text-pk-text",
+                        id === "mastered" && !masteredUrl && compare !== id && "opacity-45",
+                      )}
+                    >
+                      {id === "original" ? (isFr ? "Original" : "Original") : "Studio"}
+                    </button>
+                  ))}
+                </div>
                 <Button variant="secondary" size="sm" disabled={!activePreviewUrl} onClick={togglePreview}>
                   {previewPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                   {isFr ? "Écouter" : "Listen"}
                 </Button>
               </div>
-              {!masteredUrl ? (
-                <p className="text-xs text-white/40">
-                  {isFr ? "Lance le master pour activer la comparaison A/B studio." : "Run the master to unlock A/B studio comparison."}
-                </p>
-              ) : null}
 
-              <div className="space-y-2">
-                <div className="text-xs font-semibold text-white/45">
-                  {compare === "mastered" && masteredUrl
-                    ? isFr
-                      ? "Version studio — plus dense, plus présente"
-                      : "Studio version — denser, more present"
-                    : isFr
-                      ? "Mix original"
-                      : "Original mix"}
-                </div>
-                <div className="rounded-xl border border-white/10 bg-black/20 px-2 py-2">
-                  <AudioWaveform
-                    key={`${selected.id}-${compare}-${masteredUrl ?? originalUrl ?? "none"}`}
-                    loopId={selected.id}
-                    audioUrl={activePreviewUrl}
-                    isPlaying={previewPlaying}
-                    progress={previewProgress}
-                    height={56}
-                    color={compare === "mastered" ? "#67c3ff" : "#9d7cff"}
-                    unplayedColor="#2a2a38"
-                  />
-                </div>
-                {analysisLine ? <div className="text-xs text-cyan-200/80">{analysisLine}</div> : null}
-                {previewOnly && masteredUrl ? (
-                  <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100/90">
-                    {isFr
-                      ? "Aperçu gratuit — passe Studio ou Plus pour exporter le WAV masterisé et appliquer le master à ta track."
-                      : "Free preview — upgrade to Studio or Plus to export mastered WAV and apply the master to your track."}
-                    {onUpgrade ? (
-                      <button type="button" className="ml-1 underline hover:text-white" onClick={onUpgrade}>
-                        {isFr ? "Voir les plans" : "See plans"}
-                      </button>
-                    ) : null}
-                  </div>
-                ) : null}
+              <div className="rounded-xl border border-pk-border/50 bg-black/15 px-2 py-2">
+                <AudioWaveform
+                  key={`${selected.id}-${compare}-${masteredUrl ?? originalUrl ?? "none"}`}
+                  loopId={selected.id}
+                  audioUrl={activePreviewUrl}
+                  isPlaying={previewPlaying}
+                  progress={previewProgress}
+                  height={52}
+                  color={compare === "mastered" ? "var(--pk-accent, #67c3ff)" : "#9d7cff"}
+                  unplayedColor="rgba(255,255,255,0.12)"
+                />
               </div>
 
               {processing ? (
                 <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-xs text-white/55">
+                  <div className="flex items-center gap-2 text-xs text-pk-muted">
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    {isFr ? "Sculpture du son…" : "Sculpting your sound…"} {Math.round(progress * 100)}%
+                    {isFr ? "Master en cours…" : "Mastering…"} {Math.round(progress * 100)}%
                   </div>
-                  <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
-                    <div className="h-full bg-violet-400 transition-all" style={{ width: `${Math.round(progress * 100)}%` }} />
+                  <div className="h-1 overflow-hidden rounded-full bg-pk-border/40">
+                    <div className="h-full bg-pk-accent transition-all" style={{ width: `${Math.round(progress * 100)}%` }} />
                   </div>
                 </div>
               ) : null}
 
-              <div className="flex flex-wrap gap-2">
-                <Button variant="primary" size="sm" disabled={processing || !selected} onClick={() => void runMaster()}>
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="w-full sm:w-auto"
+                  disabled={processing || !selected}
+                  onClick={() => void runMaster()}
+                >
                   <Wand2 className="h-4 w-4" />
                   {isFr ? "Lancer le master" : "Run master"}
                 </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  disabled={!masteredBlob || applying}
-                  onClick={() => void applyMaster()}
-                  title={!canApply ? (isFr ? "Réservé Studio / Plus" : "Studio / Plus only") : undefined}
-                >
-                  {applying ? <Loader2 className="h-4 w-4 animate-spin" /> : !canApply ? <Lock className="h-4 w-4" /> : null}
-                  {isFr ? "Appliquer à la track" : "Apply to track"}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={!masteredBlob}
-                  onClick={downloadMaster}
-                  title={!canExport ? (isFr ? "Réservé Studio / Plus" : "Studio / Plus only") : undefined}
-                >
-                  {!canExport ? <Lock className="h-4 w-4" /> : null}
-                  {isFr ? "Exporter WAV" : "Export WAV"}
-                </Button>
+                {masteredBlob ? (
+                  <>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="w-full sm:w-auto"
+                      disabled={applying}
+                      onClick={() => void applyMaster()}
+                    >
+                      {applying ? <Loader2 className="h-4 w-4 animate-spin" /> : !canApply ? <Lock className="h-4 w-4" /> : null}
+                      {isFr ? "Appliquer" : "Apply"}
+                    </Button>
+                    <Button variant="ghost" size="sm" className="w-full sm:w-auto" onClick={() => void downloadMaster()}>
+                      {!canExport ? <Lock className="h-4 w-4" /> : null}
+                      {isFr ? "Export WAV 24-bit" : "Export 24-bit WAV"}
+                    </Button>
+                  </>
+                ) : null}
               </div>
+
+              {previewOnly && masteredUrl ? (
+                <p className="text-xs text-pk-muted">
+                  {isFr ? "Aperçu gratuit — " : "Free preview — "}
+                  {onUpgrade ? (
+                    <button type="button" className="underline hover:text-pk-text" onClick={onUpgrade}>
+                      {isFr ? "passer Studio / Plus pour exporter" : "upgrade to Studio / Plus to export"}
+                    </button>
+                  ) : (
+                    isFr ? "export sur Studio / Plus" : "export on Studio / Plus"
+                  )}
+                </p>
+              ) : null}
             </>
           ) : (
-            <div className="py-8 text-center text-sm text-white/45">
-              {isFr ? "Sélectionne une track à sublimer en studio." : "Select a track to polish in the studio."}
-            </div>
+            <p className="py-10 text-center text-sm text-pk-muted">
+              {isFr ? "Choisis une track à masteriser." : "Pick a track to master."}
+            </p>
           )}
-        </div>
+        </section>
       </div>
 
       <audio ref={audioRef} className="hidden" preload="auto" />
@@ -516,9 +514,13 @@ export function MasteringPanel({ locale, loops, selectedLoopId, onSelectLoop, on
   );
 }
 
-export async function quickMasterLoopBlob(loop: Loop, presetId: MasterPresetId, ensureAudioReady: (id: string) => Promise<string>): Promise<Blob> {
+export async function quickMasterLoopBlob(
+  loop: Loop,
+  presetId: MasterPresetId,
+  ensureAudioReady: (id: string) => Promise<string>,
+): Promise<Blob> {
   const preset = MASTER_PRESETS[presetId];
   const input = await loadMasteringSource(loop.id, loop.audioUrl, ensureAudioReady);
   const output = await masterAudioBuffer(input, preset);
-  return encodeWavBlob(output);
+  return encodeWavBlob(output, 24);
 }
