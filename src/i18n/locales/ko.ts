@@ -32,6 +32,7 @@ export const ko: MessageCatalog = {
     dashboardTitle: "내 스튜디오 — ProducerHit",
     libraryTitle: "내 라이브러리 — ProducerHit",
     sampleLabTitle: "AI Sample Lab — ProducerHit",
+    voiceStudioTitle: "Voice Studio — AI 보이스 클론 | ProducerHit",
     settingsTitle: "설정 — ProducerHit",
     aiBeatGeneratorTitle: "AI 비트 생성기 — 온라인 타입 비트 | ProducerHit",
     aiBeatGeneratorDescription:
@@ -48,6 +49,9 @@ export const ko: MessageCatalog = {
     defaultDescription: "ProducerHit는 온라인 타입 비트용 AI 비트 생성기입니다.",
     exploreCollectionName: "ProducerHit 커뮤니티 피드",
     exploreCollectionDescription: "공개 AI 비트, 리믹스 문화, 커뮤니티 바이브",
+    trendingTitle: "트렌딩 AI 비트 — 커뮤니티 차트 | ProducerHit",
+    trendingDescription:
+      "ProducerHit에서 트렌딩 AI 비트를 발견하세요: 높은 평점 트랙, 리믹스 시드, 커뮤니티 인기곡.",
   },
   landing: {
     heroTagline: "AI 스튜디오 · 노래 & 타입 비트",

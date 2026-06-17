@@ -32,6 +32,7 @@ export const th: MessageCatalog = {
     dashboardTitle: "สตูดิโอของฉัน — ProducerHit",
     libraryTitle: "ไลบรารีของฉัน — ProducerHit",
     sampleLabTitle: "AI Sample Lab — ProducerHit",
+    voiceStudioTitle: "Voice Studio — โคลนเสียง AI | ProducerHit",
     settingsTitle: "การตั้งค่า — ProducerHit",
     aiBeatGeneratorTitle: "AI Beat Generator — Type Beat ออนไลน์ | ProducerHit",
     aiBeatGeneratorDescription:
@@ -48,6 +49,9 @@ export const th: MessageCatalog = {
     defaultDescription: "ProducerHit คือ AI beat generator สำหรับ type beat ออนไลน์",
     exploreCollectionName: "ฟีดชุมชน ProducerHit",
     exploreCollectionDescription: "AI beat สาธารณะ, วัฒนธรรมรีมิกซ์ และ vibe ชุมชน",
+    trendingTitle: "AI beat มาแรง — ชาร์ตชุมชน | ProducerHit",
+    trendingDescription:
+      "ค้นพบ AI beat มาแรงบน ProducerHit: แทรกที่ได้คะแนนสูง, seed สำหรับ remix และรายการโปรดของชุมชน",
   },
   landing: {
     heroTagline: "สตูดิโอ AI · เพลง & type beat",

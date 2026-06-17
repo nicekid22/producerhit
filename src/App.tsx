@@ -40,6 +40,7 @@ const GrowthAdminPage = lazy(() => import("@/pages/GrowthAdmin"));
 const SampleLabPage = lazy(() => import("@/pages/SampleLab"));
 const VoiceStudioPage = lazy(() => import("@/pages/VoiceStudio"));
 const CloudThemePreviewPage = lazy(() => import("@/pages/CloudThemePreview"));
+const NotFoundPage = lazy(() => import("@/pages/NotFound"));
 
 export default function App() {
   return (
@@ -87,7 +88,7 @@ export default function App() {
                     <Route path="/admin/growth" element={<GrowthAdminPage />} />
                   </Route>
 
-                  <Route path="*" element={<Navigate to="/" replace />} />
+                  <Route path="*" element={<NotFoundPage />} />
                 </Routes>
               </Suspense>
             </RouteFade>

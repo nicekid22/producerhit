@@ -6,12 +6,14 @@ export type SeoSlugKey =
   | "blog"
   | "blog-post"
   | "explore"
+  | "trending"
   | "loop"
   | "pricing"
   | "auth"
   | "dashboard"
   | "library"
   | "sample-lab"
+  | "voice-studio"
   | "settings"
   | "ai-beat-generator"
   | "ai-music-generator"
@@ -31,6 +33,8 @@ export function getPageSeo(locale: AppLocale, slugKey: SeoSlugKey): { title: str
       return { title: s.blogTitle, description: s.blogDescription };
     case "explore":
       return { title: s.exploreTitle, description: s.exploreDescription };
+    case "trending":
+      return { title: s.trendingTitle, description: s.trendingDescription };
     case "loop":
       return { title: s.loopTitle, description: s.loopDescription };
     case "pricing":
@@ -43,6 +47,8 @@ export function getPageSeo(locale: AppLocale, slugKey: SeoSlugKey): { title: str
       return { title: s.libraryTitle, description: s.defaultDescription };
     case "sample-lab":
       return { title: s.sampleLabTitle, description: s.defaultDescription };
+    case "voice-studio":
+      return { title: s.voiceStudioTitle, description: s.defaultDescription };
     case "settings":
       return { title: s.settingsTitle, description: s.defaultDescription };
     case "ai-beat-generator":

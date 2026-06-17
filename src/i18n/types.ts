@@ -45,6 +45,7 @@ export type MessageCatalog = {
     dashboardTitle: string;
     libraryTitle: string;
     sampleLabTitle: string;
+    voiceStudioTitle: string;
     settingsTitle: string;
     aiBeatGeneratorTitle: string;
     aiBeatGeneratorDescription: string;
@@ -59,6 +60,8 @@ export type MessageCatalog = {
     defaultDescription: string;
     exploreCollectionName: string;
     exploreCollectionDescription: string;
+    trendingTitle: string;
+    trendingDescription: string;
   };
   landing: {
     heroTagline: string;

@@ -2507,7 +2507,20 @@ html.pk-warm-glass-active .pk-icon-loader__sublabel {
   border-color: rgba(255, 160, 80, 0.28) !important;
 }
 
-/* Landing / pricing — textes secondaires lisibles sur fond ambre */
+/* Landing pricing teaser — lisibilité Warm Glass (textes « fire » ambre) */
+.pk-warm-glass-stage .pk-landing-pricing-teaser [class*="text-white/"],
+.pk-warm-glass-stage .pk-landing-pricing-teaser .text-white\/45,
+.pk-warm-glass-stage .pk-landing-pricing-teaser .text-white\/50 {
+  color: rgba(255, 248, 240, 0.72) !important;
+}
+
+.pk-warm-glass-stage .pk-pricing-hero [class*="text-white/"],
+.pk-warm-glass-stage .pk-pricing-compare [class*="text-white/"],
+.pk-warm-glass-stage .pk-pricing-page footer [class*="text-white/"],
+.pk-warm-glass-stage .pk-pricing-faq [class*="text-white/"] {
+  color: rgba(255, 248, 240, 0.72) !important;
+}
+
 .pk-warm-glass-stage .pk-prism-card .text-\[\#6b7280\],
 .pk-warm-glass-stage .pk-pricing-card .text-white\/45,
 .pk-warm-glass-stage .pk-pricing-card .text-white\/55 {

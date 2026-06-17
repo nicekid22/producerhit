@@ -3,8 +3,12 @@ Allow: /
 
 Disallow: /dashboard
 Disallow: /library
+Disallow: /sample-lab
+Disallow: /voice-studio
 Disallow: /settings
+Disallow: /admin
 Disallow: /auth
+Disallow: /theme-preview
 
 Sitemap: https://www.producerhit.com/sitemap.xml
 Sitemap: https://www.producerhit.com/sitemap-loops.xml

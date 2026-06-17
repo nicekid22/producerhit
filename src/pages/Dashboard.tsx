@@ -1542,27 +1542,29 @@ export default function Dashboard() {
       };
 
       if (debugEnabled) {
-        try {
-          const previewCaption = buildAceCaption(
-            autoMetaEnabled ? { ...inputParams, bpm: 0, key: "", scale: "" } : inputParams,
-            {
-              isSong: runAsSong,
-              instrumental: runAsSong ? false : beatInstrumental,
-              autoMeta: autoMetaEnabled,
-              vocalLanguage: detectedLang,
-            },
-          );
-          console.log("[GEN UI]", {
-            mode,
-            songUiMode,
-            lyricsMode,
-            detectedLang,
-            params: inputParams,
-            aceCaption: previewCaption,
-            options: withVoiceClone(buildOptions(seed1)),
-          });
-        } catch {
-          // ignore
+        if (import.meta.env.DEV) {
+          try {
+            const previewCaption = buildAceCaption(
+              autoMetaEnabled ? { ...inputParams, bpm: 0, key: "", scale: "" } : inputParams,
+              {
+                isSong: runAsSong,
+                instrumental: runAsSong ? false : beatInstrumental,
+                autoMeta: autoMetaEnabled,
+                vocalLanguage: detectedLang,
+              },
+            );
+            console.debug("[GEN UI]", {
+              mode,
+              songUiMode,
+              lyricsMode,
+              detectedLang,
+              params: inputParams,
+              aceCaption: previewCaption,
+              options: withVoiceClone(buildOptions(seed1)),
+            });
+          } catch {
+            // ignore
+          }
         }
       }
 

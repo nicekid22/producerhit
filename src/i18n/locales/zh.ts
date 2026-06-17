@@ -32,6 +32,7 @@ export const zh: MessageCatalog = {
     dashboardTitle: "我的工作室 — ProducerHit",
     libraryTitle: "我的曲库 — ProducerHit",
     sampleLabTitle: "AI Sample Lab — ProducerHit",
+    voiceStudioTitle: "Voice Studio — AI 声音克隆 | ProducerHit",
     settingsTitle: "设置 — ProducerHit",
     aiBeatGeneratorTitle: "AI 节拍生成器 — 在线 Type Beat | ProducerHit",
     aiBeatGeneratorDescription:
@@ -48,6 +49,9 @@ export const zh: MessageCatalog = {
     defaultDescription: "ProducerHit 是在线 Type Beat 的 AI 节拍生成器。",
     exploreCollectionName: "ProducerHit 社区动态",
     exploreCollectionDescription: "公开 AI 节拍、Remix 文化与社区氛围",
+    trendingTitle: "热门 AI 节拍 — 社区榜单 | ProducerHit",
+    trendingDescription:
+      "在 ProducerHit 发现热门 AI 节拍：高评分曲目、Remix 种子与社区精选。",
   },
   landing: {
     heroTagline: "AI 工作室 · 歌曲 & Type Beat",

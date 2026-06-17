@@ -32,6 +32,7 @@ export const ja: MessageCatalog = {
     dashboardTitle: "マイスタジオ — ProducerHit",
     libraryTitle: "マイライブラリ — ProducerHit",
     sampleLabTitle: "AI Sample Lab — ProducerHit",
+    voiceStudioTitle: "Voice Studio — AIボイスクローン | ProducerHit",
     settingsTitle: "設定 — ProducerHit",
     aiBeatGeneratorTitle: "AIビートジェネレーター — オンラインタイプビート | ProducerHit",
     aiBeatGeneratorDescription:
@@ -48,6 +49,9 @@ export const ja: MessageCatalog = {
     defaultDescription: "ProducerHitはオンラインタイプビート用AIビートジェネレーター。",
     exploreCollectionName: "ProducerHitコミュニティフィード",
     exploreCollectionDescription: "公開AIビート、リミックス文化、コミュニティヴァイブ",
+    trendingTitle: "トレンドAIビート — コミュニティチャート | ProducerHit",
+    trendingDescription:
+      "ProducerHitでトレンドのAIビートを発見：高評価トラック、リミックス用シード、コミュニティのお気に入り。",
   },
   landing: {
     heroTagline: "AIスタジオ · 楽曲＆タイプビート",

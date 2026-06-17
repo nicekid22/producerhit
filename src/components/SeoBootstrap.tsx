@@ -58,7 +58,7 @@ function slugKeyFromPath(pathname: string): string {
   if (pathname === "/") return "home";
   if (pathname === "/blog") return "blog";
   if (pathname.startsWith("/blog/")) return "blog-post";
-  if (pathname.startsWith("/community/vibe/")) return "community-vibe";
+  if (pathname.startsWith("/community/vibe/")) return "explore";
   if (pathname === "/trending") return "trending";
   if (pathname === "/explore" || pathname === "/community") return "explore";
   if (pathname.startsWith("/loop/")) return "loop";
@@ -68,6 +68,7 @@ function slugKeyFromPath(pathname: string): string {
   if (pathname === "/dashboard") return "dashboard";
   if (pathname === "/library") return "library";
   if (pathname === "/sample-lab") return "sample-lab";
+  if (pathname === "/voice-studio") return "voice-studio";
   if (pathname === "/settings") return "settings";
   if (pathname === "/ai-beat-generator") return "ai-beat-generator";
   if (pathname === "/ai-music-generator") return "ai-music-generator";
@@ -88,14 +89,17 @@ export function SeoBootstrap() {
     void (async () => {
       const origin = "https://www.producerhit.com";
       const canonicalUrl = `${origin}${pathname}`;
-      const ogImageUrl = `${origin}/og-image.svg`;
+      const ogImageUrl = `${origin}/og-image.png`;
 
       const isAppRoute =
         pathname.startsWith("/dashboard") ||
         pathname.startsWith("/library") ||
         pathname.startsWith("/sample-lab") ||
+        pathname.startsWith("/voice-studio") ||
         pathname.startsWith("/settings") ||
-        pathname.startsWith("/auth");
+        pathname.startsWith("/admin") ||
+        pathname.startsWith("/auth") ||
+        pathname.startsWith("/theme-preview");
       const robots = isAppRoute ? "noindex,nofollow" : "index,follow";
 
       let seoPage: Awaited<ReturnType<typeof import("@/lib/seoPages").getSeoPageByPath>> = null;
@@ -142,10 +146,6 @@ export function SeoBootstrap() {
       const contentLocale = comparisonPage ? comparisonLocale : seoPage ? seoPageLocale : locale;
 
       const slugKey = slugKeyFromPath(pathname);
-
-      if (slugKey === "community-vibe" || slugKey === "trending") {
-        return;
-      }
 
       const pageSeo = getPageSeo(locale, slugKey as SeoSlugKey);
 
@@ -340,16 +340,16 @@ export function SeoBootstrap() {
         return;
       }
 
-      if (slugKey === "explore") {
+      if (slugKey === "explore" || slugKey === "trending") {
         const seo = getMessages(locale).seo;
         setJsonLd([
           ...baseJsonLd,
           {
             "@context": "https://schema.org",
             "@type": "CollectionPage",
-            name: seo.exploreCollectionName,
-            url: `${origin}/community`,
-            description: seo.exploreCollectionDescription,
+            name: slugKey === "trending" ? seo.trendingTitle : seo.exploreCollectionName,
+            url: `${origin}${slugKey === "trending" ? "/trending" : "/community"}`,
+            description: slugKey === "trending" ? seo.trendingDescription : seo.exploreCollectionDescription,
           },
         ]);
         return;

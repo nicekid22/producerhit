@@ -47,7 +47,7 @@ function ErrorScreen({ title, message }: { title: string; message?: string }) {
               className="mt-5 inline-flex rounded-pk border border-pk-border bg-pk-bg px-4 py-2 text-xs font-semibold text-pk-text hover:bg-white/5"
               onClick={() => window.location.reload()}
             >
-              Reload
+              Reload page
             </button>
           )}
         </div>
@@ -66,7 +66,7 @@ class RootErrorBoundary extends Component<{ children: React.ReactNode }, { error
   render() {
     if (this.state.error) {
       const message = this.state.error instanceof Error ? this.state.error.message : String(this.state.error);
-      return <ErrorScreen title="Une erreur est survenue" message={message} />;
+      return <ErrorScreen title="Something went wrong" message={message} />;
     }
     return this.props.children;
   }

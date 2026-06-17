@@ -34,6 +34,7 @@ export const en: MessageCatalog = {
     dashboardTitle: "My Studio — ProducerHit",
     libraryTitle: "My Library — ProducerHit",
     sampleLabTitle: "AI Sample Lab — ProducerHit",
+    voiceStudioTitle: "Voice Studio — AI voice clone & sing | ProducerHit",
     settingsTitle: "Settings — ProducerHit",
     aiBeatGeneratorTitle: "AI Beat Generator — Create Type Beats Online | ProducerHit",
     aiBeatGeneratorDescription:
@@ -52,6 +53,9 @@ export const en: MessageCatalog = {
     defaultDescription: "ProducerHit is an AI beat generator to create type beats online.",
     exploreCollectionName: "ProducerHit Community Feed",
     exploreCollectionDescription: "Public AI beats, remix culture, and community vibes",
+    trendingTitle: "Trending AI beats — community charts | ProducerHit",
+    trendingDescription:
+      "Discover trending AI beats on ProducerHit: top-rated tracks, remix-ready seeds, and community favorites updated daily.",
   },
   landing: {
     heroTagline: "AI studio · Songs & type beats",

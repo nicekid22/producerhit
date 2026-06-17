@@ -34,6 +34,7 @@ export const de: MessageCatalog = {
     dashboardTitle: "Mein Studio — ProducerHit",
     libraryTitle: "Meine Bibliothek — ProducerHit",
     sampleLabTitle: "AI Sample Lab — ProducerHit",
+    voiceStudioTitle: "Voice Studio — KI-Stimmenklon | ProducerHit",
     settingsTitle: "Einstellungen — ProducerHit",
     aiBeatGeneratorTitle: "KI-Beat-Generator — Type Beats online | ProducerHit",
     aiBeatGeneratorDescription:
@@ -52,6 +53,9 @@ export const de: MessageCatalog = {
     defaultDescription: "ProducerHit ist ein KI-Beat-Generator für Type Beats online.",
     exploreCollectionName: "ProducerHit Community Feed",
     exploreCollectionDescription: "Öffentliche KI-Beats, Remix-Kultur und Community-Vibes",
+    trendingTitle: "Trending KI-Beats — Community-Charts | ProducerHit",
+    trendingDescription:
+      "Entdecke trending KI-Beats auf ProducerHit: top-bewertete Tracks, Remix-Seeds und Community-Favoriten.",
   },
   landing: {
     heroTagline: "KI-Studio · Songs & Type Beats",
