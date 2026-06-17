@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { captureAttributionFromUrl } from "@/lib/attribution";
 import { GA_MEASUREMENT_ID, isGa4ScriptPresent } from "@/lib/googleAnalytics";
 import { scheduleThirdPartyAnalytics } from "@/lib/deferredAnalytics";
+import { deferUntilIdle } from "@/lib/perf/defer";
 import { flushEventQueue, trackClientEvent } from "@/lib/supabaseClient";
 import { trackLandingView } from "@/lib/growthFunnelEvents";
 
@@ -54,9 +55,11 @@ export function GrowthBootstrap() {
   }, []);
 
   useEffect(() => {
-    scheduleThirdPartyAnalytics();
-    if (!GA_MEASUREMENT_ID) return;
-    loadGa4(GA_MEASUREMENT_ID);
+    deferUntilIdle(() => {
+      scheduleThirdPartyAnalytics();
+      if (!GA_MEASUREMENT_ID) return;
+      loadGa4(GA_MEASUREMENT_ID);
+    });
   }, []);
 
   useEffect(() => {

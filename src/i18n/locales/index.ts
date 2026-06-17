@@ -6,26 +6,36 @@ import { fr } from "./fr";
 import { it } from "./it";
 import { ja } from "./ja";
 import { ko } from "./ko";
+import { nl } from "./nl";
+import { ar } from "./ar";
+import { tr } from "./tr";
+import { hi } from "./hi";
 import { pt } from "./pt";
 import { th } from "./th";
 import { zh } from "./zh";
-import type { MessageCatalog } from "../types";
+import { buildExtraSections } from "../extraCatalog";
+import type { BaseMessageCatalog, MessageCatalog } from "../types";
 
-const CATALOG: Record<AppLocale, MessageCatalog> = {
+const BASE: Record<AppLocale, BaseMessageCatalog> = {
   en,
   fr,
   es,
   pt,
   de,
   it,
+  nl,
+  ar,
   ja,
   ko,
+  tr,
+  hi,
   zh,
   th,
 };
 
 export function getMessages(locale: AppLocale): MessageCatalog {
-  return CATALOG[locale] ?? CATALOG.en;
+  const base = BASE[locale] ?? BASE.en;
+  return { ...base, ...buildExtraSections(locale) };
 }
 
-export { en, fr, es, pt, de, it, ja, ko, zh, th };
+export { en, fr, es, pt, de, it, nl, ar, ja, ko, tr, hi, zh, th };

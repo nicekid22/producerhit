@@ -470,7 +470,7 @@ html.pk-cloud-active body[data-pk-cloud-accent="transparent"] .pk-cloud-btn {
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
-  border: 2px solid transparent;
+  border: 1px solid transparent;
   cursor: pointer;
   overflow: hidden;
   transition:
@@ -650,6 +650,66 @@ html.pk-cloud-active body[data-pk-cloud-accent="transparent"] .pk-cloud-btn {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.22),
     0 0 16px var(--cloud-accent-glow);
+}
+
+/* Sidebar mood picker — inactifs en ghost, actif en gradient (harmonie nav) */
+.pk-cloud-accent-elements--sidebar .pk-cloud-accent-element:not(.pk-cloud-accent-element--active) {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: transparent !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+.pk-cloud-accent-elements--sidebar .pk-cloud-accent-element:not(.pk-cloud-accent-element--active)::before {
+  opacity: 0 !important;
+}
+
+.pk-cloud-accent-elements--sidebar .pk-cloud-accent-element:not(.pk-cloud-accent-element--active) .pk-cloud-accent-element__icon {
+  color: rgba(255, 255, 255, 0.52) !important;
+  filter: none !important;
+}
+
+.pk-cloud-accent-elements--sidebar .pk-cloud-accent-element:not(.pk-cloud-accent-element--active):hover {
+  border-color: color-mix(in srgb, var(--cloud-accent) 18%, transparent) !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+}
+
+/* Checklist d'activation — progress + icônes « vu » */
+html.pk-cloud-active .pk-activation-checklist,
+.pk-cloud-stage .pk-activation-checklist {
+  --pk-activation-progress: var(--cloud-btn-gradient, linear-gradient(90deg, var(--cloud-accent), var(--cloud-accent)));
+  --pk-activation-progress-glow: var(--cloud-accent-glow);
+  --pk-activation-done: var(--cloud-accent);
+  --pk-activation-done-glow: color-mix(in srgb, var(--cloud-accent) 40%, transparent);
+  --pk-activation-pct: color-mix(in srgb, var(--cloud-accent) 72%, #fff);
+  --pk-activation-link: color-mix(in srgb, var(--cloud-accent) 78%, #1a2e1a);
+  --pk-activation-link-decoration: color-mix(in srgb, var(--cloud-accent) 38%, transparent);
+  --pk-activation-link-decoration-hover: color-mix(in srgb, var(--cloud-accent) 62%, transparent);
+}
+
+html.pk-cloud-active .pk-notification-bell__badge,
+.pk-cloud-stage .pk-notification-bell__badge {
+  background: var(--cloud-accent) !important;
+}
+
+html.pk-cloud-active .pk-notification-item--unread,
+.pk-cloud-stage .pk-notification-item--unread {
+  background: color-mix(in srgb, var(--cloud-accent) 12%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-sidebar-root .pk-sidebar-ctrl-btn--open,
+.pk-cloud-stage .pk-sidebar-root .pk-sidebar-ctrl-btn--open {
+  border-color: color-mix(in srgb, var(--cloud-accent) 32%, transparent) !important;
+  background: color-mix(in srgb, var(--cloud-accent-soft) 55%, rgba(255, 255, 255, 0.06)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 16px var(--cloud-accent-glow) !important;
+}
+
+html.pk-cloud-active .pk-sidebar-root .pk-language-btn--cloud,
+.pk-cloud-stage .pk-sidebar-root .pk-language-btn--cloud {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: color-mix(in srgb, var(--cloud-accent) 18%, transparent) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
 }
 
 /* ——— Scrollbars globales + tokens portaled (dropdowns sur body) ——— */

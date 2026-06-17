@@ -38,7 +38,7 @@ export function PlayerCoverThumb({ loop, className }: Props) {
     <StoredLoopCover
       key={`${coverKey}:${displayUrl}`}
       coverUrl={displayUrl}
-      loading="eager"
+      loading="lazy"
       className={cn("pk-player-cover-media relative z-[2] h-full w-full", className)}
       imageClassName="pk-player-cover-media"
     />

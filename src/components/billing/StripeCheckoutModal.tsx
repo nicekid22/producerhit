@@ -15,6 +15,8 @@ import { useAuthStore } from "@/stores/authStore";
 import { useVisualThemeStore } from "@/stores/visualThemeStore";
 import { useCloudAccentStore } from "@/stores/cloudAccentStore";
 import { cn } from "@/lib/utils";
+import { clearCheckoutAbandoned, markCheckoutAbandoned } from "@/lib/checkoutRecovery";
+import { trackClientEvent } from "@/lib/supabaseClient";
 import "@/styles/stripe-checkout-modal.css";
 
 const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ?? "";
@@ -63,6 +65,14 @@ export function StripeCheckoutModal() {
   const planLabel = plan ? plan.charAt(0).toUpperCase() + plan.slice(1) : "";
   const perks = plan ? (isFr ? PLAN_PERKS_FR[plan] : PLAN_PERKS_EN[plan]) ?? [] : [];
 
+  const handleCloseCheckout = () => {
+    if (plan && !activating) {
+      markCheckoutAbandoned(plan, "embedded_modal");
+      trackClientEvent("checkout_abandoned", { plan, ui_mode: "embedded" });
+    }
+    closeCheckout();
+  };
+
   const handleComplete = () => {
     setActivating(true);
     void (async () => {
@@ -72,6 +82,7 @@ export function StripeCheckoutModal() {
       }
       const activatedPlan = await waitForPlanActivation(refreshProfile, plan ?? undefined);
       if (activatedPlan) {
+        clearCheckoutAbandoned();
         toast.success(isFr ? `Plan activé : ${activatedPlan}` : `Plan activated: ${activatedPlan}`);
       } else {
         toast(
@@ -108,7 +119,7 @@ export function StripeCheckoutModal() {
           type="button"
           className="pk-stripe-checkout__close"
           aria-label={isFr ? "Fermer" : "Close"}
-          onClick={closeCheckout}
+          onClick={handleCloseCheckout}
         >
           <X className="h-4 w-4" aria-hidden />
         </button>

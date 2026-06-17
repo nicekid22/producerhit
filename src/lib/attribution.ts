@@ -10,6 +10,8 @@ export type Attribution = {
   ref?: string;
   gclid?: string;
   fbclid?: string;
+  ttclid?: string;
+  msclkid?: string;
   landing_path?: string;
   first_ts: number;
   last_ts: number;
@@ -56,6 +58,8 @@ export function captureAttributionFromUrl(search: string, pathname: string) {
     ref: pickParam(params, "ref") ?? pickParam(params, "referral"),
     gclid: pickParam(params, "gclid"),
     fbclid: pickParam(params, "fbclid"),
+    ttclid: pickParam(params, "ttclid"),
+    msclkid: pickParam(params, "msclkid"),
   };
 
   const hasSignal = Object.values(incoming).some(Boolean);
@@ -90,6 +94,8 @@ export function getAttributionProps(): Record<string, string> {
   if (a.ref) out.ref = a.ref;
   if (a.gclid) out.gclid = a.gclid;
   if (a.fbclid) out.fbclid = a.fbclid;
+  if (a.ttclid) out.ttclid = a.ttclid;
+  if (a.msclkid) out.msclkid = a.msclkid;
   if (a.landing_path) out.landing_path = a.landing_path;
   return out;
 }

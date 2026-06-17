@@ -1,6 +1,6 @@
-import type { MessageCatalog } from "../types";
+import type { BaseMessageCatalog } from "../types";
 
-export const zh: MessageCatalog = {
+export const zh: BaseMessageCatalog = {
   nav: {
     howItWorks: "如何使用",
     features: "功能",

@@ -33,9 +33,10 @@ export function preloadWarmGlassThemeIfNeeded(): void {
   if (wantWarm) void ensureWarmGlassThemeStyles();
 }
 
-/** Précharge le thème Cloud si déjà choisi ou preview active. */
+/** Précharge le thème Cloud uniquement si l'utilisateur l'a explicitement choisi (~206 KB CSS). */
 export function preloadCloudThemeIfNeeded(): void {
   if (typeof window === "undefined") return;
+  if (!CLOUD_THEME_ENABLED) return;
   const stored = window.localStorage.getItem("producerhit_visual_theme_v1");
-  if (stored === "cloud" || CLOUD_THEME_ENABLED) void ensureCloudThemeStyles();
+  if (stored === "cloud") void ensureCloudThemeStyles();
 }

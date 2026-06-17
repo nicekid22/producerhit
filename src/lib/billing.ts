@@ -1,6 +1,7 @@
 import toast from "react-hot-toast";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { buildAuthUrl } from "@/lib/authRoutes";
+import { clearCheckoutAbandoned } from "@/lib/checkoutRecovery";
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
 import { PLAN_RANK, type PaidPlanId, type PlanId, normalizePlanId } from "@/lib/planEntitlements";
 import { useStripeCheckoutStore } from "@/stores/stripeCheckoutStore";
@@ -121,7 +122,7 @@ export async function startCheckout({
   plan,
   location,
   successUrl = `${window.location.origin}/dashboard?upgraded=true`,
-  cancelUrl = `${window.location.origin}/pricing`,
+  cancelUrl = `${window.location.origin}/pricing?checkout=cancelled&plan=${plan}`,
   locale = "en",
 }: CheckoutOptions): Promise<boolean> {
   const isFr = locale === "fr";
@@ -148,6 +149,7 @@ export async function startCheckout({
   }
 
   if (payload.upgraded || payload.alreadySubscribed) {
+    clearCheckoutAbandoned();
     window.location.href = successUrl;
     return true;
   }

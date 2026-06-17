@@ -23,6 +23,7 @@ import {
   hasOAuthCallbackParams,
 } from "@/lib/postAuthRedirect";
 import { COVER_SURFACE_CLASS, hashString } from "@/lib/utils";
+import { deferUntilIdle, loadMarketingCss } from "@/lib/perf/defer";
 import {
   extractAceTaskId,
   fetchPublicLoops,
@@ -47,6 +48,7 @@ import { LandingGenerator, type GeneratorSideCard } from "@/components/landing/L
 import { LandingWorkflow } from "@/components/landing/LandingWorkflow";
 import { HeroCtaButton } from "@/components/landing/HeroCtaButton";
 import { HeroDreamHeadline } from "@/components/landing/HeroDreamHeadline";
+import { LandingHeroReassurance } from "@/components/landing/LandingHeroReassurance";
 import { ThemeAndAccentPicker } from "@/components/ThemeAndAccentPicker";
 import { WarmGlassBackdrop } from "@/components/WarmGlassBackdrop";
 import { CloudBackdrop } from "@/components/CloudBackdrop";
@@ -181,6 +183,7 @@ function RevealSection({
 export default function Landing() {
   useEffect(() => {
     void ensureLandingMobileStyles();
+    void loadMarketingCss();
   }, []);
 
   const navigate = useNavigate();
@@ -640,55 +643,56 @@ export default function Landing() {
       persistSideCards(cards);
     };
 
-    void (async () => {
-      try {
-        const raw = window.sessionStorage.getItem(cacheKey);
-        if (raw) {
-          const parsed = JSON.parse(raw) as { ts?: unknown; cards?: unknown };
-          const ts = typeof parsed?.ts === "number" ? parsed.ts : 0;
-          const cached = Array.isArray(parsed?.cards) ? (parsed.cards as GeneratorSideCard[]) : [];
-          const ok = Date.now() - ts < 15 * 60 * 1000 && hasValidCoverUrl(cached);
-          if (ok) {
-            commitSideCards(cached);
-            syncSideCardPool(cached);
-          }
+    try {
+      const raw = window.sessionStorage.getItem(cacheKey);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { ts?: unknown; cards?: unknown };
+        const ts = typeof parsed?.ts === "number" ? parsed.ts : 0;
+        const cached = Array.isArray(parsed?.cards) ? (parsed.cards as GeneratorSideCard[]) : [];
+        const ok = Date.now() - ts < 15 * 60 * 1000 && hasValidCoverUrl(cached);
+        if (ok) {
+          commitSideCards(cached);
+          syncSideCardPool(cached);
         }
-      } catch {
-        // ignore
       }
+    } catch {
+      // ignore
+    }
 
+    deferUntilIdle(() => {
       if (cancelled) return;
-
-      try {
-        const rows = await fetchPublicLoops({ limit: 48, timeoutMs: 8000, playableOnly: true });
-        if (cancelled) return;
-
-        const pool = rows
-          .map(mapRowToSideCard)
-          .filter((c): c is GeneratorSideCard => c !== null);
-
-        if (!pool.length || cancelled) return;
-
-        syncSideCardPool(pool);
-
-        let seed = "";
+      void (async () => {
         try {
-          seed = window.sessionStorage.getItem(seedKey) ?? "";
-          if (!seed) {
-            seed = `${Date.now()}-${hashString(pool.map((p) => p.id).join(":"))}`;
-            window.sessionStorage.setItem(seedKey, seed);
-          }
-        } catch {
-          seed = `${Date.now()}`;
-        }
+          const rows = await fetchPublicLoops({ limit: 48, timeoutMs: 8000, playableOnly: true });
+          if (cancelled) return;
 
-        const picked = pickRandomSideCards(pool, 2, seed);
-        if (cancelled) return;
-        commitSideCards(picked);
-      } catch {
-        // ignore — cards stay hidden if fetch fails
-      }
-    })();
+          const pool = rows
+            .map(mapRowToSideCard)
+            .filter((c): c is GeneratorSideCard => c !== null);
+
+          if (!pool.length || cancelled) return;
+
+          syncSideCardPool(pool);
+
+          let seed = "";
+          try {
+            seed = window.sessionStorage.getItem(seedKey) ?? "";
+            if (!seed) {
+              seed = `${Date.now()}-${hashString(pool.map((p) => p.id).join(":"))}`;
+              window.sessionStorage.setItem(seedKey, seed);
+            }
+          } catch {
+            seed = `${Date.now()}`;
+          }
+
+          const picked = pickRandomSideCards(pool, 2, seed);
+          if (cancelled) return;
+          commitSideCards(picked);
+        } catch {
+          // ignore — cards stay hidden if fetch fails
+        }
+      })();
+    }, 2800);
 
     return () => {
       cancelled = true;
@@ -968,9 +972,11 @@ export default function Landing() {
       if (!cancelled) setTrendingTimedOut(true);
     }, 6500);
 
-    void (async () => {
-      try {
-        const rows = await fetchPublicLoops({ limit: 48, timeoutMs: 6500, playableOnly: true });
+    deferUntilIdle(() => {
+      if (cancelled) return;
+      void (async () => {
+        try {
+          const rows = await fetchPublicLoops({ limit: 48, timeoutMs: 6500, playableOnly: true });
         if (cancelled) return;
         window.clearTimeout(slowTimer);
         setTrendingTimedOut(false);
@@ -1039,7 +1045,9 @@ export default function Landing() {
           setTrendingLoading(false);
         }
       }
-    })();
+      })();
+    }, 3200);
+
     return () => {
       cancelled = true;
       window.clearTimeout(slowTimer);
@@ -1138,69 +1146,79 @@ export default function Landing() {
           mobileOpen && "pk-landing-header--menu-open",
         )}
       >
-        <div className="pk-landing-header__bar mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-5 sm:py-3.5 lg:px-6">
+        <div
+          className={cn(
+            "pk-landing-header__bar mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-5 sm:py-3.5 lg:px-6",
+            mobileLandingFocus && "pk-landing-header__bar--mobile",
+          )}
+        >
           <div
             className={cn(
-              "pk-landing-header__brand-slot min-w-0",
-              mobileLandingFocus && "pk-landing-header__brand-slot--mobile sm:block",
+              "pk-landing-header__brand-slot min-w-0 flex-1",
+              mobileLandingFocus && "pk-landing-header__brand-slot--mobile",
             )}
           >
             <BrandLogo compact={mobileLandingFocus} />
           </div>
 
-          <nav className="hidden items-center gap-3 sm:flex">
-            <Link to="/community" className="text-sm font-semibold text-white/70 transition-colors hover:text-white">
-              {m.nav.community}
-            </Link>
-            <Link to="#pricing" className="text-sm font-semibold text-white/70 transition-colors hover:text-white">
-              {m.nav.pricing}
-            </Link>
-            {user ? (
-              <>
-                <Link
-                  to="/dashboard"
-                  className="pk-prism-btn inline-flex h-10 items-center justify-center rounded-full px-6 text-sm font-semibold"
-                >
+          <nav className="pk-header-chrome hidden md:flex" aria-label="Main">
+            <div className="pk-header-chrome__links">
+              <Link to="/community" className="pk-header-chrome__link">
+                {m.nav.community}
+              </Link>
+              <Link to="#pricing" className="pk-header-chrome__link">
+                {m.nav.pricing}
+              </Link>
+            </div>
+            <div className="pk-header-chrome__cluster">
+              {user ? (
+                <Link to="/dashboard" className="pk-header-chrome__cta pk-header-chrome__cta--primary">
                   {m.nav.studio}
                 </Link>
-              </>
-            ) : (
-              <>
-                <Link
-                  to={buildAuthUrl({ mode: "login" })}
-                  className="pk-glass-btn pk-glass-btn--ghost inline-flex h-10 items-center justify-center rounded-full px-5 text-sm font-semibold"
-                >
-                  {m.nav.login}
-                </Link>
-                <HeroCtaButton to={buildAuthUrl()} variant="spark" size="nav">
-                  {m.nav.startFree}
-                </HeroCtaButton>
-              </>
-            )}
-            <ThemeAndAccentPicker variant="nav-icon" />
-            <LanguagePicker variant="nav" />
+              ) : (
+                <>
+                  <Link
+                    to={buildAuthUrl({ mode: "login" })}
+                    className="pk-header-chrome__cta pk-header-chrome__cta--ghost"
+                  >
+                    {m.nav.login}
+                  </Link>
+                  <HeroCtaButton
+                    to={buildAuthUrl()}
+                    variant="spark"
+                    size="nav"
+                    className="pk-header-chrome__cta pk-header-chrome__cta--primary"
+                  >
+                    {m.nav.startFree}
+                  </HeroCtaButton>
+                </>
+              )}
+              <span className="pk-header-chrome__sep" aria-hidden />
+              <div className="pk-header-chrome__tools">
+                <ThemeAndAccentPicker variant="nav-icon" surface="header" />
+                <LanguagePicker variant="nav" />
+              </div>
+            </div>
           </nav>
 
-          <div className="pk-landing-header__mobile-actions flex items-center gap-1 sm:hidden">
-            <ThemeAndAccentPicker variant="nav-icon" />
-            <LanguagePicker variant="icon" />
+          <div className="pk-header-chrome__mobile shrink-0">
             <button
               type="button"
               className={cn(
-                "pk-landing-mobile-nav__trigger inline-flex h-10 w-10 items-center justify-center rounded-full",
+                "pk-landing-mobile-nav__trigger pk-header-chrome__pill pk-header-chrome__pill--icon inline-flex items-center justify-center",
                 mobileOpen && "is-open",
               )}
               onClick={() => setMobileOpen((v) => !v)}
               aria-expanded={mobileOpen}
               aria-label={m.nav.menu}
             >
-              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </button>
           </div>
         </div>
 
         {mobileOpen ? (
-          <div className="pk-landing-mobile-nav sm:hidden">
+          <div className="pk-landing-mobile-nav md:hidden">
             <div className="pk-landing-mobile-nav__panel">
               <nav className="pk-landing-mobile-nav__list" aria-label={m.nav.mobileMenu}>
                 {user ? (
@@ -1255,6 +1273,10 @@ export default function Landing() {
                   </Link>
                 )}
               </nav>
+              <div className="pk-landing-mobile-nav__utilities">
+                <ThemeAndAccentPicker variant="nav-icon" surface="header" />
+                <LanguagePicker variant="nav" onChange={() => setMobileOpen(false)} />
+              </div>
             </div>
           </div>
         ) : null}
@@ -1288,24 +1310,18 @@ export default function Landing() {
               <HeroDreamHeadline
                 locale={locale}
                 reduceMotion={reduceMotion}
-                className={mobileLandingFocus ? "pk-hero-dream-wrap--mobile mt-3" : "mt-2"}
+                className={mobileLandingFocus ? "pk-hero-dream-wrap--mobile pk-hero-dream-wrap--mobile-apple" : "mt-2"}
               />
-              <p
-                className={cn(
-                  "pk-landing-hero-dream-sub mx-auto max-w-md text-pretty leading-relaxed text-white/55",
-                  mobileLandingFocus ? "mt-2 text-xs" : "mt-3 text-xs sm:text-[13px]",
-                )}
-              >
-                {dreamCopy.subline}
-              </p>
-              <ConversionTrustBar locale={locale} compact className="pk-landing-hero-trust" />
-              {CLOUD_THEME_ENABLED ? (
-                <LandingHeroMoodStrip
-                  locale={locale}
-                  cloudActive={cloud}
-                  compact={mobileLandingFocus}
-                  minimal
-                />
+              {!mobileLandingFocus ? (
+                <p className="pk-landing-hero-dream-sub mx-auto mt-3 max-w-md text-pretty text-xs leading-relaxed text-white/55 sm:text-[13px]">
+                  {dreamCopy.subline}
+                </p>
+              ) : null}
+              {!mobileLandingFocus ? (
+                <ConversionTrustBar locale={locale} compact variant="landing" className="pk-landing-hero-trust" />
+              ) : null}
+              {CLOUD_THEME_ENABLED && !mobileLandingFocus ? (
+                <LandingHeroMoodStrip locale={locale} cloudActive={cloud} compact minimal />
               ) : null}
             </div>
 
@@ -1343,32 +1359,40 @@ export default function Landing() {
             />
             </div>
 
-            {mobileLandingFocus ? (
-              <LandingMobileTrendingStrip
-                locale={locale}
-                tracks={homeTrendingCards}
-                loading={trendingLoading || !shouldLoadTrending}
-                activeTrackId={current?.id ?? null}
-                isPlaying={isPlaying}
-                onPlay={(track) => {
-                  const row = trending.find((t) => t.id === track.id);
-                  if (row) handlePlay(row, trending.slice(0, 12));
-                }}
-                onCreateSimilar={(track) => {
-                  const row = trending.find((t) => t.id === track.id);
-                  if (row) startCreateFromTrack(row);
-                }}
+            {!mobileLandingFocus ? (
+              <LandingHeroReassurance
+                text={copy.heroReassurance}
+                tailOnly
+                className="pk-landing-hero-reassurance mx-auto mt-4 max-w-md text-center text-[11px] font-semibold tracking-wide text-white/40"
               />
-            ) : (
-              <p className="pk-landing-hero-reassurance mx-auto mt-4 max-w-md text-center text-[11px] font-semibold tracking-wide text-white/40">
-                {copy.heroReassurance}
-              </p>
-            )}
+            ) : null}
           </section>
         </RevealSection>
 
-        {CLOUD_THEME_ENABLED && mobileLandingFocus ? (
-          <RevealSection className={`${landingSectionClass("pk-landing-section--cloud-moods-compact")} pk-landing-below-fold`}>
+        {mobileLandingFocus ? (
+          <RevealSection
+            className={`${landingSectionClass("pk-landing-section--trending-mobile pk-landing-scroll-bridge")} pk-landing-below-fold`}
+          >
+            <LandingMobileTrendingStrip
+              locale={locale}
+              tracks={homeTrendingCards}
+              loading={trendingLoading || !shouldLoadTrending}
+              activeTrackId={current?.id ?? null}
+              isPlaying={isPlaying}
+              onPlay={(track) => {
+                const row = trending.find((t) => t.id === track.id);
+                if (row) handlePlay(row, trending.slice(0, 12));
+              }}
+              onCreateSimilar={(track) => {
+                const row = trending.find((t) => t.id === track.id);
+                if (row) startCreateFromTrack(row);
+              }}
+            />
+          </RevealSection>
+        ) : null}
+
+        {CLOUD_THEME_ENABLED && !mobileLandingFocus ? (
+          <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
             <LandingCloudMoodsSection locale={locale} user={!!user} cloudActive={cloud} />
           </RevealSection>
         ) : null}
@@ -1445,11 +1469,14 @@ export default function Landing() {
           />
         </RevealSection>
 
-        <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
+        <RevealSection className={`${landingSectionClass()} pk-landing-below-fold${mobileLandingFocus ? " hidden lg:block" : ""}`}>
           <LandingBenefits locale={locale} />
         </RevealSection>
 
-        <RevealSection id="how" className={`${landingSectionClass()} pk-landing-below-fold`}>
+        <RevealSection
+          id="how"
+          className={`${landingSectionClass()} pk-landing-below-fold${mobileLandingFocus ? " hidden lg:block" : ""}`}
+        >
           <LandingWorkflow locale={locale} />
         </RevealSection>
 
@@ -1457,21 +1484,21 @@ export default function Landing() {
           <LandingPricingTeaser locale={locale} user={!!user} currentPlan={currentPlan} />
         </RevealSection>
 
-        <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
+        <RevealSection className={`${landingSectionClass()} pk-landing-below-fold${mobileLandingFocus ? " hidden lg:block" : ""}`}>
           <TestimonialsStrip locale={locale} compact />
         </RevealSection>
 
         <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
-          <div className="pk-prism-card relative overflow-hidden p-6 sm:p-10">
+          <div className="pk-landing-apple-panel pk-prism-card relative overflow-hidden p-6 sm:p-10">
             <div className="pointer-events-none absolute inset-0">
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(157,124,255,0.08)_0%,transparent_72%)]" />
             </div>
             <div className="relative">
-              <div className="text-balance text-[clamp(1.75rem,4.2vw,3rem)] font-extrabold tracking-tight text-white">{copy.ctaTitle}</div>
-              <div className="mt-3 text-balance text-[clamp(0.95rem,2vw,1.125rem)] font-semibold leading-relaxed text-white/55">
+              <div className="pk-landing-apple-panel__title text-balance font-extrabold tracking-tight text-white">{copy.ctaTitle}</div>
+              <div className="pk-landing-apple-panel__lead text-balance font-semibold leading-relaxed text-white/55">
                 {copy.ctaLead}
               </div>
-              <div className="mt-8">
+              <div className="pk-landing-apple-panel__actions mt-8">
                 <HeroCtaButton to={buildAuthUrl()} variant="beam" size="lg">
                   {copy.ctaButton}
                 </HeroCtaButton>
@@ -1481,9 +1508,9 @@ export default function Landing() {
         </RevealSection>
 
         <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
-          <div className="pk-prism-card p-5 sm:p-8">
-            <h2 className="pk-landing-section-head__title text-left">{locale === "fr" ? "Questions fréquentes" : "Frequently asked questions"}</h2>
-            <div className="mt-6 grid gap-2">
+          <div className="pk-landing-apple-faq pk-prism-card p-5 sm:p-8">
+            <h2 className="pk-landing-apple-faq__title pk-landing-section-head__title text-left">{locale === "fr" ? "Questions fréquentes" : "Frequently asked questions"}</h2>
+            <div className="pk-landing-apple-faq__list mt-6 grid gap-2">
               {faqs.map((f, i) => {
                 const open = faqOpen === i;
                 return (
@@ -1494,7 +1521,7 @@ export default function Landing() {
                       const isOpen = (e.currentTarget as HTMLDetailsElement).open;
                       setFaqOpen(isOpen ? i : null);
                     }}
-                    className="rounded-2xl border border-white/10 bg-white/[0.03]"
+                    className="pk-landing-apple-faq__item rounded-2xl border border-white/10 bg-white/[0.03]"
                   >
                     <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-left">
                       <span className="text-sm font-semibold text-white">{f.q}</span>

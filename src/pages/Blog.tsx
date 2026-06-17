@@ -1,19 +1,71 @@
-import { Link } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { BookOpen, Sparkles } from "lucide-react";
 import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";
 import { Navbar } from "@/components/Navbar";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { BlogPostCard } from "@/components/blog/BlogPostCard";
+import { BlogFilters } from "@/components/blog/BlogFilters";
+import { BlogPagination } from "@/components/blog/BlogPagination";
 import { BLOG_POSTS } from "@/content/blog";
-import { useLocaleStore } from "@/stores/localeStore";
+import { getBlogCategoryBySlug, blogCategoryLabel, blogCategoryDescription } from "@/content/blog/categories";
+import { searchBlogPosts } from "@/lib/blogEngine";
+import { localizedPath } from "@/i18n/config";
+import { interpolate, useT } from "@/i18n";
 import { useAuthStore } from "@/stores/authStore";
 
 export default function Blog() {
-  const locale = useLocaleStore((s) => s.locale);
+  const { locale, m } = useT();
   const user = useAuthStore((s) => s.user);
-  const isFr = locale === "fr";
+  const { categorySlug, tagSlug } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [query, setQuery] = useState(searchParams.get("q") ?? "");
 
-  const sorted = BLOG_POSTS.slice().sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1));
+  const category = categorySlug ? getBlogCategoryBySlug(categorySlug) : null;
+  const page = Math.max(1, Number(searchParams.get("page") ?? "1") || 1);
+
+  const result = useMemo(
+    () =>
+      searchBlogPosts(BLOG_POSTS, {
+        q: query || searchParams.get("q") || undefined,
+        categoryId: category?.id,
+        tag: tagSlug,
+        page,
+      }),
+    [category?.id, page, query, searchParams, tagSlug],
+  );
+
+  const onQueryChange = (q: string) => {
+    setQuery(q);
+    const next = new URLSearchParams(searchParams);
+    if (q.trim()) next.set("q", q.trim());
+    else next.delete("q");
+    next.delete("page");
+    setSearchParams(next, { replace: true });
+  };
+
+  const basePath = categorySlug
+    ? `/blog/category/${categorySlug}`
+    : tagSlug
+      ? `/blog/tag/${tagSlug}`
+      : "/blog";
+
+  const headerTitle = category
+    ? blogCategoryLabel(category.id, locale)
+    : tagSlug
+      ? `#${tagSlug}`
+      : m.blog.heroTitle;
+
+  const headerDesc = category
+    ? blogCategoryDescription(category.id, locale)
+    : tagSlug
+      ? interpolate(m.blog.tagDesc, { tag: tagSlug })
+      : m.blog.heroDesc;
+
+  const pageLabel =
+    result.totalPages > 1
+      ? ` · ${interpolate(m.blog.pageOf, { page: result.page, total: result.totalPages })}`
+      : "";
 
   return (
     <MarketingPageShell>
@@ -25,20 +77,18 @@ export default function Blog() {
               <BookOpen className="h-3.5 w-3.5" />
               ProducerHit Blog
             </div>
-            <h1 className="mt-4 text-balance text-3xl font-extrabold tracking-tight sm:text-4xl">
-              {isFr ? "Guides producteur & SEO musique IA" : "Producer guides & AI music SEO"}
-            </h1>
-            <p className="mt-4 text-balance text-base leading-relaxed text-white/70">
-              {isFr
-                ? "Prompts copy/paste, workflows seed, comparatifs Suno/Udio, et musique sleep/study — avec extraits audio de la communauté."
-                : "Copy/paste prompts, seed workflows, Suno/Udio comparisons, and sleep/study music — with community audio previews."}
+            <h1 className="mt-4 text-balance text-3xl font-extrabold tracking-tight sm:text-4xl">{headerTitle}</h1>
+            <p className="mt-4 text-balance text-base leading-relaxed text-white/70">{headerDesc}</p>
+            <p className="mt-3 text-sm text-white/45">
+              {result.total} {m.blog.articles}
+              {pageLabel}
             </p>
           </div>
         </header>
 
         <section className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="Quick links">
           <Link
-            to={isFr ? "/generateur-music-ai" : "/music-ai-generator"}
+            to={localizedPath(locale, "/music-ai-generator", "/generateur-music-ai")}
             className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4 text-sm font-semibold hover:border-violet-400/30 hover:bg-white/[0.08]"
           >
             <Sparkles className="mb-2 h-4 w-4 text-violet-300" />
@@ -48,39 +98,52 @@ export default function Blog() {
             to="/ai-sleep-music-generator"
             className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4 text-sm font-semibold hover:border-violet-400/30 hover:bg-white/[0.08]"
           >
-            {isFr ? "Musique sommeil IA" : "Sleep music AI"}
+            {m.blog.sleepMusicAi}
           </Link>
           <Link
             to="/ai-beat-generator"
             className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4 text-sm font-semibold hover:border-violet-400/30 hover:bg-white/[0.08]"
           >
-            AI Beat Generator
+            {m.blog.aiBeatGenerator}
           </Link>
           <Link to="/rss.xml" className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4 text-sm font-semibold hover:border-violet-400/30 hover:bg-white/[0.08]">
             RSS
           </Link>
         </section>
 
-        <section className="mt-10 grid gap-5 md:grid-cols-2" aria-label="Blog posts">
-          {sorted.map((p) => (
-            <BlogPostCard key={p.slug} post={p} locale={locale} />
-          ))}
+        <section className="mt-8">
+          <BlogFilters
+            locale={locale}
+            activeCategory={category?.id}
+            activeTag={tagSlug}
+            query={query}
+            onQueryChange={onQueryChange}
+          />
         </section>
+
+        {result.posts.length === 0 ? (
+          <p className="mt-10 text-center text-sm text-white/50">{m.blog.noResults}</p>
+        ) : (
+          <section className="mt-8 grid gap-5 md:grid-cols-2" aria-label="Blog posts">
+            {result.posts.map((p) => (
+              <BlogPostCard key={p.slug} post={p} locale={locale} enriched={p} />
+            ))}
+          </section>
+        )}
+
+        <BlogPagination locale={locale} page={result.page} totalPages={result.totalPages} basePath={basePath} />
 
         <footer className="mt-14 border-t border-white/10 pt-8 text-sm text-white/50">
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
             <Link to="/legal#privacy" className="hover:text-white">
-              {isFr ? "Confidentialité" : "Privacy"}
+              {m.common.privacy}
             </Link>
             <Link to="/legal#terms" className="hover:text-white">
-              {isFr ? "Conditions" : "Terms"}
+              {m.common.terms}
             </Link>
             <Link to="/legal#contact" className="hover:text-white">
-              {isFr ? "Support" : "Support"}
+              {m.common.support}
             </Link>
-            <a className="hover:text-white" href="mailto:info.producermarket@gmail.com">
-              info.producermarket@gmail.com
-            </a>
           </div>
           <div className="mt-4">© 2026 ProducerHit</div>
         </footer>

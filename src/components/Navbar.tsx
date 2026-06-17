@@ -25,55 +25,64 @@ export function Navbar({ variant }: { variant: "marketing" | "auth" }) {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
         <BrandLogo compact />
         {variant === "marketing" ? (
-          <nav className="hidden items-center gap-7 text-sm text-pk-muted md:flex">
-            <Link to="/#how" className="hover:text-pk-text">
-              {m.nav.howItWorks}
-            </Link>
-            <Link to="/#features" className="hover:text-pk-text">
-              {m.nav.features}
-            </Link>
-            <Link to="/pricing" className="hover:text-pk-text">
-              {m.nav.pricing}
-            </Link>
-            <Link to="/community" className="hover:text-pk-text">
-              {m.nav.community}
-            </Link>
-            <a
-              href={discordCommunityUrl("navbar")}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-pk-text"
-            >
-              Discord
-            </a>
-            <Link to="/blog" className="hover:text-pk-text">
-              {m.nav.blog}
-            </Link>
-            {user ? null : (
-              <Link to={buildAuthUrl({ mode: "login" })} className="hover:text-pk-text">
-                {m.nav.login}
+          <nav className="pk-header-chrome hidden md:flex" aria-label="Main">
+            <div className="pk-header-chrome__links">
+              <Link to="/#how" className="pk-header-chrome__link">
+                {m.nav.howItWorks}
               </Link>
-            )}
-            <ThemeAndAccentPicker variant="nav-icon" />
-            <LanguagePicker />
-            {user ? (
-              <Link
-                to="/dashboard"
-                className="pk-prism-btn inline-flex h-9 items-center justify-center rounded-full px-5 text-sm font-semibold"
+              <Link to="/#features" className="pk-header-chrome__link">
+                {m.nav.features}
+              </Link>
+              <Link to="/pricing" className="pk-header-chrome__link">
+                {m.nav.pricing}
+              </Link>
+              <Link to="/community" className="pk-header-chrome__link">
+                {m.nav.community}
+              </Link>
+              <a
+                href={discordCommunityUrl("navbar")}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="pk-header-chrome__link"
               >
-                Dashboard
+                Discord
+              </a>
+              <Link to="/blog" className="pk-header-chrome__link">
+                {m.nav.blog}
               </Link>
-            ) : (
-              <HeroCtaButton to={buildAuthUrl()} variant="spark" size="nav">
-                {m.nav.startFree}
-              </HeroCtaButton>
-            )}
+            </div>
+            <div className="pk-header-chrome__cluster">
+              {user ? (
+                <Link to="/dashboard" className="pk-header-chrome__cta pk-header-chrome__cta--primary">
+                  Dashboard
+                </Link>
+              ) : (
+                <>
+                  <Link to={buildAuthUrl({ mode: "login" })} className="pk-header-chrome__cta pk-header-chrome__cta--ghost">
+                    {m.nav.login}
+                  </Link>
+                  <HeroCtaButton
+                    to={buildAuthUrl()}
+                    variant="spark"
+                    size="nav"
+                    className="pk-header-chrome__cta pk-header-chrome__cta--primary"
+                  >
+                    {m.nav.startFree}
+                  </HeroCtaButton>
+                </>
+              )}
+              <span className="pk-header-chrome__sep" aria-hidden />
+              <div className="pk-header-chrome__tools">
+                <ThemeAndAccentPicker variant="nav-icon" surface="header" />
+                <LanguagePicker variant="nav" />
+              </div>
+            </div>
           </nav>
         ) : null}
         {variant === "marketing" ? (
           <button
             type="button"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-pk-border bg-white/5 text-pk-text md:hidden"
+            className="pk-header-chrome__pill pk-header-chrome__pill--icon inline-flex md:hidden"
             onClick={() => setMobileOpen((v) => !v)}
             aria-expanded={mobileOpen}
             aria-label={m.nav.menu}
@@ -136,10 +145,10 @@ export function Navbar({ variant }: { variant: "marketing" | "auth" }) {
                 {m.nav.homePage}
               </Link>
             )}
-            <div className="mt-2 flex justify-center">
-              <ThemeAndAccentPicker variant="nav-icon" className="rounded-xl" />
+            <div className="pk-landing-mobile-nav__utilities mt-2">
+              <ThemeAndAccentPicker variant="nav-icon" surface="header" />
+              <LanguagePicker variant="nav" onChange={() => setMobileOpen(false)} />
             </div>
-            <LanguagePicker variant="mobile" onChange={() => setMobileOpen(false)} />
           </div>
         </nav>
       ) : null}

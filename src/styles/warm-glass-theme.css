@@ -2107,9 +2107,18 @@ html.pk-warm-glass-active .pk-landing-mobile-nav__item--cta.pk-hero-cta {
     text-shadow: 0 1px 10px rgba(50, 20, 10, 0.28);
   }
 
-  /* Pills logo + menu — warm glass */
+  /* Pill glass — burger uniquement (warm glass) */
   .pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-header--scrolled .pk-landing-header__brand-slot--mobile > a,
-  .pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-header--menu-open .pk-landing-header__brand-slot--mobile > a,
+  .pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-header--menu-open .pk-landing-header__brand-slot--mobile > a {
+    border: none !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+  }
+
   .pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-header--scrolled .pk-landing-mobile-nav__trigger,
   .pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-header--menu-open .pk-landing-mobile-nav__trigger {
     border-color: color-mix(in srgb, var(--warm-glass-border) 55%, transparent) !important;
@@ -2129,6 +2138,35 @@ html.pk-warm-glass-active .pk-landing-mobile-nav__item--cta.pk-hero-cta {
   .pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-gen__mobile-stage::after {
     opacity: 0.12;
     mix-blend-mode: soft-light;
+  }
+
+  .pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-gen__apple-glow {
+    background:
+      radial-gradient(ellipse at 50% 42%, color-mix(in srgb, var(--warm-icon-accent) 20%, transparent) 0%, transparent 58%),
+      radial-gradient(ellipse at 50% 58%, color-mix(in srgb, var(--warm-icon-accent-alt) 24%, transparent) 0%, transparent 68%);
+  }
+
+  .pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-gen__cta--apple {
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--warm-icon-accent) 90%, #fff8eb) 0%,
+      color-mix(in srgb, var(--warm-icon-accent-alt) 85%, #5c3020) 100%
+    ) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 248, 235, 0.3),
+      0 6px 28px color-mix(in srgb, var(--warm-icon-accent-alt) 28%, transparent) !important;
+  }
+
+  .pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-gen__mobile-segment-btn--active {
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--warm-icon-accent) 24%, transparent) 0%,
+      color-mix(in srgb, var(--warm-icon-accent-alt) 18%, transparent) 100%
+    );
+  }
+
+  .pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-gen__reassurance-foot {
+    color: color-mix(in srgb, #5c4030 48%, var(--warm-text-cream, #fff8eb));
   }
 
   .pk-warm-glass-stage.pk-landing--mobile-focus .pk-landing-gen__reassurance--mobile .pk-landing-gen__reassurance-icon {

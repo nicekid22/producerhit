@@ -6,6 +6,7 @@ import {
   type CoachStepId,
 } from "@/lib/onboarding/coachSteps";
 import { loadCoachProgress, saveCoachProgress } from "@/lib/onboarding/coachStorage";
+import { completeOnboardingStepOnServer } from "@/lib/onboardingProgress";
 
 type CoachPhase = "idle" | "tour" | "post_gen";
 
@@ -99,9 +100,11 @@ export const useOnboardingCoachStore = create<CoachState>((set, get) => ({
     if (stepIndex >= steps.length - 1) {
       if (phase === "tour") {
         saveCoachProgress(userId, { tourDone: true });
+        void completeOnboardingStepOnServer("tour_done");
         set({ visible: false, phase: "idle", stepIndex: 0 });
       } else if (phase === "post_gen") {
         saveCoachProgress(userId, { postGenDone: true, firstGenCelebrated: true });
+        void completeOnboardingStepOnServer("first_beat");
         set({ visible: false, phase: "idle", stepIndex: 0 });
       }
       return;
@@ -122,8 +125,14 @@ export const useOnboardingCoachStore = create<CoachState>((set, get) => ({
       return;
     }
     const { phase } = get();
-    if (phase === "tour") saveCoachProgress(userId, { tourDone: true, dismissedAt: new Date().toISOString() });
-    if (phase === "post_gen") saveCoachProgress(userId, { postGenDone: true, firstGenCelebrated: true });
+    if (phase === "tour") {
+      saveCoachProgress(userId, { tourDone: true, dismissedAt: new Date().toISOString() });
+      void completeOnboardingStepOnServer("tour_done");
+    }
+    if (phase === "post_gen") {
+      saveCoachProgress(userId, { postGenDone: true, firstGenCelebrated: true });
+      void completeOnboardingStepOnServer("first_beat");
+    }
     set({ visible: false, phase: "idle", stepIndex: 0 });
   },
 }));

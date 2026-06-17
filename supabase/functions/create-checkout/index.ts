@@ -1,11 +1,24 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const ALLOWED_ORIGINS = new Set([
+  "https://www.producerhit.com",
+  "https://producerhit.com",
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "http://127.0.0.1:5173",
+]);
+
+function corsHeadersForRequest(req: Request): Record<string, string> {
+  const origin = req.headers.get("Origin") ?? req.headers.get("origin") ?? "";
+  const allowOrigin = ALLOWED_ORIGINS.has(origin) ? origin : "https://www.producerhit.com";
+  return {
+    "Access-Control-Allow-Origin": allowOrigin,
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Vary": "Origin",
+  };
+}
 
 const PLAN_NAMES = { pro: "Pro", studio: "Studio", plus: "Plus" } as const;
 const PAID_PLANS = new Set(["pro", "studio", "plus"]);
@@ -354,6 +367,8 @@ async function createHostedCheckoutSession(
 }
 
 serve(async (req) => {
+  const corsHeaders = corsHeadersForRequest(req);
+
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }

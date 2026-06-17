@@ -1,22 +1,8 @@
-export type BlogBlock =
-  | { type: "p"; text: string }
-  | { type: "h2"; text: string }
-  | { type: "h3"; text: string }
-  | { type: "ul"; items: string[] }
-  | { type: "callout"; variant: "tip" | "cta" | "note"; title?: string; text: string }
-  | { type: "links"; items: { labelEn: string; labelFr: string; href: string }[] };
+export type { BlogBlock, BlogPost, BlogCategoryId, BlogAuthorId } from "./blog/types";
+import type { BlogPost } from "./blog/types";
+import { SEO_BATCH_2026_POSTS } from "./blog/posts/seo-batch-2026";
 
-export type BlogPost = {
-  slug: string;
-  title: string;
-  description: string;
-  keywords: string[];
-  publishedAt: string;
-  updatedAt: string;
-  blocks: BlogBlock[];
-};
-
-export const BLOG_POSTS: BlogPost[] = [
+const LEGACY_BLOG_POSTS: BlogPost[] = [
   {
     slug: "drum-and-bass-beat-generator-prompt-template",
     title: "Drum & Bass beat generator: prompt template for clean DnB (160–180 BPM)",
@@ -1213,6 +1199,8 @@ export const BLOG_POSTS: BlogPost[] = [
     ],
   },
 ];
+
+export const BLOG_POSTS: BlogPost[] = [...LEGACY_BLOG_POSTS, ...SEO_BATCH_2026_POSTS];
 
 export function getBlogPostBySlug(slug: string): BlogPost | null {
   return BLOG_POSTS.find((p) => p.slug === slug) ?? null;

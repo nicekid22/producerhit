@@ -1,4 +1,3 @@
-import { Dices } from "lucide-react";
 import type { AppLocale } from "@/i18n/config";
 import { legacyEnFr } from "@/i18n/config";
 import { GeneratorSection } from "@/components/dashboard/GeneratorSection";
@@ -27,18 +26,6 @@ export function IdeaPromptSection({
 }: Props) {
   const copy = {
     title: legacyEnFr(locale, "The Idea", "L’idée"),
-    hint:
-      mode === "song"
-        ? legacyEnFr(
-            locale,
-            "ACE tags: genre, vocal, instruments, mood (comma-separated)",
-            "Tags ACE : genre, voix, instruments, mood (séparés par des virgules)",
-          )
-        : legacyEnFr(
-            locale,
-            "ACE tags: instruments, timbre, production (comma-separated)",
-            "Tags ACE : instruments, timbre, prod (séparés par des virgules)",
-          ),
     placeholder:
       mode === "song"
         ? legacyEnFr(
@@ -60,13 +47,11 @@ export function IdeaPromptSection({
       defaultOpen={defaultOpen}
       className="pk-idea-prompt-section"
     >
-      <div className="pk-idea-prompt-hero">
-        <div className="pk-idea-prompt-hero__head">
-          <p className="pk-idea-prompt-hero__hint">{copy.hint}</p>
-          <RandomPromptDiceButton locale={locale} mode={mode} onPick={onChange} />
-        </div>
-
+      <div className="pk-idea-prompt-field">
         <div className="pk-dashboard-text-field" data-coach="prompt-field">
+          <div className="pk-idea-prompt-tools">
+            <RandomPromptDiceButton locale={locale} mode={mode} onPick={onChange} />
+          </div>
           <SpeechDictationField
             multiline
             locale={locale}

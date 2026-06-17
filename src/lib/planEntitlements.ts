@@ -19,7 +19,12 @@ export function isPaidPlan(plan: string | null | undefined): boolean {
 }
 
 export function hasPriorityGeneration(plan: string | null | undefined): boolean {
-  return normalizePlanId(plan) === "plus";
+  return PLAN_RANK[normalizePlanId(plan)] >= PLAN_RANK.pro;
+}
+
+/** Droits commerciaux (Spotify, YouTube, clients) — Pro et au-dessus. */
+export function hasCommercialUseRights(plan: string | null | undefined): boolean {
+  return isPaidPlan(plan);
 }
 
 /** Plus : liens audio hébergés sans expiration (tant que l’abonnement Plus est actif). Free 1j, Pro 3j, Studio 7j. */

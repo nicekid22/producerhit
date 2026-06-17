@@ -241,10 +241,17 @@
     flex-direction: column;
     border: none;
     border-radius: 0;
-    background: transparent;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
     backdrop-filter: none;
     box-shadow: none !important;
     min-height: 0;
+  }
+
+  /* site-texture-veil tier mid/focal sur .pk-landing-gen__shell — pas sur mobile */
+  .pk-landing--mobile-focus .pk-landing-gen__shell--mobile::after {
+    display: none !important;
   }
 
   .pk-landing--mobile-focus .pk-landing-gen__mobile-hint {

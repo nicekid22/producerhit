@@ -147,6 +147,25 @@ function saveGamification(state: GamificationState) {
   }
 }
 
+/** Fusion serveur → local (garde le max XP et les champs locaux non synchronisés). */
+export function saveGamificationFromServer(partial: {
+  xp: number;
+  streak?: number;
+  lastVisitYmd?: string;
+  achievements?: AchievementId[];
+}): GamificationState {
+  const state = loadGamification();
+  state.xp = Math.max(state.xp, partial.xp);
+  if (typeof partial.streak === "number") state.streak = Math.max(state.streak, partial.streak);
+  if (partial.lastVisitYmd) state.lastVisitYmd = partial.lastVisitYmd;
+  if (partial.achievements?.length) {
+    const set = new Set([...state.achievements, ...partial.achievements]);
+    state.achievements = [...set];
+  }
+  saveGamification(state);
+  return state;
+}
+
 export function getLevel(xp: number): number {
   let level = 1;
   while (level < MAX_LEVEL && xp >= getLevelXpFloor(level + 1)) {

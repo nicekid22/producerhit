@@ -16,13 +16,14 @@ import {
 } from "lucide-react";
 import { ThemeAndAccentPicker } from "@/components/ThemeAndAccentPicker";
 import { LanguagePicker } from "@/components/LanguagePicker";
-import { ThemeBrandMark } from "@/components/ThemeBrandMark";
 import { isSampleLabEnabled } from "@/lib/sampleLab";
 import { CLOUD_THEME_ENABLED } from "@/lib/featureFlags";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 import { useGrowthAdmin } from "@/hooks/useGrowthAdmin";
 import { useAuthStore } from "@/stores/authStore";
+import { useLocaleStore } from "@/stores/localeStore";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { useT } from "@/i18n";
 import { buildAuthUrl } from "@/lib/authRoutes";
 import { SIDEBAR_ICON_CLASS, SIDEBAR_ICON_PROPS } from "@/lib/sidebarIcons";
@@ -39,6 +40,7 @@ export function Sidebar() {
   const user = useAuthStore((s) => s.user);
   const signOut = useAuthStore((s) => s.signOut);
   const { m } = useT();
+  const locale = useLocaleStore((s) => s.locale);
   const isGrowthAdmin = useGrowthAdmin();
   const [loggingOut, setLoggingOut] = useState(false);
 
@@ -109,7 +111,7 @@ export function Sidebar() {
   );
 
   const mobileNavIconClass =
-    "relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl md:h-10 md:w-10";
+    "relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl md:h-10 md:w-10";
 
   const localePicker = <LanguagePicker variant="icon" className="md:hidden" />;
   const homeActive = location.pathname === "/" || location.pathname === "/home";
@@ -135,7 +137,7 @@ export function Sidebar() {
                 aria-hidden
               />
             ) : null}
-            <ThemeBrandMark className="h-6 w-6" static />
+            <SidebarIcon icon={Home} />
           </Link>
           {items.map((it) => {
             const active =
@@ -174,6 +176,7 @@ export function Sidebar() {
         </div>
 
         <div className="pk-sidebar-footer hidden md:flex md:flex-col md:items-center md:gap-1.5 md:border-t md:border-white/[0.06] md:pt-2">
+          {user ? <NotificationBell locale={locale} /> : null}
           <ThemeAndAccentPicker variant={CLOUD_THEME_ENABLED ? "sidebar-stack" : "nav-icon"} />
           {!CLOUD_THEME_ENABLED ? <LanguagePicker variant="sidebar" /> : null}
           {user ? (
@@ -181,7 +184,7 @@ export function Sidebar() {
               type="button"
               onClick={onLogout}
               disabled={loggingOut}
-              className="flex h-10 w-10 items-center justify-center rounded-pk text-pk-muted transition-colors hover:bg-white/5 hover:text-pk-text disabled:opacity-60"
+              className="pk-sidebar-ctrl-btn"
               aria-label={m.app.logout}
               title={m.app.logout}
             >
@@ -190,7 +193,7 @@ export function Sidebar() {
           ) : (
             <Link
               to={buildAuthUrl({ mode: "login", next: "/dashboard" })}
-              className="flex h-10 w-10 items-center justify-center rounded-pk text-pk-muted transition-colors hover:bg-white/5 hover:text-pk-text"
+              className="pk-sidebar-ctrl-btn"
               aria-label={m.nav.login}
               title={m.nav.login}
             >
@@ -200,15 +203,19 @@ export function Sidebar() {
         </div>
       </div>
 
-      <div className="pk-mobile-bottom-nav__actions flex shrink-0 items-center gap-1 border-l border-white/10 py-1 pl-1.5 pr-2 md:hidden">
-        <ThemeAndAccentPicker variant={CLOUD_THEME_ENABLED ? "mobile" : "nav-icon"} className="!h-11 !w-11 shrink-0 rounded-xl" />
-        {localePicker}
+      <div className="pk-mobile-bottom-nav__actions flex shrink-0 items-center gap-0.5 border-l border-white/10 py-1 pl-1.5 pr-2 md:hidden">
+        {user ? <NotificationBell locale={locale} className="pk-mobile-bottom-nav__action-slot shrink-0" /> : null}
+        <ThemeAndAccentPicker
+          variant={CLOUD_THEME_ENABLED ? "mobile" : "nav-icon"}
+          className="pk-mobile-bottom-nav__action-slot shrink-0"
+        />
+        <div className="hidden md:block">{localePicker}</div>
         {user ? (
           <button
             type="button"
             onClick={onLogout}
             disabled={loggingOut}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-pk-muted transition-colors hover:bg-white/5 hover:text-pk-text disabled:opacity-60"
+            className="pk-sidebar-ctrl-btn pk-mobile-bottom-nav__action-slot shrink-0"
             aria-label={m.app.logout}
             title={m.app.logout}
           >
@@ -217,7 +224,7 @@ export function Sidebar() {
         ) : (
           <Link
             to={buildAuthUrl({ mode: "login", next: "/dashboard" })}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-pk-muted transition-colors hover:bg-white/5 hover:text-pk-text"
+            className="pk-sidebar-ctrl-btn pk-mobile-bottom-nav__action-slot shrink-0"
             aria-label={m.nav.login}
             title={m.nav.login}
           >

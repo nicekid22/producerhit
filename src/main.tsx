@@ -20,6 +20,13 @@ import "./styles/dropdown-theme.css";
 import "./styles/dashboard-idea-prompt.css";
 import "./styles/random-prompt-dice.css";
 import "./styles/community-flux.css";
+import "./styles/header-chrome.css";
+import "./styles/landing-free-shimmer.css";
+import "./styles/landing-mobile-v2.css";
+import "./styles/landing-apple-theme-tokens.css";
+import "./styles/landing-mobile-audio-cards.css";
+import "./styles/landing-mobile-apple-restore.css";
+import "./styles/loop-details-sheet.css";
 import { preloadCloudThemeIfNeeded, preloadWarmGlassThemeIfNeeded } from "@/lib/themeStyles";
 
 import App from "./App";

@@ -53,6 +53,7 @@ import {
   playPublicRowsInQueue,
 } from "@/lib/communityPlaybackQueue";
 import { usePlayerStore } from "@/stores/playerStore";
+import { markActivationStepLocal } from "@/components/onboarding/OnboardingChecklist";
 
 type RatingStats = { sum: number; count: number; myRating: number | null };
 
@@ -89,6 +90,10 @@ export default function Explore() {
     }
     setActiveVibeId(vibeIdParam ?? null);
   }, [navigate, vibeIdParam]);
+
+  useEffect(() => {
+    markActivationStepLocal("community_visit");
+  }, []);
 
   const hubShuffleSeed = useMemo(() => {
     const key = "producerhit_community_shuffle_v1";

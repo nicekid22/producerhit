@@ -1,57 +1,14 @@
 import { useEffect, useLayoutEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { routeHasMobileBottomNav } from "@/lib/playerDock";
 import {
-  MOBILE_BOTTOM_NAV_SELECTOR,
-  MOBILE_NAV_HEIGHT_FALLBACK,
-  PLAYER_DOCK_SELECTOR,
-  PLAYER_NAV_GAP_PX,
-  routeHasMobileBottomNav,
-} from "@/lib/playerDock";
+  clearMobileDockVars,
+  measureMobileNav,
+  measurePlayerDock,
+  observeDockTargets,
+  scheduleDockMeasure,
+} from "@/lib/playerDockMeasure";
 import { usePlayerStore } from "@/stores/playerStore";
-
-function schedulePlayerHeightSync(run: () => void) {
-  run();
-  requestAnimationFrame(() => {
-    run();
-    requestAnimationFrame(run);
-  });
-  window.setTimeout(run, 0);
-  window.setTimeout(run, 80);
-  window.setTimeout(run, 200);
-}
-
-function clearMobileDockVars(root: HTMLElement) {
-  root.style.removeProperty("--pk-bottom-nav");
-  root.style.removeProperty("--pk-mobile-nav-stack");
-  root.style.removeProperty("--pk-player-dock-bottom");
-}
-
-function measureMobileNav(root: HTMLElement) {
-  const nav = document.querySelector<HTMLElement>(MOBILE_BOTTOM_NAV_SELECTOR);
-  if (!nav) {
-    const fallback = parseInt(MOBILE_NAV_HEIGHT_FALLBACK, 10);
-    root.style.setProperty("--pk-bottom-nav", MOBILE_NAV_HEIGHT_FALLBACK);
-    root.style.setProperty("--pk-mobile-nav-stack", MOBILE_NAV_HEIGHT_FALLBACK);
-    root.style.setProperty("--pk-player-dock-bottom", `${fallback + PLAYER_NAV_GAP_PX}px`);
-    return null;
-  }
-
-  const rect = nav.getBoundingClientRect();
-  if (rect.height < 1) {
-    const fallback = parseInt(MOBILE_NAV_HEIGHT_FALLBACK, 10);
-    root.style.setProperty("--pk-bottom-nav", MOBILE_NAV_HEIGHT_FALLBACK);
-    root.style.setProperty("--pk-mobile-nav-stack", MOBILE_NAV_HEIGHT_FALLBACK);
-    root.style.setProperty("--pk-player-dock-bottom", `${fallback + PLAYER_NAV_GAP_PX}px`);
-    return null;
-  }
-
-  const height = Math.max(1, Math.ceil(rect.height));
-  const stack = Math.max(0, Math.ceil(window.innerHeight - rect.top));
-  root.style.setProperty("--pk-bottom-nav", `${height}px`);
-  root.style.setProperty("--pk-mobile-nav-stack", `${stack}px`);
-  root.style.setProperty("--pk-player-dock-bottom", `${stack + PLAYER_NAV_GAP_PX}px`);
-  return nav;
-}
 
 /** Syncs player + mobile nav CSS vars from measured layout (no hardcoded overlap). */
 export function PlayerDockBootstrap() {
@@ -73,12 +30,13 @@ export function PlayerDockBootstrap() {
     }
 
     const run = () => measureMobileNav(root);
+    scheduleDockMeasure(run);
 
-    schedulePlayerHeightSync(run);
-
-    const nav = document.querySelector<HTMLElement>(MOBILE_BOTTOM_NAV_SELECTOR);
-    const ro = nav ? new ResizeObserver(() => schedulePlayerHeightSync(run)) : null;
+    const nav = document.querySelector<HTMLElement>(".pk-app-shell-mobile-nav");
+    const ro = nav ? new ResizeObserver(() => scheduleDockMeasure(run)) : null;
     if (nav && ro) ro.observe(nav);
+
+    const mo = observeDockTargets(run);
 
     window.addEventListener("resize", run);
     window.visualViewport?.addEventListener("resize", run);
@@ -86,6 +44,7 @@ export function PlayerDockBootstrap() {
 
     return () => {
       ro?.disconnect();
+      mo.disconnect();
       window.removeEventListener("resize", run);
       window.visualViewport?.removeEventListener("resize", run);
       window.visualViewport?.removeEventListener("scroll", run);
@@ -108,38 +67,26 @@ export function PlayerDockBootstrap() {
     }
 
     const measure = () => {
-      const el = document.querySelector<HTMLElement>(PLAYER_DOCK_SELECTOR);
-      if (!el) {
-        clearPlayer();
-        return;
+      if (!measurePlayerDock(root)) {
+        scheduleDockMeasure(measure);
       }
-      const rect = el.getBoundingClientRect();
-      const h = Math.max(1, Math.ceil(rect.height));
-      const reserve = Math.max(1, Math.ceil(window.innerHeight - rect.top));
-      root.style.setProperty("--pk-player-height", `${h}px`);
-      root.style.setProperty("--pk-player-reserve", `${reserve}px`);
-      root.setAttribute(
-        "data-pk-player-dock",
-        el.classList.contains("pk-prism-player--collapsed") ? "collapsed" : "expanded",
-      );
     };
 
-    schedulePlayerHeightSync(measure);
+    scheduleDockMeasure(measure);
 
-    const el = document.querySelector<HTMLElement>(PLAYER_DOCK_SELECTOR);
-    if (!el) {
-      clearPlayer();
-      return;
-    }
+    const el = document.querySelector<HTMLElement>(".pk-prism-player--dock");
+    const ro = el ? new ResizeObserver(() => scheduleDockMeasure(measure)) : null;
+    if (el && ro) ro.observe(el);
 
-    const ro = new ResizeObserver(() => schedulePlayerHeightSync(measure));
-    ro.observe(el);
+    const mo = observeDockTargets(measure);
+
     window.addEventListener("resize", measure);
     window.visualViewport?.addEventListener("resize", measure);
     window.visualViewport?.addEventListener("scroll", measure);
 
     return () => {
-      ro.disconnect();
+      ro?.disconnect();
+      mo.disconnect();
       window.removeEventListener("resize", measure);
       window.visualViewport?.removeEventListener("resize", measure);
       window.visualViewport?.removeEventListener("scroll", measure);

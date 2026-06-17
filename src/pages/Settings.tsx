@@ -33,6 +33,10 @@ import { useVisualThemeStore } from "@/stores/visualThemeStore";
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
 import { hasEmailPassword, hasGoogleAuth, mapAuthError } from "@/lib/authProviders";
 import { SettingsGrowthExtras } from "@/components/settings/SettingsGrowthExtras";
+import { ReferralStatsPanel } from "@/components/growth/ReferralStatsPanel";
+import { ReferralLeaderboard } from "@/components/growth/ReferralLeaderboard";
+import { ViralShareBar } from "@/components/growth/ViralShareBar";
+import { markActivationStepLocal } from "@/components/onboarding/OnboardingChecklist";
 import { SettingsIdentityHero } from "@/components/settings/SettingsIdentityHero";
 
 function tierClass(plan: string) {
@@ -125,6 +129,13 @@ export default function Settings() {
       document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 80);
   }, []);
+
+  useEffect(() => {
+    if (loading) return;
+    const hash = window.location.hash.replace(/^#/, "").trim();
+    if (!hash) return;
+    scrollToSection(hash);
+  }, [loading, scrollToSection]);
 
   useEffect(() => {
     if (authStatus !== "ready" || !user) {
@@ -501,6 +512,8 @@ export default function Settings() {
                     </li>
                   </ul>
                 </div>
+                <ReferralStatsPanel locale={locale} className="mt-4" />
+                <ReferralLeaderboard locale={locale} className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-4" />
                 {referralBonus > 0 || levelBonus > 0 || dailyBonusMonth > 0 ? (
                   <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[var(--prism-cyan)]">
                     {referralBonus > 0 ? (
@@ -528,6 +541,7 @@ export default function Settings() {
                     disabled={!referralLink || referralLinkLoading}
                     onClick={() => {
                       void navigator.clipboard.writeText(referralLink).then(() => {
+                        markActivationStepLocal("referral_share");
                         toast.success(isFr ? "Lien copié" : "Link copied");
                       });
                     }}
@@ -538,6 +552,22 @@ export default function Settings() {
                 {referralCode ? (
                   <div className="mt-2 text-xs text-pk-muted">
                     {isFr ? "Code" : "Code"}: <span className="font-semibold text-white">{referralCode}</span>
+                  </div>
+                ) : null}
+                {referralLink ? (
+                  <div className="mt-4">
+                    <div className="mb-2 text-xs text-pk-muted">{isFr ? "Partager" : "Share"}</div>
+                    <ViralShareBar
+                      url={referralLink}
+                      shareText={
+                        isFr
+                          ? "Je crée mes beats avec ProducerHit — essaie avec mon lien"
+                          : "I make beats with ProducerHit — try with my link"
+                      }
+                      locale={locale}
+                      channel="referral"
+                      onShare={() => markActivationStepLocal("referral_share")}
+                    />
                   </div>
                 ) : null}
               </div>

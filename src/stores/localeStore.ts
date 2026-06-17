@@ -3,6 +3,7 @@ import {
   type AppLocale,
   DEFAULT_LOCALE,
   htmlLangAttribute,
+  isRtlLocale,
   normalizeLocale as normalizeAppLocale,
 } from "@/i18n/config";
 
@@ -22,6 +23,7 @@ function applyLocale(locale: AppLocale) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem("producerhit_locale", locale);
   document.documentElement.lang = htmlLangAttribute(locale);
+  document.documentElement.dir = isRtlLocale(locale) ? "rtl" : "ltr";
   const url = new URL(window.location.href);
   url.searchParams.set("lang", locale);
   window.history.replaceState({}, "", url.toString());

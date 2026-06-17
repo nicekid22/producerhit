@@ -106,6 +106,14 @@ serve(async (req) => {
   const v1s = parts.filter((p) => p.startsWith("v1=")).map((p) => p.slice(3)).filter(Boolean);
   if (!timestamp || v1s.length === 0) return new Response("bad signature header", { status: 400 });
 
+  const eventTs = Number.parseInt(timestamp, 10);
+  if (!Number.isFinite(eventTs)) return new Response("bad signature timestamp", { status: 400 });
+  const toleranceSec = Number.parseInt(Deno.env.get("STRIPE_WEBHOOK_TOLERANCE_SEC") ?? "300", 10);
+  const skewSec = Math.abs(Math.floor(Date.now() / 1000) - eventTs);
+  if (skewSec > Math.max(60, toleranceSec)) {
+    return new Response("timestamp outside tolerance", { status: 400 });
+  }
+
   const signedPayload = `${timestamp}.${rawBody}`;
   const expected = await hmacSha256(webhookSecret, signedPayload);
   let ok = false;

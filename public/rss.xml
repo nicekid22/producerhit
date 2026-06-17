@@ -1,17 +1,178 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0">
+<rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/">
   <channel>
     <title>ProducerHit Blog</title>
     <link>https://www.producerhit.com/blog</link>
     <description>Guides and tactics to get better beats and music from AI — prompts, workflows, comparisons.</description>
     <language>en</language>
-    <lastBuildDate>Sat, 13 Jun 2026 12:30:02 GMT</lastBuildDate>
+    <lastBuildDate>Wed, 17 Jun 2026 13:02:07 GMT</lastBuildDate>
+    <item>
+      <title>Musique IA sur Spotify : checklist de sortie 2026</title>
+      <link>https://www.producerhit.com/blog/musique-ia-spotify-checklist-sortie-2026</link>
+      <guid>https://www.producerhit.com/blog/musique-ia-spotify-checklist-sortie-2026</guid>
+      <pubDate>Wed, 17 Jun 2026 12:00:00 GMT</pubDate>
+      <description><![CDATA[Publier de la musique IA sur Spotify — droits commerciaux, masters WAV, métadonnées et checklist pré-distribution.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=musique-ia-spotify-checklist-sortie-2026&title=Musique%20IA%20sur%20Spotify%20%3A%20checklist%20de%20sortie%202026&category=monetization" type="image/svg+xml" length="0"/>
+    </item>
+    <item>
+      <title>Musique IA royalty-free pour YouTube : guide créateurs 2026</title>
+      <link>https://www.producerhit.com/blog/musique-ia-royalty-free-youtube-guide</link>
+      <guid>https://www.producerhit.com/blog/musique-ia-royalty-free-youtube-guide</guid>
+      <pubDate>Wed, 17 Jun 2026 12:00:00 GMT</pubDate>
+      <description><![CDATA[Utiliser de la musique IA sur YouTube sans strike — Free vs droits commerciaux Pro, Content ID et workflow sûr pour créateurs.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=musique-ia-royalty-free-youtube-guide&title=Musique%20IA%20royalty-free%20pour%20YouTube%20%3A%20guide%20cr%C3%A9ateurs%202026&category=monetization" type="image/svg+xml" length="0"/>
+    </item>
+    <item>
+      <title>Générateur de chanson IA avec voix : guide complet 2026</title>
+      <link>https://www.producerhit.com/blog/generateur-chanson-ia-voix-guide-complet</link>
+      <guid>https://www.producerhit.com/blog/generateur-chanson-ia-voix-guide-complet</guid>
+      <pubDate>Wed, 17 Jun 2026 12:00:00 GMT</pubDate>
+      <description><![CDATA[Chansons complètes avec voix IA — prompts Song Mode, structure couplet/refrain, paroles manuelles et export release-ready.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=generateur-chanson-ia-voix-guide-complet&title=G%C3%A9n%C3%A9rateur%20de%20chanson%20IA%20avec%20voix%20%3A%20guide%20complet%202026&category=song-vocals" type="image/svg+xml" length="0"/>
+    </item>
+    <item>
+      <title>Générer des beats gratuit sans carte : guide honnête 2026</title>
+      <link>https://www.producerhit.com/blog/generer-beats-gratuit-sans-carte-guide</link>
+      <guid>https://www.producerhit.com/blog/generer-beats-gratuit-sans-carte-guide</guid>
+      <pubDate>Wed, 17 Jun 2026 12:00:00 GMT</pubDate>
+      <description><![CDATA[Générer des beats IA gratuit sans carte bancaire — limites, export MP3, quand passer Pro pour WAV et droits commerciaux.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=generer-beats-gratuit-sans-carte-guide&title=G%C3%A9n%C3%A9rer%20des%20beats%20gratuit%20sans%20carte%20%3A%20guide%20honn%C3%AAte%202026&category=beat-generator" type="image/svg+xml" length="0"/>
+    </item>
+    <item>
+      <title>Générateur lo-fi IA : workflow chill &amp; étude</title>
+      <link>https://www.producerhit.com/blog/generateur-lofi-ia-workflow-chill-etude</link>
+      <guid>https://www.producerhit.com/blog/generateur-lofi-ia-workflow-chill-etude</guid>
+      <pubDate>Wed, 17 Jun 2026 12:00:00 GMT</pubDate>
+      <description><![CDATA[Lo-fi hip-hop et beats d’étude avec IA — drums dusty, accords chauds, prompts vinyl et workflow playlist longue durée.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=generateur-lofi-ia-workflow-chill-etude&title=G%C3%A9n%C3%A9rateur%20lo-fi%20IA%20%3A%20workflow%20chill%20%26%20%C3%A9tude&category=genre-guides" type="image/svg+xml" length="0"/>
+    </item>
+    <item>
+      <title>Générateur drill IA : prompts UK drill &amp; NY drill</title>
+      <link>https://www.producerhit.com/blog/generateur-drill-ia-uk-drill-prompts</link>
+      <guid>https://www.producerhit.com/blog/generateur-drill-ia-uk-drill-prompts</guid>
+      <pubDate>Wed, 17 Jun 2026 12:00:00 GMT</pubDate>
+      <description><![CDATA[Modèles de prompts UK drill et NY drill pour IA — 808 glissants, snare sharp et hi-hats serrés, mix-ready.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=generateur-drill-ia-uk-drill-prompts&title=G%C3%A9n%C3%A9rateur%20drill%20IA%20%3A%20prompts%20UK%20drill%20%26%20NY%20drill&category=genre-guides" type="image/svg+xml" length="0"/>
+    </item>
+    <item>
+      <title>Générateur trap IA : 5 prompts qui marchent vraiment</title>
+      <link>https://www.producerhit.com/blog/generateur-trap-ia-prompts-qui-marchent</link>
+      <guid>https://www.producerhit.com/blog/generateur-trap-ia-prompts-qui-marchent</guid>
+      <pubDate>Wed, 17 Jun 2026 12:00:00 GMT</pubDate>
+      <description><![CDATA[Cinq prompts trap IA pour 808 percutants, mix clean et boucles 16 mesures — plus astuces de variation pour type beats trap.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=generateur-trap-ia-prompts-qui-marchent&title=G%C3%A9n%C3%A9rateur%20trap%20IA%20%3A%205%20prompts%20qui%20marchent%20vraiment&category=genre-guides" type="image/svg+xml" length="0"/>
+    </item>
+    <item>
+      <title>Suno vs Udio vs ProducerHit pour producteurs (2026)</title>
+      <link>https://www.producerhit.com/blog/suno-vs-udio-vs-producerhit-producteurs-2026</link>
+      <guid>https://www.producerhit.com/blog/suno-vs-udio-vs-producerhit-producteurs-2026</guid>
+      <pubDate>Wed, 17 Jun 2026 12:00:00 GMT</pubDate>
+      <description><![CDATA[Producteurs : itération, profondeur de genres et export WAV — comparatif Suno, Udio et ProducerHit pour type beats et remix.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=suno-vs-udio-vs-producerhit-producteurs-2026&title=Suno%20vs%20Udio%20vs%20ProducerHit%20pour%20producteurs%20(2026)&category=comparisons" type="image/svg+xml" length="0"/>
+    </item>
+    <item>
+      <title>Comment créer un type beat IA : workflow étape par étape</title>
+      <link>https://www.producerhit.com/blog/comment-creer-type-beat-ia-etape-par-etape</link>
+      <guid>https://www.producerhit.com/blog/comment-creer-type-beat-ia-etape-par-etape</guid>
+      <pubDate>Wed, 17 Jun 2026 12:00:00 GMT</pubDate>
+      <description><![CDATA[Workflow type beat IA en 5 étapes — genre, prompt drums-first, Versions×2, seed lock et export MP3/WAV pour clients et YouTube.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=comment-creer-type-beat-ia-etape-par-etape&title=Comment%20cr%C3%A9er%20un%20type%20beat%20IA%20%3A%20workflow%20%C3%A9tape%20par%20%C3%A9tape&category=type-beat" type="image/svg+xml" length="0"/>
+    </item>
+    <item>
+      <title>Meilleur générateur de beats IA en 2026 : guide complet producteur</title>
+      <link>https://www.producerhit.com/blog/meilleur-generateur-beats-ia-2026-guide-complet</link>
+      <guid>https://www.producerhit.com/blog/meilleur-generateur-beats-ia-2026-guide-complet</guid>
+      <pubDate>Wed, 17 Jun 2026 12:00:00 GMT</pubDate>
+      <description><![CDATA[Critères, prompts et workflows pour choisir le meilleur générateur de beats IA en 2026 — type beats, variations seed, export WAV et droits commerciaux.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=meilleur-generateur-beats-ia-2026-guide-complet&title=Meilleur%20g%C3%A9n%C3%A9rateur%20de%20beats%20IA%20en%202026%20%3A%20guide%20complet%20producteur&category=beat-generator" type="image/svg+xml" length="0"/>
+    </item>
+    <item>
+      <title>AI Music on Spotify: Release Checklist for 2026</title>
+      <link>https://www.producerhit.com/blog/ai-music-spotify-release-checklist-2026</link>
+      <guid>https://www.producerhit.com/blog/ai-music-spotify-release-checklist-2026</guid>
+      <pubDate>Wed, 17 Jun 2026 12:00:00 GMT</pubDate>
+      <description><![CDATA[Release AI-generated music on Spotify safely — commercial rights, WAV masters, metadata, and a pre-distribution checklist for producers and artists.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=ai-music-spotify-release-checklist-2026&title=AI%20Music%20on%20Spotify%3A%20Release%20Checklist%20for%202026&category=monetization" type="image/svg+xml" length="0"/>
+    </item>
+    <item>
+      <title>Royalty-Free AI Music for YouTube Creators (2026 Guide)</title>
+      <link>https://www.producerhit.com/blog/royalty-free-ai-music-youtube-creators-guide</link>
+      <guid>https://www.producerhit.com/blog/royalty-free-ai-music-youtube-creators-guide</guid>
+      <pubDate>Wed, 17 Jun 2026 12:00:00 GMT</pubDate>
+      <description><![CDATA[Use AI music on YouTube without copyright strikes — free vs Pro commercial rights, Content ID reality checks, and a safe workflow for creators.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=royalty-free-ai-music-youtube-creators-guide&title=Royalty-Free%20AI%20Music%20for%20YouTube%20Creators%20(2026%20Guide)&category=monetization" type="image/svg+xml" length="0"/>
+    </item>
+    <item>
+      <title>AI Song Generator with Vocals: Complete 2026 Guide</title>
+      <link>https://www.producerhit.com/blog/ai-song-generator-with-vocals-complete-guide</link>
+      <guid>https://www.producerhit.com/blog/ai-song-generator-with-vocals-complete-guide</guid>
+      <pubDate>Wed, 17 Jun 2026 12:00:00 GMT</pubDate>
+      <description><![CDATA[Generate full songs with AI vocals: Song Mode prompts, verse-chorus structure, manual lyrics, and export tips for release-ready tracks.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=ai-song-generator-with-vocals-complete-guide&title=AI%20Song%20Generator%20with%20Vocals%3A%20Complete%202026%20Guide&category=song-vocals" type="image/svg+xml" length="0"/>
+    </item>
+    <item>
+      <title>Generate Beats Online Free (No Credit Card): Honest 2026 Guide</title>
+      <link>https://www.producerhit.com/blog/generate-beats-online-free-no-credit-card-guide</link>
+      <guid>https://www.producerhit.com/blog/generate-beats-online-free-no-credit-card-guide</guid>
+      <pubDate>Wed, 17 Jun 2026 12:00:00 GMT</pubDate>
+      <description><![CDATA[How to generate beats online free without a credit card — limits, MP3 exports, when to upgrade for WAV and commercial rights, and realistic expectations.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=generate-beats-online-free-no-credit-card-guide&title=Generate%20Beats%20Online%20Free%20(No%20Credit%20Card)%3A%20Honest%202026%20Guide&category=beat-generator" type="image/svg+xml" length="0"/>
+    </item>
+    <item>
+      <title>AI Lo-Fi Beat Generator: Chill &amp; Study Music Workflow</title>
+      <link>https://www.producerhit.com/blog/ai-lofi-beat-generator-chill-study-workflow</link>
+      <guid>https://www.producerhit.com/blog/ai-lofi-beat-generator-chill-study-workflow</guid>
+      <pubDate>Wed, 17 Jun 2026 12:00:00 GMT</pubDate>
+      <description><![CDATA[Build lo-fi hip-hop and study beats with AI: dusty drums, warm chords, vinyl texture prompts, and a calm iteration workflow for long playlists.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=ai-lofi-beat-generator-chill-study-workflow&title=AI%20Lo-Fi%20Beat%20Generator%3A%20Chill%20%26%20Study%20Music%20Workflow&category=genre-guides" type="image/svg+xml" length="0"/>
+    </item>
+    <item>
+      <title>AI Drill Beat Generator: UK Drill &amp; NY Drill Prompts</title>
+      <link>https://www.producerhit.com/blog/ai-drill-beat-generator-uk-drill-prompts</link>
+      <guid>https://www.producerhit.com/blog/ai-drill-beat-generator-uk-drill-prompts</guid>
+      <pubDate>Wed, 17 Jun 2026 12:00:00 GMT</pubDate>
+      <description><![CDATA[UK drill and NY drill prompt templates for AI beat generators — sliding 808s, dark slides, and tight hi-hat patterns that sound mix-ready.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=ai-drill-beat-generator-uk-drill-prompts&title=AI%20Drill%20Beat%20Generator%3A%20UK%20Drill%20%26%20NY%20Drill%20Prompts&category=genre-guides" type="image/svg+xml" length="0"/>
+    </item>
+    <item>
+      <title>AI Trap Beat Generator: 5 Prompts That Actually Work</title>
+      <link>https://www.producerhit.com/blog/ai-trap-beat-generator-prompts-that-work</link>
+      <guid>https://www.producerhit.com/blog/ai-trap-beat-generator-prompts-that-work</guid>
+      <pubDate>Wed, 17 Jun 2026 12:00:00 GMT</pubDate>
+      <description><![CDATA[Five trap beat prompts that deliver punchy 808s, clean mixes, and loopable 16-bar instrumentals — plus variation tips for AI trap beat generators.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=ai-trap-beat-generator-prompts-that-work&title=AI%20Trap%20Beat%20Generator%3A%205%20Prompts%20That%20Actually%20Work&category=genre-guides" type="image/svg+xml" length="0"/>
+    </item>
+    <item>
+      <title>Suno vs Udio vs ProducerHit for Beat Makers (2026)</title>
+      <link>https://www.producerhit.com/blog/suno-vs-udio-vs-producerhit-beat-makers-2026</link>
+      <guid>https://www.producerhit.com/blog/suno-vs-udio-vs-producerhit-beat-makers-2026</guid>
+      <pubDate>Wed, 17 Jun 2026 12:00:00 GMT</pubDate>
+      <description><![CDATA[Beat makers need iteration, genre depth, and WAV exports — not just viral song clips. Compare Suno, Udio, and ProducerHit for type beats and remix workflows.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=suno-vs-udio-vs-producerhit-beat-makers-2026&title=Suno%20vs%20Udio%20vs%20ProducerHit%20for%20Beat%20Makers%20(2026)&category=comparisons" type="image/svg+xml" length="0"/>
+    </item>
+    <item>
+      <title>How to Make Type Beats with AI: Step-by-Step Workflow (2026)</title>
+      <link>https://www.producerhit.com/blog/how-to-make-type-beats-with-ai-step-by-step</link>
+      <guid>https://www.producerhit.com/blog/how-to-make-type-beats-with-ai-step-by-step</guid>
+      <pubDate>Wed, 17 Jun 2026 12:00:00 GMT</pubDate>
+      <description><![CDATA[A step-by-step type beat workflow: pick genre, write a tight prompt, generate two versions, lock your seed, and export MP3 or WAV for clients and YouTube.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=how-to-make-type-beats-with-ai-step-by-step&title=How%20to%20Make%20Type%20Beats%20with%20AI%3A%20Step-by-Step%20Workflow%20(2026)&category=type-beat" type="image/svg+xml" length="0"/>
+    </item>
+    <item>
+      <title>Best AI Beat Generator in 2026: Complete Producer Guide</title>
+      <link>https://www.producerhit.com/blog/best-ai-beat-generator-2026-complete-guide</link>
+      <guid>https://www.producerhit.com/blog/best-ai-beat-generator-2026-complete-guide</guid>
+      <pubDate>Wed, 17 Jun 2026 12:00:00 GMT</pubDate>
+      <description><![CDATA[Compare features, prompts, and workflows to pick the best AI beat generator in 2026 — type beats, seed variations, WAV exports, and commercial rights explained.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=best-ai-beat-generator-2026-complete-guide&title=Best%20AI%20Beat%20Generator%20in%202026%3A%20Complete%20Producer%20Guide&category=beat-generator" type="image/svg+xml" length="0"/>
+    </item>
     <item>
       <title>ProducerHit vs Suno &amp; Udio: competitive advantages for producers (2026)</title>
       <link>https://www.producerhit.com/blog/producerhit-vs-suno-udio-advantages-2026</link>
       <guid>https://www.producerhit.com/blog/producerhit-vs-suno-udio-advantages-2026</guid>
       <pubDate>Sun, 07 Jun 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[680+ genres, Versions×2, seed lock, beat+song+remix — why ProducerHit beats Suno and Udio for iteration-heavy workflows.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=producerhit-vs-suno-udio-advantages-2026&title=ProducerHit%20vs%20Suno%20%26%20Udio%3A%20competitive%20advantages%20for%20producers%20(2026)" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>K-Pop AI Generator: Idol hooks, Korean lyrics &amp; seed iteration (2026)</title>
@@ -19,6 +180,7 @@
       <guid>https://www.producerhit.com/blog/k-pop-ai-generator-guide-2026</guid>
       <pubDate>Sun, 07 Jun 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[K-Pop Idol vs Ballad vs K-Indie — how to beat Suno with Genre précis, Versions×2, and manual Hangul lyrics.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=k-pop-ai-generator-guide-2026&title=K-Pop%20AI%20Generator%3A%20Idol%20hooks%2C%20Korean%20lyrics%20%26%20seed%20iteration%20(2026)" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Middle East AI Music: Khaleeji, Arabic Pop, Mahraganat &amp; Dabke (2026)</title>
@@ -26,6 +188,7 @@
       <guid>https://www.producerhit.com/blog/middle-east-khaleeji-arabic-pop-guide-2026</guid>
       <pubDate>Sun, 07 Jun 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[13+ Middle East genres with darbuka, quarter-tone, and electro-shaabi prompts — not one Oriental preset.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=middle-east-khaleeji-arabic-pop-guide-2026&title=Middle%20East%20AI%20Music%3A%20Khaleeji%2C%20Arabic%20Pop%2C%20Mahraganat%20%26%20Dabke%20(2026)" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Asia Music Generator Hub: K-Pop, J-Pop, Bollywood &amp; 25+ genres (2026)</title>
@@ -33,6 +196,7 @@
       <guid>https://www.producerhit.com/blog/asia-music-generator-hub-guide-2026</guid>
       <pubDate>Sun, 07 Jun 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[Why ProducerHit beats Suno for Asian music — K-Pop Idol vs generic pop, Anison, City Pop, Bhangra ACE prompts.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=asia-music-generator-hub-guide-2026&title=Asia%20Music%20Generator%20Hub%3A%20K-Pop%2C%20J-Pop%2C%20Bollywood%20%26%2025%2B%20genres%20(2026)" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Free AI Song Generator: what you get on ProducerHit Free vs Pro (2026)</title>
@@ -40,6 +204,7 @@
       <guid>https://www.producerhit.com/blog/free-ai-song-generator-guide-2026</guid>
       <pubDate>Sat, 06 Jun 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[Free AI song generator truth — monthly credits, MP3 export, same engine as paid. When to upgrade for WAV.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=free-ai-song-generator-guide-2026&title=Free%20AI%20Song%20Generator%3A%20what%20you%20get%20on%20ProducerHit%20Free%20vs%20Pro%20(2026)" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Cumbia AI Generator: Colombia shuffle vs cumbia sonidera Mexico</title>
@@ -47,6 +212,7 @@
       <guid>https://www.producerhit.com/blog/cumbia-generator-guide-2026</guid>
       <pubDate>Sat, 06 Jun 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[Guïro, tambora, accordion — cumbia and cumbia sonidera prompts for TikTok and diaspora content.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=cumbia-generator-guide-2026&title=Cumbia%20AI%20Generator%3A%20Colombia%20shuffle%20vs%20cumbia%20sonidera%20Mexico" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Corridos &amp; Regional Mexican AI: tumbados vs classic norteño storytelling</title>
@@ -54,6 +220,7 @@
       <guid>https://www.producerhit.com/blog/corridos-regional-mexican-ai-guide-2026</guid>
       <pubDate>Sat, 06 Jun 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[Corridos, Corridos Tumbados, and Regional Mexican — three URLs, three sounds, fastest-growing Latin niche.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=corridos-regional-mexican-ai-guide-2026&title=Corridos%20%26%20Regional%20Mexican%20AI%3A%20tumbados%20vs%20classic%20norte%C3%B1o%20storytelling" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Kizomba &amp; Zouk Love AI: slow dance genres competitors merge incorrectly</title>
@@ -61,6 +228,7 @@
       <guid>https://www.producerhit.com/blog/kizomba-zouk-ai-music-guide-2026</guid>
       <pubDate>Sat, 06 Jun 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[Separate kizomba (95 BPM, Portuguese) and zouk love (90 BPM, Caribbean) — partner dance SEO and prompts.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=kizomba-zouk-ai-music-guide-2026&title=Kizomba%20%26%20Zouk%20Love%20AI%3A%20slow%20dance%20genres%20competitors%20merge%20incorrectly" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>AI Salsa Generator: clave, montuno piano, and 180 BPM dance energy</title>
@@ -68,6 +236,7 @@
       <guid>https://www.producerhit.com/blog/ai-salsa-generator-guide-2026</guid>
       <pubDate>Sat, 06 Jun 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[Salsa vs timba — when to use each genre, prompt templates, and Song Mode coro hooks.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=ai-salsa-generator-guide-2026&title=AI%20Salsa%20Generator%3A%20clave%2C%20montuno%20piano%2C%20and%20180%20BPM%20dance%20energy" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>AI Worship Song Generator: ride the +18.5% Christian music streaming wave</title>
@@ -75,6 +244,7 @@
       <guid>https://www.producerhit.com/blog/ai-worship-song-generator-guide-2026</guid>
       <pubDate>Sat, 06 Jun 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[Worship Pop and Gospel Worship genres for anthemic choruses, English vocals, and TikTok worship trend content.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=ai-worship-song-generator-guide-2026&title=AI%20Worship%20Song%20Generator%3A%20ride%20the%20%2B18.5%25%20Christian%20music%20streaming%20wave" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Phonk generator complete guide: drift vs Memphis vs Brazilian vs gym (2026)</title>
@@ -82,6 +252,7 @@
       <guid>https://www.producerhit.com/blog/phonk-drift-memphis-brazilian-guide-2026</guid>
       <pubDate>Sat, 06 Jun 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[Six phonk subgenres on ProducerHit — drift phonk cowbell glide, Memphis dusty samples, Brazilian bounce, gym montage energy.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=phonk-drift-memphis-brazilian-guide-2026&title=Phonk%20generator%20complete%20guide%3A%20drift%20vs%20Memphis%20vs%20Brazilian%20vs%20gym%20(2026)" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>AI Song Generator by Genre: 640+ styles — internal linking strategy for 2026</title>
@@ -89,6 +260,7 @@
       <guid>https://www.producerhit.com/blog/ai-song-generator-by-genre-hub-2026</guid>
       <pubDate>Sat, 06 Jun 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[How ProducerHit's genre hub captures long-tail 'AI beat generator + genre' searches with 640+ catalog entries and bilingual landing pages.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=ai-song-generator-by-genre-hub-2026&title=AI%20Song%20Generator%20by%20Genre%3A%20640%2B%20styles%20%E2%80%94%20internal%20linking%20strategy%20for%202026" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Latin Music Generator hub: 33+ genres vs competitors' 5–8 (SEO + product)</title>
@@ -96,6 +268,7 @@
       <guid>https://www.producerhit.com/blog/latin-music-generator-hub-guide-2026</guid>
       <pubDate>Sat, 06 Jun 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[Why a Latin music generator hub with bachata, salsa, kizomba, corridos tumbados beats AISongCreator-style landing pages — and how ProducerHit wins on catalog depth.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=latin-music-generator-hub-guide-2026&title=Latin%20Music%20Generator%20hub%3A%2033%2B%20genres%20vs%20competitors'%205%E2%80%938%20(SEO%20%2B%20product)" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>AI Generated Country Song: +6800% search growth — prompts that work in 2026</title>
@@ -103,6 +276,7 @@
       <guid>https://www.producerhit.com/blog/ai-generated-country-song-guide-2026</guid>
       <pubDate>Sat, 06 Jun 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[Target the exploding 'AI generated country song' keyword with Contemporary Country, Country Pop, and manual English lyrics on ProducerHit.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=ai-generated-country-song-guide-2026&title=AI%20Generated%20Country%20Song%3A%20%2B6800%25%20search%20growth%20%E2%80%94%20prompts%20that%20work%20in%202026" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Reggaeton &amp; Dembow AI Generator: dembow riddim without generic trap drums</title>
@@ -110,6 +284,7 @@
       <guid>https://www.producerhit.com/blog/ai-reggaeton-dembow-generator-guide</guid>
       <pubDate>Sat, 06 Jun 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[Generate reggaeton and dembow with dedicated genres — 92–103 BPM, 808 subs, perreo energy. Beat mode vs Song Mode explained.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=ai-reggaeton-dembow-generator-guide&title=Reggaeton%20%26%20Dembow%20AI%20Generator%3A%20dembow%20riddim%20without%20generic%20trap%20drums" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>AI Bachata Song Generator: romantic prompts, BPM &amp; Spanish lyrics (2026)</title>
@@ -117,6 +292,7 @@
       <guid>https://www.producerhit.com/blog/ai-bachata-song-generator-guide</guid>
       <pubDate>Sat, 06 Jun 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[How to generate authentic bachata with AI — Genre précis Bachata, 130 BPM, manual Spanish lyrics, and Song Mode workflow on ProducerHit.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=ai-bachata-song-generator-guide&title=AI%20Bachata%20Song%20Generator%3A%20romantic%20prompts%2C%20BPM%20%26%20Spanish%20lyrics%20(2026)" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Why community audio pages beat « 9 best AI music generators » listicles in 2026</title>
@@ -124,6 +300,7 @@
       <guid>https://www.producerhit.com/blog/beat-listicles-vs-community-audio-seo-2026</guid>
       <pubDate>Fri, 05 Jun 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[Static comparison blogs plateau. ProducerHit’s community feed + vibe pages + loop URLs create fresh, linkable audio SEO that outruns generic AI generator rankings.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=beat-listicles-vs-community-audio-seo-2026&title=Why%20community%20audio%20pages%20beat%20%C2%AB%209%20best%20AI%20music%20generators%20%C2%BB%20listicles%20in%202026" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Trending AI beats 2026: remix TikTok vibes before they peak on Google</title>
@@ -131,6 +308,7 @@
       <guid>https://www.producerhit.com/blog/trending-ai-beats-remix-tiktok-2026</guid>
       <pubDate>Fri, 05 Jun 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[How to ride trending AI beat searches in 2026: community trending pages, remix workflows, and SEO beats static « best AI generator » listicles.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=trending-ai-beats-remix-tiktok-2026&title=Trending%20AI%20beats%202026%3A%20remix%20TikTok%20vibes%20before%20they%20peak%20on%20Google" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Le Flux ProducerHit : plateforme streaming IA par la commu (guide FR)</title>
@@ -138,6 +316,7 @@
       <guid>https://www.producerhit.com/blog/producerhit-community-feed-guide</guid>
       <pubDate>Fri, 05 Jun 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[Guide complet du Flux communautaire ProducerHit : écoute publique, notes, commentaires, remix, vibes, SEO — une plateforme streaming créée par la communauté pour la communauté.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=producerhit-community-feed-guide&title=Le%20Flux%20ProducerHit%20%3A%20plateforme%20streaming%20IA%20par%20la%20commu%20(guide%20FR)" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Community AI music streaming: how ProducerHit’s Feed works (listen, rate, remix)</title>
@@ -145,6 +324,7 @@
       <guid>https://www.producerhit.com/blog/community-ai-music-streaming-platform</guid>
       <pubDate>Fri, 05 Jun 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[ProducerHit is a community-built AI music streaming feed: public beats, ratings, comments, remix workflows, and SEO-friendly discovery — built for creators, not corporations.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=community-ai-music-streaming-platform&title=Community%20AI%20music%20streaming%3A%20how%20ProducerHit%E2%80%99s%20Feed%20works%20(listen%2C%20rate%2C%20remix)" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Générateur musique IA : musique de sommeil, étude et focus (guide FR)</title>
@@ -152,6 +332,7 @@
       <guid>https://www.producerhit.com/blog/generateur-musique-ia-sommeil-etude-fr</guid>
       <pubDate>Wed, 27 May 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[Prompts FR pour musique de sommeil, lofi étude et ambient concentration — BPM, textures, boucles propres et workflow Versions×2.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=generateur-musique-ia-sommeil-etude-fr&title=G%C3%A9n%C3%A9rateur%20musique%20IA%20%3A%20musique%20de%20sommeil%2C%20%C3%A9tude%20et%20focus%20(guide%20FR)" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Sleep &amp; study music with AI: ambient prompts + loop-friendly mixes</title>
@@ -159,6 +340,7 @@
       <guid>https://www.producerhit.com/blog/ai-sleep-study-music-generator-guide</guid>
       <pubDate>Wed, 27 May 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[How to generate sleep music, study lofi, and focus ambient tracks with AI — tempo, instrumentation, and iteration tips for seamless background listening.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=ai-sleep-study-music-generator-guide&title=Sleep%20%26%20study%20music%20with%20AI%3A%20ambient%20prompts%20%2B%20loop-friendly%20mixes" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Music AI generator: prompts that actually work in 2026 (beats + songs)</title>
@@ -166,6 +348,7 @@
       <guid>https://www.producerhit.com/blog/music-ai-generator-prompt-guide-2026</guid>
       <pubDate>Wed, 27 May 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[The exact prompt structure for music AI generator searches: genre, BPM, mood, mix target, and a producer iteration loop with Versions×2 and seed variations.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=music-ai-generator-prompt-guide-2026&title=Music%20AI%20generator%3A%20prompts%20that%20actually%20work%20in%202026%20(beats%20%2B%20songs)" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Générateur type beat IA : prompts trap, drill, R&amp;B et workflow pro (2026)</title>
@@ -173,6 +356,7 @@
       <guid>https://www.producerhit.com/blog/generateur-type-beat-ia-guide-fr</guid>
       <pubDate>Wed, 27 May 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[Guide FR pour générer des type beats avec l’IA : prompts par genre, Versions×2, variations seed et pages dédiées ProducerHit.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=generateur-type-beat-ia-guide-fr&title=G%C3%A9n%C3%A9rateur%20type%20beat%20IA%20%3A%20prompts%20trap%2C%20drill%2C%20R%26B%20et%20workflow%20pro%20(2026)" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Musique IA Spotify Ready : sortir un single en 2026 (guide FR)</title>
@@ -180,6 +364,7 @@
       <guid>https://www.producerhit.com/blog/musique-ia-spotify-ready-sortir-single-fr</guid>
       <pubDate>Wed, 27 May 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[Song Mode, mastering intégré, cover art et export WAV — workflow release complet sur ProducerHit.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=musique-ia-spotify-ready-sortir-single-fr&title=Musique%20IA%20Spotify%20Ready%20%3A%20sortir%20un%20single%20en%202026%20(guide%20FR)" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Alternatives Mubert &amp; Loudly pour chansons IA complètes (2026)</title>
@@ -187,6 +372,7 @@
       <guid>https://www.producerhit.com/blog/alternatives-mubert-loudly-chansons-fr</guid>
       <pubDate>Wed, 27 May 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[Guide FR : quand quitter Mubert/Loudly pour Song Mode, Remix et exports Spotify Ready sur ProducerHit.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=alternatives-mubert-loudly-chansons-fr&title=Alternatives%20Mubert%20%26%20Loudly%20pour%20chansons%20IA%20compl%C3%A8tes%20(2026)" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>AI cover song generator + Spotify Ready workflow (2026)</title>
@@ -194,6 +380,7 @@
       <guid>https://www.producerhit.com/blog/ai-cover-song-generator-spotify-ready-guide</guid>
       <pubDate>Wed, 27 May 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[Upload audio, generate AI covers, master, add cover art, and export WAV — full release workflow on ProducerHit.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=ai-cover-song-generator-spotify-ready-guide&title=AI%20cover%20song%20generator%20%2B%20Spotify%20Ready%20workflow%20(2026)" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Mubert &amp; Loudly alternatives for full AI songs and Remix (2026)</title>
@@ -201,6 +388,7 @@
       <guid>https://www.producerhit.com/blog/mubert-loudly-alternatives-songs-remix-2026</guid>
       <pubDate>Wed, 27 May 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[Compare Mubert and Loudly alternatives when you need Song Mode, Remix covers, and Spotify Ready exports — not just background or social clips.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=mubert-loudly-alternatives-songs-remix-2026&title=Mubert%20%26%20Loudly%20alternatives%20for%20full%20AI%20songs%20and%20Remix%20(2026)" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Remix &amp; cover IA : upload audio, itérer, exporter (guide 2026)</title>
@@ -208,6 +396,7 @@
       <guid>https://www.producerhit.com/blog/remix-cover-ia-workflow-fr</guid>
       <pubDate>Wed, 27 May 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[Remix Studio ProducerHit : covers IA depuis ton audio, variations seed, remix communauté, export MP3/WAV.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=remix-cover-ia-workflow-fr&title=Remix%20%26%20cover%20IA%20%3A%20upload%20audio%2C%20it%C3%A9rer%2C%20exporter%20(guide%202026)" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Générateur chanson IA (2026) : Song Mode, qualité studio et release</title>
@@ -215,6 +404,7 @@
       <guid>https://www.producerhit.com/blog/generateur-chanson-ia-guide-fr</guid>
       <pubDate>Wed, 27 May 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[Guide FR : utiliser un générateur chanson IA pour sortir des morceaux — prompts Song Mode, Remix, exports ProducerHit.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=generateur-chanson-ia-guide-fr&title=G%C3%A9n%C3%A9rateur%20chanson%20IA%20(2026)%20%3A%20Song%20Mode%2C%20qualit%C3%A9%20studio%20et%20release" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>AI remix &amp; cover workflow: upload audio, iterate, export (2026 guide)</title>
@@ -222,6 +412,7 @@
       <guid>https://www.producerhit.com/blog/remix-cover-ai-workflow-producerhit</guid>
       <pubDate>Wed, 27 May 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[Remix Studio on ProducerHit: AI covers from your audio, seed variations, community remix loops, and export-ready output.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=remix-cover-ai-workflow-producerhit&title=AI%20remix%20%26%20cover%20workflow%3A%20upload%20audio%2C%20iterate%2C%20export%20(2026%20guide)" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>AI song generator guide (2026): Song Mode, quality, and release workflow</title>
@@ -229,6 +420,7 @@
       <guid>https://www.producerhit.com/blog/ai-song-generator-guide-2026</guid>
       <pubDate>Wed, 27 May 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[How to use an AI song generator for release-ready tracks: Song Mode prompts, structure, Remix, exports — ProducerHit workflow.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=ai-song-generator-guide-2026&title=AI%20song%20generator%20guide%20(2026)%3A%20Song%20Mode%2C%20quality%2C%20and%20release%20workflow" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Meilleur studio musique IA (2026) — chansons, Remix &amp; beats</title>
@@ -236,6 +428,7 @@
       <guid>https://www.producerhit.com/blog/meilleur-generateur-beats-ia-2026-fr</guid>
       <pubDate>Wed, 27 May 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[Classement FR 2026 : ProducerHit vs Suno vs Udio vs Beatoven pour Song Mode, Remix, type beats et exports.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=meilleur-generateur-beats-ia-2026-fr&title=Meilleur%20studio%20musique%20IA%20(2026)%20%E2%80%94%20chansons%2C%20Remix%20%26%20beats" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Suno vs Udio : quel studio IA pour sortir des chansons en 2026 ?</title>
@@ -243,6 +436,7 @@
       <guid>https://www.producerhit.com/blog/suno-vs-udio-quel-outil-producteur-fr</guid>
       <pubDate>Wed, 27 May 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[Comparatif FR Suno vs Udio — démos vocales vs studio release. Song Mode, Remix et exports sur ProducerHit.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=suno-vs-udio-quel-outil-producteur-fr&title=Suno%20vs%20Udio%20%3A%20quel%20studio%20IA%20pour%20sortir%20des%20chansons%20en%202026%20%3F" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Alternatives à Suno pour producteurs : type beats, seeds et workflow pro (2026)</title>
@@ -250,6 +444,7 @@
       <guid>https://www.producerhit.com/blog/alternatives-suno-producteurs-guide-fr</guid>
       <pubDate>Wed, 27 May 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[Guide FR : meilleures alternatives Suno pour beat makers — ProducerHit, Udio, Beatoven. Gratuit, variations seed, exports MP3/WAV.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=alternatives-suno-producteurs-guide-fr&title=Alternatives%20%C3%A0%20Suno%20pour%20producteurs%20%3A%20type%20beats%2C%20seeds%20et%20workflow%20pro%20(2026)" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Udio alternatives for beat makers: instrumentals, seeds, and export-ready workflows</title>
@@ -257,6 +452,7 @@
       <guid>https://www.producerhit.com/blog/udio-alternatives-beat-makers-guide</guid>
       <pubDate>Wed, 27 May 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[Best Udio alternatives when you need type beats not vocal demos. Compare ProducerHit, Suno and Beatoven for producer workflows.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=udio-alternatives-beat-makers-guide&title=Udio%20alternatives%20for%20beat%20makers%3A%20instrumentals%2C%20seeds%2C%20and%20export-ready%20workfl" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>ProducerHit vs Suno: songs, Remix covers &amp; type beats — which AI studio wins?</title>
@@ -264,6 +460,7 @@
       <guid>https://www.producerhit.com/blog/producerhit-vs-suno-type-beats</guid>
       <pubDate>Wed, 27 May 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[ProducerHit vs Suno for songs, Remix covers, and type beats — Song Mode quality, seed control, exports, and when each tool wins.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=producerhit-vs-suno-type-beats&title=ProducerHit%20vs%20Suno%3A%20songs%2C%20Remix%20covers%20%26%20type%20beats%20%E2%80%94%20which%20AI%20studio%20wins%3F" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Suno alternatives for producers: type beats, seed control, and honest picks (2026)</title>
@@ -271,6 +468,7 @@
       <guid>https://www.producerhit.com/blog/suno-alternatives-for-producers-2026</guid>
       <pubDate>Wed, 27 May 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[Searching Suno alternatives? Compare ProducerHit, Udio and Beatoven for type beats, seed variations, free tiers and exports — producer-first picks.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=suno-alternatives-for-producers-2026&title=Suno%20alternatives%20for%20producers%3A%20type%20beats%2C%20seed%20control%2C%20and%20honest%20picks%20(202" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Seed variations &amp; remix workflow: how to get consistent results fast</title>
@@ -278,6 +476,7 @@
       <guid>https://www.producerhit.com/blog/seed-variations-remix-workflow</guid>
       <pubDate>Tue, 19 May 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[A producer-friendly method to turn 1 good generation into 5 usable options: save a seed, vary one constraint, and keep prompts stable.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=seed-variations-remix-workflow&title=Seed%20variations%20%26%20remix%20workflow%3A%20how%20to%20get%20consistent%20results%20fast" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Soul &amp; Funk with AI: chord progressions and groove prompts that work</title>
@@ -285,6 +484,7 @@
       <guid>https://www.producerhit.com/blog/soul-funk-ai-beats-chords</guid>
       <pubDate>Tue, 19 May 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[How to get soulful, musical beats from AI: warm chord movement, live-feel drums, funk pocket, and prompt structure for clean results.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=soul-funk-ai-beats-chords&title=Soul%20%26%20Funk%20with%20AI%3A%20chord%20progressions%20and%20groove%20prompts%20that%20work" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Hyperpop (Hip-Hop/R&amp;B) prompts: emo-pop melodies + punchy 808s (clean mix)</title>
@@ -292,6 +492,7 @@
       <guid>https://www.producerhit.com/blog/hyperpop-hiphop-rnb-prompts</guid>
       <pubDate>Tue, 19 May 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[Prompt templates for hyperpop fused with hip-hop/R&B: glitchy synths, emotive toplines, punchy 808s, and controlled chaos.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=hyperpop-hiphop-rnb-prompts&title=Hyperpop%20(Hip-Hop%2FR%26B)%20prompts%3A%20emo-pop%20melodies%20%2B%20punchy%20808s%20(clean%20mix)" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Speed Garage prompts: skippy UKG drums, heavy bassline, club-ready bounce</title>
@@ -299,6 +500,7 @@
       <guid>https://www.producerhit.com/blog/speed-garage-prompts-skippy-drums</guid>
       <pubDate>Tue, 19 May 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[Speed Garage prompt examples to get the skippy drums + bassline bounce right, plus a clean workflow using two versions and variations.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=speed-garage-prompts-skippy-drums&title=Speed%20Garage%20prompts%3A%20skippy%20UKG%20drums%2C%20heavy%20bassline%2C%20club-ready%20bounce" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Drum &amp; Bass beat generator: prompt template for clean DnB (160–180 BPM)</title>
@@ -306,6 +508,7 @@
       <guid>https://www.producerhit.com/blog/drum-and-bass-beat-generator-prompt-template</guid>
       <pubDate>Tue, 19 May 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[A practical DnB prompt template: breakbeats, rolling drums, clean sub, and how to iterate with seed variations for consistent drum & bass.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=drum-and-bass-beat-generator-prompt-template&title=Drum%20%26%20Bass%20beat%20generator%3A%20prompt%20template%20for%20clean%20DnB%20(160%E2%80%93180%20BPM)" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>AI music generator vs AI agent: why results can feel random</title>
@@ -313,6 +516,7 @@
       <guid>https://www.producerhit.com/blog/ai-music-generator-vs-agent</guid>
       <pubDate>Thu, 14 May 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[Why open generation can produce bad outputs, and the producer-friendly tactics that increase hit rate: short lengths, multiple candidates, and controlled variation.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=ai-music-generator-vs-agent&title=AI%20music%20generator%20vs%20AI%20agent%3A%20why%20results%20can%20feel%20random" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Generate beats online free: the producer workflow</title>
@@ -320,6 +524,7 @@
       <guid>https://www.producerhit.com/blog/generate-beats-online-free-guide</guid>
       <pubDate>Thu, 14 May 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[How to generate beats online for free and actually end up with a usable instrumental: short clips, pick the best take, then export and iterate.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=generate-beats-online-free-guide&title=Generate%20beats%20online%20free%3A%20the%20producer%20workflow" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>Type Beat Generator AI: prompt examples for trap, drill, R&amp;B, afrobeats</title>
@@ -327,6 +532,7 @@
       <guid>https://www.producerhit.com/blog/type-beat-generator-ai-prompt-examples</guid>
       <pubDate>Thu, 14 May 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[Copy/paste prompt examples for a type beat generator AI, plus the key ingredients that keep outputs clean and consistent.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=type-beat-generator-ai-prompt-examples&title=Type%20Beat%20Generator%20AI%3A%20prompt%20examples%20for%20trap%2C%20drill%2C%20R%26B%2C%20afrobeats" type="image/svg+xml" length="0"/>
     </item>
     <item>
       <title>AI Beat Generator: How to get better results (without wasting credits)</title>
@@ -334,6 +540,7 @@
       <guid>https://www.producerhit.com/blog/ai-beat-generator-better-results</guid>
       <pubDate>Thu, 14 May 2026 12:00:00 GMT</pubDate>
       <description><![CDATA[A practical workflow for getting higher-quality beats from an AI beat generator: short generations, two versions, seed variations, and prompt structure.]]></description>
+      <enclosure url="https://www.producerhit.com/api/og-blog?slug=ai-beat-generator-better-results&title=AI%20Beat%20Generator%3A%20How%20to%20get%20better%20results%20(without%20wasting%20credits)" type="image/svg+xml" length="0"/>
     </item>
   </channel>
 </rss>

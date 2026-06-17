@@ -1,0 +1,101 @@
+/* Newsletter — bouton & champ adaptés au skin actif */
+
+.pk-email-capture__input {
+  min-width: 0;
+  flex: 1;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.4);
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  color: #fff;
+  transition: border-color 0.15s ease;
+}
+
+.pk-email-capture__input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.pk-email-capture__input:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--prism-violet, #9d7cff) 55%, transparent);
+}
+
+.pk-email-capture__btn {
+  border-radius: 0.75rem;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--prism-violet, #9d7cff) 88%, #5b21b6) 0%,
+    color-mix(in srgb, var(--prism-cyan, #67c3ff) 72%, #7c3aed) 52%,
+    color-mix(in srgb, var(--prism-violet, #9d7cff) 80%, #d946ef) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 6px 20px color-mix(in srgb, var(--prism-violet, #9d7cff) 22%, transparent);
+  transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+.pk-email-capture__btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.pk-email-capture__btn:disabled {
+  opacity: 0.6;
+}
+
+/* Warm Glass */
+html.pk-warm-glass-active .pk-email-capture__btn,
+.pk-warm-glass-stage .pk-email-capture__btn {
+  color: #fffaf4;
+  background: var(--warm-accent-gradient-fill, linear-gradient(90deg, #f5d040 0%, #e87040 50%, #dc5070 100%));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 6px 20px var(--warm-accent-glow, rgba(240, 192, 64, 0.28));
+}
+
+html.pk-warm-glass-active .pk-email-capture__input:focus,
+.pk-warm-glass-stage .pk-email-capture__input:focus {
+  border-color: color-mix(in srgb, var(--warm-accent-gold, #f0c848) 48%, transparent);
+}
+
+/* Cloud — suit le mood (Air / Terre / Feu / Eau) */
+html.pk-cloud-active .pk-email-capture__btn,
+.pk-cloud-stage .pk-email-capture__btn {
+  color: #050508;
+  background: var(--cloud-btn-gradient, linear-gradient(135deg, var(--cloud-accent), var(--cloud-accent)));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 6px 18px var(--cloud-accent-glow, rgba(120, 160, 255, 0.22));
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+html.pk-cloud-active .pk-email-capture__input,
+.pk-cloud-stage .pk-email-capture__input {
+  border-color: var(--cloud-glass-border, rgba(255, 255, 255, 0.34));
+  background: color-mix(in srgb, var(--cloud-field-bg, rgba(255, 255, 255, 0.2)) 78%, transparent);
+  color: var(--cloud-text, #f8fcff);
+}
+
+html.pk-cloud-active .pk-email-capture__input::placeholder,
+.pk-cloud-stage .pk-email-capture__input::placeholder {
+  color: var(--cloud-text-muted, rgba(32, 28, 40, 0.5));
+}
+
+html.pk-cloud-active .pk-email-capture__input:focus,
+.pk-cloud-stage .pk-email-capture__input:focus {
+  border-color: color-mix(in srgb, var(--cloud-accent) 42%, transparent);
+}
+
+html.pk-cloud-active .pk-email-capture h3,
+.pk-cloud-stage .pk-email-capture h3 {
+  color: var(--cloud-text, #f8fcff);
+}
+
+html.pk-cloud-active .pk-email-capture p,
+.pk-cloud-stage .pk-email-capture p {
+  color: var(--cloud-text-muted, rgba(32, 28, 40, 0.62));
+}

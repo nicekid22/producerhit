@@ -1,31 +1,5 @@
 /* Dashboard — champs texte idée + paroles (alignés, mic intégré) */
 
-.pk-idea-prompt-hero {
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-}
-
-.pk-idea-prompt-hero__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  min-height: 2rem;
-}
-
-.pk-idea-prompt-hero__hint {
-  margin: 0;
-  flex: 1;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 12px;
-  line-height: 1.2;
-  color: color-mix(in srgb, var(--pk-text, #fff) 58%, transparent);
-}
-
 .pk-dashboard-text-field-wrap,
 .pk-dashboard-text-field-wrap .pk-speech-field,
 .pk-idea-prompt-field-wrap,
@@ -33,17 +7,31 @@
   margin-top: 0 !important;
 }
 
+.pk-dashboard-text-field,
+.pk-idea-prompt-field .pk-dashboard-text-field {
+  position: relative;
+}
+
+.pk-idea-prompt-tools {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 2;
+  pointer-events: auto;
+}
+
 .pk-dashboard-text-field .pk-speech-field__shell--mic-inside,
 .pk-idea-prompt-field .pk-speech-field__shell--mic-inside {
   position: relative;
   display: block;
   gap: 0;
+  overflow: visible;
 }
 
 .pk-dashboard-text-field__control,
 .pk-idea-prompt-control {
   min-height: 5.5rem !important;
-  padding: 0.7rem 3rem 0.7rem 0.85rem !important;
+  padding: 0.7rem 3rem 2.65rem 0.85rem !important;
   resize: none;
   line-height: 1.5 !important;
 }
@@ -51,20 +39,37 @@
 .pk-dashboard-text-field .pk-speech-field__mic--inside,
 .pk-idea-prompt-field .pk-speech-field__mic--inside {
   position: absolute;
-  right: 0.45rem;
-  bottom: 0.45rem;
-  width: 2.15rem;
-  height: 2.15rem;
+  right: 0.55rem;
+  bottom: 0.55rem;
+  width: 2rem;
+  height: 2rem;
   margin: 0;
+  border-color: color-mix(in srgb, var(--pk-accent, #9d7cff) 32%, rgba(255, 255, 255, 0.14));
+  background: color-mix(in srgb, var(--pk-accent, #9d7cff) 12%, rgba(255, 255, 255, 0.07));
+  color: color-mix(in srgb, var(--pk-accent, #9d7cff) 58%, rgba(255, 255, 255, 0.88));
 }
 
-html.pk-warm-glass-active .pk-idea-prompt-hero__hint {
-  color: rgba(255, 248, 240, 0.68) !important;
+.pk-dashboard-text-field .pk-speech-field__mic--inside:hover:not(:disabled),
+.pk-idea-prompt-field .pk-speech-field__mic--inside:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--pk-accent, #9d7cff) 48%, transparent);
+  background: color-mix(in srgb, var(--pk-accent, #9d7cff) 20%, rgba(255, 255, 255, 0.08));
+  color: #fff;
 }
 
-html.pk-cloud-active .pk-idea-prompt-hero__hint,
-.pk-cloud-stage .pk-idea-prompt-hero__hint {
-  color: var(--cloud-text-muted, rgba(32, 28, 40, 0.58)) !important;
+html.pk-warm-glass-active .pk-dashboard-text-field .pk-speech-field__mic--inside,
+html.pk-warm-glass-active .pk-idea-prompt-field .pk-speech-field__mic--inside {
+  border-color: color-mix(in srgb, #ff9a5c 38%, rgba(255, 255, 255, 0.12));
+  background: color-mix(in srgb, #ff9a5c 14%, rgba(255, 255, 255, 0.06));
+  color: color-mix(in srgb, #ffb380 72%, rgba(255, 255, 255, 0.9));
+}
+
+html.pk-cloud-active .pk-cloud-stage .pk-dashboard-text-field .pk-speech-field__mic--inside,
+html.pk-cloud-active .pk-cloud-stage .pk-idea-prompt-field .pk-speech-field__mic--inside,
+html.pk-cloud-active .pk-dashboard-text-field .pk-speech-field__mic--inside,
+html.pk-cloud-active .pk-idea-prompt-field .pk-speech-field__mic--inside {
+  border-color: color-mix(in srgb, var(--cloud-accent) 40%, rgba(0, 0, 0, 0.1));
+  background: color-mix(in srgb, var(--cloud-accent) 14%, rgba(255, 255, 255, 0.55));
+  color: color-mix(in srgb, var(--cloud-accent) 75%, #2d3a2d);
 }
 
 @media (min-width: 768px) {

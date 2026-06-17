@@ -1,21 +1,17 @@
 import toast from "react-hot-toast";
 import { getAttribution } from "@/lib/attribution";
+import { PRODUCERHIT_ORIGIN } from "@/lib/growthLinks";
 import { REFERRAL_REFEREE_BONUS } from "@/lib/referralConfig";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase, trackClientEvent } from "@/lib/supabaseClient";
 import { useAuthStore } from "@/stores/authStore";
 import { useLootRevealStore } from "@/stores/lootRevealStore";
 
 import type { AppLocale } from "@/i18n/config";
 const CLAIMED_KEY = "producerhit_referral_claimed_v1";
 
-function appOrigin(): string {
-  if (typeof window !== "undefined" && window.location.origin) return window.location.origin;
-  return "https://www.producerhit.com";
-}
-
 export function buildReferralInviteUrl(referralCode: string): string {
   const code = referralCode.trim();
-  const url = new URL("/auth", appOrigin());
+  const url = new URL("/auth", PRODUCERHIT_ORIGIN);
   url.searchParams.set("utm_source", "referral");
   url.searchParams.set("utm_medium", "referral");
   url.searchParams.set("utm_campaign", "invite");
@@ -70,6 +66,7 @@ export async function claimReferralIfPending(locale: AppLocale = "en"): Promise<
     }
 
     const bonus = typeof result.referee_bonus === "number" ? result.referee_bonus : REFERRAL_REFEREE_BONUS;
+    trackClientEvent("referral_claimed", { referee_bonus: bonus, ref_code: ref.slice(0, 8) });
     useLootRevealStore.getState().showLoot({ kind: "referral", credits: bonus, referralRole: "referee" });
     void useAuthStore.getState().refreshProfile();
 

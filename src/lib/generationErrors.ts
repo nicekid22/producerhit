@@ -1,5 +1,5 @@
 import type { AppLocale } from "@/i18n/config";
-/** Messages utilisateur pour erreurs de génération (ACE / Edge / réseau). */
+import { normalizePlanId } from "@/lib/planEntitlements";
 
 export type GenerationErrorFormatOptions = {
   plan?: string | null;
@@ -136,19 +136,23 @@ export function generationRetryDelayMs(raw: string, attemptIndex: number): numbe
 
 const PRIORITY_UPSELL_SESSION_KEY = "producerhit_priority_upsell_gen_fail_v1";
 
-/** Une fois par session — upsell priorité après échec « réseau chargé » (plan free). */
+function priorityUpsellStorageKey(plan: string | null | undefined): string {
+  return `${PRIORITY_UPSELL_SESSION_KEY}_${normalizePlanId(plan ?? "free")}`;
+}
+
+/** Une fois par session et par plan — upsell priorité après échec « réseau chargé ». */
 export function shouldPromptPriorityUpsellAfterCapacityError(plan: string | null | undefined): boolean {
-  if (plan && plan !== "free") return false;
+  if (normalizePlanId(plan ?? "free") === "plus") return false;
   try {
-    return !window.sessionStorage.getItem(PRIORITY_UPSELL_SESSION_KEY);
+    return !window.sessionStorage.getItem(priorityUpsellStorageKey(plan));
   } catch {
     return false;
   }
 }
 
-export function markPriorityUpsellPrompted(): void {
+export function markPriorityUpsellPrompted(plan?: string | null): void {
   try {
-    window.sessionStorage.setItem(PRIORITY_UPSELL_SESSION_KEY, "1");
+    window.sessionStorage.setItem(priorityUpsellStorageKey(plan), "1");
   } catch {
     void 0;
   }

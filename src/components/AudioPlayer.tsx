@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { ChevronDown, ChevronUp, Download, Pause, Play, SkipBack, SkipForward, Volume2 } from "lucide-react";
 import { useCoarsePointer } from "@/hooks/useCoarsePointer";
+import { useIsMobileViewport } from "@/hooks/useIsMobileViewport";
 import { usePlayerStore } from "@/stores/playerStore";
 import { Button } from "@/components/ui/Button";
 import { PlayerCoverThumb } from "@/components/player/PlayerCoverThumb";
@@ -61,6 +62,7 @@ export function AudioPlayer() {
   const toggleDockCollapsed = usePlayerStore((s) => s.toggleDockCollapsed);
   const visualTheme = useVisualThemeStore((s) => s.theme);
   const cloudAccent = useCloudAccentStore((s) => s.accent);
+  const isMobile = useIsMobileViewport();
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTimeSec, setCurrentTimeSec] = useState(0);
@@ -751,11 +753,24 @@ export function AudioPlayer() {
     };
   }, [teardownAudioContext]);
 
+  useEffect(() => {
+    if (!currentBeat) return;
+    window.dispatchEvent(new Event("resize"));
+  }, [currentBeat?.id, dockCollapsed, isMobile]);
+
+  const miniLayout = isMobile || dockCollapsed;
+
   return (
     <>
       {currentBeat ? (
     <div
-      className={`pk-prism-player pk-prism-player--dock pk-prism-player--dock-modern fixed left-0 right-0 md:bottom-[max(var(--pk-dock-inset-bottom),env(safe-area-inset-bottom,0px))] md:z-50${visualTheme === "warm-glass" ? " pk-warm-glass-player" : ""}${visualTheme === "cloud" ? " pk-cloud-player" : ""}${dockCollapsed ? " pk-prism-player--collapsed" : ""}`}
+      className={cn(
+        "pk-prism-player pk-prism-player--dock pk-prism-player--dock-modern fixed left-0 right-0 z-50 md:bottom-[max(var(--pk-dock-inset-bottom),env(safe-area-inset-bottom,0px))] md:z-50",
+        isMobile && "pk-prism-player--mobile pk-prism-player--mobile-mini",
+        visualTheme === "warm-glass" && "pk-warm-glass-player",
+        visualTheme === "cloud" && "pk-cloud-player",
+        miniLayout && "pk-prism-player--collapsed",
+      )}
       aria-busy={isLoading}
     >
       <div className="mx-auto flex max-w-[1440px] items-center gap-2 px-3 py-2 sm:gap-4 sm:px-4 sm:py-3">
@@ -782,122 +797,134 @@ export function AudioPlayer() {
           </div>
         </div>
 
-        {dockCollapsed ? (
-          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+        {miniLayout ? (
+          <div className="pk-prism-player__mini-controls flex shrink-0 items-center gap-1.5 sm:gap-2">
             <button
               type="button"
               onClick={() => void togglePlay()}
-              className={`pk-prism-player-btn pk-prism-player-btn--primary inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl sm:h-10 sm:w-10${isPlaying ? " pk-prism-player-btn--playing" : ""}`}
+              className={cn(
+                "pk-prism-player-btn pk-prism-player-btn--primary inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl sm:h-10 sm:w-10",
+                isPlaying && "pk-prism-player-btn--playing",
+              )}
               aria-label={isPlaying ? "Pause" : "Play"}
             >
               {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
             </button>
-            <button
-              type="button"
-              onClick={toggleDockCollapsed}
-              className="pk-prism-player-btn inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl sm:h-9 sm:w-9"
-              aria-label="Expand player"
-              title="Expand"
-            >
-              <ChevronUp className="h-4 w-4" />
-            </button>
+            {!isMobile ? (
+              <button
+                type="button"
+                onClick={toggleDockCollapsed}
+                className="pk-prism-player-btn inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl sm:h-9 sm:w-9"
+                aria-label="Expand player"
+                title="Expand"
+              >
+                <ChevronUp className="h-4 w-4" />
+              </button>
+            ) : null}
           </div>
         ) : null}
 
-        <div className="pk-prism-player__expanded flex min-w-0 flex-[1.2] flex-col items-center sm:flex-1">
-          <div className="flex items-center gap-1.5 sm:gap-3">
-            <button
-              type="button"
-              onClick={prev}
-              disabled={!canPrev}
-              className="pk-prism-player-btn hidden h-9 w-9 items-center justify-center rounded-xl disabled:opacity-40 sm:inline-flex"
-              aria-label="Previous"
-            >
-              <SkipBack className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => void togglePlay()}
-              className={`pk-prism-player-btn pk-prism-player-btn--primary inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl${isPlaying ? " pk-prism-player-btn--playing" : ""}`}
-              aria-label={isPlaying ? "Pause" : "Play"}
-            >
-              {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-            </button>
-            <button
-              type="button"
-              onClick={next}
-              disabled={!canNext}
-              className="pk-prism-player-btn hidden h-9 w-9 items-center justify-center rounded-xl disabled:opacity-40 sm:inline-flex"
-              aria-label="Next"
-            >
-              <SkipForward className="h-4 w-4" />
-            </button>
-            {hasError ? (
-              <Button variant="secondary" size="sm" onClick={() => void retryPlayback()} aria-label="Retry">
-                Retry
-              </Button>
-            ) : null}
-            <div className="hidden text-xs text-white/50 sm:block">
-              {formatTime(currentTimeSec)} / {durationSec > 0 ? formatTime(durationSec) : "--:--"}
-              {queueLen > 0 ? ` · ${queueIndex + 1}/${queueLen}` : ""}
-            </div>
-            <button
-              type="button"
-              onClick={handleDownload}
-              className="pk-prism-player-btn ml-1 hidden h-8 w-8 shrink-0 items-center justify-center rounded-xl sm:ml-2 sm:inline-flex sm:h-9 sm:w-9"
-              aria-label="Download"
-            >
-              <Download className="h-4 w-4" />
-            </button>
-          </div>
-          <canvas ref={vizCanvasRef} className="mt-1.5 hidden h-7 w-full max-w-xl opacity-90 sm:mt-2 sm:block" aria-hidden />
-          <div
-            className={`relative mt-2 flex h-3 w-full max-w-xl items-center group ${durationSec > 0 ? "cursor-pointer" : "cursor-default"}`}
-            onClick={durationSec > 0 ? handleSeek : undefined}
-          >
-            <div className="pk-prism-progress-track relative h-[3px] w-full overflow-hidden rounded-full bg-white/10">
-              {durationSec > 0 ? (
-                <div
-                  className="pk-prism-progress-fill h-full bg-[linear-gradient(90deg,var(--prism-chrome),var(--prism-cyan),var(--prism-violet))] transition-none"
-                  style={{ width: `${progress * 100}%` }}
-                />
-              ) : isLoading ? (
-                <div className="absolute inset-0">
-                  <div
-                    className="pk-prism-player-shimmer absolute left-0 top-0 h-full w-[42%] bg-gradient-to-r from-transparent via-[rgba(157,124,255,0.55)] to-transparent"
-                    style={{ animation: "pkShimmer 1.1s ease-in-out infinite" }}
-                  />
+        {!miniLayout ? (
+          <>
+            <div className="pk-prism-player__expanded flex min-w-0 flex-[1.2] flex-col items-center sm:flex-1">
+              <div className="flex items-center gap-1.5 sm:gap-3">
+                <button
+                  type="button"
+                  onClick={prev}
+                  disabled={!canPrev}
+                  className="pk-prism-player-btn hidden h-9 w-9 items-center justify-center rounded-xl disabled:opacity-40 sm:inline-flex"
+                  aria-label="Previous"
+                >
+                  <SkipBack className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void togglePlay()}
+                  className={cn(
+                    "pk-prism-player-btn pk-prism-player-btn--primary inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+                    isPlaying && "pk-prism-player-btn--playing",
+                  )}
+                  aria-label={isPlaying ? "Pause" : "Play"}
+                >
+                  {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={next}
+                  disabled={!canNext}
+                  className="pk-prism-player-btn hidden h-9 w-9 items-center justify-center rounded-xl disabled:opacity-40 sm:inline-flex"
+                  aria-label="Next"
+                >
+                  <SkipForward className="h-4 w-4" />
+                </button>
+                {hasError ? (
+                  <Button variant="secondary" size="sm" onClick={() => void retryPlayback()} aria-label="Retry">
+                    Retry
+                  </Button>
+                ) : null}
+                <div className="hidden text-xs text-white/50 sm:block">
+                  {formatTime(currentTimeSec)} / {durationSec > 0 ? formatTime(durationSec) : "--:--"}
+                  {queueLen > 0 ? ` · ${queueIndex + 1}/${queueLen}` : ""}
                 </div>
-              ) : (
-                <div className="h-full w-full bg-transparent" />
-              )}
+                <button
+                  type="button"
+                  onClick={handleDownload}
+                  className="pk-prism-player-btn ml-1 hidden h-8 w-8 shrink-0 items-center justify-center rounded-xl sm:ml-2 sm:inline-flex sm:h-9 sm:w-9"
+                  aria-label="Download"
+                >
+                  <Download className="h-4 w-4" />
+                </button>
+              </div>
+              <canvas ref={vizCanvasRef} className="mt-1.5 hidden h-7 w-full max-w-xl opacity-90 sm:mt-2 sm:block" aria-hidden />
+              <div
+                className={`relative mt-2 flex h-3 w-full max-w-xl items-center group ${durationSec > 0 ? "cursor-pointer" : "cursor-default"}`}
+                onClick={durationSec > 0 ? handleSeek : undefined}
+              >
+                <div className="pk-prism-progress-track relative h-[3px] w-full overflow-hidden rounded-full bg-white/10">
+                  {durationSec > 0 ? (
+                    <div
+                      className="pk-prism-progress-fill h-full bg-[linear-gradient(90deg,var(--prism-chrome),var(--prism-cyan),var(--prism-violet))] transition-none"
+                      style={{ width: `${progress * 100}%` }}
+                    />
+                  ) : isLoading ? (
+                    <div className="absolute inset-0">
+                      <div
+                        className="pk-prism-player-shimmer absolute left-0 top-0 h-full w-[42%] bg-gradient-to-r from-transparent via-[rgba(157,124,255,0.55)] to-transparent"
+                        style={{ animation: "pkShimmer 1.1s ease-in-out infinite" }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-full w-full bg-transparent" />
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        <div className="pk-prism-player__expanded hidden items-center gap-3 sm:flex">
-          <div className="flex items-center gap-2 text-white/50">
-            <Volume2 className="h-4 w-4" />
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.01}
-              value={volume}
-              onChange={handleVolumeChange}
-              className="h-1 w-24 cursor-pointer accent-[var(--prism-cyan)] lg:w-28"
-            />
-          </div>
-          <button
-            type="button"
-            onClick={toggleDockCollapsed}
-            className="pk-prism-player-btn inline-flex h-9 w-9 items-center justify-center rounded-xl"
-            aria-label="Minimize player"
-            title="Minimize"
-          >
-            <ChevronDown className="h-4 w-4" />
-          </button>
-        </div>
+            <div className="pk-prism-player__expanded hidden items-center gap-3 sm:flex">
+              <div className="flex items-center gap-2 text-white/50">
+                <Volume2 className="h-4 w-4" />
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  value={volume}
+                  onChange={handleVolumeChange}
+                  className="h-1 w-24 cursor-pointer accent-[var(--prism-cyan)] lg:w-28"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={toggleDockCollapsed}
+                className="pk-prism-player-btn inline-flex h-9 w-9 items-center justify-center rounded-xl"
+                aria-label="Minimize player"
+                title="Minimize"
+              >
+                <ChevronDown className="h-4 w-4" />
+              </button>
+            </div>
+          </>
+        ) : null}
       </div>
     </div>
       ) : null}

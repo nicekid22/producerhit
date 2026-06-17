@@ -1,5 +1,8 @@
 const ORIGIN = "https://www.producerhit.com";
 
+/** Origine publique pour liens partagés (referral, social, etc.) — jamais localhost. */
+export const PRODUCERHIT_ORIGIN = ORIGIN;
+
 export type GrowthChannel =
   | "organic"
   | "twitter"

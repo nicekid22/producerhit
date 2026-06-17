@@ -59,7 +59,7 @@
 @media (min-width: 640px) {
   .pk-workflow-rail__track {
     flex-direction: row;
-    align-items: center;
+    align-items: stretch;
     justify-content: center;
     gap: 0;
     margin-top: 1.5rem;
@@ -69,7 +69,7 @@
 .pk-workflow-rail__node {
   display: flex;
   flex: 1;
-  align-items: center;
+  align-items: stretch;
   min-width: 0;
 }
 
@@ -83,9 +83,11 @@
 .pk-workflow-rail__card {
   flex: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.65rem;
   min-width: 0;
+  min-height: 4.35rem;
+  height: 100%;
   padding: 0.75rem 0.85rem;
   border-radius: 1rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -112,7 +114,12 @@
 }
 
 .pk-workflow-rail__copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
   min-width: 0;
+  min-height: 2.75rem;
   text-align: left;
 }
 
@@ -121,14 +128,17 @@
   font-size: 0.875rem;
   font-weight: 600;
   letter-spacing: -0.02em;
+  line-height: 1.2;
   color: #fff;
 }
 
 .pk-workflow-rail__step-hint {
-  margin: 0.15rem 0 0;
+  margin: 0.2rem 0 0;
   font-size: 0.6875rem;
   font-weight: 500;
   line-height: 1.35;
+  min-height: calc(2 * 1.35 * 0.6875rem);
+  white-space: pre-line;
   color: rgba(255, 255, 255, 0.48);
 }
 

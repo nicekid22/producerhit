@@ -26,6 +26,7 @@ type AuthState = {
   refreshProfile: () => Promise<UserProfileRow | null>;
   signInWithPassword: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, redirectPath?: string) => Promise<{ needsEmailConfirm: boolean }>;
+  resendSignupConfirmation: (email: string, redirectPath?: string) => Promise<void>;
   signInWithGoogle: (emailHint?: string, nextPath?: string) => Promise<void>;
   linkGoogle: (nextPath?: string) => Promise<void>;
   setPassword: (password: string) => Promise<void>;
@@ -273,6 +274,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       scheduleProfileSync(data.session);
     }
     return { needsEmailConfirm };
+  },
+  resendSignupConfirmation: async (email, redirectPath = "/dashboard") => {
+    set({ lastError: null });
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: email.trim(),
+      options: {
+        emailRedirectTo: authCallbackUrl(redirectPath),
+      },
+    });
+    if (error) {
+      set({ lastError: error.message });
+      throw error;
+    }
   },
   signInWithGoogle: async (emailHint, nextPath = "/dashboard") => {
     set({ lastError: null });

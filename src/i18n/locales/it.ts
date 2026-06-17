@@ -1,6 +1,6 @@
-import type { MessageCatalog } from "../types";
+import type { BaseMessageCatalog } from "../types";
 
-export const it: MessageCatalog = {
+export const it: BaseMessageCatalog = {
   nav: {
     howItWorks: "Come funziona",
     features: "Funzionalità",

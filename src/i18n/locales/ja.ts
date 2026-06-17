@@ -1,6 +1,6 @@
-import type { MessageCatalog } from "../types";
+import type { BaseMessageCatalog } from "../types";
 
-export const ja: MessageCatalog = {
+export const ja: BaseMessageCatalog = {
   nav: {
     howItWorks: "使い方",
     features: "機能",

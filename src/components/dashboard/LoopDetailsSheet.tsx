@@ -1,7 +1,6 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
-import { Button } from "@/components/ui/Button";
 import { usePlayerStore } from "@/stores/playerStore";
 import { cn } from "@/lib/utils";
 
@@ -22,7 +21,6 @@ export function LoopDetailsSheet({
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const hasPlayer = usePlayerStore((s) => !!s.current);
-  const dockBottom = hasPlayer ? "var(--pk-mobile-dock-player)" : "var(--pk-mobile-dock)";
 
   useEffect(() => {
     if (!open) return;
@@ -42,45 +40,51 @@ export function LoopDetailsSheet({
   if (!open || typeof document === "undefined") return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[125] md:hidden" role="dialog" aria-modal="true" aria-label={title}>
-      <button type="button" className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} aria-label={closeLabel} />
+    <div
+      className={cn(
+        "pk-loop-details-sheet-root fixed inset-0 z-[125] flex items-end justify-center md:hidden",
+        hasPlayer ? "pk-loop-details-sheet-root--with-player" : "pk-loop-details-sheet-root--dock",
+      )}
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+    >
+      <button
+        type="button"
+        className="pk-loop-details-sheet-backdrop absolute inset-0"
+        onClick={onClose}
+        aria-label={closeLabel}
+      />
       <div
         className={cn(
-          "pk-loop-details-sheet absolute inset-x-0 flex flex-col overflow-hidden rounded-t-[1.25rem] border border-white/10 bg-[#050508]",
-          "shadow-[0_-24px_80px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.06)]",
+          "pk-loop-details-sheet relative flex w-full flex-col overflow-hidden rounded-pk border border-pk-border bg-pk-panel",
+          hasPlayer && "pk-loop-details-sheet--with-player",
         )}
-        style={{
-          top: "max(2.5rem, 6vh)",
-          bottom: dockBottom,
-        }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="pk-loop-details-sheet-header relative flex shrink-0 items-center border-b border-white/10 bg-[rgba(5,5,8,0.98)] px-4 pb-3 pt-2 backdrop-blur-md">
-          <div className="flex w-full flex-col items-center gap-1.5 pr-11">
-            <div className="h-1 w-10 rounded-full bg-white/25" aria-hidden />
-            {title ? (
-              <div className="w-full min-w-0 text-center">
-                <div className="truncate text-sm font-semibold text-pk-text">{title}</div>
-                {subtitle ? <div className="mt-0.5 truncate text-xs text-pk-muted">{subtitle}</div> : null}
-              </div>
-            ) : null}
-          </div>
-          <Button
-            variant="secondary"
-            size="sm"
+        <div className="relative z-[1] flex shrink-0 items-center justify-end px-3 pb-1 pt-2.5">
+          <div className="pk-loop-details-sheet-grabber pointer-events-none absolute left-1/2 top-2.5 h-[5px] w-9 -translate-x-1/2 rounded-full" aria-hidden />
+          <button
+            type="button"
             onClick={onClose}
             aria-label={closeLabel}
-            className="absolute right-3 top-2.5 h-10 w-10 shrink-0 rounded-xl p-0"
+            className="flex h-7 w-7 items-center justify-center rounded-pk text-pk-muted transition-colors hover:bg-white/5 hover:text-pk-text"
           >
-            <X className="h-4 w-4" />
-          </Button>
+            <X className="h-3.5 w-3.5" />
+          </button>
         </div>
         <div
           ref={scrollRef}
-          className="pk-loop-details-sheet-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(2rem,env(safe-area-inset-bottom,0px))] pt-2 [-webkit-overflow-scrolling:touch] sm:px-5"
+          className="pk-loop-details-sheet-scroll relative z-[1] min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4 [-webkit-overflow-scrolling:touch]"
         >
           {children}
         </div>
+        {(title || subtitle) && (
+          <span className="sr-only">
+            {title}
+            {subtitle ? ` — ${subtitle}` : ""}
+          </span>
+        )}
       </div>
     </div>,
     document.body,
@@ -105,9 +109,14 @@ export function LoopDetailsSheetHeader({
         <div className="truncate text-sm font-semibold text-pk-text">{title}</div>
         {subtitle ? <div className="mt-1 text-xs text-pk-muted">{subtitle}</div> : null}
       </div>
-      <Button variant="secondary" size="sm" onClick={onClose} aria-label={closeLabel}>
-        <X className="h-4 w-4" />
-      </Button>
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label={closeLabel}
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-pk text-pk-muted transition-colors hover:bg-white/5 hover:text-pk-text"
+      >
+        <X className="h-[1.125rem] w-[1.125rem]" strokeWidth={2.25} />
+      </button>
     </div>
   );
 }

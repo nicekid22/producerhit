@@ -613,14 +613,14 @@ export function landingGeneratorBottomCopy(locale: Locale) {
     modes: isFr ? ["Song", "Type Beat", "Remix"] : ["Song", "Type Beat", "Remix"],
     steps: isFr
       ? [
-          { title: "Décris", hint: "Style, mood, paroles" },
-          { title: "Itère", hint: "Seed & variations" },
-          { title: "Exporte", hint: "MP3 · WAV · TikTok" },
+          { title: "Décris", hint: "Style, mood\net paroles" },
+          { title: "Génère", hint: "Plusieurs versions\nau choix" },
+          { title: "Exporte", hint: "MP3 · WAV\nTikTok & plus" },
         ]
       : [
-          { title: "Describe", hint: "Style, mood, lyrics" },
-          { title: "Iterate", hint: "Seed & variations" },
-          { title: "Export", hint: "MP3 · WAV · TikTok" },
+          { title: "Describe", hint: "Style, mood\n& lyrics" },
+          { title: "Generate", hint: "Multiple takes\nin one click" },
+          { title: "Export", hint: "MP3 · WAV\nTikTok & more" },
         ],
     ctaPrimary: isFr ? "Créer mon premier morceau →" : "Create my first track →",
     ctaStudio: isFr ? "Ouvrir mon studio →" : "Open my studio →",

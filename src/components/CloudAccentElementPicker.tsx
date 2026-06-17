@@ -43,9 +43,14 @@ export function CloudAccentElementPicker({ variant = "settings", className, onAc
   };
 
   if (variant === "sidebar") {
+    const cloudActive = theme === "cloud";
     return (
       <div
-        className={cn("pk-cloud-accent-elements pk-cloud-accent-elements--sidebar flex flex-col gap-1", className)}
+        className={cn(
+          "pk-cloud-accent-elements pk-cloud-accent-elements--sidebar flex flex-col gap-1",
+          !cloudActive && "pk-cloud-accent-elements--dormant",
+          className,
+        )}
         role="group"
         aria-label={isFr ? "Mood Cloud — 4 éléments" : "Cloud mood — 4 elements"}
       >
@@ -54,7 +59,7 @@ export function CloudAccentElementPicker({ variant = "settings", className, onAc
             key={opt.id}
             opt={opt}
             isFr={isFr}
-            active={accent === opt.id}
+            active={cloudActive && accent === opt.id}
             size="nav"
             onClick={() => onPick(opt.id)}
           />
@@ -75,7 +80,7 @@ export function CloudAccentElementPicker({ variant = "settings", className, onAc
             key={opt.id}
             opt={opt}
             isFr={isFr}
-            active={accent === opt.id}
+            active={theme === "cloud" && accent === opt.id}
             size="compact"
             onClick={() => onPick(opt.id)}
           />

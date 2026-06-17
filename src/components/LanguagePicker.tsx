@@ -172,6 +172,8 @@ export function LanguagePicker({ variant = "nav", className = "", onChange }: Pr
         className={cn(
           "pk-language-btn",
           `pk-language-btn--${variant}`,
+          (variant === "nav" || variant === "icon") && "pk-header-chrome__pill",
+          variant === "icon" && "pk-header-chrome__pill--icon",
           theme === "warm-glass" && "pk-language-btn--warm",
           theme === "cloud" && "pk-language-btn--cloud",
           open && "pk-language-btn--open",

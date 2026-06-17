@@ -1,6 +1,6 @@
-import type { MessageCatalog } from "../types";
+import type { BaseMessageCatalog } from "../types";
 
-export const en: MessageCatalog = {
+export const en: BaseMessageCatalog = {
   nav: {
     howItWorks: "How it works",
     features: "Features",
@@ -60,7 +60,7 @@ export const en: MessageCatalog = {
   landing: {
     heroTagline: "AI studio · Songs & type beats",
     heroLead: "Type a vibe → hear a finished track in under a minute. MP3 free, WAV on Pro.",
-    heroReassurance: "10 free tracks/mo · No credit card · Cancel anytime",
+    heroReassurance: "10 free tracks/mo · No credit card · No commitment",
     heroScrollCue: "Try it now — no signup to preview",
     heroCtaPrimary: "Create my first track free",
     heroCtaDashboard: "Open my studio →",

@@ -1,0 +1,24 @@
+name: Automation report
+
+on:
+  schedule:
+    # 08:00 et 20:00 UTC — complement rapports locaux
+    - cron: "0 8,20 * * *"
+  workflow_dispatch:
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - name: Generate automation report
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          AUTOMATION_REPORT_WEBHOOK: ${{ secrets.AUTOMATION_REPORT_WEBHOOK }}
+          OPENCLAW_REPORT_WEBHOOK: ${{ secrets.OPENCLAW_REPORT_WEBHOOK }}
+        run: node scripts/automation-report.mjs

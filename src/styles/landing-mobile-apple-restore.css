@@ -1,0 +1,417 @@
+/* Restauration landing mobile Apple — état final avant régression CSS popup loop */
+
+@keyframes pkAppleGlowPulse {
+  0% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(0.92);
+  }
+  100% {
+    opacity: 0.82;
+    transform: translate(-50%, -50%) scale(1.05);
+  }
+}
+
+@keyframes pkMobileScrollHintPulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.72;
+    transform: translateY(0.2rem);
+  }
+}
+
+@media (max-width: 767px) {
+  .pk-landing--mobile-focus {
+    --pk-mobile-gap: clamp(0.85rem, 3vh, 1.35rem);
+    --pk-mobile-gutter: clamp(1.1rem, 5vw, 1.5rem);
+    --pk-mobile-gen-inset: clamp(0.5rem, 2.5vw, 0.85rem);
+    --pk-mobile-prompt-min: clamp(3.5rem, 12vh, 5rem);
+    --pk-mobile-type-size: clamp(1.28rem, 5.4vw, 1.68rem);
+    --pk-mobile-section-gap: clamp(1rem, 3.2vh, 1.45rem);
+    --pk-mobile-bridge-pull: clamp(3.5rem, 14vh, 6.25rem);
+    --pk-mobile-bridge-fade: color-mix(in srgb, var(--pk-apple-accent-from, #9d7cff) 6%, transparent);
+  }
+
+  html.pk-warm-glass-active .pk-landing--mobile-focus,
+  .pk-warm-glass-stage.pk-landing--mobile-focus {
+    --pk-mobile-bridge-fade: color-mix(in srgb, var(--warm-accent-honey, #f0c848) 8%, transparent);
+  }
+
+  html.pk-cloud-active .pk-landing--mobile-focus,
+  .pk-cloud-stage.pk-landing--mobile-focus {
+    --pk-mobile-bridge-fade: color-mix(in srgb, var(--cloud-accent, #8a9cff) 10%, transparent);
+  }
+
+  .pk-landing--mobile-focus .pk-landing-flow {
+    min-height: var(--pk-mobile-hero-h);
+    height: auto;
+    max-height: none;
+    overflow: visible;
+    padding-bottom: clamp(1.25rem, 4vh, 2rem) !important;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-flow__stack--mobile {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
+    gap: clamp(1rem, 3.5vh, 1.75rem);
+    min-height: calc(var(--pk-mobile-hero-h) - var(--pk-mobile-nav) - clamp(1.25rem, 4vh, 2rem));
+    overflow: visible;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-flow__intro--mobile {
+    flex: 0 0 auto;
+    overflow-x: hidden;
+    overflow-y: visible;
+    padding-top: clamp(0.35rem, 1.5vh, 0.65rem);
+    padding-inline: clamp(0.25rem, 1.5vw, 0.5rem);
+  }
+
+  .pk-landing--mobile-focus .pk-landing-flow__gen-zone {
+    position: relative;
+    flex: 1 1 auto;
+    justify-content: center;
+    padding-block: clamp(0.35rem, 1.5vh, 0.85rem);
+    overflow: visible;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-flow__gen-zone::before {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    left: 50%;
+    top: 48%;
+    transform: translate(-50%, -50%);
+    width: min(140%, 24rem);
+    height: clamp(12rem, 42vh, 18rem);
+    border-radius: 50%;
+    background: radial-gradient(
+      ellipse at center,
+      color-mix(in srgb, var(--prism-violet, #9d7cff) 18%, transparent) 0%,
+      transparent 72%
+    );
+    opacity: 0.65;
+    z-index: 0;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-gen {
+    position: relative;
+    z-index: 1;
+    overflow: visible;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-gen__center {
+    padding-inline: clamp(0.35rem, 2vw, var(--pk-mobile-gen-inset));
+    overflow: visible;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-gen__apple-unit {
+    position: relative;
+    width: 100%;
+    max-width: min(100%, 27rem);
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-gen__apple-glow {
+    pointer-events: none;
+    position: absolute;
+    left: 50%;
+    top: 40%;
+    z-index: 0;
+    width: min(125%, 23rem);
+    height: clamp(13rem, 44vh, 19rem);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    filter: blur(26px);
+    opacity: 0.72;
+    animation: pkAppleGlowPulse 5.5s ease-in-out infinite alternate;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-gen__mobile-stage {
+    z-index: 1;
+    max-width: 100%;
+    border-radius: clamp(1.2rem, 3.6vw, 1.5rem);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.07);
+    backdrop-filter: blur(24px) saturate(1.18);
+    -webkit-backdrop-filter: blur(24px) saturate(1.18);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.14),
+      0 2px 6px rgba(0, 0, 0, 0.06),
+      0 18px 52px rgba(0, 0, 0, 0.2),
+      0 0 72px color-mix(in srgb, var(--prism-violet, #9d7cff) 10%, transparent);
+  }
+
+  .pk-landing--mobile-focus .pk-landing-gen__mobile-stage-grain {
+    opacity: 0.08;
+    background-image: none;
+    filter: none;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-gen__mobile-stage-vignette {
+    opacity: 0.35;
+    background: radial-gradient(ellipse at center, transparent 62%, rgba(0, 0, 0, 0.08) 100%);
+  }
+
+  .pk-landing--mobile-focus .pk-landing-gen__mobile-stage::after {
+    display: none;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-gen__mobile-stage--idle {
+    animation: none;
+    transform: none;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-gen__mobile-hint,
+  .pk-landing--mobile-focus .pk-landing-gen__mobile-free {
+    display: none;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-gen__prompt-zone {
+    padding: clamp(0.75rem, 2vh, 1rem) clamp(0.85rem, 3.8vw, 1.1rem) 0.15rem;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-gen__prompt-zone textarea,
+  .pk-landing--mobile-focus .pk-landing-gen__prompt-zone .pk-speech-field__control {
+    min-height: clamp(4.25rem, 14vh, 5.75rem) !important;
+    max-height: clamp(4.75rem, 16vh, 6.25rem);
+    font-size: clamp(0.9375rem, 3.8vw, 1rem) !important;
+    line-height: 1.45 !important;
+    color: rgba(255, 252, 248, 0.94) !important;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-gen__mobile-toolbar--apple {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.6rem;
+    padding: 0.35rem clamp(0.85rem, 3.8vw, 1.1rem) clamp(0.85rem, 2.2vh, 1.1rem);
+  }
+
+  .pk-landing--mobile-focus .pk-landing-gen__mobile-segment {
+    display: flex;
+    width: 100%;
+    padding: 3px;
+    border-radius: 0.8rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.22);
+  }
+
+  .pk-landing--mobile-focus .pk-landing-gen__mobile-segment-btn {
+    flex: 1;
+    min-height: 2.35rem;
+    border: 0;
+    border-radius: 0.62rem;
+    background: transparent;
+    font-size: clamp(0.8125rem, 3.2vw, 0.875rem);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: rgba(255, 255, 255, 0.52);
+    transition:
+      background 200ms ease,
+      color 200ms ease,
+      box-shadow 200ms ease;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-gen__mobile-segment-btn--active {
+    color: rgba(255, 255, 255, 0.96);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.14),
+      0 2px 8px rgba(0, 0, 0, 0.12);
+  }
+
+  .pk-landing--mobile-focus .pk-landing-gen__mobile-advanced-link {
+    display: inline-flex;
+    align-self: flex-start;
+    align-items: center;
+    gap: 0.35rem;
+    border: 0;
+    background: transparent;
+    padding: 0.15rem 0.1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.48);
+  }
+
+  .pk-landing--mobile-focus .pk-landing-gen__cta-shell--apple {
+    width: 100%;
+    max-width: none;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-gen__cta--apple {
+    min-height: 3rem !important;
+    width: 100%;
+    border: none !important;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-gen__cta--apple .pk-landing-gen__cta-inner {
+    color: rgba(255, 255, 255, 0.98);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  }
+
+  .pk-landing--mobile-focus .pk-landing-gen__apple-unit .pk-landing-gen__reassurance--mobile {
+    flex-direction: column;
+    gap: 0.3rem;
+    max-width: 100%;
+    margin: clamp(1rem, 3vh, 1.35rem) auto 0;
+    padding-inline: clamp(0.25rem, 1.5vw, 0.5rem);
+    font-size: inherit;
+    color: inherit;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-gen__reassurance--apple .pk-landing-gen__reassurance-free {
+    font-size: clamp(0.82rem, 3.4vw, 0.92rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-gen__reassurance-foot {
+    margin: 0;
+    font-size: clamp(0.68rem, 2.8vw, 0.74rem);
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.42);
+  }
+
+  .pk-landing-section--trending-mobile {
+    padding-top: clamp(1.5rem, 5vh, 2.25rem) !important;
+    padding-bottom: clamp(1rem, 3vh, 1.5rem) !important;
+  }
+
+  .pk-landing-section--trending-mobile .pk-landing-trending-strip__create-btn {
+    display: none;
+  }
+
+  .pk-landing-section--trending-mobile .pk-landing-trending-strip__title {
+    font-size: clamp(1rem, 4.2vw, 1.15rem);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-scroll-bridge.pk-landing-section--trending-mobile {
+    position: relative;
+    margin-top: calc(-1 * var(--pk-mobile-bridge-pull));
+    padding-top: calc(var(--pk-mobile-section-gap) + var(--pk-mobile-bridge-pull) * 0.5) !important;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-scroll-bridge::before {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: var(--pk-mobile-bridge-pull);
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      var(--pk-mobile-bridge-fade) 42%,
+      color-mix(in srgb, var(--pk-mobile-bridge-fade) 180%, transparent) 100%
+    );
+  }
+
+  .pk-landing--mobile-focus .pk-landing-gen__scroll-bridge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-top: clamp(0.65rem, 2vh, 0.95rem);
+    color: var(--pk-audio-card-meta, rgba(255, 255, 255, 0.38));
+    pointer-events: none;
+    transition: opacity 420ms ease, transform 420ms ease;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-gen__scroll-bridge svg {
+    width: 1.125rem;
+    height: 1.125rem;
+    animation: pkMobileScrollHintPulse 2.4s ease-in-out infinite;
+  }
+
+  .pk-landing--mobile-focus:has(.pk-landing-trending-scroll-stage.is-scroll-revealed) .pk-landing-gen__scroll-bridge {
+    opacity: 0;
+    transform: translateY(-0.35rem);
+  }
+
+  /* Header mobile — logo + burger uniquement (header-chrome.css force display:flex) */
+  .pk-landing--mobile-focus .pk-landing-header__bar,
+  .pk-landing--mobile-focus .pk-landing-header__bar--mobile {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-width: 0;
+    overflow: visible;
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-header__brand-slot--mobile {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: calc(100% - 3.25rem);
+    overflow: hidden;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-header__brand-slot--mobile .pk-brand-logo {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .pk-landing--mobile-focus .pk-header-chrome {
+    display: none !important;
+  }
+
+  .pk-landing--mobile-focus .pk-header-chrome__mobile {
+    display: flex !important;
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-mobile-nav__trigger {
+    width: 2.5rem;
+    height: 2.5rem;
+    min-width: 2.5rem;
+    flex-shrink: 0;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-header--scrolled .pk-landing-header__brand-slot--mobile > a,
+  .pk-landing--mobile-focus .pk-landing-header--menu-open .pk-landing-header__brand-slot--mobile > a {
+    border: none;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: none;
+    padding: 0;
+    border-radius: 0;
+  }
+
+  @container pk-mobile-hero (max-height: 700px) {
+    .pk-landing-flow__stack--mobile {
+      --pk-mobile-gap: clamp(0.55rem, 2vh, 0.85rem);
+      --pk-mobile-prompt-min: clamp(3.15rem, 10vh, 4.35rem);
+    }
+  }
+
+  @container pk-mobile-hero (min-height: 820px) {
+    .pk-landing-flow__stack--mobile {
+      --pk-mobile-gap: clamp(1rem, 3.2vh, 1.5rem);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pk-landing--mobile-focus .pk-landing-gen__apple-glow {
+    animation: none;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-gen__scroll-bridge svg {
+    animation: none;
+    opacity: 0.45;
+  }
+}

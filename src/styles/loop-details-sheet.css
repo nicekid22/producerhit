@@ -1,0 +1,110 @@
+/* Popup détail mobile — layout uniquement (ne pas toucher site-texture-veil / thèmes globaux) */
+
+.pk-loop-details-sheet-root {
+  padding:
+    max(0.5rem, env(safe-area-inset-top, 0px))
+    0.625rem
+    max(calc(var(--pk-mobile-dock, 62px) + 0.5rem), calc(62px + env(safe-area-inset-bottom, 0px) + 0.5rem));
+  pointer-events: none;
+}
+
+.pk-loop-details-sheet-root--with-player {
+  padding-bottom: max(
+    calc(var(--pk-mobile-dock-player, 140px) + 0.5rem),
+    calc(var(--pk-mobile-dock, 62px) + 52px + env(safe-area-inset-bottom, 0px) + 0.5rem)
+  );
+}
+
+.pk-loop-details-sheet-root > * {
+  pointer-events: auto;
+}
+
+.pk-loop-details-sheet-backdrop {
+  background: rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: pk-loop-sheet-fade-in 0.28s ease-out;
+}
+
+.pk-loop-details-sheet {
+  max-width: 24rem;
+  max-height: min(
+    80dvh,
+    calc(100dvh - max(0.5rem, env(safe-area-inset-top, 0px)) - var(--pk-mobile-dock, 62px) - 1rem)
+  );
+  /* Coins arrondis partout — override cloud sheet top-only (spécificité > cloud-theme-polish) */
+  border-radius: 10px !important;
+  animation: pk-loop-sheet-float-up 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html.pk-cloud-active .pk-loop-details-sheet-root .pk-loop-details-sheet {
+  border-radius: 10px !important;
+}
+
+/* Une seule surface verre — annule tier focal + grain site-texture-veil */
+.pk-loop-details-sheet-root .pk-loop-details-sheet::after {
+  display: none !important;
+}
+
+.pk-loop-details-sheet-root .pk-loop-details-panel::after {
+  display: none !important;
+}
+
+.pk-loop-details-sheet--with-player {
+  max-height: min(
+    76dvh,
+    calc(100dvh - max(0.5rem, env(safe-area-inset-top, 0px)) - var(--pk-mobile-dock-player, 140px) - 1rem)
+  );
+}
+
+/* Pas de 2e couche grise sur le contenu intérieur (tier mid site-texture-veil) */
+.pk-loop-details-sheet-root .pk-loop-details-sheet .pk-loop-details-panel,
+.pk-loop-details-sheet-root .pk-loop-details-sheet .pk-loop-details-panel--compact {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.pk-loop-details-sheet-root .pk-loop-details-sheet .pk-loop-details-panel::after {
+  display: none !important;
+}
+
+.pk-loop-details-sheet-grabber {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.pk-loop-details-sheet-scroll {
+  touch-action: pan-y;
+}
+
+.pk-loop-details-panel--compact {
+  padding-bottom: 0.125rem;
+}
+
+@keyframes pk-loop-sheet-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pk-loop-sheet-float-up {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pk-loop-details-sheet,
+  .pk-loop-details-sheet-backdrop {
+    animation: none !important;
+  }
+}

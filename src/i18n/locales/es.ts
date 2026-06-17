@@ -1,6 +1,6 @@
-import type { MessageCatalog } from "../types";
+import type { BaseMessageCatalog } from "../types";
 
-export const es: MessageCatalog = {
+export const es: BaseMessageCatalog = {
   nav: {
     howItWorks: "Cómo funciona",
     features: "Funciones",
@@ -65,7 +65,7 @@ export const es: MessageCatalog = {
     heroCtaPrimary: "Probar ProducerHit",
     heroCtaDashboard: "Abrir mi estudio →",
     ctaTitle: "Tu próxima idea merece ser escuchada",
-    ctaLead: "{{free}} generaciones gratis / mes. Pasa a Pro ({{proPrice}}/mo) para WAV y uso comercial.",
+    ctaLead: "{{free}} generaciones gratis / mes. Pasa a Pro ({{proPrice}}) para WAV y uso comercial.",
     ctaButton: "Probar ProducerHit gratis →",
     modeSong: "Canción",
     modeBeat: "Type Beat",

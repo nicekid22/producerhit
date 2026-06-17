@@ -18,6 +18,8 @@ import {
 import { PricingPlanButton } from "@/components/pricing/PricingPlanButton";
 import { discordCommunityUrl } from "@/lib/discordConfig";
 import { trackClientEvent } from "@/lib/supabaseClient";
+import { readCheckoutAbandoned, clearCheckoutAbandoned } from "@/lib/checkoutRecovery";
+import { EmailCaptureSection } from "@/components/growth/EmailCaptureSection";
 import { PLAN_BILLING_CURRENCY } from "@/lib/planPricing";
 import {
   getPricingCompareRows,
@@ -119,6 +121,28 @@ export default function Pricing() {
     ? ["Paiement Stripe sécurisé", "Facturation USD", "Annulation à tout moment", "Activation instantanée"]
     : ["Secure Stripe checkout", "USD billing", "Cancel anytime", "Instant activation"];
   const pricingHero = useMemo(() => croPricingHero(locale), [locale]);
+  const abandonedCheckout = useMemo(() => readCheckoutAbandoned(), []);
+
+  useEffect(() => {
+    if (searchParams.get("checkout") !== "cancelled") return;
+    const planHint = searchParams.get("plan");
+    if (planHint === "pro" || planHint === "studio" || planHint === "plus") {
+      trackClientEvent("checkout_abandoned", { plan: planHint, source: "stripe_cancel_url" });
+    }
+  }, [searchParams]);
+
+  const resumeAbandonedCheckout = useCallback(async () => {
+    const abandoned = readCheckoutAbandoned();
+    const tier = (abandoned?.plan ?? searchParams.get("plan")) as PaidPlan | null;
+    if (tier !== "pro" && tier !== "studio" && tier !== "plus") return;
+    trackClientEvent("checkout_resume_click", { plan: tier });
+    setLoading(tier);
+    try {
+      await runCheckoutWithAuth({ plan: tier, location: "checkout_recovery", locale });
+    } finally {
+      setLoading(null);
+    }
+  }, [locale, searchParams]);
 
   return (
     <MarketingPageShell contentClassName="pk-pricing-page">
@@ -166,6 +190,39 @@ export default function Pricing() {
             ) : null}
           </div>
         </header>
+
+        {abandonedCheckout &&
+        (abandonedCheckout.plan === "pro" ||
+          abandonedCheckout.plan === "studio" ||
+          abandonedCheckout.plan === "plus") ? (
+          <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-violet-400/30 bg-violet-500/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-white">
+                {isFr ? "Tu étais à un clic du plan" : "You were one click away"}{" "}
+                {abandonedCheckout.plan.charAt(0).toUpperCase() + abandonedCheckout.plan.slice(1)}
+              </p>
+              <p className="mt-1 text-xs text-white/60">
+                {isFr ? "Reprends le paiement Stripe — activation instantanée." : "Resume Stripe checkout — instant activation."}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => void resumeAbandonedCheckout()}
+                className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500"
+              >
+                {isFr ? "Reprendre" : "Resume"}
+              </button>
+              <button
+                type="button"
+                onClick={() => clearCheckoutAbandoned()}
+                className="rounded-xl border border-white/15 px-4 py-2 text-sm text-white/70 hover:bg-white/5"
+              >
+                {isFr ? "Fermer" : "Dismiss"}
+              </button>
+            </div>
+          </div>
+        ) : null}
 
         {/* Plan cards */}
         <div className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4 xl:items-stretch">
@@ -315,6 +372,10 @@ export default function Pricing() {
               );
             })}
           </div>
+        </section>
+
+        <section className="mt-12">
+          <EmailCaptureSection locale={locale} source="pricing_page" compact />
         </section>
 
         <footer className="mt-14 border-t border-white/10 pt-8 text-sm text-white/45">

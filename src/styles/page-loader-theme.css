@@ -71,6 +71,24 @@
   pointer-events: none;
 }
 
+/* Boot shell — fond aligné au thème sauvegardé, sans flash violet */
+.pk-page-loader--boot {
+  position: fixed;
+  inset: 0;
+  z-index: 9990;
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  background: transparent;
+  animation: none;
+  opacity: 1;
+  pointer-events: none;
+}
+
+.pk-page-loader--boot .pk-page-loader__card {
+  animation: none;
+}
+
 .pk-page-loader--inline {
   min-height: min(52vh, 28rem);
   animation: none;
@@ -179,6 +197,56 @@
   background: linear-gradient(90deg, transparent, currentColor 42%, transparent);
   opacity: 0.72;
   animation: pkPageLoaderBarSlide 1.45s ease-in-out infinite;
+}
+
+/* ——— Boot neutre (défaut Prism — charcoal, sans dégradé violet) ——— */
+.pk-page-loader--boot.pk-page-loader--neutral {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.pk-page-loader--boot.pk-page-loader--neutral::before {
+  background: #121214;
+}
+
+.pk-page-loader--boot.pk-page-loader--neutral::after {
+  display: none;
+}
+
+.pk-page-loader--boot.pk-page-loader--neutral .pk-page-loader__bar {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.pk-page-loader--boot.pk-page-loader--neutral .pk-page-loader__bar-fill {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* Boot + warm/cloud : fond plat proche du thème (pas de mesh lourd) */
+.pk-page-loader--boot.pk-page-loader--warm::before {
+  background: #1a1210;
+}
+
+.pk-page-loader--boot.pk-page-loader--warm::after {
+  display: none;
+}
+
+.pk-page-loader--boot.pk-page-loader--cloud::before {
+  background: #e8d8f0;
+}
+
+.pk-page-loader--boot.pk-page-loader--cloud[data-pk-cloud-accent="green"]::before {
+  background: #dcecc8;
+}
+
+.pk-page-loader--boot.pk-page-loader--cloud[data-pk-cloud-accent="red"]::before {
+  background: #f0d8cc;
+}
+
+.pk-page-loader--boot.pk-page-loader--cloud[data-pk-cloud-accent="blue"]::before {
+  background: #d0e8f8;
+}
+
+.pk-page-loader--boot.pk-page-loader--cloud::after {
+  display: none;
 }
 
 /* ——— Prism ——— */

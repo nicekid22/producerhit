@@ -6,19 +6,31 @@ import { RouteFade } from "@/components/RouteFade";
 import { LoopsBootstrap } from "@/components/LoopsBootstrap";
 import { ThemeBootstrap } from "@/components/ThemeBootstrap";
 import { AppToaster } from "@/components/AppToaster";
-import { LootRevealModal } from "@/components/growth/LootRevealModal";
-import { GrowthUpsellHost } from "@/components/growth/GrowthUpsellHost";
-import { StripeCheckoutModal } from "@/components/billing/StripeCheckoutModal";
-import { GenerationActivityPill } from "@/components/generation/GenerationActivityPill";
 import { ReferralReferrerWatcher } from "@/components/growth/ReferralReferrerWatcher";
 import { SeoBootstrap } from "@/components/SeoBootstrap";
 import { PageLoader } from "@/components/PageLoader";
-import { AudioPlayer } from "@/components/AudioPlayer";
 import { SiteTextureVeil } from "@/components/SiteTextureVeil";
+import { RouteStylesBootstrap } from "@/components/RouteStylesBootstrap";
 import { isSampleLabEnabled } from "@/lib/sampleLab";
 import { COMPARISON_PAGE_PATHS, SEO_PAGE_PATHS } from "@/generated/marketingRoutePaths";
 import { GrowthBootstrap } from "@/components/GrowthBootstrap";
+import { GrowthPlatformBootstrap } from "@/components/growth/GrowthPlatformBootstrap";
+import { GrowthAdsBootstrap } from "@/components/growth/GrowthAdsBootstrap";
 import { PlayerDockBootstrap } from "@/components/PlayerDockBootstrap";
+
+const LootRevealModal = lazy(() =>
+  import("@/components/growth/LootRevealModal").then((m) => ({ default: m.LootRevealModal })),
+);
+const GrowthUpsellHost = lazy(() =>
+  import("@/components/growth/GrowthUpsellHost").then((m) => ({ default: m.GrowthUpsellHost })),
+);
+const StripeCheckoutModal = lazy(() =>
+  import("@/components/billing/StripeCheckoutModal").then((m) => ({ default: m.StripeCheckoutModal })),
+);
+const GenerationActivityPill = lazy(() =>
+  import("@/components/generation/GenerationActivityPill").then((m) => ({ default: m.GenerationActivityPill })),
+);
+const AudioPlayer = lazy(() => import("@/components/AudioPlayer").then((m) => ({ default: m.AudioPlayer })));
 
 const LandingPage = lazy(() => import("@/pages/Landing"));
 const HomePage = lazy(() => import("@/pages/Home"));
@@ -49,10 +61,15 @@ export default function App() {
         <ThemeBootstrap>
           <LoopsBootstrap>
             <AppToaster />
-            <LootRevealModal />
+            <Suspense fallback={null}>
+              <LootRevealModal />
+            </Suspense>
             <ReferralReferrerWatcher />
             <SeoBootstrap />
             <GrowthBootstrap />
+            <GrowthPlatformBootstrap />
+            <GrowthAdsBootstrap />
+            <RouteStylesBootstrap />
             <PlayerDockBootstrap />
             <RouteFade>
               <Suspense fallback={<PageLoader />}>
@@ -66,6 +83,8 @@ export default function App() {
                   <Route path="/loop/:id" element={<PublicLoopPage />} />
                   <Route path="/u/:username" element={<CreatorProfilePage />} />
                   <Route path="/blog" element={<BlogPage />} />
+                  <Route path="/blog/category/:categorySlug" element={<BlogPage />} />
+                  <Route path="/blog/tag/:tagSlug" element={<BlogPage />} />
                   <Route path="/blog/:slug" element={<BlogPostPage />} />
                   {SEO_PAGE_PATHS.map((path) => (
                     <Route key={path} path={path} element={<HomePage />} />
@@ -92,11 +111,19 @@ export default function App() {
                 </Routes>
               </Suspense>
             </RouteFade>
-            <AudioPlayer />
-            <GenerationActivityPill />
+            <Suspense fallback={null}>
+              <AudioPlayer />
+            </Suspense>
+            <Suspense fallback={null}>
+              <GenerationActivityPill />
+            </Suspense>
             <SiteTextureVeil />
-            <GrowthUpsellHost />
-            <StripeCheckoutModal />
+            <Suspense fallback={null}>
+              <GrowthUpsellHost />
+            </Suspense>
+            <Suspense fallback={null}>
+              <StripeCheckoutModal />
+            </Suspense>
           </LoopsBootstrap>
         </ThemeBootstrap>
       </AuthBootstrap>

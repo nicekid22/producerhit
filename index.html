@@ -21,10 +21,10 @@
     <meta name="googlebot" content="index,follow" />
     <meta name="language" content="English" />
     <meta name="author" content="ProducerHit" />
-    <meta name="theme-color" content="#0a0a0f" />
+    <meta name="theme-color" content="#121214" />
     <meta name="color-scheme" content="dark light" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="msapplication-TileColor" content="#0a0a0f" />
+    <meta name="msapplication-TileColor" content="#121214" />
     <link rel="canonical" href="https://www.producerhit.com/" />
     <link rel="alternate" href="https://www.producerhit.com/?lang=en" hreflang="en" />
     <link rel="alternate" href="https://www.producerhit.com/?lang=fr" hreflang="fr" />
@@ -32,8 +32,12 @@
     <link rel="alternate" href="https://www.producerhit.com/?lang=pt" hreflang="pt" />
     <link rel="alternate" href="https://www.producerhit.com/?lang=de" hreflang="de" />
     <link rel="alternate" href="https://www.producerhit.com/?lang=it" hreflang="it" />
+    <link rel="alternate" href="https://www.producerhit.com/?lang=nl" hreflang="nl" />
+    <link rel="alternate" href="https://www.producerhit.com/?lang=ar" hreflang="ar" />
     <link rel="alternate" href="https://www.producerhit.com/?lang=ja" hreflang="ja" />
     <link rel="alternate" href="https://www.producerhit.com/?lang=ko" hreflang="ko" />
+    <link rel="alternate" href="https://www.producerhit.com/?lang=tr" hreflang="tr" />
+    <link rel="alternate" href="https://www.producerhit.com/?lang=hi" hreflang="hi" />
     <link rel="alternate" href="https://www.producerhit.com/?lang=zh" hreflang="zh" />
     <link rel="alternate" href="https://www.producerhit.com/?lang=th" hreflang="th" />
     <link rel="alternate" href="https://www.producerhit.com/?lang=en" hreflang="x-default" />
@@ -46,6 +50,9 @@
     />
     <meta property="og:url" content="https://www.producerhit.com/" />
     <meta property="og:image" content="https://www.producerhit.com/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="ProducerHit — AI beat & song generator" />
     <meta property="og:locale" content="en_US" />
     <meta property="og:locale:alternate" content="fr_FR" />
     <meta property="og:locale:alternate" content="es_ES" />
@@ -55,7 +62,10 @@
     <meta property="og:locale:alternate" content="ja_JP" />
     <meta property="og:locale:alternate" content="ko_KR" />
     <meta property="og:locale:alternate" content="zh_CN" />
-    <meta property="og:locale:alternate" content="th_TH" />
+    <meta property="og:locale:alternate" content="nl_NL" />
+    <meta property="og:locale:alternate" content="ar_SA" />
+    <meta property="og:locale:alternate" content="tr_TR" />
+    <meta property="og:locale:alternate" content="hi_IN" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="ProducerHit — AI Beat Generator & AI Music Generator" />
     <meta
@@ -63,26 +73,83 @@
       content="Generate type beats and full songs online with ProducerHit — an AI beat generator built for producers. Fast results, variations via seeds, MP3/WAV exports."
     />
     <meta name="twitter:image" content="https://www.producerhit.com/og-image.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <!-- Polices système uniquement (index.css) — pas de requête Google Fonts sur le chemin LCP -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://www.producerhit.com/#organization",
+            "name": "ProducerHit",
+            "url": "https://www.producerhit.com/",
+            "logo": "https://www.producerhit.com/icon-512.png",
+            "sameAs": [
+              "https://www.instagram.com/producerhit_com/",
+              "https://www.tiktok.com/@producerhit"
+            ]
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://www.producerhit.com/#website",
+            "url": "https://www.producerhit.com/",
+            "name": "ProducerHit",
+            "publisher": { "@id": "https://www.producerhit.com/#organization" },
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://www.producerhit.com/community?q={search_term_string}",
+              "query-input": "required name=search_term_string"
+            }
+          },
+          {
+            "@type": "WebApplication",
+            "name": "ProducerHit",
+            "applicationCategory": "MusicApplication",
+            "operatingSystem": "Web Browser",
+            "url": "https://www.producerhit.com/",
+            "description": "AI beat generator and AI song creator for producers — type beats, remix, MP3/WAV exports.",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            }
+          }
+        ]
+      }
+    </script>
+    <style id="pk-boot-surface">
+      html,
+      body {
+        background: #121214;
+      }
+    </style>
     <script>
       (function () {
-        try {
-          var theme = localStorage.getItem("producerhit_visual_theme_v1");
-          var accent = localStorage.getItem("producerhit_cloud_accent_v1") || "transparent";
-          var cloudColors = {
+        var bootBgs = {
+          prism: "#121214",
+          "warm-glass": "#1a1210",
+          cloud: {
             transparent: "#e8d8f0",
             green: "#dcecc8",
             red: "#f0d8cc",
             blue: "#d0e8f8",
-          };
-          if (theme === "cloud" && cloudColors[accent]) {
+          },
+        };
+        var bg = bootBgs.prism;
+        try {
+          var theme = localStorage.getItem("producerhit_visual_theme_v1");
+          var accent = localStorage.getItem("producerhit_cloud_accent_v1") || "transparent";
+          var html = document.documentElement;
+          var style = document.getElementById("pk-boot-surface");
+          if (theme === "cloud" && bootBgs.cloud[accent]) {
+            bg = bootBgs.cloud[accent];
+            html.setAttribute("data-pk-boot-theme", "cloud");
+            html.setAttribute("data-pk-cloud-accent", accent);
+            html.classList.add("pk-boot-cloud");
             var tc = document.querySelector('meta[name="theme-color"]');
-            if (tc) tc.setAttribute("content", cloudColors[accent]);
+            if (tc) tc.setAttribute("content", bg);
             var tile = document.querySelector('meta[name="msapplication-TileColor"]');
-            if (tile) tile.setAttribute("content", cloudColors[accent]);
+            if (tile) tile.setAttribute("content", bg);
             var cs = document.querySelector('meta[name="color-scheme"]');
             if (cs) cs.setAttribute("content", "light");
             var fav = document.querySelector('link[rel="icon"][type="image/svg+xml"]');
@@ -92,10 +159,23 @@
             var apple = document.querySelector('link[rel="apple-touch-icon"]');
             if (apple) apple.setAttribute("href", "/apple-touch-icon-cloud-" + accent + ".png");
           } else if (theme === "warm-glass") {
+            bg = bootBgs["warm-glass"];
+            html.setAttribute("data-pk-boot-theme", "warm-glass");
+            html.classList.add("pk-boot-warm");
             var tcW = document.querySelector('meta[name="theme-color"]');
             if (tcW) tcW.setAttribute("content", "#963848");
             var favW = document.querySelector('link[rel="icon"][type="image/svg+xml"]');
             if (favW) favW.setAttribute("href", "/favicon-warm.svg");
+          } else {
+            html.setAttribute("data-pk-boot-theme", "prism");
+          }
+          if (style) {
+            style.textContent =
+              "html,body{background:" +
+              bg +
+              " !important;color-scheme:" +
+              (theme === "cloud" ? "light" : "dark") +
+              ";}";
           }
         } catch (e) {}
       })();

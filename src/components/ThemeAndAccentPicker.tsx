@@ -16,6 +16,8 @@ import { SIDEBAR_ICON_CLASS, SIDEBAR_ICON_PROPS } from "@/lib/sidebarIcons";
 type Props = {
   /** nav-icon = cycle direct · sidebar-stack = cycle + accents · mobile = cycle · segmented = panneau settings */
   variant?: "nav-icon" | "sidebar-stack" | "mobile" | "segmented";
+  /** sidebar = rail studio · header = landing / marketing navbar */
+  surface?: "sidebar" | "header";
   className?: string;
 };
 
@@ -30,7 +32,11 @@ function ThemeModeIcon({ theme, className }: { theme: VisualTheme; className?: s
   return <Moon className={cn(iconClass, "pk-theme-cycle-btn__icon--moon")} {...SIDEBAR_ICON_PROPS} aria-hidden />;
 }
 
-/** Sur Cloud, le bouton cycle affiche la Lune (→ Prism), pas un 2ᵉ nuage (Air). */
+/**
+ * Icône du bouton cycle :
+ * - Prism / Warm → thème actuel (lune / soleil colorés)
+ * - Cloud → lune (prochain skin = Prism), évite 2 nuages sous le mood Air
+ */
 function themeCycleDisplayIcon(current: VisualTheme): VisualTheme {
   if (current === "cloud") return "prism";
   return current;
@@ -43,7 +49,7 @@ function themeShortLabel(theme: VisualTheme, isFr: boolean): string {
 }
 
 /** Prism → Warm → Cloud — clic direct, sans menu */
-export function ThemeAndAccentPicker({ variant = "nav-icon", className }: Props) {
+export function ThemeAndAccentPicker({ variant = "nav-icon", surface = "sidebar", className }: Props) {
   if (!CLOUD_THEME_ENABLED) {
     if (variant === "segmented") {
       return <ThemeToggleButton variant="segmented" className={className} />;
@@ -63,6 +69,7 @@ export function ThemeAndAccentPicker({ variant = "nav-icon", className }: Props)
     <ThemeCycleButton
       className={className}
       size={variant === "mobile" ? "mobile" : "nav"}
+      surface={surface}
     />
   );
 }
@@ -70,9 +77,11 @@ export function ThemeAndAccentPicker({ variant = "nav-icon", className }: Props)
 function ThemeCycleButton({
   className,
   size = "nav",
+  surface = "sidebar",
 }: {
   className?: string;
   size?: "nav" | "mobile";
+  surface?: "sidebar" | "header";
 }) {
   const locale = useLocaleStore((s) => s.locale);
   const isFr = locale === "fr";
@@ -80,15 +89,19 @@ function ThemeCycleButton({
   const cycleTheme = useVisualThemeStore((s) => s.cycleTheme);
   const next = nextVisualTheme(theme);
 
+  const isHeader = surface === "header";
+
   return (
     <button
       type="button"
       className={cn(
         "pk-theme-cycle-btn flex shrink-0 items-center justify-center focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/15",
-        size === "mobile" && "pk-theme-cycle-btn--mobile h-11 w-11 rounded-xl",
+        isHeader
+          ? "pk-header-chrome__pill pk-header-chrome__pill--icon pk-header-chrome__pill--active"
+          : cn("pk-sidebar-ctrl-btn pk-theme-cycle-btn--active", size === "mobile" && "pk-theme-cycle-btn--mobile"),
         theme === "warm-glass" && "pk-theme-cycle-btn--warm",
         theme === "cloud" && "pk-theme-cycle-btn--cloud",
-        theme === "prism" && "pk-theme-cycle-btn--prism text-white/55 hover:text-white/85",
+        theme === "prism" && "pk-theme-cycle-btn--prism",
         className,
       )}
       aria-label={

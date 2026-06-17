@@ -3,6 +3,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { flushEventQueue } from "@/lib/supabaseClient";
 import { claimReferralIfPending } from "@/lib/referral";
 import { useLocaleStore } from "@/stores/localeStore";
+import { deferUntilIdle } from "@/lib/perf/defer";
 
 export function AuthBootstrap({ children }: { children: React.ReactNode }) {
   const init = useAuthStore((s) => s.init);
@@ -11,7 +12,9 @@ export function AuthBootstrap({ children }: { children: React.ReactNode }) {
   const locale = useLocaleStore((s) => s.locale);
 
   useEffect(() => {
-    void init();
+    deferUntilIdle(() => {
+      void init();
+    }, 1600);
   }, [init]);
 
   useEffect(() => {

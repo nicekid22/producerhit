@@ -20,6 +20,7 @@ import {
 } from "@/lib/gamification";
 import { performDailyBonusClaim } from "@/lib/dailyBonusClaim";
 import { getNextLevelRewardCredits, syncLevelRewards } from "@/lib/gamificationRewards";
+import { pushGamificationToServer } from "@/lib/gamificationSync";
 import { useLootRevealStore } from "@/stores/lootRevealStore";
 import { cn } from "@/lib/utils";
 
@@ -161,6 +162,7 @@ export function GamificationStrip({
     const visit = recordVisit();
     setState(visit.state);
     void syncLevelAndMaybeLoot(before.xp, visit.state.xp, locale, syncRewards, onBonusCreditsChange);
+    if (syncRewards) void pushGamificationToServer(visit.state);
   }, [locale, onBonusCreditsChange, syncRewards]);
 
   useEffect(() => {

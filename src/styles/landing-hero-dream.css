@@ -69,8 +69,31 @@
   }
 }
 
+@keyframes pkLandingGenIdleFloat {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -4px, 0);
+  }
+}
+
 .pk-hero-dream-wrap--mobile .pk-hero-dream-layer {
   font-size: clamp(1.2rem, 5.2vw, 1.45rem);
+  line-height: 1.3;
+  padding-bottom: 0.14em;
+}
+
+.pk-hero-dream-wrap--mobile-apple .pk-hero-dream-layer {
+  font-size: clamp(1.45rem, 6.2vw, 1.85rem);
+  font-weight: 700;
+  line-height: 1.22;
+  letter-spacing: -0.03em;
+}
+
+.pk-hero-dream-wrap--mobile-apple .pk-hero-dream-stage {
+  min-height: clamp(4rem, 15vw, 5.5rem);
 }
 
 .pk-landing-hero-dream-sub {

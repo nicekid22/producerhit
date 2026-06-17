@@ -1,0 +1,119 @@
+import { useMemo } from "react";
+import { AlertTriangle, Clock, Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import type { AppLocale } from "@/i18n/config";
+import type { Loop } from "@/types/loop";
+import {
+  getDaysUntilAudioExpiry,
+  getLoopAudioRetentionState,
+  isHostedLoopAudioUrl,
+  isLoopAudioRetentionDisabled,
+} from "@/lib/loopAudioRetention";
+import { hasPermanentHostedAudio, normalizePlanId } from "@/lib/planEntitlements";
+import { LOOP_AUDIO_RETENTION_DAYS_FREE, LOOP_AUDIO_RETENTION_DAYS_PRO } from "@/lib/loopAudioRetention";
+import { useGrowthUpsellStore } from "@/stores/growthUpsellStore";
+import { cn } from "@/lib/utils";
+
+type Props = {
+  locale: AppLocale;
+  plan: string;
+  loops: Loop[];
+  className?: string;
+};
+
+export function AudioRetentionBanner({ locale, plan, loops, className }: Props) {
+  const navigate = useNavigate();
+  const openUpsell = useGrowthUpsellStore((s) => s.openUpsell);
+  const isFr = locale === "fr";
+  const normalizedPlan = normalizePlanId(plan);
+
+  const summary = useMemo(() => {
+    if (isLoopAudioRetentionDisabled() || hasPermanentHostedAudio(plan)) return null;
+
+    let expiring = 0;
+    let expired = 0;
+    let soonestDays: number | null = null;
+
+    for (const loop of loops) {
+      if (!loop.createdAt || !isHostedLoopAudioUrl(loop.audioUrl)) continue;
+      const state = getLoopAudioRetentionState(loop.createdAt, { plan });
+      if (state === "expired") {
+        expired += 1;
+        continue;
+      }
+      if (state === "expiring") {
+        expiring += 1;
+        const days = getDaysUntilAudioExpiry(loop.createdAt, { plan });
+        if (soonestDays === null || days < soonestDays) soonestDays = days;
+      }
+    }
+
+    if (expired === 0 && expiring === 0) return null;
+    return { expiring, expired, soonestDays };
+  }, [loops, plan]);
+
+  if (!summary) return null;
+
+  const urgent = summary.expired > 0 || (summary.soonestDays !== null && summary.soonestDays <= 1);
+
+  return (
+    <div
+      className={cn(
+        "pk-audio-retention-banner flex flex-col gap-3 rounded-2xl border px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
+        urgent ? "border-amber-400/30 bg-amber-500/10" : "border-cyan-400/20 bg-cyan-500/10",
+        className,
+      )}
+      role="status"
+    >
+      <div className="flex items-start gap-3">
+        {urgent ? (
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
+        ) : (
+          <Clock className="mt-0.5 h-5 w-5 shrink-0 text-cyan-300" />
+        )}
+        <div>
+          <p className="text-sm font-semibold text-white">
+            {summary.expired > 0
+              ? isFr
+                ? `${summary.expired} track${summary.expired > 1 ? "s" : ""} expirée${summary.expired > 1 ? "s" : ""}`
+                : `${summary.expired} track${summary.expired > 1 ? "s" : ""} expired`
+              : isFr
+                ? `${summary.expiring} track${summary.expiring > 1 ? "s" : ""} expire${summary.expiring > 1 ? "nt" : ""} bientôt`
+                : `${summary.expiring} track${summary.expiring > 1 ? "s" : ""} expiring soon`}
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-white/65">
+            {normalizedPlan === "free"
+              ? isFr
+                ? `Plan Free : audio hébergé ${LOOP_AUDIO_RETENTION_DAYS_FREE}j. Passe Pro (${LOOP_AUDIO_RETENTION_DAYS_PRO}j) ou Plus (permanent).`
+                : `Free plan: ${LOOP_AUDIO_RETENTION_DAYS_FREE}d hosted audio. Pro (${LOOP_AUDIO_RETENTION_DAYS_PRO}d) or Plus (permanent).`
+              : isFr
+                ? "Passe Plus pour des liens audio permanents tant que tu es abonné."
+                : "Upgrade to Plus for permanent hosted audio while subscribed."}
+          </p>
+        </div>
+      </div>
+      <div className="flex shrink-0 gap-2">
+        <button
+          type="button"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-white hover:bg-white/10"
+          onClick={() => navigate("/library")}
+        >
+          {isFr ? "Voir Library" : "Open Library"}
+        </button>
+        <button
+          type="button"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-3 py-2 text-xs font-semibold text-white hover:bg-violet-500"
+          onClick={() => {
+            openUpsell("feature_permanent_audio", {
+              source: "audio_retention_banner",
+              plan,
+            });
+          }}
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          {isFr ? "Sécuriser mes sons" : "Keep my tracks"}
+        </button>
+      </div>
+    </div>
+  );
+}

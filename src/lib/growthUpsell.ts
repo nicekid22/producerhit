@@ -2,6 +2,7 @@ import type { AppLocale } from "@/i18n/config";
 import {
   canDualGeneration,
   canExportWav,
+  hasCommercialUseRights,
   hasFullMastering,
   hasPriorityGeneration,
   normalizePlanId,
@@ -9,6 +10,7 @@ import {
   type PaidPlanId,
 } from "@/lib/planEntitlements";
 import { PLAN_LIMITS, getPlanBaseLimit } from "@/lib/planLimits";
+import { LOOP_AUDIO_RETENTION_DAYS_PRO } from "@/lib/loopAudioRetention";
 import { COMMERCIAL_RIGHTS_FAQ, planPriceLabel, planPriceUpsellLabel } from "@/lib/planPricing";
 
 export type UpsellReason =
@@ -21,7 +23,11 @@ export type UpsellReason =
   | "feature_priority"
   | "feature_dual_generation"
   | "feature_voice_to_song"
-  | "feature_voice_clone";
+  | "feature_voice_clone"
+  | "feature_stems"
+  | "feature_no_watermark"
+  | "feature_permanent_audio"
+  | "feature_commercial_download";
 
 export type UpsellContext = {
   source: string;
@@ -55,6 +61,14 @@ export function shouldShowPlanUpsell(
       return !hasFullMastering(plan);
     case "feature_voice_clone":
       return !hasFullMastering(plan);
+    case "feature_stems":
+      return normalizePlanId(plan) !== "plus";
+    case "feature_no_watermark":
+      return !hasCommercialUseRights(plan);
+    case "feature_permanent_audio":
+      return normalizePlanId(plan) !== "plus";
+    case "feature_commercial_download":
+      return !hasCommercialUseRights(plan);
     case "wav_export":
       return !hasFullMastering(plan);
     case "feature_wav_format":
@@ -78,6 +92,13 @@ export function recommendedUpgradePlan(plan: string | null | undefined): PaidPla
   if (cur === "pro") return "studio";
   if (cur === "studio") return "plus";
   return null;
+}
+
+/** Cible upsell après erreur « réseau chargé » selon le plan actuel. */
+export function priorityUpsellTarget(plan: string | null | undefined): PaidPlanId {
+  const cur = normalizePlanId(plan);
+  if (cur === "free") return "pro";
+  return "plus";
 }
 
 export function shouldShowLowCreditsPrompt(plan: string, remaining: number): boolean {
@@ -249,17 +270,106 @@ export function getUpsellCopy(
   }
 
   if (reason === "feature_priority") {
+    const targetPriority = priorityUpsellTarget(plan);
     return {
       title: isFr ? "Priorité génération" : "Generation priority",
+      description:
+        cur === "free"
+          ? isFr
+            ? "Le réseau est chargé. Passe Pro pour sauter la file free et enchaîner tes sessions."
+            : "The network is busy. Go Pro to skip the free queue and keep your flow."
+          : isFr
+            ? "Tu es en Pro/Studio mais la charge est forte. Plus = priorité max + quota ×4."
+            : "You're on Pro/Studio but load is high. Plus = max priority + 4× quota.",
+      bullets:
+        targetPriority === "pro"
+          ? isFr
+            ? [`${proLimit} générations / mois`, "File prioritaire vs Free", "Export MP3 & droits commerciaux", planPriceUpsellLabel("pro", "fr")]
+            : [`${proLimit} generations / month`, "Priority queue vs Free", "MP3 export & commercial rights", planPriceUpsellLabel("pro", "en")]
+          : isFr
+            ? [`${plusLimit} générations / mois`, "Priorité serveur max", "Audio hébergé permanent", "Stems ZIP inclus"]
+            : [`${plusLimit} generations / month`, "Max server priority", "Permanent hosted audio", "Stems ZIP included"],
+      primaryLabel:
+        targetPriority === "pro"
+          ? isFr
+            ? `Passer Pro — ${planPriceLabel("pro", "fr", { suffix: true })}`
+            : `Go Pro — ${planPriceLabel("pro", "en", { suffix: true })}`
+          : isFr
+            ? `Passer Plus — ${planPriceLabel("plus", "fr", { suffix: true })}`
+            : `Go Plus — ${planPriceLabel("plus", "en", { suffix: true })}`,
+      secondaryLabel: isFr ? "Réessayer plus tard" : "Try again later",
+      targetPlan: targetPriority,
+    };
+  }
+
+  if (reason === "feature_stems") {
+    return {
+      title: isFr ? "Stems séparés (Plus)" : "Separate stems (Plus)",
       description: isFr
-        ? "Le réseau est chargé. Les plans Pro et au-dessus passent avant la file d'attente free."
-        : "The network is busy. Pro plans and above skip ahead of the free queue.",
+        ? "Télécharge les pistes ACE en ZIP — idéal pour mixer dans ton DAW."
+        : "Download ACE tracks as a ZIP — perfect for mixing in your DAW.",
       bullets: isFr
-        ? [`${proLimit} générations / mois sur Pro`, "File prioritaire", "Export MP3 & Song Mode", "Remix Studio"]
-        : [`${proLimit} generations / month on Pro`, "Priority queue", "MP3 export & Song Mode", "Remix Studio"],
+        ? [`${plusLimit} générations / mois`, "Stems ZIP par track", "Audio hébergé permanent", planPriceUpsellLabel("plus", "fr")]
+        : [`${plusLimit} generations / month`, "Stems ZIP per track", "Permanent hosted audio", planPriceUpsellLabel("plus", "en")],
+      primaryLabel: isFr ? `Passer Plus — ${planPriceLabel("plus", "fr", { suffix: true })}` : `Go Plus — ${planPriceLabel("plus", "en", { suffix: true })}`,
+      secondaryLabel: isFr ? "Plus tard" : "Not now",
+      targetPlan: "plus",
+    };
+  }
+
+  if (reason === "feature_no_watermark") {
+    return {
+      title: isFr ? "Partage sans watermark" : "Share without watermark",
+      description: isFr
+        ? "Tes vidéos virales sans logo ProducerHit — inclus dès Pro."
+        : "Your viral videos without the ProducerHit logo — included from Pro.",
+      bullets: isFr
+        ? ["Watermark retiré", "Droits commerciaux", `${proLimit} gen / mois`, planPriceUpsellLabel("pro", "fr")]
+        : ["No watermark", "Commercial rights", `${proLimit} gen / month`, planPriceUpsellLabel("pro", "en")],
+      primaryLabel: isFr ? `Passer Pro — ${planPriceLabel("pro", "fr", { suffix: true })}` : `Go Pro — ${planPriceLabel("pro", "en", { suffix: true })}`,
+      secondaryLabel: isFr ? "Garder le watermark" : "Keep watermark",
+      targetPlan: "pro",
+    };
+  }
+
+  if (reason === "feature_permanent_audio") {
+    const targetAudio: PaidPlanId = cur === "free" ? "pro" : "plus";
+    return {
+      title: isFr ? "Garde tes sons en ligne" : "Keep your tracks online",
+      description:
+        cur === "free"
+          ? isFr
+            ? "Free = 24h d'hébergement. Pro = 3 jours, Plus = permanent tant que tu es abonné."
+            : "Free = 24h hosting. Pro = 3 days, Plus = permanent while subscribed."
+          : isFr
+            ? "Passe Plus pour des liens audio permanents — plus de tracks expirées."
+            : "Go Plus for permanent audio links — no more expired tracks.",
+      bullets:
+        targetAudio === "pro"
+          ? isFr
+            ? [`${LOOP_AUDIO_RETENTION_DAYS_PRO} jours d'hébergement`, `${proLimit} gen / mois`, "Export WAV", planPriceUpsellLabel("pro", "fr")]
+            : [`${LOOP_AUDIO_RETENTION_DAYS_PRO}-day hosting`, `${proLimit} gen / month`, "WAV export", planPriceUpsellLabel("pro", "en")]
+          : isFr
+            ? ["Hébergement permanent", "Stems ZIP", `${plusLimit} gen / mois`, planPriceUpsellLabel("plus", "fr")]
+            : ["Permanent hosting", "Stems ZIP", `${plusLimit} gen / month`, planPriceUpsellLabel("plus", "en")],
       primaryLabel: primaryForTarget,
-      secondaryLabel: isFr ? "Voir les tarifs" : "View pricing",
-      targetPlan: target ?? "pro",
+      secondaryLabel: isFr ? "Voir Library" : "Open Library",
+      targetPlan: targetAudio,
+    };
+  }
+
+  if (reason === "feature_commercial_download") {
+    return {
+      title: isFr ? "Droits commerciaux requis" : "Commercial rights required",
+      description: isFr
+        ? COMMERCIAL_RIGHTS_FAQ.fr.a
+        : COMMERCIAL_RIGHTS_FAQ.en.a,
+      bullets: isFr
+        ? [`Pro : ${proLimit} gen / mois`, "Spotify · YouTube · clients", "Export WAV", planPriceUpsellLabel("pro", "fr")]
+        : [`Pro: ${proLimit} gen / month`, "Spotify · YouTube · clients", "WAV export", planPriceUpsellLabel("pro", "en")],
+      primaryLabel: isFr ? `Passer Pro — ${planPriceLabel("pro", "fr", { suffix: true })}` : `Go Pro — ${planPriceLabel("pro", "en", { suffix: true })}`,
+      secondaryLabel: isFr ? "Usage perso uniquement" : "Personal use only",
+      targetPlan: "pro",
     };
   }
 

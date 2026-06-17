@@ -1,0 +1,174 @@
+/* —— Landing : highlight « X générations gratuites / mois » — dégradé animé par thème —— */
+
+.pk-landing-free-shimmer {
+  --pk-free-shimmer-gradient: linear-gradient(
+    112deg,
+    #8b72e8 0%,
+    #5eb0f4 18%,
+    #d8f4ff 32%,
+    #7ec8fc 44%,
+    #a88bf5 58%,
+    #5eb0f4 74%,
+    #8b72e8 100%
+  );
+  display: inline;
+  background-image: var(--pk-free-shimmer-gradient);
+  background-size: 200% 100%;
+  background-position: 0% 50%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  font-weight: 700;
+  line-height: 1.35;
+  padding-block: 0.02em 0.08em;
+  animation:
+    pkLandingFreeShimmer 3.4s ease-in-out infinite alternate,
+    pkLandingFreeShimmerPulse 3.4s ease-in-out infinite alternate;
+  will-change: background-position, filter;
+}
+
+p.pk-landing-free-shimmer {
+  display: block;
+}
+
+/* Warm Glass — or / miel / cuivre (lisible sur fond clair) */
+.pk-warm-glass-stage .pk-landing-free-shimmer,
+html.pk-warm-glass-active .pk-landing-free-shimmer {
+  --pk-free-shimmer-gradient: linear-gradient(
+    112deg,
+    #b87818 0%,
+    #e0a828 16%,
+    #fff4d0 30%,
+    #f0c848 42%,
+    #e07840 56%,
+    #f5dc78 70%,
+    #d89828 86%,
+    #b87818 100%
+  );
+}
+
+/* Cloud — accent mood + reflet pastel */
+.pk-cloud-stage .pk-landing-free-shimmer,
+html.pk-cloud-active .pk-landing-free-shimmer {
+  --pk-free-shimmer-gradient: linear-gradient(
+    112deg,
+    color-mix(in srgb, var(--cloud-accent) 82%, #182018) 0%,
+    color-mix(in srgb, var(--cloud-accent) 58%, white) 18%,
+    rgba(255, 255, 255, 0.98) 30%,
+    color-mix(in srgb, var(--cloud-accent) 68%, white) 44%,
+    var(--cloud-accent) 58%,
+    color-mix(in srgb, var(--cloud-accent) 52%, white) 74%,
+    color-mix(in srgb, var(--cloud-accent) 78%, #182018) 90%,
+    color-mix(in srgb, var(--cloud-accent) 82%, #182018) 100%
+  );
+}
+
+html.pk-cloud-active body[data-pk-cloud-accent="transparent"] .pk-landing-free-shimmer,
+.pk-cloud-stage[data-pk-cloud-accent="transparent"] .pk-landing-free-shimmer {
+  --pk-free-shimmer-gradient: linear-gradient(
+    112deg,
+    color-mix(in srgb, var(--cloud-accent) 78%, #282038) 0%,
+    color-mix(in srgb, var(--cloud-accent) 48%, white) 20%,
+    rgba(255, 255, 255, 0.96) 34%,
+    color-mix(in srgb, var(--cloud-accent-soft, var(--cloud-accent)) 72%, white) 50%,
+    var(--cloud-accent) 64%,
+    color-mix(in srgb, var(--cloud-accent) 55%, white) 80%,
+    color-mix(in srgb, var(--cloud-accent) 75%, #282038) 100%
+  );
+}
+
+@keyframes pkLandingFreeShimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes pkLandingFreeShimmerPulse {
+  0% {
+    filter: brightness(1) saturate(1);
+  }
+  100% {
+    filter: brightness(1.1) saturate(1.12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pk-landing-free-shimmer {
+    animation: none;
+    filter: none;
+    background-position: 42% 50%;
+  }
+}
+
+/* Réassurance générateur — contraste secondaire (Warm / Cloud) */
+.pk-warm-glass-stage .pk-landing-gen__reassurance,
+html.pk-warm-glass-active .pk-landing-gen__reassurance {
+  color: color-mix(in srgb, #5c4030 52%, var(--warm-text-cream, #fff8eb));
+}
+
+.pk-warm-glass-stage .pk-landing-gen__reassurance-sep,
+html.pk-warm-glass-active .pk-landing-gen__reassurance-sep {
+  color: color-mix(in srgb, #5c4030 38%, transparent);
+}
+
+.pk-cloud-stage .pk-landing-gen__reassurance,
+html.pk-cloud-active .pk-landing-gen__reassurance {
+  color: var(--cloud-text-muted);
+}
+
+.pk-cloud-stage .pk-landing-gen__reassurance-sep,
+html.pk-cloud-active .pk-landing-gen__reassurance-sep {
+  color: color-mix(in srgb, var(--cloud-text-muted) 72%, transparent);
+}
+
+/* Trust bar — pill « free / mois » mis en avant */
+.pk-cro-trust__pill--free {
+  border-color: color-mix(in srgb, var(--prism-violet, #9d7cff) 32%, rgba(255, 255, 255, 0.12));
+  background: color-mix(in srgb, var(--prism-violet, #9d7cff) 8%, rgba(255, 255, 255, 0.05));
+}
+
+.pk-cro-trust__pill--free .pk-cro-trust__icon {
+  color: var(--prism-cyan, #67c3ff);
+}
+
+html.pk-warm-glass-active .pk-cro-trust__pill--free,
+.pk-warm-glass-stage .pk-cro-trust__pill--free {
+  border-color: color-mix(in srgb, var(--warm-accent-gold, #f0c848) 38%, transparent);
+  background: color-mix(in srgb, var(--warm-accent-copper, #e87838) 12%, rgba(255, 255, 255, 0.06));
+}
+
+html.pk-warm-glass-active .pk-cro-trust__pill--free .pk-cro-trust__icon,
+.pk-warm-glass-stage .pk-cro-trust__pill--free .pk-cro-trust__icon {
+  color: var(--warm-icon-accent, #f5dc78);
+}
+
+html.pk-cloud-active .pk-cro-trust__pill--free,
+.pk-cloud-stage .pk-cro-trust__pill--free {
+  border-color: color-mix(in srgb, var(--cloud-accent) 34%, transparent);
+  background: color-mix(in srgb, var(--cloud-accent-soft) 48%, rgba(255, 255, 255, 0.05));
+}
+
+html.pk-cloud-active .pk-cro-trust__pill--free .pk-cro-trust__icon,
+.pk-cloud-stage .pk-cro-trust__pill--free .pk-cro-trust__icon {
+  color: var(--cloud-accent);
+}
+
+/* Réassurance hero — segment secondaire */
+.pk-landing-hero-reassurance-muted {
+  color: rgba(255, 252, 255, 0.46);
+  font-weight: 600;
+}
+
+html.pk-warm-glass-active .pk-landing-hero-reassurance-muted,
+.pk-warm-glass-stage .pk-landing-hero-reassurance-muted {
+  color: color-mix(in srgb, var(--warm-text-cream, #fff8eb) 52%, transparent);
+}
+
+html.pk-cloud-active .pk-landing-hero-reassurance-muted,
+.pk-cloud-stage .pk-landing-hero-reassurance-muted {
+  color: var(--cloud-text-muted);
+}

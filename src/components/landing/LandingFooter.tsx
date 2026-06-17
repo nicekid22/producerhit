@@ -1,134 +1,284 @@
 import { Link } from "react-router-dom";
+
 import type { User } from "@supabase/supabase-js";
+
 import { BrandLogo } from "@/components/landing/BrandLogo";
+
 import { SocialIconLinks } from "@/components/landing/SocialIconLinks";
+
 import { landingCopy } from "@/lib/landingContent";
-import type { AppLocale } from "@/i18n/config";
+
+import { EmailCaptureSection } from "@/components/growth/EmailCaptureSection";
+
+import { localizedPath, type AppLocale } from "@/i18n/config";
+
+import { getMessages } from "@/i18n/locales";
+
+
 
 type Props = {
+
   locale: AppLocale;
+
   user: User | null;
+
 };
+
+
 
 type FooterLink = { to: string; label: string };
 
+
+
 function FooterNavColumn({ title, links }: { title: string; links: FooterLink[] }) {
+
   return (
+
     <div>
+
       <h3 className="pk-landing-footer-v2__nav-title">{title}</h3>
+
       <ul className="pk-landing-footer-v2__nav-list">
+
         {links.map((l) => (
+
           <li key={l.to}>
+
             <Link to={l.to} className="pk-landing-footer-v2__nav-link">
+
               {l.label}
+
             </Link>
+
           </li>
+
         ))}
+
       </ul>
+
     </div>
+
   );
+
 }
+
+
 
 export function LandingFooter({ locale, user }: Props) {
-  const isFr = locale === "fr";
+
+  const f = getMessages(locale).footer;
+
   const copy = landingCopy(locale);
 
+
+
   const productLinks: FooterLink[] = [
-    { to: "/dashboard", label: isFr ? "Générateur" : "Generator" },
-    { to: "/community", label: isFr ? "Communauté" : "Community" },
-    { to: "/pricing", label: isFr ? "Tarifs" : "Pricing" },
+
+    { to: "/dashboard", label: f.generator },
+
+    { to: "/community", label: f.community },
+
+    { to: "/trending", label: f.trending },
+
+    { to: "/pricing", label: f.pricing },
+
     { to: "/blog", label: "Blog" },
+
+    { to: "/voice-studio", label: f.voiceStudio },
+
   ];
+
+
 
   const compareLinks: FooterLink[] = [
-    { to: "/suno-alternatives", label: isFr ? "Alternatives Suno" : "Suno Alternatives" },
-    { to: isFr ? "/alternatives-udio" : "/udio-alternatives", label: isFr ? "Alternatives Udio" : "Udio Alternatives" },
-    { to: isFr ? "/remix-cover-ia" : "/remix-cover-ai", label: isFr ? "Remix & Cover IA" : "AI Remix & Cover" },
-    { to: isFr ? "/musique-ia-spotify-ready" : "/spotify-ready-ai-music", label: "Spotify Ready" },
-    { to: isFr ? "/comparatif-generateur-musique-ia-2026" : "/ai-music-generator-comparison-2026", label: isFr ? "Comparatif 2026" : "Comparison 2026" },
-    { to: isFr ? "/meilleur-generateur-beats-ia-producteurs" : "/best-ai-beat-generator-for-producers", label: isFr ? "Meilleur beats IA" : "Best Beat AI" },
+
+    { to: localizedPath(locale, "/suno-alternatives", "/alternatives-suno"), label: f.sunoAlt },
+
+    { to: localizedPath(locale, "/udio-alternatives", "/alternatives-udio"), label: f.udioAlt },
+
+    { to: localizedPath(locale, "/remix-cover-ai", "/remix-cover-ia"), label: f.remixCover },
+
+    { to: localizedPath(locale, "/spotify-ready-ai-music", "/musique-ia-spotify-ready"), label: "Spotify Ready" },
+
+    {
+
+      to: localizedPath(locale, "/ai-music-generator-comparison-2026", "/comparatif-generateur-musique-ia-2026"),
+
+      label: f.comparison2026,
+
+    },
+
+    {
+
+      to: localizedPath(locale, "/best-ai-beat-generator-for-producers", "/meilleur-generateur-beats-ia-producteurs"),
+
+      label: f.bestBeatAi,
+
+    },
+
   ];
+
+
 
   const legalLinks: FooterLink[] = [
-    { to: "/legal#privacy", label: "Privacy" },
-    { to: "/legal#terms", label: isFr ? "Conditions" : "Terms" },
-    { to: "/legal#cookies", label: "Cookies" },
-    { to: "/legal#refunds", label: isFr ? "Remboursements" : "Refunds" },
-    { to: "/legal#contact", label: "Support" },
+
+    { to: "/legal#privacy", label: getMessages(locale).common.privacy },
+
+    { to: "/legal#terms", label: getMessages(locale).common.terms },
+
+    { to: "/legal#cookies", label: getMessages(locale).common.cookies },
+
+    { to: "/legal#refunds", label: getMessages(locale).common.refunds },
+
+    { to: "/legal#contact", label: getMessages(locale).common.support },
+
   ];
+
+
 
   const guideLinks: FooterLink[] = [
-    { to: isFr ? "/generateur-music-ai" : "/music-ai-generator", label: "Music AI Generator" },
-    { to: isFr ? "/generateur-musique-ia-gratuit" : "/free-music-ai-generator", label: isFr ? "Musique IA gratuit" : "Free Music AI" },
-    { to: isFr ? "/texte-en-musique-ia" : "/text-to-music-ai-generator", label: isFr ? "Texte → musique" : "Text to Music" },
-    { to: isFr ? "/generateur-chanson-ia" : "/ai-song-generator", label: isFr ? "Chanson IA" : "AI Song" },
+
+    { to: localizedPath(locale, "/music-ai-generator", "/generateur-music-ai"), label: "Music AI Generator" },
+
+    { to: localizedPath(locale, "/free-music-ai-generator", "/generateur-musique-ia-gratuit"), label: f.freeMusicAi },
+
+    { to: localizedPath(locale, "/text-to-music-ai-generator", "/texte-en-musique-ia"), label: f.textToMusic },
+
+    { to: localizedPath(locale, "/ai-song-generator", "/generateur-chanson-ia"), label: f.aiSong },
+
     { to: "/ai-beat-generator", label: "AI Beat" },
+
     { to: "/ai-trap-beat-generator", label: "Trap AI" },
+
     { to: "/ai-lofi-beat-generator", label: "Lo-Fi AI" },
+
     { to: "/ai-phonk-beat-generator", label: "Phonk AI" },
-    { to: isFr ? "/generateur-k-pop-ia" : "/ai-k-pop-song-generator", label: "K-Pop AI" },
-    { to: isFr ? "/musique-sommeil-ia" : "/ai-sleep-music-generator", label: isFr ? "Sommeil" : "Sleep" },
-    { to: isFr ? "/musique-etude-ia" : "/ai-study-music-generator", label: isFr ? "Étude" : "Study" },
-    { to: isFr ? "/musique-meditation-ia" : "/ai-meditation-music-generator", label: isFr ? "Méditation" : "Meditation" },
-    { to: isFr ? "/generateur-chanson-ia-par-genre" : "/ai-song-generator-by-genre", label: isFr ? "Par genre" : "By genre" },
-    { to: isFr ? "/alternatives-generateur-chanson-ia" : "/ai-song-generator-alternatives", label: isFr ? "Alt. chanson IA" : "Song alt." },
-    { to: "/beatoven-alternatives", label: isFr ? "Alt. Beatoven" : "Beatoven alt." },
-    { to: isFr ? "/alternatives-mubert" : "/mubert-alternatives", label: isFr ? "Alt. Mubert" : "Mubert alt." },
+
+    { to: localizedPath(locale, "/ai-k-pop-song-generator", "/generateur-k-pop-ia"), label: "K-Pop AI" },
+
+    { to: localizedPath(locale, "/ai-sleep-music-generator", "/musique-sommeil-ia"), label: f.sleep },
+
+    { to: localizedPath(locale, "/ai-study-music-generator", "/musique-etude-ia"), label: f.study },
+
+    { to: localizedPath(locale, "/ai-meditation-music-generator", "/musique-meditation-ia"), label: f.meditation },
+
+    { to: localizedPath(locale, "/ai-song-generator-by-genre", "/generateur-chanson-ia-par-genre"), label: f.byGenre },
+
+    { to: localizedPath(locale, "/ai-song-generator-alternatives", "/alternatives-generateur-chanson-ia"), label: f.songAlt },
+
+    { to: "/beatoven-alternatives", label: f.beatovenAlt },
+
+    { to: localizedPath(locale, "/mubert-alternatives", "/alternatives-mubert"), label: f.mubertAlt },
+
   ];
 
+
+
   return (
+
     <footer className="pk-landing-footer pk-landing-footer-v2 relative z-[1]">
+
       <div className="relative z-[1] mx-auto max-w-6xl px-4 py-12 pb-[calc(2rem+env(safe-area-inset-bottom,0px))] sm:py-14 md:py-16">
+
         <div className="pk-landing-footer-v2__top">
+
           <div>
+
             <BrandLogo />
-            <p className="pk-landing-footer-v2__brand-lead">
-              {isFr
-                ? "Générateur IA de chansons et type beats — qualité studio, prêt à publier."
-                : "AI song & type beat generator — studio quality, release-ready."}
-            </p>
+
+            <p className="pk-landing-footer-v2__brand-lead">{f.brandLead}</p>
+
             <p className="pk-landing-footer-v2__ace">Powered by ACE-Step</p>
+
             <p className="pk-landing-footer-v2__social-label">{copy.footerSocialLabel}</p>
+
             <SocialIconLinks locale={locale} variant="footer" className="mt-3" />
+
           </div>
+
+
 
           <div className="pk-landing-footer-v2__nav-grid">
-            <FooterNavColumn title={isFr ? "Produit" : "Product"} links={productLinks} />
-            <FooterNavColumn title={isFr ? "Comparatifs" : "Compare"} links={compareLinks} />
-            <FooterNavColumn title={isFr ? "Légal" : "Legal"} links={legalLinks} />
+
+            <FooterNavColumn title={f.product} links={productLinks} />
+
+            <FooterNavColumn title={f.compare} links={compareLinks} />
+
+            <FooterNavColumn title={f.legalCol} links={legalLinks} />
+
           </div>
+
         </div>
 
-        <section className="pk-landing-footer-v2__guides" aria-label={isFr ? "Guides SEO" : "SEO guides"}>
+
+
+        <section className="pk-landing-footer-v2__guides" aria-label={f.guidesAria}>
+
           <div className="pk-landing-footer-v2__guides-head">
-            <h3 className="pk-landing-footer-v2__guides-title">{isFr ? "Guides & générateurs" : "Guides & generators"}</h3>
-            <span className="pk-landing-footer-v2__guides-note">
-              {isFr ? "Pages ressources · SEO" : "Resource pages · SEO"}
-            </span>
+
+            <h3 className="pk-landing-footer-v2__guides-title">{f.guidesTitle}</h3>
+
+            <span className="pk-landing-footer-v2__guides-note">{f.guidesNote}</span>
+
           </div>
+
           <div className="pk-landing-footer-v2__pill-grid">
+
             {guideLinks.map((l) => (
+
               <Link key={l.to} to={l.to} className="pk-landing-footer-v2__pill">
+
                 {l.label}
+
               </Link>
+
             ))}
+
           </div>
+
         </section>
 
+
+
+        <section className="pk-landing-footer-v2__newsletter px-4 py-8 sm:px-6">
+
+          <EmailCaptureSection locale={locale} source="landing_footer" className="mx-auto max-w-xl" />
+
+        </section>
+
+
+
         <div className="pk-landing-footer-v2__bottom">
+
           <span className="pk-landing-footer-v2__copy">
+
             Made with <span className="pk-footer-heart" aria-hidden>♥</span> © 2026 ProducerHit
+
           </span>
+
           <div className="pk-landing-footer-v2__bottom-actions">
+
             <Link to={user ? "/dashboard" : "/auth"} className="pk-landing-footer-v2__cta">
-              {user ? "Dashboard" : isFr ? "Commencer gratuitement" : "Start free"}
+
+              {user ? "Dashboard" : f.startFree}
+
             </Link>
+
             <Link to="/legal" className="pk-landing-footer-v2__legal-link">
-              {isFr ? "Mentions légales" : "Legal"}
+
+              {f.legalPage}
+
             </Link>
+
           </div>
+
         </div>
+
       </div>
+
     </footer>
+
   );
+
 }
+

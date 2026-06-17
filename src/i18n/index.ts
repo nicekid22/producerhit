@@ -12,9 +12,12 @@ export {
   normalizeLocale,
   legacyEnFr,
   isFrenchLocale,
+  localizedPath,
   hreflangUrl,
 } from "./config";
 export { getMessages } from "./locales";
+export { pickLocalized } from "./resolve";
+export { formatDate, formatNumber, formatReadingTime, formatPlanPrice, planMonthlySuffix } from "./format";
 
 export function useT() {
   const locale = useLocaleStore((s) => s.locale);

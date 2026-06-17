@@ -13,6 +13,7 @@ import { markJustAuthenticated, sanitizePostAuthPath } from "@/lib/postAuthRedir
 import { ConversionTrustBar } from "@/components/marketing/ConversionTrustBar";
 import { croAuthHeadline } from "@/lib/croTrustCopy";
 import { resolveAuthModeFromSearch, resolvePostAuthRedirect, type AuthMode } from "@/lib/authRoutes";
+import { pendingGenerationSummary, readPendingGeneration } from "@/lib/pendingGeneration";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ export default function Auth() {
   const signInWithPassword = useAuthStore((s) => s.signInWithPassword);
   const signUp = useAuthStore((s) => s.signUp);
   const signInWithGoogle = useAuthStore((s) => s.signInWithGoogle);
+  const resendSignupConfirmation = useAuthStore((s) => s.resendSignupConfirmation);
   const resetPassword = useAuthStore((s) => s.resetPassword);
   const user = useAuthStore((s) => s.user);
   const locale = useLocaleStore((s) => s.locale);
@@ -32,6 +34,13 @@ export default function Auth() {
   const [busy, setBusy] = useState(false);
   const [inlineError, setInlineError] = useState<string | null>(null);
   const [awaitingEmailConfirm, setAwaitingEmailConfirm] = useState(false);
+  const [resendBusy, setResendBusy] = useState(false);
+
+  const pendingGenSummary = useMemo(() => {
+    const pending = readPendingGeneration();
+    if (!pending) return null;
+    return pendingGenerationSummary(pending, isFr);
+  }, [isFr, awaitingEmailConfirm]);
 
   useEffect(() => {
     setMode(resolveAuthModeFromSearch(location.search));
@@ -160,18 +169,52 @@ export default function Auth() {
                 ? `On t'a envoyé un lien à ${email.trim()}. Ouvre-le pour activer ton compte et accéder au studio.`
                 : `We sent a link to ${email.trim()}. Open it to activate your account and enter the studio.`}
             </p>
+            {pendingGenSummary ? (
+              <p className="mt-4 rounded-xl border border-violet-400/25 bg-violet-500/10 px-4 py-3 text-sm text-violet-100/90">
+                {isFr ? "Ta création t'attend :" : "Your creation is waiting:"}{" "}
+                <span className="font-semibold text-white">{pendingGenSummary}</span>
+              </p>
+            ) : null}
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void onGoogle()}
+              className="pk-prism-btn mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-semibold disabled:opacity-60"
+            >
+              {googleIcon}
+              {isFr ? "Continuer avec Google (instantané)" : "Continue with Google (instant)"}
+            </button>
             <p className="mt-3 text-[11px] leading-relaxed text-pk-muted/80">
               {isFr
-                ? "Rien reçu ? Vérifie les spams ou connecte-toi avec Google — même email, même compte."
-                : "Nothing in inbox? Check spam or continue with Google — same email, same account."}
+                ? "Rien reçu ? Vérifie les spams ou renvoie le lien ci-dessous."
+                : "Nothing in inbox? Check spam or resend the link below."}
             </p>
+            <button
+              type="button"
+              disabled={resendBusy}
+              onClick={() => {
+                setResendBusy(true);
+                void resendSignupConfirmation(email.trim(), getPostAuthRedirect())
+                  .then(() => {
+                    toast.success(isFr ? "Lien renvoyé — vérifie ta boîte" : "Link resent — check your inbox");
+                  })
+                  .catch((err) => {
+                    const message = mapAuthError(err, locale, "signup");
+                    toast.error(message);
+                  })
+                  .finally(() => setResendBusy(false));
+              }}
+              className="mt-3 inline-flex w-full items-center justify-center rounded-full border border-pk-border bg-white/5 px-4 py-2.5 text-sm font-semibold text-pk-text hover:bg-white/10 disabled:opacity-60"
+            >
+              {resendBusy ? (isFr ? "Envoi…" : "Sending…") : isFr ? "Renvoyer le lien" : "Resend link"}
+            </button>
             <button
               type="button"
               onClick={() => {
                 setAwaitingEmailConfirm(false);
                 setMode("login");
               }}
-              className="pk-prism-btn mt-6 inline-flex w-full items-center justify-center rounded-full px-4 py-3 text-sm font-semibold"
+              className="mt-3 w-full text-center text-xs font-medium text-pk-muted hover:text-pk-text"
             >
               {isFr ? "J'ai confirmé — me connecter" : "I confirmed — sign in"}
             </button>
@@ -225,6 +268,25 @@ export default function Auth() {
           </div>
 
           <form className="mt-6 space-y-4" onSubmit={onSubmit}>
+            {mode === "signup" ? (
+              <>
+                <button
+                  type="button"
+                  onClick={onGoogle}
+                  disabled={busy}
+                  className="pk-prism-btn inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {googleIcon}
+                  {isFr ? "Continuer avec Google" : "Continue with Google"}
+                </button>
+                <div className="flex items-center gap-3 text-[11px] text-pk-muted">
+                  <span className="h-px flex-1 bg-pk-border" />
+                  {isFr ? "ou par email" : "or with email"}
+                  <span className="h-px flex-1 bg-pk-border" />
+                </div>
+              </>
+            ) : null}
+
             <div>
               <label htmlFor="auth-email" className="text-xs font-medium text-pk-muted">Email</label>
               <input
@@ -267,7 +329,11 @@ export default function Auth() {
             <button
               type="submit"
               disabled={busy}
-              className="pk-prism-btn inline-flex w-full items-center justify-center rounded-full px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+              className={
+                mode === "signup"
+                  ? "inline-flex w-full items-center justify-center rounded-full border border-pk-border bg-white/5 px-4 py-3 text-sm font-semibold text-pk-text transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  : "pk-prism-btn inline-flex w-full items-center justify-center rounded-full px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+              }
             >
               {busy
                 ? isFr
@@ -280,15 +346,17 @@ export default function Auth() {
                     : "Create free account"}
             </button>
 
-            <button
-              type="button"
-              onClick={onGoogle}
-              disabled={busy}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-pk-border bg-white/5 px-4 py-3 text-sm font-semibold text-pk-text transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {googleIcon}
-              {isFr ? "Continuer avec Google" : "Continue with Google"}
-            </button>
+            {mode === "login" ? (
+              <button
+                type="button"
+                onClick={onGoogle}
+                disabled={busy}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-pk-border bg-white/5 px-4 py-3 text-sm font-semibold text-pk-text transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {googleIcon}
+                {isFr ? "Continuer avec Google" : "Continue with Google"}
+              </button>
+            ) : null}
 
             <button
               type="button"

@@ -19,6 +19,7 @@ import {
   type SharePlatform,
 } from "@/lib/sharePlatform";
 import { canShareWithoutWatermark } from "@/lib/planEntitlements";
+import { useGrowthUpsellStore } from "@/stores/growthUpsellStore";
 import { downloadShareVideoBlob, exportShareVideo } from "@/lib/shareVideo";
 import type { VisualizerLayout } from "@/lib/visualizer/types";
 import { trackClientEvent } from "@/lib/supabaseClient";
@@ -45,6 +46,7 @@ export function ShareMomentModal({ open, onClose, loop, locale, plan = "free", o
   const [previewMuted, setPreviewMuted] = useState(true);
   const [showCaptionEdit, setShowCaptionEdit] = useState(false);
   const showWatermark = !canShareWithoutWatermark(plan);
+  const openUpsell = useGrowthUpsellStore((s) => s.openUpsell);
 
   useEffect(() => {
     if (!open || !loop) return;
@@ -325,11 +327,25 @@ export function ShareMomentModal({ open, onClose, loop, locale, plan = "free", o
           </button>
         ) : null}
 
-        {!showWatermark ? (
+        {showWatermark ? (
+          <div className="rounded-xl border border-violet-400/25 bg-violet-500/10 px-3 py-2.5 text-center">
+            <p className="text-[11px] text-white/70">
+              {isFr ? "Watermark ProducerHit sur la vidéo" : "ProducerHit watermark on video"}
+            </p>
+            <button
+              type="button"
+              onClick={() => openUpsell("feature_no_watermark", { source: "share_moment", plan })}
+              className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-violet-200 hover:text-white"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              {isFr ? "Retirer le watermark (Pro)" : "Remove watermark (Pro)"}
+            </button>
+          </div>
+        ) : (
           <p className="text-center text-[10px] text-emerald-300/65">
             {isFr ? "Sans watermark (Pro)" : "No watermark (Pro)"}
           </p>
-        ) : null}
+        )}
       </div>
     </Modal>
   );

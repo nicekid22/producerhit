@@ -10,6 +10,8 @@ Disallow: /admin
 Disallow: /auth
 Disallow: /theme-preview
 
+Sitemap: https://www.producerhit.com/sitemap-index.xml
 Sitemap: https://www.producerhit.com/sitemap.xml
+Sitemap: https://www.producerhit.com/sitemap-blog.xml
 Sitemap: https://www.producerhit.com/sitemap-loops.xml
 # Public tracks RSS feed: https://www.producerhit.com/rss-tracks.xml

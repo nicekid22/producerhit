@@ -2,26 +2,27 @@ import type { LucideIcon } from "lucide-react";
 import {
   BookOpen,
   Disc3,
+  DollarSign,
   Headphones,
   Mic2,
   Moon,
   Music2,
   Scale,
   Sparkles,
+  Users,
   Waves,
   Zap,
 } from "lucide-react";
-import { BLOG_POSTS, type BlogBlock } from "@/content/blog";
-
-export type BlogCategory = "beat" | "genre" | "workflow" | "comparison" | "song" | "guide";
+import { BLOG_POSTS } from "@/content/blog";
+import type { BlogCategoryId, EnrichedBlogPost } from "@/content/blog/types";
+import { enrichBlogPost, estimateReadingMinutes } from "@/lib/blogEngine";
 
 export type BlogVisual = {
   slug: string;
-  category: BlogCategory;
+  categoryId: BlogCategoryId;
   heroImage: string;
   icon: LucideIcon;
   accent: string;
-  /** Filtre genres/moods pour l’échantillonneur audio communauté */
   genreMatchers: RegExp[];
   readingMinutes: number;
   excerptEn: string;
@@ -47,41 +48,32 @@ const HERO_IMAGES = [
   "/img/Gemini_Generated_Image_5dc3ts5dc3ts5dc3-jukebox-bg-removed.png",
 ] as const;
 
-const CATEGORY_ICON: Record<BlogCategory, LucideIcon> = {
-  beat: Music2,
-  genre: Disc3,
+const CATEGORY_ICON: Record<BlogCategoryId, LucideIcon> = {
+  "beat-generator": Music2,
+  "type-beat": Disc3,
+  "song-vocals": Mic2,
+  "genre-guides": Waves,
+  comparisons: Scale,
   workflow: Sparkles,
-  comparison: Scale,
-  song: Mic2,
-  guide: BookOpen,
+  monetization: DollarSign,
+  community: Users,
 };
 
-const CATEGORY_ACCENT: Record<BlogCategory, string> = {
-  beat: "from-violet-600/40 via-fuchsia-500/20 to-transparent",
-  genre: "from-cyan-500/35 via-violet-500/15 to-transparent",
+const CATEGORY_ACCENT: Record<BlogCategoryId, string> = {
+  "beat-generator": "from-violet-600/40 via-fuchsia-500/20 to-transparent",
+  "type-beat": "from-cyan-500/35 via-violet-500/15 to-transparent",
+  "song-vocals": "from-emerald-500/25 via-cyan-500/15 to-transparent",
+  "genre-guides": "from-cyan-500/35 via-violet-500/15 to-transparent",
+  comparisons: "from-pink-500/30 via-violet-500/20 to-transparent",
   workflow: "from-amber-500/30 via-violet-500/15 to-transparent",
-  comparison: "from-pink-500/30 via-violet-500/20 to-transparent",
-  song: "from-emerald-500/25 via-cyan-500/15 to-transparent",
-  guide: "from-violet-500/35 via-cyan-400/15 to-transparent",
+  monetization: "from-green-500/25 via-emerald-500/15 to-transparent",
+  community: "from-indigo-500/35 via-violet-500/15 to-transparent",
 };
 
 function hashSlug(slug: string): number {
   let h = 0;
   for (let i = 0; i < slug.length; i++) h = (h * 31 + slug.charCodeAt(i)) >>> 0;
   return h;
-}
-
-function inferCategory(slug: string, keywords: string[]): BlogCategory {
-  const s = `${slug} ${keywords.join(" ")}`.toLowerCase();
-  if (/suno|udio|beatoven|mubert|loudly|alternatives|comparatif|vs/.test(s)) return "comparison";
-  if (/remix|cover|chanson|song|spotify|vocal/.test(s)) return "song";
-  if (/seed|workflow|guide|results|prompt/.test(s) && !/generator-prompt-template/.test(slug)) {
-    if (/trap|drill|dnb|garage|hyperpop|funk|soul/.test(s)) return "genre";
-    return "workflow";
-  }
-  if (/sleep|meditation|study|focus|lofi|ambient|sommeil|étude|concentration/.test(s)) return "guide";
-  if (/trap|drill|dnb|garage|hyperpop|funk|soul|afro|phonk|lofi/.test(s)) return "genre";
-  return "beat";
 }
 
 function inferGenreMatchers(slug: string, keywords: string[]): RegExp[] {
@@ -99,58 +91,27 @@ function inferGenreMatchers(slug: string, keywords: string[]): RegExp[] {
   return [/trap|drill|lofi|pop|r&b|hip hop|ambient|house|afro/i];
 }
 
-function estimateReadingMinutes(blocks: BlogBlock[]): number {
-  let words = 0;
-  for (const b of blocks) {
-    if (b.type === "p" || b.type === "h2" || b.type === "h3" || b.type === "callout") {
-      words += b.text.split(/\s+/).length;
-      if (b.type === "callout" && b.title) words += b.title.split(/\s+/).length;
-    } else if (b.type === "ul") {
-      words += b.items.join(" ").split(/\s+/).length;
-    }
-  }
-  return Math.max(3, Math.min(14, Math.ceil(words / 180)));
-}
-
-const SLUG_OVERRIDES: Partial<Record<string, Partial<BlogVisual>>> = {
-  "drum-and-bass-beat-generator-prompt-template": {
-    category: "genre",
-    genreMatchers: [/dnb|drum|bass|jungle|breakbeat/i],
-    icon: Waves,
-  },
-  "speed-garage-prompts-skippy-drums": {
-    category: "genre",
-    genreMatchers: [/garage|ukg|bassline|house/i],
-  },
+const SLUG_OVERRIDES: Partial<Record<string, { genreMatchers?: RegExp[]; icon?: LucideIcon; accent?: string }>> = {
+  "drum-and-bass-beat-generator-prompt-template": { genreMatchers: [/dnb|drum|bass|jungle|breakbeat/i], icon: Waves },
   "ai-sleep-study-music-generator-guide": {
-    category: "guide",
     genreMatchers: [/sleep|ambient|lofi|meditation|calm|study|focus/i],
     icon: Moon,
     accent: "from-indigo-500/40 via-violet-500/15 to-transparent",
   },
-  "music-ai-generator-prompt-guide-2026": {
-    category: "guide",
-    icon: Sparkles,
-    genreMatchers: [/trap|pop|r&b|lofi|ambient|hip hop/i],
-  },
-  "generateur-musique-ia-sommeil-etude-fr": {
-    category: "guide",
-    genreMatchers: [/sleep|lofi|ambient|calm|study|focus/i],
-    icon: Moon,
-  },
 };
 
-function buildVisual(slug: string): BlogVisual {
+function buildVisual(slug: string, enriched?: EnrichedBlogPost): BlogVisual {
   const post = BLOG_POSTS.find((p) => p.slug === slug);
+  const e = enriched ?? (post ? enrichBlogPost(post) : null);
+  const categoryId = e?.categoryId ?? "beat-generator";
   const keywords = post?.keywords ?? [];
-  const category = SLUG_OVERRIDES[slug]?.category ?? inferCategory(slug, keywords);
   const heroImage = HERO_IMAGES[hashSlug(slug) % HERO_IMAGES.length]!;
   const base: BlogVisual = {
     slug,
-    category,
+    categoryId,
     heroImage,
-    icon: CATEGORY_ICON[category],
-    accent: CATEGORY_ACCENT[category],
+    icon: CATEGORY_ICON[categoryId],
+    accent: CATEGORY_ACCENT[categoryId],
     genreMatchers: inferGenreMatchers(slug, keywords),
     readingMinutes: post ? estimateReadingMinutes(post.blocks) : 5,
     excerptEn: post?.description ?? "",
@@ -158,15 +119,26 @@ function buildVisual(slug: string): BlogVisual {
   };
   const over = SLUG_OVERRIDES[slug];
   if (!over) return base;
-  return { ...base, ...over, genreMatchers: over.genreMatchers ?? base.genreMatchers };
+  return {
+    ...base,
+    icon: over.icon ?? base.icon,
+    accent: over.accent ?? base.accent,
+    genreMatchers: over.genreMatchers ?? base.genreMatchers,
+  };
 }
 
 const visualCache = new Map<string, BlogVisual>();
-for (const p of BLOG_POSTS) {
-  visualCache.set(p.slug, buildVisual(p.slug));
+
+function ensureVisualCache(): void {
+  if (visualCache.size > 0) return;
+  for (const p of BLOG_POSTS) {
+    visualCache.set(p.slug, buildVisual(p.slug));
+  }
 }
 
-export function getBlogVisual(slug: string): BlogVisual {
+export function getBlogVisual(slug: string, enriched?: EnrichedBlogPost): BlogVisual {
+  if (enriched) return buildVisual(slug, enriched);
+  ensureVisualCache();
   return visualCache.get(slug) ?? buildVisual(slug);
 }
 

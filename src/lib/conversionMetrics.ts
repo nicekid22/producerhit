@@ -23,13 +23,19 @@ function writeMilestones(set: Set<number>): void {
 }
 
 /** Milestones free plan pour mesurer activation → friction paywall. */
-export function trackFreeGenerationMilestones(args: {
-  plan: string;
-  usedAfterGen: number;
-  loopId: string;
-  mode: string;
-  source: string;
-}): void {
+export function trackFreeGenerationMilestones(
+  args: {
+    plan: string;
+    usedAfterGen: number;
+    loopId: string;
+    mode: string;
+    source: string;
+  },
+  hooks?: {
+    onMilestone?: (milestone: number) => void;
+    onQuotaExhausted?: () => void;
+  },
+): void {
   if (args.plan !== "free") return;
 
   const fired = readMilestones();
@@ -43,6 +49,7 @@ export function trackFreeGenerationMilestones(args: {
         source: args.source,
         used: args.usedAfterGen,
       });
+      hooks?.onMilestone?.(m);
     }
   }
   writeMilestones(fired);
@@ -53,5 +60,6 @@ export function trackFreeGenerationMilestones(args: {
       mode: args.mode,
       source: args.source,
     });
+    hooks?.onQuotaExhausted?.();
   }
 }

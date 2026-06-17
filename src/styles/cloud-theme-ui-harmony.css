@@ -582,10 +582,15 @@ html.pk-cloud-active .pk-prism-player.pk-cloud-player.pk-prism-player--dock::aft
   html.pk-cloud-active .pk-prism-player.pk-cloud-player,
   html.pk-cloud-active .pk-prism-player.pk-cloud-player.pk-prism-player--dock,
   html.pk-cloud-active .pk-prism-player.pk-cloud-player.pk-prism-player--dock-modern {
-    left: 10px !important;
-    right: 10px !important;
+    left: 12px !important;
+    right: 12px !important;
+    bottom: max(
+      var(--pk-player-dock-bottom, 80px),
+      calc(var(--cloud-float-nav-h, 62px) + var(--cloud-float-nav-gap, 10px) + 8px + env(safe-area-inset-bottom, 0px))
+    ) !important;
     width: auto !important;
-    max-width: calc(100vw - 20px);
+    max-width: calc(100vw - 24px);
+    z-index: 50 !important;
     border-radius: var(--cloud-radius-xl) !important;
   }
 }

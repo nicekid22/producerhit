@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { LibraryVaultHero } from "@/components/library/LibraryVaultHero";
 import { LibraryCollectionsRow } from "@/components/library/LibraryCollectionsRow";
 import { buildLibraryCollections, loopsForCollection } from "@/lib/libraryCurations";
+import { markActivationStepLocal } from "@/components/onboarding/OnboardingChecklist";
 
 type Filter = "all" | "genre" | "key" | "bpm";
 
@@ -55,6 +56,10 @@ export default function Library() {
     if (loopsHydrated) return;
     void loadMyLoops();
   }, [loadMyLoops, loopsHydrated]);
+
+  useEffect(() => {
+    markActivationStepLocal("library_visit");
+  }, []);
 
   const filtered = useMemo(() => {
     const base = genreFilter ? scopedLoops.filter((l) => l.genre === genreFilter) : scopedLoops;

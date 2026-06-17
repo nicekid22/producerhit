@@ -1,0 +1,412 @@
+/* Landing mobile — cartes audio Apple (trending strip) */
+
+@media (max-width: 767px) {
+  .pk-landing--mobile-focus {
+    --pk-audio-card-w: clamp(10.5rem, 42vw, 11.75rem);
+    --pk-audio-card-radius: 1.05rem;
+    --pk-audio-card-cover-radius: 0.72rem;
+    --pk-audio-card-bg: rgba(255, 255, 255, 0.06);
+    --pk-audio-card-border: rgba(255, 255, 255, 0.12);
+    --pk-audio-card-highlight: rgba(255, 255, 255, 0.1);
+    --pk-audio-card-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
+    --pk-audio-card-name: rgba(255, 255, 255, 0.94);
+    --pk-audio-card-meta: rgba(255, 255, 255, 0.44);
+    --pk-audio-card-tint: linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--pk-apple-accent-from) 14%, transparent) 0%,
+      transparent 42%,
+      color-mix(in srgb, var(--pk-apple-accent-to) 10%, transparent) 100%
+    );
+    --pk-audio-card-play-bg: var(--pk-apple-cta-gradient);
+    --pk-audio-card-play-shadow: var(--pk-apple-cta-shadow);
+    --pk-audio-card-ring: color-mix(in srgb, var(--pk-apple-accent-from) 42%, transparent);
+  }
+
+  html.pk-warm-glass-active .pk-landing--mobile-focus,
+  .pk-warm-glass-stage.pk-landing--mobile-focus {
+    --pk-audio-card-bg: rgba(255, 252, 245, 0.07);
+    --pk-audio-card-border: rgba(255, 235, 210, 0.14);
+    --pk-audio-card-name: rgba(255, 248, 240, 0.94);
+    --pk-audio-card-meta: color-mix(in srgb, #fff8eb 44%, transparent);
+  }
+
+  html.pk-cloud-active .pk-landing--mobile-focus,
+  .pk-cloud-stage.pk-landing--mobile-focus {
+    --pk-audio-card-bg: color-mix(in srgb, var(--cloud-glass-bg-elevated) 90%, transparent);
+    --pk-audio-card-border: var(--cloud-glass-border);
+    --pk-audio-card-highlight: var(--cloud-glass-highlight);
+    --pk-audio-card-shadow: 0 10px 28px color-mix(in srgb, #000 8%, transparent);
+    --pk-audio-card-name: var(--cloud-text);
+    --pk-audio-card-meta: var(--cloud-text-muted);
+    --pk-audio-card-tint: linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--cloud-accent) 12%, transparent) 0%,
+      transparent 50%,
+      color-mix(in srgb, var(--cloud-accent) 8%, transparent) 100%
+    );
+  }
+
+  .pk-landing-trending-strip--apple .pk-landing-trending-strip__head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.65rem;
+    margin-bottom: clamp(0.85rem, 2.5vh, 1.1rem);
+    padding-inline: 0.1rem;
+  }
+
+  .pk-landing-trending-strip--apple .pk-landing-trending-strip__eyebrow {
+    margin: 0;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--pk-audio-card-meta);
+  }
+
+  .pk-landing-trending-strip--apple .pk-landing-trending-strip__title {
+    margin: 0.2rem 0 0;
+    font-size: clamp(1.125rem, 4.8vw, 1.28rem);
+    font-weight: 700;
+    letter-spacing: -0.028em;
+    line-height: 1.18;
+    color: var(--pk-audio-card-name);
+  }
+
+  .pk-landing-trending-strip--apple .pk-landing-trending-strip__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.1rem;
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+    color: var(--pk-apple-link);
+    transition: color 160ms ease, opacity 160ms ease;
+  }
+
+  .pk-landing-trending-strip--apple .pk-landing-trending-strip__rail {
+    display: flex;
+    gap: clamp(0.55rem, 2.2vw, 0.75rem);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    padding: 0.15rem 0.1rem 0.35rem;
+    margin-inline: -0.1rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .pk-landing-trending-strip--apple .pk-landing-trending-strip__rail::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* —— Carte audio —— */
+  .pk-audio-card-wrap {
+    flex: 0 0 var(--pk-audio-card-w);
+    width: var(--pk-audio-card-w);
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .pk-audio-card {
+    display: block;
+    width: 100%;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    text-align: left;
+    color: inherit;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .pk-audio-card:active .pk-audio-card__shell {
+    transform: scale(0.985);
+  }
+
+  .pk-audio-card__shell {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding: 0.5rem;
+    border-radius: var(--pk-audio-card-radius);
+    border: 1px solid var(--pk-audio-card-border);
+    background: var(--pk-audio-card-bg);
+    backdrop-filter: blur(20px) saturate(1.14);
+    -webkit-backdrop-filter: blur(20px) saturate(1.14);
+    box-shadow:
+      inset 0 1px 0 var(--pk-audio-card-highlight),
+      var(--pk-audio-card-shadow);
+    overflow: hidden;
+    transition:
+      transform 200ms ease,
+      border-color 200ms ease,
+      box-shadow 200ms ease;
+  }
+
+  .pk-audio-card.is-playing .pk-audio-card__shell {
+    border-color: var(--pk-audio-card-ring);
+    box-shadow:
+      inset 0 1px 0 var(--pk-audio-card-highlight),
+      0 0 0 1px color-mix(in srgb, var(--pk-apple-accent-from) 18%, transparent),
+      0 12px 32px color-mix(in srgb, var(--pk-apple-accent-to) 16%, transparent);
+  }
+
+  .pk-audio-card__cover-wrap {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    width: 100%;
+    overflow: hidden;
+    border-radius: var(--pk-audio-card-cover-radius);
+    background: rgba(0, 0, 0, 0.12);
+  }
+
+  .pk-audio-card__cover-wrap::after {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    background: var(--pk-audio-card-tint);
+    opacity: 0.85;
+    transition: opacity 200ms ease;
+  }
+
+  .pk-audio-card.is-playing .pk-audio-card__cover-wrap::after {
+    opacity: 0.55;
+  }
+
+  .pk-audio-card__cover-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    filter: saturate(0.95) contrast(1.02);
+  }
+
+  .pk-audio-card__badge {
+    position: absolute;
+    left: 0.4rem;
+    top: 0.4rem;
+    z-index: 3;
+    max-width: calc(100% - 3rem);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border-radius: 0.4rem;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(0, 0, 0, 0.38);
+    padding: 0.18rem 0.42rem;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .pk-audio-card__play-fab {
+    position: absolute;
+    right: 0.55rem;
+    bottom: 0.55rem;
+    z-index: 4;
+    display: grid;
+    place-items: center;
+    width: 2.15rem;
+    height: 2.15rem;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    background: rgba(0, 0, 0, 0.35);
+    color: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+    transition:
+      background 200ms ease,
+      border-color 200ms ease,
+      box-shadow 200ms ease,
+      transform 200ms ease;
+  }
+
+  .pk-audio-card.is-playing .pk-audio-card__play-fab {
+    border-color: rgba(255, 255, 255, 0.32);
+    background: var(--pk-audio-card-play-bg);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.24),
+      var(--pk-audio-card-play-shadow);
+    transform: scale(1.04);
+  }
+
+  .pk-audio-card__play-fab svg {
+    width: 0.95rem;
+    height: 0.95rem;
+  }
+
+  .pk-audio-card__info {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 0.2rem;
+    min-width: 0;
+    min-height: 2.125rem;
+    height: 2.125rem;
+    padding: 0 0.15rem 0.1rem;
+    flex-shrink: 0;
+  }
+
+  .pk-audio-card__name {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-height: 1.0625rem;
+    max-height: 1.0625rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.0625rem;
+    color: var(--pk-audio-card-name);
+  }
+
+  .pk-audio-card__meta {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-height: 0.875rem;
+    max-height: 0.875rem;
+    line-height: 0.875rem;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    color: var(--pk-audio-card-meta);
+  }
+
+  .pk-audio-card__remix {
+    display: inline-flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    min-height: 2rem;
+    max-height: 2rem;
+    flex-shrink: 0;
+    border: 1px solid color-mix(in srgb, var(--pk-apple-accent-from) 22%, transparent);
+    border-radius: 0.65rem;
+    background: color-mix(in srgb, var(--pk-apple-accent-from) 8%, transparent);
+    padding: 0.35rem 0.5rem;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--pk-apple-link);
+    transition:
+      background 160ms ease,
+      border-color 160ms ease,
+      transform 160ms ease;
+  }
+
+  .pk-audio-card__remix:active {
+    transform: scale(0.98);
+    background: color-mix(in srgb, var(--pk-apple-accent-from) 16%, transparent);
+    border-color: color-mix(in srgb, var(--pk-apple-accent-to) 30%, transparent);
+  }
+
+  .pk-audio-card-wrap--skeleton .pk-audio-card__shell {
+    pointer-events: none;
+  }
+
+  .pk-audio-card-wrap--skeleton .pk-audio-card__cover-wrap {
+    background: color-mix(in srgb, var(--pk-audio-card-name) 8%, transparent);
+  }
+
+  .pk-audio-card-wrap--skeleton .pk-audio-card__name-line,
+  .pk-audio-card-wrap--skeleton .pk-audio-card__meta-line {
+    border-radius: 0.35rem;
+    background: color-mix(in srgb, var(--pk-audio-card-name) 8%, transparent);
+  }
+
+  .pk-audio-card-wrap--skeleton .pk-audio-card__name-line {
+    height: 1.0625rem;
+    width: 88%;
+  }
+
+  .pk-audio-card-wrap--skeleton .pk-audio-card__meta-line {
+    height: 0.875rem;
+    width: 62%;
+  }
+
+  /* Titre complet au survol (desktop / pointeur fin) */
+  @media (hover: hover) and (pointer: fine) {
+    .pk-audio-card.is-title-clamped:hover .pk-audio-card__shell,
+    .pk-audio-card.is-title-clamped:focus-visible .pk-audio-card__shell {
+      overflow: visible;
+      z-index: 4;
+    }
+
+    .pk-audio-card__hover-tip {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: calc(100% + 0.35rem);
+      z-index: 8;
+      padding: 0.45rem 0.55rem;
+      border-radius: 0.55rem;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(12, 14, 22, 0.92);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      line-height: 1.35;
+      letter-spacing: -0.01em;
+      color: rgba(255, 255, 255, 0.95);
+      text-align: left;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(5px) scale(0.98);
+      transition:
+        opacity 180ms ease,
+        transform 180ms ease;
+    }
+
+    html.pk-cloud-active .pk-audio-card__hover-tip,
+    .pk-cloud-stage .pk-audio-card__hover-tip {
+      background: color-mix(in srgb, var(--cloud-glass-bg-elevated) 94%, #182018);
+      border-color: var(--cloud-glass-border);
+      color: var(--cloud-text);
+      box-shadow: 0 8px 24px color-mix(in srgb, #000 12%, transparent);
+    }
+
+    .pk-audio-card.is-title-clamped:hover .pk-audio-card__hover-tip,
+    .pk-audio-card.is-title-clamped:focus-visible .pk-audio-card__hover-tip {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .pk-landing-trending-strip--apple .pk-landing-trending-strip__empty {
+    margin: 0;
+    padding: 1.25rem 0.35rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--pk-audio-card-meta);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pk-audio-card__shell,
+  .pk-audio-card__play-fab,
+  .pk-audio-card__remix {
+    transition: none;
+  }
+}

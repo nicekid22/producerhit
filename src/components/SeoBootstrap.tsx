@@ -5,7 +5,12 @@ import { UI_LOCALES, hreflangUrl } from "@/i18n/config";
 import { getMessages } from "@/i18n/locales";
 import { getPageSeo, type SeoSlugKey } from "@/i18n/seo";
 import { PLAN_LIMITS } from "@/lib/planLimits";
-import { COMMERCIAL_RIGHTS_FAQ } from "@/lib/planPricing";
+import { PLAN_MONTHLY_USD } from "@/lib/planPricing";
+import { getPricingFaqs } from "@/lib/pricingContent";
+import { getHomeFaqsForJsonLd } from "@/lib/seoFaqJsonLd";
+import { enrichBlogPost, buildBlogArticleJsonLd } from "@/lib/blogEngine";
+import { getBlogAuthor } from "@/content/blog/authors";
+import { PRODUCERHIT_SOCIALS } from "@/lib/socialLinks";
 import {
   COMPARISON_PAGE_PATH_SET,
   SEO_PAGE_PATH_SET,
@@ -57,6 +62,7 @@ function setJsonLd(data: unknown) {
 function slugKeyFromPath(pathname: string): string {
   if (pathname === "/") return "home";
   if (pathname === "/blog") return "blog";
+  if (pathname.startsWith("/blog/category/") || pathname.startsWith("/blog/tag/")) return "blog";
   if (pathname.startsWith("/blog/")) return "blog-post";
   if (pathname.startsWith("/community/vibe/")) return "explore";
   if (pathname === "/trending") return "trending";
@@ -87,9 +93,12 @@ export function SeoBootstrap() {
     let cancelled = false;
 
     void (async () => {
+      if (pathname.startsWith("/loop/")) return;
+
       const origin = "https://www.producerhit.com";
       const canonicalUrl = `${origin}${pathname}`;
       const ogImageUrl = `${origin}/og-image.png`;
+      const slugKey = slugKeyFromPath(pathname);
 
       const isAppRoute =
         pathname.startsWith("/dashboard") ||
@@ -99,8 +108,11 @@ export function SeoBootstrap() {
         pathname.startsWith("/settings") ||
         pathname.startsWith("/admin") ||
         pathname.startsWith("/auth") ||
+        pathname.startsWith("/auth/callback") ||
+        pathname.startsWith("/u/") ||
         pathname.startsWith("/theme-preview");
-      const robots = isAppRoute ? "noindex,nofollow" : "index,follow";
+      const isUnknownRoute = slugKey === "other";
+      const robots = isAppRoute || isUnknownRoute ? "noindex,nofollow" : "index,follow";
 
       let seoPage: Awaited<ReturnType<typeof import("@/lib/seoPages").getSeoPageByPath>> = null;
       let comparisonPage: Awaited<ReturnType<typeof import("@/lib/seoComparisons").getComparisonByPath>> = null;
@@ -145,8 +157,6 @@ export function SeoBootstrap() {
       const seoPageLocale = seoPage && getSeoPageLocaleForPath ? getSeoPageLocaleForPath(pathname) : locale;
       const contentLocale = comparisonPage ? comparisonLocale : seoPage ? seoPageLocale : locale;
 
-      const slugKey = slugKeyFromPath(pathname);
-
       const pageSeo = getPageSeo(locale, slugKey as SeoSlugKey);
 
       const title = (() => {
@@ -164,6 +174,8 @@ export function SeoBootstrap() {
 
       const effectiveTitle = blogPost ? `${blogPost.title} | ProducerHit` : title;
       const effectiveDescription = blogPost ? blogPost.description : description;
+      const blogEnriched = blogPost ? enrichBlogPost(blogPost) : null;
+      const effectiveOgImage = blogEnriched?.ogImageUrl ?? ogImageUrl;
       const effectiveCanonicalUrl = (() => {
         if (blogPost) return `${origin}/blog/${blogPost.slug}`;
         if (comparisonPage && getComparisonCanonicalPath && getComparisonLocaleForPath) {
@@ -201,7 +213,10 @@ export function SeoBootstrap() {
       setMeta("og:title", effectiveTitle, "property");
       setMeta("og:description", effectiveDescription, "property");
       setMeta("og:url", effectiveCanonicalUrl, "property");
-      setMeta("og:image", ogImageUrl, "property");
+      setMeta("og:image", effectiveOgImage, "property");
+      setMeta("og:image:width", "1200", "property");
+      setMeta("og:image:height", "630", "property");
+      setMeta("og:image:alt", "ProducerHit — AI beat & song generator", "property");
       if (blogPost) {
         setMeta("article:published_time", `${blogPost.publishedAt}T00:00:00.000Z`, "property");
         setMeta("article:modified_time", `${blogPost.updatedAt}T00:00:00.000Z`, "property");
@@ -212,7 +227,7 @@ export function SeoBootstrap() {
       setMeta("twitter:card", "summary_large_image", "name");
       setMeta("twitter:title", effectiveTitle, "name");
       setMeta("twitter:description", effectiveDescription, "name");
-      setMeta("twitter:image", ogImageUrl, "name");
+      setMeta("twitter:image", effectiveOgImage, "name");
 
       setLink("canonical", effectiveCanonicalUrl);
       setLink("alternate", `${origin}/rss.xml`, { type: "application/rss+xml", title: "ProducerHit Blog RSS" });
@@ -242,13 +257,31 @@ export function SeoBootstrap() {
         })),
       });
 
-      const baseJsonLd = [
-        {
-          "@context": "https://schema.org",
-          "@type": "WebSite",
-          name: "ProducerHit",
-          url: origin,
+      const organizationLd = {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        name: "ProducerHit",
+        url: origin,
+        logo: `${origin}/icon-512.png`,
+        sameAs: PRODUCERHIT_SOCIALS.map((s) => s.href),
+      };
+
+      const websiteLd = {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        name: "ProducerHit",
+        url: origin,
+        publisher: { "@type": "Organization", name: "ProducerHit", url: origin },
+        potentialAction: {
+          "@type": "SearchAction",
+          target: `${origin}/community?q={search_term_string}`,
+          "query-input": "required name=search_term_string",
         },
+      };
+
+      const baseJsonLd = [
+        organizationLd,
+        websiteLd,
         {
           "@context": "https://schema.org",
           "@type": "WebApplication",
@@ -262,28 +295,28 @@ export function SeoBootstrap() {
               "@type": "Offer",
               name: "Free Plan",
               price: "0",
-              priceCurrency: "EUR",
+              priceCurrency: "USD",
               description: `${PLAN_LIMITS.free} AI generated tracks per month`,
             },
             {
               "@type": "Offer",
               name: "Pro Plan",
-              price: "10",
-              priceCurrency: "EUR",
+              price: String(PLAN_MONTHLY_USD.pro),
+              priceCurrency: "USD",
               description: `${PLAN_LIMITS.pro} AI generated tracks per month`,
             },
             {
               "@type": "Offer",
               name: "Studio Plan",
-              price: "30",
-              priceCurrency: "EUR",
+              price: String(PLAN_MONTHLY_USD.studio),
+              priceCurrency: "USD",
               description: `${PLAN_LIMITS.studio} AI generated tracks per month`,
             },
             {
               "@type": "Offer",
               name: "Plus Plan",
-              price: "89",
-              priceCurrency: "EUR",
+              price: String(PLAN_MONTHLY_USD.plus),
+              priceCurrency: "USD",
               description: `${PLAN_LIMITS.plus} AI generated tracks per month`,
             },
           ],
@@ -355,21 +388,11 @@ export function SeoBootstrap() {
         return;
       }
 
-      if (slugKey === "blog-post" && blogPost) {
+      if (slugKey === "blog-post" && blogPost && blogEnriched) {
+        const author = getBlogAuthor(blogEnriched.authorId);
         setJsonLd([
           ...baseJsonLd,
-          {
-            "@context": "https://schema.org",
-            "@type": "BlogPosting",
-            headline: blogPost.title,
-            description: blogPost.description,
-            datePublished: blogPost.publishedAt,
-            dateModified: blogPost.updatedAt,
-            url: `${origin}/blog/${blogPost.slug}`,
-            isPartOf: { "@type": "Blog", name: "ProducerHit Blog", url: `${origin}/blog` },
-            author: { "@type": "Organization", name: "ProducerHit", url: origin },
-            publisher: { "@type": "Organization", name: "ProducerHit", url: origin },
-          },
+          buildBlogArticleJsonLd(blogEnriched, author),
           {
             "@context": "https://schema.org",
             "@type": "BreadcrumbList",
@@ -421,28 +444,29 @@ export function SeoBootstrap() {
         return;
       }
 
-      if (slugKey === "home" || slugKey === "pricing") {
+      if (slugKey === "home") {
+        setJsonLd([...baseJsonLd, faq(getHomeFaqsForJsonLd(locale))]);
+        return;
+      }
+
+      if (slugKey === "pricing") {
         setJsonLd([
           ...baseJsonLd,
-          faq([
-            {
-              q: "Can I use the generated music commercially?",
-              a: COMMERCIAL_RIGHTS_FAQ.en.a,
+          faq(getPricingFaqs(locale)),
+          {
+            "@context": "https://schema.org",
+            "@type": "Product",
+            name: "ProducerHit Pro",
+            description: pageSeo.description,
+            brand: { "@type": "Brand", name: "ProducerHit" },
+            offers: {
+              "@type": "AggregateOffer",
+              priceCurrency: "USD",
+              lowPrice: String(PLAN_MONTHLY_USD.pro),
+              highPrice: String(PLAN_MONTHLY_USD.plus),
+              offerCount: 3,
             },
-            {
-              q: "Does ProducerHit generate full songs with vocals?",
-              a: "Yes. Song Mode generates complete songs with vocals, verse-chorus structure and professional mix quality. Type Beat Mode generates instrumental beats for producers.",
-            },
-            {
-              q: "What genres does ProducerHit support?",
-              a: "ProducerHit supports multiple genres including Trap, Drill, 90s R&B, Neo Soul, Afrobeats, Amapiano, Reggaeton, Jersey Club, Pop, UK Garage, Hyperpop, Baile Funk, Afrotrap and Dancehall.",
-            },
-            {
-              q: "How fast does ProducerHit generate music?",
-              a: "Most beats and songs generate in about 20 to 45 seconds depending on the length and complexity.",
-            },
-            { q: "Can I download beats as WAV files?", a: "Yes. ProducerHit supports MP3 downloads and WAV exports on paid plans." },
-          ]),
+          },
         ]);
         return;
       }

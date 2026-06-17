@@ -50,10 +50,9 @@ export function ThemeToggleButton({ variant = "icon", className }: Props) {
       type="button"
       onClick={toggleTheme}
       className={cn(
-        "flex h-10 w-10 shrink-0 items-center justify-center rounded-pk transition-colors",
-        warm
-          ? "bg-white/10 text-white hover:bg-white/14"
-          : "text-white/55 hover:bg-white/[0.06] hover:text-white/85",
+        "pk-sidebar-ctrl-btn",
+        warm && "pk-theme-cycle-btn--warm pk-theme-cycle-btn--active",
+        !warm && "pk-theme-cycle-btn--prism pk-theme-cycle-btn--active",
         "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/15",
         className,
       )}
@@ -117,4 +116,4 @@ export function visualThemeLabel(theme: VisualTheme, isFr: boolean): string {
   if (theme === "warm-glass") return isFr ? "Warm Glass" : "Warm Glass";
   return "Prism";
 }
-
+

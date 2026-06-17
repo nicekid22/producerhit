@@ -1,4 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
+import { mirrorEventToAdPixels, shouldMirrorToServer } from "@/lib/adPixels";
+import { sendServerConversion } from "@/lib/conversionApi";
 import { supabaseAuthStorage } from "@/lib/authStorage";
 import { getAttributionProps } from "@/lib/attribution";
 import { getOrCreateSessionId } from "@/lib/sessionId";
@@ -60,7 +62,7 @@ function writeQueue(events: ClientEventPayload[]) {
   }
 }
 
-/** Enqueue uniquement — pas de RPC immédiat (réduit l'egress API). */
+/** Enqueue + mirror pixels ads + CAPI pour les events clés. */
 export function trackClientEvent(name: string, props?: Record<string, unknown>) {
   const attribution = getAttributionProps();
   const mergedProps = { ...attribution, ...props };
@@ -73,6 +75,11 @@ export function trackClientEvent(name: string, props?: Record<string, unknown>) 
   const q = readQueue();
   q.push(payload);
   writeQueue(q);
+
+  const eventId = mirrorEventToAdPixels(name, mergedProps);
+  if (eventId && shouldMirrorToServer(name)) {
+    sendServerConversion(name, eventId, mergedProps);
+  }
 }
 
 /** Vide la file d'events vers growth_events (anonyme ou connecté). */

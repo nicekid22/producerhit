@@ -218,7 +218,7 @@ async function oauthWeb() {
   authUrl.searchParams.set("scope", SCOPES);
   authUrl.searchParams.set("access_type", "offline");
   authUrl.searchParams.set("prompt", "consent");
-  authUrl.searchParams.set("state", crypto.randomBytes(16).toString("hex"));
+  authUrl.searchParams.set("state", (process.env.OAUTH_SETUP_SECRET ?? "").trim() || crypto.randomBytes(16).toString("hex"));
   printChecklist(WEB_REDIRECT);
   console.log(authUrl.toString());
 }

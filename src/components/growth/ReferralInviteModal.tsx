@@ -10,6 +10,7 @@ import {
 } from "@/lib/referralConfig";
 import { buildReferralInviteUrl } from "@/lib/referral";
 import { trackClientEvent } from "@/lib/supabaseClient";
+import { ViralShareBar } from "@/components/growth/ViralShareBar";
 
 type Props = {
   open: boolean;
@@ -114,6 +115,20 @@ export function ReferralInviteModal({ open, onClose, locale, referralCode }: Pro
             <Copy className="h-4 w-4" />
             {isFr ? "Copier mon lien d'invitation" : "Copy my invite link"}
           </button>
+          {link ? (
+            <div className="mt-4">
+              <ViralShareBar
+                url={link}
+                shareText={
+                  isFr
+                    ? "Je crée mes beats avec ProducerHit — essaie avec mon lien"
+                    : "I make beats with ProducerHit — try with my link"
+                }
+                locale={locale}
+                channel="referral"
+              />
+            </div>
+          ) : null}
           <button
             type="button"
             onClick={onClose}

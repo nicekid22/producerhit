@@ -157,9 +157,9 @@ export function getPricingCompareRows(locale: AppLocale): PricingCompareRow[] {
     {
       label: isFr ? "Priorité génération" : "Generation priority",
       free: no,
-      pro: no,
-      studio: no,
-      plus: yes,
+      pro: yes,
+      studio: yes,
+      plus: isFr ? "Max" : "Max",
     },
     {
       label: isFr ? "Audio hébergé" : "Hosted audio",

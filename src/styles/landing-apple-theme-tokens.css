@@ -1,0 +1,145 @@
+/* Landing mobile Apple — tokens d'accent par thème (générateur + below-fold) */
+
+@media (max-width: 767px) {
+  .pk-landing--mobile-focus {
+    --pk-apple-accent-from: var(--prism-cyan, #67c3ff);
+    --pk-apple-accent-to: var(--prism-violet, #9d7cff);
+    --pk-apple-cta-gradient: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--pk-apple-accent-from) 92%, white) 0%,
+      color-mix(in srgb, var(--pk-apple-accent-to) 88%, #4a3a8a) 100%
+    );
+    --pk-apple-cta-shadow: 0 6px 28px color-mix(in srgb, var(--pk-apple-accent-to) 32%, transparent);
+    --pk-apple-segment-active: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--pk-apple-accent-from) 24%, transparent) 0%,
+      color-mix(in srgb, var(--pk-apple-accent-to) 20%, transparent) 100%
+    );
+    --pk-apple-glow-a: color-mix(in srgb, var(--pk-apple-accent-from) 22%, transparent);
+    --pk-apple-glow-b: color-mix(in srgb, var(--pk-apple-accent-to) 28%, transparent);
+    --pk-apple-link: color-mix(in srgb, var(--pk-apple-accent-from) 88%, white);
+    --pk-apple-text-gradient: linear-gradient(
+      118deg,
+      var(--pk-apple-accent-from) 0%,
+      color-mix(in srgb, var(--pk-apple-accent-from) 55%, white) 38%,
+      var(--pk-apple-accent-to) 100%
+    );
+    --pk-pricing-accent: var(--pk-apple-accent-to);
+    --pk-pricing-accent-soft: color-mix(in srgb, var(--pk-apple-accent-to) 16%, transparent);
+    --pk-pricing-accent-border: color-mix(in srgb, var(--pk-apple-accent-to) 38%, transparent);
+  }
+
+  html.pk-warm-glass-active .pk-landing--mobile-focus,
+  .pk-warm-glass-stage.pk-landing--mobile-focus {
+    --pk-apple-accent-from: var(--warm-icon-accent, #f5dc78);
+    --pk-apple-accent-to: var(--warm-icon-accent-alt, #e87840);
+    --pk-apple-cta-gradient: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--warm-icon-accent, #f5dc78) 90%, #fff8eb) 0%,
+      color-mix(in srgb, var(--warm-icon-accent-alt, #e87840) 86%, #5c3020) 100%
+    );
+    --pk-apple-cta-shadow: 0 6px 28px color-mix(in srgb, var(--warm-icon-accent-alt, #e87840) 30%, transparent);
+    --pk-apple-segment-active: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--warm-icon-accent, #f5dc78) 28%, transparent) 0%,
+      color-mix(in srgb, var(--warm-icon-accent-alt, #e87840) 22%, transparent) 100%
+    );
+    --pk-apple-glow-a: color-mix(in srgb, var(--warm-icon-accent, #f5dc78) 20%, transparent);
+    --pk-apple-glow-b: color-mix(in srgb, var(--warm-icon-accent-alt, #e87840) 24%, transparent);
+    --pk-apple-link: var(--warm-icon-accent, #f5dc78);
+    --pk-apple-text-gradient: linear-gradient(
+      118deg,
+      #b87818 0%,
+      #f0c848 42%,
+      #e07840 100%
+    );
+    --pk-pricing-accent: var(--warm-icon-accent-alt, #e87840);
+    --pk-pricing-accent-soft: color-mix(in srgb, var(--warm-icon-accent, #f5dc78) 18%, transparent);
+    --pk-pricing-accent-border: color-mix(in srgb, var(--warm-icon-accent-alt, #e87840) 36%, transparent);
+  }
+
+  html.pk-cloud-active .pk-landing--mobile-focus,
+  .pk-cloud-stage.pk-landing--mobile-focus {
+    --pk-apple-accent-from: color-mix(in srgb, var(--cloud-accent) 78%, white);
+    --pk-apple-accent-to: color-mix(in srgb, var(--cloud-accent) 88%, #2a3040);
+    --pk-apple-cta-gradient: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--cloud-accent) 88%, white) 0%,
+      color-mix(in srgb, var(--cloud-accent) 72%, #4a5568) 100%
+    );
+    --pk-apple-cta-shadow: 0 6px 28px color-mix(in srgb, var(--cloud-accent) 24%, transparent);
+    --pk-apple-segment-active: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--cloud-accent) 20%, transparent) 0%,
+      color-mix(in srgb, var(--cloud-field-bg, rgba(255, 255, 255, 0.5)) 42%, transparent) 100%
+    );
+    --pk-apple-glow-a: color-mix(in srgb, var(--cloud-accent) 16%, transparent);
+    --pk-apple-glow-b: color-mix(in srgb, var(--cloud-accent) 12%, transparent);
+    --pk-apple-link: var(--cloud-accent);
+    --pk-apple-text-gradient: linear-gradient(
+      118deg,
+      color-mix(in srgb, var(--cloud-accent) 82%, #182018) 0%,
+      color-mix(in srgb, var(--cloud-accent) 58%, white) 50%,
+      var(--cloud-accent) 100%
+    );
+    --pk-pricing-accent: var(--cloud-accent);
+    --pk-pricing-accent-soft: color-mix(in srgb, var(--cloud-accent) 14%, transparent);
+    --pk-pricing-accent-border: color-mix(in srgb, var(--cloud-accent) 34%, transparent);
+  }
+
+  /* Générateur — CTA & segment via tokens */
+  .pk-landing--mobile-focus .pk-landing-gen__apple-glow {
+    background:
+      radial-gradient(ellipse at 50% 42%, var(--pk-apple-glow-a) 0%, transparent 58%),
+      radial-gradient(ellipse at 50% 58%, var(--pk-apple-glow-b) 0%, transparent 68%);
+  }
+
+  .pk-landing--mobile-focus .pk-landing-gen__mobile-segment-btn--active {
+    background: var(--pk-apple-segment-active);
+  }
+
+  .pk-landing--mobile-focus .pk-landing-gen__cta--apple {
+    background: var(--pk-apple-cta-gradient) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.28),
+      var(--pk-apple-cta-shadow) !important;
+  }
+
+  .pk-landing--mobile-focus .pk-landing-flow__gen-zone::before {
+    background: radial-gradient(
+      ellipse at center,
+      color-mix(in srgb, var(--pk-apple-accent-to) 18%, transparent) 0%,
+      transparent 72%
+    );
+  }
+
+  /* Cloud — textes sombres sur fond clair */
+  html.pk-cloud-active .pk-landing--mobile-focus .pk-landing-apple-panel__title,
+  .pk-cloud-stage.pk-landing--mobile-focus .pk-landing-apple-panel__title,
+  html.pk-cloud-active .pk-landing--mobile-focus .pk-landing-apple-faq__title,
+  .pk-cloud-stage.pk-landing--mobile-focus .pk-landing-apple-faq__title {
+    color: var(--cloud-text);
+  }
+
+  html.pk-cloud-active .pk-landing--mobile-focus .pk-landing-apple-panel__lead,
+  .pk-cloud-stage.pk-landing--mobile-focus .pk-landing-apple-panel__lead,
+  html.pk-cloud-active .pk-landing--mobile-focus .pk-landing-apple-faq__item > div,
+  .pk-cloud-stage.pk-landing--mobile-focus .pk-landing-apple-faq__item > div {
+    color: var(--cloud-text-muted);
+  }
+
+  html.pk-cloud-active .pk-landing--mobile-focus .pk-landing-apple-faq__item summary,
+  .pk-cloud-stage.pk-landing--mobile-focus .pk-landing-apple-faq__item summary {
+    color: var(--cloud-text);
+  }
+
+  html.pk-cloud-active .pk-landing--mobile-focus .pk-landing-trending-strip__title,
+  .pk-cloud-stage.pk-landing--mobile-focus .pk-landing-trending-strip__title {
+    color: var(--cloud-text);
+  }
+
+  html.pk-cloud-active .pk-landing--mobile-focus .pk-landing-trending-strip__eyebrow,
+  .pk-cloud-stage.pk-landing--mobile-focus .pk-landing-trending-strip__eyebrow {
+    color: var(--cloud-text-muted);
+  }
+}

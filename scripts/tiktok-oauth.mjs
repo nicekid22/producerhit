@@ -132,7 +132,7 @@ async function main() {
     return;
   }
 
-  const state = randomState();
+  const state = (process.env.OAUTH_SETUP_SECRET ?? "").trim() || randomState();
   const authUrl = new URL("https://www.tiktok.com/v2/auth/authorize/");
   authUrl.searchParams.set("client_key", CLIENT_KEY);
   authUrl.searchParams.set("scope", scopes);

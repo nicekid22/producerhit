@@ -78,6 +78,9 @@ import { MasteringUpsellModal } from "@/components/growth/MasteringUpsellModal";
 import { notifyGamificationGeneration } from "@/components/growth/GamificationStrip";
 import { DailyBonusBannerButton } from "@/components/growth/DailyBonusBannerButton";
 import { DashboardPromoBillboard } from "@/components/growth/DashboardPromoBillboard";
+import { AudioRetentionBanner } from "@/components/growth/AudioRetentionBanner";
+import { CheckoutRecoveryBanner } from "@/components/billing/CheckoutRecoveryBanner";
+import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
 import { pickLoopForSharePrompt, shouldShowSharePromptAfterGeneration } from "@/lib/sharePrompt";
 import { trackFreeGenerationMilestones } from "@/lib/conversionMetrics";
 import { markReferralInvitePromptShown, shouldShowReferralInvitePrompt } from "@/lib/referralPrompt";
@@ -979,6 +982,22 @@ export default function Dashboard() {
     [entrySource, openUpsell, remaining, totalLimit, usedThisMonth],
   );
 
+  const trackFreeGenMilestonesWithUpsell = useCallback(
+    (args: { usedAfterGen: number; loopId: string; mode: string; source: string }) => {
+      trackFreeGenerationMilestones(
+        { plan, ...args },
+        {
+          onMilestone: (m) => {
+            if (m === 4 || m === 8) promptPlanUpsell("credits_low");
+            if (m === 10) promptPlanUpsell("limit_reached");
+          },
+          onQuotaExhausted: () => promptPlanUpsell("limit_reached"),
+        },
+      );
+    },
+    [plan, promptPlanUpsell],
+  );
+
   const promptCreditsBlocked = useCallback(
     (cost = versions) => {
       promptPlanUpsell(creditsBlockedReason(remaining, cost));
@@ -992,6 +1011,7 @@ export default function Dashboard() {
 
   const handleNeedCredits = useCallback(() => {
     if (remaining >= LOOP_COVER_REROLL_CREDIT_COST) {
+      trackClientEvent("quota_desync", { remaining, plan, source: "dashboard" });
       toast.error(
         locale === "fr"
           ? "Quota serveur désynchronisé — actualisation en cours, réessaie dans un instant."
@@ -1001,7 +1021,7 @@ export default function Dashboard() {
       return;
     }
     promptPlanUpsell("credits_exhausted");
-  }, [locale, promptPlanUpsell, refreshProfile, remaining]);
+  }, [locale, plan, promptPlanUpsell, refreshProfile, remaining]);
 
   useEffect(() => {
     if (profileBusy || !user) return;
@@ -1809,9 +1829,8 @@ export default function Dashboard() {
         });
         consumeCredit();
         const usedAfterGen = usedCountRef.current;
-        trackFreeGenerationMilestones({
-          plan,
-          usedAfterGen,
+        trackFreeGenMilestonesWithUpsell({
+          usedAfterGen: usedAfterGen,
           loopId: loop.id,
           mode,
           source: entrySource,
@@ -1886,7 +1905,7 @@ export default function Dashboard() {
               : "Monthly limit reached"
             : formatGenerationErrorMessage(rawMessage, locale, { plan });
           if (plan === "free" && isGenerationCapacityError(rawMessage) && shouldPromptPriorityUpsellAfterCapacityError(plan)) {
-            markPriorityUpsellPrompted();
+            markPriorityUpsellPrompted(plan);
             promptPlanUpsell("feature_priority");
           }
           if (previewId) {
@@ -2061,7 +2080,7 @@ export default function Dashboard() {
           const rawMessage = normalizeGenerationRawError(err instanceof Error ? err.message : String(err));
           const errorText = formatGenerationErrorMessage(rawMessage, locale, { plan });
           if (plan === "free" && isGenerationCapacityError(rawMessage) && shouldPromptPriorityUpsellAfterCapacityError(plan)) {
-            markPriorityUpsellPrompted();
+            markPriorityUpsellPrompted(plan);
             promptPlanUpsell("feature_priority");
           }
           for (const idx of [1, 2] as const) {
@@ -2329,8 +2348,7 @@ export default function Dashboard() {
         trackClientEvent("generate_success", { loop_id: loop.id, mode: "remix", versions: 1, plan, source: entrySource });
         consumeCredit();
         const usedAfterRemix = usedCountRef.current;
-        trackFreeGenerationMilestones({
-          plan,
+        trackFreeGenMilestonesWithUpsell({
           usedAfterGen: usedAfterRemix,
           loopId: loop.id,
           mode: "remix",
@@ -2566,8 +2584,7 @@ export default function Dashboard() {
         });
         consumeCredit();
         const usedAfterVibe = usedCountRef.current;
-        trackFreeGenerationMilestones({
-          plan,
+        trackFreeGenMilestonesWithUpsell({
           usedAfterGen: usedAfterVibe,
           loopId: loop.id,
           mode: isSongLike ? "song" : "beat",
@@ -2666,6 +2683,7 @@ export default function Dashboard() {
     if (remaining === 0) {
       setLandingAutoGenQueued(false);
       landingGenerateSnapshotRef.current = null;
+      trackClientEvent("landing_auto_generate_blocked", { reason: "credits_exhausted", entry_source: entrySource });
       promptPlanUpsell("credits_exhausted");
       return;
     }
@@ -2908,6 +2926,12 @@ export default function Dashboard() {
               mobileV2 ? "px-3 pb-1 pt-1" : "border-b border-pk-border p-4 md:border-white/10",
             )}
           >
+            <CheckoutRecoveryBanner
+              locale={locale}
+              location="dashboard"
+              currentPlan={plan}
+              className={mobileV2 ? "mb-2" : "mb-3"}
+            />
             <div className={cn("flex items-center gap-2", mobileV2 ? "w-full" : "justify-between")}>
               <div
                 data-coach="mode-rail"
@@ -3968,74 +3992,101 @@ export default function Dashboard() {
                 />
               </>
             ) : null}
-            <div className={cn(mobileV2 ? "pk-dashboard-mobile-footer__meta mt-2.5" : "mt-3")}>
-              <div
-                className={cn(
-                  mobileV2
-                    ? "pk-dashboard-mobile-footer__quota-row"
-                    : "flex items-center justify-between text-xs",
-                )}
-              >
-                <span
-                  className={cn(
-                    "inline-flex min-w-0 flex-wrap items-center gap-1",
-                    mobileV2 ? "text-white/50" : "text-gray-500",
-                  )}
-                >
+            <div className={cn(mobileV2 ? "pk-dashboard-mobile-footer__meta mt-1.5" : "mt-3")}>
+              {mobileV2 ? (
+                <div className="pk-dashboard-mobile-footer__quota-row pk-dashboard-mobile-footer__quota-row--compact">
                   {showQuotaLoading ? (
-                    locale === "fr" ? (
-                      "Chargement du quota…"
-                    ) : (
-                      "Loading quota…"
-                    )
+                    <span className="text-white/50">
+                      {locale === "fr" ? "Chargement du quota…" : "Loading quota…"}
+                    </span>
                   ) : (
-                    <>
-                      <span className="tabular-nums font-medium">
+                    <span
+                      className="pk-dashboard-mobile-footer__quota-compact inline-flex min-w-0 max-w-full items-center gap-1 overflow-hidden text-white/50"
+                      title={
+                        locale === "fr"
+                          ? `${remaining}/${totalLimit} restantes ce mois-ci · Plan ${plan}${bonusCreditsTotal > 0 ? ` · +${bonusCreditsTotal} bonus actifs` : ""}`
+                          : `${remaining}/${totalLimit} left this month · ${plan} plan${bonusCreditsTotal > 0 ? ` · +${bonusCreditsTotal} active bonus` : ""}`
+                      }
+                    >
+                      <span className="shrink-0 tabular-nums font-medium text-white/72">
                         {remaining}/{totalLimit}
                       </span>
                       <GenerationCreditIcon className="h-3 w-3 shrink-0" />
-                      <span>{locale === "fr" ? "restantes ce mois-ci" : "left this month"}</span>
-                    </>
+                      <span className="shrink-0 opacity-35" aria-hidden>
+                        ·
+                      </span>
+                      <span className="pk-dashboard-mobile-footer__plan shrink-0 capitalize">{plan}</span>
+                      {bonusCreditsTotal > 0 ? (
+                        <>
+                          <span className="shrink-0 opacity-35" aria-hidden>
+                            ·
+                          </span>
+                          <GenerationCreditAmount
+                            amount={bonusCreditsTotal}
+                            showPlus
+                            iconClassName="h-2.5 w-2.5"
+                            className="shrink-0 text-white/55"
+                          />
+                        </>
+                      ) : null}
+                    </span>
                   )}
-                </span>
-                <span className={mobileV2 ? "pk-dashboard-mobile-footer__plan" : "shrink-0 text-gray-600"}>
-                  {showQuotaLoading
-                    ? locale === "fr"
-                      ? "Plan…"
-                      : "Plan…"
-                    : locale === "fr"
-                      ? `Plan ${plan}`
-                      : `${plan} plan`}
-                </span>
-              </div>
-            <div
-              className={cn(
-                reserveBonusMetaRow ? "min-h-[1.125rem]" : "",
-                bonusCreditsTotal > 0 ? undefined : "invisible",
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="inline-flex min-w-0 flex-wrap items-center gap-1 text-gray-500">
+                      {showQuotaLoading ? (
+                        locale === "fr" ? (
+                          "Chargement du quota…"
+                        ) : (
+                          "Loading quota…"
+                        )
+                      ) : (
+                        <>
+                          <span className="tabular-nums font-medium">
+                            {remaining}/{totalLimit}
+                          </span>
+                          <GenerationCreditIcon className="h-3 w-3 shrink-0" />
+                          <span>{locale === "fr" ? "restantes ce mois-ci" : "left this month"}</span>
+                        </>
+                      )}
+                    </span>
+                    <span className="shrink-0 text-gray-600">
+                      {showQuotaLoading
+                        ? locale === "fr"
+                          ? "Plan…"
+                          : "Plan…"
+                        : locale === "fr"
+                          ? `Plan ${plan}`
+                          : `${plan} plan`}
+                    </span>
+                  </div>
+                  <div
+                    className={cn(
+                      reserveBonusMetaRow ? "min-h-[1.125rem]" : "",
+                      bonusCreditsTotal > 0 ? undefined : "invisible",
+                    )}
+                    aria-hidden={bonusCreditsTotal <= 0}
+                  >
+                    {bonusCreditsTotal > 0 ? (
+                      <div className="pk-dashboard-bonus-meta mt-1 inline-flex flex-wrap items-center gap-1 text-[10px]">
+                        <GenerationCreditAmount
+                          amount={bonusCreditsTotal}
+                          showPlus
+                          iconClassName="h-2.5 w-2.5 pk-dashboard-bonus-meta__gem"
+                          className="pk-dashboard-bonus-meta__amount"
+                        />
+                        <span>
+                          {locale === "fr"
+                            ? "bonus actifs (niveau, parrainage, daily)"
+                            : "active bonus (level, referral, daily)"}
+                        </span>
+                      </div>
+                    ) : null}
+                  </div>
+                </>
               )}
-              aria-hidden={bonusCreditsTotal <= 0}
-            >
-            {bonusCreditsTotal > 0 ? (
-              <div
-                className={cn(
-                  "pk-dashboard-bonus-meta inline-flex flex-wrap items-center gap-1",
-                  mobileV2 ? "text-[10px] leading-snug" : "mt-1 text-[10px]",
-                )}
-              >
-                <GenerationCreditAmount
-                  amount={bonusCreditsTotal}
-                  showPlus
-                  iconClassName="h-2.5 w-2.5 pk-dashboard-bonus-meta__gem"
-                  className="pk-dashboard-bonus-meta__amount"
-                />
-                <span>
-                  {locale === "fr"
-                    ? "bonus actifs (niveau, parrainage, daily)"
-                    : "active bonus (level, referral, daily)"}
-                </span>
-              </div>
-            ) : null}
-            </div>
             </div>
             {plan === "free" && remaining > 0 && remaining <= 2 ? (
               <div className="pk-dashboard-mobile-footer__upsell mt-2 flex flex-col gap-2 rounded-lg border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-100/90">
@@ -4090,6 +4141,10 @@ export default function Dashboard() {
         )}
       >
         {!mobileV2 ? dashboardPromoAndGaming : null}
+        <div className="mb-4 space-y-4">
+          <OnboardingChecklist locale={locale} />
+          <AudioRetentionBanner locale={locale} plan={plan} loops={loops} />
+        </div>
         {showMasterWorkspace ? (
           <MasteringPanel
             locale={locale}
@@ -4118,67 +4173,81 @@ export default function Dashboard() {
             onCreate={goCreate}
           />
         ) : null}
-        <div
-          className={cn(
-            "pk-studio-workspace-header flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
-            mobileV2 && mobileTab !== "results" && "hidden",
-            mobileV2 && mobileTab === "results" && "pk-mobile-results-filters mb-2 gap-2",
-          )}
-        >
-          {!mobileV2 ? (
-            <div>
-              <div className="pk-studio-workspace-header__title text-lg font-semibold">{locale === "fr" ? "Mon espace" : "My Workspace"}</div>
-              <div className="mt-1 text-sm text-pk-muted">
-                {locale === "fr"
-                  ? `Affichage ${workspaceVisibleCount} sur ${hasWorkspaceFilters ? workspaceFilteredTotal : libraryTotalCount}`
-                  : `Showing ${workspaceVisibleCount} of ${hasWorkspaceFilters ? workspaceFilteredTotal : libraryTotalCount}`}
-              </div>
+        {mobileV2 && mobileTab === "results" ? (
+          <div className="pk-mobile-gen-notice pk-mobile-results-filters mb-3 flex flex-col gap-3 rounded-2xl border px-3 py-3 backdrop-blur-xl">
+            <p className="pk-workspace-track-count text-xs tabular-nums text-white/50">
+              {locale === "fr"
+                ? hasWorkspaceFilters
+                  ? `${workspaceVisibleCount} / ${workspaceFilteredTotal} · ${libraryTotalCount}`
+                  : `${workspaceVisibleCount} / ${libraryTotalCount}`
+                : hasWorkspaceFilters
+                  ? `${workspaceVisibleCount} / ${workspaceFilteredTotal} · ${libraryTotalCount}`
+                  : `${workspaceVisibleCount} / ${libraryTotalCount}`}
+            </p>
+            <div className="relative w-full">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-pk-muted" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={locale === "fr" ? "Rechercher…" : "Search your creations..."}
+                className="pk-workspace-search-field w-full rounded-xl border border-pk-border py-2.5 pl-9 pr-3 text-sm outline-none placeholder:text-pk-muted focus:border-pk-accent"
+              />
             </div>
-          ) : null}
-          <div
-            className={
-              mobileV2
-                ? "flex w-full min-w-0 flex-wrap items-center gap-2"
-                : "flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center"
-            }
-          >
-            {mobileV2 ? (
-              <div className="pk-workspace-track-count shrink-0 text-xs leading-snug text-white/45">
-                {locale === "fr"
-                  ? hasWorkspaceFilters
-                    ? `${workspaceVisibleCount} / ${workspaceFilteredTotal} · ${libraryTotalCount}`
-                    : `${workspaceVisibleCount} / ${libraryTotalCount}`
-                  : hasWorkspaceFilters
-                    ? `${workspaceVisibleCount} / ${workspaceFilteredTotal} · ${libraryTotalCount}`
-                    : `${workspaceVisibleCount} / ${libraryTotalCount}`}
-              </div>
-            ) : null}
-            {!mobileV2 ? (
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setWorkspaceView("tracks")}
-                  className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-                    workspaceView === "tracks" ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
-                  }`}
-                >
-                  {locale === "fr" ? "Tracks" : "Tracks"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setWorkspaceView("master");
-                    goMaster();
-                  }}
-                  className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-                    workspaceView === "master" ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
-                  }`}
-                >
-                  {locale === "fr" ? "Mastering Studio" : "Mastering Studio"}
-                </button>
-              </div>
-            ) : null}
-            <div className={mobileV2 ? "flex min-w-0 flex-1 flex-col gap-2" : "contents"}>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setSavedOnly(false)}
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  !savedOnly ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
+                }`}
+              >
+                {locale === "fr" ? "Tout" : "All"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setSavedOnly(true)}
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  savedOnly ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
+                }`}
+              >
+                {locale === "fr" ? "Sauvegardés" : "Saved"}
+              </button>
+            </div>
+          </div>
+        ) : (
+        <div className="pk-studio-workspace-header flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="pk-studio-workspace-header__title text-lg font-semibold">{locale === "fr" ? "Mon espace" : "My Workspace"}</div>
+            <div className="mt-1 text-sm text-pk-muted">
+              {locale === "fr"
+                ? `Affichage ${workspaceVisibleCount} sur ${hasWorkspaceFilters ? workspaceFilteredTotal : libraryTotalCount}`
+                : `Showing ${workspaceVisibleCount} of ${hasWorkspaceFilters ? workspaceFilteredTotal : libraryTotalCount}`}
+            </div>
+          </div>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setWorkspaceView("tracks")}
+                className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                  workspaceView === "tracks" ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
+                }`}
+              >
+                {locale === "fr" ? "Tracks" : "Tracks"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setWorkspaceView("master");
+                  goMaster();
+                }}
+                className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                  workspaceView === "master" ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
+                }`}
+              >
+                {locale === "fr" ? "Mastering Studio" : "Mastering Studio"}
+              </button>
+            </div>
             <div className="relative w-full sm:w-80">
               <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-pk-muted" />
               <input
@@ -4208,9 +4277,9 @@ export default function Dashboard() {
                 {locale === "fr" ? "Sauvegardés" : "Saved"}
               </button>
             </div>
-            </div>
           </div>
         </div>
+        )}
 
         <div ref={mobileGenerationsAnchorRef} className="mt-5 space-y-4 scroll-mt-3">
           {workspaceJobs.length ? (

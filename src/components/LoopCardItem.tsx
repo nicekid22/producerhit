@@ -28,7 +28,7 @@ import { prepareLoopVariantGeneration, variantResultTitle } from "@/lib/loopVari
 import { extractLoopVocalLanguage, formatVocalLanguageLabel, isSongLoop } from "@/lib/vocalLanguages";
 import { resolveLoopVoiceCloneInfo, voiceCloneStatusLabel } from "@/lib/voiceCloneMeta";
 import { resolveStemsDownloadUrl } from "@/lib/stemsDownload";
-import { canDownloadStems } from "@/lib/planEntitlements";
+import { canDownloadStems, hasCommercialUseRights } from "@/lib/planEntitlements";
 import { useGrowthUpsellStore } from "@/stores/growthUpsellStore";
 import { GenerationCreditAmount } from "@/components/GenerationCreditIcon";
 import { rerollLoopCover, LOOP_COVER_REROLL_CREDIT_COST } from "@/lib/loopCoverReroll";
@@ -469,6 +469,13 @@ export const LoopCardItem = memo(function LoopCardItem({
   const handleDownloadBeat = useCallback(() => {
     void (async () => {
       if (!loop.audioUrl || isDownloading) return;
+      if (!hasCommercialUseRights(plan)) {
+        useGrowthUpsellStore.getState().openUpsell("feature_commercial_download", {
+          source: "loop_card_download",
+          plan,
+        });
+        return;
+      }
       setIsDownloading(true);
       try {
         const response = await fetch(loop.audioUrl);
@@ -509,7 +516,7 @@ export const LoopCardItem = memo(function LoopCardItem({
         setIsDownloading(false);
       }
     })();
-  }, [isDownloading, loop.audioUrl, loop.details?.audioFormat, loop.name]);
+  }, [isDownloading, loop.audioUrl, loop.details?.audioFormat, loop.name, plan]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -552,8 +559,7 @@ export const LoopCardItem = memo(function LoopCardItem({
             e.stopPropagation();
             setMenuOpen(false);
             if (!canDownloadStems(plan)) {
-              toast(locale === "fr" ? "Stems ZIP : plan Plus" : "Stems ZIP: Plus plan");
-              window.location.href = "/pricing?plan=plus&checkout=1";
+              useGrowthUpsellStore.getState().openUpsell("feature_stems", { source: "loop_card_stems", plan });
               return;
             }
             setIsDownloadingStems(true);

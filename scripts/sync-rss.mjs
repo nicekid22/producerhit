@@ -1,44 +1,50 @@
+import { buildSync } from "esbuild";
 import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 const repoRoot = process.cwd();
-const blogFile = path.join(repoRoot, "src", "content", "blog.ts");
+const outFile = path.join(repoRoot, ".tmp", "blog-rss-bundle.cjs");
 const rssFile = path.join(repoRoot, "public", "rss.xml");
-
-const src = readFileSync(blogFile, "utf8");
 const origin = "https://www.producerhit.com";
 
-const posts = [];
-const blockRe = /slug:\s+"([^"]+)"[\s\S]*?title:\s+"([^"]+)"[\s\S]*?description:\s+"([^"]+)"[\s\S]*?publishedAt:\s+"([^"]+)"/g;
-let m;
-while ((m = blockRe.exec(src)) !== null) {
-  posts.push({ slug: m[1], title: m[2], description: m[3], publishedAt: m[4] });
-}
+buildSync({
+  entryPoints: [path.join(repoRoot, "scripts", "blog-posts-entry.ts")],
+  bundle: true,
+  platform: "node",
+  format: "cjs",
+  outfile: outFile,
+  logLevel: "silent",
+});
 
-posts.sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1));
+const mod = await import(pathToFileURL(outFile).href);
+const posts = (mod.BLOG_POSTS ?? []).slice().sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1));
 
 function rssDate(ymd) {
-  const d = new Date(`${ymd}T12:00:00Z`);
-  return d.toUTCString();
+  return new Date(`${ymd}T12:00:00Z`).toUTCString();
+}
+
+function escXml(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 }
 
 const items = posts
   .map((p) => {
     const url = `${origin}/blog/${p.slug}`;
-    const title = p.title.replace(/&/g, "&amp;").replace(/</g, "&lt;");
-    const desc = p.description.replace(/]]>/g, "]]&gt;");
+    const og = `${origin}/api/og-blog?slug=${encodeURIComponent(p.slug)}&title=${encodeURIComponent(p.title.slice(0, 80))}${p.categoryId ? `&category=${encodeURIComponent(p.categoryId)}` : ""}`;
     return `    <item>
-      <title>${title}</title>
+      <title>${escXml(p.title)}</title>
       <link>${url}</link>
       <guid>${url}</guid>
       <pubDate>${rssDate(p.publishedAt)}</pubDate>
-      <description><![CDATA[${desc}]]></description>
+      <description><![CDATA[${p.description.replace(/]]>/g, "]]&gt;")}]]></description>
+      <enclosure url="${og}" type="image/svg+xml" length="0"/>
     </item>`;
   })
   .join("\n");
 
 const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0">
+<rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/">
   <channel>
     <title>ProducerHit Blog</title>
     <link>${origin}/blog</link>
