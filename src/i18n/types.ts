@@ -8,9 +8,22 @@ export type MessageCatalog = {
     login: string;
     startFree: string;
     openStudio: string;
+    studio: string;
     homePage: string;
     menu: string;
     mobileMenu: string;
+  };
+  app: {
+    generator: string;
+    library: string;
+    voiceStudio: string;
+    sampleLab: string;
+    settings: string;
+    website: string;
+    home: string;
+    logout: string;
+    signedOut: string;
+    signOutFailed: string;
   };
   seo: {
     homeTitle: string;
@@ -52,5 +65,11 @@ export type MessageCatalog = {
     ctaTitle: string;
     ctaLead: string;
     ctaButton: string;
+    modeSong: string;
+    modeBeat: string;
+    modeAdvanced: string;
+    create: string;
+    generating: string;
+    stayOnHome: string;
   };
 };

@@ -7,6 +7,7 @@ import { PLAN_LIMITS } from "@/lib/planLimits";
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
 
 import type { AppLocale } from "@/i18n/config";
+import { getMessages } from "@/i18n/locales";
 type CreateMode = "song" | "beat";
 
 export type GeneratorSideCard = {
@@ -218,6 +219,7 @@ export function LandingGenerator({
   reduceMotion = false,
 }: Props) {
   const isFr = locale === "fr";
+  const landing = getMessages(locale).landing;
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [shellTouched, setShellTouched] = useState(false);
   const [shellIdle, setShellIdle] = useState(false);
@@ -473,7 +475,7 @@ export function LandingGenerator({
                       mode === "song" ? "pk-prism-pill-active" : "text-white/55 hover:text-white",
                     )}
                   >
-                    Song
+                    {landing.modeSong}
                   </button>
                   <button
                     type="button"
@@ -483,7 +485,7 @@ export function LandingGenerator({
                       mode === "beat" ? "pk-prism-pill-active" : "text-white/55 hover:text-white",
                     )}
                   >
-                    Type Beat
+                    {landing.modeBeat}
                   </button>
                 </div>
                 {mode === "beat" ? (
@@ -496,7 +498,7 @@ export function LandingGenerator({
                         ? "border-[var(--prism-violet)]/40 bg-[var(--prism-violet)]/10 text-white"
                         : "border-white/10 bg-white/[0.03] text-white/60 hover:text-white",
                     )}
-                    aria-label={isFr ? "Options avancées" : "Advanced options"}
+                    aria-label={landing.modeAdvanced}
                   >
                     <SlidersHorizontal className="h-4 w-4" />
                   </button>
@@ -523,7 +525,7 @@ export function LandingGenerator({
                     ) : (
                       <Music2 className="h-4 w-4" aria-hidden />
                     )}
-                    {generating ? (isFr ? "Génération…" : "Generating…") : isFr ? "Créer" : "Create"}
+                    {generating ? landing.generating : landing.create}
                   </span>
                 </button>
               </div>
@@ -555,7 +557,7 @@ export function LandingGenerator({
                     ) : (
                       <Music2 className="h-4 w-4" aria-hidden />
                     )}
-                    {generating ? (isFr ? "Génération…" : "Generating…") : isFr ? "Créer" : "Create"}
+                    {generating ? landing.generating : landing.create}
                   </span>
                 </button>
               </div>

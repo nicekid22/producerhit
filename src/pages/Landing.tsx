@@ -6,6 +6,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
 import { trackLandingView } from "@/lib/growthFunnelEvents";
 import { useLocaleStore } from "@/stores/localeStore";
+import { useT } from "@/i18n";
 import { LanguagePicker } from "@/components/LanguagePicker";
 import { Menu, Mic2, X } from "lucide-react";
 import { usePlayerStore } from "@/stores/playerStore";
@@ -187,6 +188,7 @@ export default function Landing() {
   const profile = useAuthStore((s) => s.profile);
   const refreshProfile = useAuthStore((s) => s.refreshProfile);
   const locale = useLocaleStore((s) => s.locale);
+  const { m } = useT();
   const visualTheme = useVisualThemeStore((s) => s.theme);
   const warmGlass = isWarmGlassTheme(visualTheme);
   const cloud = isCloudTheme(visualTheme);
@@ -1145,10 +1147,10 @@ export default function Landing() {
 
           <nav className="hidden items-center gap-3 sm:flex">
             <Link to="/community" className="text-sm font-semibold text-white/70 transition-colors hover:text-white">
-              {locale === "fr" ? "Communauté" : "Community"}
+              {m.nav.community}
             </Link>
             <Link to="#pricing" className="text-sm font-semibold text-white/70 transition-colors hover:text-white">
-              {locale === "fr" ? "Tarifs" : "Pricing"}
+              {m.nav.pricing}
             </Link>
             {user ? (
               <>
@@ -1156,7 +1158,7 @@ export default function Landing() {
                   to="/dashboard"
                   className="pk-prism-btn inline-flex h-10 items-center justify-center rounded-full px-6 text-sm font-semibold"
                 >
-                  {locale === "fr" ? "Studio" : "Studio"}
+                  {m.nav.studio}
                 </Link>
               </>
             ) : (
@@ -1165,10 +1167,10 @@ export default function Landing() {
                   to={buildAuthUrl({ mode: "login" })}
                   className="pk-glass-btn pk-glass-btn--ghost inline-flex h-10 items-center justify-center rounded-full px-5 text-sm font-semibold"
                 >
-                  {locale === "fr" ? "Connexion" : "Login"}
+                  {m.nav.login}
                 </Link>
                 <HeroCtaButton to={buildAuthUrl()} variant="spark" size="nav">
-                  {locale === "fr" ? "Essayer gratuit" : "Start Free"}
+                  {m.nav.startFree}
                 </HeroCtaButton>
               </>
             )}
@@ -1176,31 +1178,35 @@ export default function Landing() {
             <LanguagePicker variant="nav" />
           </nav>
 
-          <button
-            type="button"
-            className={cn(
-              "pk-landing-mobile-nav__trigger inline-flex h-10 w-10 items-center justify-center rounded-full sm:hidden",
-              mobileOpen && "is-open",
-            )}
-            onClick={() => setMobileOpen((v) => !v)}
-            aria-expanded={mobileOpen}
-            aria-label={locale === "fr" ? "Menu navigation" : "Navigation menu"}
-          >
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
+          <div className="pk-landing-header__mobile-actions flex items-center gap-1 sm:hidden">
+            <ThemeAndAccentPicker variant="nav-icon" />
+            <LanguagePicker variant="icon" />
+            <button
+              type="button"
+              className={cn(
+                "pk-landing-mobile-nav__trigger inline-flex h-10 w-10 items-center justify-center rounded-full",
+                mobileOpen && "is-open",
+              )}
+              onClick={() => setMobileOpen((v) => !v)}
+              aria-expanded={mobileOpen}
+              aria-label={m.nav.menu}
+            >
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
         </div>
 
         {mobileOpen ? (
           <div className="pk-landing-mobile-nav sm:hidden">
             <div className="pk-landing-mobile-nav__panel">
-              <nav className="pk-landing-mobile-nav__list" aria-label={locale === "fr" ? "Menu mobile" : "Mobile menu"}>
+              <nav className="pk-landing-mobile-nav__list" aria-label={m.nav.mobileMenu}>
                 {user ? (
                   <Link
                     to="/dashboard"
                     className="pk-landing-mobile-nav__item pk-landing-mobile-nav__item--primary"
                     onClick={() => setMobileOpen(false)}
                   >
-                    {locale === "fr" ? "Ouvrir le studio" : "Open studio"}
+                    {m.nav.openStudio}
                   </Link>
                 ) : null}
                 <Link
@@ -1208,14 +1214,14 @@ export default function Landing() {
                   className="pk-landing-mobile-nav__item"
                   onClick={() => setMobileOpen(false)}
                 >
-                  {locale === "fr" ? "Communauté" : "Community"}
+                  {m.nav.community}
                 </Link>
                 <Link
                   to="#pricing"
                   className="pk-landing-mobile-nav__item"
                   onClick={() => setMobileOpen(false)}
                 >
-                  {locale === "fr" ? "Tarifs" : "Pricing"}
+                  {m.nav.pricing}
                 </Link>
                 {!user ? (
                   <>
@@ -1224,7 +1230,7 @@ export default function Landing() {
                       className="pk-landing-mobile-nav__item"
                       onClick={() => setMobileOpen(false)}
                     >
-                      {locale === "fr" ? "Connexion" : "Login"}
+                      {m.nav.login}
                     </Link>
                     <HeroCtaButton
                       to={buildAuthUrl()}
@@ -1233,7 +1239,7 @@ export default function Landing() {
                       className="pk-landing-mobile-nav__item pk-landing-mobile-nav__item--cta w-full rounded-[0.875rem]"
                       onClick={() => setMobileOpen(false)}
                     >
-                      {locale === "fr" ? "Essayer gratuit" : "Start free"}
+                      {m.nav.startFree}
                     </HeroCtaButton>
                   </>
                 ) : (
@@ -1242,14 +1248,10 @@ export default function Landing() {
                     className="pk-landing-mobile-nav__item pk-landing-mobile-nav__item--muted"
                     onClick={() => setMobileOpen(false)}
                   >
-                    {locale === "fr" ? "Rester sur l’accueil" : "Stay on home"}
+                    {m.landing.stayOnHome}
                   </Link>
                 )}
               </nav>
-              <div className="pk-landing-mobile-nav__footer">
-                <ThemeAndAccentPicker variant="nav-icon" className="pk-landing-mobile-nav__theme" />
-                <LanguagePicker variant="mobile" className="pk-landing-mobile-nav__locale" onChange={() => setMobileOpen(false)} />
-              </div>
             </div>
           </div>
         ) : null}
@@ -1288,7 +1290,7 @@ export default function Landing() {
               <p
                 className={cn(
                   "pk-landing-hero-dream-sub mx-auto max-w-md text-pretty leading-relaxed text-white/55",
-                  mobileLandingFocus ? "mt-2 text-[11px]" : "mt-3 text-xs sm:text-[13px]",
+                  mobileLandingFocus ? "mt-2 text-xs" : "mt-3 text-xs sm:text-[13px]",
                 )}
               >
                 {dreamCopy.subline}

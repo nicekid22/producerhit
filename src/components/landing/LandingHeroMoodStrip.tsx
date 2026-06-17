@@ -57,7 +57,7 @@ export function LandingHeroMoodStrip({ locale, cloudActive, compact, minimal }: 
               )}
             >
               <span className="pk-mood-dot" data-pk-element={mood.element} aria-hidden />
-              <span className="pk-landing-hero-moods__name text-[9px] font-medium tracking-wide sm:text-[10px]">
+              <span className="pk-landing-hero-moods__name text-[10px] font-medium tracking-wide sm:text-[11px]">
                 {mood.label}
               </span>
             </button>

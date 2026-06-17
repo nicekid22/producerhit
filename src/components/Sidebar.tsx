@@ -23,8 +23,7 @@ import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 import { useGrowthAdmin } from "@/hooks/useGrowthAdmin";
 import { useAuthStore } from "@/stores/authStore";
-import { COMMUNITY_HUB_NAV } from "@/lib/communityHub";
-import { useLocaleStore } from "@/stores/localeStore";
+import { useT } from "@/i18n";
 import { buildAuthUrl } from "@/lib/authRoutes";
 import { SIDEBAR_ICON_CLASS, SIDEBAR_ICON_PROPS } from "@/lib/sidebarIcons";
 
@@ -39,48 +38,48 @@ export function Sidebar() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const signOut = useAuthStore((s) => s.signOut);
-  const locale = useLocaleStore((s) => s.locale);
+  const { m } = useT();
   const isGrowthAdmin = useGrowthAdmin();
   const [loggingOut, setLoggingOut] = useState(false);
 
   const items: Item[] = [
     {
       to: "/dashboard",
-      label: locale === "fr" ? "Générateur" : "Generator",
+      label: m.app.generator,
       icon: <SidebarIcon icon={AudioWaveform} />,
     },
     {
       to: "/library",
-      label: locale === "fr" ? "Bibliothèque" : "Library",
+      label: m.app.library,
       icon: <SidebarIcon icon={Grid3X3} />,
     },
     {
       to: "/voice-studio",
-      label: locale === "fr" ? "Voice Studio" : "Voice Studio",
+      label: m.app.voiceStudio,
       icon: <SidebarIcon icon={Mic} />,
     },
     ...(isSampleLabEnabled()
       ? [
           {
             to: "/sample-lab",
-            label: locale === "fr" ? "Sample Lab" : "Sample Lab",
+            label: m.app.sampleLab,
             icon: <SidebarIcon icon={Layers} />,
           } satisfies Item,
         ]
       : []),
     {
       to: "/community",
-      label: locale === "fr" ? COMMUNITY_HUB_NAV.fr : COMMUNITY_HUB_NAV.en,
+      label: m.nav.community,
       icon: <SidebarIcon icon={Users} />,
     },
     {
       to: "/settings",
-      label: locale === "fr" ? "Paramètres" : "Settings",
+      label: m.app.settings,
       icon: <SidebarIcon icon={Settings} />,
     },
     {
       to: "/?home=1",
-      label: locale === "fr" ? "Site" : "Website",
+      label: m.app.website,
       icon: <SidebarIcon icon={Home} />,
       mobileHidden: true,
     },
@@ -94,10 +93,10 @@ export function Sidebar() {
     setLoggingOut(true);
     try {
       await signOut();
-      toast.success(locale === "fr" ? "Déconnecté" : "Signed out");
+      toast.success(m.app.signedOut);
       navigate("/auth", { replace: true });
     } catch {
-      toast.error(locale === "fr" ? "Impossible de se déconnecter" : "Could not sign out");
+      toast.error(m.app.signOutFailed);
     } finally {
       setLoggingOut(false);
     }
@@ -114,7 +113,7 @@ export function Sidebar() {
 
   const localePicker = <LanguagePicker variant="icon" className="md:hidden" />;
   const homeActive = location.pathname === "/" || location.pathname === "/home";
-  const homeLabel = locale === "fr" ? "Accueil" : "Home";
+  const homeLabel = m.app.home;
 
   return (
     <div className="pk-sidebar-root flex h-full w-full min-w-0 items-center bg-transparent md:h-auto md:w-auto md:flex-col md:justify-between md:px-2 md:py-3">
@@ -183,8 +182,8 @@ export function Sidebar() {
               onClick={onLogout}
               disabled={loggingOut}
               className="flex h-10 w-10 items-center justify-center rounded-pk text-pk-muted transition-colors hover:bg-white/5 hover:text-pk-text disabled:opacity-60"
-              aria-label={locale === "fr" ? "Déconnexion" : "Logout"}
-              title={locale === "fr" ? "Déconnexion" : "Logout"}
+              aria-label={m.app.logout}
+              title={m.app.logout}
             >
               {logoutIcon}
             </button>
@@ -192,8 +191,8 @@ export function Sidebar() {
             <Link
               to={buildAuthUrl({ mode: "login", next: "/dashboard" })}
               className="flex h-10 w-10 items-center justify-center rounded-pk text-pk-muted transition-colors hover:bg-white/5 hover:text-pk-text"
-              aria-label={locale === "fr" ? "Connexion" : "Login"}
-              title={locale === "fr" ? "Connexion" : "Login"}
+              aria-label={m.nav.login}
+              title={m.nav.login}
             >
               <LogIn className={SIDEBAR_ICON_CLASS} {...SIDEBAR_ICON_PROPS} />
             </Link>
@@ -210,8 +209,8 @@ export function Sidebar() {
             onClick={onLogout}
             disabled={loggingOut}
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-pk-muted transition-colors hover:bg-white/5 hover:text-pk-text disabled:opacity-60"
-            aria-label={locale === "fr" ? "Déconnexion" : "Logout"}
-            title={locale === "fr" ? "Déconnexion" : "Logout"}
+            aria-label={m.app.logout}
+            title={m.app.logout}
           >
             {logoutIcon}
           </button>
@@ -219,8 +218,8 @@ export function Sidebar() {
           <Link
             to={buildAuthUrl({ mode: "login", next: "/dashboard" })}
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-pk-muted transition-colors hover:bg-white/5 hover:text-pk-text"
-            aria-label={locale === "fr" ? "Connexion" : "Login"}
-            title={locale === "fr" ? "Connexion" : "Login"}
+            aria-label={m.nav.login}
+            title={m.nav.login}
           >
             <LogIn className={SIDEBAR_ICON_CLASS} {...SIDEBAR_ICON_PROPS} />
           </Link>

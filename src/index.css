@@ -3042,6 +3042,15 @@ a.pk-pricing-plan-btn {
     background: rgba(255, 255, 255, 0.05);
   }
 
+  .pk-studio-nav-link:focus-visible {
+    outline: 2px solid rgba(103, 195, 255, 0.5);
+    outline-offset: 2px;
+  }
+
+  .pk-studio-nav-link:active {
+    transform: scale(0.96);
+  }
+
   .pk-studio-nav-link--active {
     border-color: rgba(157, 124, 255, 0.35) !important;
     background: linear-gradient(145deg, rgba(157, 124, 255, 0.16), rgba(103, 195, 255, 0.08)) !important;

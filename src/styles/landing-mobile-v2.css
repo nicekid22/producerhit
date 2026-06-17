@@ -74,7 +74,7 @@
   .pk-landing--mobile-focus .pk-landing-flow__tagline--mobile {
     margin-top: clamp(0.15rem, 0.5vh, 0.35rem);
     padding-top: 0;
-    font-size: clamp(8px, 2.2vw, 9px);
+    font-size: clamp(10px, 2.6vw, 11px);
   }
 
   .pk-landing--mobile-focus .pk-landing-flow__intro--mobile .pk-hero-prompt-wrap--mobile {
@@ -83,8 +83,8 @@
 
   .pk-landing--mobile-focus .pk-landing-flow__lead--mobile {
     margin-top: clamp(0.25rem, 0.7vh, 0.4rem);
-    font-size: clamp(10px, 2.6vw, 11px);
-    line-height: 1.35;
+    font-size: clamp(11px, 2.8vw, 12px);
+    line-height: 1.4;
   }
 
   .pk-landing--mobile-focus .pk-warm-pigment-vignette {
@@ -459,6 +459,21 @@
     border-color: rgba(103, 195, 255, 0.28);
     background: rgba(103, 195, 255, 0.08);
     box-shadow: 0 0 0 1px rgba(103, 195, 255, 0.08);
+  }
+
+  .pk-landing-mobile-nav__trigger:focus-visible,
+  .pk-landing-mobile-nav__item:focus-visible {
+    outline: 2px solid rgba(103, 195, 255, 0.55);
+    outline-offset: 2px;
+  }
+
+  .pk-landing-mobile-nav__item:active {
+    transform: scale(0.985);
+  }
+
+  .pk-landing-header__mobile-actions {
+    flex-shrink: 0;
+    align-items: center;
   }
 
   .pk-landing-mobile-nav {
