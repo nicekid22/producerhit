@@ -1,0 +1,285 @@
+/**
+ * Cloud — lisibilité texte sur verre clair + mode audit contraste.
+ * Active l’audit : Settings → Cloud → « Audit contraste », ou ?cloudContrast=1
+ */
+
+/* ——— Tokens Prism → Cloud (héritage composants legacy) ——— */
+html.pk-cloud-active,
+html.pk-cloud-active body,
+.pk-cloud-stage {
+  --pk-text: var(--cloud-text);
+  --pk-muted: var(--cloud-text-muted);
+  --pk-text-secondary: var(--cloud-text-muted);
+}
+
+/* Accent texte lisible (pas lavande pâle sur verre clair) */
+html.pk-cloud-active .pk-voice-studio-page,
+.pk-cloud-stage .pk-voice-studio-page {
+  --voice-accent: color-mix(in srgb, var(--cloud-accent) 62%, var(--cloud-text));
+  --voice-accent-soft: color-mix(in srgb, var(--cloud-accent) 14%, transparent);
+  --voice-emerald: color-mix(in srgb, #059669 72%, var(--cloud-text));
+}
+
+/* ——— Voice Studio — textes encore en blanc hardcodé ——— */
+html.pk-cloud-active .pk-voice-studio-hero__eyebrow,
+html.pk-cloud-active .pk-voice-studio-stat__value,
+html.pk-cloud-active .pk-voice-studio-stat__label,
+html.pk-cloud-active .pk-voice-studio-stat__icon,
+.pk-cloud-stage .pk-voice-studio-hero__eyebrow,
+.pk-cloud-stage .pk-voice-studio-stat__value,
+.pk-cloud-stage .pk-voice-studio-stat__label,
+.pk-cloud-stage .pk-voice-studio-stat__icon {
+  color: var(--cloud-text) !important;
+}
+
+html.pk-cloud-active .pk-voice-studio-stat__label,
+.pk-cloud-stage .pk-voice-studio-stat__label {
+  color: var(--cloud-text-muted) !important;
+}
+
+html.pk-cloud-active .pk-voice-studio-hero__chip--muted,
+.pk-cloud-stage .pk-voice-studio-hero__chip--muted {
+  color: var(--cloud-text-muted) !important;
+  background: color-mix(in srgb, var(--cloud-field-bg) 90%, transparent) !important;
+  border-color: var(--cloud-glass-border) !important;
+}
+
+html.pk-cloud-active .pk-voice-studio-panel__new,
+.pk-cloud-stage .pk-voice-studio-panel__new {
+  color: color-mix(in srgb, var(--cloud-accent) 58%, var(--cloud-text)) !important;
+}
+
+html.pk-cloud-active .pk-voice-card__btn:not(.pk-voice-card__btn--primary),
+.pk-cloud-stage .pk-voice-card__btn:not(.pk-voice-card__btn--primary) {
+  color: var(--cloud-text) !important;
+  background: color-mix(in srgb, var(--cloud-field-bg) 92%, transparent) !important;
+  border-color: var(--cloud-glass-border) !important;
+}
+
+html.pk-cloud-active .pk-voice-card__btn:not(.pk-voice-card__btn--primary):hover:not(:disabled),
+.pk-cloud-stage .pk-voice-card__btn:not(.pk-voice-card__btn--primary):hover:not(:disabled) {
+  background: color-mix(in srgb, var(--cloud-accent) 12%, var(--cloud-field-bg)) !important;
+  border-color: color-mix(in srgb, var(--cloud-accent) 28%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-voice-card__btn.is-on,
+.pk-cloud-stage .pk-voice-card__btn.is-on {
+  color: color-mix(in srgb, #059669 78%, var(--cloud-text)) !important;
+  background: color-mix(in srgb, #34d399 14%, var(--cloud-field-bg)) !important;
+  border-color: color-mix(in srgb, #34d399 32%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-voice-card__btn--primary,
+html.pk-cloud-active .pk-voice-create__primary,
+html.pk-cloud-active .pk-voice-create__record:not(.is-recording),
+html.pk-cloud-active .pk-voice-empty__cta,
+.pk-cloud-stage .pk-voice-card__btn--primary,
+.pk-cloud-stage .pk-voice-create__primary,
+.pk-cloud-stage .pk-voice-create__record:not(.is-recording),
+.pk-cloud-stage .pk-voice-empty__cta {
+  color: #050508 !important;
+  background: var(--cloud-btn-gradient) !important;
+  border-color: color-mix(in srgb, var(--cloud-accent) 28%, transparent) !important;
+  box-shadow: 0 8px 22px var(--cloud-accent-glow) !important;
+}
+
+html.pk-cloud-active .pk-voice-card__delete,
+.pk-cloud-stage .pk-voice-card__delete {
+  color: var(--cloud-text-muted) !important;
+}
+
+html.pk-cloud-active .pk-voice-card__delete:hover:not(:disabled),
+.pk-cloud-stage .pk-voice-card__delete:hover:not(:disabled) {
+  color: #dc2626 !important;
+}
+
+/* ——— Formulaire Nouvelle voix ——— */
+html.pk-cloud-active .pk-voice-create,
+.pk-cloud-stage .pk-voice-create {
+  border-color: var(--cloud-glass-border) !important;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--cloud-glass-bg-elevated) 92%, transparent),
+    color-mix(in srgb, var(--cloud-glass-bg) 78%, transparent)
+  ) !important;
+  box-shadow:
+    inset 0 1px 0 var(--cloud-glass-highlight),
+    0 16px 44px color-mix(in srgb, #000 10%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-voice-create__title,
+html.pk-cloud-active .pk-voice-create__step-label,
+html.pk-cloud-active .pk-voice-create__dropzone-text,
+html.pk-cloud-active .pk-voice-create__field-label,
+html.pk-cloud-active .pk-voice-create__hint,
+html.pk-cloud-active .pk-voice-empty__title,
+.pk-cloud-stage .pk-voice-create__title,
+.pk-cloud-stage .pk-voice-create__step-label,
+.pk-cloud-stage .pk-voice-create__dropzone-text,
+.pk-cloud-stage .pk-voice-create__field-label,
+.pk-cloud-stage .pk-voice-create__hint,
+.pk-cloud-stage .pk-voice-empty__title {
+  color: var(--cloud-text) !important;
+}
+
+html.pk-cloud-active .pk-voice-create__quota,
+html.pk-cloud-active .pk-voice-create__tips li,
+html.pk-cloud-active .pk-voice-empty__text,
+.pk-cloud-stage .pk-voice-create__quota,
+.pk-cloud-stage .pk-voice-create__tips li,
+.pk-cloud-stage .pk-voice-empty__text {
+  color: var(--cloud-text-muted) !important;
+}
+
+html.pk-cloud-active .pk-voice-create__quota,
+.pk-cloud-stage .pk-voice-create__quota {
+  background: var(--cloud-field-bg) !important;
+  border-color: var(--cloud-glass-border) !important;
+}
+
+html.pk-cloud-active .pk-voice-create__step,
+.pk-cloud-stage .pk-voice-create__step {
+  color: var(--cloud-text-muted) !important;
+  background: var(--cloud-field-bg) !important;
+  border-color: var(--cloud-glass-border) !important;
+}
+
+html.pk-cloud-active .pk-voice-create__step.is-current,
+.pk-cloud-stage .pk-voice-create__step.is-current {
+  color: var(--cloud-text) !important;
+  background: color-mix(in srgb, var(--cloud-accent) 16%, var(--cloud-field-bg)) !important;
+  border-color: color-mix(in srgb, var(--cloud-accent) 32%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-voice-create__step-line,
+.pk-cloud-stage .pk-voice-create__step-line {
+  background: var(--cloud-glass-border) !important;
+}
+
+html.pk-cloud-active .pk-voice-create__dropzone,
+.pk-cloud-stage .pk-voice-create__dropzone {
+  border-color: color-mix(in srgb, var(--cloud-accent) 22%, var(--cloud-glass-border)) !important;
+  background: color-mix(in srgb, var(--cloud-field-bg) 88%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-voice-create__secondary,
+html.pk-cloud-active .pk-voice-create__ghost,
+.pk-cloud-stage .pk-voice-create__secondary,
+.pk-cloud-stage .pk-voice-create__ghost {
+  color: var(--cloud-text) !important;
+  background: var(--cloud-field-bg) !important;
+  border: 1px solid var(--cloud-glass-border) !important;
+}
+
+html.pk-cloud-active .pk-voice-create__input,
+.pk-cloud-stage .pk-voice-create__input {
+  color: var(--cloud-text) !important;
+  background: var(--cloud-field-bg) !important;
+  border-color: var(--cloud-field-border) !important;
+}
+
+html.pk-cloud-active .pk-voice-create__tips,
+.pk-cloud-stage .pk-voice-create__tips {
+  border-top-color: var(--cloud-glass-border) !important;
+}
+
+html.pk-cloud-active .pk-voice-create__tips li::before,
+.pk-cloud-stage .pk-voice-create__tips li::before {
+  background: var(--cloud-accent) !important;
+  opacity: 1 !important;
+}
+
+html.pk-cloud-active .pk-voice-empty,
+.pk-cloud-stage .pk-voice-empty {
+  border-color: var(--cloud-glass-border) !important;
+  background: color-mix(in srgb, var(--cloud-field-bg) 70%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-voice-studio-hero__footer,
+.pk-cloud-stage .pk-voice-studio-hero__footer {
+  border-top-color: var(--cloud-glass-border) !important;
+}
+
+html.pk-cloud-active .pk-voice-studio-panel__head,
+.pk-cloud-stage .pk-voice-studio-panel__head {
+  border-bottom-color: var(--cloud-glass-border) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Mode audit contraste — surligne le texte suspect (blanc / très clair)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+html.pk-cloud-contrast-debug::after {
+  content: "Audit contraste Cloud";
+  position: fixed;
+  bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  left: 12px;
+  z-index: 99999;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font:
+    600 11px/1.2 system-ui,
+    sans-serif;
+  letter-spacing: 0.02em;
+  color: #fff;
+  background: rgba(220, 38, 38, 0.92);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28);
+  pointer-events: none;
+}
+
+html.pk-cloud-contrast-debug.pk-cloud-active .pk-cloud-stage :is(
+    .text-white,
+    .text-white\/20,
+    .text-white\/30,
+    .text-white\/40,
+    .text-white\/45,
+    .text-white\/50,
+    .text-white\/55,
+    .text-white\/60,
+    .text-white\/70,
+    .text-white\/75,
+    .text-white\/80,
+    .text-white\/90,
+    [class*="text-white/"],
+    .pk-voice-card__btn:not(.pk-voice-card__btn--primary):not(.is-on),
+    .pk-voice-create__secondary,
+    .pk-voice-create__ghost,
+    .pk-voice-create__step:not(.is-current),
+    .pk-voice-studio-hero__chip--muted,
+    .pk-hub-vibe-tile__sub,
+    .pk-hub-vibe-tile__count,
+    .pk-accent-link:not(:hover),
+    [class*="bg-black/"],
+    [class*="bg-\[#0a0a0f\]"]
+  ),
+html.pk-cloud-contrast-debug .pk-marketing-page.pk-cloud-stage :is(
+    .text-white,
+    [class*="text-white/"]
+  ) {
+  outline: 2px dashed rgba(220, 38, 38, 0.92) !important;
+  outline-offset: 2px;
+  box-shadow: inset 0 0 0 9999px rgba(255, 0, 80, 0.06) !important;
+}
+
+/* Overlays éphémères — hors scope audit (toasts, modales, upsell…) */
+html.pk-cloud-contrast-debug :is(
+    .pk-toast-container,
+    .pk-toast,
+    .pk-veil-modal-panel,
+    .pk-loop-details-sheet,
+    .pk-mobile-onboarding-sheet,
+    .pk-gen-activity-pill,
+    .pk-wow-banner,
+    .pk-theme-roast,
+    .pk-element-spirit,
+    .pk-coach-root,
+    .pk-wav-coach-bubble
+  ),
+html.pk-cloud-contrast-debug :is(
+    .pk-toast-container,
+    .pk-toast,
+    .pk-veil-modal-panel
+  ) * {
+  outline: none !important;
+  box-shadow: none !important;
+}

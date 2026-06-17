@@ -1,5 +1,11 @@
 /** Assets & copy landing — remplace les partenaires par de vrais logos SVG quand disponibles. */
 
+import type { AppLocale } from "@/i18n/config";
+import { getMessages } from "@/i18n/locales";
+
+function interpolate(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{\{(\w+)\}\}/g, (_, key: string) => String(vars[key] ?? ""));
+}
 import { PLAN_LIMITS } from "@/lib/planLimits";
 import { planPriceLabel } from "@/lib/planPricing";
 
@@ -110,7 +116,7 @@ export function pickLandingGalleryImages(
   return out;
 }
 
-type Locale = "en" | "fr";
+type Locale = AppLocale;
 
 export type LandingTestimonial = {
   id: string;
@@ -191,17 +197,15 @@ export function landingFlowSectionClass(extra?: string): string {
 
 export function landingCopy(locale: Locale) {
   const isFr = locale === "fr";
+  const landing = getMessages(locale).landing;
+  const proPrice = planPriceLabel("pro", isFr ? "fr" : "en", { suffix: true });
   return {
-    heroTagline: isFr ? "Studio IA · Chansons & type beats" : "AI studio · Songs & type beats",
-    heroLead: isFr
-      ? "Décris une vibe → obtiens un morceau en quelques secondes. MP3 gratuit, WAV sur Pro."
-      : "Describe a vibe → get a track in seconds. Free MP3, WAV on Pro.",
-    heroReassurance: isFr
-      ? "Gratuit pour commencer · Sans carte · Export MP3"
-      : "Free to start · No card · MP3 export",
-    heroScrollCue: isFr ? "Essayer le générateur" : "Try the generator",
-    heroCtaPrimary: isFr ? "Essayer ProducerHit" : "Try ProducerHit",
-    heroCtaDashboard: isFr ? "Ouvrir mon studio →" : "Open my studio →",
+    heroTagline: landing.heroTagline,
+    heroLead: landing.heroLead,
+    heroReassurance: landing.heroReassurance,
+    heroScrollCue: landing.heroScrollCue,
+    heroCtaPrimary: landing.heroCtaPrimary,
+    heroCtaDashboard: landing.heroCtaDashboard,
 
     trustEyebrow: isFr ? "Adopté par les meilleurs créateurs" : "Trusted by the creators",
     trustTitle: isFr ? "Une suite complète pour produire, remixer et publier" : "A complete suite to produce, remix, and publish",
@@ -258,11 +262,9 @@ export function landingCopy(locale: Locale) {
       ? "Song Mode, Type Beat, Remix ACE, export MP3/WAV — des workflows concrets, pas des promesses marketing."
       : "Song Mode, Type Beat, Remix, MP3/WAV export — real workflows, not marketing fluff.",
 
-    ctaTitle: isFr ? "Ta prochaine idée mérite d’être entendue" : "Your next idea deserves to be heard",
-    ctaLead: isFr
-      ? `${PLAN_LIMITS.free} générations gratuites / mois. Passe Pro (${planPriceLabel("pro", "fr")}/mo) pour le WAV et l’usage commercial.`
-      : `${PLAN_LIMITS.free} free gens / month. Go Pro (${planPriceLabel("pro", "en")}/mo) for WAV and commercial use.`,
-    ctaButton: isFr ? "Essayer ProducerHit gratuitement →" : "Try ProducerHit free →",
+    ctaTitle: landing.ctaTitle,
+    ctaLead: interpolate(landing.ctaLead, { free: PLAN_LIMITS.free, proPrice }),
+    ctaButton: landing.ctaButton,
 
     freeSpotlightTitle: isFr
       ? `${PLAN_LIMITS.free} générations gratuites, chaque mois`
@@ -487,4 +489,144 @@ export function landingFeatureCards(locale: Locale): LandingFeatureCard[] {
       description: "MP3/WAV, built-in mastering, cloud library — Spotify Ready, BeatStars, and direct DAW import.",
     },
   ];
+}
+
+export type LandingCloudMoodCard = {
+  id: "transparent" | "green" | "red" | "blue";
+  element: "air" | "earth" | "fire" | "water";
+  label: string;
+  tag: string;
+  moment: string;
+  unlock: string;
+  toast: string;
+};
+
+export function landingCloudMoodsCopy(locale: Locale) {
+  const isFr = locale === "fr";
+  if (isFr) {
+    return {
+      eyebrow: "Cloud · 4 humeurs",
+      title: "Quatre humeurs. Un studio.",
+      lead: "Air, Terre, Feu ou Eau — choisis l’ambiance, le studio s’aligne.",
+      heroLine: "Règle l’humeur avant la première note.",
+      heroStripLabel: "4 humeurs Cloud",
+      scrollToMoods: "Tout voir",
+      footnote: "Pas un filtre. Une sensation. Change d’élément quand tu veux — le studio suit ton flow.",
+      cta: "Trouver mon mood",
+      ctaHint: "Essaie Cloud dans le studio",
+      moods: [
+        {
+          id: "transparent" as const,
+          element: "air" as const,
+          label: "Air",
+          tag: "Clarté",
+          moment: "3h du matin, fenêtre ouverte, tête enfin légère.",
+          unlock: "Espace pour respirer — et entendre la mélodie que tu chuchotais sans t’en rendre compte.",
+          toast: "Air — tête légère, idées claires.",
+        },
+        {
+          id: "green" as const,
+          element: "earth" as const,
+          label: "Terre",
+          tag: "Ancrage",
+          moment: "Après-midi lent, café, rien à prouver.",
+          unlock: "Des grooves ancrés, des idées organiques — la musique qui sent le vrai, pas le rush.",
+          toast: "Terre — ancré, chaleureux, sans rush.",
+        },
+        {
+          id: "red" as const,
+          element: "fire" as const,
+          label: "Feu",
+          tag: "Intensité",
+          moment: "Tu en as marre de jouer small. Aujourd’hui, tu crèves l’écran.",
+          unlock: "L’énergie qui pousse une hook agressive, un beat qui claque, une prise de risque assumée.",
+          toast: "Feu — drive activé, pas d’excuses.",
+        },
+        {
+          id: "blue" as const,
+          element: "water" as const,
+          label: "Eau",
+          tag: "Flow",
+          moment: "Pluie dehors, émotion à fleur de peau, session intime.",
+          unlock: "Le flow où les paroles viennent seules — mélancolie, R&B, cinéma intérieur.",
+          toast: "Eau — flow intime, émotion à fleur.",
+        },
+      ] satisfies LandingCloudMoodCard[],
+    };
+  }
+
+  return {
+    eyebrow: "Cloud · 4 moods",
+    title: "Four moods. One studio.",
+    lead: "Air, Earth, Fire, or Water — pick a vibe, the studio adapts.",
+    heroLine: "Set the mood before the first note.",
+    heroStripLabel: "Cloud · 4 moods",
+    scrollToMoods: "See all",
+    footnote: "Not a filter. A feeling. Switch elements anytime — the studio moves with you.",
+    cta: "Find my mood",
+    ctaHint: "Try Cloud in the studio",
+    moods: [
+      {
+        id: "transparent",
+        element: "air",
+        label: "Air",
+        tag: "Clarity",
+        moment: "3 a.m., window cracked, mind finally quiet.",
+        unlock: "Room to breathe — and hear the melody you were humming without knowing it.",
+        toast: "Air — light head, clear ideas.",
+      },
+      {
+        id: "green",
+        element: "earth",
+        label: "Earth",
+        tag: "Grounded",
+        moment: "Slow afternoon, coffee, nothing to prove.",
+        unlock: "Grounded grooves, organic ideas — music that feels real, not rushed.",
+        toast: "Earth — grounded, warm, no rush.",
+      },
+      {
+        id: "red",
+        element: "fire",
+        label: "Fire",
+        tag: "Intensity",
+        moment: "You’re done playing small. Tonight, you break through.",
+        unlock: "The energy behind a bold hook, a hard beat, a take you don’t apologize for.",
+        toast: "Fire — drive on, no apologies.",
+      },
+      {
+        id: "blue",
+        element: "water",
+        label: "Water",
+        tag: "Flow",
+        moment: "Rain outside, feelings close to the surface, private session.",
+        unlock: "The flow where lyrics write themselves — melancholy, R&B, inner cinema.",
+        toast: "Water — intimate flow, feelings up front.",
+      },
+    ] satisfies LandingCloudMoodCard[],
+  };
+}
+
+export function landingGeneratorBottomCopy(locale: Locale) {
+  const isFr = locale === "fr";
+  return {
+    title: isFr ? "De l'idée à l'export" : "From idea to export",
+    modes: isFr ? ["Song", "Type Beat", "Remix"] : ["Song", "Type Beat", "Remix"],
+    steps: isFr
+      ? [
+          { title: "Décris", hint: "Style, mood, paroles" },
+          { title: "Itère", hint: "Seed & variations" },
+          { title: "Exporte", hint: "MP3 · WAV · TikTok" },
+        ]
+      : [
+          { title: "Describe", hint: "Style, mood, lyrics" },
+          { title: "Iterate", hint: "Seed & variations" },
+          { title: "Export", hint: "MP3 · WAV · TikTok" },
+        ],
+    ctaPrimary: isFr ? "Créer mon premier morceau →" : "Create my first track →",
+    ctaStudio: isFr ? "Ouvrir mon studio →" : "Open my studio →",
+    note: isFr
+      ? `${PLAN_LIMITS.free} générations gratuites / mois · Sans carte · Export MP3`
+      : `${PLAN_LIMITS.free} free gens / month · No card · MP3 export`,
+    pricingLink: isFr ? "Voir les tarifs Pro & Studio" : "See Pro & Studio pricing",
+  };
 }

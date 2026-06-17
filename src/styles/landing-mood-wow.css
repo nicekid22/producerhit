@@ -1,0 +1,296 @@
+/**
+ * Landing — notification wow changement de mood (premier pas user)
+ */
+
+.pk-landing-mood-wow {
+  position: fixed;
+  inset: 0;
+  z-index: 9995;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: max(1.25rem, env(safe-area-inset-top)) 1rem 1rem;
+  pointer-events: none;
+  animation: pkLandingMoodWowRoot 3.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.pk-landing-mood-wow__backdrop {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(90% 70% at 50% 20%, var(--pk-wow-glow, rgba(167, 139, 250, 0.28)), transparent 70%);
+  opacity: 0;
+  animation: pkLandingMoodWowBackdrop 3.2s ease-out forwards;
+}
+
+.pk-landing-mood-wow__panel {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  width: min(100%, 22rem);
+  padding: 1rem 1.1rem 1.05rem;
+  border-radius: 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--pk-wow-accent, #c4b5fd) 42%, rgba(255, 255, 255, 0.2));
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--pk-wow-accent, #c4b5fd) 22%, rgba(12, 10, 22, 0.88)),
+    rgba(8, 8, 14, 0.92)
+  );
+  backdrop-filter: blur(20px) saturate(1.35);
+  -webkit-backdrop-filter: blur(20px) saturate(1.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 0 0 1px color-mix(in srgb, var(--pk-wow-accent, #c4b5fd) 18%, transparent),
+    0 24px 64px color-mix(in srgb, var(--pk-wow-glow, rgba(167, 139, 250, 0.35)) 55%, rgba(0, 0, 0, 0.45));
+  text-align: center;
+  transform: translateY(-12px) scale(0.94);
+  opacity: 0;
+  animation: pkLandingMoodWowPanel 3.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.pk-landing-mood-wow__shine {
+  position: absolute;
+  inset: -40% -20%;
+  background: linear-gradient(
+    105deg,
+    transparent 38%,
+    rgba(255, 255, 255, 0.28) 50%,
+    transparent 62%
+  );
+  transform: translateX(-120%) skewX(-12deg);
+  animation: pkLandingMoodWowShine 3.2s ease-in-out forwards;
+  pointer-events: none;
+}
+
+.pk-landing-mood-wow__ring {
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--pk-wow-accent, #c4b5fd) 80%, #fff),
+    transparent 42%,
+    color-mix(in srgb, var(--pk-wow-accent, #c4b5fd) 55%, transparent)
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.pk-landing-mood-wow__icon-wrap {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 3rem;
+  width: 3rem;
+  margin: 0 auto 0.55rem;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, var(--pk-wow-accent, #c4b5fd) 52%, rgba(255, 255, 255, 0.32));
+  backdrop-filter: blur(10px) saturate(1.3);
+  -webkit-backdrop-filter: blur(10px) saturate(1.3);
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.52), transparent 46%),
+    radial-gradient(circle at 72% 82%, color-mix(in srgb, var(--pk-wow-accent, #c4b5fd) 38%, transparent), transparent 54%),
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--pk-wow-accent, #c4b5fd) 62%, #fff),
+      color-mix(in srgb, var(--pk-wow-accent, #c4b5fd) 42%, rgba(12, 8, 24, 0.88))
+    );
+  color: #fff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    0 0 32px color-mix(in srgb, var(--pk-wow-glow, rgba(167, 139, 250, 0.4)) 72%, transparent),
+    0 10px 28px rgba(0, 0, 0, 0.22);
+  animation: pkLandingMoodWowIcon 3.2s ease-in-out forwards;
+}
+
+.pk-landing-mood-wow__icon-wrap .pk-landing-mood-wow__icon {
+  filter:
+    drop-shadow(0 1px 2px rgba(0, 0, 0, 0.48))
+    drop-shadow(0 0 10px var(--pk-wow-glow, rgba(167, 139, 250, 0.4)));
+}
+
+.pk-landing-mood-wow__icon {
+  height: 1.35rem;
+  width: 1.35rem;
+}
+
+.pk-landing-mood-wow__label {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.pk-landing-mood-wow__tag {
+  position: relative;
+  z-index: 1;
+  margin: 0.2rem 0 0;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--pk-wow-accent, #c4b5fd) 72%, #fff);
+}
+
+.pk-landing-mood-wow__moment {
+  position: relative;
+  z-index: 1;
+  margin: 0.45rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+/* Accents par élément */
+.pk-landing-mood-wow[data-pk-element="air"] {
+  --pk-wow-accent: #c4b5fd;
+  --pk-wow-glow: rgba(196, 181, 253, 0.45);
+}
+
+.pk-landing-mood-wow[data-pk-element="earth"] {
+  --pk-wow-accent: #86efac;
+  --pk-wow-glow: rgba(134, 239, 172, 0.42);
+}
+
+.pk-landing-mood-wow[data-pk-element="fire"] {
+  --pk-wow-accent: #fb923c;
+  --pk-wow-glow: rgba(251, 146, 60, 0.48);
+}
+
+.pk-landing-mood-wow[data-pk-element="water"] {
+  --pk-wow-accent: #67c3ff;
+  --pk-wow-glow: rgba(103, 195, 255, 0.48);
+}
+
+@keyframes pkLandingMoodWowRoot {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  8%,
+  78% {
+    opacity: 1;
+  }
+}
+
+@keyframes pkLandingMoodWowBackdrop {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  12%,
+  70% {
+    opacity: 1;
+  }
+}
+
+@keyframes pkLandingMoodWowPanel {
+  0% {
+    opacity: 0;
+    transform: translateY(-18px) scale(0.9);
+  }
+  12% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  78% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+}
+
+@keyframes pkLandingMoodWowShine {
+  0%,
+  18% {
+    transform: translateX(-120%) skewX(-12deg);
+  }
+  42% {
+    transform: translateX(120%) skewX(-12deg);
+  }
+  100% {
+    transform: translateX(120%) skewX(-12deg);
+  }
+}
+
+@keyframes pkLandingMoodWowIcon {
+  0%,
+  10% {
+    transform: scale(0.82) rotate(-8deg);
+  }
+  18% {
+    transform: scale(1.06) rotate(4deg);
+  }
+  28%,
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+/* Flash plein écran — renforcé */
+html.pk-landing-mood-flash::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9988;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    100% 85% at 50% 30%,
+    color-mix(in srgb, var(--pk-flash-accent, rgba(167, 139, 250, 0.55)) 22%, transparent),
+    transparent 72%
+  );
+  animation: pkLandingMoodFlashWash 1.1s ease-out forwards;
+}
+
+html.pk-landing-mood-flash::after {
+  animation-duration: 1.1s;
+  background: radial-gradient(
+    75% 65% at 50% 35%,
+    color-mix(in srgb, var(--pk-flash-accent, rgba(167, 139, 250, 0.55)) 48%, transparent),
+    transparent 68%
+  );
+}
+
+@keyframes pkLandingMoodFlashWash {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pk-landing-mood-wow,
+  .pk-landing-mood-wow__panel,
+  .pk-landing-mood-wow__shine,
+  .pk-landing-mood-wow__icon-wrap,
+  html.pk-landing-mood-flash::before,
+  html.pk-landing-mood-flash::after {
+    animation: none !important;
+  }
+
+  .pk-landing-mood-wow {
+    opacity: 0;
+  }
+}

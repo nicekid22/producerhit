@@ -3,13 +3,16 @@ import { useSpeechDictation } from "@/hooks/useSpeechDictation";
 import { Mic, Square } from "lucide-react";
 import type { InputHTMLAttributes, RefObject, TextareaHTMLAttributes } from "react";
 
+import type { AppLocale } from "@/i18n/config";
 type BaseProps = {
-  locale: "en" | "fr";
+  locale: AppLocale;
   value: string;
   onChange: (value: string) => void;
   variant?: "landing" | "dashboard";
   wrapperClassName?: string;
   showStatus?: boolean;
+  /** Micro à l’intérieur du champ (style Apple) */
+  micPlacement?: "outside" | "inside";
 };
 
 type InputProps = BaseProps & {
@@ -32,6 +35,7 @@ export function SpeechDictationField(props: SpeechDictationFieldProps) {
     variant = "dashboard",
     wrapperClassName,
     showStatus = true,
+    micPlacement = "outside",
     multiline,
     inputRef,
     className,
@@ -71,6 +75,7 @@ export function SpeechDictationField(props: SpeechDictationFieldProps) {
       <div
         className={cn(
           "pk-speech-field__shell flex gap-2",
+          micPlacement === "inside" && "pk-speech-field__shell--mic-inside",
           multiline ? "items-start" : "items-center",
         )}
       >
@@ -101,7 +106,8 @@ export function SpeechDictationField(props: SpeechDictationFieldProps) {
           className={cn(
             "pk-speech-field__mic shrink-0",
             variant === "landing" && "pk-speech-field__mic--landing",
-            multiline && "pk-speech-field__mic--multiline",
+            multiline && micPlacement === "outside" && "pk-speech-field__mic--multiline",
+            micPlacement === "inside" && "pk-speech-field__mic--inside",
             dictation.isListening && "is-listening",
             !dictation.supported && "is-unsupported",
           )}

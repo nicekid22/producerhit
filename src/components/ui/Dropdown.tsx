@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { useIsMobileViewport } from "@/hooks/useIsMobileViewport";
+import { useVisualThemeStore } from "@/stores/visualThemeStore";
 import { Check, ChevronDown, X } from "lucide-react";
 import {
   useEffect,
@@ -56,8 +57,8 @@ function DropdownOptionsList({
         onMouseEnter={() => onHoverOption(o.value)}
         onClick={() => onSelect(o.value)}
         className={cn(
-          "flex w-full items-center justify-between gap-2 rounded-pk px-3 py-2.5 text-left text-sm transition-colors",
-          isActive ? "bg-pk-accent/15 text-pk-text" : "text-pk-text hover:bg-white/5",
+          "pk-dropdown-option flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-sm transition-colors",
+          isActive ? "pk-dropdown-option--active bg-pk-accent/15 text-pk-text" : "text-pk-text hover:bg-white/5",
         )}
       >
         <span className="flex min-w-0 items-center gap-2">
@@ -85,7 +86,7 @@ function DropdownOptionsList({
         if (items.length === 0) return null;
         return (
           <div key={g} className="mt-1">
-            <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-pk-muted">{g}</div>
+            <div className="pk-dropdown-group-label px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-pk-muted">{g}</div>
             {items.map(renderOption)}
           </div>
         );
@@ -138,6 +139,7 @@ export function Dropdown({
   disabled?: boolean;
 }) {
   const isMobile = useIsMobileViewport();
+  const visualTheme = useVisualThemeStore((s) => s.theme);
   const panelLabel = label?.trim() || menuTitle?.trim() || placeholder?.trim() || "—";
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -287,6 +289,9 @@ export function Dropdown({
 
   const desktopListMaxHeight = panelRect ? Math.max(120, panelRect.maxHeight - (showSearch ? 56 : 0)) : 320;
 
+  const searchInputClassName =
+    "pk-dropdown-panel__search-input w-full border border-pk-border bg-pk-input px-3 text-sm text-pk-text outline-none ring-0 focus:outline-none focus:ring-0";
+
   const mobilePanel =
     open && isMobile
       ? createPortal(
@@ -297,7 +302,10 @@ export function Dropdown({
               aria-label="Fermer"
               onClick={() => setOpen(false)}
             />
-            <div className="pk-dropdown-panel relative z-[1] flex max-h-[min(78vh,560px)] flex-col overflow-hidden rounded-t-2xl border border-pk-border bg-pk-bg shadow-[0_-24px_80px_rgba(0,0,0,0.55)]">
+            <div
+              data-pk-visual-theme={visualTheme}
+              className="pk-dropdown-panel pk-dropdown-panel--mobile relative z-[1] flex max-h-[min(78vh,560px)] flex-col overflow-hidden border border-pk-border shadow-[0_-24px_80px_rgba(0,0,0,0.55)]"
+            >
               <div className="flex items-center justify-between gap-3 border-b border-pk-border/70 px-4 py-3">
                 <div className="min-w-0">
                   <div className="text-[11px] font-semibold uppercase tracking-wide text-pk-muted">{panelLabel}</div>
@@ -321,7 +329,7 @@ export function Dropdown({
                     onChange={(e) => setQuery(e.target.value)}
                     onKeyDown={onKeyDown}
                     placeholder={panelLabel}
-                    className="w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm text-pk-text outline-none focus:border-pk-accent"
+                    className={cn(searchInputClassName, "rounded-pk py-2.5")}
                   />
                 </div>
               ) : null}
@@ -338,29 +346,30 @@ export function Dropdown({
       ? createPortal(
           <div
             ref={panelRef}
+            data-pk-visual-theme={visualTheme}
             style={{
               position: "fixed",
               top: panelRect.top,
               left: panelRect.left,
               width: panelRect.width,
               maxHeight: panelRect.maxHeight,
-              zIndex: 200,
+              zIndex: 1200,
             }}
-            className="pk-dropdown-panel flex flex-col overflow-hidden rounded-pk border border-pk-border bg-pk-bg/95 shadow-[0_24px_70px_rgba(0,0,0,0.55)] backdrop-blur-xl"
+            className="pk-dropdown-panel pk-dropdown-panel--desktop flex flex-col overflow-hidden border border-pk-border shadow-[0_24px_70px_rgba(0,0,0,0.55)]"
           >
             {showSearch ? (
-              <div className="shrink-0 border-b border-pk-border/60 bg-white/3 p-2">
+              <div className="pk-dropdown-panel__search shrink-0 border-b border-pk-border/60 p-2">
                 <input
                   ref={searchRef}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={onKeyDown}
                   placeholder={panelLabel}
-                  className="w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2 text-sm text-pk-text outline-none focus:border-pk-accent"
+                  className={cn(searchInputClassName, "rounded-pk py-2")}
                 />
               </div>
             ) : null}
-            <DropdownOptionsList {...listProps} listStyle={{ maxHeight: desktopListMaxHeight }} />
+            <DropdownOptionsList {...listProps} listClassName="pk-dropdown-panel__list" listStyle={{ maxHeight: desktopListMaxHeight }} />
           </div>,
           document.body,
         )

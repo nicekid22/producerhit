@@ -1,3 +1,4 @@
+import type { AppLocale } from "@/i18n/config";
 /** Web Speech API — types + détection navigateur (Chrome, Edge, Brave, Safari…). */
 
 export type SpeechRecognitionCtor = new () => SpeechRecognitionInstance;
@@ -52,6 +53,6 @@ export function isSpeechRecognitionSupported(): boolean {
   return getSpeechRecognitionCtor() !== null;
 }
 
-export function speechRecognitionLang(locale: "en" | "fr"): string {
+export function speechRecognitionLang(locale: AppLocale): string {
   return locale === "fr" ? "fr-FR" : "en-US";
 }

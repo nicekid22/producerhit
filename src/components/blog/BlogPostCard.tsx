@@ -3,9 +3,10 @@ import type { BlogPost } from "@/content/blog";
 import { getBlogVisual } from "@/lib/blogMeta";
 import { Clock } from "lucide-react";
 
+import type { AppLocale } from "@/i18n/config";
 type Props = {
   post: BlogPost;
-  locale: "en" | "fr";
+  locale: AppLocale;
 };
 
 export function BlogPostCard({ post, locale }: Props) {

@@ -1,0 +1,54 @@
+/**
+ * Carte génération (LoopCardSkeleton) — couleur du logo par thème visuel.
+ * PkIconLoader « generator » → pk-icon-loader--element-fire (orange) : écrasé ici.
+ */
+
+@keyframes pkIconLoaderColorCloud {
+  0%,
+  100% {
+    color: var(--cloud-accent, #8a9cff);
+    filter: drop-shadow(0 0 10px var(--cloud-accent-glow, rgba(200, 180, 255, 0.28)));
+  }
+  50% {
+    color: color-mix(in srgb, var(--cloud-electric-a, #c8b8ff) 58%, var(--cloud-accent, #8a9cff));
+    filter: drop-shadow(0 0 14px color-mix(in srgb, var(--cloud-electric-b, #a8d4ff) 42%, transparent));
+  }
+}
+
+/* ——— Prism ——— */
+html:not(.pk-warm-glass-active):not(.pk-cloud-active) .pk-gen-loading-card .pk-icon-loader__icon {
+  color: #a78bfa !important;
+  filter: drop-shadow(0 0 10px rgba(167, 139, 250, 0.38)) !important;
+  animation: pkIconLoaderColor 2.4s ease-in-out infinite !important;
+}
+
+html:not(.pk-warm-glass-active):not(.pk-cloud-active) .pk-gen-loading-card .pk-icon-loader__ring {
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(157, 124, 255, 0.28),
+    rgba(103, 195, 255, 0.1) 58%,
+    transparent 72%
+  ) !important;
+}
+
+/* ——— Warm glass ——— */
+html.pk-warm-glass-active .pk-gen-loading-card .pk-icon-loader__icon,
+.pk-warm-glass-stage .pk-gen-loading-card .pk-icon-loader__icon {
+  color: var(--warm-accent-honey, #f0c848) !important;
+  filter: drop-shadow(0 0 10px var(--warm-accent-glow, rgba(240, 192, 64, 0.32))) !important;
+  animation: pkIconLoaderColorWarm 2.4s ease-in-out infinite !important;
+}
+
+/* ——— Cloud ——— */
+html.pk-cloud-active .pk-gen-loading-card .pk-icon-loader__icon,
+.pk-cloud-stage .pk-gen-loading-card .pk-icon-loader__icon {
+  color: var(--cloud-accent, #8a9cff) !important;
+  filter: drop-shadow(0 0 10px var(--cloud-accent-glow, rgba(200, 180, 255, 0.28))) !important;
+  animation: pkIconLoaderColorCloud 2.4s ease-in-out infinite !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pk-gen-loading-card .pk-icon-loader__icon {
+    animation: none !important;
+  }
+}

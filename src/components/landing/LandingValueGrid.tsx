@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import type { AppLocale } from "@/i18n/config";
 import {
   Compass,
   Gift,
@@ -17,7 +18,7 @@ import { HeroCtaButton } from "@/components/landing/HeroCtaButton";
 import { buildAuthUrl } from "@/lib/authRoutes";
 
 type Props = {
-  locale: "en" | "fr";
+  locale: AppLocale;
   user: boolean;
 };
 

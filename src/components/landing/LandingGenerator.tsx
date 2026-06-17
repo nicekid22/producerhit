@@ -1,10 +1,12 @@
 import { useEffect, useState, type RefObject } from "react";
 import { COVER_SURFACE_CLASS, cn } from "@/lib/utils";
+import { RandomPromptDiceButton } from "@/components/RandomPromptDiceButton";
 import { SpeechDictationField } from "@/components/SpeechDictationField";
 import { Music2, Pause, Play, SlidersHorizontal, Sparkles } from "lucide-react";
 import { PLAN_LIMITS } from "@/lib/planLimits";
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
 
+import type { AppLocale } from "@/i18n/config";
 type CreateMode = "song" | "beat";
 
 export type GeneratorSideCard = {
@@ -26,7 +28,7 @@ export type GeneratorSideCard = {
 };
 
 type Props = {
-  locale: "en" | "fr";
+  locale: AppLocale;
   mode: CreateMode;
   setMode: (mode: CreateMode) => void;
   prompt: string;
@@ -65,7 +67,7 @@ function FloatingCard({
 }: {
   card: GeneratorSideCard;
   side: "left" | "right";
-  locale: "en" | "fr";
+  locale: AppLocale;
   isActive: boolean;
   isPlaying: boolean;
   onPlay: (card: GeneratorSideCard) => void;
@@ -166,7 +168,7 @@ function GeneratorReassurance({
   compact,
   freeLabel,
 }: {
-  locale: "en" | "fr";
+  locale: AppLocale;
   compact?: boolean;
   freeLabel: string;
 }) {
@@ -323,7 +325,7 @@ export function LandingGenerator({
             )}
           >
         {!compactMobile ? (
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.08] bg-white/[0.02] px-3 py-2.5 sm:px-4">
+        <div className="pk-landing-gen__toolbar-head flex flex-wrap items-center justify-between gap-2 px-3 pt-3 pb-1 sm:px-4 sm:pt-3.5">
               <div className="inline-flex rounded-full border border-white/10 bg-white/[0.04] p-0.5">
                 <button
                   type="button"
@@ -368,7 +370,10 @@ export function LandingGenerator({
         </div>
         ) : null}
 
-        <div className={cn("px-3 py-3 sm:px-4 sm:py-4", compactMobile && "pk-landing-gen__prompt-zone")}>
+        <div className={cn("pk-landing-gen__prompt-zone px-3 sm:px-4", compactMobile ? "py-3 sm:py-4" : "py-1 sm:py-1.5")}>
+          <div className="pk-landing-gen__prompt-head mb-2 flex items-center justify-end">
+            <RandomPromptDiceButton locale={locale} mode={mode} onPick={setPrompt} variant="landing" />
+          </div>
           <SpeechDictationField
             multiline
             locale={locale}
@@ -391,7 +396,7 @@ export function LandingGenerator({
         </div>
 
         {mode === "beat" && advancedOpen ? (
-          <div className="border-t border-white/[0.08] px-3 py-3 sm:px-4">
+          <div className="pk-landing-gen__advanced px-3 py-2 sm:px-4 sm:py-3">
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="block">
                 <span className="text-[11px] font-semibold uppercase tracking-wide text-white/45">
@@ -452,7 +457,7 @@ export function LandingGenerator({
 
         <div
           className={cn(
-            "border-t border-white/[0.08] px-3 py-3 sm:px-4",
+            "pk-landing-gen__toolbar-foot px-3 pb-3 pt-1 sm:px-4 sm:pb-3.5 sm:pt-1.5",
             compactMobile ? "pk-landing-gen__mobile-toolbar" : "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
           )}
         >

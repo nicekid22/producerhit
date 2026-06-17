@@ -1,3 +1,4 @@
+import type { AppLocale } from "@/i18n/config";
 /** Affichage UI — facturation Stripe en USD ($8 / $24 / $47). */
 export const PLAN_MONTHLY_USD = {
   pro: 8,
@@ -9,7 +10,7 @@ export const PLAN_BILLING_CURRENCY = "USD" as const;
 
 export function planPriceLabel(
   tier: keyof typeof PLAN_MONTHLY_USD | "free",
-  _locale?: "en" | "fr",
+  _locale?: AppLocale,
   opts?: { suffix?: boolean },
 ): string {
   if (tier === "free") return "$0";
@@ -18,7 +19,7 @@ export function planPriceLabel(
   return `$${amount}${suffix}`;
 }
 
-export function planPriceUpsellLabel(tier: keyof typeof PLAN_MONTHLY_USD, locale: "en" | "fr"): string {
+export function planPriceUpsellLabel(tier: keyof typeof PLAN_MONTHLY_USD, locale: AppLocale): string {
   const amount = PLAN_MONTHLY_USD[tier];
   return locale === "fr" ? `$${amount} / mois` : `$${amount} / month`;
 }

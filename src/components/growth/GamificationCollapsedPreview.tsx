@@ -1,8 +1,9 @@
 import { Flame, Sparkles } from "lucide-react";
 import { getLevelProgress, loadGamification } from "@/lib/gamification";
 
+import type { AppLocale } from "@/i18n/config";
 type Props = {
-  locale: "en" | "fr";
+  locale: AppLocale;
 };
 
 export function GamificationCollapsedPreview({ locale }: Props) {

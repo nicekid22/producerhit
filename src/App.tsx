@@ -1,5 +1,5 @@
 import { Suspense, lazy } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthBootstrap } from "@/components/AuthBootstrap";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { RouteFade } from "@/components/RouteFade";
@@ -8,14 +8,13 @@ import { ThemeBootstrap } from "@/components/ThemeBootstrap";
 import { AppToaster } from "@/components/AppToaster";
 import { LootRevealModal } from "@/components/growth/LootRevealModal";
 import { GrowthUpsellHost } from "@/components/growth/GrowthUpsellHost";
+import { StripeCheckoutModal } from "@/components/billing/StripeCheckoutModal";
 import { GenerationActivityPill } from "@/components/generation/GenerationActivityPill";
 import { ReferralReferrerWatcher } from "@/components/growth/ReferralReferrerWatcher";
 import { SeoBootstrap } from "@/components/SeoBootstrap";
-import { PkIconLoader } from "@/components/ui/PkIconLoader";
-import { loaderIconFromPath } from "@/lib/loaderIcons";
+import { PageLoader } from "@/components/PageLoader";
 import { AudioPlayer } from "@/components/AudioPlayer";
 import { SiteTextureVeil } from "@/components/SiteTextureVeil";
-import { useLocaleStore } from "@/stores/localeStore";
 import { isSampleLabEnabled } from "@/lib/sampleLab";
 import { COMPARISON_PAGE_PATHS, SEO_PAGE_PATHS } from "@/generated/marketingRoutePaths";
 import { GrowthBootstrap } from "@/components/GrowthBootstrap";
@@ -39,24 +38,8 @@ const LibraryPage = lazy(() => import("@/pages/Library"));
 const SettingsPage = lazy(() => import("@/pages/Settings"));
 const GrowthAdminPage = lazy(() => import("@/pages/GrowthAdmin"));
 const SampleLabPage = lazy(() => import("@/pages/SampleLab"));
-
-function PageLoader() {
-  const { pathname } = useLocation();
-  const locale = useLocaleStore((s) => s.locale);
-  const isFr = locale === "fr";
-  const icon = loaderIconFromPath(pathname);
-
-  return (
-    <div className="pk-page-loader grid min-h-[70vh] place-items-center px-6 py-16">
-      <PkIconLoader
-        icon={icon}
-        size="lg"
-        label={isFr ? "Chargement…" : "Loading…"}
-        sublabel={isFr ? "On prépare ton studio" : "Setting up your studio"}
-      />
-    </div>
-  );
-}
+const VoiceStudioPage = lazy(() => import("@/pages/VoiceStudio"));
+const CloudThemePreviewPage = lazy(() => import("@/pages/CloudThemePreview"));
 
 export default function App() {
   return (
@@ -93,11 +76,13 @@ export default function App() {
                   <Route path="/auth/callback" element={<AuthCallbackPage />} />
                   <Route path="/pricing" element={<PricingPage />} />
                   <Route path="/legal" element={<LegalPage />} />
+                  <Route path="/theme-preview/cloud" element={<CloudThemePreviewPage />} />
 
                   <Route element={<ProtectedRoute />}>
                     <Route path="/dashboard" element={<DashboardPage />} />
                     <Route path="/library" element={<LibraryPage />} />
                     {isSampleLabEnabled() ? <Route path="/sample-lab" element={<SampleLabPage />} /> : null}
+                    <Route path="/voice-studio" element={<VoiceStudioPage />} />
                     <Route path="/settings" element={<SettingsPage />} />
                     <Route path="/admin/growth" element={<GrowthAdminPage />} />
                   </Route>
@@ -110,6 +95,7 @@ export default function App() {
             <GenerationActivityPill />
             <SiteTextureVeil />
             <GrowthUpsellHost />
+            <StripeCheckoutModal />
           </LoopsBootstrap>
         </ThemeBootstrap>
       </AuthBootstrap>

@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useAuthStore } from "@/stores/authStore";
 import { useLootRevealStore } from "@/stores/lootRevealStore";
 
+import type { AppLocale } from "@/i18n/config";
 const CLAIMED_KEY = "producerhit_referral_claimed_v1";
 
 function appOrigin(): string {
@@ -35,7 +36,7 @@ export async function ensureReferralCode(): Promise<string | null> {
   }
 }
 
-export async function claimReferralIfPending(locale: "en" | "fr" = "en"): Promise<boolean> {
+export async function claimReferralIfPending(locale: AppLocale = "en"): Promise<boolean> {
   if (typeof window === "undefined") return false;
   try {
     if (window.localStorage.getItem(CLAIMED_KEY) === "1") return false;

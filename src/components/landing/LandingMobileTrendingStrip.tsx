@@ -5,8 +5,9 @@ import { publicRowToCoverLoop, resolveLoopDisplayCoverUrl } from "@/lib/coverArt
 import { cn, COVER_SURFACE_CLASS } from "@/lib/utils";
 import type { LandingCommunityTrack } from "@/components/landing/LandingCommunityRail";
 
+import type { AppLocale } from "@/i18n/config";
 type Props = {
-  locale: "en" | "fr";
+  locale: AppLocale;
   tracks: LandingCommunityTrack[];
   loading: boolean;
   activeTrackId: string | null;

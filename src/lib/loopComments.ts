@@ -19,6 +19,10 @@ export type LoopCommentView = LoopCommentRow & {
   displayName: string;
 };
 
+export type FluxCommentPreview = LoopCommentView & {
+  loopName: string | null;
+};
+
 export async function fetchLoopCommentCounts(loopIds: string[]): Promise<Record<string, number>> {
   const ids = loopIds.filter(Boolean);
   if (!ids.length) return {};
@@ -29,6 +33,33 @@ export async function fetchLoopCommentCounts(loopIds: string[]): Promise<Record<
     if (row.loop_id) out[row.loop_id] = Number(row.comment_count) || 0;
   }
   return out;
+}
+
+export async function fetchRecentFluxComments(limit = 14): Promise<FluxCommentPreview[]> {
+  const { data, error } = await supabase
+    .from("loop_comments")
+    .select("id, loop_id, user_id, body, author_name, author_avatar_id, is_seed, created_at, loops(name)")
+    .is("hidden_at", null)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) return [];
+
+  const rows = (data ?? []) as Array<
+    LoopCommentRow & { loops?: { name?: string | null } | { name?: string | null }[] | null }
+  >;
+  const userIds = [...new Set(rows.map((r) => r.user_id).filter(Boolean))] as string[];
+  const cards = userIds.length ? await fetchPublicProfileCards(userIds) : new Map<string, PublicProfileCard>();
+
+  return rows.map((row) => {
+    const author = row.user_id ? cards.get(row.user_id) ?? null : null;
+    const displayName =
+      author?.username?.trim() ||
+      row.author_name?.trim() ||
+      "Producer";
+    const loopJoin = row.loops;
+    const loopName = Array.isArray(loopJoin) ? loopJoin[0]?.name ?? null : loopJoin?.name ?? null;
+    return { ...row, author, displayName, loopName };
+  });
 }
 
 export async function fetchLoopComments(loopId: string): Promise<LoopCommentView[]> {

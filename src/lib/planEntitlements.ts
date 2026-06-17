@@ -22,7 +22,7 @@ export function hasPriorityGeneration(plan: string | null | undefined): boolean 
   return normalizePlanId(plan) === "plus";
 }
 
-/** Plus : liens audio hébergés sans expiration (tant que l’abonnement Plus est actif). Free/Pro 3j, Studio 7j. */
+/** Plus : liens audio hébergés sans expiration (tant que l’abonnement Plus est actif). Free 1j, Pro 3j, Studio 7j. */
 export function hasPermanentHostedAudio(plan: string | null | undefined): boolean {
   return normalizePlanId(plan) === "plus";
 }
@@ -34,6 +34,14 @@ export function canExportWav(plan: string | null | undefined): boolean {
 /** Mastering complet (aperçu apply + export master) — Studio et Plus. */
 export function hasFullMastering(plan: string | null | undefined): boolean {
   return PLAN_RANK[normalizePlanId(plan)] >= PLAN_RANK.studio;
+}
+
+/** Voix → paroles (transcription) — Studio+ illimité ; Free/Pro essais mensuels. */
+export function canUseVoiceToSong(plan: string | null | undefined, usedThisMonth: number): boolean {
+  const id = normalizePlanId(plan);
+  if (PLAN_RANK[id] >= PLAN_RANK.studio) return true;
+  const limit = id === "pro" ? 5 : 2;
+  return Math.max(0, usedThisMonth) < limit;
 }
 
 /** Génération ×2 en parallèle (double slot v2) — Studio et Plus uniquement. */

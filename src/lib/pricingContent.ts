@@ -1,9 +1,11 @@
 import type { PlanTier } from "@/lib/billing";
+import type { AppLocale } from "@/i18n/config";
 import { PLAN_LIMITS } from "@/lib/planLimits";
 import {
   LOOP_AUDIO_RETENTION_DAYS_FREE,
   LOOP_AUDIO_RETENTION_DAYS_PRO,
   LOOP_AUDIO_RETENTION_DAYS_STUDIO,
+  hostedAudioRetentionDaysLabel,
   hostedAudioRetentionSummary,
   plusPermanentAudioBenefit,
 } from "@/lib/loopAudioRetention";
@@ -27,7 +29,7 @@ export type PricingCompareRow = {
   plus: PricingCompareCell;
 };
 
-export function getPricingPlans(locale: "en" | "fr"): PricingPlanContent[] {
+export function getPricingPlans(locale: AppLocale): PricingPlanContent[] {
   const isFr = locale === "fr";
   const gen = (n: number) =>
     isFr ? `${n} générations / mois` : `${n} generations / month`;
@@ -42,7 +44,7 @@ export function getPricingPlans(locale: "en" | "fr"): PricingPlanContent[] {
         gen(PLAN_LIMITS.free),
         isFr ? "Export MP3 — usage personnel" : "MP3 export — personal use",
         isFr ? "Bibliothèque cloud + player" : "Cloud library + player",
-        isFr ? `Audio hébergé ${LOOP_AUDIO_RETENTION_DAYS_FREE} jours` : `Hosted audio ${LOOP_AUDIO_RETENTION_DAYS_FREE} days`,
+        hostedAudioRetentionDaysLabel(locale, "free"),
         isFr ? "Pas de droits commerciaux" : "No commercial rights",
       ],
     },
@@ -55,7 +57,7 @@ export function getPricingPlans(locale: "en" | "fr"): PricingPlanContent[] {
         gen(PLAN_LIMITS.pro),
         isFr ? "Export WAV + MP3 Spotify Ready" : "WAV + MP3 Spotify Ready",
         isFr ? "Droits commerciaux inclus" : "Commercial rights included",
-        isFr ? `Audio hébergé ${LOOP_AUDIO_RETENTION_DAYS_PRO} jours` : `Hosted audio ${LOOP_AUDIO_RETENTION_DAYS_PRO} days`,
+        hostedAudioRetentionDaysLabel(locale, "pro"),
         isFr ? "Song, Type Beat & Remix" : "Song, Type Beat & Remix",
         isFr ? "Bibliothèque cloud + liens publics" : "Cloud library + public links",
       ],
@@ -69,7 +71,7 @@ export function getPricingPlans(locale: "en" | "fr"): PricingPlanContent[] {
         gen(PLAN_LIMITS.studio),
         isFr ? "Tout Pro + mastering complet" : "Everything in Pro + full mastering",
         isFr ? "Versions ×2 en parallèle" : "Parallel ×2 versions",
-        isFr ? `Audio hébergé ${LOOP_AUDIO_RETENTION_DAYS_STUDIO} jours` : `Hosted audio ${LOOP_AUDIO_RETENTION_DAYS_STUDIO} days`,
+        hostedAudioRetentionDaysLabel(locale, "studio"),
         isFr ? "Export vidéo vertical" : "Vertical video export",
         isFr ? "Idéal releases & clients" : "Built for releases & clients",
       ],
@@ -90,7 +92,7 @@ export function getPricingPlans(locale: "en" | "fr"): PricingPlanContent[] {
   ];
 }
 
-export function getPricingCompareRows(locale: "en" | "fr"): PricingCompareRow[] {
+export function getPricingCompareRows(locale: AppLocale): PricingCompareRow[] {
   const isFr = locale === "fr";
   const yes = true;
   const no = false;
@@ -169,7 +171,7 @@ export function getPricingCompareRows(locale: "en" | "fr"): PricingCompareRow[] 
   ];
 }
 
-export function getPricingFaqs(locale: "en" | "fr") {
+export function getPricingFaqs(locale: AppLocale) {
   const isFr = locale === "fr";
   return [
     COMMERCIAL_RIGHTS_FAQ[isFr ? "fr" : "en"],

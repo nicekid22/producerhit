@@ -1,8 +1,9 @@
 import { Globe2, Music2, ShieldCheck, Waves } from "lucide-react";
 import { landingCopy } from "@/lib/landingContent";
 
+import type { AppLocale } from "@/i18n/config";
 type Props = {
-  locale: "en" | "fr";
+  locale: AppLocale;
   compact?: boolean;
 };
 

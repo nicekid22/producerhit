@@ -270,7 +270,7 @@
     color: rgba(255, 220, 160, 0.82);
   }
 
-  .pk-landing--mobile-focus .pk-landing-gen__shell--mobile > div:first-child {
+  .pk-landing--mobile-focus .pk-landing-gen__shell--mobile .pk-landing-gen__toolbar-head {
     border-bottom: none !important;
   }
 

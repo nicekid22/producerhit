@@ -1,4 +1,5 @@
 import type { LoopLength } from "@/types/loop";
+import type { AppLocale } from "@/i18n/config";
 
 /**
  * Sample Lab en standby par défaut (pas affiché sur le site).
@@ -373,7 +374,7 @@ export function buildSampleLabCaption(input: SampleLabGenerateInput): string {
 }
 
 /** Nom fichier style ProducerGrind : « Guitar Drip 140 BPM Amin » */
-export function buildSampleLoopName(input: SampleLabGenerateInput, locale: "fr" | "en"): string {
+export function buildSampleLoopName(input: SampleLabGenerateInput, locale: AppLocale): string {
   const pack = resolveSamplePack(input.packPresetId);
   const inst = resolveSampleInstrument(input.instrument);
   const base = pack ? (locale === "fr" ? pack.labelFr : pack.labelEn) : locale === "fr" ? inst.labelFr : inst.labelEn;

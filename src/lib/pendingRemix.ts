@@ -1,5 +1,6 @@
 import type { RemixSourceLoop } from "@/lib/remixSourceLoop";
 
+import type { AppLocale } from "@/i18n/config";
 export type PendingRemix = {
   sourceLoopId: string;
   sourceLoopName: string;
@@ -56,7 +57,7 @@ export function clearPendingRemix(): void {
   }
 }
 
-export function buildRemixPromptFromMeta(args: { prompt?: string; genre?: string; mood?: string; locale: "en" | "fr" }): string {
+export function buildRemixPromptFromMeta(args: { prompt?: string; genre?: string; mood?: string; locale: AppLocale }): string {
   const existing = (args.prompt || "").trim();
   if (existing) return existing;
   const genre = (args.genre || "").trim();

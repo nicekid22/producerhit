@@ -3,10 +3,11 @@ import type { Loop } from "@/types/loop";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 
+import type { AppLocale } from "@/i18n/config";
 type Props = {
   open: boolean;
   loop: Loop | null;
-  locale: "en" | "fr";
+  locale: AppLocale;
   onClose: () => void;
   onTryMastering: () => void;
   onUpgrade: () => void;

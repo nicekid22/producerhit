@@ -1,0 +1,208 @@
+/**
+ * Cloud — pages & composants persistants (hors toasts / modales / upsell / onboarding).
+ */
+
+/* ——— Explore / Hub ——— */
+html.pk-cloud-active .pk-hub-nav,
+.pk-cloud-stage .pk-hub-nav {
+  background: color-mix(in srgb, var(--cloud-glass-bg) 82%, transparent) !important;
+  border-color: var(--cloud-glass-border) !important;
+}
+
+html.pk-cloud-active .pk-hub-vibe-tile__title,
+.pk-cloud-stage .pk-hub-vibe-tile__title {
+  color: var(--cloud-text) !important;
+}
+
+html.pk-cloud-active .pk-hub-vibe-tile__sub,
+.pk-cloud-stage .pk-hub-vibe-tile__sub {
+  color: var(--cloud-text-muted) !important;
+}
+
+html.pk-cloud-active .pk-hub-vibe-tile__count,
+.pk-cloud-stage .pk-hub-vibe-tile__count {
+  color: var(--cloud-text-muted) !important;
+  background: var(--cloud-field-bg) !important;
+}
+
+html.pk-cloud-active .pk-hub-vibe-tile:hover,
+.pk-cloud-stage .pk-hub-vibe-tile:hover {
+  background: color-mix(in srgb, var(--cloud-accent) 8%, var(--cloud-field-bg)) !important;
+}
+
+html.pk-cloud-active .pk-hub-hero__card-title,
+html.pk-cloud-active .pk-hub-hero__card-label,
+html.pk-cloud-active .pk-hub-pulse__item,
+html.pk-cloud-active .pk-hub-pulse__text,
+.pk-cloud-stage .pk-hub-hero__card-title,
+.pk-cloud-stage .pk-hub-hero__card-label,
+.pk-cloud-stage .pk-hub-pulse__item,
+.pk-cloud-stage .pk-hub-pulse__text {
+  color: var(--cloud-text) !important;
+}
+
+html.pk-cloud-active .pk-hub-pulse__item--link:hover,
+.pk-cloud-stage .pk-hub-pulse__item--link:hover {
+  color: var(--cloud-accent) !important;
+}
+
+html.pk-cloud-active .pk-hub-hero__card--empty,
+.pk-cloud-stage .pk-hub-hero__card--empty {
+  border-color: color-mix(in srgb, var(--cloud-accent) 28%, transparent) !important;
+  background: color-mix(in srgb, var(--cloud-accent) 8%, var(--cloud-field-bg)) !important;
+}
+
+html.pk-cloud-active .pk-community-seo,
+.pk-cloud-stage .pk-community-seo {
+  border-color: var(--cloud-glass-border) !important;
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--cloud-glass-bg-elevated) 88%, transparent),
+    color-mix(in srgb, var(--cloud-glass-bg) 72%, transparent)
+  ) !important;
+  color: var(--cloud-text-muted) !important;
+}
+
+html.pk-cloud-active .pk-community-seo a,
+.pk-cloud-stage .pk-community-seo a {
+  color: var(--cloud-accent) !important;
+}
+
+/* ——— Page heroes (Sample Lab, etc.) ——— */
+html.pk-cloud-active .pk-prism-page-hero,
+.pk-cloud-stage .pk-prism-page-hero {
+  border-color: var(--cloud-glass-border) !important;
+  background:
+    radial-gradient(640px circle at 12% -10%, color-mix(in srgb, var(--cloud-accent) 16%, transparent), transparent 58%),
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--cloud-glass-bg-elevated) 92%, transparent),
+      color-mix(in srgb, var(--cloud-glass-bg) 78%, transparent)
+    ) !important;
+  box-shadow:
+    inset 0 1px 0 var(--cloud-glass-highlight),
+    0 20px 52px color-mix(in srgb, #000 10%, transparent) !important;
+  border-radius: var(--cloud-radius-xl) !important;
+}
+
+html.pk-cloud-active .pk-prism-eyebrow,
+.pk-cloud-stage .pk-prism-eyebrow {
+  color: color-mix(in srgb, var(--cloud-accent) 62%, var(--cloud-text)) !important;
+}
+
+html.pk-cloud-active .pk-prism-hero-orb--a,
+.pk-cloud-stage .pk-prism-hero-orb--a {
+  background: color-mix(in srgb, var(--cloud-accent) 22%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-prism-hero-orb--b,
+.pk-cloud-stage .pk-prism-hero-orb--b {
+  background: color-mix(in srgb, var(--cloud-accent) 14%, transparent) !important;
+}
+
+/* ——— Remix rail (dashboard) ——— */
+html.pk-cloud-active .pk-remix-library-pill,
+.pk-cloud-stage .pk-remix-library-pill {
+  border-color: var(--cloud-glass-border) !important;
+  background: var(--cloud-field-bg) !important;
+  color: var(--cloud-text) !important;
+}
+
+html.pk-cloud-active .pk-remix-library-pill:hover,
+.pk-cloud-stage .pk-remix-library-pill:hover {
+  background: color-mix(in srgb, var(--cloud-accent) 10%, var(--cloud-field-bg)) !important;
+}
+
+html.pk-cloud-active .pk-remix-library-pill--selected,
+.pk-cloud-stage .pk-remix-library-pill--selected {
+  border-color: color-mix(in srgb, var(--cloud-accent) 42%, transparent) !important;
+  background: color-mix(in srgb, var(--cloud-accent) 14%, var(--cloud-field-bg)) !important;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--cloud-accent) 18%, transparent) !important;
+}
+
+/* ——— Empty states ——— */
+html.pk-cloud-active .pk-empty-state,
+.pk-cloud-stage .pk-empty-state,
+html.pk-cloud-active .rounded-pk.border-dashed.border-pk-border.bg-pk-panel,
+.pk-cloud-stage .rounded-pk.border-dashed.border-pk-border.bg-pk-panel {
+  border-color: var(--cloud-glass-border) !important;
+  background: color-mix(in srgb, var(--cloud-field-bg) 75%, transparent) !important;
+  color: var(--cloud-text) !important;
+}
+
+/* ——— Profil créateur (marketing shell Cloud) ——— */
+html.pk-cloud-active .pk-marketing-page .text-violet-200,
+.pk-marketing-page.pk-cloud-stage .text-violet-200 {
+  color: color-mix(in srgb, var(--cloud-accent) 72%, var(--cloud-text)) !important;
+}
+
+html.pk-cloud-active .pk-marketing-page .border-violet-400\/30,
+.pk-marketing-page.pk-cloud-stage .border-violet-400\/30 {
+  border-color: color-mix(in srgb, var(--cloud-accent) 32%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-marketing-page .bg-violet-500\/10,
+.pk-marketing-page.pk-cloud-stage .bg-violet-500\/10 {
+  background: color-mix(in srgb, var(--cloud-accent) 12%, transparent) !important;
+}
+
+/* ——— Settings — bloc thème Cloud ——— */
+html.pk-cloud-active .pk-cloud-settings-block,
+.pk-cloud-stage .pk-cloud-settings-block {
+  border-color: var(--cloud-glass-border) !important;
+}
+
+html.pk-cloud-active .pk-cloud-settings-block .pk-cloud-theme-chip,
+.pk-cloud-stage .pk-cloud-settings-block .pk-cloud-theme-chip {
+  color: var(--cloud-text-muted) !important;
+}
+
+html.pk-cloud-active .pk-cloud-settings-block .pk-cloud-theme-chip[aria-pressed="true"],
+.pk-cloud-stage .pk-cloud-settings-block .pk-cloud-theme-chip[aria-pressed="true"] {
+  color: var(--cloud-text) !important;
+  background: color-mix(in srgb, var(--cloud-accent) 14%, var(--cloud-field-bg)) !important;
+  border-color: color-mix(in srgb, var(--cloud-accent) 28%, transparent) !important;
+  box-shadow: inset 0 1px 0 var(--cloud-glass-highlight) !important;
+}
+
+html.pk-cloud-active .pk-cloud-settings-block .pk-cloud-theme-chip:hover:not([aria-pressed="true"]),
+.pk-cloud-stage .pk-cloud-settings-block .pk-cloud-theme-chip:hover:not([aria-pressed="true"]) {
+  color: var(--cloud-text) !important;
+  background: var(--cloud-field-bg) !important;
+}
+
+html.pk-cloud-active .pk-cloud-contrast-audit,
+.pk-cloud-stage .pk-cloud-contrast-audit {
+  border-color: var(--cloud-glass-border) !important;
+  background: color-mix(in srgb, var(--cloud-field-bg) 65%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-cloud-contrast-audit__toggle:not([aria-pressed="true"]),
+.pk-cloud-stage .pk-cloud-contrast-audit__toggle:not([aria-pressed="true"]) {
+  color: var(--cloud-text-muted) !important;
+  background: var(--cloud-field-bg) !important;
+}
+
+/* ——— Library card menu / icon buttons ——— */
+html.pk-cloud-active .pk-library-card__menu,
+html.pk-cloud-active .pk-library-card__icon-btn,
+.pk-cloud-stage .pk-library-card__menu,
+.pk-cloud-stage .pk-library-card__icon-btn {
+  border-color: var(--cloud-glass-border) !important;
+  background: color-mix(in srgb, var(--cloud-glass-bg-elevated) 94%, transparent) !important;
+  color: var(--cloud-text) !important;
+}
+
+html.pk-cloud-active .pk-library-card__icon-btn--on,
+.pk-cloud-stage .pk-library-card__icon-btn--on {
+  color: var(--cloud-accent) !important;
+  background: color-mix(in srgb, var(--cloud-accent) 12%, var(--cloud-field-bg)) !important;
+}
+
+/* ——— Prism filter pills (community sort) ——— */
+html.pk-cloud-active .pk-community .pk-prism-pill:not(.pk-prism-pill-active),
+.pk-cloud-stage .pk-community .pk-prism-pill:not(.pk-prism-pill-active) {
+  color: var(--cloud-text-muted) !important;
+  border-color: var(--cloud-glass-border) !important;
+  background: var(--cloud-field-bg) !important;
+}

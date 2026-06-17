@@ -2,6 +2,7 @@ import toast from "react-hot-toast";
 import { supabase } from "@/lib/supabaseClient";
 import { getLevel, getLevelRewardCredits, loadGamification } from "@/lib/gamification";
 
+import type { AppLocale } from "@/i18n/config";
 export type BonusCreditsState = {
   referralBonus: number;
   levelBonus: number;
@@ -56,7 +57,7 @@ function parseClaimDaily(data: unknown): ClaimDailyResult {
   };
 }
 
-export async function syncLevelRewards(locale: "en" | "fr", options?: { silent?: boolean }): Promise<ClaimLevelResult | null> {
+export async function syncLevelRewards(locale: AppLocale, options?: { silent?: boolean }): Promise<ClaimLevelResult | null> {
   const xp = loadGamification().xp;
   try {
     const { data, error } = await supabase.rpc("claim_level_rewards", { p_xp: xp });
@@ -77,7 +78,7 @@ export async function syncLevelRewards(locale: "en" | "fr", options?: { silent?:
   }
 }
 
-export async function syncDailyGenerationBonus(locale: "en" | "fr", options?: { silent?: boolean }): Promise<ClaimDailyResult | null> {
+export async function syncDailyGenerationBonus(locale: AppLocale, options?: { silent?: boolean }): Promise<ClaimDailyResult | null> {
   try {
     const { data, error } = await supabase.rpc("claim_daily_generation_bonus");
     if (error) return null;
@@ -95,7 +96,7 @@ export async function syncDailyGenerationBonus(locale: "en" | "fr", options?: { 
   }
 }
 
-export async function syncAllGamificationRewards(locale: "en" | "fr"): Promise<BonusCreditsState | null> {
+export async function syncAllGamificationRewards(locale: AppLocale): Promise<BonusCreditsState | null> {
   const levelResult = await syncLevelRewards(locale);
   if (!levelResult?.ok) return null;
   return {

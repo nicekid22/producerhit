@@ -88,10 +88,10 @@ async function syncProfilePlan(
   priceId: string,
   currentPeriodEnd: number | null,
 ) {
-  if (!serviceRoleKey) return;
+  if (!serviceRoleKey) throw new Error("Missing service role key");
   const admin = createClient(supabaseUrl, serviceRoleKey);
   const periodEndIso = currentPeriodEnd ? new Date(currentPeriodEnd * 1000).toISOString() : null;
-  await admin
+  const { error } = await admin
     .from("profiles")
     .update({
       plan,
@@ -99,6 +99,39 @@ async function syncProfilePlan(
       stripe_subscription_id: subscriptionId,
       stripe_price_id: priceId || null,
       stripe_current_period_end: periodEndIso,
+    })
+    .eq("id", userId);
+  if (error) throw error;
+}
+
+function planFromEnvPriceId(priceId: string, pricePro: string, priceStudio: string, pricePlus: string): string {
+  if (priceId && priceId === pricePro) return "pro";
+  if (priceId && priceId === priceStudio) return "studio";
+  if (priceId && priceId === pricePlus) return "plus";
+  return "free";
+}
+
+function subscriptionPriceId(sub: Record<string, unknown>): string {
+  const items = (sub.items as { data?: unknown } | undefined)?.data;
+  const firstItem = Array.isArray(items) && items[0] && typeof items[0] === "object" ? (items[0] as Record<string, unknown>) : null;
+  const price = firstItem && typeof firstItem.price === "object" ? (firstItem.price as Record<string, unknown>) : null;
+  return asString(price?.id);
+}
+
+async function clearStaleBilling(
+  supabaseUrl: string,
+  serviceRoleKey: string,
+  userId: string,
+) {
+  if (!serviceRoleKey) return;
+  const admin = createClient(supabaseUrl, serviceRoleKey);
+  await admin
+    .from("profiles")
+    .update({
+      plan: "free",
+      stripe_subscription_id: null,
+      stripe_price_id: null,
+      stripe_current_period_end: null,
     })
     .eq("id", userId);
 }
@@ -110,16 +143,239 @@ function priceIdForPlan(plan: string, pricePro: string, priceStudio: string, pri
   return "";
 }
 
+function buildEmbeddedReturnUrl(successUrl: string): string {
+  if (successUrl.includes("{CHECKOUT_SESSION_ID}")) return successUrl;
+  const join = successUrl.includes("?") ? "&" : "?";
+  return `${successUrl}${join}session_id={CHECKOUT_SESSION_ID}`;
+}
+
+type StripeSessionResult = {
+  ok: boolean;
+  session: {
+    url?: unknown;
+    client_secret?: unknown;
+    error?: { message?: unknown; type?: unknown; code?: unknown };
+  } | null;
+};
+
+async function createStripeCheckoutSession(
+  stripeKey: string,
+  params: URLSearchParams,
+  stripeVersion?: string,
+): Promise<StripeSessionResult> {
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${stripeKey}`,
+    "Content-Type": "application/x-www-form-urlencoded",
+  };
+  if (stripeVersion) headers["Stripe-Version"] = stripeVersion;
+
+  const stripeRes = await fetch("https://api.stripe.com/v1/checkout/sessions", {
+    method: "POST",
+    headers,
+    body: params,
+  });
+
+  const session = (await stripeRes.json().catch(() => null)) as StripeSessionResult["session"];
+  return { ok: stripeRes.ok, session };
+}
+
+function stripeErrorMessage(session: StripeSessionResult["session"]): string {
+  return typeof session?.error?.message === "string" ? session.error.message : "Stripe error";
+}
+
+function applyCheckoutBranding(
+  params: URLSearchParams,
+  plan: string,
+  visualTheme: string,
+  cloudAccent: string,
+): void {
+  const palette = brandingPalette(visualTheme, cloudAccent, plan);
+  params.set("branding_settings[background_color]", palette.background);
+  params.set("branding_settings[button_color]", palette.button);
+  params.set("branding_settings[font_family]", "inter");
+  params.set("branding_settings[border_style]", "rounded");
+  params.set("branding_settings[display_name]", "ProducerHit");
+}
+
+function brandingPalette(
+  visualTheme: string,
+  cloudAccent: string,
+  plan: string,
+): { background: string; button: string } {
+  if (visualTheme === "cloud") {
+    const buttons: Record<string, string> = {
+      transparent: "#8a9cff",
+      green: "#7ec850",
+      red: "#e87858",
+      blue: "#58a8e8",
+    };
+    return {
+      background: "#f5f5f7",
+      button: buttons[cloudAccent] ?? buttons.transparent,
+    };
+  }
+  if (visualTheme === "warm-glass") {
+    return { background: "#261008", button: "#d4845a" };
+  }
+  return {
+    background: "#0f0d18",
+    button: plan === "pro" ? "#5eb8ff" : "#9d7cff",
+  };
+}
+
+function stripCheckoutBranding(params: URLSearchParams): URLSearchParams {
+  const next = new URLSearchParams(params);
+  for (const key of [...next.keys()]) {
+    if (key.startsWith("branding_settings")) next.delete(key);
+  }
+  return next;
+}
+
+function buildBaseCheckoutParams(
+  priceId: string,
+  plan: string,
+  userId: string,
+  customerId: string,
+  customerEmail: string,
+  visualTheme: string,
+  cloudAccent: string,
+  locale: string,
+): URLSearchParams {
+  const params = new URLSearchParams({
+    mode: "subscription",
+    "line_items[0][price]": priceId,
+    "line_items[0][quantity]": "1",
+    allow_promotion_codes: "true",
+    client_reference_id: userId,
+    "metadata[plan]": plan,
+    "metadata[supabase_user_id]": userId,
+    "metadata[price_id]": priceId,
+    "subscription_data[metadata][plan]": plan,
+    "subscription_data[metadata][supabase_user_id]": userId,
+    "subscription_data[metadata][price_id]": priceId,
+  });
+  if (customerId) params.set("customer", customerId);
+  else if (customerEmail) params.set("customer_email", customerEmail);
+  params.set("locale", locale === "fr" ? "fr" : "auto");
+  if (locale === "fr") {
+    params.set("custom_text[submit][message]", "Confirmer l'abonnement");
+  }
+  applyCheckoutBranding(params, plan, visualTheme, cloudAccent);
+  return params;
+}
+
+async function createEmbeddedCheckoutSession(
+  stripeKey: string,
+  baseParams: URLSearchParams,
+  successUrl: string,
+): Promise<{ clientSecret: string } | { error: string; code?: string }> {
+  const attempts: URLSearchParams[] = [
+    (() => {
+      const params = new URLSearchParams(baseParams);
+      params.set("ui_mode", "embedded_page");
+      params.set("redirect_on_completion", "never");
+      return params;
+    })(),
+    (() => {
+      const params = new URLSearchParams(baseParams);
+      params.set("ui_mode", "embedded_page");
+      params.set("return_url", buildEmbeddedReturnUrl(successUrl));
+      params.set("redirect_on_completion", "if_required");
+      return params;
+    })(),
+    (() => {
+      const params = new URLSearchParams(baseParams);
+      params.set("ui_mode", "embedded");
+      params.set("return_url", buildEmbeddedReturnUrl(successUrl));
+      return params;
+    })(),
+    (() => {
+      const params = stripCheckoutBranding(new URLSearchParams(baseParams));
+      params.set("ui_mode", "embedded_page");
+      params.set("redirect_on_completion", "never");
+      return params;
+    })(),
+  ];
+
+  let lastError = "Stripe error";
+  let lastCode: string | undefined;
+
+  for (const params of attempts) {
+    const { ok, session } = await createStripeCheckoutSession(stripeKey, params);
+    const clientSecret = typeof session?.client_secret === "string" ? session.client_secret : null;
+    if (ok && clientSecret) return { clientSecret };
+    lastError = stripeErrorMessage(session);
+    lastCode = typeof session?.error?.code === "string" ? session.error.code : undefined;
+    console.warn("create-checkout embedded attempt failed", {
+      ui_mode: params.get("ui_mode"),
+      redirect_on_completion: params.get("redirect_on_completion"),
+      message: lastError,
+      code: lastCode,
+    });
+  }
+
+  return { error: lastError, code: lastCode };
+}
+
+async function createHostedCheckoutSession(
+  stripeKey: string,
+  baseParams: URLSearchParams,
+  successUrl: string,
+  cancelUrl: string,
+): Promise<{ url: string } | { error: string; code?: string }> {
+  const attempts: URLSearchParams[] = [
+    (() => {
+      const params = new URLSearchParams(baseParams);
+      params.set("success_url", successUrl);
+      params.set("cancel_url", cancelUrl);
+      return params;
+    })(),
+    (() => {
+      const params = new URLSearchParams(baseParams);
+      params.set("ui_mode", "hosted_page");
+      params.set("success_url", successUrl);
+      params.set("cancel_url", cancelUrl);
+      return params;
+    })(),
+  ];
+
+  let lastError = "Stripe error";
+  let lastCode: string | undefined;
+
+  for (const params of attempts) {
+    const { ok, session } = await createStripeCheckoutSession(stripeKey, params);
+    const checkoutUrl = typeof session?.url === "string" ? session.url : null;
+    if (ok && checkoutUrl) return { url: checkoutUrl };
+    lastError = stripeErrorMessage(session);
+    lastCode = typeof session?.error?.code === "string" ? session.error.code : undefined;
+  }
+
+  return { error: lastError, code: lastCode };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    const body = (await req.json().catch(() => ({}))) as { plan?: unknown; successUrl?: unknown; cancelUrl?: unknown };
+    const body = (await req.json().catch(() => ({}))) as {
+      plan?: unknown;
+      successUrl?: unknown;
+      cancelUrl?: unknown;
+      uiMode?: unknown;
+      visualTheme?: unknown;
+      cloudAccent?: unknown;
+      locale?: unknown;
+    };
     const plan = String(body.plan ?? "");
     const successUrl = String(body.successUrl ?? "");
     const cancelUrl = String(body.cancelUrl ?? "");
+    const uiMode = String(body.uiMode ?? "embedded");
+    const visualTheme = String(body.visualTheme ?? "prism");
+    const cloudAccent = String(body.cloudAccent ?? "transparent");
+    const checkoutLocale = String(body.locale ?? "auto");
+    const embedded = uiMode === "embedded";
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     const pricePro = Deno.env.get("STRIPE_PRICE_ID_PRO") ?? "";
@@ -163,8 +419,14 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (!successUrl.startsWith("http") || !cancelUrl.startsWith("http")) {
-      return new Response(JSON.stringify({ error: "Missing successUrl/cancelUrl" }), {
+    if (!successUrl.startsWith("http")) {
+      return new Response(JSON.stringify({ error: "Missing successUrl" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (!embedded && !cancelUrl.startsWith("http")) {
+      return new Response(JSON.stringify({ error: "Missing cancelUrl" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -176,8 +438,44 @@ serve(async (req) => {
       .eq("id", user.id)
       .maybeSingle();
     const customerId = typeof profile?.stripe_customer_id === "string" ? profile.stripe_customer_id : "";
-    const subscriptionId = typeof profile?.stripe_subscription_id === "string" ? profile.stripe_subscription_id : "";
-    const currentPlan = typeof profile?.plan === "string" ? profile.plan : "free";
+    let subscriptionId = typeof profile?.stripe_subscription_id === "string" ? profile.stripe_subscription_id : "";
+    let currentPlan = typeof profile?.plan === "string" ? profile.plan : "free";
+
+    if (subscriptionId) {
+      let subActive = false;
+      let subRecord: Record<string, unknown> | null = null;
+      try {
+        subRecord = await fetchSubscription(stripeKey, subscriptionId);
+        const status = asString(subRecord.status);
+        subActive = status === "active" || status === "trialing";
+      } catch {
+        subActive = false;
+      }
+
+      if (!subActive) {
+        await clearStaleBilling(supabaseUrl, serviceRoleKey, user.id);
+        subscriptionId = "";
+        currentPlan = "free";
+      } else if (subRecord && !PAID_PLANS.has(currentPlan)) {
+        const subPriceId = subscriptionPriceId(subRecord);
+        const healedPlan = planFromEnvPriceId(subPriceId, pricePro, priceStudio, pricePlus);
+        if (PAID_PLANS.has(healedPlan)) {
+          const healedCustomerId = asString(subRecord.customer) || customerId;
+          const currentPeriodEnd = typeof subRecord.current_period_end === "number" ? subRecord.current_period_end : null;
+          await syncProfilePlan(
+            supabaseUrl,
+            serviceRoleKey,
+            user.id,
+            healedPlan,
+            healedCustomerId,
+            subscriptionId,
+            subPriceId,
+            currentPeriodEnd,
+          );
+          currentPlan = healedPlan;
+        }
+      }
+    }
 
     if (subscriptionId && PAID_PLANS.has(currentPlan)) {
       if (currentPlan === plan) {
@@ -209,49 +507,62 @@ serve(async (req) => {
       });
     }
 
-    const params = new URLSearchParams({
-      mode: "subscription",
-      "line_items[0][price]": priceId,
-      "line_items[0][quantity]": "1",
-      success_url: successUrl,
-      cancel_url: cancelUrl,
-      allow_promotion_codes: "true",
-      client_reference_id: user.id,
-      "metadata[plan]": plan,
-      "metadata[supabase_user_id]": user.id,
-      "metadata[price_id]": priceId,
-      "subscription_data[metadata][plan]": plan,
-      "subscription_data[metadata][supabase_user_id]": user.id,
-      "subscription_data[metadata][price_id]": priceId,
-    });
-    if (customerId) params.set("customer", customerId);
-    else params.set("customer_email", user.email ?? "");
+    const baseParams = buildBaseCheckoutParams(
+      priceId,
+      plan,
+      user.id,
+      customerId,
+      user.email ?? "",
+      visualTheme,
+      cloudAccent,
+      checkoutLocale,
+    );
 
-    const stripeRes = await fetch("https://api.stripe.com/v1/checkout/sessions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${stripeKey}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: params,
-    });
+    if (embedded) {
+      const embeddedResult = await createEmbeddedCheckoutSession(stripeKey, baseParams, successUrl);
+      if ("clientSecret" in embeddedResult) {
+        return new Response(JSON.stringify({ clientSecret: embeddedResult.clientSecret, uiMode: "embedded" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
-    const session = (await stripeRes.json().catch(() => null)) as
-      | { url?: unknown; error?: { message?: unknown } }
-      | null;
-    if (!stripeRes.ok) {
-      const stripeMessage = typeof session?.error?.message === "string" ? session.error.message : "Stripe error";
-      return new Response(JSON.stringify({ error: stripeMessage }), {
-        status: 400,
+      console.error("create-checkout embedded failed, trying hosted fallback", {
+        plan,
+        message: embeddedResult.error,
+        code: embeddedResult.code,
+      });
+
+      const hostedResult = await createHostedCheckoutSession(stripeKey, baseParams, successUrl, cancelUrl);
+      if ("url" in hostedResult) {
+        return new Response(
+          JSON.stringify({ url: hostedResult.url, uiMode: "hosted", fallback: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ error: hostedResult.error, code: hostedResult.code ?? null }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    const hostedResult = await createHostedCheckoutSession(stripeKey, baseParams, successUrl, cancelUrl);
+    if ("url" in hostedResult) {
+      return new Response(JSON.stringify({ url: hostedResult.url, uiMode: "hosted" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const checkoutUrl = typeof session?.url === "string" ? session.url : null;
-    if (!checkoutUrl) throw new Error("Stripe response missing checkout URL");
 
-    return new Response(JSON.stringify({ url: checkoutUrl }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: hostedResult.error, code: hostedResult.code ?? null }),
+      {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return new Response(JSON.stringify({ error: message }), {

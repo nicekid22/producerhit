@@ -3,6 +3,7 @@ import { ALL_GENRE_OPTIONS } from "@/lib/genres";
 import { EXTENDED_GENRES } from "@/lib/genres/extendedCatalog";
 import { RANDOM_GENRE_VALUE } from "@/lib/genres/genrePickMode";
 
+import type { AppLocale } from "@/i18n/config";
 const CUSTOM_GENRE_OPTIONS = ALL_GENRE_OPTIONS.filter((o) => o.value !== "Auto");
 
 /** Genres les plus utilisés — affichés en tête du menu (avant les catégories). */
@@ -51,7 +52,7 @@ const CORE_GROUP_ORDER: readonly string[] = [
   "LAB (Futur)",
 ];
 
-export function buildPrecisionGenreOptions(locale: "en" | "fr"): DropdownOption[] {
+export function buildPrecisionGenreOptions(locale: AppLocale): DropdownOption[] {
   const primaryGroup = locale === "fr" ? "Genres principaux" : "Popular genres";
   const randomLabel =
     locale === "fr" ? "Aléatoire" : "Random";

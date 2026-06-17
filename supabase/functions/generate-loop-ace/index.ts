@@ -1076,6 +1076,129 @@ async function generateViaChatCompletionsAce(input: {
   };
 }
 
+function unwrapAcePayload(json: unknown): Record<string, unknown> {
+  if (!json || typeof json !== "object") return {};
+  const root = json as Record<string, unknown>;
+  if (root.data && typeof root.data === "object" && root.data !== null) return root.data as Record<string, unknown>;
+  return root;
+}
+
+async function pollAceMusicJob(args: {
+  baseUrl: string;
+  apiKey: string;
+  jobId: string;
+  timeoutMs?: number;
+  signal?: AbortSignal;
+}): Promise<{ audioPath: string; metas: Record<string, unknown> | null }> {
+  const startedAt = Date.now();
+  const timeoutMs = args.timeoutMs ?? 180_000;
+  const base = args.baseUrl.replace(/\/$/, "");
+
+  while (Date.now() - startedAt < timeoutMs) {
+    if (args.signal?.aborted) throw new Error("Aborted");
+    const res = await fetch(`${base}/v1/jobs/${encodeURIComponent(args.jobId)}`, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${args.apiKey}`, Accept: "application/json" },
+      signal: args.signal,
+    });
+    const text = await readTextSafe(res);
+    if (!res.ok) throw new Error(`ACE job poll failed (${res.status}): ${text.slice(0, 400)}`);
+    const json = JSON.parse(text) as unknown;
+    const data = unwrapAcePayload(json);
+    const status = typeof data.status === "string" ? data.status.trim().toLowerCase() : "";
+    if (status === "succeeded") {
+      const result =
+        data.result && typeof data.result === "object" && data.result !== null
+          ? (data.result as Record<string, unknown>)
+          : null;
+      const path =
+        (result && typeof result.first_audio_path === "string" ? result.first_audio_path : "") ||
+        (result && Array.isArray(result.audio_paths) && typeof result.audio_paths[0] === "string"
+          ? (result.audio_paths[0] as string)
+          : "");
+      if (!path) throw new Error("voice clone job succeeded but no audio path");
+      const metas =
+        result && typeof result.metas === "object" && result.metas !== null
+          ? (result.metas as Record<string, unknown>)
+          : null;
+      return { audioPath: path, metas };
+    }
+    if (status === "failed") {
+      throw new Error(typeof data.error === "string" ? data.error : "voice clone task failed");
+    }
+    await sleep(2000);
+  }
+  throw new Error("voice clone timed out");
+}
+
+/** Song avec timbre utilisateur — ACE reference_audio (music/generate). */
+async function generateViaMusicGenerateReference(input: {
+  apiKey: string;
+  baseUrl: string;
+  referenceBytes: Uint8Array;
+  referenceName: string;
+  prompt: string;
+  lyrics: string;
+  vocalLanguage: string;
+  audioFormat: string;
+  duration: number | null;
+  bpm: number | null;
+  timbreStrength: number;
+  signal?: AbortSignal;
+}): Promise<{ audioUrl: string; meta: Record<string, unknown> }> {
+  const base = input.baseUrl.replace(/\/$/, "");
+  const effectiveLyrics = input.lyrics.trim() || "[Verse]\n(lyrics)";
+  const form = new FormData();
+  form.append("caption", input.prompt);
+  form.append("prompt", input.prompt);
+  form.append("lyrics", effectiveLyrics);
+  form.append("task_type", "text2music");
+  form.append(
+    "reference_audio",
+    new Blob([input.referenceBytes], { type: "audio/wav" }),
+    input.referenceName || "reference.wav",
+  );
+  form.append("vocal_language", input.vocalLanguage || "en");
+  form.append("audio_format", input.audioFormat || "mp3");
+  form.append("thinking", "false");
+  form.append("use_format", "false");
+  form.append("model", ACE_RELEASE_MODEL);
+  form.append("audio_cover_strength", String(clampNumber(input.timbreStrength, 0.2, 1)));
+  if (input.duration != null && input.duration > 0) form.append("duration", String(Math.round(input.duration)));
+  if (input.bpm != null && input.bpm > 0) form.append("bpm", String(Math.round(input.bpm)));
+
+  const res = await fetch(`${base}/v1/music/generate`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${input.apiKey}`, Accept: "application/json" },
+    body: form,
+    signal: input.signal,
+  });
+  const text = await readTextSafe(res);
+  if (!res.ok) throw new Error(`ACE voice clone failed (${res.status}): ${text.slice(0, 400)}`);
+  const json = JSON.parse(text) as unknown;
+  const data = unwrapAcePayload(json);
+  const jobId = typeof data.job_id === "string" ? data.job_id.trim() : "";
+  if (!jobId) throw new Error("ACE voice clone did not return job_id");
+
+  const polled = await pollAceMusicJob({
+    baseUrl: base,
+    apiKey: input.apiKey,
+    jobId,
+    signal: input.signal,
+  });
+  const audioUrl = toAbsoluteUrl(base, polled.audioPath);
+  if (!audioUrl) throw new Error("voice clone returned no audio URL");
+  return {
+    audioUrl,
+    meta: {
+      ...(polled.metas ?? {}),
+      engine: "music-generate-voice-clone",
+      voiceClone: true,
+      httpAudioUrl: audioUrl.startsWith("http") ? audioUrl : undefined,
+    },
+  };
+}
+
 function getAceTargets(
   seedKey: string,
   preferIndex?: number,
@@ -1303,6 +1426,8 @@ serve(async (req) => {
       dualBatch?: unknown;
       dualSeeds?: unknown;
       generationKeys?: unknown;
+      voiceProfileId?: unknown;
+      voiceCloneStrength?: unknown;
     };
 
     const action = String(body?.action ?? "generate");
@@ -1803,6 +1928,8 @@ serve(async (req) => {
         ? audioFormatRaw
         : "mp3";
     const audioFormat = requirePersistableUrl || authedPlan === "free" ? "mp3" : requestedAudioFormat;
+    const voiceProfileId = asString(body?.voiceProfileId).trim();
+    const voiceCloneStrength = clampNumber(asNumber(body?.voiceCloneStrength) ?? 0.72, 0.2, 1);
 
     console.log("ACE-Step request:", {
       requestId,
@@ -2218,13 +2345,90 @@ serve(async (req) => {
       let lastErr: unknown = null;
 
       if (!instrumental) {
-        console.log("Song mode — chat/completions only", { requestId, sampleMode, requirePersistableUrl });
-        const out = await runChatCompletions(controller.signal);
-        audioUrl = out.audioUrl;
-        meta = out.meta;
-        chatJsonForStems = out.chatJson ?? null;
-        if (requirePersistableUrl && audioUrl.startsWith("data:audio")) {
-          meta = { ...(meta ?? {}), providerDataUrl: audioUrl, sessionOnly: false, aceKeyCount };
+        let voiceCloneDone = false;
+        let voiceProfileNameResolved: string | undefined;
+        if (voiceProfileId && authedUserId && authedSupabase) {
+          const { data: cloneQuotaRaw, error: cloneQuotaErr } = await authedSupabase.rpc("check_and_consume_voice_clone");
+          if (!cloneQuotaErr && (cloneQuotaRaw as { ok?: boolean } | null)?.ok) {
+            const svc = createServiceSupabase();
+            const { data: profileRow } = svc
+              ? await svc
+                  .from("voice_profiles")
+                  .select("storage_path, name")
+                  .eq("id", voiceProfileId)
+                  .eq("user_id", authedUserId)
+                  .maybeSingle()
+              : { data: null };
+            voiceProfileNameResolved = typeof profileRow?.name === "string" ? profileRow.name : undefined;
+            if (profileRow?.storage_path && svc) {
+              const { data: refFile, error: refErr } = await svc.storage
+                .from("voice-profiles")
+                .download(profileRow.storage_path);
+              if (!refErr && refFile) {
+                const refBytes = new Uint8Array(await refFile.arrayBuffer());
+                let lastCloneErr: unknown = null;
+                for (const t of aceTargets) {
+                  try {
+                    const cloned = await generateViaMusicGenerateReference({
+                      apiKey: t.apiKey,
+                      baseUrl: t.baseUrl,
+                      referenceBytes: refBytes,
+                      referenceName: profileRow.storage_path.split("/").pop() || "reference.wav",
+                      prompt: effectivePrompt || baseCaption,
+                      lyrics: effectiveLyrics,
+                      vocalLanguage,
+                      audioFormat,
+                      duration: requestedDuration ?? null,
+                      bpm: bpm && bpm > 0 ? bpm : null,
+                      timbreStrength: voiceCloneStrength,
+                      signal: controller.signal,
+                    });
+                    audioUrl = cloned.audioUrl;
+                    meta = {
+                      ...(cloned.meta ?? {}),
+                      aceKeyIndex: t.keyIndex,
+                      aceKeyCount,
+                      voiceProfileId,
+                      voiceProfileName: profileRow.name,
+                      voiceCloneStrength,
+                    };
+                    voiceCloneDone = true;
+                    console.log("Song mode — voice clone OK", { requestId, voiceProfileId });
+                    break;
+                  } catch (e) {
+                    lastCloneErr = e;
+                  }
+                }
+                if (!voiceCloneDone && lastCloneErr) {
+                  console.warn("Voice clone failed — fallback chat/completions", lastCloneErr);
+                }
+              }
+            }
+          } else {
+            console.warn("Voice clone quota", cloneQuotaRaw, cloneQuotaErr?.message);
+          }
+        }
+        if (!voiceCloneDone) {
+          const voiceFallbackMeta = voiceProfileId
+            ? {
+                voiceCloneRequested: true,
+                voiceCloneFallback: true,
+                voiceProfileId,
+                voiceProfileName: voiceProfileNameResolved,
+                voiceCloneStrength,
+              }
+            : null;
+          console.log("Song mode — chat/completions only", { requestId, sampleMode, requirePersistableUrl, voiceProfileId });
+          const out = await runChatCompletions(controller.signal);
+          audioUrl = out.audioUrl;
+          meta = {
+            ...(out.meta ?? {}),
+            ...(voiceFallbackMeta ?? {}),
+          };
+          chatJsonForStems = out.chatJson ?? null;
+          if (requirePersistableUrl && audioUrl.startsWith("data:audio")) {
+            meta = { ...(meta ?? {}), providerDataUrl: audioUrl, sessionOnly: false, aceKeyCount };
+          }
         }
       } else if (!isAceReleaseTaskEnabled()) {
         console.log("Beat mode — chat/completions only", { requestId, sampleMode });

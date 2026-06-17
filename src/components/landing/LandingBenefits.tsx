@@ -2,10 +2,11 @@ import { Download, Mic2, Sparkles } from "lucide-react";
 import { landingBenefitPillars } from "@/lib/landingContent";
 import type { LucideIcon } from "lucide-react";
 
+import type { AppLocale } from "@/i18n/config";
 const ICONS: LucideIcon[] = [Mic2, Download, Sparkles];
 
 type Props = {
-  locale: "en" | "fr";
+  locale: AppLocale;
 };
 
 export function LandingBenefits({ locale }: Props) {

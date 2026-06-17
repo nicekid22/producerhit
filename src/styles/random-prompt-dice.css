@@ -1,0 +1,132 @@
+/* Bouton dé — prompt aléatoire (landing + dashboard) */
+
+@keyframes pkDiceRoll {
+  0% {
+    transform: rotate(0deg) scale(1);
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  20% {
+    transform: rotate(72deg) scale(1.18);
+  }
+  45% {
+    transform: rotate(180deg) scale(1.06);
+    filter: drop-shadow(0 0 10px color-mix(in srgb, var(--pk-accent, #7c3aed) 55%, transparent));
+  }
+  70% {
+    transform: rotate(288deg) scale(1.14);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+    filter: drop-shadow(0 0 0 transparent);
+  }
+}
+
+@keyframes pkDiceIconWobble {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-18deg);
+  }
+  75% {
+    transform: rotate(18deg);
+  }
+}
+
+.pk-random-prompt-dice {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.78);
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pk-random-prompt-dice__icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.pk-random-prompt-dice:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--pk-accent, #7c3aed) 40%, transparent);
+  background: color-mix(in srgb, var(--pk-accent, #7c3aed) 14%, rgba(255, 255, 255, 0.05));
+  color: #fff;
+}
+
+.pk-random-prompt-dice--rolling {
+  pointer-events: none;
+  border-color: color-mix(in srgb, var(--pk-accent, #7c3aed) 55%, rgba(255, 255, 255, 0.2));
+  background: color-mix(in srgb, var(--pk-accent, #7c3aed) 22%, rgba(255, 255, 255, 0.06));
+  color: color-mix(in srgb, var(--pk-accent, #7c3aed) 85%, #fff);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--pk-accent, #7c3aed) 28%, transparent),
+    0 0 16px color-mix(in srgb, var(--pk-accent, #7c3aed) 35%, transparent);
+  animation: pkDiceRoll 0.58s cubic-bezier(0.34, 1.35, 0.64, 1) both;
+}
+
+.pk-random-prompt-dice--rolling .pk-random-prompt-dice__icon {
+  animation: pkDiceIconWobble 0.58s ease-in-out both;
+}
+
+.pk-random-prompt-dice--landing {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.pk-landing-gen__prompt-head {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 2rem;
+  margin-bottom: 0.15rem;
+}
+
+html.pk-warm-glass-active .pk-random-prompt-dice {
+  border-color: rgba(255, 160, 80, 0.22) !important;
+  color: rgba(255, 220, 180, 0.88) !important;
+}
+
+html.pk-warm-glass-active .pk-random-prompt-dice:hover:not(:disabled) {
+  background: rgba(255, 120, 60, 0.16) !important;
+  color: #fff !important;
+}
+
+html.pk-warm-glass-active .pk-random-prompt-dice--rolling {
+  border-color: rgba(255, 180, 90, 0.55) !important;
+  background: rgba(255, 120, 60, 0.22) !important;
+  color: var(--warm-accent-honey, #f0c848) !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 160, 80, 0.35),
+    0 0 18px rgba(255, 140, 80, 0.35);
+}
+
+html.pk-cloud-active .pk-random-prompt-dice,
+.pk-cloud-stage .pk-random-prompt-dice {
+  border-color: var(--cloud-field-border, rgba(255, 255, 255, 0.35)) !important;
+  background: color-mix(in srgb, var(--cloud-field-bg) 70%, transparent) !important;
+  color: var(--cloud-text, rgba(32, 28, 40, 0.82)) !important;
+}
+
+html.pk-cloud-active .pk-random-prompt-dice--rolling,
+.pk-cloud-stage .pk-random-prompt-dice--rolling {
+  border-color: color-mix(in srgb, var(--cloud-accent) 50%, transparent) !important;
+  background: color-mix(in srgb, var(--cloud-accent) 18%, transparent) !important;
+  color: var(--cloud-accent) !important;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--cloud-accent) 30%, transparent),
+    0 0 16px var(--cloud-accent-glow, rgba(100, 180, 255, 0.35));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pk-random-prompt-dice--rolling,
+  .pk-random-prompt-dice--rolling .pk-random-prompt-dice__icon {
+    animation: none !important;
+  }
+}

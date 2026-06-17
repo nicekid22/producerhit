@@ -3,11 +3,29 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import "./styles/cover-surface.css";
 import "./styles/site-texture-veil.css";
-import { preloadWarmGlassThemeIfNeeded } from "@/lib/themeStyles";
+import "./styles/library-cozy.css";
+import "./styles/landing-pricing-teaser.css";
+import "./styles/landing-cloud-moods.css";
+import "./styles/landing-hero-dream.css";
+import "./styles/landing-mood-wow.css";
+import "./styles/brand-logo.css";
+import "./styles/landing-footer-v2.css";
+import "./styles/page-loader-theme.css";
+import "./styles/gen-loading-theme.css";
+import "./styles/toast-theme.css";
+import "./styles/theme-roast-popup.css";
+import "./styles/theme-mobile-harmony.css";
+import "./styles/theme-overlays-harmony.css";
+import "./styles/dropdown-theme.css";
+import "./styles/dashboard-idea-prompt.css";
+import "./styles/random-prompt-dice.css";
+import "./styles/community-flux.css";
+import { preloadCloudThemeIfNeeded, preloadWarmGlassThemeIfNeeded } from "@/lib/themeStyles";
 
 import App from "./App";
 
 preloadWarmGlassThemeIfNeeded();
+preloadCloudThemeIfNeeded();
 
 function ErrorScreen({ title, message }: { title: string; message?: string }) {
   const missingEnv = [

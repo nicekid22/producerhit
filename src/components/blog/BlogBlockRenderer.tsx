@@ -4,9 +4,10 @@ import { getH2SectionIcon } from "@/lib/blogMeta";
 import { cn } from "@/lib/utils";
 import { Lightbulb, ListChecks } from "lucide-react";
 
+import type { AppLocale } from "@/i18n/config";
 type Props = {
   blocks: BlogBlock[];
-  locale: "en" | "fr";
+  locale: AppLocale;
 };
 
 export function BlogBlockRenderer({ blocks, locale }: Props) {

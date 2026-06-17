@@ -1,5 +1,6 @@
 import type { Loop } from "@/types/loop";
 
+import type { AppLocale } from "@/i18n/config";
 const BASE_HASHTAGS = ["#aimusic", "#musicproducer", "#beatmaker", "#producerhit"];
 
 const MOOD_TAGS: Record<string, string[]> = {
@@ -29,7 +30,7 @@ export function buildTikTokHashtags(loop: Loop): string[] {
   return Array.from(tags).slice(0, 5);
 }
 
-export function buildTikTokCaption(loop: Loop, locale: "en" | "fr"): string {
+export function buildTikTokCaption(loop: Loop, locale: AppLocale): string {
   const name = (loop.name || "Untitled").trim();
   const bpm = loop.bpm && loop.bpm > 0 ? `${loop.bpm} BPM` : null;
   const tags = buildTikTokHashtags(loop).join(" ");
@@ -42,6 +43,6 @@ export function buildSocialKitText(caption: string, shareUrl: string): string {
   return `${caption.trim()}\n\n${shareUrl.trim()}`;
 }
 
-export function buildShareMomentTitle(locale: "en" | "fr"): string {
+export function buildShareMomentTitle(locale: AppLocale): string {
   return locale === "fr" ? "Partager" : "Share";
 }

@@ -1,0 +1,987 @@
+/**
+ * CLOUD — polish Apple HIG (vague 2)
+ * Auth · nav · dropdowns · inputs · settings · community · library · pricing · landing mobile
+ */
+
+/* ——— Scrollbars globales ——— */
+html.pk-cloud-active,
+html.pk-cloud-active *,
+.pk-cloud-stage,
+.pk-cloud-stage * {
+  scrollbar-color: color-mix(in srgb, var(--cloud-accent) 32%, transparent) transparent;
+  scrollbar-width: thin;
+}
+
+html.pk-cloud-active ::-webkit-scrollbar,
+html.pk-cloud-active *::-webkit-scrollbar,
+.pk-cloud-stage ::-webkit-scrollbar,
+.pk-cloud-stage *::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+html.pk-cloud-active ::-webkit-scrollbar-track,
+html.pk-cloud-active *::-webkit-scrollbar-track,
+.pk-cloud-stage ::-webkit-scrollbar-track,
+.pk-cloud-stage *::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 999px;
+}
+
+html.pk-cloud-active ::-webkit-scrollbar-thumb,
+html.pk-cloud-active *::-webkit-scrollbar-thumb,
+.pk-cloud-stage ::-webkit-scrollbar-thumb,
+.pk-cloud-stage *::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--cloud-accent) 42%, rgba(255, 255, 255, 0.35)),
+    color-mix(in srgb, var(--cloud-accent) 28%, rgba(255, 255, 255, 0.18))
+  );
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--cloud-glass-border) 40%, transparent);
+  background-clip: padding-box;
+}
+
+html.pk-cloud-active ::-webkit-scrollbar-thumb:hover,
+html.pk-cloud-active *::-webkit-scrollbar-thumb:hover,
+.pk-cloud-stage ::-webkit-scrollbar-thumb:hover,
+.pk-cloud-stage *::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--cloud-accent) 58%, rgba(255, 255, 255, 0.42)),
+    color-mix(in srgb, var(--cloud-accent) 38%, rgba(255, 255, 255, 0.24))
+  );
+}
+
+/* ——— Surfaces verre réutilisables ——— */
+html.pk-cloud-active .pk-cloud-glass-surface,
+.pk-cloud-stage .pk-cloud-glass-surface {
+  border: 1px solid var(--cloud-glass-border);
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--cloud-glass-bg-elevated) 92%, transparent),
+    color-mix(in srgb, var(--cloud-glass-bg) 86%, transparent)
+  );
+  backdrop-filter: blur(var(--cloud-blur)) saturate(1.35);
+  -webkit-backdrop-filter: blur(var(--cloud-blur)) saturate(1.35);
+  box-shadow:
+    inset 0 1px 0 var(--cloud-glass-highlight),
+    0 20px 56px color-mix(in srgb, #000 12%, transparent);
+}
+
+/* ——— Auth ——— */
+html.pk-cloud-active .pk-auth-panel,
+.pk-cloud-stage .pk-auth-panel {
+  border-color: var(--cloud-glass-border) !important;
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--cloud-glass-bg-elevated) 94%, transparent),
+    color-mix(in srgb, var(--cloud-glass-bg) 88%, transparent)
+  ) !important;
+  backdrop-filter: blur(var(--cloud-blur-heavy)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--cloud-blur-heavy)) saturate(1.4);
+  box-shadow:
+    inset 0 1px 0 var(--cloud-glass-highlight),
+    0 28px 72px color-mix(in srgb, #000 18%, transparent) !important;
+  border-radius: var(--cloud-radius-xl) !important;
+}
+
+html.pk-cloud-active .pk-auth-tabs,
+.pk-cloud-stage .pk-auth-tabs {
+  border-color: var(--cloud-glass-border) !important;
+  background: color-mix(in srgb, var(--cloud-field-bg) 55%, transparent) !important;
+  border-radius: var(--cloud-radius-chip) !important;
+}
+
+html.pk-cloud-active .pk-auth-tab-active,
+.pk-cloud-stage .pk-auth-tab-active {
+  background: var(--cloud-btn-gradient) !important;
+  color: #050508 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    0 4px 16px var(--cloud-accent-glow) !important;
+}
+
+/* ——— Navbar marketing ——— */
+html.pk-cloud-active .pk-marketing-navbar,
+.pk-cloud-stage .pk-marketing-navbar {
+  border-bottom-color: var(--cloud-glass-border) !important;
+  background: color-mix(in srgb, var(--cloud-glass-bg) 72%, transparent) !important;
+  backdrop-filter: blur(20px) saturate(1.45);
+  -webkit-backdrop-filter: blur(20px) saturate(1.45);
+}
+
+html.pk-cloud-active .pk-marketing-navbar .pk-navbar-logo-hit,
+.pk-cloud-stage .pk-marketing-navbar .pk-navbar-logo-hit {
+  background: var(--cloud-accent-gradient) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+html.pk-cloud-active .pk-marketing-navbar .bg-\[\#7c3aed\],
+.pk-cloud-stage .pk-marketing-navbar .bg-\[\#7c3aed\] {
+  background: var(--cloud-btn-gradient) !important;
+  color: #050508 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 6px 18px var(--cloud-accent-glow) !important;
+}
+
+/* ——— Dropdowns portaled (global) ——— */
+html.pk-cloud-active .pk-dropdown-panel::after,
+.pk-cloud-stage .pk-dropdown-panel::after {
+  display: none !important;
+}
+
+html.pk-cloud-active .pk-dropdown-panel,
+.pk-cloud-stage .pk-dropdown-panel {
+  border-color: var(--cloud-glass-border) !important;
+  backdrop-filter: blur(28px) saturate(1.4);
+  -webkit-backdrop-filter: blur(28px) saturate(1.4);
+  border-radius: var(--cloud-radius-lg) !important;
+  background:
+    linear-gradient(165deg, var(--cloud-glass-bg-elevated), var(--cloud-glass-bg)),
+    color-mix(in srgb, var(--cloud-mesh-base, #d8cce8) 18%, white) !important;
+  box-shadow:
+    inset 0 1px 0 var(--cloud-glass-highlight),
+    0 28px 72px color-mix(in srgb, #000 28%, transparent) !important;
+}
+
+html.pk-cloud-active body[data-pk-cloud-accent="transparent"] .pk-dropdown-panel,
+.pk-cloud-stage[data-pk-cloud-accent="transparent"] .pk-dropdown-panel {
+  background:
+    linear-gradient(165deg, rgba(255, 255, 255, 0.94), rgba(255, 248, 252, 0.9)),
+    color-mix(in srgb, var(--cloud-mesh-base, #d8cce8) 12%, white) !important;
+}
+
+html.pk-cloud-active body[data-pk-cloud-accent="green"] .pk-dropdown-panel,
+.pk-cloud-stage[data-pk-cloud-accent="green"] .pk-dropdown-panel {
+  background:
+    linear-gradient(165deg, rgba(252, 255, 248, 0.94), rgba(244, 252, 236, 0.9)),
+    color-mix(in srgb, var(--cloud-mesh-base, #c8e0b8) 14%, white) !important;
+}
+
+html.pk-cloud-active body[data-pk-cloud-accent="red"] .pk-dropdown-panel,
+.pk-cloud-stage[data-pk-cloud-accent="red"] .pk-dropdown-panel {
+  background:
+    linear-gradient(165deg, rgba(255, 250, 246, 0.94), rgba(255, 242, 236, 0.9)),
+    color-mix(in srgb, var(--cloud-mesh-base, #e8c8bc) 14%, white) !important;
+}
+
+html.pk-cloud-active body[data-pk-cloud-accent="blue"] .pk-dropdown-panel,
+.pk-cloud-stage[data-pk-cloud-accent="blue"] .pk-dropdown-panel {
+  background:
+    linear-gradient(165deg, rgba(246, 252, 255, 0.94), rgba(236, 246, 255, 0.9)),
+    color-mix(in srgb, var(--cloud-mesh-base, #b8d4ec) 14%, white) !important;
+}
+
+html.pk-cloud-active .pk-dropdown-panel .text-pk-text,
+html.pk-cloud-active .pk-dropdown-panel button[role="option"],
+.pk-cloud-stage .pk-dropdown-panel .text-pk-text,
+.pk-cloud-stage .pk-dropdown-panel button[role="option"] {
+  color: var(--cloud-text) !important;
+}
+
+html.pk-cloud-active .pk-dropdown-panel .text-pk-muted,
+.pk-cloud-stage .pk-dropdown-panel .text-pk-muted {
+  color: var(--cloud-text-muted) !important;
+}
+
+html.pk-cloud-active .pk-dropdown-panel .border-pk-border,
+html.pk-cloud-active .pk-dropdown-panel .border-pk-border\/60,
+html.pk-cloud-active .pk-dropdown-panel .border-pk-border\/70,
+.pk-cloud-stage .pk-dropdown-panel .border-pk-border,
+.pk-cloud-stage .pk-dropdown-panel .border-pk-border\/60,
+.pk-cloud-stage .pk-dropdown-panel .border-pk-border\/70 {
+  border-color: var(--cloud-glass-border) !important;
+}
+
+html.pk-cloud-active .pk-dropdown-panel .pk-dropdown-panel__list,
+.pk-cloud-stage .pk-dropdown-panel .pk-dropdown-panel__list {
+  background: transparent !important;
+}
+
+html.pk-cloud-active .pk-dropdown-panel .pk-dropdown-panel__search,
+html.pk-cloud-active .pk-dropdown-panel .bg-pk-input,
+html.pk-cloud-active .pk-dropdown-panel .bg-white\/3,
+.pk-cloud-stage .pk-dropdown-panel .pk-dropdown-panel__search,
+.pk-cloud-stage .pk-dropdown-panel .bg-pk-input,
+.pk-cloud-stage .pk-dropdown-panel .bg-white\/3 {
+  background: color-mix(in srgb, var(--cloud-field-bg) 92%, var(--cloud-mesh-base)) !important;
+  border-color: var(--cloud-field-border) !important;
+}
+
+html.pk-cloud-active .pk-dropdown-panel input,
+.pk-cloud-stage .pk-dropdown-panel input,
+html.pk-cloud-active .pk-dropdown-panel__search-input,
+.pk-cloud-stage .pk-dropdown-panel__search-input {
+  color: var(--cloud-text) !important;
+  outline: none !important;
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+}
+
+html.pk-cloud-active .pk-dropdown-panel input:focus,
+.pk-cloud-stage .pk-dropdown-panel input:focus,
+html.pk-cloud-active .pk-dropdown-panel__search-input:focus,
+.pk-cloud-stage .pk-dropdown-panel__search-input:focus {
+  outline: none !important;
+  border-color: color-mix(in srgb, var(--cloud-accent) 48%, var(--cloud-field-border)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 0 0 3px color-mix(in srgb, var(--cloud-accent) 18%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-dropdown-panel button[role="option"],
+.pk-cloud-stage .pk-dropdown-panel button[role="option"],
+html.pk-cloud-active .pk-dropdown-option,
+.pk-cloud-stage .pk-dropdown-option {
+  border-radius: var(--cloud-radius-chip) !important;
+}
+
+html.pk-cloud-active .pk-dropdown-panel input::placeholder,
+.pk-cloud-stage .pk-dropdown-panel input::placeholder {
+  color: var(--cloud-text-muted) !important;
+  opacity: 1 !important;
+}
+
+html.pk-cloud-active .pk-dropdown-panel button[role="option"]:hover,
+html.pk-cloud-active .pk-dropdown-panel button[role="option"].bg-pk-accent\/15,
+.pk-cloud-stage .pk-dropdown-panel button[role="option"]:hover,
+.pk-cloud-stage .pk-dropdown-panel button[role="option"].bg-pk-accent\/15 {
+  background: color-mix(in srgb, var(--cloud-accent) 22%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-dropdown-panel .text-pk-accent,
+.pk-cloud-stage .pk-dropdown-panel .text-pk-accent {
+  color: var(--cloud-accent) !important;
+}
+
+html.pk-cloud-active .pk-dropdown-panel--mobile,
+.pk-cloud-stage .pk-dropdown-panel--mobile {
+  border-radius: var(--cloud-radius-xl) var(--cloud-radius-xl) 0 0 !important;
+}
+
+/* ——— Inputs globaux ——— */
+html.pk-cloud-active input.bg-pk-input:not([type="checkbox"]):not([type="radio"]),
+html.pk-cloud-active textarea.bg-pk-input,
+.pk-cloud-stage input.bg-pk-input:not([type="checkbox"]):not([type="radio"]),
+.pk-cloud-stage textarea.bg-pk-input {
+  background: color-mix(in srgb, var(--cloud-field-bg) 82%, transparent) !important;
+  border-color: var(--cloud-field-border) !important;
+  color: var(--cloud-text) !important;
+  border-radius: var(--cloud-radius-sm) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px) saturate(1.2);
+  -webkit-backdrop-filter: blur(8px) saturate(1.2);
+}
+
+html.pk-cloud-active input.bg-pk-input::placeholder,
+html.pk-cloud-active textarea.bg-pk-input::placeholder,
+html.pk-cloud-active .placeholder\:text-pk-muted::placeholder {
+  color: var(--cloud-text-muted) !important;
+  opacity: 1 !important;
+}
+
+html.pk-cloud-active input.bg-pk-input:focus,
+html.pk-cloud-active textarea.bg-pk-input:focus,
+.pk-cloud-stage input.bg-pk-input:focus,
+.pk-cloud-stage textarea.bg-pk-input:focus {
+  border-color: color-mix(in srgb, var(--cloud-accent) 48%, var(--cloud-field-border)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 0 0 3px color-mix(in srgb, var(--cloud-accent) 18%, transparent) !important;
+}
+
+html.pk-cloud-active button.border-pk-accent\/60,
+.pk-cloud-stage button.border-pk-accent\/60 {
+  border-color: color-mix(in srgb, var(--cloud-accent) 42%, transparent) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--cloud-accent) 12%, transparent) !important;
+}
+
+/* ——— Sweep couleurs Prism hardcodées ——— */
+html.pk-cloud-active .bg-\[\#7c3aed\],
+.pk-cloud-stage .bg-\[\#7c3aed\] {
+  background: var(--cloud-btn-gradient) !important;
+  color: #050508 !important;
+}
+
+html.pk-cloud-active .bg-\[\#7c3aed\]:hover,
+.pk-cloud-stage .bg-\[\#7c3aed\]:hover {
+  filter: brightness(1.06) saturate(1.08);
+}
+
+html.pk-cloud-active .border-\[\#7c3aed\]\/30,
+html.pk-cloud-active .border-\[\#7c3aed\]\/40,
+.pk-cloud-stage .border-\[\#7c3aed\]\/30,
+.pk-cloud-stage .border-\[\#7c3aed\]\/40 {
+  border-color: color-mix(in srgb, var(--cloud-accent) 32%, transparent) !important;
+}
+
+html.pk-cloud-active .bg-\[\#7c3aed\]\/10,
+html.pk-cloud-active .bg-\[\#7c3aed\]\/15,
+.pk-cloud-stage .bg-\[\#7c3aed\]\/10,
+.pk-cloud-stage .bg-\[\#7c3aed\]\/15 {
+  background: var(--cloud-accent-soft) !important;
+}
+
+html.pk-cloud-active .text-\[\#a78bfa\],
+html.pk-cloud-active .text-\[\#c4b5fd\],
+.pk-cloud-stage .text-\[\#a78bfa\],
+.pk-cloud-stage .text-\[\#c4b5fd\] {
+  color: color-mix(in srgb, var(--cloud-accent) 72%, white) !important;
+}
+
+html.pk-cloud-active .text-violet-200,
+html.pk-cloud-active .text-violet-300,
+.pk-cloud-stage .text-violet-200,
+.pk-cloud-stage .text-violet-300 {
+  color: color-mix(in srgb, var(--cloud-accent) 68%, white) !important;
+}
+
+html.pk-cloud-active .hover\:border-violet-400\/30:hover,
+.pk-cloud-stage .hover\:border-violet-400\/30:hover {
+  border-color: color-mix(in srgb, var(--cloud-accent) 28%, transparent) !important;
+}
+
+/* ——— Workspace header ——— */
+html.pk-cloud-active .pk-studio-workspace-header,
+.pk-cloud-stage .pk-studio-workspace-header {
+  border-color: var(--cloud-glass-border) !important;
+  background:
+    radial-gradient(480px circle at 0% 0%, color-mix(in srgb, var(--cloud-accent) 14%, transparent), transparent 55%),
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--cloud-glass-bg-elevated) 90%, transparent),
+      color-mix(in srgb, var(--cloud-glass-bg) 82%, transparent)
+    ) !important;
+  box-shadow: inset 0 1px 0 var(--cloud-glass-highlight) !important;
+  border-radius: var(--cloud-radius-lg) !important;
+}
+
+/* ——— Settings ——— */
+html.pk-cloud-active .pk-settings-hero,
+.pk-cloud-stage .pk-settings-hero {
+  border-color: var(--cloud-glass-border) !important;
+  background:
+    radial-gradient(560px circle at 0% 0%, color-mix(in srgb, var(--cloud-accent) 16%, transparent), transparent 55%),
+    radial-gradient(480px circle at 100% 100%, color-mix(in srgb, var(--cloud-accent) 10%, transparent), transparent 52%),
+    linear-gradient(
+      168deg,
+      color-mix(in srgb, var(--cloud-glass-bg-elevated) 92%, transparent),
+      color-mix(in srgb, var(--cloud-glass-bg) 78%, transparent)
+    ) !important;
+  box-shadow:
+    inset 0 1px 0 var(--cloud-glass-highlight),
+    0 24px 64px color-mix(in srgb, #000 14%, transparent) !important;
+  border-radius: var(--cloud-radius-xl) !important;
+}
+
+html.pk-cloud-active .pk-settings-hero__orb--a,
+.pk-cloud-stage .pk-settings-hero__orb--a {
+  background: color-mix(in srgb, var(--cloud-accent) 28%, transparent);
+}
+
+html.pk-cloud-active .pk-settings-hero__orb--b,
+.pk-cloud-stage .pk-settings-hero__orb--b {
+  background: color-mix(in srgb, var(--cloud-accent) 16%, transparent);
+}
+
+html.pk-cloud-active .pk-settings-hero__avatar,
+.pk-cloud-stage .pk-settings-hero__avatar {
+  border-color: color-mix(in srgb, var(--cloud-accent) 22%, transparent);
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--cloud-accent) 18%, transparent), transparent),
+    color-mix(in srgb, var(--cloud-field-bg) 65%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 12px 32px color-mix(in srgb, var(--cloud-accent) 12%, transparent);
+}
+
+html.pk-cloud-active .pk-settings-hero__link,
+html.pk-cloud-active .pk-settings-hero__upgrade,
+.pk-cloud-stage .pk-settings-hero__link,
+.pk-cloud-stage .pk-settings-hero__upgrade {
+  color: var(--cloud-accent);
+  border-color: color-mix(in srgb, var(--cloud-accent) 28%, transparent);
+  background: color-mix(in srgb, var(--cloud-accent) 10%, transparent);
+  border-radius: var(--cloud-radius-chip);
+}
+
+html.pk-cloud-active .pk-settings-hero__upgrade:hover,
+.pk-cloud-stage .pk-settings-hero__upgrade:hover {
+  background: color-mix(in srgb, var(--cloud-accent) 16%, transparent);
+  border-color: color-mix(in srgb, var(--cloud-accent) 38%, transparent);
+}
+
+html.pk-cloud-active .pk-settings-quota-ring,
+.pk-cloud-stage .pk-settings-quota-ring {
+  background: conic-gradient(
+    from 210deg,
+    var(--cloud-accent) calc(var(--pk-quota-pct) * 1),
+    color-mix(in srgb, var(--cloud-field-bg) 65%, transparent) 0
+  );
+  box-shadow: 0 0 24px var(--cloud-accent-glow);
+}
+
+html.pk-cloud-active .pk-settings-quota-ring__inner,
+.pk-cloud-stage .pk-settings-quota-ring__inner {
+  background: color-mix(in srgb, var(--cloud-glass-bg) 88%, #080810);
+}
+
+html.pk-cloud-active .pk-settings-nav__pill--active,
+.pk-cloud-stage .pk-settings-nav__pill--active {
+  border-color: color-mix(in srgb, var(--cloud-accent) 32%, transparent);
+  background: color-mix(in srgb, var(--cloud-accent) 12%, transparent);
+  color: var(--cloud-text-inverse);
+}
+
+html.pk-cloud-active .pk-settings-referral-highlight,
+.pk-cloud-stage .pk-settings-referral-highlight {
+  border-color: color-mix(in srgb, var(--cloud-accent) 22%, transparent);
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--cloud-accent) 8%, transparent),
+    color-mix(in srgb, var(--cloud-field-bg) 42%, transparent)
+  );
+  border-radius: var(--cloud-radius-md);
+}
+
+/* ——— Landing mobile nav ——— */
+html.pk-cloud-active .pk-landing-mobile-nav__trigger,
+.pk-cloud-stage .pk-landing-mobile-nav__trigger {
+  border-color: color-mix(in srgb, var(--cloud-glass-border) 88%, transparent) !important;
+  background: color-mix(in srgb, var(--cloud-accent) 8%, rgba(255, 255, 255, 0.06)) !important;
+  color: rgba(255, 255, 255, 0.94) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  border-radius: var(--cloud-radius-chip) !important;
+}
+
+html.pk-cloud-active .pk-landing-mobile-nav__trigger.is-open,
+html.pk-cloud-active .pk-landing-mobile-nav__trigger:hover,
+.pk-cloud-stage .pk-landing-mobile-nav__trigger.is-open,
+.pk-cloud-stage .pk-landing-mobile-nav__trigger:hover {
+  border-color: color-mix(in srgb, var(--cloud-accent) 38%, transparent) !important;
+  background: color-mix(in srgb, var(--cloud-accent) 14%, rgba(255, 255, 255, 0.08)) !important;
+}
+
+html.pk-cloud-active .pk-landing-mobile-nav,
+.pk-cloud-stage .pk-landing-mobile-nav {
+  border-top-color: color-mix(in srgb, var(--cloud-glass-border) 90%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-landing-mobile-nav__panel,
+.pk-cloud-stage .pk-landing-mobile-nav__panel {
+  background:
+    radial-gradient(120% 85% at 50% -25%, color-mix(in srgb, var(--cloud-accent) 14%, transparent), transparent 58%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--cloud-glass-bg-elevated) 88%, transparent),
+      color-mix(in srgb, var(--cloud-glass-bg) 72%, transparent)
+    ) !important;
+  backdrop-filter: blur(28px) saturate(1.45) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(1.45) !important;
+  box-shadow: inset 0 1px 0 var(--cloud-glass-highlight) !important;
+}
+
+html.pk-cloud-active .pk-landing-mobile-nav__item,
+.pk-cloud-stage .pk-landing-mobile-nav__item {
+  border-color: color-mix(in srgb, var(--cloud-glass-border) 82%, transparent) !important;
+  background: color-mix(in srgb, var(--cloud-field-bg) 48%, transparent) !important;
+  color: rgba(255, 255, 255, 0.94) !important;
+  border-radius: var(--cloud-radius-sm) !important;
+}
+
+html.pk-cloud-active .pk-landing-mobile-nav__item:hover,
+.pk-cloud-stage .pk-landing-mobile-nav__item:hover {
+  border-color: color-mix(in srgb, var(--cloud-accent) 28%, transparent) !important;
+  background: color-mix(in srgb, var(--cloud-accent) 12%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-landing-mobile-nav__item--primary,
+.pk-cloud-stage .pk-landing-mobile-nav__item--primary {
+  border-color: color-mix(in srgb, var(--cloud-accent) 32%, transparent) !important;
+  background: linear-gradient(
+    132deg,
+    color-mix(in srgb, var(--cloud-accent) 24%, transparent),
+    color-mix(in srgb, var(--cloud-accent) 14%, transparent)
+  ) !important;
+}
+
+html.pk-cloud-active .pk-landing-mobile-nav__locale-btn.is-active,
+.pk-cloud-stage .pk-landing-mobile-nav__locale-btn.is-active {
+  background: var(--cloud-btn-gradient) !important;
+  color: #050508 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  border-radius: var(--cloud-radius-sm) !important;
+}
+
+html.pk-cloud-active .pk-landing-mobile-nav__locale,
+.pk-cloud-stage .pk-landing-mobile-nav__locale {
+  border-color: var(--cloud-glass-border) !important;
+  background: color-mix(in srgb, var(--cloud-field-bg) 42%, transparent) !important;
+  border-radius: var(--cloud-radius-sm) !important;
+}
+
+/* ——— Landing conversion ——— */
+html.pk-cloud-active .pk-landing-sticky-cta__inner,
+.pk-cloud-stage .pk-landing-sticky-cta__inner {
+  border-color: color-mix(in srgb, var(--cloud-accent) 22%, transparent) !important;
+  background: color-mix(in srgb, var(--cloud-glass-bg) 82%, rgba(8, 8, 16, 0.72)) !important;
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border-radius: var(--cloud-radius-bar) !important;
+  box-shadow:
+    inset 0 1px 0 var(--cloud-glass-highlight),
+    0 12px 40px color-mix(in srgb, #000 20%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-landing-pricing-teaser__card--featured,
+.pk-cloud-stage .pk-landing-pricing-teaser__card--featured {
+  border-color: color-mix(in srgb, var(--cloud-accent) 38%, transparent) !important;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--cloud-accent) 12%, transparent),
+    0 24px 64px var(--cloud-accent-glow) !important;
+}
+
+html.pk-cloud-active .pk-landing-benefits__icon svg,
+.pk-cloud-stage .pk-landing-benefits__icon svg {
+  color: var(--cloud-accent) !important;
+}
+
+html.pk-cloud-active .pk-landing-benefits__card li span.rounded-full,
+.pk-cloud-stage .pk-landing-benefits__card li span.rounded-full {
+  background: var(--cloud-accent-gradient) !important;
+}
+
+/* ——— Community ——— */
+html.pk-cloud-active .pk-community-card:hover,
+.pk-cloud-stage .pk-community-card:hover {
+  border-color: color-mix(in srgb, var(--cloud-accent) 32%, transparent) !important;
+  box-shadow: 0 12px 36px color-mix(in srgb, var(--cloud-accent) 12%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-community-card__play,
+.pk-cloud-stage .pk-community-card__play {
+  --pk-community-play-ring: color-mix(in srgb, var(--cloud-accent) 88%, white);
+}
+
+html.pk-cloud-active .pk-community-card:hover .pk-community-card__play,
+html.pk-cloud-active .pk-community-card--playing .pk-community-card__play,
+.pk-cloud-stage .pk-community-card:hover .pk-community-card__play,
+.pk-cloud-stage .pk-community-card--playing .pk-community-card__play {
+  box-shadow: 0 0 28px var(--cloud-accent-glow) !important;
+}
+
+html.pk-cloud-active .pk-community-card__play--active,
+.pk-cloud-stage .pk-community-card__play--active {
+  border-color: color-mix(in srgb, var(--cloud-accent) 55%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-community-card__remix-icon,
+.pk-cloud-stage .pk-community-card__remix-icon {
+  color: var(--cloud-accent) !important;
+}
+
+html.pk-cloud-active .pk-hub-pulse,
+.pk-cloud-stage .pk-hub-pulse {
+  border-color: color-mix(in srgb, var(--cloud-accent) 26%, transparent) !important;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--cloud-accent) 12%, transparent),
+    color-mix(in srgb, var(--cloud-accent) 8%, transparent)
+  ) !important;
+  border-radius: var(--cloud-radius-bar) !important;
+}
+
+html.pk-cloud-active .pk-hub-pulse__item--link:hover,
+.pk-cloud-stage .pk-hub-pulse__item--link:hover {
+  color: color-mix(in srgb, var(--cloud-accent) 78%, white) !important;
+}
+
+html.pk-cloud-active .pk-hub-pulse__dots span.is-active,
+.pk-cloud-stage .pk-hub-pulse__dots span.is-active {
+  background: var(--cloud-accent) !important;
+  box-shadow: 0 0 8px var(--cloud-accent-glow) !important;
+}
+
+html.pk-cloud-active .pk-hub-hero__live-pill,
+.pk-cloud-stage .pk-hub-hero__live-pill {
+  border-color: color-mix(in srgb, var(--cloud-accent) 28%, transparent) !important;
+  background: color-mix(in srgb, var(--cloud-accent) 10%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-hub-hero__live-dot,
+.pk-cloud-stage .pk-hub-hero__live-dot {
+  background: var(--cloud-accent) !important;
+  box-shadow: 0 0 10px var(--cloud-accent-glow);
+}
+
+/* ——— Loop cards Mon espace ——— */
+.pk-cloud-stage [data-loop-card] {
+  position: relative;
+  overflow: hidden;
+}
+
+.pk-cloud-stage [data-loop-card]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+  background: linear-gradient(
+    148deg,
+    rgba(255, 255, 255, 0.2) 0%,
+    rgba(255, 255, 255, 0.05) 36%,
+    transparent 62%
+  );
+  opacity: 0.7;
+}
+
+.pk-cloud-stage [data-loop-card] > * {
+  position: relative;
+  z-index: 1;
+}
+
+.pk-cloud-stage .pk-loop-card--active {
+  border-color: color-mix(in srgb, var(--cloud-accent) 32%, transparent) !important;
+  background:
+    radial-gradient(520px circle at 0% 0%, color-mix(in srgb, var(--cloud-accent) 12%, transparent), transparent 52%),
+    color-mix(in srgb, var(--cloud-glass-bg) 88%, transparent) !important;
+  box-shadow:
+    inset 0 1px 0 var(--cloud-glass-highlight),
+    0 0 0 1px color-mix(in srgb, var(--cloud-accent) 14%, transparent),
+    0 12px 40px color-mix(in srgb, var(--cloud-accent) 10%, transparent) !important;
+}
+
+.pk-cloud-stage .pk-loop-card--playing {
+  border-color: color-mix(in srgb, var(--cloud-accent) 42%, transparent) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 0 0 1px color-mix(in srgb, var(--cloud-accent) 22%, transparent),
+    0 0 28px var(--cloud-accent-glow),
+    0 16px 48px color-mix(in srgb, var(--cloud-accent) 8%, transparent) !important;
+}
+
+.pk-cloud-stage .pk-loop-cover--selected::after {
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.78),
+    0 0 14px var(--cloud-accent-glow) !important;
+}
+
+.pk-cloud-stage .pk-loop-cover--playing::after {
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.88),
+    0 0 18px var(--cloud-accent-glow),
+    0 0 28px color-mix(in srgb, var(--cloud-accent) 14%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-loop-card-hint--public,
+.pk-cloud-stage .pk-loop-card-hint--public {
+  color: color-mix(in srgb, var(--cloud-accent) 72%, white) !important;
+}
+
+/* ——— Bibliothèque ——— */
+html.pk-cloud-active .pk-library-hero,
+.pk-cloud-stage .pk-library-hero {
+  border-color: var(--cloud-glass-border) !important;
+  background:
+    radial-gradient(560px circle at 0% 0%, color-mix(in srgb, var(--cloud-accent) 16%, transparent), transparent 55%),
+    radial-gradient(480px circle at 100% 100%, color-mix(in srgb, var(--cloud-accent) 10%, transparent), transparent 52%),
+    linear-gradient(
+      168deg,
+      color-mix(in srgb, var(--cloud-glass-bg-elevated) 92%, transparent),
+      color-mix(in srgb, var(--cloud-glass-bg) 78%, transparent)
+    ) !important;
+  border-radius: var(--cloud-radius-xl) !important;
+}
+
+html.pk-cloud-active .pk-library-hero__title,
+.pk-cloud-stage .pk-library-hero__title {
+  background: var(--cloud-accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+html.pk-cloud-active .pk-library-genre-pill--active,
+.pk-cloud-stage .pk-library-genre-pill--active {
+  border-color: color-mix(in srgb, var(--cloud-accent) 32%, transparent);
+  background: color-mix(in srgb, var(--cloud-accent) 12%, transparent);
+}
+
+html.pk-cloud-active .pk-library-hero__cta,
+.pk-cloud-stage .pk-library-hero__cta {
+  border-color: color-mix(in srgb, var(--cloud-accent) 32%, transparent);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--cloud-accent) 22%, transparent),
+    color-mix(in srgb, var(--cloud-accent) 12%, transparent)
+  );
+  box-shadow: 0 8px 28px var(--cloud-accent-glow);
+  border-radius: var(--cloud-radius-chip);
+}
+
+html.pk-cloud-active .pk-library-card:hover,
+.pk-cloud-stage .pk-library-card:hover {
+  border-color: color-mix(in srgb, var(--cloud-accent) 28%, transparent) !important;
+  box-shadow: 0 18px 52px color-mix(in srgb, var(--cloud-accent) 10%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-library-card__progress-fill,
+.pk-cloud-stage .pk-library-card__progress-fill {
+  background: var(--cloud-accent-gradient) !important;
+}
+
+html.pk-cloud-active .pk-library-collections-row__title,
+.pk-cloud-stage .pk-library-collections-row__title {
+  color: var(--cloud-text) !important;
+}
+
+html.pk-cloud-active .pk-library-collections-row__subtitle,
+.pk-cloud-stage .pk-library-collections-row__subtitle {
+  color: var(--cloud-text-muted) !important;
+}
+
+html.pk-cloud-active .pk-library-collection-card__cover,
+.pk-cloud-stage .pk-library-collection-card__cover {
+  border-radius: var(--cloud-radius-lg) !important;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 22%, transparent),
+    0 12px 32px color-mix(in srgb, #000 12%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-library-hero--cozy,
+.pk-cloud-stage .pk-library-hero--cozy {
+  backdrop-filter: blur(18px) saturate(1.15);
+}
+
+/* ——— Pricing ——— */
+html.pk-cloud-active .pk-pricing-page,
+.pk-cloud-stage.pk-pricing-page,
+.pk-cloud-stage .pk-pricing-page {
+  --pk-pricing-accent: var(--cloud-accent);
+  --pk-pricing-accent-soft: var(--cloud-accent-soft);
+  --pk-pricing-accent-border: color-mix(in srgb, var(--cloud-accent) 42%, transparent);
+}
+
+html.pk-cloud-active .pk-pricing-card,
+.pk-cloud-stage .pk-pricing-card {
+  background:
+    radial-gradient(420px circle at 0% 0%, color-mix(in srgb, var(--cloud-accent) 10%, transparent), transparent 52%),
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--cloud-glass-bg-elevated) 88%, transparent),
+      color-mix(in srgb, var(--cloud-glass-bg) 72%, transparent)
+    ) !important;
+  border-color: var(--cloud-glass-border) !important;
+  border-radius: var(--cloud-radius-xl) !important;
+}
+
+html.pk-cloud-active .pk-pricing-card--popular,
+html.pk-cloud-active .pk-pricing-tier--featured,
+.pk-cloud-stage .pk-pricing-card--popular,
+.pk-cloud-stage .pk-pricing-tier--featured {
+  border-color: color-mix(in srgb, var(--cloud-accent) 38%, transparent) !important;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--cloud-accent) 12%, transparent),
+    0 28px 72px var(--cloud-accent-glow) !important;
+}
+
+html.pk-cloud-active .pk-pricing-tier__badge,
+.pk-cloud-stage .pk-pricing-tier__badge {
+  border-color: color-mix(in srgb, var(--cloud-accent) 42%, transparent) !important;
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, var(--cloud-accent) 24%, transparent),
+    color-mix(in srgb, var(--cloud-accent) 12%, transparent)
+  ) !important;
+  color: color-mix(in srgb, var(--cloud-accent) 78%, white) !important;
+}
+
+html.pk-cloud-active .pk-pricing-tier__check,
+.pk-cloud-stage .pk-pricing-tier__check {
+  color: var(--cloud-accent) !important;
+}
+
+html.pk-cloud-active .pk-pricing-current,
+.pk-cloud-stage .pk-pricing-current {
+  border-color: color-mix(in srgb, var(--cloud-accent) 35%, transparent) !important;
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--cloud-accent) 14%, transparent),
+    color-mix(in srgb, var(--cloud-glass-bg) 72%, transparent)
+  ) !important;
+}
+
+/* ——— Panneaux détail / gaming ——— */
+html.pk-cloud-active .pk-gaming-panel-shell,
+html.pk-cloud-active .pk-studio-detail-panel,
+html.pk-cloud-active .pk-library-detail-panel,
+.pk-cloud-stage .pk-gaming-panel-shell,
+.pk-cloud-stage .pk-studio-detail-panel,
+.pk-cloud-stage .pk-library-detail-panel {
+  border-color: var(--cloud-glass-border) !important;
+  background:
+    radial-gradient(560px circle at 18% 0%, color-mix(in srgb, var(--cloud-accent) 12%, transparent), transparent 54%),
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--cloud-glass-bg-elevated) 90%, transparent),
+      color-mix(in srgb, var(--cloud-glass-bg) 78%, transparent)
+    ) !important;
+  border-radius: var(--cloud-radius-lg) !important;
+  box-shadow:
+    inset 0 1px 0 var(--cloud-glass-highlight),
+    0 20px 56px color-mix(in srgb, #000 12%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-gaming-panel-shell__body,
+.pk-cloud-stage .pk-gaming-panel-shell__body {
+  background: transparent !important;
+}
+
+/* ——— Sheets mobile portaled ——— */
+html.pk-cloud-active .pk-loop-details-sheet,
+html.pk-cloud-active .pk-mobile-onboarding-sheet {
+  border-color: var(--cloud-glass-border) !important;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--cloud-glass-bg-elevated) 94%, rgba(8, 8, 16, 0.92)),
+    color-mix(in srgb, var(--cloud-glass-bg) 88%, rgba(8, 8, 16, 0.96))
+  ) !important;
+  backdrop-filter: blur(var(--cloud-blur-heavy)) saturate(1.35);
+  -webkit-backdrop-filter: blur(var(--cloud-blur-heavy)) saturate(1.35);
+  box-shadow:
+    inset 0 1px 0 var(--cloud-glass-highlight),
+    0 -24px 80px color-mix(in srgb, #000 22%, transparent) !important;
+  border-radius: var(--cloud-radius-xl) var(--cloud-radius-xl) 0 0 !important;
+}
+
+html.pk-cloud-active .pk-loop-details-sheet-header {
+  background: color-mix(in srgb, var(--cloud-glass-bg) 82%, transparent) !important;
+  border-bottom-color: var(--cloud-glass-border) !important;
+}
+
+/* ——— Blog listen CTA ——— */
+html.pk-cloud-active .pk-blog-listen,
+.pk-cloud-stage .pk-blog-listen {
+  background: var(--cloud-btn-gradient) !important;
+  border-color: color-mix(in srgb, var(--cloud-accent) 28%, transparent) !important;
+  color: #050508 !important;
+  box-shadow: 0 8px 24px var(--cloud-accent-glow) !important;
+}
+
+/* ——— Activity pill / gen queue ——— */
+html.pk-cloud-active .pk-gen-activity-pill__card,
+.pk-cloud-stage .pk-gen-activity-pill__card {
+  border-color: color-mix(in srgb, var(--cloud-accent) 28%, transparent) !important;
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--cloud-glass-bg-elevated) 92%, transparent),
+    color-mix(in srgb, var(--cloud-glass-bg) 78%, transparent)
+  ) !important;
+  border-radius: var(--cloud-radius-lg) !important;
+  box-shadow:
+    inset 0 1px 0 var(--cloud-glass-highlight),
+    0 16px 48px color-mix(in srgb, #000 14%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-gen-activity-pill__progress-fill,
+.pk-cloud-stage .pk-gen-activity-pill__progress-fill {
+  background: var(--cloud-accent-gradient) !important;
+  box-shadow: 0 0 10px var(--cloud-accent-glow) !important;
+}
+
+html.pk-cloud-active .pk-gen-activity-pill__icon,
+.pk-cloud-stage .pk-gen-activity-pill__icon {
+  border-color: color-mix(in srgb, var(--cloud-accent) 32%, transparent) !important;
+  background: color-mix(in srgb, var(--cloud-accent) 12%, transparent) !important;
+  color: var(--cloud-accent) !important;
+}
+
+/* ——— Tier badges Settings ——— */
+html.pk-cloud-active .pk-prism-tier-badge--plus,
+html.pk-cloud-active .pk-prism-tier-badge--studio,
+html.pk-cloud-active .pk-prism-tier-badge--pro,
+.pk-cloud-stage .pk-prism-tier-badge--plus,
+.pk-cloud-stage .pk-prism-tier-badge--studio,
+.pk-cloud-stage .pk-prism-tier-badge--pro {
+  border-color: color-mix(in srgb, var(--cloud-accent) 32%, transparent) !important;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--cloud-accent) 18%, transparent),
+    color-mix(in srgb, var(--cloud-accent) 8%, transparent)
+  ) !important;
+  color: color-mix(in srgb, var(--cloud-accent) 82%, white) !important;
+}
+
+/* ——— Empty states ——— */
+html.pk-cloud-active .pk-empty-state__icon,
+.pk-cloud-stage .pk-empty-state__icon {
+  color: var(--cloud-accent) !important;
+  filter: drop-shadow(0 0 12px var(--cloud-accent-glow));
+}
+
+/* ——— Landing header scrolled ——— */
+html.pk-cloud-active .pk-landing-header--scrolled,
+.pk-cloud-stage .pk-landing-header--scrolled {
+  background: color-mix(in srgb, var(--cloud-glass-bg) 78%, rgba(8, 8, 16, 0.42)) !important;
+  backdrop-filter: blur(22px) saturate(1.45);
+  -webkit-backdrop-filter: blur(22px) saturate(1.45);
+  box-shadow:
+    inset 0 -1px 0 var(--cloud-glass-border),
+    0 8px 32px color-mix(in srgb, #000 12%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-landing-header .border-white\/10,
+.pk-cloud-stage .pk-landing-header .border-white\/10 {
+  border-color: var(--cloud-glass-border) !important;
+}
+
+/* ——— Compare / SEO marketing gradients ——— */
+html.pk-cloud-active .from-cyan-500\/\[0\.08\],
+html.pk-cloud-active .via-violet-500\/\[0\.06\],
+html.pk-cloud-active .to-fuchsia-500\/\[0\.04\],
+.pk-cloud-stage .from-cyan-500\/\[0\.08\],
+.pk-cloud-stage .via-violet-500\/\[0\.06\],
+.pk-cloud-stage .to-fuchsia-500\/\[0\.04\] {
+  --tw-gradient-from: color-mix(in srgb, var(--cloud-accent) 10%, transparent) var(--tw-gradient-from-position) !important;
+  --tw-gradient-via: color-mix(in srgb, var(--cloud-accent) 8%, transparent) var(--tw-gradient-via-position) !important;
+  --tw-gradient-to: color-mix(in srgb, var(--cloud-accent) 5%, transparent) var(--tw-gradient-to-position) !important;
+}
+
+/* ——— Public loop pages ——— */
+html.pk-cloud-active .pk-public-loop .border-pk-border,
+.pk-cloud-stage .pk-public-loop .border-pk-border {
+  border-color: var(--cloud-glass-border) !important;
+}
+
+html.pk-cloud-active .pk-public-loop .bg-pk-panel\/60,
+html.pk-cloud-active .pk-public-loop .bg-pk-panel\/70,
+.pk-cloud-stage .pk-public-loop .bg-pk-panel\/60,
+.pk-cloud-stage .pk-public-loop .bg-pk-panel\/70 {
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--cloud-glass-bg-elevated) 90%, transparent),
+    color-mix(in srgb, var(--cloud-glass-bg) 78%, transparent)
+  ) !important;
+  border-radius: var(--cloud-radius-lg) !important;
+}
+
+/* ——— Focus visible Apple ——— */
+html.pk-cloud-active :focus-visible,
+.pk-cloud-stage :focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--cloud-accent) 55%, transparent);
+  outline-offset: 2px;
+}
+
+html.pk-cloud-active button:focus:not(:focus-visible),
+html.pk-cloud-active a:focus:not(:focus-visible),
+.pk-cloud-stage button:focus:not(:focus-visible),
+.pk-cloud-stage a:focus:not(:focus-visible) {
+  outline: none;
+}

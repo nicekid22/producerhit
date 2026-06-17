@@ -1,8 +1,15 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { useCloudHtmlClass } from "@/hooks/useCloudHtmlClass";
 import { useWarmGlassHtmlClass } from "@/hooks/useWarmGlassHtmlClass";
-import { ensureWarmGlassThemeStyles } from "@/lib/themeStyles";
-import { useVisualThemeStore, isWarmGlassTheme } from "@/stores/visualThemeStore";
+import { ensureCloudThemeStyles, ensureWarmGlassThemeStyles } from "@/lib/themeStyles";
+import { applyCloudContrastDebugClass } from "@/lib/cloudContrastDebug";
+import { applyBrandChrome, resetBrandChrome } from "@/lib/brandChrome";
+import { CloudElementTransition } from "@/components/cloud/CloudElementTransition";
+import { LandingMoodWowHost } from "@/components/landing/LandingMoodWow";
+import { ThemeRoastPopup } from "@/components/theme/ThemeRoastPopup";
+import { useCloudAccentStore } from "@/stores/cloudAccentStore";
+import { useVisualThemeStore, isCloudTheme, isWarmGlassTheme } from "@/stores/visualThemeStore";
 
 function isAppRoute(pathname: string) {
   return (
@@ -21,13 +28,33 @@ function isMarketingPath(pathname: string) {
 export function ThemeBootstrap({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const marketing = isMarketingPath(location.pathname);
-  const warmGlass = isWarmGlassTheme(useVisualThemeStore((s) => s.theme));
+  const visualTheme = useVisualThemeStore((s) => s.theme);
+  const cloudAccent = useCloudAccentStore((s) => s.accent);
+  const warmGlass = isWarmGlassTheme(visualTheme);
+  const cloud = isCloudTheme(visualTheme);
 
   useWarmGlassHtmlClass(warmGlass);
+  useCloudHtmlClass(cloud, cloudAccent);
 
   useEffect(() => {
     if (warmGlass) void ensureWarmGlassThemeStyles();
   }, [warmGlass]);
+
+  useEffect(() => {
+    if (cloud) void ensureCloudThemeStyles();
+  }, [cloud]);
+
+  useEffect(() => {
+    applyCloudContrastDebugClass();
+  }, [location.search]);
+
+  useEffect(() => {
+    if (!cloud) {
+      document.documentElement.classList.remove("pk-cloud-contrast-debug");
+      return;
+    }
+    applyCloudContrastDebugClass();
+  }, [cloud]);
 
   useEffect(() => {
     const html = document.documentElement;
@@ -36,9 +63,15 @@ export function ThemeBootstrap({ children }: { children: React.ReactNode }) {
     body.dataset.pkTheme = marketing ? "marketing" : "app";
     if (warmGlass) body.dataset.pkWarmGlass = "1";
     else delete body.dataset.pkWarmGlass;
+    if (cloud) body.dataset.pkCloud = "1";
+    else delete body.dataset.pkCloud;
 
     if (marketing) {
-      if (warmGlass) {
+      if (cloud) {
+        html.style.background = "transparent";
+        body.style.background = "transparent";
+        body.style.color = "var(--cloud-text, rgba(248, 252, 255, 0.92))";
+      } else if (warmGlass) {
         const base = "#963848";
         const bg = [
           "radial-gradient(920px 640px at 12% 58%, rgba(200,152,56,0.28), rgba(200,152,56,0) 58%)",
@@ -60,7 +93,12 @@ export function ThemeBootstrap({ children }: { children: React.ReactNode }) {
         body.style.background = bg;
       }
       body.style.backgroundAttachment = "fixed";
-      body.style.color = "#fff9f4";
+      body.style.color = cloud ? "var(--cloud-text, rgba(248, 252, 255, 0.92))" : "#fff9f4";
+    } else if (cloud) {
+      html.style.background = "transparent";
+      body.style.background = "transparent";
+      body.style.backgroundAttachment = "fixed";
+      body.style.color = "var(--cloud-text, rgba(248, 252, 255, 0.92))";
     } else if (warmGlass) {
       const base = "#963848";
       const bg = [
@@ -79,31 +117,27 @@ export function ThemeBootstrap({ children }: { children: React.ReactNode }) {
       body.style.color = "#f1f0f5";
     }
 
-    const themeColorMeta = document.querySelector('meta[name="theme-color"]');
-    if (themeColorMeta) {
-      if (warmGlass) {
-        themeColorMeta.setAttribute("content", marketing ? "#c89838" : "#963848");
-      } else {
-        themeColorMeta.setAttribute("content", "#0c0820");
-      }
-    }
-
-    const faviconSvg = document.querySelector('link[rel="icon"][type="image/svg+xml"]');
-    if (faviconSvg) {
-      faviconSvg.setAttribute("href", warmGlass ? "/favicon-warm.svg" : "/favicon.svg");
-    }
+    applyBrandChrome({ cloud, warmGlass, cloudAccent, marketing });
 
     return () => {
       body.dataset.pkTheme = "";
       delete body.dataset.pkWarmGlass;
+      delete body.dataset.pkCloud;
       html.style.background = "";
       body.style.background = "";
       body.style.backgroundAttachment = "";
       body.style.color = "";
-      if (faviconSvg) faviconSvg.setAttribute("href", "/favicon.svg");
+      resetBrandChrome();
     };
-  }, [marketing, warmGlass]);
+  }, [marketing, warmGlass, cloud, cloudAccent]);
 
-  return <>{children}</>;
+  return (
+    <>
+      <CloudElementTransition />
+      <ThemeRoastPopup />
+      <LandingMoodWowHost />
+      {children}
+    </>
+  );
 }
 

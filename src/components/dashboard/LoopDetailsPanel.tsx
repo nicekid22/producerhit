@@ -1,4 +1,5 @@
 import toast from "react-hot-toast";
+import type { AppLocale } from "@/i18n/config";
 import { useMemo } from "react";
 import { Clock, Copy, Gauge, Info, KeyRound, Loader2, Sigma } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -28,7 +29,7 @@ export function LoopDetailsPanel({
   compact = false,
 }: {
   loop: Loop;
-  locale: "fr" | "en";
+  locale: AppLocale;
   detailsTitle: string;
   onDetailsTitleChange: (value: string) => void;
   savingDetailsTitle: boolean;

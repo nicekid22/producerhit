@@ -6,8 +6,9 @@ import { useOnboardingCoachStore } from "@/stores/onboardingCoachStore";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
+import type { AppLocale } from "@/i18n/config";
 type Props = {
-  locale: "en" | "fr";
+  locale: AppLocale;
 };
 
 type Rect = { top: number; left: number; width: number; height: number };

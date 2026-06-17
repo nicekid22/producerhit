@@ -22,9 +22,17 @@
     <meta name="language" content="English" />
     <meta name="author" content="ProducerHit" />
     <meta name="theme-color" content="#0a0a0f" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="msapplication-TileColor" content="#0a0a0f" />
     <link rel="canonical" href="https://www.producerhit.com/" />
     <link rel="alternate" href="https://www.producerhit.com/?lang=en" hreflang="en" />
     <link rel="alternate" href="https://www.producerhit.com/?lang=fr" hreflang="fr" />
+    <link rel="alternate" href="https://www.producerhit.com/?lang=es" hreflang="es" />
+    <link rel="alternate" href="https://www.producerhit.com/?lang=pt" hreflang="pt" />
+    <link rel="alternate" href="https://www.producerhit.com/?lang=de" hreflang="de" />
+    <link rel="alternate" href="https://www.producerhit.com/?lang=it" hreflang="it" />
+    <link rel="alternate" href="https://www.producerhit.com/?lang=en" hreflang="x-default" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="ProducerHit" />
     <meta property="og:title" content="ProducerHit — AI Beat Generator & AI Music Generator" />
@@ -36,6 +44,10 @@
     <meta property="og:image" content="https://www.producerhit.com/og-image.svg" />
     <meta property="og:locale" content="en_US" />
     <meta property="og:locale:alternate" content="fr_FR" />
+    <meta property="og:locale:alternate" content="es_ES" />
+    <meta property="og:locale:alternate" content="pt_BR" />
+    <meta property="og:locale:alternate" content="de_DE" />
+    <meta property="og:locale:alternate" content="it_IT" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="ProducerHit — AI Beat Generator & AI Music Generator" />
     <meta
@@ -47,6 +59,39 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script>
+      (function () {
+        try {
+          var theme = localStorage.getItem("producerhit_visual_theme_v1");
+          var accent = localStorage.getItem("producerhit_cloud_accent_v1") || "transparent";
+          var cloudColors = {
+            transparent: "#e8d8f0",
+            green: "#dcecc8",
+            red: "#f0d8cc",
+            blue: "#d0e8f8",
+          };
+          if (theme === "cloud" && cloudColors[accent]) {
+            var tc = document.querySelector('meta[name="theme-color"]');
+            if (tc) tc.setAttribute("content", cloudColors[accent]);
+            var tile = document.querySelector('meta[name="msapplication-TileColor"]');
+            if (tile) tile.setAttribute("content", cloudColors[accent]);
+            var cs = document.querySelector('meta[name="color-scheme"]');
+            if (cs) cs.setAttribute("content", "light");
+            var fav = document.querySelector('link[rel="icon"][type="image/svg+xml"]');
+            if (fav) fav.setAttribute("href", "/favicon-cloud-" + accent + ".svg");
+            var png = document.querySelector('link[rel="icon"][type="image/png"]');
+            if (png) png.setAttribute("href", "/favicon-cloud-" + accent + "-32.png");
+            var apple = document.querySelector('link[rel="apple-touch-icon"]');
+            if (apple) apple.setAttribute("href", "/apple-touch-icon-cloud-" + accent + ".png");
+          } else if (theme === "warm-glass") {
+            var tcW = document.querySelector('meta[name="theme-color"]');
+            if (tcW) tcW.setAttribute("content", "#963848");
+            var favW = document.querySelector('link[rel="icon"][type="image/svg+xml"]');
+            if (favW) favW.setAttribute("href", "/favicon-warm.svg");
+          }
+        } catch (e) {}
+      })();
+    </script>
     <script type="module">
       if (import.meta.hot?.on) {
         import.meta.hot.on('vite:error', (error) => {

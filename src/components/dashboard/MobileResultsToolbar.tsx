@@ -1,8 +1,9 @@
 import { AudioWaveform, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+import type { AppLocale } from "@/i18n/config";
 type Props = {
-  locale: "en" | "fr";
+  locale: AppLocale;
   generating: boolean;
   activeCount: number;
   onCreate: () => void;

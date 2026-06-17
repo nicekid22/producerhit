@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Loader2, MessageCircle, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { AVATAR_PRESETS } from "@/lib/creatorProfile";
 import {
   LOOP_COMMENT_MAX_LEN,
@@ -20,6 +20,7 @@ type Props = {
   isFr: boolean;
   userId: string | null;
   compactPreview?: boolean;
+  feedSheet?: boolean;
   commentCount?: number;
   onCommentCountChange?: (count: number) => void;
 };
@@ -49,9 +50,11 @@ export function LoopCommentsSection({
   isFr,
   userId,
   compactPreview = false,
+  feedSheet = false,
   commentCount,
   onCommentCountChange,
 }: Props) {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState<LoopCommentView[]>([]);
   const [draft, setDraft] = useState("");
@@ -83,7 +86,7 @@ export function LoopCommentsSection({
     if (!body) return;
     if (!userId) {
       toast(isFr ? "Connecte-toi pour commenter" : "Login to comment");
-      window.location.href = "/auth";
+      navigate("/auth", { state: { from: "/community" } });
       return;
     }
     if (posting) return;
@@ -148,16 +151,25 @@ export function LoopCommentsSection({
   return (
     <section
       id="comments"
-      className="mt-10 rounded-2xl border border-pk-border bg-pk-panel/40 p-6 sm:p-8"
+      className={cn(
+        feedSheet
+          ? "rounded-xl border border-white/10 bg-white/[0.03] p-4"
+          : "mt-10 rounded-2xl border border-pk-border bg-pk-panel/40 p-6 sm:p-8",
+      )}
       aria-labelledby="loop-comments-title"
     >
       <div className="flex items-center gap-2">
-        <MessageCircle className="h-5 w-5 text-pk-accent" />
-        <h2 id="loop-comments-title" className="text-xl font-bold">
-          {isFr ? "Commentaires" : "Comments"}
-          {total > 0 ? <span className="ml-2 text-base font-semibold text-pk-muted">({total})</span> : null}
+        <MessageCircle className={cn("text-pk-accent", feedSheet ? "h-4 w-4" : "h-5 w-5")} />
+        <h2 id="loop-comments-title" className={cn("font-bold", feedSheet ? "text-base" : "text-xl")}>
+          {isFr ? "Commentaires live" : "Live comments"}
+          {total > 0 ? <span className="ml-2 text-sm font-semibold text-pk-muted">({total})</span> : null}
         </h2>
       </div>
+      {feedSheet ? (
+        <p className="mt-1 text-[11px] font-medium text-white/45">
+          {isFr ? "Rejoins la conv — réagis, challenge, remixe." : "Join the convo — react, challenge, remix."}
+        </p>
+      ) : null}
 
       <div className="mt-5 space-y-3">
         <label className="sr-only" htmlFor="loop-comment-input">

@@ -26,6 +26,8 @@ import { Modal } from "@/components/ui/Modal";
 import { useLocaleStore } from "@/stores/localeStore";
 import { CreditCard, LogOut, Palette, Shield, Sparkles, UserRound, Users } from "lucide-react";
 import { ThemeToggleButton } from "@/components/ThemeToggleButton";
+import { CloudThemeSettingsBlock, visualThemeDescription } from "@/components/CloudThemeSettingsBlock";
+import { CLOUD_THEME_ENABLED } from "@/lib/featureFlags";
 import { discordCommunityUrl } from "@/lib/discordConfig";
 import { useVisualThemeStore } from "@/stores/visualThemeStore";
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
@@ -401,17 +403,17 @@ export default function Settings() {
                       </div>
                     </div>
                   </div>
-                  <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="mt-4 flex flex-col gap-3">
                     <p className="text-xs leading-relaxed text-pk-muted">
-                      {visualTheme === "warm-glass"
-                        ? isFr
-                          ? "Warm Glass — or, rose, liquid glass."
-                          : "Warm Glass — gold, pink, liquid glass."
-                        : isFr
-                          ? "Prism — cyan, violet, chrome."
-                          : "Prism — cyan, violet, chrome."}
+                      {visualThemeDescription(visualTheme, isFr)}
                     </p>
-                    <ThemeToggleButton variant="segmented" />
+                    {CLOUD_THEME_ENABLED ? (
+                      <CloudThemeSettingsBlock />
+                    ) : (
+                      <div className="flex justify-end sm:justify-end">
+                        <ThemeToggleButton variant="segmented" />
+                      </div>
+                    )}
                   </div>
                 </div>
 

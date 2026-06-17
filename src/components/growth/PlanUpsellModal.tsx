@@ -1,17 +1,20 @@
-import { useEffect } from "react";
-import { Sparkles, Zap } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { Modal } from "@/components/ui/Modal";
+import { useEffect, useState } from "react";
+import { Check, Lock, Sparkles, X, Zap } from "lucide-react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/Button";
-import { buildPricingUrl } from "@/lib/billing";
+import { buildAuthNextUrl, runCheckoutWithAuth } from "@/lib/billing";
 import { getUpsellCopy, shouldShowPlanUpsell, type UpsellReason } from "@/lib/growthUpsell";
+import { planPriceLabel } from "@/lib/planPricing";
 import { trackClientEvent } from "@/lib/supabaseClient";
+import { useAuthStore } from "@/stores/authStore";
 import type { PaidPlanId } from "@/lib/planEntitlements";
+import { cn } from "@/lib/utils";
 
+import type { AppLocale } from "@/i18n/config";
 type Props = {
   open: boolean;
   reason: UpsellReason | null;
-  locale: "en" | "fr";
+  locale: AppLocale;
   plan: string;
   source: string;
   remaining?: number;
@@ -31,85 +34,172 @@ export function PlanUpsellModal({
   usedThisMonth,
   onClose,
 }: Props) {
-  const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
+  const [busy, setBusy] = useState(false);
   const ctx = { source, plan, remaining, totalLimit, usedThisMonth };
   const visible = reason ? shouldShowPlanUpsell(plan, reason, ctx) : false;
+  const isFr = locale === "fr";
 
   useEffect(() => {
     if (!reason) return;
     if (open && !visible) onClose();
   }, [open, visible, onClose, reason]);
 
-  if (!reason || !visible) return null;
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
+  if (!reason || !visible || !open || typeof document === "undefined") return null;
 
   const copy = getUpsellCopy(reason, locale, plan, ctx);
+  const targetPlan = copy.targetPlan;
+  const price = targetPlan ? planPriceLabel(targetPlan, locale, { suffix: true }) : null;
 
   const trackDismiss = () => {
     trackClientEvent("upgrade_prompt_dismissed", { source, reason, plan });
     onClose();
   };
 
-  const goPricing = (target: PaidPlanId | null, checkout: boolean) => {
+  const startUpgrade = async (target: PaidPlanId | null) => {
+    if (!target) {
+      onClose();
+      window.location.href = "/settings";
+      return;
+    }
+
     trackClientEvent("upgrade_click", {
       source,
       reason,
       location: "plan_upsell_modal",
-      plan: target ?? "pricing",
+      plan: target,
     });
-    onClose();
-    if (!target) {
-      navigate("/settings");
+
+    if (!user) {
+      onClose();
+      window.location.href = buildAuthNextUrl(target);
       return;
     }
-    navigate(buildPricingUrl(target, checkout));
+
+    setBusy(true);
+    try {
+      await runCheckoutWithAuth({ plan: target, location: `upsell_${reason}`, locale });
+      onClose();
+    } finally {
+      setBusy(false);
+    }
   };
 
-  return (
-    <Modal open={open} title={copy.title} description={copy.description} confirmText={copy.primaryLabel} onClose={trackDismiss} onConfirm={() => goPricing(copy.targetPlan, true)} hideFooter>
-      <div className="space-y-4">
-        <div className="relative overflow-hidden rounded-2xl border border-violet-400/20 bg-gradient-to-br from-violet-500/12 to-cyan-500/8 p-4">
-          <div
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(167,139,250,0.2),transparent_50%),radial-gradient(circle_at_85%_80%,rgba(34,211,238,0.12),transparent_45%)]"
-            aria-hidden
-          />
-          <div className="relative flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-500/20 text-violet-200">
-              {reason === "credits_exhausted" || reason === "limit_reached" ? (
-                <Zap className="h-5 w-5" />
-              ) : (
-                <Sparkles className="h-5 w-5" />
+  const urgent = reason === "credits_exhausted" || reason === "limit_reached";
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[210] flex items-end justify-center bg-black/72 p-0 backdrop-blur-md sm:items-center sm:p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="pk-paywall-title"
+      onClick={trackDismiss}
+    >
+      <div
+        className={cn(
+          "pk-paywall relative w-full max-w-md overflow-hidden rounded-t-[1.5rem] border border-white/10 bg-[#0a0812] shadow-[0_32px_100px_rgba(0,0,0,0.72)] sm:rounded-[1.5rem]",
+        )}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_60%_at_50%_-10%,rgba(157,124,255,0.22),transparent_58%),radial-gradient(ellipse_70%_50%_at_100%_100%,rgba(103,195,255,0.12),transparent_55%)]"
+          aria-hidden
+        />
+
+        <button
+          type="button"
+          className="absolute right-4 top-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white/60 transition hover:text-white"
+          aria-label={isFr ? "Fermer" : "Close"}
+          onClick={trackDismiss}
+        >
+          <X className="h-4 w-4" aria-hidden />
+        </button>
+
+        <div className="relative px-6 pb-6 pt-8 sm:px-7 sm:pb-7">
+          <div className="flex items-center gap-3">
+            <div
+              className={cn(
+                "flex h-12 w-12 items-center justify-center rounded-2xl border",
+                urgent
+                  ? "border-amber-400/30 bg-amber-500/15 text-amber-200"
+                  : "border-violet-400/30 bg-violet-500/15 text-violet-200",
               )}
+            >
+              {urgent ? <Zap className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
             </div>
-            <div className="text-xs text-white/55">
-              {locale === "fr" ? "Débloque la suite de ton workflow producteur" : "Unlock the rest of your producer workflow"}
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/42">
+                {urgent
+                  ? isFr
+                    ? "Quota atteint"
+                    : "Limit reached"
+                  : isFr
+                    ? "Passe au niveau supérieur"
+                    : "Level up"}
+              </p>
+              {price ? (
+                <p className="mt-0.5 text-sm font-bold tabular-nums text-white">
+                  {price}
+                  <span className="ml-1 text-xs font-medium text-white/45">
+                    {isFr ? "· annulable à tout moment" : "· cancel anytime"}
+                  </span>
+                </p>
+              ) : null}
             </div>
           </div>
-          <ul className="relative mt-3 space-y-1.5 text-xs text-white/70">
-            {copy.bullets.map((line) => (
-              <li key={line}>✓ {line}</li>
+
+          <h2 id="pk-paywall-title" className="mt-5 text-balance text-xl font-bold leading-snug tracking-tight text-white sm:text-[1.35rem]">
+            {copy.title}
+          </h2>
+          <p className="mt-2 text-sm leading-relaxed text-white/58">{copy.description}</p>
+
+          <ul className="mt-5 space-y-2.5">
+            {copy.bullets.slice(0, 4).map((line) => (
+              <li key={line} className="flex items-start gap-2.5 text-sm text-white/78">
+                <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-400/12 text-emerald-300">
+                  <Check className="h-3 w-3" strokeWidth={2.5} aria-hidden />
+                </span>
+                <span>{line}</span>
+              </li>
             ))}
           </ul>
-        </div>
 
-        <div className="grid gap-2 sm:grid-cols-2">
-          <Button variant="primary" size="sm" onClick={() => goPricing(copy.targetPlan, true)}>
-            {copy.primaryLabel}
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => {
-              if (reason === "post_generation" || reason === "credits_low") {
-                trackDismiss();
-                return;
-              }
-              goPricing(copy.targetPlan, false);
-            }}
-          >
-            {copy.secondaryLabel}
-          </Button>
+          <div className="mt-6 space-y-2.5">
+            <Button
+              variant="primary"
+              size="md"
+              className="h-12 w-full rounded-full text-sm font-bold"
+              disabled={busy}
+              onClick={() => void startUpgrade(targetPlan)}
+            >
+              {busy ? (isFr ? "Ouverture du paiement…" : "Opening checkout…") : copy.primaryLabel}
+            </Button>
+            <button
+              type="button"
+              className="w-full py-2 text-center text-xs font-semibold text-white/42 transition hover:text-white/70"
+              disabled={busy}
+              onClick={trackDismiss}
+            >
+              {copy.secondaryLabel}
+            </button>
+          </div>
+
+          <p className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-white/38">
+            <Lock className="h-3 w-3 shrink-0" aria-hidden />
+            {isFr ? "Paiement Stripe · Apple Pay · Google Pay" : "Stripe checkout · Apple Pay · Google Pay"}
+          </p>
         </div>
       </div>
-    </Modal>
+    </div>,
+    document.body,
   );
 }

@@ -1,6 +1,7 @@
 import { GenerationCreditAmount } from "@/components/GenerationCreditIcon";
 import { cn } from "@/lib/utils";
 
+import type { AppLocale } from "@/i18n/config";
 export const VOCAL_STYLE_OPTIONS = [
   { value: "Singer", label: "Singer" },
   { value: "Rapper", label: "Rapper" },
@@ -11,7 +12,7 @@ export const VOCAL_STYLE_OPTIONS = [
 export type VocalStyleValue = (typeof VOCAL_STYLE_OPTIONS)[number]["value"];
 
 type Props = {
-  locale: "en" | "fr";
+  locale: AppLocale;
   versions: 1 | 2;
   onVersionsChange: (v: 1 | 2) => void;
   remaining: number;

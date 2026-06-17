@@ -1,6 +1,9 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useLocaleStore } from "@/stores/localeStore";
+import { UI_LOCALES, hreflangUrl } from "@/i18n/config";
+import { getMessages } from "@/i18n/locales";
+import { getPageSeo, type SeoSlugKey } from "@/i18n/seo";
 import { PLAN_LIMITS } from "@/lib/planLimits";
 import { COMMERCIAL_RIGHTS_FAQ } from "@/lib/planPricing";
 import {
@@ -144,106 +147,19 @@ export function SeoBootstrap() {
         return;
       }
 
-      const t = (en: string, fr: string) => (locale === "fr" ? fr : en);
+      const pageSeo = getPageSeo(locale, slugKey as SeoSlugKey);
 
       const title = (() => {
         if (comparisonPage) return contentLocale === "fr" ? comparisonPage.titleFr : comparisonPage.titleEn;
         if (seoPage) return contentLocale === "fr" ? seoPage.titleFr : seoPage.titleEn;
-        if (slugKey === "home")
-          return t(
-            "ProducerHit — AI Song Creator & Type Beat Generator | Royalty-Free",
-            "ProducerHit — Créateur de chansons IA & générateur de type beats | Royalty-free",
-          );
-        if (slugKey === "blog") return t("Blog — ProducerHit", "Blog — ProducerHit");
-        if (slugKey === "blog-post") return t("Blog — ProducerHit", "Blog — ProducerHit");
-        if (slugKey === "explore")
-          return t(
-            "Community AI beats — listen, remix & create | ProducerHit",
-            "Beats IA communauté — écoute, remixe & crée | ProducerHit",
-          );
-        if (slugKey === "loop") return t("Track — ProducerHit", "Track — ProducerHit");
-        if (slugKey === "pricing") return t("Pricing — ProducerHit", "Tarifs — ProducerHit");
-        if (slugKey === "auth") return t("Sign Up Free — ProducerHit", "Inscription gratuite — ProducerHit");
-        if (slugKey === "dashboard") return t("My Studio — ProducerHit", "Mon studio — ProducerHit");
-        if (slugKey === "library") return t("My Library — ProducerHit", "Ma bibliothèque — ProducerHit");
-        if (slugKey === "sample-lab") return t("AI Sample Lab — ProducerHit", "AI Sample Lab — ProducerHit");
-        if (slugKey === "settings") return t("Settings — ProducerHit", "Paramètres — ProducerHit");
-        if (slugKey === "ai-beat-generator")
-          return t(
-            "AI Beat Generator — Create Type Beats Online | ProducerHit",
-            "Générateur de beats IA — Type beats en ligne | ProducerHit",
-          );
-        if (slugKey === "ai-music-generator")
-          return t(
-            "AI Music Generator — Generate Songs & Beats | ProducerHit",
-            "Générateur de musique IA — Songs & beats | ProducerHit",
-          );
-        if (slugKey === "type-beat-generator-ai")
-          return t(
-            "Type Beat Generator AI — Producer-Ready Beats | ProducerHit",
-            "Type beat generator IA — Beats pro | ProducerHit",
-          );
-        if (slugKey === "generate-beats-online-free")
-          return t(
-            "Generate Beats Online Free — AI Beat Generator | ProducerHit",
-            "Générer des beats en ligne gratuit — IA | ProducerHit",
-          );
-        if (slugKey === "legal") return t("Legal — ProducerHit", "Mentions légales — ProducerHit");
-        return t("ProducerHit — AI Beat Generator", "ProducerHit — Générateur de beats IA");
+        if (slugKey === "blog-post") return pageSeo.title;
+        return pageSeo.title;
       })();
 
       const description = (() => {
         if (comparisonPage) return contentLocale === "fr" ? comparisonPage.descriptionFr : comparisonPage.descriptionEn;
         if (seoPage) return contentLocale === "fr" ? seoPage.descriptionFr : seoPage.descriptionEn;
-        if (slugKey === "home")
-          return t(
-            "ProducerHit is an AI song creator and type beat generator: Song Mode, Remix covers, royalty-free MP3/WAV exports, video clips, and mastering — Spotify Ready for producers and artists.",
-            "ProducerHit est un créateur de chansons IA et générateur de type beats : Song Mode, covers Remix, exports MP3/WAV royalty-free, clips vidéo et mastering — Spotify Ready pour producteurs et artistes.",
-          );
-        if (slugKey === "ai-beat-generator")
-          return t(
-            "Use ProducerHit as your AI beat generator: generate type beats fast, try 2 versions, and refine with seed-based variations. Export MP3/WAV.",
-            "Utilise ProducerHit comme générateur de beats IA : crée des type beats rapidement, génère 2 versions, et fais des variations via seed. Export MP3/WAV.",
-          );
-        if (slugKey === "ai-music-generator")
-          return t(
-            "AI music generator for songs and type beats. Describe a vibe, generate, iterate with variations, and export your track.",
-            "Générateur de musique IA pour chansons et type beats. Décris une vibe, génère, itère avec des variations, et exporte ton track.",
-          );
-        if (slugKey === "type-beat-generator-ai")
-          return t(
-            "Type beat generator AI built for producers: modern genres, clean mix, quick iterations, and reproducible seeds for variations.",
-            "Type beat generator IA pensé pour les producteurs : genres modernes, mix clean, itérations rapides, seeds reproductibles.",
-          );
-        if (slugKey === "generate-beats-online-free")
-          return t(
-            "Generate beats online free with ProducerHit. Start with short clips, pick the best version, then iterate with variations. Export MP3 (free) and WAV (Pro).",
-            "Génère des beats en ligne gratuitement avec ProducerHit. Commence par des clips courts, choisis la meilleure version, puis itère avec des variations. Export MP3 (gratuit) et WAV (Pro).",
-          );
-        if (slugKey === "blog")
-          return t(
-            "ProducerHit blog: guides, prompts, and workflows for AI beat generators and AI music generators.",
-            "Blog ProducerHit : guides, prompts et workflows pour générer des beats et de la musique avec l’IA.",
-          );
-        if (slugKey === "explore")
-          return t(
-            "Stream public AI beats on ProducerHit: community feed, ratings, comments, remix workflows, and vibe pages (Trap, Lo-Fi, R&B…).",
-            "Écoute des beats IA publics sur ProducerHit : flux communautaire, notes, commentaires, remix et pages vibes (Trap, Lo-Fi, R&B…).",
-          );
-        if (slugKey === "loop")
-          return t(
-            "Listen to a public track made with ProducerHit, then remix a similar version using seed-based variation.",
-            "Écoute un track public créé avec ProducerHit, puis remix une version similaire grâce aux variations via seed.",
-          );
-        if (slugKey === "pricing")
-          return t(
-            "Simple pricing for AI beats and AI songs. Upgrade for more credits and WAV exports.",
-            "Tarifs simples pour beats IA et songs IA. Upgrade pour plus de crédits et l’export WAV.",
-          );
-        return t(
-          "ProducerHit is an AI beat generator to create type beats online.",
-          "ProducerHit est un générateur de beats IA pour créer des type beats en ligne.",
-        );
+        return pageSeo.description;
       })();
 
       const effectiveTitle = blogPost ? `${blogPost.title} | ProducerHit` : title;
@@ -310,8 +226,10 @@ export function SeoBootstrap() {
         setLink("alternate", `${origin}${seoPage.pathFr}`, { hreflang: "fr" });
         setLink("alternate", `${origin}${seoPage.path}`, { hreflang: "x-default" });
       } else {
-        setLink("alternate", `${origin}${pathname}?lang=en`, { hreflang: "en" });
-        setLink("alternate", `${origin}${pathname}?lang=fr`, { hreflang: "fr" });
+        for (const code of UI_LOCALES) {
+          setLink("alternate", hreflangUrl(origin, pathname, code), { hreflang: code });
+        }
+        setLink("alternate", hreflangUrl(origin, pathname, "en"), { hreflang: "x-default" });
       }
 
       const faq = (items: { q: string; a: string }[]) => ({
@@ -423,17 +341,15 @@ export function SeoBootstrap() {
       }
 
       if (slugKey === "explore") {
+        const seo = getMessages(locale).seo;
         setJsonLd([
           ...baseJsonLd,
           {
             "@context": "https://schema.org",
             "@type": "CollectionPage",
-            name: locale === "fr" ? "Flux communauté ProducerHit" : "ProducerHit Community Feed",
+            name: seo.exploreCollectionName,
             url: `${origin}/community`,
-            description:
-              locale === "fr"
-                ? "Beats IA publics, remix et vibes communautaires"
-                : "Public AI beats, remix culture, and community vibes",
+            description: seo.exploreCollectionDescription,
           },
         ]);
         return;

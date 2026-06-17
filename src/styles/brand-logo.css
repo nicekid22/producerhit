@@ -1,0 +1,113 @@
+/* ProducerHit — wordmark dev-style (Apple Developer : simple, lowercase, accent thème) */
+
+.pk-brand-logo {
+  --pk-logo-base: rgba(255, 255, 255, 0.72);
+  --pk-logo-accent: linear-gradient(90deg, #67c3ff 0%, #9d7cff 100%);
+  text-decoration: none;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Text",
+    "SF Pro Display",
+    system-ui,
+    sans-serif;
+  font-size: 1.0625rem;
+  font-weight: 500;
+  letter-spacing: -0.022em;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "kern", "liga", "ss01";
+}
+
+.pk-brand-logo--compact {
+  font-size: 0.9375rem;
+  letter-spacing: -0.02em;
+}
+
+.pk-brand-logo__word {
+  display: inline-flex;
+  align-items: baseline;
+  white-space: nowrap;
+}
+
+.pk-brand-logo__base {
+  color: var(--pk-logo-base);
+  font-weight: 500;
+}
+
+.pk-brand-logo__accent {
+  font-weight: 600;
+  letter-spacing: -0.028em;
+  background: var(--pk-logo-accent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Monogramme compact (iconOnly) */
+.pk-brand-logo--mono {
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+
+.pk-brand-logo--compact.pk-brand-logo--mono {
+  font-size: 0.8125rem;
+}
+
+.pk-brand-logo__mono {
+  background: var(--pk-logo-accent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+/* —— Prism (défaut, fond sombre) —— */
+html:not(.pk-cloud-active):not(.pk-warm-glass-active) .pk-brand-logo,
+.pk-prism-stage .pk-brand-logo:not(.pk-cloud-stage *) {
+  --pk-logo-base: rgba(255, 255, 255, 0.74);
+  --pk-logo-accent: linear-gradient(92deg, #8fd4ff 0%, #67c3ff 38%, #9d7cff 100%);
+}
+
+/* —— Cloud (fond clair + accents dynamiques) —— */
+html.pk-cloud-active .pk-brand-logo,
+.pk-cloud-stage .pk-brand-logo {
+  --pk-logo-base: color-mix(in srgb, var(--cloud-text, #1c1c20) 52%, transparent);
+  --pk-logo-accent: var(--cloud-accent-gradient, linear-gradient(135deg, #ffd4e8, #c8b8ff, #a8d4ff));
+}
+
+/* Accents Cloud individuels */
+html.pk-cloud-active body[data-pk-cloud-accent="green"] .pk-brand-logo,
+.pk-cloud-stage[data-pk-cloud-accent="green"] .pk-brand-logo {
+  --pk-logo-accent: linear-gradient(92deg, #9fd86a 0%, #7ec850 55%, #5cb838 100%);
+}
+
+html.pk-cloud-active body[data-pk-cloud-accent="red"] .pk-brand-logo,
+.pk-cloud-stage[data-pk-cloud-accent="red"] .pk-brand-logo {
+  --pk-logo-accent: linear-gradient(92deg, #ffb090 0%, #e87858 55%, #d85840 100%);
+}
+
+html.pk-cloud-active body[data-pk-cloud-accent="blue"] .pk-brand-logo,
+.pk-cloud-stage[data-pk-cloud-accent="blue"] .pk-brand-logo {
+  --pk-logo-accent: linear-gradient(92deg, #90c8f8 0%, #58a8e8 55%, #3890d8 100%);
+}
+
+html.pk-cloud-active body[data-pk-cloud-accent="transparent"] .pk-brand-logo,
+.pk-cloud-stage[data-pk-cloud-accent="transparent"] .pk-brand-logo {
+  --pk-logo-accent: linear-gradient(92deg, #ffd4e8 0%, #c8b8ff 42%, #a8d4ff 100%);
+}
+
+/* —— Warm glass —— */
+html.pk-warm-glass-active .pk-brand-logo,
+.pk-warm-glass-stage .pk-brand-logo {
+  --pk-logo-base: rgba(255, 235, 210, 0.62);
+  --pk-logo-accent: linear-gradient(92deg, #f0c878 0%, #e8a060 45%, #d4845a 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pk-brand-logo {
+    transition: none;
+  }
+}

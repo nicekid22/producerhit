@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Download, Sparkles, Wand2, type LucideIcon } from "lucide-react";
 import { landingCopy } from "@/lib/landingContent";
 
+import type { AppLocale } from "@/i18n/config";
 type Step = {
   n: string;
   t: string;
@@ -12,7 +13,7 @@ type Step = {
 };
 
 type Props = {
-  locale: "en" | "fr";
+  locale: AppLocale;
 };
 
 export function LandingWorkflow({ locale }: Props) {

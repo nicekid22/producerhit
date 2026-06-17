@@ -1,5 +1,6 @@
 import type { DropdownOption } from "@/components/ui/Dropdown";
 
+import type { AppLocale } from "@/i18n/config";
 /** Valeurs alignées sur `energyMap` dans promptBuilder.ts */
 export const BEAT_ENERGY_OPTIONS: { value: string; labelEn: string; labelFr: string; groupEn: string; groupFr: string }[] = [
   { value: "Chill", labelEn: "Chill", labelFr: "Chill", groupEn: "Energy", groupFr: "Énergie" },
@@ -12,7 +13,7 @@ export const BEAT_ENERGY_OPTIONS: { value: string; labelEn: string; labelFr: str
   { value: "Nostalgic", labelEn: "Nostalgic", labelFr: "Nostalgique", groupEn: "Mood", groupFr: "Humeur" },
 ];
 
-export function beatEnergyDropdownOptions(locale: "en" | "fr"): DropdownOption[] {
+export function beatEnergyDropdownOptions(locale: AppLocale): DropdownOption[] {
   const isFr = locale === "fr";
   return BEAT_ENERGY_OPTIONS.map((o) => ({
     value: o.value,

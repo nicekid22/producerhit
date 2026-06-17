@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Music2, Sparkles, Zap } from "lucide-react";
 
+import type { AppLocale } from "@/i18n/config";
 type Props = {
-  locale: "en" | "fr";
+  locale: AppLocale;
 };
 
 type DemoItem = {

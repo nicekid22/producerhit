@@ -12,6 +12,7 @@ import {
   PUBLIC_LOOP_QUEUE_SOURCE,
 } from "@/lib/communityPlaybackQueue";
 import { publicRowToCoverLoop, resolvePublicRowCoverUrl } from "@/lib/coverArt";
+import { displayProducerInfluence } from "@/lib/beatInfluence";
 import { fetchPublicProfileCards, type PublicProfileCard } from "@/lib/creatorProfile";
 import { ProfileAuthorChip } from "@/components/profile/ProfileAuthorChip";
 import { LoopCommentsSection } from "@/components/community/LoopCommentsSection";
@@ -81,6 +82,7 @@ export default function PublicLoop() {
   const coverLoop = useMemo(() => (row ? publicRowToCoverLoop(row) : null), [row]);
   const coverUrl = useMemo(() => (row ? resolvePublicRowCoverUrl(row, 1024) : ""), [row]);
   const genreSeo = useMemo(() => getGenreSeoLink(row?.genre, locale), [row?.genre, locale]);
+  const producerInfluence = useMemo(() => displayProducerInfluence(row?.influence), [row?.influence]);
   const avgRating = ratingCount > 0 ? ratingSum / ratingCount : null;
 
   const fromShorts = useMemo(() => {
@@ -487,6 +489,11 @@ export default function PublicLoop() {
                     {row.genre ? (
                       <span className="rounded-full border border-white/15 bg-black/40 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
                         {row.genre}
+                      </span>
+                    ) : null}
+                    {producerInfluence ? (
+                      <span className="pk-community-card__influence rounded-full px-3 py-1 text-xs font-semibold backdrop-blur-sm">
+                        {producerInfluence}
                       </span>
                     ) : null}
                     {row.mood ? (

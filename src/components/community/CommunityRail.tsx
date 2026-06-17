@@ -21,6 +21,7 @@ type Props = {
   onPlay: (row: PublicLoopRow, index: number) => void;
   onRemix: (row: PublicLoopRow) => void;
   onRate: (loopId: string, stars: number) => void;
+  onOpenDetail?: (row: PublicLoopRow, focusComments?: boolean) => void;
   onSeeAll?: () => void;
 };
 
@@ -40,6 +41,7 @@ export function CommunityRail({
   onPlay,
   onRemix,
   onRate,
+  onOpenDetail,
   onSeeAll,
 }: Props) {
   if (!items.length) return null;
@@ -82,6 +84,7 @@ export function CommunityRail({
             onPlay={() => onPlay(row, idx)}
             onRemix={() => onRemix(row)}
             onRate={(stars) => onRate(row.id, stars)}
+            onOpenDetail={onOpenDetail ? (focusComments) => onOpenDetail(row, focusComments) : undefined}
             slotIndex={idx}
           />
         ))}

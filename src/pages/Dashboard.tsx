@@ -3,17 +3,17 @@ import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { AppShell } from "@/components/AppShell";
 import { Dropdown, type DropdownOption } from "@/components/ui/Dropdown";
-import { GenrePickControl } from "@/components/dashboard/GenrePickControl";
+import { GenreAutoModeToggle, GenrePickControl } from "@/components/dashboard/GenrePickControl";
 import {
   GENRE_PICK_MODE_STORAGE_KEY,
   isRandomGenreSelection,
-  normalizeGenrePickMode,
   pickRandomGenreValue,
   resolveGenreForGeneration,
   RANDOM_GENRE_VALUE,
   type GenrePickMode,
 } from "@/lib/genres/genrePickMode";
-import { vocalLanguageAutoOption, vocalLanguageDropdownOptions } from "@/lib/vocalLanguages";
+import { resolveGenreForLandingPrompt } from "@/lib/genres/matchGenreFromPrompt";
+import { vocalLanguageAutoOption, vocalLanguageDropdownOptions, resolveSongVocalLanguage } from "@/lib/vocalLanguages";
 import { Slider } from "@/components/ui/Slider";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/EmptyState";
@@ -65,6 +65,10 @@ import { usePlayerStore } from "@/stores/playerStore";
 import { LoopCardItem } from "@/components/LoopCardItem";
 import { LoopCardSkeleton } from "@/components/LoopCardSkeleton";
 import { SpeechDictationField } from "@/components/SpeechDictationField";
+import { VoiceLyricsImport } from "@/components/voice/VoiceLyricsImport";
+import { VoicePickerCompact } from "@/components/voice/VoicePickerCompact";
+import { readVoiceStudioPrefs, writeVoiceStudioPrefs } from "@/lib/voiceStudioPrefs";
+import { buildAceVoiceCloneStemsFields, voiceCloneToastMessage } from "@/lib/voiceCloneMeta";
 import { AlertTriangle, Copy, Search, SlidersHorizontal, X } from "lucide-react";
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
 import { trackDashboardReady } from "@/lib/growthFunnelEvents";
@@ -115,8 +119,8 @@ import { generateBeat, generateBeatDualBatch, remixLoopAce } from "@/lib/audioAp
 import { ACE_REMIX_UNAVAILABLE_COPY, AceRemixUnavailableError } from "@/lib/aceRemix";
 import { buildAceCaption, type GenerateParams } from "@/lib/promptBuilder";
 import { buildCoverPromptSnapshot, cn } from "@/lib/utils";
-import { BrandLogo } from "@/components/landing/BrandLogo";
-import { MOBILE_DASHBOARD_V2 } from "@/lib/featureFlags";
+import { DashboardStudioBrand } from "@/components/dashboard/DashboardStudioBrand";
+import { DASHBOARD_VOICE_SECTIONS_ENABLED, MOBILE_DASHBOARD_V2 } from "@/lib/featureFlags";
 import { useIsCompactMobileViewport, useIsDesktop } from "@/hooks/useMediaQuery";
 import { useMobileDashboardTab } from "@/hooks/useMobileDashboardTab";
 import { DashboardMobileTabs } from "@/components/dashboard/DashboardMobileTabs";
@@ -131,6 +135,7 @@ import {
   VOCAL_STYLE_OPTIONS,
   type VocalStyleValue,
 } from "@/components/dashboard/GeneratorAdvancedOutputControls";
+import { IdeaPromptSection, DASHBOARD_PROMPT_ROWS } from "@/components/dashboard/IdeaPromptSection";
 import { InspirationChipRow } from "@/components/dashboard/InspirationChipRow";
 import { GenerationCreditAmount, GenerationCreditIcon } from "@/components/GenerationCreditIcon";
 import { triggerBeatReady } from "@/lib/delight/moments";
@@ -263,17 +268,6 @@ function getInspirationChipsForGenre(genre: string) {
   return (genreInspirationChips[genre] ?? defaultInspirationChips) as readonly string[];
 }
 
-function detectLanguage(text: string): string {
-  if (!text || text.trim().length < 3) return "en";
-  const frPattern = /\b(je|tu|il|elle|nous|vous|ils|elles|le|la|les|un|une|des|et|est|pas|que|qui|dans|sur|avec|pour|mon|ton|son|ma|ta|sa)\b/i;
-  const esPattern = /\b(yo|tú|él|ella|nosotros|los|las|una|del|por|para|con|que|como|pero|este|esta|muy|más)\b/i;
-  const ptPattern = /\b(eu|você|ele|ela|nós|os|as|um|uma|do|da|por|para|com|que|como|mas|este|essa|muito)\b/i;
-  if (frPattern.test(text)) return "fr";
-  if (esPattern.test(text)) return "es";
-  if (ptPattern.test(text)) return "pt";
-  return "en";
-}
-
 function parseKeyScale(value: string) {
   const parts = value.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return { key: "", scale: "" };
@@ -402,6 +396,11 @@ export default function Dashboard() {
   const [plan, setPlan] = useState("free");
   const planRef = useRef("free");
   const [usedThisMonth, setUsedThisMonth] = useState(0);
+  const [voiceToSongUsed, setVoiceToSongUsed] = useState(0);
+  const [voiceCloneUsed, setVoiceCloneUsed] = useState(0);
+  const [activeVoiceProfileId, setActiveVoiceProfileId] = useState<string | null>(null);
+  const [voiceCloneStrength, setVoiceCloneStrength] = useState(0.72);
+  const voiceCloneConfigRef = useRef<{ profileId: string | null; strength: number }>({ profileId: null, strength: 0.72 });
   const [referralBonus, setReferralBonus] = useState(0);
   const [levelBonus, setLevelBonus] = useState(0);
   const [dailyBonusMonth, setDailyBonusMonth] = useState(0);
@@ -476,9 +475,10 @@ export default function Dashboard() {
   const [songUiMode, setSongUiMode] = useState<"simple" | "custom">("simple");
   const [genrePickMode, setGenrePickMode] = useState<GenrePickMode>(() => {
     try {
-      return normalizeGenrePickMode(window.localStorage.getItem(GENRE_PICK_MODE_STORAGE_KEY));
+      const saved = window.localStorage.getItem(GENRE_PICK_MODE_STORAGE_KEY);
+      return saved === "auto" ? "auto" : "custom";
     } catch {
-      return "auto";
+      return "custom";
     }
   });
   const [lastRandomGenre, setLastRandomGenre] = useState("");
@@ -496,12 +496,14 @@ export default function Dashboard() {
   const [songDurationSec, setSongDurationSec] = useState(30);
   const [songTimeSignature, setSongTimeSignature] = useState<(typeof timeSignatureOptions)[number]>("4/4");
   const [beatInstrumental] = useState(true);
-  const [activeChips, setActiveChips] = useState<string[]>([]);
   const [autoGeneratePending, setAutoGeneratePending] = useState(false);
   const [pendingLandingRequest, setPendingLandingRequest] = useState<LandingPendingGeneration | null>(null);
   const [externalSeed, setExternalSeed] = useState<number | null>(null);
   const landingFormAppliedRef = useRef(false);
   const autoLandingGenerateRef = useRef(false);
+  const [landingAutoGenQueued, setLandingAutoGenQueued] = useState(false);
+  type LandingGenerateSnapshot = { prompt: string; mode: "beat" | "song"; genre: string };
+  const landingGenerateSnapshotRef = useRef<LandingGenerateSnapshot | null>(null);
   const debugEnabled = useMemo(() => {
     try {
       const params = new URLSearchParams(window.location.search);
@@ -515,6 +517,8 @@ export default function Dashboard() {
     planRef.current = data.plan;
     setPlan(data.plan);
     setUsedThisMonth(data.loops_used_this_month);
+    setVoiceToSongUsed(data.voice_to_song_used_this_month ?? 0);
+    setVoiceCloneUsed(data.voice_clone_used_this_month ?? 0);
     setReferralBonus(data.referral_bonus);
     setLevelBonus(data.level_bonus);
     setDailyBonusMonth(data.daily_bonus_month);
@@ -753,6 +757,27 @@ export default function Dashboard() {
   }, [locale, refreshAuthProfile, refreshProfile, user?.id]);
 
   useEffect(() => {
+    if (!user?.id) return;
+    const prefs = readVoiceStudioPrefs(user.id);
+    setActiveVoiceProfileId(prefs.profileId);
+    setVoiceCloneStrength(prefs.strength);
+    voiceCloneConfigRef.current = { profileId: prefs.profileId, strength: prefs.strength };
+  }, [user?.id]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const voiceId = params.get("voice")?.trim();
+    if (!voiceId || !user?.id) return;
+    setMode("song");
+    setActiveVoiceProfileId(voiceId);
+    voiceCloneConfigRef.current = { ...voiceCloneConfigRef.current, profileId: voiceId };
+    writeVoiceStudioPrefs(user.id, { profileId: voiceId });
+    params.delete("voice");
+    const rest = params.toString();
+    window.history.replaceState({}, "", rest ? `/dashboard?${rest}` : "/dashboard");
+  }, [user?.id]);
+
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const urlPrompt = params.get("prompt");
     const urlMode = params.get("mode") === "beat" ? "beat" : "song";
@@ -785,7 +810,7 @@ export default function Dashboard() {
       } catch {
         landingRequest = { prompt: urlPrompt, mode: urlMode };
       }
-    } else if (storedLanding) {
+    } else if (storedLanding && !params.has("mode")) {
       landingRequest = storedLanding;
     }
 
@@ -796,6 +821,9 @@ export default function Dashboard() {
       });
       setEntrySource("landing");
     } else if (!pendingRemix && !remixParam) {
+      const rawMode = params.get("mode");
+      if (rawMode === "beat" || rawMode === "song") setMode(rawMode);
+      if (params.has("mode")) clearLandingPendingGeneration();
       try {
         const src = window.localStorage.getItem("producerhit_pending_source");
         if (src) {
@@ -818,7 +846,7 @@ export default function Dashboard() {
     }
 
     if (urlPrompt) window.history.replaceState({}, "", "/dashboard");
-    else if (urlGenre) window.history.replaceState({}, "", "/dashboard");
+    else if (urlGenre || params.has("mode")) window.history.replaceState({}, "", "/dashboard");
   }, []);
 
   useEffect(() => {
@@ -873,10 +901,6 @@ export default function Dashboard() {
   }, [genrePickMode]);
 
   useEffect(() => {
-    setActiveChips([]);
-  }, [form.genre, genrePickMode, lastRandomGenre]);
-
-  useEffect(() => {
     if (genrePickMode === "auto") {
       if (form.genre !== "Auto") setField("genre", "Auto");
       return;
@@ -899,13 +923,6 @@ export default function Dashboard() {
     }
     return "Auto";
   }, [form.genre, genrePickMode, lastRandomGenre, locale]);
-
-  const prevChipGenreRef = useRef(chipGenre);
-  useEffect(() => {
-    if (prevChipGenreRef.current === chipGenre) return;
-    prevChipGenreRef.current = chipGenre;
-    setActiveChips([]);
-  }, [chipGenre]);
 
   const genreReady = genrePickMode === "auto" || (form.genre.length > 0 && form.genre !== "Auto");
 
@@ -1057,67 +1074,7 @@ export default function Dashboard() {
     }
     return () => store.cancelPending();
   }, [authProfile?.loops_used_this_month, plan, profileBusy, user?.id]);
-  const inferGenreFromPrompt = useCallback((p: string) => {
-    const s = p.toLowerCase();
-    if (s.includes("pluggnb") || s.includes("pluggn")) return "PluggnB";
-    if (s.includes("rage + ambient") || s.includes("rage ambient")) return "Rage + Ambient";
-    if (s.includes("experimental rage")) return "Experimental Rage";
-    if (s.includes("rage")) return "Rage";
-    if (s.includes("vinahouse")) return "VinaHouse";
-    if (s.includes("k-pop") || s.includes("kpop")) return "K-Pop";
-    if (s.includes("vaporwave")) return "Vaporwave";
-    if (s.includes("synthwave") || s.includes("synth wave")) return "Synthwave";
-    if (s.includes("witch house")) return "Witch House";
-    if (s.includes("glitchcore")) return "Glitchcore";
-    if (s.includes("digicore")) return "Digicore";
-    if (s.includes("dubstep")) return "Dubstep";
-    if (s.includes("chillstep")) return "Chillstep";
-    if (s.includes("edm")) return "EDM";
-    if (s.includes("brazilian phonk") || (s.includes("phonk") && !s.includes("drift"))) return "Brazilian Phonk";
-    if (s.includes("study beats") || s.includes("study beat")) return "Study Beats";
-    if (s.includes("dark r&b") || s.includes("dark rnb")) return "Dark R&B";
-    if (s.includes("future r&b") || s.includes("future rnb")) return "Future R&B";
-    if (s.includes("toxic r&b") || s.includes("toxic rnb")) return "Toxic R&B";
-    if (s.includes("afro r&b") || s.includes("afro rnb")) return "Afro R&B";
-    if (s.includes("afro house")) return "Afro House";
-    if (s.includes("reggae") || s.includes("raggae")) return "Reggae";
-    if (s.includes("latin")) return "Latin";
-    if (s.includes("cloud rap")) return "Cloud Rap";
-    if (s.includes("emo rap")) return "Emo Rap";
-    if (s.includes("sad rap")) return "Sad Rap";
-    if (s.includes("atmospheric rap")) return "Atmospheric Rap";
-    if (s.includes("ambient drill")) return "Ambient Drill";
-    if (s.includes("sample drill")) return "Sample Drill";
-    if (s.includes("melodic drill")) return "Melodic Drill";
-    if (s.includes("ambient trap")) return "Ambient Trap";
-    if (s.includes("cinematic trap")) return "Cinematic Trap";
-    if (s.includes("experimental trap")) return "Experimental Trap";
-    if (s.includes("emotional trap")) return "Emotional Trap";
-    if (s.includes("holographic r&b") || s.includes("holographic rnb")) return "Holographic R&B";
-    if (s.includes("futuristic trap soul")) return "Futuristic Trap Soul";
-    if (s.includes("cinematic afro trap")) return "Cinematic Afro Trap";
-    if (s.includes("ai-assisted pop") || s.includes("ai assisted pop")) return "AI-assisted Pop";
-    if (s.includes("experimental afro house")) return "Experimental Afro House";
-    if (s.includes("hyper melodic rap")) return "Hyper Melodic Rap";
-    if (s.includes("dark atmospheric pop")) return "Dark Atmospheric Pop";
-    if (s.includes("y2k") && s.includes("pop")) return "Y2K Futuristic Pop";
-    if (s.includes("hybrid electronic rap")) return "Hybrid Electronic Rap";
-    if (s.includes("sci-fi r&b") || s.includes("sci fi r&b") || s.includes("sci-fi rnb") || s.includes("sci fi rnb")) return "Sci-Fi R&B";
-    if (s.includes("ethereal trap")) return "Ethereal Trap";
-    if (s.includes("nostalgic future")) return "Nostalgic Future Beats";
-    if (s.includes("afrobeats") || s.includes("afro")) return "Afrobeats";
-    if (s.includes("jersey drill")) return "Jersey Drill";
-    if (s.includes("uk drill")) return "UK Drill";
-    if (s.includes("ny drill")) return "NY Drill";
-    if (s.includes("drill")) return "Drill";
-    if (s.includes("trapsoul") || s.includes("trap soul")) return "Trapsoul";
-    if (s.includes("r&b") || s.includes("rnb")) return "90s R&B";
-    if (s.includes("boom bap") || s.includes("boombap") || s.includes("old school") || s.includes("old-school")) return "Old School Hip-Hop";
-    if (s.includes("uk garage") || s.includes("2-step")) return "UK Garage";
-    if (s.includes("pop")) return "Pop";
-    if (s.includes("trap")) return "Dark Trap";
-    return "Pop";
-  }, []);
+
   const displayedLoops = useMemo(
     () => buildWorkspacePlaybackQueue(loops, { query, savedOnly }),
     [loops, query, savedOnly],
@@ -1243,13 +1200,20 @@ export default function Dashboard() {
     ? !songIsCustom || (songTempoMode === "auto" && songKeyMode === "auto")
     : !advancedOpen || (beatTempoMode === "auto" && beatKeyMode === "auto");
 
-  const detectedLang = isSong ? (songVocalLanguageMode === "manual" ? manualVocalLanguage : (lyricsMode === "manual" ? detectLanguage(lyrics) : "en")) : "en";
+  const detectedLang = isSong
+    ? resolveSongVocalLanguage({
+        mode: songVocalLanguageMode,
+        manualCode: manualVocalLanguage,
+        lyricsMode,
+        lyrics,
+        songDescription,
+      })
+    : "en";
   const songLyrics = isSong ? (lyricsMode === "manual" ? lyrics.trim() : "") : "";
   const songDurationMax = 240;
   const manualSongDurationRaw = songIsCustom && songDurationMode === "manual" ? songDurationSec : undefined;
   const manualSongDuration = typeof manualSongDurationRaw === "number" ? Math.min(manualSongDurationRaw, songDurationMax) : undefined;
   const manualSongTimeSignature = songIsCustom && songTimeSignatureMode === "manual" ? songTimeSignature : "";
-  const chipExtra = !isSong ? activeChips.join(", ") : "";
   const uiPrompt = isSong
     ? [
         genrePickMode === "custom" && !isRandomGenreSelection(form.genre) && form.genre !== "Auto" ? `${form.genre}` : "",
@@ -1258,7 +1222,7 @@ export default function Dashboard() {
       ]
         .filter(Boolean)
         .join(", ")
-    : [form.prompt?.trim() ?? "", chipExtra].filter((s) => s.length > 0).join(", ");
+    : (form.prompt?.trim() ?? "");
 
   const aceDebugParams = useMemo<GenerateParams>(() => {
     return {
@@ -1296,13 +1260,37 @@ export default function Dashboard() {
       return;
     }
     if (generating) return;
+
+    const landingSnap = landingGenerateSnapshotRef.current;
+    if (landingSnap) landingGenerateSnapshotRef.current = null;
+    const runAsSong = landingSnap ? landingSnap.mode === "song" : isSong;
+    const runGenrePickMode: GenrePickMode = landingSnap ? "custom" : genrePickMode;
+    const runFormGenre = landingSnap?.genre ?? form.genre;
+    const runSongDescription = landingSnap && runAsSong ? landingSnap.prompt : songDescription;
+    const runFormPrompt = landingSnap && !runAsSong ? landingSnap.prompt : form.prompt;
+    const runUiPrompt =
+      landingSnap != null
+        ? runAsSong
+          ? [runFormGenre, landingSnap.prompt.trim()].filter(Boolean).join(", ")
+          : landingSnap.prompt.trim()
+        : uiPrompt;
+
     let effectiveLyricsMode = lyricsMode;
     let effectiveSongLyrics = songLyrics;
-    if (mode === "song" && lyricsMode === "manual" && !songLyrics) {
+    if (runAsSong && lyricsMode === "manual" && !songLyrics) {
       effectiveLyricsMode = "ai";
       effectiveSongLyrics = "";
       setLyricsMode("ai");
     }
+    const runVocalLanguage = runAsSong
+      ? resolveSongVocalLanguage({
+          mode: songVocalLanguageMode,
+          manualCode: manualVocalLanguage,
+          lyricsMode: effectiveLyricsMode,
+          lyrics: effectiveSongLyrics,
+          songDescription: runSongDescription,
+        })
+      : "en";
     const sessionId = ++generateSessionRef.current;
     unlockAudioPlaybackFromGesture();
     armGenerationAutoplay();
@@ -1380,16 +1368,29 @@ export default function Dashboard() {
         .slice(0, 72);
 
     const randomGenre =
-      genrePickMode === "custom" && isRandomGenreSelection(form.genre) ? pickRandomGenreValue() : undefined;
+      !landingSnap &&
+      runGenrePickMode === "custom" &&
+      isRandomGenreSelection(runFormGenre)
+        ? pickRandomGenreValue()
+        : undefined;
     if (randomGenre) setLastRandomGenre(randomGenre);
-    const { promptGenre, displayGenre } = resolveGenreForGeneration(genrePickMode, form.genre, randomGenre);
+    const { promptGenre, displayGenre } = resolveGenreForGeneration(
+      runGenrePickMode,
+      landingSnap ? landingSnap.genre : form.genre,
+      randomGenre,
+    );
 
     const normalizedGenreForPrompt = promptGenre;
-    const source = (isSong ? songDescription : form.prompt || uiPrompt || normalizedGenreForPrompt).trim();
-    const inferredWords = compactWords(source);
+    const rawTitleSource = (
+      runAsSong ? runSongDescription : runFormPrompt || runUiPrompt || normalizedGenreForPrompt
+    ).trim();
+    const inferredWords = compactWords(rawTitleSource);
+    const excerptTitle = normalizeTitle((rawTitleSource.split(/[,;|\n]+/)[0] ?? rawTitleSource).trim());
     const defaultBase = inferredWords.length
       ? titleCase(inferredWords.join(" "))
-      : titleCase(displayGenre === "Auto" ? "Auto" : displayGenre);
+      : excerptTitle.length > 0
+        ? excerptTitle
+        : titleCase(displayGenre === "Auto" ? (locale === "fr" ? "Nouvelle piste" : "New track") : displayGenre);
     const baseTitle = normalizeTitle(requestedTitle) || defaultBase;
 
     const titleIndexStart = (() => {
@@ -1484,7 +1485,7 @@ export default function Dashboard() {
           "[generate] 1 seule clé VITE ACE — ajoute VITE_ACE_STEP_API_KEYS (comme ACE_STEP_API_KEYS) pour v1/v2 en parallèle sans 429.",
         );
       }
-      const prompt = isSong ? uiPrompt : [form.prompt?.trim() ?? "", chipExtra].filter((s) => s.length > 0).join(", ");
+      const prompt = runAsSong ? runUiPrompt : (runFormPrompt?.trim() ?? "");
 
       const inputParams = {
         genre: normalizedGenreForPrompt,
@@ -1494,10 +1495,10 @@ export default function Dashboard() {
         bpm: effectiveBpm,
         loopLengthBars: bars,
         swing: form.swing,
-        mood: isSong ? "" : form.mood,
-        energyLevel: isSong ? "" : form.energyLevel,
+        mood: runAsSong ? "" : form.mood,
+        energyLevel: runAsSong ? "" : form.energyLevel,
         reverb: form.reverb,
-        prompt: uiPrompt,
+        prompt: runUiPrompt,
       };
 
       const buildOptions = (seed?: number, slotIdx?: 1 | 2) => {
@@ -1506,16 +1507,11 @@ export default function Dashboard() {
         const songAceDuration =
           manualSongDuration ??
           (hasManualLyrics ? estimateSongDurationFromLyrics(effectiveSongLyrics) : undefined);
-        const base = isSong
+        const base = runAsSong
           ? {
               instrumental: false,
               lyrics: effectiveSongLyrics,
-              vocalLanguage:
-                songVocalLanguageMode === "manual"
-                  ? manualVocalLanguage
-                  : effectiveLyricsMode === "manual"
-                    ? detectLanguage(effectiveSongLyrics)
-                    : "en",
+              vocalLanguage: runVocalLanguage,
               autoMeta: autoMetaEnabled,
               thinking: true,
               useFormat: !hasManualLyrics,
@@ -1537,11 +1533,22 @@ export default function Dashboard() {
         return aceKeyPreferIndex !== undefined ? { ...base, aceKeyPreferIndex } : base;
       };
 
+      const cloneCfg = voiceCloneConfigRef.current;
+      const withVoiceClone = (opts: ReturnType<typeof buildOptions>) => {
+        if (!runAsSong || !cloneCfg.profileId) return opts;
+        return { ...opts, voiceProfileId: cloneCfg.profileId, voiceCloneStrength: cloneCfg.strength };
+      };
+
       if (debugEnabled) {
         try {
           const previewCaption = buildAceCaption(
             autoMetaEnabled ? { ...inputParams, bpm: 0, key: "", scale: "" } : inputParams,
-            { isSong, instrumental: isSong ? false : beatInstrumental, autoMeta: autoMetaEnabled, vocalLanguage: detectedLang },
+            {
+              isSong: runAsSong,
+              instrumental: runAsSong ? false : beatInstrumental,
+              autoMeta: autoMetaEnabled,
+              vocalLanguage: detectedLang,
+            },
           );
           console.log("[GEN UI]", {
             mode,
@@ -1550,7 +1557,7 @@ export default function Dashboard() {
             detectedLang,
             params: inputParams,
             aceCaption: previewCaption,
-            options: buildOptions(seed1),
+            options: withVoiceClone(buildOptions(seed1)),
           });
         } catch {
           // ignore
@@ -1579,8 +1586,8 @@ export default function Dashboard() {
           bpm: usedBpm,
           loopLength: form.loopLength,
           swing: form.swing,
-          mood: isSong ? "" : form.mood,
-          energyLevel: isSong ? "" : form.energyLevel,
+          mood: runAsSong ? "" : form.mood,
+          energyLevel: runAsSong ? "" : form.energyLevel,
           reverb: form.reverb,
           prompt: storedPrompt,
           audioUrl: audioUrl ?? null,
@@ -1588,7 +1595,10 @@ export default function Dashboard() {
           details: result.meta
             ? {
                 caption: result.meta.prompt ?? storedPrompt,
-                lyrics: isSong && effectiveLyricsMode === "manual" && effectiveSongLyrics ? effectiveSongLyrics : (result.meta.lyrics ?? ""),
+                lyrics:
+                  runAsSong && effectiveLyricsMode === "manual" && effectiveSongLyrics
+                    ? effectiveSongLyrics
+                    : (result.meta.lyrics ?? ""),
                 bpm: result.meta.bpm ?? null,
                 duration: result.meta.duration ?? null,
                 keyScale: result.meta.keyScale ?? "",
@@ -1597,7 +1607,7 @@ export default function Dashboard() {
                 coverPrompt: buildCoverPromptSnapshot({
                   prompt: storedPrompt,
                   genre: displayGenre,
-                  mood: isSong ? "" : form.mood,
+                  mood: runAsSong ? "" : form.mood,
                   influence: form.influence,
                 }),
               }
@@ -1611,6 +1621,10 @@ export default function Dashboard() {
               (typeof result.meta?.httpAudioUrl === "string" && result.meta.httpAudioUrl.trim()) ||
               (audioUrl.startsWith("http") ? audioUrl.trim() : "");
             if (!taskId && !result.meta && !httpAudioUrl) return null;
+            const voiceFields = buildAceVoiceCloneStemsFields(result.meta, {
+              requestedProfileId: voiceCloneConfigRef.current.profileId,
+              requestedStrength: voiceCloneConfigRef.current.strength,
+            });
             return {
               ace: {
                 ...(taskId ? { taskId } : {}),
@@ -1618,8 +1632,9 @@ export default function Dashboard() {
                 ...(typeof result.meta?.stemsZipUrl === "string" && result.meta.stemsZipUrl.trim().length > 0
                   ? { stemsZipUrl: result.meta.stemsZipUrl.trim() }
                   : {}),
-                isSong,
-                ...(isSong ? { vocalLanguage: detectedLang } : {}),
+                isSong: runAsSong,
+                ...(runAsSong ? { vocalLanguage: detectedLang } : {}),
+                ...(voiceFields ?? {}),
               },
             } as Record<string, unknown>;
           })(),
@@ -1764,6 +1779,11 @@ export default function Dashboard() {
 
         const loop = await persistDraft(draft, audioUrl, value.engine, previewId);
         persistCompleted = true;
+        if (mode === "song" && voiceCloneConfigRef.current.profileId) {
+          const voiceToast = voiceCloneToastMessage(value.meta, locale === "fr");
+          if (voiceToast?.type === "success") toast.success(voiceToast.message, { id: `voice-clone-${loop.id}` });
+          else if (voiceToast?.type === "warning") toast(voiceToast.message, { icon: "⚠️", id: `voice-clone-${loop.id}` });
+        }
         await migrateAudioCache(previewId, loop.id);
         const player = usePlayerStore.getState();
         if (player.current?.id === previewId || player.queue.some((l) => l.id === previewId)) {
@@ -1836,7 +1856,7 @@ export default function Dashboard() {
           for (let attempt = 0; attempt < 2; attempt++) {
             try {
               const value = await generateBeat(inputParams, effectiveEngine, {
-                ...buildOptions(seed, idx),
+                ...withVoiceClone(buildOptions(seed, idx)),
                 generationKey,
               });
               stopProgressTick();
@@ -2002,7 +2022,7 @@ export default function Dashboard() {
 
         try {
           const rows = await generateBeatDualBatch(inputParams, effectiveEngine, {
-            ...buildOptions(seed1, 1),
+            ...withVoiceClone(buildOptions(seed1, 1)),
             dualSeeds: [seed1, seed2],
             generationKeys: [generationKey1, generationKey2],
           });
@@ -2162,7 +2182,6 @@ export default function Dashboard() {
     autoMetaEnabled,
     bars,
     beatInstrumental,
-    chipExtra,
     createLoop,
     removeLoop,
     primeAudioCache,
@@ -2607,10 +2626,19 @@ export default function Dashboard() {
 
     landingFormAppliedRef.current = true;
     const { prompt, mode: landingMode } = pendingLandingRequest;
+    const genreHandoff = resolveGenreForLandingPrompt(prompt);
+
+    landingGenerateSnapshotRef.current = {
+      prompt,
+      mode: landingMode,
+      genre: genreHandoff.formGenre,
+    };
+    setLandingAutoGenQueued(true);
 
     setMode(landingMode);
     setGenrePickMode("custom");
-    setField("genre", inferGenreFromPrompt(prompt));
+    setField("genre", genreHandoff.formGenre);
+    if (!genreHandoff.matchedFromPrompt) setLastRandomGenre(genreHandoff.formGenre);
 
     if (landingMode === "song") {
       setSongUiMode("simple");
@@ -2620,51 +2648,55 @@ export default function Dashboard() {
     } else {
       setField("prompt", prompt);
     }
-  }, [inferGenreFromPrompt, pendingLandingRequest, setField, setLyricsMode, setMode, setSongDescription, setSongUiMode]);
+
+    clearLandingPendingGeneration();
+    setPendingLandingRequest(null);
+  }, [pendingLandingRequest, setField, setLastRandomGenre, setLyricsMode, setMode, setSongDescription, setSongUiMode]);
 
   useEffect(() => {
-    if (!pendingLandingRequest) return;
+    if (!landingAutoGenQueued) return;
     if (autoLandingGenerateRef.current) return;
     if (!user || !quotaReady || generating) return;
-    if (!genreReady) return;
+    if (!landingGenerateSnapshotRef.current) return;
 
     if (remaining === 0) {
+      setLandingAutoGenQueued(false);
+      landingGenerateSnapshotRef.current = null;
       promptPlanUpsell("credits_exhausted");
-      clearLandingPendingGeneration();
-      setPendingLandingRequest(null);
       return;
     }
 
+    const snap = landingGenerateSnapshotRef.current;
+    const autogenKey = `${snap.mode}:${snap.prompt.slice(0, 120)}:${snap.genre}`;
     try {
-      if (window.sessionStorage.getItem("producerhit_landing_autogen_done") === "1") {
-        clearLandingPendingGeneration();
-        setPendingLandingRequest(null);
+      const done = window.sessionStorage.getItem("producerhit_landing_autogen_key");
+      if (done === autogenKey) {
+        setLandingAutoGenQueued(false);
+        landingGenerateSnapshotRef.current = null;
         return;
       }
-      window.sessionStorage.setItem("producerhit_landing_autogen_done", "1");
+      window.sessionStorage.setItem("producerhit_landing_autogen_key", autogenKey);
     } catch {
       void 0;
     }
 
     autoLandingGenerateRef.current = true;
-    clearLandingPendingGeneration();
-    setPendingLandingRequest(null);
+    setLandingAutoGenQueued(false);
     trackClientEvent("landing_auto_generate_start", { entry_source: entrySource, mobile: mobileV2 });
     toast.success(
-      locale === "fr" ? "Génération lancée — ton idée depuis la landing." : "Generating — starting your landing idea.",
+      locale === "fr" ? "Génération lancée — ton idée prend forme." : "Generating from your idea.",
       { duration: 3200 },
     );
     if (mobileV2) goResults();
     void handleGenerate();
   }, [
-    genreReady,
     generating,
     entrySource,
     goResults,
     handleGenerate,
+    landingAutoGenQueued,
     locale,
     mobileV2,
-    pendingLandingRequest,
     quotaReady,
     promptPlanUpsell,
     remaining,
@@ -2835,6 +2867,13 @@ export default function Dashboard() {
       theme="prism"
       mobileLayoutV2={mobileV2}
       mobilePanel={mobileTab}
+      consoleHeader={
+        <DashboardStudioBrand
+          mode={mode}
+          locale={locale}
+          remixRecreate={isRemixVibeRecreateEnabled()}
+        />
+      }
       mobileTabs={
         mobileV2 ? (
           <DashboardMobileTabs
@@ -2859,15 +2898,21 @@ export default function Dashboard() {
             mobileV2 && mobileTab === "create" && "pk-mobile-create-shell",
           )}
         >
-          {!mobileV2 ? (
-            <div className="flex-shrink-0 border-b border-white/10 px-4 pb-3 pt-4">
-              <BrandLogo />
+          {!mobileV2 ? null : (
+            <div className="pk-dashboard-mobile-head pk-dashboard-mobile-head--themed flex-shrink-0 border-b px-3 pb-1.5 pt-1 md:hidden">
+              <DashboardStudioBrand
+                mode={mode}
+                locale={locale}
+                remixRecreate={isRemixVibeRecreateEnabled()}
+                compact
+                staticMode
+              />
             </div>
-          ) : null}
+          )}
           <div
             className={cn(
-              "flex-shrink-0",
-              mobileV2 ? "px-3 pb-1.5 pt-1.5" : "border-b border-pk-border p-4 md:border-white/10",
+              "pk-mobile-create-chrome flex-shrink-0",
+              mobileV2 ? "px-3 pb-1 pt-1" : "border-b border-pk-border p-4 md:border-white/10",
             )}
           >
             <div className={cn("flex items-center gap-2", mobileV2 ? "w-full" : "justify-between")}>
@@ -2922,7 +2967,7 @@ export default function Dashboard() {
                         : "text-white/50 hover:text-white",
                   )}
                 >
-                  {isRemixVibeRecreateEnabled() ? (locale === "fr" ? "Recréer" : "Recreate") : "Remix"}
+                  Remix
                 </button>
                 {mobileV2 && (mode === "song" || mode === "beat") ? (
                   <button
@@ -2991,8 +3036,8 @@ export default function Dashboard() {
                   title={locale === "fr" ? "Style & Vibe" : "Style & Vibe"}
                   hint={
                     locale === "fr"
-                      ? "Custom : genre précis ou Aléatoire. Auto : l’IA adapte le style à ton idée."
-                      : "Custom: exact genre or Random. Auto: AI adapts style to your idea."
+                      ? "Genre précis ou Aléatoire dans la liste."
+                      : "Pick an exact genre or Random from the list."
                   }
                   collapsible={mobileV2}
                   defaultOpen={mobileV2 ? mobileSectionDefaultOpen : true}
@@ -3002,7 +3047,6 @@ export default function Dashboard() {
                       compact
                       locale={locale}
                       mode={genrePickMode}
-                      onModeChange={handleGenrePickModeChange}
                       genre={form.genre}
                       onGenreChange={(v) => {
                         setGenrePickMode("custom");
@@ -3036,28 +3080,14 @@ export default function Dashboard() {
                   </div>
                 </GeneratorSection>
 
-                <GeneratorSection
-                  title={locale === "fr" ? "L’idée" : "The Idea"}
+                <IdeaPromptSection
+                  locale={locale}
+                  mode="beat"
+                  value={form.prompt}
+                  onChange={(v) => setField("prompt", v)}
                   collapsible={mobileV2}
                   defaultOpen={mobileV2 ? mobileSectionDefaultOpen : true}
-                >
-                  <InspirationChipRow
-                    chips={getInspirationChipsForGenre(chipGenre)}
-                    isActive={(chip) => activeChips.includes(chip)}
-                    onChipClick={(chip) => {
-                      setActiveChips((prev) => (prev.includes(chip) ? prev.filter((c) => c !== chip) : [...prev, chip]));
-                    }}
-                  />
-
-                  <div data-coach="prompt-field">
-                    <input
-                      value={form.prompt}
-                      onChange={(e) => setField("prompt", e.target.value)}
-                      className="mt-3 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2 text-sm outline-none placeholder:text-pk-muted focus:border-pk-accent"
-                      placeholder={locale === "fr" ? "ex: dark melodic, smooth 808s" : "e.g. dark melodic, smooth 808s"}
-                    />
-                  </div>
-                </GeneratorSection>
+                />
 
                 <GeneratorSection
                   title={locale === "fr" ? "Titre du son" : "Sound Title"}
@@ -3254,6 +3284,7 @@ export default function Dashboard() {
                   <div className={cn("pk-studio-section min-w-0 max-w-full overflow-x-clip border-b border-pk-border bg-pk-bg/30", generatorSectionPad)}>
                     <div className="text-sm font-semibold">{locale === "fr" ? "Avancé" : "Advanced"}</div>
                     <div className="mt-4 grid min-w-0 max-w-full gap-4">
+                      <GenreAutoModeToggle locale={locale} mode={genrePickMode} onModeChange={handleGenrePickModeChange} />
                       <GeneratorAdvancedOutputControls
                         locale={locale}
                         versions={versions}
@@ -3382,8 +3413,8 @@ export default function Dashboard() {
                   title={locale === "fr" ? "Le Style" : "The Style"}
                   hint={
                     locale === "fr"
-                      ? "Custom : genre du catalogue ou Aléatoire. Auto : l’IA choisit le style selon ton idée."
-                      : "Custom: catalog genre or Random. Auto: AI picks style from your idea."
+                      ? "Genre du catalogue ou Aléatoire — complété par ton idée."
+                      : "Catalog genre or Random — combined with your idea."
                   }
                   collapsible={mobileV2}
                   defaultOpen={mobileV2 ? mobileSectionDefaultOpen : true}
@@ -3392,7 +3423,6 @@ export default function Dashboard() {
                     compact
                     locale={locale}
                     mode={genrePickMode}
-                    onModeChange={handleGenrePickModeChange}
                     genre={form.genre}
                     onGenreChange={(v) => {
                       setGenrePickMode("custom");
@@ -3406,8 +3436,8 @@ export default function Dashboard() {
                   title={locale === "fr" ? "La Langue" : "Language"}
                   hint={
                     locale === "fr"
-                      ? "Auto détecte la langue des paroles. Choisis une langue pour guider la voix."
-                      : "Auto detects lyrics language. Pick a language to guide the vocals."
+                      ? "Auto détecte la langue depuis ton idée ou tes paroles manuelles."
+                      : "Auto detects language from your idea or manual lyrics."
                   }
                   collapsible={mobileV2}
                   defaultOpen={mobileV2 ? mobileSectionDefaultOpen : true}
@@ -3427,46 +3457,14 @@ export default function Dashboard() {
                   />
                 </GeneratorSection>
 
-                <GeneratorSection
-                  title={locale === "fr" ? "L’idée" : "The Idea"}
+                <IdeaPromptSection
+                  locale={locale}
+                  mode="song"
+                  value={songDescription}
+                  onChange={setSongDescription}
                   collapsible={mobileV2}
                   defaultOpen={mobileV2 ? mobileSectionDefaultOpen : true}
-                >
-                  <InspirationChipRow
-                    chips={getInspirationChipsForGenre(chipGenre)}
-                    isActive={(chip) => songDescription.includes(chip)}
-                    onChipClick={(chip) => {
-                      const current = songDescription.trim();
-                      const on = current.includes(chip);
-                      if (on) {
-                        setSongDescription(
-                          current
-                            .split(",")
-                            .map((s) => s.trim())
-                            .filter((s) => s !== chip)
-                            .join(", "),
-                        );
-                      } else {
-                        setSongDescription(current ? `${current}, ${chip}` : chip);
-                      }
-                    }}
-                  />
-
-                  <div data-coach="prompt-field">
-                    <SpeechDictationField
-                      multiline
-                      locale={locale}
-                      value={songDescription}
-                      onChange={setSongDescription}
-                      rows={2}
-                      placeholder={
-                        locale === "fr"
-                          ? "ex: R&B mélancolique, nuits en ville…"
-                          : "e.g. Melancholic R&B, late nights…"
-                      }
-                    />
-                  </div>
-                </GeneratorSection>
+                />
 
                 <GeneratorSection
                   title={locale === "fr" ? "Paroles" : "The Lyrics"}
@@ -3494,18 +3492,40 @@ export default function Dashboard() {
                     </button>
                   </div>
                   {lyricsMode === "manual" ? (
-                    <SpeechDictationField
-                      multiline
-                      locale={locale}
-                      value={lyrics}
-                      onChange={setLyrics}
-                      className={cn(mobileV2 ? "min-h-[120px]" : "min-h-[160px]")}
-                      placeholder={
-                        locale === "fr"
-                          ? "[Couplet]\nÉcris tes paroles ici...\n\n[Refrain]\nÉcris ton hook ici..."
-                          : "[Verse]\nWrite your lyrics here...\n\n[Chorus]\nWrite your hook here..."
-                      }
-                    />
+                    <>
+                      {DASHBOARD_VOICE_SECTIONS_ENABLED && user?.id ? (
+                        <VoiceLyricsImport
+                          locale={locale}
+                          userId={user.id}
+                          plan={plan}
+                          used={voiceToSongUsed}
+                          onTranscript={(text) => {
+                            setLyrics(text);
+                            setLyricsMode("manual");
+                          }}
+                          onUsageUpdate={setVoiceToSongUsed}
+                          onUpsell={() => promptPlanUpsell("feature_voice_to_song")}
+                        />
+                      ) : null}
+                      <div className="pk-dashboard-text-field mt-3">
+                        <SpeechDictationField
+                          multiline
+                          locale={locale}
+                          value={lyrics}
+                          onChange={setLyrics}
+                          rows={DASHBOARD_PROMPT_ROWS}
+                          micPlacement="inside"
+                          wrapperClassName="pk-dashboard-text-field-wrap"
+                          className="pk-dashboard-text-field__control bg-pk-input border border-pk-border text-sm text-pk-text placeholder:text-pk-muted focus:border-pk-accent"
+                          placeholder={
+                            locale === "fr"
+                              ? "[Couplet]\nÉcris tes paroles ici...\n\n[Refrain]\nÉcris ton hook ici..."
+                              : "[Verse]\nWrite your lyrics here...\n\n[Chorus]\nWrite your hook here..."
+                          }
+                          showStatus={false}
+                        />
+                      </div>
+                    </>
                   ) : (
                     <div className="mt-3 rounded-pk border border-pk-border bg-pk-bg p-4 text-center">
                       <p className="text-[11px] italic text-pk-muted leading-relaxed">
@@ -3516,6 +3536,38 @@ export default function Dashboard() {
                     </div>
                   )}
                 </GeneratorSection>
+
+                {DASHBOARD_VOICE_SECTIONS_ENABLED && user?.id ? (
+                  <GeneratorSection
+                    title={locale === "fr" ? "Voix chantée" : "Singing voice"}
+                    hint={
+                      locale === "fr"
+                        ? "Profil vocal ACE — géré dans Voice Studio"
+                        : "ACE voice profile — managed in Voice Studio"
+                    }
+                    collapsible={mobileV2}
+                    defaultOpen={mobileV2 ? mobileSectionDefaultOpen : true}
+                  >
+                    <VoicePickerCompact
+                      locale={locale}
+                      plan={plan}
+                      cloneUsed={voiceCloneUsed}
+                      activeProfileId={activeVoiceProfileId}
+                      strength={voiceCloneStrength}
+                      onActiveProfileChange={(id) => {
+                        setActiveVoiceProfileId(id);
+                        voiceCloneConfigRef.current = { ...voiceCloneConfigRef.current, profileId: id };
+                        if (user?.id) writeVoiceStudioPrefs(user.id, { profileId: id });
+                      }}
+                      onStrengthChange={(strength) => {
+                        setVoiceCloneStrength(strength);
+                        voiceCloneConfigRef.current = { ...voiceCloneConfigRef.current, strength };
+                        if (user?.id) writeVoiceStudioPrefs(user.id, { strength });
+                      }}
+                      onUpsell={() => promptPlanUpsell("feature_voice_clone")}
+                    />
+                  </GeneratorSection>
+                ) : null}
 
                 <GeneratorSection
                   title={locale === "fr" ? "Titre de la chanson" : "Song Title"}
@@ -3534,6 +3586,7 @@ export default function Dashboard() {
                   <div className={cn("pk-studio-section min-w-0 max-w-full overflow-x-clip border-b border-pk-border bg-pk-bg/30", generatorSectionPad)}>
                     <div className="text-sm font-semibold">{locale === "fr" ? "Réglages avancés" : "Advanced Settings"}</div>
                     <div className="mt-4 grid min-w-0 max-w-full gap-4">
+                      <GenreAutoModeToggle locale={locale} mode={genrePickMode} onModeChange={handleGenrePickModeChange} />
                       <GeneratorAdvancedOutputControls
                         locale={locale}
                         versions={versions}
@@ -3972,11 +4025,16 @@ export default function Dashboard() {
             {bonusCreditsTotal > 0 ? (
               <div
                 className={cn(
-                  "inline-flex flex-wrap items-center gap-1 text-cyan-200/70",
+                  "pk-dashboard-bonus-meta inline-flex flex-wrap items-center gap-1",
                   mobileV2 ? "text-[10px] leading-snug" : "mt-1 text-[10px]",
                 )}
               >
-                <GenerationCreditAmount amount={bonusCreditsTotal} showPlus iconClassName="h-2.5 w-2.5" />
+                <GenerationCreditAmount
+                  amount={bonusCreditsTotal}
+                  showPlus
+                  iconClassName="h-2.5 w-2.5 pk-dashboard-bonus-meta__gem"
+                  className="pk-dashboard-bonus-meta__amount"
+                />
                 <span>
                   {locale === "fr"
                     ? "bonus actifs (niveau, parrainage, daily)"

@@ -1,15 +1,12 @@
-const REDIRECT_URI = "https://www.producerhit.com/api/tiktok-oauth-callback";
-
-function decodeState(state: string): string | null {
-  try {
-    const padded = state.replace(/-/g, "+").replace(/_/g, "/");
-    const json = Buffer.from(padded, "base64").toString("utf8");
-    const parsed = JSON.parse(json) as { v?: string };
-    return typeof parsed.v === "string" && parsed.v.length >= 20 ? parsed.v : null;
-  } catch {
-    return null;
-  }
+function normalizeRedirectUri(uri: string) {
+  const u = uri.trim();
+  if (!u) return "https://www.producerhit.com/api/tiktok-oauth-callback/";
+  return u.endsWith("/") ? u : `${u}/`;
 }
+
+const REDIRECT_URI = normalizeRedirectUri(
+  process.env.TIKTOK_REDIRECT_URI ?? "https://www.producerhit.com/api/tiktok-oauth-callback/",
+);
 
 function page(title: string, body: string) {
   return `<!doctype html><html lang="fr"><head><meta charset="utf-8"/><meta name="robots" content="noindex"/><title>${title}</title>
@@ -34,22 +31,16 @@ export default async function handler(
   if (error) {
     const hint =
       error === "access_denied"
-        ? "<p>Ajoute le compte TikTok comme <strong>utilisateur test</strong> (Sandbox) dans TikTok Developers.</p>"
-        : "<p>Vérifie Login Kit → Redirect URI HTTPS exacte, et que Login Kit est activé sur l'app.</p>";
+        ? "<p>Ajoute le compte TikTok en target user Sandbox + autorise Login Kit.</p>"
+        : "<p>Redirect URI Login Kit doit matcher exactement (toggle SANDBOX, pas Production). Voir login-kit-web doc.</p>";
     return res
       .status(400)
       .send(page("TikTok OAuth — erreur", `<h1>Erreur TikTok</h1><p><code>${error}</code> ${errorDesc}</p>${hint}`));
   }
 
   const code = String(q.code ?? "");
-  const state = String(q.state ?? "");
-  if (!code || !state) {
-    return res.status(400).send(page("TikTok OAuth", "<p>Paramètres <code>code</code> ou <code>state</code> manquants.</p>"));
-  }
-
-  const verifier = decodeState(state);
-  if (!verifier) {
-    return res.status(400).send(page("TikTok OAuth", "<p>State OAuth invalide — relance <code>npm run tiktok:oauth</code>.</p>"));
+  if (!code) {
+    return res.status(400).send(page("TikTok OAuth", "<p>Parametre <code>code</code> manquant.</p>"));
   }
 
   const clientKey = (process.env.TIKTOK_CLIENT_KEY ?? process.env.TIKTOK_CLIENT_ID ?? "").trim();
@@ -60,7 +51,7 @@ export default async function handler(
       .send(
         page(
           "TikTok OAuth",
-          "<p>Secrets manquants sur Vercel. Ajoute <code>TIKTOK_CLIENT_KEY</code> et <code>TIKTOK_CLIENT_SECRET</code>, puis redéploie.</p>",
+          "<p>Secrets manquants sur Vercel. Ajoute <code>TIKTOK_CLIENT_KEY</code> et <code>TIKTOK_CLIENT_SECRET</code>, puis redeploy.</p>",
         ),
       );
   }
@@ -71,7 +62,6 @@ export default async function handler(
     code,
     grant_type: "authorization_code",
     redirect_uri: REDIRECT_URI,
-    code_verifier: verifier,
   });
 
   const tokenRes = await fetch("https://open.tiktokapis.com/v2/oauth/token/", {
@@ -86,13 +76,15 @@ export default async function handler(
     error_code?: number;
     error_description?: string;
     message?: string;
+    error?: string;
   };
 
-  if (!tokenRes.ok || json.error_code || !json.refresh_token) {
+  if (!tokenRes.ok || json.error_code || json.error || !json.refresh_token) {
     return res.status(400).send(
       page(
-        "TikTok OAuth — échec token",
-        `<h1>Échange token échoué</h1><pre>${JSON.stringify(json, null, 2)}</pre>`,
+        "TikTok OAuth — echec token",
+        `<h1>Echange token echoue</h1><pre>${JSON.stringify(json, null, 2)}</pre>
+<p>redirect_uri utilise: <code>${REDIRECT_URI}</code></p>`,
       ),
     );
   }
@@ -101,12 +93,11 @@ export default async function handler(
   return res.status(200).send(
     page(
       "TikTok OAuth — OK",
-      `<h1>✅ TikTok connecté</h1>
-<p>Ajoute ce refresh token dans <strong>.env</strong> et Supabase secrets :</p>
+      `<h1>TikTok connecte</h1>
+<p>Ajoute dans <strong>.env</strong> et Supabase secrets :</p>
 <pre>TIKTOK_REFRESH_TOKEN=${json.refresh_token}</pre>
-<p>Puis :</p>
 <pre>supabase secrets set TIKTOK_REFRESH_TOKEN=...
-supabase secrets set SOCIAL_PUBLISH_PLATFORMS=webhook,twitter,indexnow,tiktok</pre>
+supabase secrets set SOCIAL_PUBLISH_PLATFORMS=indexnow,youtube,tiktok</pre>
 <p>open_id: <code>${json.open_id ?? "—"}</code></p>`,
     ),
   );

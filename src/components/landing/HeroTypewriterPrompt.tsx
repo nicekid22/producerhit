@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import type { AppLocale } from "@/i18n/config";
 import {
   LANDING_HERO_PROMPTS_EN,
   LANDING_HERO_PROMPTS_FR,
@@ -7,7 +8,7 @@ import {
 import { cn } from "@/lib/utils";
 
 type Props = {
-  locale: "en" | "fr";
+  locale: AppLocale;
   reduceMotion?: boolean;
   className?: string;
 };

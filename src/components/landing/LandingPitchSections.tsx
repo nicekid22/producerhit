@@ -4,8 +4,9 @@ import { HeroCtaButton } from "@/components/landing/HeroCtaButton";
 import { buildAuthUrl } from "@/lib/authRoutes";
 import { LandingLiveGenerations } from "@/components/landing/LandingLiveGenerations";
 
+import type { AppLocale } from "@/i18n/config";
 type Props = {
-  locale: "en" | "fr";
+  locale: AppLocale;
   user: boolean;
 };
 

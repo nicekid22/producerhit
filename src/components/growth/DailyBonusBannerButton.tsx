@@ -4,8 +4,9 @@ import { canClaimDailyBonus, loadGamification } from "@/lib/gamification";
 import { performDailyBonusClaim } from "@/lib/dailyBonusClaim";
 import { cn } from "@/lib/utils";
 
+import type { AppLocale } from "@/i18n/config";
 type Props = {
-  locale: "en" | "fr";
+  locale: AppLocale;
   syncRewards?: boolean;
   onCreditsChange?: (credits: { levelBonus: number; dailyBonusMonth: number }) => void;
   /** Si bonus déjà pris — ouvre la progression (paramètres). */

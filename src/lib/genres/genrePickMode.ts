@@ -2,6 +2,7 @@ import { ALL_GENRE_OPTIONS } from "@/lib/genres";
 import { buildPrecisionGenreOptions } from "@/lib/genres/genreMenuOrder";
 import type { DropdownOption } from "@/components/ui/Dropdown";
 
+import type { AppLocale } from "@/i18n/config";
 /** Sentinel: random genre pick inside Custom mode (Genre précis dropdown). */
 export const RANDOM_GENRE_VALUE = "__random__";
 
@@ -38,7 +39,7 @@ export function normalizeGenrePickMode(value: string | null | undefined): GenreP
   return "custom";
 }
 
-export function precisionGenreOptions(locale: "en" | "fr"): DropdownOption[] {
+export function precisionGenreOptions(locale: AppLocale): DropdownOption[] {
   return buildPrecisionGenreOptions(locale);
 }
 
@@ -58,7 +59,7 @@ export function resolveGenreForGeneration(
   return { promptGenre: g, displayGenre: g };
 }
 
-export function genrePickModeHint(mode: GenrePickMode, locale: "en" | "fr", lastRandom?: string): string {
+export function genrePickModeHint(mode: GenrePickMode, locale: AppLocale, lastRandom?: string): string {
   const isFr = locale === "fr";
   if (mode === "auto") {
     return isFr

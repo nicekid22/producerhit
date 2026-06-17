@@ -83,11 +83,12 @@ export function buildCommunityPulse(input: {
   }
 
   if (totalComments > 0) {
-    items.push({
-      id: "comments",
+    items.unshift({
+      id: "live-chat",
       emoji: "💬",
-      textFr: `${totalComments} commentaire${totalComments > 1 ? "s" : ""} sur le flux — la commu parle`,
-      textEn: `${totalComments} comment${totalComments === 1 ? "" : "s"} on the feed — the community is talking`,
+      textFr: `${totalComments} coms sur le flux — ouvre un son et rejoins le chat live`,
+      textEn: `${totalComments} comments on the feed — open a track and join the live chat`,
+      href: "/community#flux-live-chat",
     });
   }
 

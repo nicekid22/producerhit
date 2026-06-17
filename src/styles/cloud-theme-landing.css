@@ -1,0 +1,358 @@
+/**
+ * Cloud — Landing (desktop + mobile focus) · cartes, sections, conversion
+ */
+
+/* ——— Cartes & panneaux landing → verre Cloud (remplace voile Prism sombre) ——— */
+html.pk-cloud-active .pk-prism-stage--landing.pk-cloud-stage .pk-landing-community__card,
+html.pk-cloud-active .pk-prism-stage--landing.pk-cloud-stage
+  .pk-landing-section:not(.pk-landing-section--trust)
+  .pk-prism-card,
+html.pk-cloud-active .pk-prism-stage--landing.pk-cloud-stage .pk-landing-live-gen,
+html.pk-cloud-active .pk-prism-stage--landing.pk-cloud-stage .pk-landing-social__card,
+html.pk-cloud-active .pk-prism-stage--landing.pk-cloud-stage .pk-landing-gen-card__frame,
+html.pk-cloud-active .pk-prism-stage--landing.pk-cloud-stage .pk-landing-gen__shell,
+.pk-cloud-stage.pk-prism-stage--landing .pk-landing-community__card,
+.pk-cloud-stage.pk-prism-stage--landing
+  .pk-landing-section:not(.pk-landing-section--trust)
+  .pk-prism-card,
+.pk-cloud-stage.pk-prism-stage--landing .pk-landing-live-gen,
+.pk-cloud-stage.pk-prism-stage--landing .pk-landing-social__card,
+.pk-cloud-stage.pk-prism-stage--landing .pk-landing-gen-card__frame,
+.pk-cloud-stage.pk-prism-stage--landing .pk-landing-gen__shell {
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--cloud-glass-bg-elevated) 92%, transparent),
+    color-mix(in srgb, var(--cloud-glass-bg) 78%, transparent)
+  ) !important;
+  border-color: var(--cloud-glass-border) !important;
+  box-shadow:
+    inset 0 1px 0 var(--cloud-glass-highlight),
+    0 16px 44px color-mix(in srgb, #000 8%, transparent) !important;
+  backdrop-filter: blur(var(--cloud-blur));
+  -webkit-backdrop-filter: blur(var(--cloud-blur));
+  border-radius: var(--cloud-radius-lg) !important;
+}
+
+/* Générateur hero — intérieur épuré (pas de bandes / cadre champ) */
+html.pk-cloud-active .pk-prism-stage--landing .pk-landing-gen__toolbar-head,
+html.pk-cloud-active .pk-prism-stage--landing .pk-landing-gen__toolbar-foot,
+html.pk-cloud-active .pk-prism-stage--landing .pk-landing-gen__prompt-zone,
+html.pk-cloud-active .pk-prism-stage--landing .pk-landing-gen__advanced,
+.pk-cloud-stage.pk-prism-stage--landing .pk-landing-gen__toolbar-head,
+.pk-cloud-stage.pk-prism-stage--landing .pk-landing-gen__toolbar-foot,
+.pk-cloud-stage.pk-prism-stage--landing .pk-landing-gen__prompt-zone,
+.pk-cloud-stage.pk-prism-stage--landing .pk-landing-gen__advanced {
+  background: transparent !important;
+  border: none !important;
+}
+
+html.pk-cloud-active .pk-prism-stage--landing .pk-landing-gen__shell--focused,
+.pk-cloud-stage.pk-prism-stage--landing .pk-landing-gen__shell--focused {
+  border-color: color-mix(in srgb, var(--cloud-glass-border) 92%, var(--cloud-accent) 8%) !important;
+  box-shadow:
+    inset 0 1px 0 var(--cloud-glass-highlight),
+    0 16px 44px color-mix(in srgb, #000 8%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-prism-stage--landing .pk-landing-gen__prompt-zone .pk-speech-field__control-wrap,
+html.pk-cloud-active .pk-prism-stage--landing .pk-landing-gen__prompt-zone .pk-speech-field__control,
+.pk-cloud-stage.pk-prism-stage--landing .pk-landing-gen__prompt-zone .pk-speech-field__control-wrap,
+.pk-cloud-stage.pk-prism-stage--landing .pk-landing-gen__prompt-zone .pk-speech-field__control {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+html.pk-cloud-active .pk-prism-stage--landing .pk-landing-gen__prompt-zone .pk-speech-field__control:focus,
+html.pk-cloud-active .pk-prism-stage--landing .pk-landing-gen__prompt-zone .pk-speech-field__control:focus-visible,
+.pk-cloud-stage.pk-prism-stage--landing .pk-landing-gen__prompt-zone .pk-speech-field__control:focus,
+.pk-cloud-stage.pk-prism-stage--landing .pk-landing-gen__prompt-zone .pk-speech-field__control:focus-visible {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+html.pk-cloud-active .pk-prism-stage--landing .pk-landing-stat,
+.pk-cloud-stage.pk-prism-stage--landing .pk-landing-stat {
+  background: color-mix(in srgb, var(--cloud-field-bg) 72%, transparent) !important;
+  border-color: var(--cloud-glass-border) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* Titres sections landing */
+html.pk-cloud-active .pk-prism-stage--landing .pk-landing-section-head__title,
+.pk-cloud-stage.pk-prism-stage--landing .pk-landing-section-head__title {
+  color: var(--cloud-text) !important;
+}
+
+html.pk-cloud-active .pk-prism-stage--landing .pk-landing-section-head__eyebrow,
+.pk-cloud-stage.pk-prism-stage--landing .pk-landing-section-head__eyebrow,
+html.pk-cloud-active .pk-prism-stage--landing [class*="tracking-[0.22em]"],
+.pk-cloud-stage.pk-prism-stage--landing [class*="tracking-[0.22em]"] {
+  color: color-mix(in srgb, var(--cloud-accent) 55%, var(--cloud-text-muted)) !important;
+}
+
+/* FAQ landing */
+html.pk-cloud-active .pk-prism-stage--landing details.rounded-2xl,
+.pk-cloud-stage.pk-prism-stage--landing details.rounded-2xl {
+  border-color: var(--cloud-glass-border) !important;
+  background: color-mix(in srgb, var(--cloud-field-bg) 65%, transparent) !important;
+}
+
+/* Live gen — badges & queue */
+html.pk-cloud-active .pk-landing-live-gen__live,
+.pk-cloud-stage .pk-landing-live-gen__live {
+  border-color: color-mix(in srgb, var(--cloud-accent) 28%, transparent) !important;
+  background: color-mix(in srgb, var(--cloud-accent) 12%, transparent) !important;
+  color: color-mix(in srgb, var(--cloud-accent) 82%, var(--cloud-text)) !important;
+}
+
+html.pk-cloud-active .pk-landing-live-gen__live-dot,
+.pk-cloud-stage .pk-landing-live-gen__live-dot {
+  background: var(--cloud-accent) !important;
+}
+
+html.pk-cloud-active .pk-landing-live-gen > .rounded-2xl.border,
+.pk-cloud-stage .pk-landing-live-gen > .rounded-2xl.border {
+  border-color: var(--cloud-glass-border) !important;
+  background: color-mix(in srgb, var(--cloud-field-bg) 55%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-landing-live-gen__pill--lit,
+.pk-cloud-stage .pk-landing-live-gen__pill--lit {
+  border-color: color-mix(in srgb, var(--cloud-accent) 38%, transparent) !important;
+  background: color-mix(in srgb, var(--cloud-accent) 14%, var(--cloud-field-bg)) !important;
+  color: var(--cloud-text) !important;
+}
+
+/* Social feed — fond carte */
+html.pk-cloud-active .pk-landing-social__card.bg-\[\#0a0a0f\],
+.pk-cloud-stage .pk-landing-social__card.bg-\[\#0a0a0f\] {
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--cloud-glass-bg-elevated) 90%, transparent),
+    color-mix(in srgb, var(--cloud-glass-bg) 76%, transparent)
+  ) !important;
+}
+
+/* Community rail — badges & play */
+html.pk-cloud-active .pk-landing-community__card .rounded-full.border-white\/15,
+.pk-cloud-stage .pk-landing-community__card .rounded-full.border-white\/15 {
+  border-color: var(--cloud-glass-border) !important;
+  background: color-mix(in srgb, var(--cloud-field-bg) 78%, transparent) !important;
+  color: var(--cloud-text) !important;
+}
+
+html.pk-cloud-active .pk-landing-community__play-fab,
+.pk-cloud-stage .pk-landing-community__play-fab {
+  border-color: color-mix(in srgb, var(--cloud-accent) 32%, transparent) !important;
+  background: color-mix(in srgb, var(--cloud-field-bg) 82%, transparent) !important;
+  color: var(--cloud-text) !important;
+}
+
+/* Hero prompt typewriter */
+html.pk-cloud-active .pk-hero-prompt-line.text-white\/88,
+.pk-cloud-stage .pk-hero-prompt-line.text-white\/88 {
+  color: var(--cloud-text) !important;
+}
+
+html.pk-cloud-active .pk-hero-prompt-line.text-white\/40,
+.pk-cloud-stage .pk-hero-prompt-line.text-white\/40 {
+  color: var(--cloud-text-muted) !important;
+}
+
+/* CTA bloc bas landing */
+html.pk-cloud-active .pk-prism-stage--landing .rounded-2xl.border.border-white\/10.bg-white\/\[0\.03\],
+.pk-cloud-stage.pk-prism-stage--landing .rounded-2xl.border.border-white\/10 {
+  border-color: var(--cloud-glass-border) !important;
+  background: color-mix(in srgb, var(--cloud-field-bg) 62%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-landing-sticky-cta__inner,
+.pk-cloud-stage .pk-landing-sticky-cta__inner {
+  background: color-mix(in srgb, var(--cloud-glass-bg-elevated) 88%, transparent) !important;
+}
+
+/* Liens accent Prism → Cloud */
+html.pk-cloud-active .pk-prism-stage--landing a.text-\[var\(--prism-cyan\)\],
+html.pk-cloud-active .pk-prism-stage--landing .text-\[var\(--prism-cyan\)\],
+.pk-cloud-stage.pk-prism-stage--landing a.text-\[var\(--prism-cyan\)\] {
+  color: var(--cloud-accent) !important;
+}
+
+html.pk-cloud-active .pk-prism-stage--landing a.hover\:text-white:hover,
+.pk-cloud-stage.pk-prism-stage--landing a.hover\:text-white:hover {
+  color: var(--cloud-text) !important;
+}
+
+/* Boutons outline landing (réparer liens, etc.) */
+html.pk-cloud-active .pk-prism-stage--landing .border-\[\#2d2d3d\],
+.pk-cloud-stage.pk-prism-stage--landing .border-\[\#2d2d3d\] {
+  border-color: var(--cloud-glass-border) !important;
+  color: var(--cloud-text) !important;
+}
+
+html.pk-cloud-active .pk-prism-stage--landing .border-\[\#2d2d3d\]:hover,
+.pk-cloud-stage.pk-prism-stage--landing .border-\[\#2d2d3d\]:hover {
+  border-color: color-mix(in srgb, var(--cloud-accent) 42%, transparent) !important;
+  color: var(--cloud-accent) !important;
+}
+
+/* Pills locale header desktop */
+html.pk-cloud-active .pk-landing-header .border-white\/10.bg-white\/\[0\.03\],
+.pk-cloud-stage .pk-landing-header .border-white\/10.bg-white\/\[0\.03\] {
+  border-color: var(--cloud-glass-border) !important;
+  background: color-mix(in srgb, var(--cloud-field-bg) 55%, transparent) !important;
+}
+
+/* ——— Mobile focus landing ——— */
+@media (max-width: 767px) {
+  /* Scène mobile générateur — verre Cloud (remplace teinte warm par défaut) */
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus .pk-landing-gen__mobile-stage {
+    border-color: var(--cloud-glass-border) !important;
+    background:
+      radial-gradient(380px circle at 14% -4%, color-mix(in srgb, var(--cloud-accent) 18%, transparent), transparent 54%),
+      radial-gradient(340px circle at 92% 104%, color-mix(in srgb, var(--cloud-accent) 10%, transparent), transparent 56%),
+      linear-gradient(
+        165deg,
+        color-mix(in srgb, var(--cloud-glass-bg-elevated) 94%, transparent),
+        color-mix(in srgb, var(--cloud-glass-bg) 82%, transparent)
+      ) !important;
+    box-shadow:
+      inset 0 1px 0 var(--cloud-glass-highlight),
+      0 14px 40px color-mix(in srgb, #000 6%, transparent) !important;
+  }
+
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus .pk-landing-gen__mobile-stage-grain,
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus .pk-landing-gen__mobile-stage::after {
+    opacity: 0.14 !important;
+    mix-blend-mode: soft-light !important;
+  }
+
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus .pk-landing-gen__mobile-stage-vignette {
+    background:
+      radial-gradient(ellipse at center, transparent 58%, color-mix(in srgb, var(--cloud-accent) 6%, transparent) 100%),
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--cloud-glass-highlight) 40%, transparent) 0%,
+        transparent 14%,
+        transparent 90%,
+        color-mix(in srgb, var(--cloud-accent) 4%, transparent) 100%
+      ) !important;
+  }
+
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus .pk-landing-gen__mobile-hint {
+    color: var(--cloud-text-muted) !important;
+  }
+
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus .pk-landing-gen__mobile-free {
+    color: color-mix(in srgb, var(--cloud-accent) 78%, var(--cloud-text)) !important;
+  }
+
+  /* Prompt mobile — texte & placeholder Cloud */
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus .pk-landing-gen__prompt-zone textarea,
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus
+    .pk-landing-gen__prompt-zone
+    .pk-speech-field__control {
+    color: var(--cloud-text) !important;
+  }
+
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus
+    .pk-landing-gen__prompt-zone
+    .pk-speech-field__control::placeholder {
+    color: var(--cloud-text-muted) !important;
+  }
+
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus
+    .pk-landing-gen__prompt-zone
+    .pk-speech-field__mic--landing {
+    border-color: var(--cloud-glass-border) !important;
+    background: color-mix(in srgb, var(--cloud-field-bg) 65%, transparent) !important;
+    color: var(--cloud-text) !important;
+  }
+
+  /* Trending strip mobile */
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus .pk-landing-trending-strip__eyebrow {
+    color: var(--cloud-text-muted) !important;
+  }
+
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus .pk-landing-trending-strip__title {
+    color: var(--cloud-text) !important;
+  }
+
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus .pk-landing-trending-strip__link {
+    color: var(--cloud-accent) !important;
+  }
+
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus .pk-landing-trending-strip__link:hover {
+    color: color-mix(in srgb, var(--cloud-accent) 88%, var(--cloud-text)) !important;
+  }
+
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus .pk-landing-trending-strip__card {
+    border-color: var(--cloud-glass-border) !important;
+    background: color-mix(in srgb, var(--cloud-field-bg) 58%, transparent) !important;
+  }
+
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus .pk-landing-trending-strip__name,
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus .pk-landing-trending-strip__meta {
+    color: var(--cloud-text) !important;
+  }
+
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus .pk-landing-trending-strip__meta {
+    color: var(--cloud-text-muted) !important;
+  }
+
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus .pk-landing-trending-strip__create-btn {
+    border-color: color-mix(in srgb, var(--cloud-accent) 32%, transparent) !important;
+    background: color-mix(in srgb, var(--cloud-accent) 12%, var(--cloud-field-bg)) !important;
+    color: var(--cloud-text) !important;
+  }
+
+  /* Header mobile focus — lisible sur fond Cloud */
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus .pk-landing-header,
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus .pk-landing-header--scrolled {
+    background: color-mix(in srgb, var(--cloud-glass-bg) 52%, transparent) !important;
+    border-bottom-color: var(--cloud-glass-border) !important;
+  }
+
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus
+    .pk-landing-header--mobile-focus-mode:not(.pk-landing-header--scrolled):not(.pk-landing-header--menu-open)
+    .pk-landing-header__brand-slot--mobile
+    > a,
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus
+    .pk-landing-header--mobile-focus-mode:not(.pk-landing-header--scrolled):not(.pk-landing-header--menu-open)
+    .pk-landing-mobile-nav__trigger {
+    color: var(--cloud-text) !important;
+  }
+
+  /* Aurora / vignette Prism sombre → adoucie sur Cloud mobile */
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus .pk-prism-aurora {
+    opacity: 0.22 !important;
+    filter: blur(32px) !important;
+  }
+
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus .pk-prism-vignette {
+    background: radial-gradient(ellipse at center, transparent 58%, color-mix(in srgb, #000 12%, transparent) 100%) !important;
+  }
+
+  /* Padding bas — player dock + sticky CTA */
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus:has(.pk-prism-player) {
+    padding-bottom: calc(var(--pk-player-height) + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus:has(.pk-landing-sticky-cta):not(:has(.pk-prism-player)) {
+    padding-bottom: 5.5rem !important;
+  }
+
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus:has(.pk-landing-sticky-cta):has(.pk-prism-player) {
+    padding-bottom: calc(var(--pk-player-height) + 5.5rem + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+/* Desktop landing — sections scrollables au-dessus du player */
+@media (min-width: 768px) {
+  html.pk-cloud-active:not(:has(.pk-app-shell)) .pk-prism-stage--landing.pk-cloud-stage:has(.pk-prism-player) {
+    padding-bottom: calc(var(--pk-player-height) + 12px + env(safe-area-inset-bottom, 0px));
+  }
+}

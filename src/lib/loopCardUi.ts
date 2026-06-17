@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import type { AppLocale } from "@/i18n/config";
 import type { Loop } from "@/types/loop";
 import { resolveStemsDownloadUrl } from "@/lib/stemsDownload";
 
@@ -8,7 +9,7 @@ export type LoopCardFooterHint = {
 };
 
 /** Info positive en bas de carte (remplace le countdown d’expiration). */
-export function getLoopCardFooterHint(loop: Loop, locale: "fr" | "en"): LoopCardFooterHint | null {
+export function getLoopCardFooterHint(loop: Loop, locale: AppLocale): LoopCardFooterHint | null {
   if (loop.isPublic) {
     return {
       label: locale === "fr" ? "En ligne · Communauté" : "Live · Community",

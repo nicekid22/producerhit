@@ -1065,9 +1065,10 @@ html.pk-warm-glass-active .pk-glass-btn:hover:not(:disabled),
   text-shadow: none !important;
 }
 
-.pk-warm-glass-stage .pk-studio-generate-dock .text-cyan-200\/70,
-.pk-warm-glass-stage .pk-dashboard-mobile-footer .text-cyan-200\/70 {
-  color: rgba(255, 210, 150, 0.82) !important;
+.pk-warm-glass-stage .pk-studio-generate-dock .pk-dashboard-bonus-meta,
+.pk-warm-glass-stage .pk-dashboard-mobile-footer .pk-dashboard-bonus-meta {
+  color: color-mix(in srgb, var(--warm-icon-accent, #f5dc78) 94%, white) !important;
+  text-shadow: 0 0 14px rgba(240, 192, 64, 0.24);
 }
 
 .pk-warm-glass-stage .pk-studio-generate-dock .bg-white\/5,
@@ -1450,13 +1451,6 @@ html.pk-warm-glass-active .pk-gen-loading-icon-box::before,
   opacity: 0.5 !important;
 }
 
-html.pk-warm-glass-active .pk-gen-loading-card .pk-icon-loader__icon,
-.pk-warm-glass-stage .pk-gen-loading-card .pk-icon-loader__icon {
-  color: var(--warm-accent-honey) !important;
-  filter: drop-shadow(0 0 8px var(--warm-accent-glow)) !important;
-  animation: pkIconLoaderColorWarm 2.4s ease-in-out infinite !important;
-}
-
 html.pk-warm-glass-active .pk-gen-loading-card .pk-icon-loader__ring,
 .pk-warm-glass-stage .pk-gen-loading-card .pk-icon-loader__ring {
   inset: -22% !important;
@@ -1695,6 +1689,7 @@ html.pk-warm-glass-active .pk-glass-btn--primary {
 
 html.pk-warm-glass-active .pk-dropdown-panel {
   border-color: var(--warm-glass-border) !important;
+  border-radius: 20px !important;
   background: linear-gradient(
     165deg,
     var(--warm-glass-surface-elevated),
@@ -2116,8 +2111,8 @@ html.pk-warm-glass-active .pk-landing-mobile-nav__item--cta.pk-hero-cta {
 }
 
 /* Icônes Lucide / checks — contraste sur verre sombre (landing, tarifs, app…) */
-.pk-warm-glass-stage svg.text-\[var\(--prism-cyan\)\],
-html.pk-warm-glass-active svg.text-\[var\(--prism-cyan\)\],
+.pk-warm-glass-stage svg.text-\[var\(--prism-cyan\)\]:not(.pk-sidebar-root svg):not(.pk-sidebar-root *),
+html.pk-warm-glass-active svg.text-\[var\(--prism-cyan\)\]:not(.pk-sidebar-root svg):not(.pk-sidebar-root *),
 .pk-warm-glass-stage .pk-prism-card svg.text-\[var\(--prism-cyan\)\],
 .pk-warm-glass-stage .pk-landing-stat svg.text-\[var\(--prism-cyan\)\],
 .pk-warm-glass-stage .pk-prism-section-head__icon,
@@ -2350,11 +2345,7 @@ html.pk-warm-glass-active .pk-footer-social__link--tt:hover {
   box-shadow: 0 8px 28px rgba(220, 90, 50, 0.16) !important;
 }
 
-/* ——— Chargement entre pages (Suspense) ——— */
-html.pk-warm-glass-active .pk-page-loader {
-  min-height: 70vh;
-  background: transparent;
-}
+/* Chargement Suspense entre pages — voir page-loader-theme.css */
 
 html.pk-warm-glass-active .pk-icon-loader__ring {
   background: radial-gradient(
@@ -2681,6 +2672,27 @@ html.pk-warm-glass-active .pk-loop-cover-thumb,
   box-shadow:
     0 0 0 1px color-mix(in srgb, var(--warm-accent-gold) 22%, transparent),
     0 4px 14px rgba(40, 16, 8, 0.24) !important;
+}
+
+html.pk-warm-glass-active .pk-prism-player.pk-warm-glass-player .pk-player-cover-thumb,
+.pk-prism-player.pk-warm-glass-player .pk-player-cover-thumb {
+  --pk-player-cover-radius: 1rem;
+  --pk-player-cover-inner-radius: calc(var(--pk-player-cover-radius) - 3px);
+  border-radius: var(--pk-player-cover-radius) !important;
+  overflow: hidden !important;
+}
+
+html.pk-warm-glass-active .pk-prism-player.pk-warm-glass-player .pk-player-cover-thumb > div,
+.pk-prism-player.pk-warm-glass-player .pk-player-cover-thumb > div {
+  border-radius: var(--pk-player-cover-inner-radius) !important;
+  overflow: hidden !important;
+}
+
+html.pk-warm-glass-active .pk-prism-player.pk-warm-glass-player .pk-player-cover-thumb img,
+html.pk-warm-glass-active .pk-prism-player.pk-warm-glass-player .pk-player-cover-thumb .pk-cover-surface,
+.pk-prism-player.pk-warm-glass-player .pk-player-cover-thumb img,
+.pk-prism-player.pk-warm-glass-player .pk-player-cover-thumb .pk-cover-surface {
+  border-radius: var(--pk-player-cover-inner-radius) !important;
 }
 
 html.pk-warm-glass-active .pk-prism-cover.pk-loop-cover-thumb,
@@ -3431,15 +3443,19 @@ html.pk-warm-glass-active:has(.pk-dashboard-generator) {
 }
 
 html.pk-warm-glass-active:has(.pk-dashboard-generator) .pk-dropdown-panel {
-  background: linear-gradient(
-    165deg,
-    color-mix(in srgb, rgba(22, 20, 26, 0.28) 90%, transparent),
-    color-mix(in srgb, rgba(18, 16, 22, 0.2) 88%, transparent)
-  ) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  background: rgba(14, 12, 18, 0.96) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 16px 48px rgba(8, 6, 12, 0.22) !important;
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 20px 56px rgba(8, 6, 12, 0.42) !important;
+}
+
+html.pk-warm-glass-active:has(.pk-dashboard-generator) .pk-dropdown-panel::after {
+  display: none !important;
+}
+
+html.pk-warm-glass-active:has(.pk-dashboard-generator) .pk-dropdown-panel .pk-dropdown-panel__list {
+  background: transparent !important;
 }
 
 html.pk-warm-glass-active:has(.pk-dashboard-generator) .pk-dropdown-panel .bg-pk-input,
@@ -3871,17 +3887,17 @@ html.pk-warm-glass-active:has(.pk-dashboard-generator) .pk-loop-details-sheet .b
   }
 
   .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-app-shell-mobile-nav {
+    border-top-color: var(--warm-glass-border) !important;
     background: linear-gradient(
       180deg,
-      rgba(12, 10, 18, 0.92) 0%,
-      rgba(8, 6, 14, 0.98) 100%
+      rgba(48, 22, 14, 0.9) 0%,
+      rgba(38, 16, 10, 0.96) 100%
     ) !important;
-    backdrop-filter: blur(10px) saturate(1.2) !important;
-    -webkit-backdrop-filter: blur(10px) saturate(1.2) !important;
-    border-top-color: rgba(255, 255, 255, 0.12) !important;
+    backdrop-filter: blur(22px) saturate(1.35) !important;
+    -webkit-backdrop-filter: blur(22px) saturate(1.35) !important;
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.06),
-      0 -8px 32px rgba(0, 0, 0, 0.35) !important;
+      inset 0 1px 0 rgba(255, 220, 180, 0.08),
+      0 -8px 32px rgba(40, 16, 8, 0.32) !important;
   }
 
   .pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-mobile-create-scroll .pk-studio-section {
@@ -3923,14 +3939,28 @@ html.pk-warm-glass-active:has(.pk-dashboard-generator) .pk-loop-details-sheet .b
 }
 
 .pk-warm-glass-stage .pk-landing-gen__shell--focused {
-  border-color: rgba(255, 160, 80, 0.42) !important;
+  border-color: color-mix(in srgb, var(--warm-glass-border) 88%, rgba(255, 160, 80, 0.2)) !important;
   box-shadow:
-    0 0 0 3px rgba(240, 192, 64, 0.12),
     inset 0 1px 0 var(--warm-glass-highlight),
     0 28px 80px rgba(40, 16, 8, 0.32) !important;
 }
 
-.pk-warm-glass-stage .pk-landing-gen__shell > div:first-child {
+.pk-warm-glass-stage .pk-landing-gen__toolbar-head,
+.pk-warm-glass-stage .pk-landing-gen__toolbar-foot,
+.pk-warm-glass-stage .pk-landing-gen__prompt-zone,
+.pk-warm-glass-stage .pk-landing-gen__advanced {
+  background: transparent !important;
+  border: none !important;
+}
+
+.pk-warm-glass-stage .pk-landing-gen__prompt-zone .pk-speech-field__control-wrap,
+.pk-warm-glass-stage .pk-landing-gen__prompt-zone .pk-speech-field__control {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.pk-warm-glass-stage .pk-landing-gen__shell > .pk-landing-gen__toolbar-head {
   margin-top: -1px;
   border-top-left-radius: inherit;
   border-top-right-radius: inherit;

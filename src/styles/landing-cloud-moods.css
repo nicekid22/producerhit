@@ -1,0 +1,227 @@
+/**
+ * Landing — humeurs Cloud (sobre · style Apple)
+ */
+
+/* Pastille couleur — remplace les icônes illustrées */
+.pk-mood-dot {
+  display: inline-block;
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border-radius: 999px;
+  background: var(--pk-mood-accent, rgba(255, 255, 255, 0.55));
+}
+
+.pk-mood-dot[data-pk-element="air"] {
+  --pk-mood-accent: #c4b5fd;
+}
+
+.pk-mood-dot[data-pk-element="earth"] {
+  --pk-mood-accent: #86efac;
+}
+
+.pk-mood-dot[data-pk-element="fire"] {
+  --pk-mood-accent: #fb923c;
+}
+
+.pk-mood-dot[data-pk-element="water"] {
+  --pk-mood-accent: #67c3ff;
+}
+
+/* Section humeurs */
+.pk-landing-cloud-moods__title {
+  color: #fff;
+}
+
+.pk-landing-cloud-moods__lead,
+.pk-landing-cloud-moods__hint {
+  color: rgba(255, 255, 255, 0.58);
+}
+
+.pk-landing-cloud-moods__pill {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.035);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.pk-landing-cloud-moods__pill[data-pk-element="air"] {
+  --pk-mood-accent: #c4b5fd;
+}
+
+.pk-landing-cloud-moods__pill[data-pk-element="earth"] {
+  --pk-mood-accent: #86efac;
+}
+
+.pk-landing-cloud-moods__pill[data-pk-element="fire"] {
+  --pk-mood-accent: #fb923c;
+}
+
+.pk-landing-cloud-moods__pill[data-pk-element="water"] {
+  --pk-mood-accent: #67c3ff;
+}
+
+.pk-landing-cloud-moods__pill:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.pk-landing-cloud-moods__pill--active {
+  border-color: color-mix(in srgb, var(--pk-mood-accent) 38%, rgba(255, 255, 255, 0.14));
+  background: color-mix(in srgb, var(--pk-mood-accent) 8%, rgba(255, 255, 255, 0.04));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.pk-landing-cloud-moods__pill--active .pk-landing-cloud-moods__hint {
+  color: color-mix(in srgb, var(--pk-mood-accent) 55%, rgba(255, 255, 255, 0.62));
+}
+
+/* Cloud landing tokens */
+html.pk-cloud-active .pk-prism-stage--landing .pk-landing-cloud-moods__title,
+.pk-cloud-stage.pk-prism-stage--landing .pk-landing-cloud-moods__title {
+  color: var(--cloud-text) !important;
+}
+
+html.pk-cloud-active .pk-prism-stage--landing .pk-landing-cloud-moods__lead,
+html.pk-cloud-active .pk-prism-stage--landing .pk-landing-cloud-moods__hint,
+.pk-cloud-stage.pk-prism-stage--landing .pk-landing-cloud-moods__lead,
+.pk-cloud-stage.pk-prism-stage--landing .pk-landing-cloud-moods__hint {
+  color: var(--cloud-text-muted) !important;
+}
+
+html.pk-cloud-active .pk-prism-stage--landing .pk-landing-cloud-moods__pill,
+.pk-cloud-stage.pk-prism-stage--landing .pk-landing-cloud-moods__pill {
+  border-color: var(--cloud-glass-border) !important;
+  background: color-mix(in srgb, var(--cloud-field-bg) 55%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-prism-stage--landing .pk-landing-cloud-moods__pill--active,
+.pk-cloud-stage.pk-prism-stage--landing .pk-landing-cloud-moods__pill--active {
+  border-color: color-mix(in srgb, var(--cloud-accent) 32%, var(--cloud-glass-border)) !important;
+  background: color-mix(in srgb, var(--cloud-accent-soft) 42%, transparent) !important;
+  box-shadow: inset 0 1px 0 var(--cloud-glass-highlight) !important;
+}
+
+@media (max-width: 767px) {
+  .pk-landing-section--cloud-moods-compact .pk-landing-cloud-moods__intro {
+    text-align: center;
+  }
+
+  .pk-landing-section--cloud-moods-compact .pk-landing-cloud-moods__title {
+    font-size: clamp(1.35rem, 5vw, 1.55rem);
+  }
+
+  .pk-landing-section--cloud-moods-compact .pk-landing-cloud-moods__lead {
+    font-size: 0.8125rem;
+  }
+}
+
+/* Hero — strip 4 humeurs (pastilles) */
+.pk-landing-hero-moods__btn {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.035);
+  min-width: 0;
+}
+
+.pk-landing-hero-moods__btn[data-pk-element="air"] {
+  --pk-mood-accent: #c4b5fd;
+}
+
+.pk-landing-hero-moods__btn[data-pk-element="earth"] {
+  --pk-mood-accent: #86efac;
+}
+
+.pk-landing-hero-moods__btn[data-pk-element="fire"] {
+  --pk-mood-accent: #fb923c;
+}
+
+.pk-landing-hero-moods__btn[data-pk-element="water"] {
+  --pk-mood-accent: #67c3ff;
+}
+
+.pk-landing-hero-moods__name {
+  color: rgba(255, 255, 255, 0.52);
+}
+
+.pk-landing-hero-moods__btn--active,
+.pk-landing-hero-moods__btn:hover {
+  border-color: color-mix(in srgb, var(--pk-mood-accent) 32%, rgba(255, 255, 255, 0.12));
+  background: color-mix(in srgb, var(--pk-mood-accent) 7%, rgba(255, 255, 255, 0.04));
+}
+
+.pk-landing-hero-moods__btn--active .pk-landing-hero-moods__name,
+.pk-landing-hero-moods__btn:hover .pk-landing-hero-moods__name {
+  color: color-mix(in srgb, var(--pk-mood-accent) 72%, #fff);
+}
+
+html.pk-cloud-active .pk-prism-stage--landing .pk-landing-hero-moods__btn,
+.pk-cloud-stage.pk-prism-stage--landing .pk-landing-hero-moods__btn {
+  border-color: var(--cloud-glass-border) !important;
+  background: color-mix(in srgb, var(--cloud-field-bg) 48%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-prism-stage--landing .pk-landing-hero-moods__btn--active,
+.pk-cloud-stage.pk-prism-stage--landing .pk-landing-hero-moods__btn--active {
+  border-color: color-mix(in srgb, var(--cloud-accent) 30%, var(--cloud-glass-border)) !important;
+  background: color-mix(in srgb, var(--cloud-accent-soft) 38%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-prism-stage--landing .pk-landing-hero-moods__name,
+.pk-cloud-stage.pk-prism-stage--landing .pk-landing-hero-moods__name {
+  color: var(--cloud-text-muted) !important;
+}
+
+html.pk-cloud-active .pk-prism-stage--landing .pk-landing-hero-moods__btn--active .pk-landing-hero-moods__name,
+.pk-cloud-stage.pk-prism-stage--landing .pk-landing-hero-moods__btn--active .pk-landing-hero-moods__name {
+  color: var(--cloud-text) !important;
+}
+
+/* Flash mood (léger, pas de lignes) */
+html.pk-landing-mood-flash::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9996;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    ellipse 80% 60% at 50% 42%,
+    color-mix(in srgb, var(--pk-flash-accent, #c4b5fd) 16%, transparent),
+    transparent 72%
+  );
+  animation: pkLandingMoodFlash 0.55s ease-out forwards;
+}
+
+html.pk-landing-mood-flash[data-pk-landing-mood-flash="air"] {
+  --pk-flash-accent: #c4b5fd;
+}
+
+html.pk-landing-mood-flash[data-pk-landing-mood-flash="earth"] {
+  --pk-flash-accent: #86efac;
+}
+
+html.pk-landing-mood-flash[data-pk-landing-mood-flash="fire"] {
+  --pk-flash-accent: #fb923c;
+}
+
+html.pk-landing-mood-flash[data-pk-landing-mood-flash="water"] {
+  --pk-flash-accent: #67c3ff;
+}
+
+@keyframes pkLandingMoodFlash {
+  0% {
+    opacity: 0;
+  }
+  24% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.pk-landing-mood-flash::after {
+    animation: none;
+    opacity: 0 !important;
+  }
+}

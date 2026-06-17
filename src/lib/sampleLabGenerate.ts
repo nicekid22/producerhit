@@ -1,4 +1,5 @@
 import { generateLoopAce } from "@/lib/audioApi";
+import type { AppLocale } from "@/i18n/config";
 import type { GenerateParams } from "@/lib/promptBuilder";
 import {
   barsToLoopLength,
@@ -23,7 +24,7 @@ export async function generateSampleLabLoop(
   options: {
     audioFormat?: string;
     seed?: number;
-    locale?: "fr" | "en";
+    locale?: AppLocale;
   } = {},
 ): Promise<SampleLabGenerateResult> {
   const locale = options.locale ?? "en";

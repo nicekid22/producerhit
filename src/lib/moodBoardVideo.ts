@@ -7,6 +7,7 @@ import type { VisualizerLayout } from "@/lib/visualizer/types";
 import { supabase } from "@/lib/supabaseClient";
 import { getTotalGenerationLimit } from "@/lib/planLimits";
 
+import type { AppLocale } from "@/i18n/config";
 export const MOOD_VIDEO_EXPORT_MAX_SEC = 15;
 export const MOOD_VIDEO_CREDIT_COST = 1;
 
@@ -230,7 +231,7 @@ export async function exportMoodBoardVideo(
   options?: {
     durationSec?: number;
     showWatermark?: boolean;
-    locale?: "en" | "fr";
+    locale?: AppLocale;
   },
 ): Promise<Blob> {
   if (!loop.audioUrl) throw new Error("missing_audio");

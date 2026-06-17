@@ -21,6 +21,7 @@ import {
 import { getPlayerVisualizerRgb } from "@/lib/waveformThemeColors";
 import { trackFirstAudioPlay } from "@/lib/growthFunnelEvents";
 import { useVisualThemeStore } from "@/stores/visualThemeStore";
+import { useCloudAccentStore } from "@/stores/cloudAccentStore";
 
 function formatTime(sec: number): string {
   if (!sec || !isFinite(sec) || sec < 0) return "0:00";
@@ -59,6 +60,7 @@ export function AudioPlayer() {
   const dockCollapsed = usePlayerStore((s) => s.dockCollapsed);
   const toggleDockCollapsed = usePlayerStore((s) => s.toggleDockCollapsed);
   const visualTheme = useVisualThemeStore((s) => s.theme);
+  const cloudAccent = useCloudAccentStore((s) => s.accent);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTimeSec, setCurrentTimeSec] = useState(0);
@@ -244,11 +246,15 @@ export function AudioPlayer() {
       const x = startX + i * (barW + gap);
       const y = Math.floor(h - barH);
       const t = barCount === 1 ? 0 : i / (barCount - 1);
-      const [r, g, b] = getPlayerVisualizerRgb(visualTheme, t);
+      const [r, g, b] = getPlayerVisualizerRgb(
+        visualTheme,
+        t,
+        visualTheme === "cloud" ? cloudAccent : undefined,
+      );
       ctx2d.fillStyle = `rgb(${r}, ${g}, ${b})`;
       ctx2d.fillRect(x, y, barW, barH);
     }
-  }, [visualTheme]);
+  }, [visualTheme, cloudAccent]);
 
   const startVisualizer = useCallback(() => {
     if (skipVisualizer) return;
@@ -749,15 +755,15 @@ export function AudioPlayer() {
     <>
       {currentBeat ? (
     <div
-      className={`pk-prism-player pk-prism-player--dock pk-prism-player--dock-modern fixed bottom-[calc(var(--pk-bottom-nav)+env(safe-area-inset-bottom,0px))] left-0 right-0 z-30 md:z-50${visualTheme === "warm-glass" ? " pk-warm-glass-player" : ""}${dockCollapsed ? " pk-prism-player--collapsed" : ""}`}
+      className={`pk-prism-player pk-prism-player--dock pk-prism-player--dock-modern fixed left-0 right-0 md:bottom-[max(var(--pk-dock-inset-bottom),env(safe-area-inset-bottom,0px))] md:z-50${visualTheme === "warm-glass" ? " pk-warm-glass-player" : ""}${visualTheme === "cloud" ? " pk-cloud-player" : ""}${dockCollapsed ? " pk-prism-player--collapsed" : ""}`}
       aria-busy={isLoading}
     >
       <div className="mx-auto flex max-w-[1440px] items-center gap-2 px-3 py-2 sm:gap-4 sm:px-4 sm:py-3">
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:max-w-none sm:gap-3">
           <div
-            className="pk-loop-cover-thumb relative z-0 h-9 w-9 shrink-0 rounded-xl p-[2px] sm:h-11 sm:w-11"
+            className="pk-loop-cover-thumb pk-player-cover-thumb relative z-0 h-9 w-9 shrink-0 overflow-hidden rounded-2xl p-[2px] sm:h-11 sm:w-11"
           >
-            <div className="relative z-[1] h-full w-full overflow-hidden rounded-[10px] bg-[#060608]">
+            <div className="relative z-[1] h-full w-full overflow-hidden rounded-[calc(1rem-3px)] bg-[#060608] sm:rounded-[calc(1rem-3px)]">
               {currentBeat ? <PlayerCoverThumb loop={currentBeat} /> : null}
             </div>
           </div>
@@ -781,7 +787,7 @@ export function AudioPlayer() {
             <button
               type="button"
               onClick={() => void togglePlay()}
-              className="pk-prism-player-btn pk-prism-player-btn--primary inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl sm:h-10 sm:w-10"
+              className={`pk-prism-player-btn pk-prism-player-btn--primary inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl sm:h-10 sm:w-10${isPlaying ? " pk-prism-player-btn--playing" : ""}`}
               aria-label={isPlaying ? "Pause" : "Play"}
             >
               {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
@@ -812,7 +818,7 @@ export function AudioPlayer() {
             <button
               type="button"
               onClick={() => void togglePlay()}
-              className="pk-prism-player-btn pk-prism-player-btn--primary inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+              className={`pk-prism-player-btn pk-prism-player-btn--primary inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl${isPlaying ? " pk-prism-player-btn--playing" : ""}`}
               aria-label={isPlaying ? "Pause" : "Play"}
             >
               {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
@@ -849,10 +855,10 @@ export function AudioPlayer() {
             className={`relative mt-2 flex h-3 w-full max-w-xl items-center group ${durationSec > 0 ? "cursor-pointer" : "cursor-default"}`}
             onClick={durationSec > 0 ? handleSeek : undefined}
           >
-            <div className="relative h-[3px] w-full overflow-hidden rounded-full bg-white/10">
+            <div className="pk-prism-progress-track relative h-[3px] w-full overflow-hidden rounded-full bg-white/10">
               {durationSec > 0 ? (
                 <div
-                  className="h-full bg-[linear-gradient(90deg,var(--prism-chrome),var(--prism-cyan),var(--prism-violet))] transition-none"
+                  className="pk-prism-progress-fill h-full bg-[linear-gradient(90deg,var(--prism-chrome),var(--prism-cyan),var(--prism-violet))] transition-none"
                   style={{ width: `${progress * 100}%` }}
                 />
               ) : isLoading ? (

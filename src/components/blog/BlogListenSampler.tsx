@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { AppLocale } from "@/i18n/config";
 import { Link } from "react-router-dom";
 import { Loader2, Play, Shuffle, Square } from "lucide-react";
 import { publicRowToCoverLoop, resolveLoopDisplayCoverUrl } from "@/lib/coverArt";
@@ -26,7 +27,7 @@ function rowMatches(row: PublicLoopRow, matchers: RegExp[]): boolean {
 }
 
 type Props = {
-  locale: "en" | "fr";
+  locale: AppLocale;
   genreMatchers: RegExp[];
   className?: string;
 };

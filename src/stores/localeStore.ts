@@ -1,26 +1,23 @@
 import { create } from "zustand";
+import {
+  type AppLocale,
+  DEFAULT_LOCALE,
+  normalizeLocale as normalizeAppLocale,
+} from "@/i18n/config";
 
-export type Locale = "en" | "fr";
+export type { AppLocale as Locale, AppLocale } from "@/i18n/config";
 
-function normalizeLocale(input: string | null | undefined): Locale | null {
-  if (!input) return null;
-  const v = input.toLowerCase();
-  if (v === "en" || v.startsWith("en-")) return "en";
-  if (v === "fr" || v.startsWith("fr-")) return "fr";
-  return null;
-}
-
-function getInitialLocale(): Locale {
-  if (typeof window === "undefined") return "en";
-  const fromQuery = normalizeLocale(new URLSearchParams(window.location.search).get("lang"));
+function getInitialLocale(): AppLocale {
+  if (typeof window === "undefined") return DEFAULT_LOCALE;
+  const fromQuery = normalizeAppLocale(new URLSearchParams(window.location.search).get("lang"));
   if (fromQuery) return fromQuery;
-  const fromStorage = normalizeLocale(window.localStorage.getItem("producerhit_locale"));
+  const fromStorage = normalizeAppLocale(window.localStorage.getItem("producerhit_locale"));
   if (fromStorage) return fromStorage;
-  const fromNavigator = normalizeLocale(window.navigator.language);
-  return fromNavigator ?? "en";
+  const fromNavigator = normalizeAppLocale(window.navigator.language);
+  return fromNavigator ?? DEFAULT_LOCALE;
 }
 
-function applyLocale(locale: Locale) {
+function applyLocale(locale: AppLocale) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem("producerhit_locale", locale);
   document.documentElement.lang = locale;
@@ -30,8 +27,8 @@ function applyLocale(locale: Locale) {
 }
 
 type LocaleState = {
-  locale: Locale;
-  setLocale: (locale: Locale) => void;
+  locale: AppLocale;
+  setLocale: (locale: AppLocale) => void;
 };
 
 export const useLocaleStore = create<LocaleState>((set) => {

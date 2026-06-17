@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import type { CommunityPulseItem } from "@/lib/communityPulse";
+import { cn } from "@/lib/utils";
 
 type Props = {
   items: CommunityPulseItem[];
@@ -38,11 +39,17 @@ export function CommunityPulseStrip({ items, isFr }: Props) {
       <div className="pk-hub-pulse__track">
         <span className="pk-hub-pulse__live">{isFr ? "LIVE" : "LIVE"}</span>
         {item.href ? (
-          <Link to={item.href} className="pk-hub-pulse__item pk-hub-pulse__item--link">
+          <Link
+            to={item.href}
+            className={cn(
+              "pk-hub-pulse__item pk-hub-pulse__item--link",
+              item.id === "live-chat" && "pk-hub-pulse__item--chat",
+            )}
+          >
             {body}
           </Link>
         ) : (
-          <div className="pk-hub-pulse__item">{body}</div>
+          <div className={cn("pk-hub-pulse__item", item.id === "live-chat" && "pk-hub-pulse__item--chat")}>{body}</div>
         )}
         {visible.length > 1 ? (
           <div className="pk-hub-pulse__dots" aria-hidden>

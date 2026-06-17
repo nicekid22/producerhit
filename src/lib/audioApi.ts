@@ -29,6 +29,14 @@ export type AceMeta = {
   audioFormat?: string;
   seed?: number | null;
   stemsZipUrl?: string;
+  /** ACE music/generate + reference_audio — timbre utilisateur appliqué */
+  voiceClone?: boolean;
+  voiceCloneFallback?: boolean;
+  voiceCloneRequested?: boolean;
+  voiceProfileId?: string;
+  voiceProfileName?: string;
+  voiceCloneStrength?: number;
+  engine?: string;
 };
 
 export type AceFormatResult = {
@@ -213,6 +221,9 @@ type GenerateLoopAceOptions = {
   captionOverride?: string;
   /** Composition mélodique sample pack — ne pas préfixer par « beat with drums » (edge + direct ACE). */
   melodyComposition?: boolean;
+  /** Profil vocal sauvegardé — ACE reference_audio (timbre clone). */
+  voiceProfileId?: string;
+  voiceCloneStrength?: number;
 };
 
 const MELODY_COMPOSITION_ACE_RULES =
@@ -770,6 +781,12 @@ export async function generateLoopAce(
   if (options?.melodyComposition === true || captionOverride) {
     body.melodyComposition = true;
     Object.assign(body, aceMelodyCompositionAceFields());
+  }
+  if (typeof options?.voiceProfileId === "string" && options.voiceProfileId.trim()) {
+    body.voiceProfileId = options.voiceProfileId.trim();
+    if (typeof options.voiceCloneStrength === "number" && Number.isFinite(options.voiceCloneStrength)) {
+      body.voiceCloneStrength = options.voiceCloneStrength;
+    }
   }
 
   const { asyncGenerationJobsEnabled, startGenerationJob, waitForGenerationJob } = await import(

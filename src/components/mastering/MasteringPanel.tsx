@@ -13,8 +13,9 @@ import { useLoopsStore } from "@/stores/loopsStore";
 import { usePlayerStore } from "@/stores/playerStore";
 import type { Loop } from "@/types/loop";
 
+import type { AppLocale } from "@/i18n/config";
 type Props = {
-  locale: "en" | "fr";
+  locale: AppLocale;
   loops: Loop[];
   selectedLoopId: string | null;
   onSelectLoop: (id: string | null) => void;

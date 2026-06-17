@@ -3,11 +3,12 @@ import { buildLoopShareUrl, buildSignupUrl, type GrowthChannel } from "@/lib/gro
 import { buildSocialKitText, buildTikTokCaption, buildTikTokHashtags } from "@/lib/tiktokPack";
 import type { VisualizerLayout } from "@/lib/visualizer/types";
 
+import type { AppLocale } from "@/i18n/config";
 export type SharePlatform = "tiktok" | "instagram" | "youtube";
 
 export const SHARE_PLATFORMS: SharePlatform[] = ["tiktok", "instagram", "youtube"];
 
-export function sharePlatformLabel(platform: SharePlatform, _locale: "en" | "fr"): string {
+export function sharePlatformLabel(platform: SharePlatform, _locale: AppLocale): string {
   if (platform === "tiktok") return "TikTok";
   if (platform === "instagram") return "Instagram";
   return "YouTube";
@@ -32,7 +33,7 @@ export function buildYouTubeShortsCaption(loop: Loop): string {
   return `${line}\nAI music · ProducerHit\n${tags}`;
 }
 
-export function buildPlatformCaption(loop: Loop, platform: SharePlatform, locale: "en" | "fr"): string {
+export function buildPlatformCaption(loop: Loop, platform: SharePlatform, locale: AppLocale): string {
   if (platform === "instagram") return buildInstagramCaption(loop);
   if (platform === "youtube") return buildYouTubeShortsCaption(loop);
   return buildTikTokCaption(loop, locale);
@@ -98,14 +99,14 @@ export async function shareVideoViaSheet(input: {
   return "download_fallback";
 }
 
-export function sharePlatformHint(platform: SharePlatform, locale: "en" | "fr"): string {
+export function sharePlatformHint(platform: SharePlatform, locale: AppLocale): string {
   const label = sharePlatformLabel(platform, locale);
   return locale === "fr"
     ? `Choisis ${label} dans la liste — caption incluse.`
     : `Pick ${label} from the list — caption included.`;
 }
 
-export function sharePlatformFallbackHint(platform: SharePlatform, locale: "en" | "fr"): string {
+export function sharePlatformFallbackHint(platform: SharePlatform, locale: AppLocale): string {
   const label = sharePlatformLabel(platform, locale);
   return locale === "fr"
     ? `Vidéo téléchargée · caption copiée — importe dans ${label}.`

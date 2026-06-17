@@ -2,6 +2,7 @@ import { Loader2, MessageCircle, Pause, Play, Radio, Shuffle, Sparkles, Trending
 import { Link } from "react-router-dom";
 import { ProfileAuthorChip } from "@/components/profile/ProfileAuthorChip";
 import { resolveCommunityDisplayCoverUrl } from "@/lib/coverArt";
+import { displayProducerInfluence } from "@/lib/beatInfluence";
 import { COMMUNITY_HUB_PAGE, type CommunityVibeCategory } from "@/lib/communityHub";
 import { discordCommunityUrl } from "@/lib/discordConfig";
 import { COVER_SURFACE_CLASS, cn } from "@/lib/utils";
@@ -22,6 +23,7 @@ type Props = {
   onShuffle: () => void;
   onRemix: () => void;
   onCreate: () => void;
+  onJoinChat?: () => void;
 };
 
 export function CommunityHubHero({
@@ -39,6 +41,7 @@ export function CommunityHubHero({
   onShuffle,
   onRemix,
   onCreate,
+  onJoinChat,
 }: Props) {
   const title = isFr ? COMMUNITY_HUB_PAGE.title.fr : COMMUNITY_HUB_PAGE.title.en;
   const hook = isFr ? COMMUNITY_HUB_PAGE.hook.fr : COMMUNITY_HUB_PAGE.hook.en;
@@ -47,6 +50,7 @@ export function CommunityHubHero({
   const ctaShuffle = isFr ? COMMUNITY_HUB_PAGE.ctaShuffle.fr : COMMUNITY_HUB_PAGE.ctaShuffle.en;
   const playingNow = isActive && isPlaying;
   const coverUrl = spotlight ? resolveCommunityDisplayCoverUrl(spotlight) : "";
+  const spotlightInfluence = spotlight ? displayProducerInfluence(spotlight.influence) : null;
 
   return (
     <section className="pk-hub-hero" aria-labelledby="hub-hero-title">
@@ -112,6 +116,16 @@ export function CommunityHubHero({
                 <Shuffle className="h-3.5 w-3.5" />
                 {ctaShuffle}
               </button>
+              {onJoinChat && totalComments > 0 ? (
+                <button
+                  type="button"
+                  onClick={onJoinChat}
+                  className="pk-hub-hero__btn-ghost inline-flex h-10 items-center gap-2 rounded-full px-5 text-xs font-bold"
+                >
+                  <MessageCircle className="h-3.5 w-3.5" />
+                  {isFr ? "Rejoins le chat" : "Join the chat"}
+                </button>
+              ) : null}
               <Link
                 to="/blog/producerhit-community-feed-guide"
                 className="pk-hub-hero__btn-ghost inline-flex h-10 items-center gap-2 rounded-full px-5 text-xs font-bold"
@@ -172,6 +186,11 @@ export function CommunityHubHero({
                 <div className="mt-2 flex flex-wrap gap-1">
                   {spotlight.genre ? (
                     <span className="pk-hub-hero__vibe-chip max-w-full truncate">{spotlight.genre}</span>
+                  ) : null}
+                  {spotlightInfluence ? (
+                    <span className="pk-hub-hero__vibe-chip pk-hub-hero__vibe-chip--producer max-w-full truncate">
+                      {spotlightInfluence}
+                    </span>
                   ) : null}
                   {(spotlight.bpm ?? 0) > 0 ? <span className="pk-hub-hero__vibe-chip shrink-0">{spotlight.bpm} BPM</span> : null}
                 </div>

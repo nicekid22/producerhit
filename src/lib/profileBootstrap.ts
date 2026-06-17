@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabaseClient";
 
+import type { AppLocale } from "@/i18n/config";
 type ReconcileResult = {
   ok?: boolean;
   status?: string;
@@ -20,6 +21,8 @@ export type UserProfileRow = {
   bio: string | null;
   creator_type: string | null;
   social: Record<string, string>;
+  voice_to_song_used_this_month: number;
+  voice_clone_used_this_month: number;
   hosted_audio_expires_at: string | null;
 };
 
@@ -32,7 +35,7 @@ export type ProfileBootstrapResult = {
 };
 
 const PROFILE_SELECT_FULL =
-  "username, plan, loops_used_this_month, referral_bonus, referral_code, level_bonus, daily_bonus_month, avatar_id, bio, creator_type, social, hosted_audio_expires_at";
+  "username, plan, loops_used_this_month, voice_to_song_used_this_month, voice_clone_used_this_month, referral_bonus, referral_code, level_bonus, daily_bonus_month, avatar_id, bio, creator_type, social, hosted_audio_expires_at";
 
 const PROFILE_SELECT_CREATOR =
   "username, plan, loops_used_this_month, level_bonus, daily_bonus_month, avatar_id, bio, creator_type, social";
@@ -136,6 +139,10 @@ function normalizeProfileRow(data: Record<string, unknown> | null): UserProfileR
     username: typeof data.username === "string" ? data.username : null,
     plan: typeof data.plan === "string" ? data.plan : "free",
     loops_used_this_month: typeof data.loops_used_this_month === "number" ? data.loops_used_this_month : 0,
+    voice_to_song_used_this_month:
+      typeof data.voice_to_song_used_this_month === "number" ? data.voice_to_song_used_this_month : 0,
+    voice_clone_used_this_month:
+      typeof data.voice_clone_used_this_month === "number" ? data.voice_clone_used_this_month : 0,
     referral_bonus: typeof data.referral_bonus === "number" ? data.referral_bonus : 0,
     referral_code: typeof data.referral_code === "string" ? data.referral_code : null,
     level_bonus: typeof data.level_bonus === "number" ? data.level_bonus : 0,
@@ -367,7 +374,7 @@ export function syncProfileCache(
   }
 }
 
-export function profileLoadErrorMessage(error: unknown, locale: "en" | "fr"): string {
+export function profileLoadErrorMessage(error: unknown, locale: AppLocale): string {
   const detail = extractErrorMessage(error);
   const raw = detail.toLowerCase();
 

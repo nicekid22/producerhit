@@ -1,3 +1,4 @@
+import type { AppLocale } from "@/i18n/config";
 import {
   canDualGeneration,
   canExportWav,
@@ -18,7 +19,9 @@ export type UpsellReason =
   | "wav_export"
   | "feature_wav_format"
   | "feature_priority"
-  | "feature_dual_generation";
+  | "feature_dual_generation"
+  | "feature_voice_to_song"
+  | "feature_voice_clone";
 
 export type UpsellContext = {
   source: string;
@@ -48,6 +51,10 @@ export function shouldShowPlanUpsell(
       return !hasPriorityGeneration(plan);
     case "feature_dual_generation":
       return !canDualGeneration(plan);
+    case "feature_voice_to_song":
+      return !hasFullMastering(plan);
+    case "feature_voice_clone":
+      return !hasFullMastering(plan);
     case "wav_export":
       return !hasFullMastering(plan);
     case "feature_wav_format":
@@ -138,7 +145,7 @@ export type UpsellCopy = {
 
 export function getUpsellCopy(
   reason: UpsellReason,
-  locale: "en" | "fr",
+  locale: AppLocale,
   plan: string,
   ctx: UpsellContext = { source: "unknown" },
 ): UpsellCopy {
@@ -207,6 +214,36 @@ export function getUpsellCopy(
         : [`${studioLimit} generations / month on Studio`, "Parallel ×2 versions", "Mastered WAV export", "Everything in Pro"],
       primaryLabel: isFr ? "Passer Studio" : "Go Studio",
       secondaryLabel: isFr ? "Rester en ×1" : "Stay on ×1",
+      targetPlan: "studio",
+    };
+  }
+
+  if (reason === "feature_voice_to_song") {
+    return {
+      title: isFr ? "Voix → paroles illimité" : "Unlimited voice → lyrics",
+      description: isFr
+        ? "Free et Pro ont quelques essais par mois. Studio+ : enregistre ou upload ta voix, transcription auto, puis chanson ACE avec tes paroles."
+        : "Free and Pro get a few trials per month. Studio+: record or upload your voice, auto transcript, then ACE song with your lyrics.",
+      bullets: isFr
+        ? ["Enregistrement micro + upload audio", "Transcription → paroles Song Mode", "Illimité sur Studio et Plus", `${studioLimit} générations / mois sur Studio`]
+        : ["Mic recording + audio upload", "Transcript → Song Mode lyrics", "Unlimited on Studio & Plus", `${studioLimit} generations / month on Studio`],
+      primaryLabel: isFr ? "Passer Studio" : "Go Studio",
+      secondaryLabel: isFr ? "Continuer l'essai" : "Keep trial",
+      targetPlan: "studio",
+    };
+  }
+
+  if (reason === "feature_voice_clone") {
+    return {
+      title: isFr ? "Clone vocal illimité" : "Unlimited voice clone",
+      description: isFr
+        ? "Sauvegarde ton timbre et génère des chansons ACE avec TA voix — illimité sur Studio+."
+        : "Save your timbre and generate ACE songs with YOUR voice — unlimited on Studio+.",
+      bullets: isFr
+        ? ["Profils vocaux persistants", "reference_audio ACE (timbre)", "Transcription voix → paroles", `${studioLimit} générations / mois sur Studio`]
+        : ["Persistent voice profiles", "ACE reference_audio timbre", "Voice → lyrics transcription", `${studioLimit} generations / month on Studio`],
+      primaryLabel: isFr ? "Passer Studio" : "Go Studio",
+      secondaryLabel: isFr ? "Continuer l'essai" : "Keep trial",
       targetPlan: "studio",
     };
   }

@@ -14,6 +14,7 @@ import { GenerationCreditAmount } from "@/components/GenerationCreditIcon";
 import { cn, COVER_SURFACE_CLASS } from "@/lib/utils";
 import { useGrowthUpsellStore } from "@/stores/growthUpsellStore";
 
+import type { AppLocale } from "@/i18n/config";
 function loopLibrarySubtitle(loop: Loop, isFr: boolean): string {
   const parts: string[] = [];
   if (loop.genre?.trim()) parts.push(loop.genre.trim());
@@ -35,7 +36,7 @@ function loopLibraryChipLabel(loop: Loop, all: Loop[]): string {
 }
 
 type Props = {
-  locale: "en" | "fr";
+  locale: AppLocale;
   loops: Loop[];
   generating: boolean;
   remaining: number;

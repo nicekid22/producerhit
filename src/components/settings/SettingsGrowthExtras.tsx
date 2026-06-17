@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { AppLocale } from "@/i18n/config";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { DashboardPromoBillboard } from "@/components/growth/DashboardPromoBillboard";
@@ -13,7 +14,7 @@ import { ensureReferralCode } from "@/lib/referral";
 import { trackClientEvent } from "@/lib/supabaseClient";
 
 type Props = {
-  locale: "en" | "fr";
+  locale: AppLocale;
   plan: string;
   /** Masque le billboard promo — garde uniquement la progression. */
   compact?: boolean;

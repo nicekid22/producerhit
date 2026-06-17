@@ -1,12 +1,12 @@
 import { create } from "zustand";
 import { WARM_GLASS_THEME_DEFAULT } from "@/lib/featureFlags";
 
-export type VisualTheme = "prism" | "warm-glass";
+export type VisualTheme = "prism" | "warm-glass" | "cloud";
 
 const STORAGE_KEY = "producerhit_visual_theme_v1";
 
 function normalizeTheme(raw: string | null | undefined): VisualTheme | null {
-  if (raw === "prism" || raw === "warm-glass") return raw;
+  if (raw === "prism" || raw === "warm-glass" || raw === "cloud") return raw;
   return null;
 }
 
@@ -26,7 +26,15 @@ type VisualThemeState = {
   theme: VisualTheme;
   setTheme: (theme: VisualTheme) => void;
   toggleTheme: () => void;
+  cycleTheme: () => void;
 };
+
+const THEME_CYCLE: VisualTheme[] = ["prism", "warm-glass", "cloud"];
+
+export function nextVisualTheme(current: VisualTheme): VisualTheme {
+  const index = THEME_CYCLE.indexOf(current);
+  return THEME_CYCLE[(index + 1) % THEME_CYCLE.length] ?? "prism";
+}
 
 export const useVisualThemeStore = create<VisualThemeState>((set, get) => ({
   theme: getInitialTheme(),
@@ -39,8 +47,17 @@ export const useVisualThemeStore = create<VisualThemeState>((set, get) => ({
     persistTheme(next);
     set({ theme: next });
   },
+  cycleTheme: () => {
+    const next = nextVisualTheme(get().theme);
+    persistTheme(next);
+    set({ theme: next });
+  },
 }));
 
 export function isWarmGlassTheme(theme: VisualTheme): boolean {
   return theme === "warm-glass";
+}
+
+export function isCloudTheme(theme: VisualTheme): boolean {
+  return theme === "cloud";
 }

@@ -6,8 +6,9 @@ import { useWavFormatCoachStore } from "@/stores/wavFormatCoachStore";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
+import type { AppLocale } from "@/i18n/config";
 type Props = {
-  locale: "en" | "fr";
+  locale: AppLocale;
   onPrepareTarget: () => void;
   onTryWav: () => void;
   onUpgradePro: () => void;

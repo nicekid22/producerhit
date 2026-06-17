@@ -1,5 +1,6 @@
 import type { Loop } from "@/types/loop";
 
+import type { AppLocale } from "@/i18n/config";
 const GEN_SINCE_KEY = "producerhit_share_prompt_gen_since_v2";
 const LAST_SHOWN_KEY = "producerhit_share_prompt_last_shown_v2";
 const HOURLY_KEY = "producerhit_share_prompt_hourly_v2";
@@ -177,7 +178,7 @@ export function shouldShowSharePromptAfterGeneration(lifetimeGenCount?: number):
   return true;
 }
 
-export function pickSharePromptCopy(locale: "en" | "fr", seed?: string): SharePromptCopy {
+export function pickSharePromptCopy(locale: AppLocale, seed?: string): SharePromptCopy {
   const pool = locale === "fr" ? PROMPTS_FR : PROMPTS_EN;
   let index = Math.floor(Math.random() * pool.length);
   if (seed) {
@@ -213,7 +214,7 @@ export function pickLoopForSharePrompt(loops: Loop[], excludeIds: string[] = [],
   return pool[hash % pool.length] ?? pool[0] ?? fallback;
 }
 
-export function buildShareMessage(loopName: string, locale: "en" | "fr", isPublic: boolean): string {
+export function buildShareMessage(loopName: string, locale: AppLocale, isPublic: boolean): string {
   if (locale === "fr") {
     return isPublic
       ? `Écoute « ${loopName} » que j'ai produit sur ProducerHit — site de ouf 🎵`

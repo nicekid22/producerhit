@@ -1,3 +1,4 @@
+import type { AppLocale } from "@/i18n/config";
 export type ComparisonMatrixColumn = {
   id: string;
   labelEn: string;
@@ -1424,12 +1425,12 @@ export function getComparisonByPath(pathname: string): ComparisonPageConfig | nu
   return COMPARISON_PAGES.find((p) => p.path === pathname || p.pathFr === pathname) ?? null;
 }
 
-export function getComparisonLocaleForPath(pathname: string): "en" | "fr" {
+export function getComparisonLocaleForPath(pathname: string): AppLocale {
   const page = getComparisonByPath(pathname);
   if (!page) return "en";
   return page.pathFr === pathname ? "fr" : "en";
 }
 
-export function getComparisonCanonicalPath(page: ComparisonPageConfig, locale: "en" | "fr"): string {
+export function getComparisonCanonicalPath(page: ComparisonPageConfig, locale: AppLocale): string {
   return locale === "fr" ? page.pathFr : page.path;
 }

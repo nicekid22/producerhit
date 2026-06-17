@@ -1,8 +1,9 @@
 import { LANDING_PARTNER_NAMES, landingCopy } from "@/lib/landingContent";
 import { useLazyInView } from "@/hooks/useLazyInView";
 
+import type { AppLocale } from "@/i18n/config";
 type Props = {
-  locale: "en" | "fr";
+  locale: AppLocale;
 };
 
 export function LogoMarquee({ locale }: Props) {

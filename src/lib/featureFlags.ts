@@ -60,6 +60,21 @@ export const PINTEREST_PINIMG_FALLBACK = import.meta.env.VITE_PINTEREST_PINIMG_F
 export const WARM_GLASS_THEME_DEFAULT = import.meta.env.VITE_WARM_GLASS_THEME === "1";
 
 /**
+ * Thème Cloud — actif en dev par défaut ; prod : VITE_CLOUD_THEME=1.
+ * Désactiver partout : VITE_CLOUD_THEME=0 — voir CLOUD_THEME_ROLLBACK.md
+ */
+export const CLOUD_THEME_ENABLED =
+  import.meta.env.VITE_CLOUD_THEME === "0"
+    ? false
+    : import.meta.env.DEV || import.meta.env.VITE_CLOUD_THEME === "1";
+
+/**
+ * Dashboard — import voix + picker « Voix chantée » (WIP).
+ * Réactiver : VITE_DASHBOARD_VOICE_SECTIONS=1
+ */
+export const DASHBOARD_VOICE_SECTIONS_ENABLED = import.meta.env.VITE_DASHBOARD_VOICE_SECTIONS === "1";
+
+/**
  * Voile PNG feutre — site entier (Prism + Warm Glass, mobile + desktop).
  * Rollback : VITE_SITE_TEXTURE_VEIL=0 — voir SITE_TEXTURE_VEIL.md
  */

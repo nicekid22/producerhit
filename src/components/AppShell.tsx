@@ -2,9 +2,12 @@ import type { CSSProperties } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { BrandLogo } from "@/components/landing/BrandLogo";
 import { WarmGlassBackdrop } from "@/components/WarmGlassBackdrop";
+import { CloudBackdrop } from "@/components/CloudBackdrop";
 import { BackdropTextureVeil } from "@/components/BackdropTextureVeil";
 import { usePlayerStore } from "@/stores/playerStore";
-import { useVisualThemeStore, isWarmGlassTheme } from "@/stores/visualThemeStore";
+import { useCloudAccentStore } from "@/stores/cloudAccentStore";
+import { cloudAccentToElement } from "@/lib/elementTheme";
+import { useVisualThemeStore, isCloudTheme, isWarmGlassTheme } from "@/stores/visualThemeStore";
 import { cn } from "@/lib/utils";
 
 export function AppShell({
@@ -15,6 +18,7 @@ export function AppShell({
   mobileTabs,
   mobilePanel,
   mobileLayoutV2 = false,
+  consoleHeader,
 }: {
   left?: React.ReactNode;
   children: React.ReactNode;
@@ -24,11 +28,15 @@ export function AppShell({
   mobileTabs?: React.ReactNode;
   mobilePanel?: "create" | "results" | "master";
   mobileLayoutV2?: boolean;
+  /** En-tête console (ex. logo animé dashboard) — remplace BrandLogo */
+  consoleHeader?: React.ReactNode;
 }) {
   const hasPlayer = usePlayerStore((s) => !!s.current);
   const isPrism = theme === "prism";
   const visualTheme = useVisualThemeStore((s) => s.theme);
+  const cloudAccent = useCloudAccentStore((s) => s.accent);
   const warmGlass = isPrism && isWarmGlassTheme(visualTheme);
+  const cloud = isPrism && isCloudTheme(visualTheme);
   const dockPb = hasPlayer ? "pk-shell-dock-pb--player" : "pk-shell-dock-pb";
   /** Padding scroll zones — pas sur la colonne création desktop (évite trou sous Versions). */
   /** Scroll workspace : padding géré par margin-bottom colonnes + --pk-player-reserve */
@@ -43,11 +51,14 @@ export function AppShell({
         mobileLayoutV2 && "pk-mobile-app-shell pt-[env(safe-area-inset-top,0px)]",
         isPrism ? "pk-prism-stage pk-prism-dashboard" : "bg-pk-bg",
         warmGlass && "pk-warm-glass-stage",
+        cloud && "pk-cloud-stage pk-cloud-shell",
       )}
+      data-pk-cloud-accent={cloud ? cloudAccent : undefined}
+      data-pk-element={cloud ? cloudAccentToElement(cloudAccent) : undefined}
       style={
         {
-          "--pk-bottom-nav": "56px",
-          "--pk-player-height": mobileLayoutV2 ? "88px" : "72px",
+          "--pk-mobile-nav-inner-h": cloud || warmGlass ? "62px" : "56px",
+          "--pk-studio-console-width": cloud ? "448px" : "480px",
         } as CSSProperties
       }
     >
@@ -55,6 +66,8 @@ export function AppShell({
         {isPrism ? (
           warmGlass ? (
             <WarmGlassBackdrop />
+          ) : cloud ? (
+            <CloudBackdrop />
           ) : (
             <>
               <div
@@ -79,7 +92,7 @@ export function AppShell({
             <div className="pk-prism-fx-orb absolute -top-56 -right-24 h-[520px] w-[520px] rounded-full bg-cyan-500/10 blur-3xl" aria-hidden />
           </>
         )}
-        <BackdropTextureVeil variant="dashboard" />
+        {!cloud ? <BackdropTextureVeil variant="dashboard" /> : null}
       </div>
 
       <div
@@ -115,12 +128,13 @@ export function AppShell({
               className={cn(
                 "flex flex-1 flex-col gap-3 md:min-h-0 md:flex-row md:overflow-hidden",
                 mobileLayoutV2 && "min-h-0 overflow-hidden",
+                cloud && mobileLayoutV2 && "gap-2",
               )}
             >
               {mobileLayoutV2 && mobileTabs ? (
                 <div
                   className={cn(
-                    "pk-mobile-dashboard-chrome flex-shrink-0 md:hidden rounded-2xl border px-2.5 py-2 backdrop-blur",
+                    "pk-mobile-dashboard-chrome flex-shrink-0 md:hidden rounded-[14px] border px-2 py-1 backdrop-blur",
                     isPrism ? "pk-prism-glass border-white/10 bg-white/[0.04]" : "border-pk-border/70 bg-pk-panel/70",
                   )}
                 >
@@ -130,7 +144,7 @@ export function AppShell({
 
               <div
                 className={cn(
-                  "w-full overflow-visible rounded-2xl backdrop-blur md:w-[440px] md:min-h-0 md:overflow-hidden",
+                  "w-full overflow-visible rounded-2xl backdrop-blur md:w-[var(--pk-studio-console-width,480px)] md:min-w-[var(--pk-studio-console-width,480px)] md:max-w-[var(--pk-studio-console-width,480px)] md:flex-shrink-0 md:min-h-0 md:overflow-hidden",
                   isPrism ? "pk-prism-glass pk-studio-console border border-white/10" : "border border-pk-border/70 bg-pk-panel/70",
                   mobileLayoutV2
                     ? "flex min-h-0 flex-1 flex-col overflow-hidden"
@@ -146,12 +160,12 @@ export function AppShell({
                         isPrism ? "border-white/10 bg-white/[0.03]" : "border-pk-border/70 bg-pk-panel/40 text-sm font-semibold",
                       ].join(" ")}
                     >
-                      {isPrism ? <BrandLogo /> : "ProducerHit"}
+                      {consoleHeader ?? <BrandLogo compact />}
                     </div>
                   </div>
                 ) : (
                   <div className="hidden border-b border-white/10 px-4 pb-3 pt-4 md:block">
-                    {isPrism ? <BrandLogo /> : <div className="text-sm font-semibold">ProducerHit</div>}
+                    {consoleHeader ?? <BrandLogo compact />}
                   </div>
                 )}
                 {left}
@@ -199,10 +213,17 @@ export function AppShell({
       <div
         className={cn(
           "pk-app-shell-mobile-nav fixed bottom-0 left-0 right-0 z-40 max-w-[100vw] overflow-hidden pb-[env(safe-area-inset-bottom)] md:hidden",
+          cloud && "pk-app-shell-mobile-nav--cloud",
+          warmGlass && "pk-app-shell-mobile-nav--warm-glass",
           isPrism ? "border-t border-white/10 bg-[rgba(4,3,10,0.88)] backdrop-blur-xl" : "border-t border-pk-border bg-pk-panel",
         )}
       >
-        <div className="mx-auto h-14 w-full max-w-[100vw] min-w-0 overflow-hidden">
+        <div
+          className={cn(
+            "mx-auto w-full max-w-[100vw] min-w-0 overflow-hidden",
+            cloud || warmGlass ? "h-[var(--pk-mobile-nav-inner-h,62px)]" : "h-14",
+          )}
+        >
           <Sidebar />
         </div>
       </div>

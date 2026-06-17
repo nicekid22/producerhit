@@ -1,4 +1,5 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { PageLoader } from "@/components/PageLoader";
 import { buildAuthUrl } from "@/lib/authRoutes";
 import { useAuthStore } from "@/stores/authStore";
 
@@ -8,16 +9,7 @@ export function ProtectedRoute() {
   const location = useLocation();
 
   if (status !== "ready") {
-    return (
-      <div className="min-h-[60vh] bg-pk-bg text-pk-text">
-        <div className="mx-auto max-w-lg px-6 py-16">
-          <div className="rounded-pk border border-pk-border bg-pk-panel p-6">
-            <div className="text-sm font-semibold">Loading…</div>
-            <div className="mt-3 h-4 w-2/3 animate-pulse rounded bg-white/10" />
-          </div>
-        </div>
-      </div>
-    );
+    return <PageLoader variant="inline" />;
   }
 
   if (!user) {

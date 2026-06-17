@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import type { AppLocale } from "@/i18n/config";
 import { createPortal } from "react-dom";
 import { Copy, Gift, Sparkles, Users, X, Zap } from "lucide-react";
 import toast from "react-hot-toast";
@@ -13,7 +14,7 @@ import { trackClientEvent } from "@/lib/supabaseClient";
 type Props = {
   open: boolean;
   onClose: () => void;
-  locale: "en" | "fr";
+  locale: AppLocale;
   referralCode: string | null;
 };
 

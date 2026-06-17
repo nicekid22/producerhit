@@ -15,7 +15,7 @@ import {
   playPublicRowsInQueue,
 } from "@/lib/communityPlaybackQueue";
 import { isPersistedStorageCoverUrl, publicRowToCoverLoop, resolvePublicRowCoverUrl } from "@/lib/coverArt";
-import { UNIFIED_STORED_COVERS } from "@/lib/featureFlags";
+import { UNIFIED_STORED_COVERS, CLOUD_THEME_ENABLED } from "@/lib/featureFlags";
 import {
   consumeJustAuthenticated,
   hasOAuthCallbackParams,
@@ -31,24 +31,29 @@ import {
 import { LandingPrismScene } from "@/components/landing/LandingPrismScene";
 import { BrandLogo } from "@/components/landing/BrandLogo";
 import { LandingFooter } from "@/components/landing/LandingFooter";
-import { LogoMarquee } from "@/components/landing/LogoMarquee";
-import { SocialProofStats } from "@/components/landing/SocialProofStats";
+import { LandingGeneratorBottomBand } from "@/components/landing/LandingGeneratorBottomBand";
 import { TestimonialsStrip } from "@/components/landing/TestimonialsStrip";
 import { LandingCommunityRail } from "@/components/landing/LandingCommunityRail";
 import { LandingBenefits } from "@/components/landing/LandingBenefits";
 import { LandingPricingTeaser } from "@/components/landing/LandingPricingTeaser";
+import { LandingCloudMoodsSection } from "@/components/landing/LandingCloudMoodsSection";
+import { LandingHeroMoodStrip } from "@/components/landing/LandingHeroMoodStrip";
 import { LandingStickyCta } from "@/components/landing/LandingStickyCta";
 import { BackdropTextureVeil } from "@/components/BackdropTextureVeil";
 import { LandingMobileTrendingStrip } from "@/components/landing/LandingMobileTrendingStrip";
 import { LandingGenerator, type GeneratorSideCard } from "@/components/landing/LandingGenerator";
 import { LandingWorkflow } from "@/components/landing/LandingWorkflow";
 import { HeroCtaButton } from "@/components/landing/HeroCtaButton";
+import { HeroDreamHeadline } from "@/components/landing/HeroDreamHeadline";
 import { HeroTypewriterPrompt } from "@/components/landing/HeroTypewriterPrompt";
-import { ThemeToggleButton } from "@/components/ThemeToggleButton";
+import { ThemeAndAccentPicker } from "@/components/ThemeAndAccentPicker";
 import { WarmGlassBackdrop } from "@/components/WarmGlassBackdrop";
-import { useVisualThemeStore, isWarmGlassTheme } from "@/stores/visualThemeStore";
+import { CloudBackdrop } from "@/components/CloudBackdrop";
+import { useVisualThemeStore, isCloudTheme, isWarmGlassTheme } from "@/stores/visualThemeStore";
+import { useCloudAccentStore } from "@/stores/cloudAccentStore";
 import { landingCopy, landingFlowSectionClass, landingSectionClass } from "@/lib/landingContent";
-import { saveLandingPendingGeneration } from "@/lib/landingPendingGeneration";
+import { landingHeroDreamCopy } from "@/lib/landingHeroDreamCopy";
+import { clearLandingPendingGeneration, saveLandingPendingGeneration } from "@/lib/landingPendingGeneration";
 import { handoffRemixToDashboard } from "@/lib/remixHandoff";
 import { buildAuthUrl, resolvePostAuthRedirect } from "@/lib/authRoutes";
 import { cn } from "@/lib/utils";
@@ -185,7 +190,10 @@ export default function Landing() {
   const setLocale = useLocaleStore((s) => s.setLocale);
   const visualTheme = useVisualThemeStore((s) => s.theme);
   const warmGlass = isWarmGlassTheme(visualTheme);
+  const cloud = isCloudTheme(visualTheme);
+  const cloudAccent = useCloudAccentStore((s) => s.accent);
   const copy = useMemo(() => landingCopy(locale), [locale]);
+  const dreamCopy = useMemo(() => landingHeroDreamCopy(locale), [locale]);
   const isMobileViewport = useMediaQuery("(max-width: 767px)");
   const mobileLandingFocus = LANDING_MOBILE_V2 && isMobileViewport;
 
@@ -466,15 +474,35 @@ export default function Landing() {
     return `${tags}, ${artist}${bpm}${beatMood} mood, clean mix, hook-ready`.replace(/\s+/g, " ").trim();
   };
 
-  const inferSongPrompt = () => {
-    const base = prompt.trim();
-    if (base) return base;
-    return placeholders[placeholderIndex] ?? "Afrobeats summer hit with female vocals";
-  };
-
   const onGenerate = () => {
     if (generating) return;
-    const promptValue = mode === "beat" ? inferBeatPrompt() : inferSongPrompt();
+
+    const userPrompt = prompt.trim();
+
+    if (mode === "song" && !userPrompt) {
+      trackClientEvent("landing_create_empty", { mode: "song" });
+      clearLandingPendingGeneration();
+      const dashboardNext = "/dashboard?mode=song";
+      if (!user) {
+        navigate(buildAuthUrl({ next: dashboardNext }));
+        return;
+      }
+      navigate(dashboardNext);
+      return;
+    }
+
+    const promptValue = mode === "beat" ? userPrompt || inferBeatPrompt() : userPrompt;
+    if (!promptValue.trim()) {
+      clearLandingPendingGeneration();
+      const dashboardNext = `/dashboard?mode=${mode}`;
+      if (!user) {
+        navigate(buildAuthUrl({ next: dashboardNext }));
+        return;
+      }
+      navigate(dashboardNext);
+      return;
+    }
+
     saveLandingPendingGeneration({ prompt: promptValue, mode });
     const dashboardNext = `/dashboard?prompt=${encodeURIComponent(promptValue)}&mode=${mode}`;
     if (!user) {
@@ -1079,14 +1107,20 @@ export default function Landing() {
       className={cn(
         "relative min-h-screen pk-prism-stage pk-prism-stage--landing text-white",
         warmGlass && "pk-warm-glass-stage",
+        cloud && "pk-cloud-stage",
         mobileLandingFocus && "pk-landing--mobile-focus",
         !user && "max-sm:pb-24",
       )}
+      data-pk-cloud-accent={cloud ? cloudAccent : undefined}
     >
       {warmGlass ? (
         <div className="pk-warm-backdrop pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
           <WarmGlassBackdrop />
           <BackdropTextureVeil variant="marketing" />
+        </div>
+      ) : cloud ? (
+        <div className="pk-warm-backdrop pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
+          <CloudBackdrop />
         </div>
       ) : (
         <BackdropTextureVeil variant="landing" />
@@ -1139,7 +1173,7 @@ export default function Landing() {
                 </HeroCtaButton>
               </>
             )}
-            <ThemeToggleButton variant="icon" />
+            <ThemeAndAccentPicker variant="nav-icon" />
             <div className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] p-1">
               <button
                 type="button"
@@ -1235,7 +1269,7 @@ export default function Landing() {
                 )}
               </nav>
               <div className="pk-landing-mobile-nav__footer">
-                <ThemeToggleButton variant="icon" className="pk-landing-mobile-nav__theme" />
+                <ThemeAndAccentPicker variant="nav-icon" className="pk-landing-mobile-nav__theme" />
                 <div className="pk-landing-mobile-nav__locale" role="group" aria-label={locale === "fr" ? "Langue" : "Language"}>
                   <button
                     type="button"
@@ -1265,7 +1299,7 @@ export default function Landing() {
       </header>
 
       <main ref={heroRef} className="relative z-10">
-        {!warmGlass ? (
+        {!warmGlass && !cloud ? (
           <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
             <LandingPrismScene spot={spot} reduceMotion={reduceMotion} />
           </div>
@@ -1284,29 +1318,58 @@ export default function Landing() {
                 mobileLandingFocus && "pk-landing-flow__intro--mobile",
               )}
             >
-              <p
-                className={cn(
-                  "font-semibold uppercase tracking-[0.18em] text-white/45",
-                  mobileLandingFocus ? "pk-landing-flow__tagline--mobile text-[9px] tracking-[0.2em]" : "text-[10px] text-white/40",
-                )}
-              >
-                {copy.heroTagline}
-              </p>
-              <HeroTypewriterPrompt
-                locale={locale}
-                reduceMotion={reduceMotion}
-                className={mobileLandingFocus ? "pk-hero-prompt-wrap--mobile mt-3" : "mt-2"}
-              />
-              <p
-                className={cn(
-                  "mx-auto max-w-lg text-pretty leading-relaxed text-white/50",
-                  mobileLandingFocus
-                    ? "pk-landing-flow__lead--mobile mt-2 text-[11px]"
-                    : "mt-2 text-xs sm:text-[13px] text-white/45",
-                )}
-              >
-                {copy.heroLead}
-              </p>
+              {!CLOUD_THEME_ENABLED || !mobileLandingFocus ? (
+                <p
+                  className={cn(
+                    "font-semibold uppercase tracking-[0.18em] text-white/45",
+                    mobileLandingFocus ? "pk-landing-flow__tagline--mobile text-[9px] tracking-[0.2em]" : "text-[10px] text-white/40",
+                  )}
+                >
+                  {copy.heroTagline}
+                </p>
+              ) : null}
+              {CLOUD_THEME_ENABLED ? (
+                <HeroDreamHeadline
+                  locale={locale}
+                  reduceMotion={reduceMotion}
+                  className={mobileLandingFocus ? "pk-hero-dream-wrap--mobile mt-3" : "mt-2"}
+                />
+              ) : (
+                <HeroTypewriterPrompt
+                  locale={locale}
+                  reduceMotion={reduceMotion}
+                  className={mobileLandingFocus ? "pk-hero-prompt-wrap--mobile mt-3" : "mt-2"}
+                />
+              )}
+              {CLOUD_THEME_ENABLED ? (
+                <p
+                  className={cn(
+                    "pk-landing-hero-dream-sub mx-auto max-w-md text-pretty leading-relaxed text-white/55",
+                    mobileLandingFocus ? "mt-2 text-[11px]" : "mt-3 text-xs sm:text-[13px]",
+                  )}
+                >
+                  {dreamCopy.subline}
+                </p>
+              ) : (
+                <p
+                  className={cn(
+                    "mx-auto max-w-lg text-pretty leading-relaxed text-white/50",
+                    mobileLandingFocus
+                      ? "pk-landing-flow__lead--mobile mt-2 text-[11px]"
+                      : "mt-2 text-xs sm:text-[13px] text-white/45",
+                  )}
+                >
+                  {copy.heroLead}
+                </p>
+              )}
+              {CLOUD_THEME_ENABLED ? (
+                <LandingHeroMoodStrip
+                  locale={locale}
+                  cloudActive={cloud}
+                  compact={mobileLandingFocus}
+                  minimal
+                />
+              ) : null}
             </div>
 
             {!mobileLandingFocus ? <div className="pk-landing-flow__handoff" aria-hidden /> : null}
@@ -1367,16 +1430,27 @@ export default function Landing() {
           </section>
         </RevealSection>
 
+        {CLOUD_THEME_ENABLED && mobileLandingFocus ? (
+          <RevealSection className={`${landingSectionClass("pk-landing-section--cloud-moods-compact")} pk-landing-below-fold`}>
+            <LandingCloudMoodsSection locale={locale} user={!!user} cloudActive={cloud} />
+          </RevealSection>
+        ) : null}
+
         {mobileLandingFocus ? (
           <RevealSection className={`${landingSectionClass("pk-landing-section--trust pk-landing-section--trust-compact")} pk-landing-below-fold`}>
-            <SocialProofStats locale={locale} compact />
+            <LandingGeneratorBottomBand locale={locale} compact loggedIn={!!user} />
           </RevealSection>
         ) : (
           <RevealSection className={`${landingSectionClass("pk-landing-section--trust")} pk-landing-below-fold`}>
-            <LogoMarquee locale={locale} />
-            <SocialProofStats locale={locale} />
+            <LandingGeneratorBottomBand locale={locale} loggedIn={!!user} />
           </RevealSection>
         )}
+
+        {CLOUD_THEME_ENABLED && !mobileLandingFocus ? (
+          <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
+            <LandingCloudMoodsSection locale={locale} user={!!user} cloudActive={cloud} />
+          </RevealSection>
+        ) : null}
 
         <RevealSection className={`${landingSectionClass()} pk-landing-below-fold${mobileLandingFocus ? " hidden lg:block" : ""}`}>
           <LandingCommunityRail

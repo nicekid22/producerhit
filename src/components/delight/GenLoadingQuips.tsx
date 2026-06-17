@@ -3,9 +3,10 @@ import { pickGenLoadingQuip } from "@/lib/delight/copy";
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
 import { cn } from "@/lib/utils";
 
+import type { AppLocale } from "@/i18n/config";
 type Props = {
   active: boolean;
-  locale: "en" | "fr";
+  locale: AppLocale;
   className?: string;
 };
 

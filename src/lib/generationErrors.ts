@@ -1,3 +1,4 @@
+import type { AppLocale } from "@/i18n/config";
 /** Messages utilisateur pour erreurs de génération (ACE / Edge / réseau). */
 
 export type GenerationErrorFormatOptions = {
@@ -48,7 +49,7 @@ export function isGenerationCapacityError(raw: string): boolean {
   );
 }
 
-function capacityMessage(locale: "en" | "fr", plan?: string | null): string {
+function capacityMessage(locale: AppLocale, plan?: string | null): string {
   const isFree = !plan || plan === "free";
   if (locale === "fr") {
     return isFree
@@ -62,7 +63,7 @@ function capacityMessage(locale: "en" | "fr", plan?: string | null): string {
 
 export function formatGenerationErrorMessage(
   raw: string,
-  locale: "en" | "fr",
+  locale: AppLocale,
   options?: GenerationErrorFormatOptions,
 ): string {
   const msg = normalizeGenerationRawError(raw);

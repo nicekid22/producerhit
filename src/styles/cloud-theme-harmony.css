@@ -1,0 +1,381 @@
+/**
+ * Cloud — filet de sécurité harmonie (texte clair oublié, fonds sombres, accents Tailwind).
+ * Charge en dernier. Exclut toasts / modales / upsell / onboarding.
+ */
+
+/* ——— Sweep text-white/* (variantes Tailwind oubliées) ——— */
+html.pk-cloud-active .pk-cloud-stage :where([class*="text-white/"]):not(
+    :where(
+      .pk-toast-container *,
+      .pk-veil-modal-panel *,
+      .pk-loop-details-sheet *,
+      .pk-mobile-onboarding-sheet *,
+      .pk-gen-activity-pill *,
+      .pk-wow-banner *,
+      .pk-theme-roast *,
+      .pk-element-spirit *,
+      .pk-landing-cloud-moods *,
+      .pk-prism-player *,
+      .pk-cloud-player *,
+      .pk-prism-pill-active,
+      .pk-prism-pill-active *,
+      .pk-voice-card__btn--primary,
+      .pk-voice-create__primary,
+      .pk-voice-create__record,
+      .pk-voice-studio-hero__cta,
+      .pk-hub-hero__btn-primary,
+      .pk-library-hero__cta,
+      .pk-blog-listen,
+      .pk-landing-gen__cta,
+      .pk-public-loop__cta
+    )
+  ),
+html.pk-cloud-active .pk-marketing-page.pk-cloud-stage :where([class*="text-white/"]),
+html.pk-cloud-active .pk-prism-stage--landing.pk-cloud-stage :where([class*="text-white/"]) {
+  color: var(--cloud-text-muted) !important;
+}
+
+html.pk-cloud-active .pk-cloud-stage :where(.text-white):not(
+    :where(
+      .pk-toast-container *,
+      .pk-veil-modal-panel *,
+      .pk-loop-details-sheet *,
+      .pk-mobile-onboarding-sheet *,
+      .pk-gen-activity-pill *,
+      .pk-wow-banner *,
+      .pk-theme-roast *,
+      .pk-element-spirit *,
+      .pk-landing-cloud-moods *,
+      .pk-prism-player *,
+      .pk-cloud-player *,
+      .pk-prism-pill-active,
+      .pk-prism-pill-active *,
+      .pk-voice-card__btn--primary,
+      .pk-voice-create__primary,
+      .pk-voice-create__record,
+      .pk-voice-studio-hero__cta,
+      .pk-hub-hero__btn-primary,
+      .pk-library-hero__cta,
+      .pk-blog-listen,
+      .pk-landing-gen__cta,
+      .pk-public-loop__cta
+    )
+  ),
+html.pk-cloud-active .pk-marketing-page.pk-cloud-stage :where(.text-white),
+html.pk-cloud-active .pk-prism-stage--landing.pk-cloud-stage :where(.text-white) {
+  color: var(--cloud-text) !important;
+}
+
+/* Accents Tailwind Prism → Cloud lisibles */
+html.pk-cloud-active .pk-cloud-stage :is(
+    .text-cyan-200,
+    .text-cyan-300,
+    .text-emerald-300,
+    .text-violet-200,
+    .text-orange-400,
+    .text-yellow-400
+  ),
+html.pk-cloud-active .pk-marketing-page.pk-cloud-stage :is(
+    .text-cyan-200,
+    .text-cyan-300,
+    .text-emerald-300,
+    .text-violet-200
+  ) {
+  color: color-mix(in srgb, var(--cloud-accent) 78%, var(--cloud-text)) !important;
+}
+
+/* ——— Fonds sombres Tailwind → verre Cloud ——— */
+html.pk-cloud-active .pk-cloud-stage :is(
+    [class*="bg-black/"],
+    [class*="bg-\[#0a0a0f\]"],
+    [class*="bg-\[#06060c\]"]
+  ):not(
+    :where(
+      .pk-toast-container *,
+      .pk-veil-modal-panel *,
+      .pk-loop-details-sheet *,
+      .pk-mobile-onboarding-sheet *,
+      .pk-mobile-onboarding-sheet *,
+      .pk-gen-activity-pill *,
+      .pk-wow-banner *,
+      .pk-theme-roast *,
+      .pk-element-spirit *,
+      .pk-dashboard-mobile-footer *,
+      .pk-dashboard-gen__cta *,
+      .pk-landing-gen__cta-shell *,
+      .pk-coach-root *,
+      .pk-wav-coach-bubble *
+    )
+  ),
+html.pk-cloud-active .pk-marketing-page.pk-cloud-stage [class*="bg-black/"],
+html.pk-cloud-active .pk-prism-stage--landing.pk-cloud-stage [class*="bg-black/"] {
+  background: color-mix(in srgb, var(--cloud-field-bg) 88%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-gaming-panel-shell,
+.pk-cloud-stage .pk-gaming-panel-shell {
+  border-color: var(--cloud-glass-border) !important;
+  background: transparent !important;
+  box-shadow:
+    inset 0 1px 0 var(--cloud-glass-highlight),
+    0 16px 48px color-mix(in srgb, #000 10%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-gaming-panel-shell__body,
+html.pk-cloud-active .pk-gaming-panel-shell__body.bg-\[\#0a0a0f\]\/90,
+.pk-cloud-stage .pk-gaming-panel-shell__body {
+  background: linear-gradient(
+    168deg,
+    color-mix(in srgb, var(--cloud-glass-bg-elevated) 92%, transparent),
+    color-mix(in srgb, var(--cloud-glass-bg) 78%, transparent)
+  ) !important;
+  border-radius: calc(var(--cloud-radius-lg) - 1px) !important;
+}
+
+html.pk-cloud-active .pk-gaming-panel-shell__glow,
+.pk-cloud-stage .pk-gaming-panel-shell__glow {
+  background: radial-gradient(
+    ellipse 80% 60% at 20% 0%,
+    color-mix(in srgb, var(--cloud-accent) 12%, transparent),
+    transparent 58%
+  ) !important;
+}
+
+/* ——— Remix Studio (panneau gaming) ——— */
+html.pk-cloud-active .pk-gaming-panel-shell__body .border-cyan-400\/20,
+html.pk-cloud-active .pk-gaming-panel-shell__body .from-cyan-500\/10,
+.pk-cloud-stage .pk-gaming-panel-shell__body .border-cyan-400\/20 {
+  border-color: color-mix(in srgb, var(--cloud-accent) 28%, transparent) !important;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--cloud-accent) 10%, transparent),
+    transparent 62%
+  ) !important;
+}
+
+html.pk-cloud-active .pk-gaming-panel-shell__body .border-cyan-400\/25,
+html.pk-cloud-active .pk-gaming-panel-shell__body .bg-cyan-500\/10,
+.pk-cloud-stage .pk-gaming-panel-shell__body .bg-cyan-500\/10 {
+  border-color: color-mix(in srgb, var(--cloud-accent) 32%, transparent) !important;
+  background: color-mix(in srgb, var(--cloud-accent) 12%, transparent) !important;
+  color: color-mix(in srgb, var(--cloud-accent) 72%, var(--cloud-text)) !important;
+}
+
+html.pk-cloud-active .pk-gaming-panel-shell__body .bg-cyan-500\/15,
+html.pk-cloud-active .pk-gaming-panel-shell__body .text-cyan-200,
+.pk-cloud-stage .pk-gaming-panel-shell__body .bg-cyan-500\/15 {
+  background: color-mix(in srgb, var(--cloud-accent) 14%, var(--cloud-field-bg)) !important;
+  color: color-mix(in srgb, var(--cloud-accent) 68%, var(--cloud-text)) !important;
+}
+
+/* ——— Loop details / commentaires ——— */
+html.pk-cloud-active .pk-studio-detail-panel :is(
+    [class*="border-white/"],
+    [class*="bg-white/"]
+  ),
+html.pk-cloud-active .pk-library-detail-panel :is(
+    [class*="border-white/"],
+    [class*="bg-white/"]
+  ),
+.pk-cloud-stage .pk-community :is(
+    [class*="border-white/"][class*="bg-white/"]
+  ) {
+  border-color: var(--cloud-glass-border) !important;
+  background: var(--cloud-field-bg) !important;
+}
+
+html.pk-cloud-active .pk-community .rounded-xl.border,
+.pk-cloud-stage .pk-community article.rounded-xl {
+  border-color: var(--cloud-glass-border) !important;
+  background: color-mix(in srgb, var(--cloud-field-bg) 82%, transparent) !important;
+}
+
+/* ——— Tarifs (marketing Cloud) ——— */
+html.pk-cloud-active .pk-pricing-hero .text-white,
+html.pk-cloud-active .pk-pricing-hero [class*="text-white/"],
+html.pk-cloud-active .pk-pricing-card .text-white,
+html.pk-cloud-active .pk-pricing-card [class*="text-white/"],
+html.pk-cloud-active .pk-pricing-current .text-white,
+html.pk-cloud-active .pk-pricing-current [class*="text-white/"],
+html.pk-cloud-active .pk-pricing-compare [class*="text-white/"] {
+  color: var(--cloud-text) !important;
+}
+
+html.pk-cloud-active .pk-pricing-hero [class*="text-white/"],
+html.pk-cloud-active .pk-pricing-card [class*="text-white/"],
+html.pk-cloud-active .pk-pricing-current [class*="text-white/"],
+html.pk-cloud-active .pk-pricing-trust-pill,
+html.pk-cloud-active .pk-pricing-compare__no {
+  color: var(--cloud-text-muted) !important;
+}
+
+html.pk-cloud-active .pk-pricing-trust-pill,
+html.pk-cloud-active .pk-pricing-compare__yes,
+html.pk-cloud-active .pk-pricing-compare__no {
+  border-color: var(--cloud-glass-border) !important;
+  background: var(--cloud-field-bg) !important;
+}
+
+html.pk-cloud-active .pk-pricing-compare__yes .text-emerald-300 {
+  color: color-mix(in srgb, #059669 72%, var(--cloud-text)) !important;
+}
+
+/* ——— Blog ——— */
+html.pk-cloud-active .pk-marketing-page header.rounded-3xl,
+html.pk-cloud-active .pk-marketing-page .rounded-2xl.border.border-white\/10 {
+  border-color: var(--cloud-glass-border) !important;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--cloud-accent) 10%, transparent),
+    color-mix(in srgb, var(--cloud-glass-bg) 78%, transparent)
+  ) !important;
+}
+
+html.pk-cloud-active .pk-blog-card,
+html.pk-cloud-active .pk-marketing-page .pk-blog-card {
+  color: var(--cloud-text) !important;
+}
+
+html.pk-cloud-active .pk-blog-card .text-pk-muted,
+html.pk-cloud-active .pk-blog-card [class*="text-white/"] {
+  color: var(--cloud-text-muted) !important;
+}
+
+/* ——— Public loop hero ——— */
+html.pk-cloud-active .pk-public-loop .text-white,
+html.pk-cloud-active .pk-public-loop [class*="text-white/"] {
+  color: var(--cloud-text) !important;
+}
+
+html.pk-cloud-active .pk-public-loop [class*="text-white/"],
+html.pk-cloud-active .pk-public-loop .bg-black\/40 {
+  color: var(--cloud-text-muted) !important;
+  background: var(--cloud-field-bg) !important;
+}
+
+html.pk-cloud-active .pk-public-loop h1.text-white {
+  color: var(--cloud-text) !important;
+}
+
+/* ——— Landing generator ——— */
+html.pk-cloud-active .pk-landing-gen-card__frame,
+html.pk-cloud-active .pk-landing-gen .border-white\/10,
+html.pk-cloud-active .pk-landing-gen [class*="bg-white/"] {
+  border-color: var(--cloud-glass-border) !important;
+}
+
+html.pk-cloud-active .pk-landing-gen .pk-landing-gen-card__frame {
+  box-shadow: 0 20px 56px color-mix(in srgb, #000 10%, transparent) !important;
+}
+
+html.pk-cloud-active .pk-landing-gen .text-white,
+html.pk-cloud-active .pk-landing-gen [class*="text-white/"] {
+  color: var(--cloud-text) !important;
+}
+
+html.pk-cloud-active .pk-landing-gen [class*="text-white/"] {
+  color: var(--cloud-text-muted) !important;
+}
+
+/* ——— Settings hero ——— */
+html.pk-cloud-active .pk-settings-hero .text-white\/50,
+html.pk-cloud-active .pk-settings-quota-ring__label,
+html.pk-cloud-active .pk-settings-quota-ring__value {
+  color: var(--cloud-text) !important;
+}
+
+html.pk-cloud-active .pk-settings-quota-ring__label {
+  color: var(--cloud-text-muted) !important;
+}
+
+/* ——— Community trending ——— */
+html.pk-cloud-active .pk-hub-hero.border-white\/10,
+.pk-cloud-stage .pk-hub-hero.border-white\/10 {
+  border-color: color-mix(in srgb, var(--cloud-accent) 24%, var(--cloud-glass-border)) !important;
+}
+
+/* ——— Légal / prose marketing ——— */
+html.pk-cloud-active .pk-marketing-page main :is(h1, h2, h3, p, li, a:not(.pk-accent-link)) {
+  color: inherit;
+}
+
+html.pk-cloud-active .pk-marketing-page main a.hover\:text-white:hover {
+  color: var(--cloud-accent) !important;
+}
+
+html.pk-cloud-active .pk-marketing-page main section.rounded-2xl,
+html.pk-cloud-active .pk-marketing-page main section.rounded-3xl,
+html.pk-cloud-active .pk-prism-stage--landing.pk-cloud-stage .pk-landing-section .pk-prism-card,
+html.pk-cloud-active .pk-prism-stage--landing.pk-cloud-stage .pk-landing-testimonials__card {
+  border-color: var(--cloud-glass-border) !important;
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--cloud-glass-bg-elevated) 90%, transparent),
+    color-mix(in srgb, var(--cloud-glass-bg) 76%, transparent)
+  ) !important;
+}
+
+/* ——— Bordures & champs génériques (dashboard panels) ——— */
+html.pk-cloud-active .pk-cloud-stage :is(
+    [class*="border-white/"],
+    .border-pk-border
+  ):not(
+    :where(
+      .pk-toast-container *,
+      .pk-veil-modal-panel *,
+      .pk-loop-details-sheet *,
+      .pk-mobile-onboarding-sheet *
+    )
+  ) {
+  border-color: var(--cloud-glass-border) !important;
+}
+
+html.pk-cloud-active .pk-cloud-stage :is(
+    [class*="bg-white/"],
+    .bg-pk-bg,
+    .bg-pk-bg\/40
+  ):not(
+    :where(
+      .pk-toast-container *,
+      .pk-veil-modal-panel *,
+      .pk-loop-details-sheet *,
+      .pk-mobile-onboarding-sheet *,
+      .pk-prism-pill-active,
+      .pk-voice-card__btn--primary,
+      .pk-voice-create__primary,
+      .pk-dashboard-mobile-footer *,
+      .pk-dashboard-gen__cta *,
+      .pk-landing-gen__cta-shell *,
+      .pk-coach-root *,
+      .pk-wav-coach-bubble *
+    )
+  ) {
+  background-color: var(--cloud-field-bg) !important;
+}
+
+html.pk-cloud-active .pk-cloud-stage input[class*="border-white"],
+html.pk-cloud-active .pk-cloud-stage textarea[class*="border-white"],
+html.pk-cloud-active .pk-cloud-stage select[class*="border-white"] {
+  color: var(--cloud-text) !important;
+  background: var(--cloud-field-bg) !important;
+  border-color: var(--cloud-field-border) !important;
+}
+
+html.pk-cloud-active .pk-cloud-stage input::placeholder,
+html.pk-cloud-active .pk-cloud-stage textarea::placeholder {
+  color: var(--cloud-text-muted) !important;
+}
+
+/* ——— Sidebar / rail (liens muted) ——— */
+html.pk-cloud-active .pk-sidebar .text-white\/45,
+html.pk-cloud-active .pk-sidebar .text-white\/50,
+html.pk-cloud-active .pk-studio-rail .text-white\/45,
+.pk-cloud-stage .pk-sidebar .text-white\/45 {
+  color: var(--cloud-text-muted) !important;
+}
+
+html.pk-cloud-active .pk-sidebar a:hover,
+html.pk-cloud-active .pk-studio-nav-link:hover,
+.pk-cloud-stage .pk-sidebar a:hover {
+  color: var(--cloud-text) !important;
+}

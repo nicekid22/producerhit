@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import type { AppLocale } from "@/i18n/config";
 import {
   AudioWaveform,
   ChevronRight,
@@ -25,7 +26,7 @@ const HIDDEN_STORAGE_KEY = "producerhit_dashboard_spotlight_hidden_v1";
 type SlideAccent = "cyan" | "violet" | "amber" | "orange" | "rose" | "emerald";
 
 type Props = {
-  locale: "en" | "fr";
+  locale: AppLocale;
   plan?: string;
   streak?: number;
   onShare?: () => void;

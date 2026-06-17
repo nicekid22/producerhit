@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
 import { CommunityHubHero } from "@/components/community/CommunityHubHero";
 import { CommunityRail } from "@/components/community/CommunityRail";
+import { CommunityTrackSheet } from "@/components/community/CommunityTrackSheet";
 import { CommunityTrackCard } from "@/components/community/CommunityTrackCard";
 import { CommunityVibeNav } from "@/components/community/CommunityVibeNav";
 import {
@@ -22,6 +23,7 @@ import {
   type CommunityRailSort,
 } from "@/lib/communityHub";
 import { buildCommunityPulse, countNewToday } from "@/lib/communityPulse";
+import { CommunityLiveChatStrip } from "@/components/community/CommunityLiveChatStrip";
 import { CommunityPulseStrip } from "@/components/community/CommunityPulseStrip";
 import { CommunitySeoFooter } from "@/components/community/CommunitySeoFooter";
 import {
@@ -41,7 +43,7 @@ import {
 import { savePendingRemix } from "@/lib/pendingRemix";
 import { isRemixVibeRecreateEnabled } from "@/lib/remixVibeFallback";
 import { fetchRemixSourceLoop } from "@/lib/remixSourceLoop";
-import { fetchLoopCommentCounts } from "@/lib/loopComments";
+import { fetchLoopCommentCounts, fetchRecentFluxComments, type FluxCommentPreview } from "@/lib/loopComments";
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
 import { useLocaleStore } from "@/stores/localeStore";
 import { useAuthStore } from "@/stores/authStore";
@@ -75,6 +77,10 @@ export default function Explore() {
   const [ratingsById, setRatingsById] = useState<Record<string, RatingStats>>({});
   const [commentsById, setCommentsById] = useState<Record<string, number>>({});
   const [playsById, setPlaysById] = useState<Record<string, number>>({});
+  const [sheetTrack, setSheetTrack] = useState<PublicLoopRow | null>(null);
+  const [sheetFocusComments, setSheetFocusComments] = useState(false);
+  const [fluxComments, setFluxComments] = useState<FluxCommentPreview[]>([]);
+  const [fluxCommentsLoading, setFluxCommentsLoading] = useState(true);
 
   useEffect(() => {
     if (vibeIdParam && !isValidCommunityVibeId(vibeIdParam)) {
@@ -209,7 +215,7 @@ export default function Explore() {
 
   useEffect(() => {
     let cancelled = false;
-    const ids = rows.slice(0, 40).map((r) => r.id).filter(Boolean);
+    const ids = rows.map((r) => r.id).filter(Boolean).slice(0, 150);
     if (!ids.length) {
       setRatingsById({});
       return;
@@ -248,7 +254,7 @@ export default function Explore() {
 
   useEffect(() => {
     let cancelled = false;
-    const ids = rows.slice(0, 40).map((r) => r.id).filter(Boolean);
+    const ids = rows.map((r) => r.id).filter(Boolean).slice(0, 150);
     if (!ids.length) {
       setCommentsById({});
       return;
@@ -260,6 +266,30 @@ export default function Explore() {
     return () => {
       cancelled = true;
     };
+  }, [rows]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      setFluxCommentsLoading(true);
+      const recent = await fetchRecentFluxComments(14);
+      if (!cancelled) {
+        setFluxComments(recent);
+        setFluxCommentsLoading(false);
+      }
+    };
+    void load();
+    const timer = window.setInterval(() => void load(), 45000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [rows.length, refetchToken]);
+
+  const rowsById = useMemo(() => {
+    const map: Record<string, PublicLoopRow> = {};
+    for (const row of rows) map[row.id] = row;
+    return map;
   }, [rows]);
 
   useEffect(() => {
@@ -495,6 +525,21 @@ export default function Explore() {
 
   const isMineRow = (r: PublicLoopRow) => Boolean(user?.id && r.user_id === user.id);
 
+  const openTrackSheet = (row: PublicLoopRow, focusComments = false) => {
+    setSheetTrack(row);
+    setSheetFocusComments(focusComments);
+  };
+
+  const scrollToLiveChat = () => {
+    document.getElementById("flux-live-chat")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  useEffect(() => {
+    if (loading || window.location.hash !== "#flux-live-chat") return;
+    const timer = window.setTimeout(scrollToLiveChat, 280);
+    return () => window.clearTimeout(timer);
+  }, [loading]);
+
   const railProps = {
     isFr,
     currentId: current?.id ?? null,
@@ -506,6 +551,7 @@ export default function Explore() {
     isMineRow,
     onRemix: remixFrom,
     onRate: setRating,
+    onOpenDetail: openTrackSheet,
   };
 
   return (
@@ -526,9 +572,18 @@ export default function Explore() {
           onShuffle={shufflePlay}
           onRemix={() => spotlight && remixFrom(spotlight)}
           onCreate={() => navigate("/dashboard")}
+          onJoinChat={scrollToLiveChat}
         />
 
         <CommunityPulseStrip items={pulseItems} isFr={isFr} />
+
+        <CommunityLiveChatStrip
+          isFr={isFr}
+          comments={fluxComments}
+          loading={fluxCommentsLoading}
+          rowsById={rowsById}
+          onOpenTrack={openTrackSheet}
+        />
 
         <CommunityVibeNav
           isFr={isFr}
@@ -674,6 +729,7 @@ export default function Explore() {
                   onPlay={() => void togglePlayFromFiltered(r)}
                   onRemix={() => remixFrom(r)}
                   onRate={(stars) => setRating(r.id, stars)}
+                  onOpenDetail={(focusComments) => openTrackSheet(r, focusComments)}
                   slotIndex={idx}
                 />
               ))
@@ -693,6 +749,30 @@ export default function Explore() {
           </Link>
         </div>
       </div>
+
+      <CommunityTrackSheet
+        open={Boolean(sheetTrack)}
+        onClose={() => {
+          setSheetTrack(null);
+          setSheetFocusComments(false);
+        }}
+        row={sheetTrack}
+        isFr={isFr}
+        isActive={sheetTrack ? current?.id === sheetTrack.id : false}
+        isPlaying={isPlaying}
+        resolving={sheetTrack ? resolvingId === sheetTrack.id : false}
+        rating={sheetTrack ? ratingsById[sheetTrack.id] : undefined}
+        commentCount={sheetTrack ? (commentsById[sheetTrack.id] ?? 0) : 0}
+        userId={user?.id ?? null}
+        focusComments={sheetFocusComments}
+        onPlay={() => sheetTrack && void togglePlayFromFiltered(sheetTrack)}
+        onRemix={() => sheetTrack && remixFrom(sheetTrack)}
+        onRate={(stars) => sheetTrack && setRating(sheetTrack.id, stars)}
+        onCommentCountChange={(count) => {
+          if (!sheetTrack) return;
+          setCommentsById((prev) => ({ ...prev, [sheetTrack.id]: count }));
+        }}
+      />
     </AppShell>
   );
 }

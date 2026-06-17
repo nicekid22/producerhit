@@ -1,3 +1,4 @@
+import type { AppLocale } from "@/i18n/config";
 export type DelightKind =
   | "first_beat"
   | "beat_ready"
@@ -79,16 +80,16 @@ export function pickRandom<T>(pool: T[], seed?: string): T {
   return pool[hash % pool.length]!;
 }
 
-export function pickGenLoadingQuip(locale: "en" | "fr", tick: number): string {
+export function pickGenLoadingQuip(locale: AppLocale, tick: number): string {
   const pool = locale === "fr" ? GEN_LOADING_FR : GEN_LOADING_EN;
   return pool[tick % pool.length]!;
 }
 
-export function pickBeatReadyToast(locale: "en" | "fr", seed?: string): string {
+export function pickBeatReadyToast(locale: AppLocale, seed?: string): string {
   return pickRandom(locale === "fr" ? BEAT_READY_FR : BEAT_READY_EN, seed);
 }
 
-export function getDelightCopy(kind: DelightKind, locale: "en" | "fr", extra?: { level?: number; streak?: number; emoji?: string }): DelightCopy {
+export function getDelightCopy(kind: DelightKind, locale: AppLocale, extra?: { level?: number; streak?: number; emoji?: string }): DelightCopy {
   const isFr = locale === "fr";
 
   const map: Record<DelightKind, DelightCopy> = {

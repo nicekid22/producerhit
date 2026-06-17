@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { AppLocale } from "@/i18n/config";
 import toast from "react-hot-toast";
 import {
   getSpeechRecognitionCtor,
@@ -11,14 +12,14 @@ import {
 export type SpeechDictationStatus = "idle" | "listening" | "unsupported";
 
 type Options = {
-  locale: "en" | "fr";
+  locale: AppLocale;
   getValue: () => string;
   onValueChange: (value: string) => void;
   /** Arrêt auto après silence (Safari / mobile). */
   autoStopMs?: number;
 };
 
-function errorMessage(code: string, locale: "en" | "fr"): string {
+function errorMessage(code: string, locale: AppLocale): string {
   const fr = locale === "fr";
   switch (code) {
     case "not-allowed":

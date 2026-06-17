@@ -13,6 +13,8 @@ export function saveLandingPendingGeneration(payload: LandingPendingGeneration) 
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ prompt, mode }));
     window.localStorage.setItem("producerhit_pending_prompt", prompt);
     window.localStorage.setItem("producerhit_pending_source", "landing");
+    window.sessionStorage.removeItem("producerhit_landing_autogen_done");
+    window.sessionStorage.removeItem("producerhit_landing_autogen_key");
   } catch {
     void 0;
   }

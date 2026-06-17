@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { AppShell } from "@/components/AppShell";
 import { CommunityRail } from "@/components/community/CommunityRail";
 import { CommunitySeoFooter } from "@/components/community/CommunitySeoFooter";
+import { CommunityTrackSheet } from "@/components/community/CommunityTrackSheet";
 import { CommunityTrackCard } from "@/components/community/CommunityTrackCard";
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
 import { sortByCommunityLove } from "@/lib/communityHub";
@@ -46,6 +47,8 @@ export default function CommunityTrending() {
   const [ratingsById, setRatingsById] = useState<Record<string, RatingStats>>({});
   const [commentsById, setCommentsById] = useState<Record<string, number>>({});
   const [playsById, setPlaysById] = useState<Record<string, number>>({});
+  const [sheetTrack, setSheetTrack] = useState<PublicLoopRow | null>(null);
+  const [sheetFocusComments, setSheetFocusComments] = useState(false);
   const current = usePlayerStore((s) => s.current);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
 
@@ -183,6 +186,21 @@ export default function CommunityTrending() {
   };
 
   const isNew = (createdAt: string) => Date.now() - new Date(createdAt).getTime() < 24 * 60 * 60 * 1000;
+
+  const openTrackSheet = (row: PublicLoopRow, focusComments = false) => {
+    setSheetTrack(row);
+    setSheetFocusComments(focusComments);
+  };
+
+  const togglePlayRow = (r: PublicLoopRow) => {
+    if (current?.id === r.id) {
+      usePlayerStore.getState().setPlaying(!isPlaying);
+      return;
+    }
+    const i = findPublicRowIndex(trending, r.id);
+    void playQueue(trending, i >= 0 ? i : 0);
+  };
+
   const railProps = {
     isFr,
     currentId: current?.id ?? null,
@@ -194,6 +212,7 @@ export default function CommunityTrending() {
     isMineRow: (r: PublicLoopRow) => Boolean(user?.id && r.user_id === user.id),
     onRemix: remixFrom,
     onRate: setRating,
+    onOpenDetail: openTrackSheet,
   };
 
   return (
@@ -276,6 +295,7 @@ export default function CommunityTrending() {
                     }}
                     onRemix={() => remixFrom(r)}
                     onRate={(stars) => setRating(r.id, stars)}
+                    onOpenDetail={(focusComments) => openTrackSheet(r, focusComments)}
                     slotIndex={idx}
                   />
                 ))}
@@ -286,6 +306,30 @@ export default function CommunityTrending() {
 
         <CommunitySeoFooter isFr={isFr} variant="trending" />
       </div>
+
+      <CommunityTrackSheet
+        open={Boolean(sheetTrack)}
+        onClose={() => {
+          setSheetTrack(null);
+          setSheetFocusComments(false);
+        }}
+        row={sheetTrack}
+        isFr={isFr}
+        isActive={sheetTrack ? current?.id === sheetTrack.id : false}
+        isPlaying={isPlaying}
+        resolving={sheetTrack ? resolvingId === sheetTrack.id : false}
+        rating={sheetTrack ? ratingsById[sheetTrack.id] : undefined}
+        commentCount={sheetTrack ? (commentsById[sheetTrack.id] ?? 0) : 0}
+        userId={user?.id ?? null}
+        focusComments={sheetFocusComments}
+        onPlay={() => sheetTrack && togglePlayRow(sheetTrack)}
+        onRemix={() => sheetTrack && remixFrom(sheetTrack)}
+        onRate={(stars) => sheetTrack && setRating(sheetTrack.id, stars)}
+        onCommentCountChange={(count) => {
+          if (!sheetTrack) return;
+          setCommentsById((prev) => ({ ...prev, [sheetTrack.id]: count }));
+        }}
+      />
     </AppShell>
   );
 }

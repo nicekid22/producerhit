@@ -1,0 +1,122 @@
+/**
+ * Overlays portaled (coaches, wow) — harmonie Cloud · Warm Glass
+ */
+
+/* ——— Onboarding coach ——— */
+html.pk-cloud-active .pk-coach-bubble,
+html.pk-cloud-active .pk-coach-root .pk-coach-bubble {
+  border-color: var(--cloud-glass-border) !important;
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--cloud-glass-bg-elevated) 94%, rgba(8, 8, 16, 0.92)),
+    color-mix(in srgb, var(--cloud-glass-bg) 88%, rgba(8, 8, 16, 0.96))
+  ) !important;
+  backdrop-filter: blur(var(--cloud-blur-heavy, 48px)) saturate(1.3);
+  -webkit-backdrop-filter: blur(var(--cloud-blur-heavy, 48px)) saturate(1.3);
+  box-shadow:
+    inset 0 1px 0 var(--cloud-glass-highlight),
+    0 20px 56px color-mix(in srgb, #000 18%, transparent) !important;
+  color: var(--cloud-text) !important;
+}
+
+html.pk-cloud-active .pk-coach-bubble .text-white,
+html.pk-cloud-active .pk-coach-bubble .text-white\/90,
+html.pk-cloud-active .pk-coach-bubble .text-white\/80 {
+  color: var(--cloud-text) !important;
+}
+
+html.pk-cloud-active .pk-coach-bubble .text-white\/60,
+html.pk-cloud-active .pk-coach-bubble .text-white\/50 {
+  color: var(--cloud-text-muted) !important;
+}
+
+html.pk-warm-glass-active .pk-coach-bubble,
+html.pk-warm-glass-active .pk-coach-root .pk-coach-bubble {
+  border-color: var(--warm-glass-border) !important;
+  background: linear-gradient(180deg, rgba(48, 22, 14, 0.96), rgba(38, 16, 10, 0.98)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 180, 0.1),
+    0 20px 56px rgba(40, 16, 8, 0.45) !important;
+  color: rgba(255, 248, 240, 0.92) !important;
+}
+
+html.pk-warm-glass-active .pk-coach-bubble .text-white\/60,
+html.pk-warm-glass-active .pk-coach-bubble .text-white\/50 {
+  color: rgba(255, 220, 180, 0.62) !important;
+}
+
+/* ——— WAV format coach ——— */
+html.pk-cloud-active .pk-wav-coach-bubble {
+  border-color: var(--cloud-glass-border) !important;
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--cloud-glass-bg-elevated) 92%, rgba(8, 8, 16, 0.9)),
+    color-mix(in srgb, var(--cloud-glass-bg) 85%, rgba(8, 8, 16, 0.94))
+  ) !important;
+  backdrop-filter: blur(var(--cloud-blur-heavy, 48px)) saturate(1.3);
+  -webkit-backdrop-filter: blur(var(--cloud-blur-heavy, 48px)) saturate(1.3);
+  color: var(--cloud-text) !important;
+}
+
+html.pk-cloud-active .pk-wav-coach-bubble .text-white,
+html.pk-cloud-active .pk-wav-coach-bubble h2 {
+  color: var(--cloud-text) !important;
+}
+
+html.pk-cloud-active .pk-wav-coach-bubble .text-white\/35,
+html.pk-cloud-active .pk-wav-coach-bubble .text-white\/50 {
+  color: var(--cloud-text-muted) !important;
+}
+
+html.pk-cloud-active .pk-wav-coach-bubble .border-white\/10,
+html.pk-cloud-active .pk-wav-coach-bubble .border-white\/12 {
+  border-color: var(--cloud-glass-border) !important;
+}
+
+html.pk-cloud-active .pk-wav-coach-bubble .bg-white\/\[0\.04\],
+html.pk-cloud-active .pk-wav-coach-bubble .bg-black\/30 {
+  background: var(--cloud-field-bg) !important;
+}
+
+html.pk-warm-glass-active .pk-wav-coach-bubble {
+  border-color: var(--warm-glass-border) !important;
+  background: linear-gradient(180deg, rgba(48, 22, 14, 0.96), rgba(32, 14, 8, 0.98)) !important;
+  color: rgba(255, 248, 240, 0.92) !important;
+}
+
+html.pk-warm-glass-active .pk-wav-coach-bubble .text-white\/35,
+html.pk-warm-glass-active .pk-wav-coach-bubble .text-white\/50 {
+  color: rgba(255, 220, 180, 0.58) !important;
+}
+
+/* ——— Wow banners Warm Glass ——— */
+html.pk-warm-glass-active .pk-wow-banner__title {
+  background: var(--warm-accent-gradient) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+}
+
+html.pk-warm-glass-active .pk-wow-banner__subtitle {
+  color: rgba(255, 220, 180, 0.72) !important;
+}
+
+html.pk-warm-glass-active .pk-wow-banner__emoji {
+  filter: drop-shadow(0 0 20px rgba(255, 160, 80, 0.35));
+}
+
+/* ——— Cloud onboarding sheet · icônes ——— */
+html.pk-cloud-active .pk-mobile-onboarding-icon-box--0 .pk-mobile-onboarding-icon {
+  color: var(--cloud-accent) !important;
+}
+
+html.pk-cloud-active .pk-mobile-onboarding-icon-box--1 .pk-mobile-onboarding-icon {
+  color: color-mix(in srgb, var(--cloud-accent) 72%, #67c3ff) !important;
+}
+
+html.pk-cloud-active .pk-mobile-onboarding-icon-box--2 .pk-mobile-onboarding-icon {
+  color: color-mix(in srgb, var(--cloud-accent) 55%, #ffd080) !important;
+}
+
+html.pk-cloud-active .pk-mobile-onboarding-dot--active {
+  background: var(--cloud-accent-gradient) !important;
+}

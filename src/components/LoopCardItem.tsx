@@ -11,6 +11,7 @@ import { useLazyPinterestCover } from "@/hooks/useLazyPinterestCover";
 import { StoredLoopCover } from "@/components/cover/StoredLoopCover";
 import { CoverMedia } from "@/components/CoverMedia";
 import { buildCoverPromptSnapshot, cn, COVER_SURFACE_CLASS } from "@/lib/utils";
+import { displayProducerInfluence } from "@/lib/beatInfluence";
 import { loopCardClass, loopCoverClass, loopPlayButtonClass, loopPublicButtonClass, loopToggleButtonClass, getLoopCardFooterHint } from "@/lib/loopCardUi";
 import { useAuthStore } from "@/stores/authStore";
 import { Badge } from "@/components/ui/Badge";
@@ -25,6 +26,7 @@ import { useLocaleStore } from "@/stores/localeStore";
 import type { Loop } from "@/types/loop";
 import { prepareLoopVariantGeneration, variantResultTitle } from "@/lib/loopVariantGeneration";
 import { extractLoopVocalLanguage, formatVocalLanguageLabel, isSongLoop } from "@/lib/vocalLanguages";
+import { resolveLoopVoiceCloneInfo, voiceCloneStatusLabel } from "@/lib/voiceCloneMeta";
 import { resolveStemsDownloadUrl } from "@/lib/stemsDownload";
 import { canDownloadStems } from "@/lib/planEntitlements";
 import { useGrowthUpsellStore } from "@/stores/growthUpsellStore";
@@ -521,7 +523,10 @@ export const LoopCardItem = memo(function LoopCardItem({
   const songCard = isSongLoop(loop);
   const vocalLangCode = songCard ? extractLoopVocalLanguage(loop) : null;
   const vocalLangLabel = vocalLangCode ? formatVocalLanguageLabel(vocalLangCode, locale) : null;
+  const voiceCloneInfo = songCard ? resolveLoopVoiceCloneInfo(loop) : null;
+  const voiceCloneLabel = voiceCloneInfo ? voiceCloneStatusLabel(voiceCloneInfo, locale === "fr") : null;
   const footerHint = getLoopCardFooterHint(loop, locale);
+  const producerInfluence = displayProducerInfluence(loop.influence);
 
   const libraryMenu = (
     <>
@@ -579,7 +584,7 @@ export const LoopCardItem = memo(function LoopCardItem({
           }}
         >
           {isRerollingCover ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCcw className="h-3.5 w-3.5" />}
-          {locale === "fr" ? "Autre cover" : "New cover"}
+          {locale === "fr" ? "Autre image" : "New inspo"}
         </button>
       ) : null}
       <button
@@ -670,6 +675,11 @@ export const LoopCardItem = memo(function LoopCardItem({
           />
           <div className="pk-library-card__shade" aria-hidden />
           <span className="pk-library-card__genre">{loop.genre}</span>
+          {producerInfluence ? (
+            <span className="pk-library-card__influence" title={producerInfluence}>
+              {producerInfluence}
+            </span>
+          ) : null}
           {footerHint ? (
             <span
               className={cn(
@@ -983,7 +993,7 @@ export const LoopCardItem = memo(function LoopCardItem({
                   <RefreshCcw className="h-3 w-3 shrink-0 opacity-75" aria-hidden />
                 )}
                 <span className="inline-flex items-center gap-1 max-[380px]:hidden">
-                  <span>{locale === "fr" ? "Autre cover" : "New cover"}</span>
+                  <span>{locale === "fr" ? "Autre image" : "New inspo"}</span>
                   <GenerationCreditAmount
                     amount={LOOP_COVER_REROLL_CREDIT_COST}
                     showPlus
@@ -1000,6 +1010,18 @@ export const LoopCardItem = memo(function LoopCardItem({
               <Badge variant="muted" className="gap-1">
                 <Languages className="h-3 w-3 shrink-0 opacity-80" aria-hidden />
                 {vocalLangLabel}
+              </Badge>
+            ) : null}
+            {voiceCloneLabel ? (
+              <Badge
+                variant="muted"
+                className={
+                  voiceCloneInfo?.applied && !voiceCloneInfo.fallback
+                    ? "gap-1 border-emerald-400/30 bg-emerald-500/10 text-emerald-200"
+                    : "gap-1 border-amber-400/25 bg-amber-500/10 text-amber-100"
+                }
+              >
+                {voiceCloneLabel}
               </Badge>
             ) : null}
             {!songCard && loop.mood ? <Badge variant="muted">{loop.mood}</Badge> : null}
@@ -1441,7 +1463,7 @@ export const LoopCardItem = memo(function LoopCardItem({
           Share
         </Button>
         <Button
-          variant="ghost"
+          variant="secondary"
           size="sm"
           disabled={isVarying}
           onClick={(e) => {
@@ -1454,7 +1476,7 @@ export const LoopCardItem = memo(function LoopCardItem({
           {isVarying ? (locale === "fr" ? "Génération…" : "Generating...") : "Variation"}
         </Button>
         <Button
-          variant="ghost"
+          variant="secondary"
           size="sm"
           disabled={isVarying}
           onClick={(e) => {

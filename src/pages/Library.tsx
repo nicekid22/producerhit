@@ -12,12 +12,14 @@ import { useLoopsStore } from "@/stores/loopsStore";
 import { LoopCardItem } from "@/components/LoopCardItem";
 import { useLocaleStore } from "@/stores/localeStore";
 import { useMobileUiV2 } from "@/hooks/useMobileUiV2";
-import { Music2, Search, X } from "lucide-react";
+import { Disc3, ListMusic, Music2, Search, X } from "lucide-react";
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
 import { dedupeLoopsById } from "@/lib/loopWorkspaceUtils";
 import { genreCoverGradient } from "@/lib/genreCoverStyle";
 import { cn } from "@/lib/utils";
 import { LibraryVaultHero } from "@/components/library/LibraryVaultHero";
+import { LibraryCollectionsRow } from "@/components/library/LibraryCollectionsRow";
+import { buildLibraryCollections, loopsForCollection } from "@/lib/libraryCurations";
 
 type Filter = "all" | "genre" | "key" | "bpm";
 
@@ -38,8 +40,16 @@ export default function Library() {
   const [bpmMin, setBpmMin] = useState(90);
   const [bpmMax, setBpmMax] = useState(160);
   const [genreFilter, setGenreFilter] = useState<string | null>(null);
+  const [collectionId, setCollectionId] = useState<string | null>(null);
 
   const libraryLoops = useMemo(() => dedupeLoopsById(loops), [loops]);
+  const collections = useMemo(() => buildLibraryCollections(libraryLoops), [libraryLoops]);
+  const playlists = useMemo(() => collections.filter((c) => c.kind === "playlist"), [collections]);
+  const mixtapes = useMemo(() => collections.filter((c) => c.kind === "mixtape"), [collections]);
+  const scopedLoops = useMemo(
+    () => loopsForCollection(libraryLoops, collectionId, collections),
+    [collectionId, collections, libraryLoops],
+  );
 
   useEffect(() => {
     if (loopsHydrated) return;
@@ -47,7 +57,7 @@ export default function Library() {
   }, [loadMyLoops, loopsHydrated]);
 
   const filtered = useMemo(() => {
-    const base = genreFilter ? libraryLoops.filter((l) => l.genre === genreFilter) : libraryLoops;
+    const base = genreFilter ? scopedLoops.filter((l) => l.genre === genreFilter) : scopedLoops;
     const text = q.trim().toLowerCase();
     const afterSearch = text
       ? base.filter((l) => [l.name, l.genre, l.key, l.mood].some((x) => x.toLowerCase().includes(text)))
@@ -63,11 +73,10 @@ export default function Library() {
       .filter((l) => l.bpm >= min && l.bpm <= max)
       .slice()
       .sort((a, b) => a.bpm - b.bpm);
-  }, [bpmMax, bpmMin, filter, genreFilter, libraryLoops, q]);
+  }, [bpmMax, bpmMin, filter, genreFilter, scopedLoops, q]);
 
   const savedCount = useMemo(() => libraryLoops.filter((l) => l.isSaved).length, [libraryLoops]);
   const libraryTotalCount = loopsTotalCount ?? libraryLoops.length;
-  const genreCount = useMemo(() => new Set(libraryLoops.map((l) => l.genre).filter(Boolean)).size, [libraryLoops]);
   const topGenres = useMemo(() => {
     const counts = new Map<string, number>();
     for (const l of libraryLoops) {
@@ -78,6 +87,10 @@ export default function Library() {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 6);
   }, [libraryLoops]);
+  const activeCollection = useMemo(
+    () => (collectionId ? collections.find((c) => c.id === collectionId) ?? null : null),
+    [collectionId, collections],
+  );
   const detailsLoop = useMemo(
     () => (detailsId ? libraryLoops.find((l) => l.id === detailsId) ?? null : null),
     [detailsId, libraryLoops],
@@ -114,9 +127,52 @@ export default function Library() {
           isFr={isFr}
           totalCount={libraryTotalCount}
           savedCount={savedCount}
-          genreCount={genreCount}
-          visibleCount={filtered.length}
+          playlistCount={playlists.length}
+          mixtapeCount={mixtapes.length}
         />
+
+        {!loopsLoading && libraryLoops.length > 0 ? (
+          <div className="pk-library-collections space-y-5">
+            <LibraryCollectionsRow
+              title={isFr ? "Tes playlists" : "Your playlists"}
+              subtitle={isFr ? "Tes morceaux, classés pour revenir écouter" : "Your tracks, curated to replay"}
+              icon={ListMusic}
+              collections={playlists}
+              activeId={collectionId}
+              isFr={isFr}
+              onSelect={setCollectionId}
+            />
+            <LibraryCollectionsRow
+              title={isFr ? "Mixtapes pour toi" : "Mixtapes for you"}
+              subtitle={isFr ? "Comme Spotify — vibes auto-générées" : "Spotify-style — auto-generated vibes"}
+              icon={Disc3}
+              collections={mixtapes}
+              activeId={collectionId}
+              isFr={isFr}
+              onSelect={setCollectionId}
+            />
+          </div>
+        ) : null}
+
+        {activeCollection ? (
+          <div className="pk-library-active-filter pk-library-active-filter--collection">
+            <span>
+              {activeCollection.kind === "mixtape"
+                ? isFr
+                  ? "Mixtape"
+                  : "Mixtape"
+                : isFr
+                  ? "Playlist"
+                  : "Playlist"}
+              {" · "}
+              <strong>{isFr ? activeCollection.titleFr : activeCollection.titleEn}</strong>
+            </span>
+            <button type="button" className="pk-library-active-filter__clear" onClick={() => setCollectionId(null)}>
+              <X className="h-3.5 w-3.5" />
+              {isFr ? "Tout afficher" : "Show all"}
+            </button>
+          </div>
+        ) : null}
 
         <div className="flex flex-col gap-3">
           {loopsSyncError ? (
@@ -153,7 +209,7 @@ export default function Library() {
                 icon="library"
                 size="md"
                 label={locale === "fr" ? "Synchronisation…" : "Syncing…"}
-                sublabel={locale === "fr" ? "Chargement de tes créations." : "Loading your creations."}
+                sublabel={locale === "fr" ? "On prépare ta bibliothèque cozy." : "Setting up your cozy library."}
               />
             </div>
           ) : null}

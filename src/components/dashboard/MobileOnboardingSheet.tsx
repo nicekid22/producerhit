@@ -3,10 +3,11 @@ import { Sparkles, Share2, Music2, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
+import type { AppLocale } from "@/i18n/config";
 const STORAGE_KEY = "producerhit_mobile_onboarding_v1";
 
 type Props = {
-  locale: "en" | "fr";
+  locale: AppLocale;
   open: boolean;
   onClose: () => void;
 };

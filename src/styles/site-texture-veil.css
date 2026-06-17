@@ -128,14 +128,14 @@ body[data-pk-theme="marketing"] {
     --pk-veil-panel-grain: 0.008;
   }
 
-  body[data-pk-theme="app"] .pk-prism-dashboard:not(.pk-warm-glass-stage):has(.pk-dashboard-generator) {
+  body[data-pk-theme="app"] .pk-prism-dashboard:not(.pk-warm-glass-stage):not(.pk-cloud-stage):has(.pk-dashboard-generator) {
     --pk-veil-surface-focal: rgba(14, 12, 28, 0.94);
     --pk-veil-surface-mid: rgba(12, 10, 26, 0.92);
     --pk-veil-surface-soft: rgba(16, 14, 32, 0.9);
     --pk-veil-panel-grain: 0.006;
   }
 
-  body[data-pk-theme="app"] .pk-prism-dashboard:not(.pk-warm-glass-stage):has(.pk-dashboard-generator) :is(
+  body[data-pk-theme="app"] .pk-prism-dashboard:not(.pk-warm-glass-stage):not(.pk-cloud-stage):has(.pk-dashboard-generator) :is(
       .pk-studio-console,
       .pk-mobile-dashboard-chrome,
       .pk-studio-workspace,
@@ -207,14 +207,18 @@ body[data-pk-theme="marketing"] .pk-landing-gen__shell::after {
 }
 
 /* Cartes communauté / features — tier 2 */
-body[data-pk-theme="marketing"] .pk-landing-community__card,
-body[data-pk-theme="marketing"] .pk-landing-section:not(.pk-landing-section--trust) .pk-prism-card {
+body[data-pk-theme="marketing"]:not(:has(.pk-cloud-stage)) .pk-landing-community__card,
+body[data-pk-theme="marketing"]:not(:has(.pk-cloud-stage))
+  .pk-landing-section:not(.pk-landing-section--trust)
+  .pk-prism-card {
   isolation: isolate;
   background-color: rgba(8, 7, 14, 0.54) !important;
 }
 
-body[data-pk-theme="marketing"] .pk-landing-community__card::after,
-body[data-pk-theme="marketing"] .pk-landing-section:not(.pk-landing-section--trust) .pk-prism-card::after {
+body[data-pk-theme="marketing"]:not(:has(.pk-cloud-stage)) .pk-landing-community__card::after,
+body[data-pk-theme="marketing"]:not(:has(.pk-cloud-stage))
+  .pk-landing-section:not(.pk-landing-section--trust)
+  .pk-prism-card::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -227,12 +231,16 @@ body[data-pk-theme="marketing"] .pk-landing-section:not(.pk-landing-section--tru
 }
 
 /* Cartes latérales hero — tier 3, un peu plus de vie / texture */
-body[data-pk-theme="marketing"] .pk-landing-gen-card__frame {
+body[data-pk-theme="marketing"]:not(:has(.pk-cloud-stage)) .pk-landing-gen-card__frame {
   background-color: rgba(6, 5, 12, 0.28);
 }
 
-body[data-pk-theme="marketing"] .pk-landing-gen-card__fx {
-  opacity: 0.82;
+body[data-pk-theme="marketing"]:not(:has(.pk-cloud-stage)) .pk-landing-gen-card__fx {
+  opacity: 0.72;
+}
+
+html.pk-cloud-active body[data-pk-theme="marketing"] .pk-landing-gen__shell::after {
+  display: none !important;
 }
 
 /* Zones ouvertes (trust, intro) — tier 4, fond respire */
@@ -242,7 +250,7 @@ body[data-pk-theme="marketing"] .pk-landing-trending-strip__card {
   background-color: transparent !important;
 }
 
-body[data-pk-theme="marketing"] .pk-landing-trending-strip__link {
+body[data-pk-theme="marketing"]:not(:has(.pk-cloud-stage)) .pk-landing-trending-strip__link {
   background-color: rgba(8, 7, 14, 0.38) !important;
 }
 
@@ -272,9 +280,9 @@ body[data-pk-theme="app"] [data-loop-card] {
   isolation: isolate;
 }
 
-/* Console création — focal, la plus « propre » */
-body[data-pk-theme="app"] .pk-app-shell:not(.pk-warm-glass-stage) .pk-studio-console,
-body[data-pk-theme="app"] .pk-app-shell:not(.pk-warm-glass-stage) .pk-gaming-panel-shell__body {
+/* Console création — focal, la plus « propre » (hors Cloud / Warm Glass) */
+body[data-pk-theme="app"] .pk-app-shell:not(.pk-warm-glass-stage):not(.pk-cloud-stage) .pk-studio-console,
+body[data-pk-theme="app"] .pk-app-shell:not(.pk-warm-glass-stage):not(.pk-cloud-stage) .pk-gaming-panel-shell__body {
   background-color: rgba(8, 7, 14, 0.62) !important;
   background-image: linear-gradient(
     155deg,
@@ -284,8 +292,8 @@ body[data-pk-theme="app"] .pk-app-shell:not(.pk-warm-glass-stage) .pk-gaming-pan
   ) !important;
 }
 
-body[data-pk-theme="app"] .pk-app-shell:not(.pk-warm-glass-stage) .pk-studio-console::after,
-body[data-pk-theme="app"] .pk-app-shell:not(.pk-warm-glass-stage) .pk-gaming-panel-shell__body::after {
+body[data-pk-theme="app"] .pk-app-shell:not(.pk-warm-glass-stage):not(.pk-cloud-stage) .pk-studio-console::after,
+body[data-pk-theme="app"] .pk-app-shell:not(.pk-warm-glass-stage):not(.pk-cloud-stage) .pk-gaming-panel-shell__body::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -297,8 +305,8 @@ body[data-pk-theme="app"] .pk-app-shell:not(.pk-warm-glass-stage) .pk-gaming-pan
   background-size: 210px 210px;
 }
 
-/* Workspace résultats — tier 2 */
-body[data-pk-theme="app"] .pk-app-shell:not(.pk-warm-glass-stage) .pk-studio-workspace {
+/* Workspace résultats — tier 2 (hors Cloud) */
+body[data-pk-theme="app"] .pk-app-shell:not(.pk-warm-glass-stage):not(.pk-cloud-stage) .pk-studio-workspace {
   background-color: rgba(8, 7, 14, 0.52) !important;
   background-image: linear-gradient(
     168deg,
@@ -307,7 +315,7 @@ body[data-pk-theme="app"] .pk-app-shell:not(.pk-warm-glass-stage) .pk-studio-wor
   ) !important;
 }
 
-body[data-pk-theme="app"] .pk-app-shell:not(.pk-warm-glass-stage) .pk-studio-workspace::after {
+body[data-pk-theme="app"] .pk-app-shell:not(.pk-warm-glass-stage):not(.pk-cloud-stage) .pk-studio-workspace::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -319,12 +327,12 @@ body[data-pk-theme="app"] .pk-app-shell:not(.pk-warm-glass-stage) .pk-studio-wor
   background-size: 230px 230px;
 }
 
-/* Cartes loops — tier 3, un peu plus de texture (covers + grain léger) */
-body[data-pk-theme="app"] .pk-app-shell:not(.pk-warm-glass-stage) [data-loop-card] {
+/* Cartes loops — tier 3 (hors Cloud) */
+body[data-pk-theme="app"] .pk-app-shell:not(.pk-warm-glass-stage):not(.pk-cloud-stage) [data-loop-card] {
   background-color: rgba(8, 7, 14, 0.46) !important;
 }
 
-body[data-pk-theme="app"] .pk-app-shell:not(.pk-warm-glass-stage) [data-loop-card]::after {
+body[data-pk-theme="app"] .pk-app-shell:not(.pk-warm-glass-stage):not(.pk-cloud-stage) [data-loop-card]::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -393,6 +401,14 @@ body[data-pk-theme="marketing"] .pk-landing-section .pk-prism-card > * {
 
 .pk-dropdown-panel {
   position: relative;
+  background-color: rgba(8, 7, 14, 0.96);
+  backdrop-filter: blur(22px) saturate(1.25);
+  -webkit-backdrop-filter: blur(22px) saturate(1.25);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 24px 64px rgba(0, 0, 0, 0.45);
 }
 
 .pk-prism-player.pk-prism-player--dock::after,
@@ -429,7 +445,7 @@ body[data-pk-theme="marketing"] .pk-landing-section .pk-prism-card > * {
   opacity: calc(var(--pk-veil-panel-grain) * 0.88);
 }
 
-body[data-pk-theme="app"] .pk-app-shell-mobile-nav {
+body[data-pk-theme="app"] .pk-app-shell:not(.pk-cloud-stage) .pk-app-shell-mobile-nav {
   background-color: rgba(6, 5, 12, 0.82) !important;
 }
 
@@ -620,20 +636,20 @@ body[data-pk-theme="app"] .pk-loop-details-sheet-header {
   background-color: rgba(5, 5, 8, 0.98) !important;
 }
 
-body[data-pk-theme="app"] .pk-studio-rail {
+body[data-pk-theme="app"] .pk-app-shell:not(.pk-cloud-stage) .pk-studio-rail {
   background-color: rgba(8, 7, 14, 0.58) !important;
 }
 
-body[data-pk-theme="app"] .pk-mobile-dashboard-chrome {
+body[data-pk-theme="app"] .pk-app-shell:not(.pk-cloud-stage) .pk-mobile-dashboard-chrome {
   background-color: rgba(8, 7, 14, 0.82) !important;
 }
 
-body[data-pk-theme="app"] .pk-dashboard-mobile-footer,
-body[data-pk-theme="app"] .pk-studio-generate-dock {
+body[data-pk-theme="app"] .pk-app-shell:not(.pk-cloud-stage) .pk-dashboard-mobile-footer,
+body[data-pk-theme="app"] .pk-app-shell:not(.pk-cloud-stage) .pk-studio-generate-dock {
   background-color: rgba(8, 7, 14, 0.9) !important;
 }
 
-body[data-pk-theme="app"] .pk-mobile-gen-notice {
+body[data-pk-theme="app"] .pk-app-shell:not(.pk-cloud-stage) .pk-mobile-gen-notice {
   background-color: rgba(8, 8, 14, 0.84) !important;
 }
 
@@ -798,7 +814,7 @@ body[data-pk-theme="app"] .pk-hub-hero {
 }
 
 /* Écrase les fonds opaques du dashboard (index.css) */
-body[data-pk-theme="app"] .pk-prism-dashboard:not(.pk-warm-glass-stage) :is(
+body[data-pk-theme="app"] .pk-prism-dashboard:not(.pk-warm-glass-stage):not(.pk-cloud-stage) :is(
     .pk-studio-console,
     .pk-studio-workspace,
     .pk-mobile-dashboard-chrome,
@@ -813,7 +829,7 @@ body[data-pk-theme="app"] .pk-prism-dashboard:not(.pk-warm-glass-stage) :is(
   -webkit-backdrop-filter: blur(var(--pk-veil-surface-blur)) saturate(1.15);
 }
 
-body[data-pk-theme="app"] .pk-prism-dashboard:not(.pk-warm-glass-stage) :is(
+body[data-pk-theme="app"] .pk-prism-dashboard:not(.pk-warm-glass-stage):not(.pk-cloud-stage) :is(
     .pk-studio-console,
     .pk-mobile-dashboard-chrome,
     .pk-gaming-panel-shell__body
@@ -822,12 +838,12 @@ body[data-pk-theme="app"] .pk-prism-dashboard:not(.pk-warm-glass-stage) :is(
   background-image: var(--pk-veil-gradient-focal) !important;
 }
 
-body[data-pk-theme="app"] .pk-prism-dashboard:not(.pk-warm-glass-stage) .pk-studio-workspace {
+body[data-pk-theme="app"] .pk-prism-dashboard:not(.pk-warm-glass-stage):not(.pk-cloud-stage) .pk-studio-workspace {
   background-color: var(--pk-veil-surface-mid) !important;
   background-image: var(--pk-veil-gradient-mid) !important;
 }
 
-body[data-pk-theme="app"] .pk-prism-dashboard:not(.pk-warm-glass-stage) :is(
+body[data-pk-theme="app"] .pk-prism-dashboard:not(.pk-warm-glass-stage):not(.pk-cloud-stage) :is(
     [data-loop-card],
     .bg-pk-panel,
     .bg-pk-panel\/70,
@@ -838,7 +854,7 @@ body[data-pk-theme="app"] .pk-prism-dashboard:not(.pk-warm-glass-stage) :is(
   background-image: var(--pk-veil-gradient-soft) !important;
 }
 
-body[data-pk-theme="app"] .pk-app-shell-mobile-nav {
+body[data-pk-theme="app"] .pk-app-shell:not(.pk-cloud-stage) .pk-app-shell-mobile-nav {
   background-color: rgba(8, 7, 14, 0.94) !important;
 }
 
@@ -1142,4 +1158,23 @@ body[data-pk-theme="app"] .pk-warm-glass-stage .pk-studio-console:has(.pk-dashbo
   .pk-warm-glass-stage [data-loop-card]::before {
     opacity: 0.2 !important;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Cloud Glass — pas de voile Prism sombre (surfaces = cloud-theme-*)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body[data-pk-theme="app"] .pk-cloud-stage .pk-hub-hero,
+body[data-pk-theme="app"] .pk-cloud-stage .pk-hub-nav,
+body[data-pk-theme="app"] .pk-cloud-stage .pk-hub-hero__card,
+body[data-pk-theme="app"] .pk-cloud-stage .pk-hub-vibe-tile,
+body[data-pk-theme="app"] .pk-cloud-stage .pk-community-card,
+body[data-pk-theme="app"] .pk-cloud-stage .pk-gaming-panel-shell,
+body[data-pk-theme="app"] .pk-cloud-stage .pk-gaming-panel-shell__body,
+body[data-pk-theme="app"] .pk-cloud-stage [data-loop-card],
+body[data-pk-theme="app"] .pk-cloud-stage .pk-prism-stat,
+html.pk-cloud-active .pk-marketing-page :is(.pk-prism-card, .pk-pricing-card, .pk-blog-card) {
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
 }

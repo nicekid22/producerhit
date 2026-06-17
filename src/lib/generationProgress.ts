@@ -1,4 +1,5 @@
 import { estimateGenerationDurationMs as estimateFromAceDuration } from "@/lib/aceDuration";
+import type { AppLocale } from "@/i18n/config";
 
 /** Durée typique attendue (pas un vrai % serveur ACE). */
 export function estimateGenerationDurationMs(
@@ -29,7 +30,7 @@ export function simulatedGenerationPercent(elapsedMs: number, expectedMs: number
 }
 
 export function formatGenerationProgressLabel(
-  locale: "fr" | "en",
+  locale: AppLocale,
   percent: number,
   base?: string,
 ): string {

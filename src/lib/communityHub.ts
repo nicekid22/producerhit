@@ -2,8 +2,8 @@ import type { PublicLoopRow } from "@/lib/publicLoops";
 import { sortPublicLoopsByNewest } from "@/lib/publicLoops";
 
 export const COMMUNITY_HUB_NAV = {
-  fr: "Découvrir",
-  en: "Discover",
+  fr: "Le Flux",
+  en: "The Feed",
 } as const;
 
 export const COMMUNITY_HUB_PAGE = {

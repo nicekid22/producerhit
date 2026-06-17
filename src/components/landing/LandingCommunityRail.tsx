@@ -9,6 +9,7 @@ import { COVER_SURFACE_CLASS, cn } from "@/lib/utils";
 import { isPlayablePublicLoop } from "@/lib/publicLoops";
 import { ProfileAuthorChip } from "@/components/profile/ProfileAuthorChip";
 
+import type { AppLocale } from "@/i18n/config";
 export type LandingCommunityTrack = {
   id: string;
   name: string;
@@ -28,7 +29,7 @@ export type LandingCommunityTrack = {
 };
 
 type Props = {
-  locale: "en" | "fr";
+  locale: AppLocale;
   title: string;
   lead: string;
   tracks: LandingCommunityTrack[];

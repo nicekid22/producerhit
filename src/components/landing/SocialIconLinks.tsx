@@ -1,4 +1,5 @@
 import { Instagram } from "lucide-react";
+import type { AppLocale } from "@/i18n/config";
 import { PRODUCERHIT_SOCIALS } from "@/lib/socialLinks";
 import { cn } from "@/lib/utils";
 
@@ -11,7 +12,7 @@ function TikTokIcon({ className }: { className?: string }) {
 }
 
 type Props = {
-  locale: "en" | "fr";
+  locale: AppLocale;
   size?: "sm" | "md";
   variant?: "default" | "footer";
   showHandles?: boolean;

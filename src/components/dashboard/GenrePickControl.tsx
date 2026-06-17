@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import type { AppLocale } from "@/i18n/config";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { GenreOptionIcon } from "@/lib/genres/genreIcons";
 import {
@@ -10,23 +11,18 @@ import {
 } from "@/lib/genres/genrePickMode";
 import { cn } from "@/lib/utils";
 
-type Props = {
-  locale: "en" | "fr";
+type GenrePickProps = {
+  locale: AppLocale;
   mode: GenrePickMode;
-  onModeChange: (mode: GenrePickMode) => void;
   genre: string;
   onGenreChange: (genre: string) => void;
   lastRandomGenre?: string;
-  /** Masque labels et texte d’aide — section titre suffit. */
+  /** Masque le label — section titre suffit. */
   compact?: boolean;
 };
 
-const modes: { id: GenrePickMode; fr: string; en: string }[] = [
-  { id: "custom", fr: "Custom", en: "Custom" },
-  { id: "auto", fr: "Auto", en: "Auto" },
-];
-
-export function GenrePickControl({ locale, mode, onModeChange, genre, onGenreChange, lastRandomGenre, compact = false }: Props) {
+/** Sélecteur genre précis / Aléatoire — sans toggle Custom·Auto (voir GenreAutoModeToggle en avancé). */
+export function GenrePickControl({ locale, mode, genre, onGenreChange, lastRandomGenre, compact = false }: GenrePickProps) {
   const isFr = locale === "fr";
 
   const genreOptions = useMemo(() => {
@@ -36,52 +32,83 @@ export function GenrePickControl({ locale, mode, onModeChange, genre, onGenreCha
     }));
   }, [locale]);
 
+  if (mode === "auto") {
+    return (
+      <div
+        className={cn(
+          "rounded-pk border border-pk-border/80 bg-pk-bg/40 px-3 py-2.5",
+          compact ? "text-[11px]" : "text-xs",
+        )}
+      >
+        <p className="font-semibold text-pk-text">{isFr ? "Genre · Auto" : "Genre · Auto"}</p>
+        <p className="mt-1 leading-relaxed text-pk-muted">{genrePickModeHint("auto", locale, lastRandomGenre)}</p>
+      </div>
+    );
+  }
+
   const dropdownValue =
-    mode === "custom"
-      ? isRandomGenreSelection(genre) || !genre || genre === "Auto"
-        ? RANDOM_GENRE_VALUE
-        : genre
-      : RANDOM_GENRE_VALUE;
+    isRandomGenreSelection(genre) || !genre || genre === "Auto" ? RANDOM_GENRE_VALUE : genre;
 
   return (
-    <div className={cn("grid min-w-0 max-w-full", compact ? "gap-2.5" : "gap-3")}>
-      <div className="min-w-0 max-w-full">
-        {compact ? null : <div className="text-xs text-pk-muted">{isFr ? "Genre" : "Genre"}</div>}
-        <div className={cn("flex max-w-full flex-wrap gap-2", compact ? "" : "mt-2")}>
-          {modes.map((m) => {
-            const active = mode === m.id;
-            return (
-              <button
-                key={m.id}
-                type="button"
-                onClick={() => onModeChange(m.id)}
-                className={cn(
-                  "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
-                  active
-                    ? "border-pk-accent/40 bg-pk-accent/15 text-pk-accent"
-                    : "border-pk-border bg-pk-bg text-pk-muted hover:bg-white/5 hover:text-pk-text",
-                )}
-              >
-                {isFr ? m.fr : m.en}
-              </button>
-            );
-          })}
-        </div>
-        {compact ? null : (
-          <p className="mt-2 text-[11px] leading-relaxed text-pk-muted">{genrePickModeHint(mode, locale, lastRandomGenre)}</p>
-        )}
-      </div>
+    <div className={cn("min-w-0 max-w-full", compact ? "gap-2" : "gap-2.5")}>
+      <Dropdown
+        label={compact ? undefined : isFr ? "Genre" : "Genre"}
+        menuTitle={isFr ? "Genre" : "Genre"}
+        value={dropdownValue}
+        onChange={onGenreChange}
+        options={genreOptions}
+        placeholder={isFr ? "Sélectionner…" : "Select…"}
+      />
+      {compact ? null : (
+        <p className="text-[11px] leading-relaxed text-pk-muted">{genrePickModeHint("custom", locale, lastRandomGenre)}</p>
+      )}
+    </div>
+  );
+}
 
-      {mode === "custom" ? (
-        <Dropdown
-          label={compact ? undefined : isFr ? "Genre précis" : "Exact genre"}
-          menuTitle={isFr ? "Genre" : "Genre"}
-          value={dropdownValue}
-          onChange={onGenreChange}
-          options={genreOptions}
-          placeholder={isFr ? "Sélectionner…" : "Select…"}
-        />
-      ) : null}
+type AutoToggleProps = {
+  locale: AppLocale;
+  mode: GenrePickMode;
+  onModeChange: (mode: GenrePickMode) => void;
+};
+
+/** Toggle Custom / Auto — uniquement dans les options avancées. */
+export function GenreAutoModeToggle({ locale, mode, onModeChange }: AutoToggleProps) {
+  const isFr = locale === "fr";
+  const options: { id: GenrePickMode; fr: string; en: string }[] = [
+    { id: "custom", fr: "Custom", en: "Custom" },
+    { id: "auto", fr: "Auto", en: "Auto" },
+  ];
+
+  return (
+    <div className="min-w-0">
+      <div className="pk-gen-inline-toggle-row mb-2 flex min-w-0 items-center justify-between gap-2">
+        <div className="min-w-0 shrink text-xs text-pk-muted">{isFr ? "Choix du genre" : "Genre picking"}</div>
+        <div className="flex shrink-0 items-center rounded-full border border-pk-border bg-pk-bg p-0.5">
+          {options.map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => onModeChange(opt.id)}
+              className={cn(
+                "rounded-full px-2.5 py-0.5 text-[10px] font-semibold transition-colors",
+                mode === opt.id ? "bg-pk-accent text-white" : "text-pk-muted hover:text-pk-text",
+              )}
+            >
+              {isFr ? opt.fr : opt.en}
+            </button>
+          ))}
+        </div>
+      </div>
+      <p className="text-[10px] leading-relaxed text-pk-muted">
+        {mode === "auto"
+          ? isFr
+            ? "L’IA choisit le style à partir de ton idée — sans genre imposé du menu."
+            : "AI picks style from your idea — no fixed catalog genre."
+          : isFr
+            ? "Genre précis du catalogue ou Aléatoire à chaque génération."
+            : "Exact catalog genre or Random each generation."}
+      </p>
     </div>
   );
 }

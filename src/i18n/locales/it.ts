@@ -1,0 +1,66 @@
+import type { MessageCatalog } from "../types";
+
+export const it: MessageCatalog = {
+  nav: {
+    howItWorks: "Come funziona",
+    features: "Funzionalità",
+    pricing: "Prezzi",
+    community: "Community",
+    blog: "Blog",
+    login: "Accedi",
+    startFree: "Prova gratis",
+    openStudio: "Apri studio",
+    homePage: "Home",
+    menu: "Menu di navigazione",
+    mobileMenu: "Menu mobile",
+  },
+  seo: {
+    homeTitle: "ProducerHit — Creatore di brani IA e generatore di type beat | Royalty-free",
+    homeDescription:
+      "ProducerHit è un creatore di brani IA e generatore di type beat: Song Mode, cover Remix, export MP3/WAV royalty-free, clip video e mastering — pronto per Spotify.",
+    blogTitle: "Blog — ProducerHit",
+    blogDescription:
+      "Blog ProducerHit: guide, prompt e workflow per generatori di beat e musica IA.",
+    exploreTitle: "Beat IA della community — ascolta, remixa e crea | ProducerHit",
+    exploreDescription:
+      "Ascolta beat IA pubblici su ProducerHit: feed community, valutazioni, commenti, remix e pagine vibe (Trap, Lo-Fi, R&B…).",
+    loopTitle: "Track — ProducerHit",
+    loopDescription:
+      "Ascolta un track pubblico creato con ProducerHit e remixa una versione simile con variazioni seed.",
+    pricingTitle: "Prezzi — ProducerHit",
+    pricingDescription: "Prezzi semplici per beat e brani IA. Upgrade per più crediti ed export WAV.",
+    authTitle: "Registrazione gratis — ProducerHit",
+    dashboardTitle: "Il mio studio — ProducerHit",
+    libraryTitle: "La mia libreria — ProducerHit",
+    sampleLabTitle: "AI Sample Lab — ProducerHit",
+    settingsTitle: "Impostazioni — ProducerHit",
+    aiBeatGeneratorTitle: "Generatore di beat IA — Type beat online | ProducerHit",
+    aiBeatGeneratorDescription:
+      "Usa ProducerHit come generatore di beat IA: crea type beat velocemente, prova 2 versioni e affina con variazioni seed. Export MP3/WAV.",
+    aiMusicGeneratorTitle: "Generatore di musica IA — Brani e beat | ProducerHit",
+    aiMusicGeneratorDescription:
+      "Generatore di musica IA per brani e type beat. Descrivi una vibe, genera, itera con variazioni ed esporta il tuo track.",
+    typeBeatGeneratorTitle: "Type beat generator IA — Beat pronti per producer | ProducerHit",
+    typeBeatGeneratorDescription:
+      "Generatore di type beat IA per producer: generi moderni, mix pulito, iterazioni rapide e seed riproducibili.",
+    generateBeatsFreeTitle: "Generare beat online gratis — IA | ProducerHit",
+    generateBeatsFreeDescription:
+      "Genera beat online gratis con ProducerHit. Inizia con clip brevi, scegli la versione migliore e itera con variazioni. Export MP3 (gratis) e WAV (Pro).",
+    legalTitle: "Legale — ProducerHit",
+    defaultTitle: "ProducerHit — Generatore di beat IA",
+    defaultDescription: "ProducerHit è un generatore di beat IA per creare type beat online.",
+    exploreCollectionName: "Feed community ProducerHit",
+    exploreCollectionDescription: "Beat IA pubblici, cultura remix e vibe della community",
+  },
+  landing: {
+    heroTagline: "Studio IA · Brani e type beat",
+    heroLead: "Descrivi una vibe → ottieni un track in pochi secondi. MP3 gratis, WAV con Pro.",
+    heroReassurance: "Gratis per iniziare · Nessuna carta · Export MP3",
+    heroScrollCue: "Prova il generatore",
+    heroCtaPrimary: "Prova ProducerHit",
+    heroCtaDashboard: "Apri il mio studio →",
+    ctaTitle: "La tua prossima idea merita di essere ascoltata",
+    ctaLead: "{{free}} generazioni gratis / mese. Passa a Pro ({{proPrice}}/mo) per WAV e uso commerciale.",
+    ctaButton: "Prova ProducerHit gratis →",
+  },
+};

@@ -1,5 +1,6 @@
 import type { DropdownOption } from "@/components/ui/Dropdown";
 
+import type { AppLocale } from "@/i18n/config";
 export type BeatAmbianceEntry = {
   value: string;
   labelEn: string;
@@ -239,7 +240,7 @@ export function buildBeatAmbianceMoodMap(): Record<string, string> {
   return map;
 }
 
-export function beatAmbianceDropdownOptions(locale: "en" | "fr"): DropdownOption[] {
+export function beatAmbianceDropdownOptions(locale: AppLocale): DropdownOption[] {
   const fr = locale === "fr";
   return BEAT_AMBIANCE_CATALOG.map((entry) => ({
     value: entry.value,

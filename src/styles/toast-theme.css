@@ -1,0 +1,166 @@
+/**
+ * Toasts — harmonie Prism / Warm Glass / Cloud + delight post-génération
+ */
+
+/* ——— Base (Prism) ——— */
+.pk-toast {
+  background: rgba(8, 8, 14, 0.94) !important;
+  color: rgba(255, 255, 255, 0.92) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 14px !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 20px 48px rgba(0, 0, 0, 0.48),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+  backdrop-filter: blur(16px) saturate(1.2) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.2) !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  line-height: 1.45 !important;
+  padding: 12px 14px !important;
+  max-width: min(360px, calc(100vw - 2rem)) !important;
+}
+
+.pk-toast--success {
+  border-color: rgba(103, 195, 255, 0.32) !important;
+  background-image: linear-gradient(135deg, rgba(103, 195, 255, 0.1), transparent 58%) !important;
+  box-shadow:
+    0 0 0 1px rgba(103, 195, 255, 0.1),
+    0 20px 48px rgba(0, 0, 0, 0.48),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+.pk-toast--error {
+  border-color: rgba(255, 79, 216, 0.28) !important;
+  background-image: linear-gradient(135deg, rgba(255, 79, 216, 0.08), transparent 58%) !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 79, 216, 0.08),
+    0 20px 48px rgba(0, 0, 0, 0.48),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+.pk-toast--loading {
+  background-image: linear-gradient(135deg, rgba(157, 124, 255, 0.08), transparent 58%) !important;
+}
+
+.pk-toast:not(.pk-toast--success):not(.pk-toast--error):not(.pk-toast--loading) {
+  background-image: linear-gradient(135deg, rgba(157, 124, 255, 0.06), transparent 50%) !important;
+}
+
+/* Delight · « Wallah le beat est sale » etc. */
+.pk-toast--delight {
+  font-size: 0.9375rem !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.018em !important;
+  padding: 13px 16px !important;
+  border-radius: 16px !important;
+}
+
+.pk-toast--delight.pk-toast--success {
+  border-color: rgba(167, 139, 250, 0.38) !important;
+  background-image: linear-gradient(
+    128deg,
+    rgba(157, 124, 255, 0.14),
+    rgba(103, 195, 255, 0.08) 42%,
+    transparent 72%
+  ) !important;
+  box-shadow:
+    0 0 0 1px rgba(167, 139, 250, 0.12),
+    0 0 28px rgba(103, 195, 255, 0.12),
+    0 22px 52px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ——— Warm Glass ——— */
+html.pk-warm-glass-active .pk-toast {
+  background: rgba(28, 16, 12, 0.88) !important;
+  color: rgba(255, 250, 245, 0.94) !important;
+  border-color: rgba(255, 200, 160, 0.22) !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 180, 100, 0.08),
+    0 20px 48px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 220, 180, 0.1) !important;
+}
+
+html.pk-warm-glass-active .pk-toast--success {
+  border-color: rgba(255, 180, 100, 0.36) !important;
+  background-image: linear-gradient(135deg, rgba(255, 180, 100, 0.14), transparent 58%) !important;
+}
+
+html.pk-warm-glass-active .pk-toast--error {
+  border-color: rgba(255, 120, 90, 0.34) !important;
+  background-image: linear-gradient(135deg, rgba(255, 120, 90, 0.12), transparent 58%) !important;
+}
+
+html.pk-warm-glass-active .pk-toast--delight.pk-toast--success {
+  border-color: rgba(255, 180, 100, 0.42) !important;
+  background-image: linear-gradient(
+    128deg,
+    rgba(255, 180, 100, 0.18),
+    rgba(255, 140, 80, 0.1) 45%,
+    transparent 72%
+  ) !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 180, 100, 0.14),
+    0 0 32px rgba(255, 140, 80, 0.14),
+    0 22px 52px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255, 220, 180, 0.12) !important;
+}
+
+/* ——— Cloud ——— */
+html.pk-cloud-active .pk-toast {
+  background: color-mix(in srgb, rgba(255, 255, 255, 0.82) 90%, var(--cloud-mesh-base)) !important;
+  color: var(--cloud-text) !important;
+  border-color: color-mix(in srgb, var(--cloud-accent) 22%, rgba(255, 255, 255, 0.55)) !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.45),
+    0 16px 40px color-mix(in srgb, var(--cloud-accent-glow) 16%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
+}
+
+html.pk-cloud-active .pk-toast--success {
+  border-color: color-mix(in srgb, var(--cloud-accent) 32%, rgba(255, 255, 255, 0.5)) !important;
+  background-image: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--cloud-electric-a) 18%, transparent),
+    transparent 58%
+  ) !important;
+}
+
+html.pk-cloud-active .pk-toast--error {
+  border-color: color-mix(in srgb, #e85858 28%, rgba(255, 255, 255, 0.4)) !important;
+  background-image: linear-gradient(135deg, rgba(255, 120, 100, 0.12), transparent 58%) !important;
+}
+
+html.pk-cloud-active .pk-toast--loading {
+  background-image: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--cloud-electric-b) 14%, transparent),
+    transparent 58%
+  ) !important;
+}
+
+html.pk-cloud-active .pk-toast--delight.pk-toast--success {
+  border-color: color-mix(in srgb, var(--cloud-accent) 38%, rgba(255, 255, 255, 0.55)) !important;
+  background-image: linear-gradient(
+    128deg,
+    color-mix(in srgb, var(--cloud-electric-a) 22%, transparent),
+    color-mix(in srgb, var(--cloud-accent) 12%, transparent) 48%,
+    transparent 72%
+  ) !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.5),
+    0 0 36px color-mix(in srgb, var(--cloud-accent-glow) 22%, transparent),
+    0 18px 44px color-mix(in srgb, var(--cloud-accent) 12%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78) !important;
+}
+
+html.pk-cloud-active .pk-toast--delight {
+  font-weight: 600 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pk-toast {
+    animation: none !important;
+  }
+}

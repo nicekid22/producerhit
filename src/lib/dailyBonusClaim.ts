@@ -3,6 +3,7 @@ import { claimDailyBonus, getLevel, loadGamification } from "@/lib/gamification"
 import { syncDailyGenerationBonus, syncLevelRewards } from "@/lib/gamificationRewards";
 import { useLootRevealStore } from "@/stores/lootRevealStore";
 
+import type { AppLocale } from "@/i18n/config";
 export type DailyBonusClaimResult = {
   claimed: boolean;
   alreadyClaimed: boolean;
@@ -10,7 +11,7 @@ export type DailyBonusClaimResult = {
 
 /** Récupère le bonus du jour + sync crédits profil (dashboard / paramètres). */
 export async function performDailyBonusClaim(
-  locale: "en" | "fr",
+  locale: AppLocale,
   options?: {
     syncRewards?: boolean;
     onCreditsChange?: (credits: { levelBonus: number; dailyBonusMonth: number }) => void;

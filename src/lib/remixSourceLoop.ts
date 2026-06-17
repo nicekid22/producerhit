@@ -3,6 +3,7 @@ import { isSongLoop, extractLoopVocalLanguage } from "@/lib/vocalLanguages";
 import { supabase } from "@/lib/supabaseClient";
 import type { Loop, LoopLength } from "@/types/loop";
 
+import type { AppLocale } from "@/i18n/config";
 /** Snapshot sérialisable pour pending remix (communauté → dashboard). */
 export type RemixSourceLoop = {
   id: string;
@@ -150,7 +151,7 @@ export async function fetchRemixSourceLoop(loopId: string): Promise<RemixSourceL
   return partial;
 }
 
-export function remixSourceSummary(loop: RemixSourceLoop, locale: "en" | "fr"): string {
+export function remixSourceSummary(loop: RemixSourceLoop, locale: AppLocale): string {
   const isFr = locale === "fr";
   const song = isSongLoop(remixSourceToLoop(loop));
   const keyScale = [loop.key, loop.scale].filter(Boolean).join(" ") || (isFr ? "Auto" : "Auto");

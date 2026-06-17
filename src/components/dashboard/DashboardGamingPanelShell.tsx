@@ -3,12 +3,13 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { useCollapsiblePanel } from "@/components/dashboard/useCollapsiblePanel";
 import { cn } from "@/lib/utils";
 
+import type { AppLocale } from "@/i18n/config";
 export type DashboardGamingPanelHandle = {
   expand: () => void;
 };
 
 type Props = {
-  locale: "en" | "fr";
+  locale: AppLocale;
   title: string;
   subtitle?: string;
   storageKey: string;

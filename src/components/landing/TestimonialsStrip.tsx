@@ -4,8 +4,9 @@ import { landingCopy, landingTestimonials } from "@/lib/landingContent";
 import { shuffleArray } from "@/lib/utils";
 import { useLazyInView } from "@/hooks/useLazyInView";
 
+import type { AppLocale } from "@/i18n/config";
 type Props = {
-  locale: "en" | "fr";
+  locale: AppLocale;
   /** Grille statique (landing conversion) vs bandeau défilant. */
   compact?: boolean;
 };

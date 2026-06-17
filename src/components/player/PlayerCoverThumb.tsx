@@ -19,7 +19,7 @@ export function PlayerCoverThumb({ loop, className }: Props) {
   const isVideo = isCoverVideo(live, displayUrl);
 
   if (!displayUrl.startsWith("http")) {
-    return <div className={cn(COVER_SURFACE_CLASS, "h-full w-full rounded-[10px]", className)} aria-hidden />;
+    return <div className={cn(COVER_SURFACE_CLASS, "pk-player-cover-media h-full w-full", className)} aria-hidden />;
   }
 
   if (isVideo) {
@@ -28,8 +28,8 @@ export function PlayerCoverThumb({ loop, className }: Props) {
         loop={live}
         coverUrl={displayUrl}
         coverKey={`${coverKey}:${displayUrl}`}
-        className={cn("h-full w-full rounded-[10px]", className)}
-        imageClassName="rounded-[10px]"
+        className={cn("pk-player-cover-media h-full w-full", className)}
+        imageClassName="pk-player-cover-media"
       />
     );
   }
@@ -39,8 +39,8 @@ export function PlayerCoverThumb({ loop, className }: Props) {
       key={`${coverKey}:${displayUrl}`}
       coverUrl={displayUrl}
       loading="eager"
-      className={cn("relative z-[2] h-full w-full rounded-[10px]", className)}
-      imageClassName="rounded-[10px]"
+      className={cn("pk-player-cover-media relative z-[2] h-full w-full", className)}
+      imageClassName="pk-player-cover-media"
     />
   );
 }

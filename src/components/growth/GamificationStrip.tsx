@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { AppLocale } from "@/i18n/config";
 import toast from "react-hot-toast";
 import { Flame, Gift, Sparkles, Trophy, Zap } from "lucide-react";
 import { AchievementIcon } from "@/components/growth/AchievementIcon";
@@ -28,7 +29,7 @@ type BonusCreditsPayload = {
 };
 
 type Props = {
-  locale: "en" | "fr";
+  locale: AppLocale;
   refreshKey?: number;
   syncRewards?: boolean;
   onBonusCreditsChange?: (credits: BonusCreditsPayload) => void;
@@ -37,7 +38,7 @@ type Props = {
 async function syncLevelAndMaybeLoot(
   beforeXp: number,
   afterXp: number,
-  locale: "en" | "fr",
+  locale: AppLocale,
   syncRewards: boolean,
   onBonusCreditsChange?: (credits: BonusCreditsPayload) => void,
 ) {
@@ -316,14 +317,14 @@ type NotifyOptions = {
   onBonusCreditsChange?: (credits: BonusCreditsPayload) => void;
 };
 
-export function notifyGamificationGeneration(locale: "en" | "fr", options: NotifyOptions = {}) {
+export function notifyGamificationGeneration(locale: AppLocale, options: NotifyOptions = {}) {
   const before = loadGamification();
   const result = recordGeneration();
   void syncLevelAndMaybeLoot(before.xp, result.state.xp, locale, Boolean(options.syncRewards), options.onBonusCreditsChange);
   return result;
 }
 
-export function notifyGamificationMasteringPreview(locale: "en" | "fr", options: NotifyOptions = {}) {
+export function notifyGamificationMasteringPreview(locale: AppLocale, options: NotifyOptions = {}) {
   const before = loadGamification();
   const result = recordMasteringPreview();
   void syncLevelAndMaybeLoot(before.xp, result.state.xp, locale, Boolean(options.syncRewards), options.onBonusCreditsChange);

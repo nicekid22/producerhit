@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import { getWaveformColors } from "@/lib/waveformThemeColors";
 import { fetchCachedLoopAudioBlob } from "@/stores/loopsStore";
+import { useCloudAccentStore } from "@/stores/cloudAccentStore";
 import { useVisualThemeStore } from "@/stores/visualThemeStore";
 
 const PEAK_POINTS = 256;
@@ -382,7 +383,8 @@ export function AudioWaveform({
   unplayedColor?: string;
 }) {
   const visualTheme = useVisualThemeStore((s) => s.theme);
-  const themeWave = getWaveformColors(visualTheme);
+  const cloudAccent = useCloudAccentStore((s) => s.accent);
+  const themeWave = getWaveformColors(visualTheme, visualTheme === "cloud" ? cloudAccent : undefined);
   const playedColor = color ?? themeWave.played;
   const idleColor = unplayedColor ?? themeWave.unplayed;
   const containerRef = useRef<HTMLDivElement>(null);

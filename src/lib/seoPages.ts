@@ -3,6 +3,7 @@ import { LATIN_SEO_PAGES } from "@/lib/seoPagesLatin";
 import { ASIA_SEO_PAGES } from "@/lib/seoPagesAsia";
 import { PILLAR_SEO_PAGES } from "@/lib/seoPagesPillar";
 
+import type { AppLocale } from "@/i18n/config";
 export type SeoPageCategory = "core" | "genre" | "music-ai" | "intent" | "beat" | "latin" | "country" | "song" | "hub" | "asia" | "middle-east";
 
 export type SeoPageConfig = {
@@ -241,13 +242,13 @@ export function getSeoPageByPath(pathname: string): SeoPageConfig | null {
   return SEO_PAGES.find((p) => p.path === pathname || p.pathFr === pathname) ?? null;
 }
 
-export function getSeoPageLocaleForPath(pathname: string): "en" | "fr" {
+export function getSeoPageLocaleForPath(pathname: string): AppLocale {
   const page = getSeoPageByPath(pathname);
   if (!page) return "en";
   return page.pathFr === pathname ? "fr" : "en";
 }
 
-export function getSeoPageCanonicalPath(page: SeoPageConfig, locale: "en" | "fr"): string {
+export function getSeoPageCanonicalPath(page: SeoPageConfig, locale: AppLocale): string {
   return locale === "fr" ? page.pathFr : page.path;
 }
 
@@ -288,7 +289,7 @@ const GENRE_SEO_HINTS: Array<{ match: RegExp; slugKey: string }> = [
 ];
 
 /** Lien SEO genre depuis le libellé genre d’un track public. */
-export function getGenreSeoLink(genre: string | null | undefined, locale: "en" | "fr"): { path: string; label: string } | null {
+export function getGenreSeoLink(genre: string | null | undefined, locale: AppLocale): { path: string; label: string } | null {
   const g = (genre ?? "").trim();
   if (!g) return null;
   const hint = GENRE_SEO_HINTS.find((h) => h.match.test(g));

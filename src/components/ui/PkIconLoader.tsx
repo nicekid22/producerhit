@@ -1,27 +1,8 @@
-import {
-  AudioWaveform,
-  BarChart3,
-  CreditCard,
-  Grid3X3,
-  Settings,
-  Users,
-  type LucideIcon,
-} from "lucide-react";
+import type { ElementKind } from "@/components/icons/ElementIcons";
+import { loaderElementFromIcon, loaderNavIconFromIcon, type PkLoaderIcon } from "@/lib/loaderIcons";
 import { cn } from "@/lib/utils";
 
-export type PkLoaderIcon = "generator" | "library" | "community" | "settings" | "growth" | "pricing" | "default";
-
 type Size = "xs" | "sm" | "md" | "lg";
-
-const ICONS: Record<PkLoaderIcon, LucideIcon> = {
-  generator: AudioWaveform,
-  library: Grid3X3,
-  community: Users,
-  settings: Settings,
-  growth: BarChart3,
-  pricing: CreditCard,
-  default: AudioWaveform,
-};
 
 const ICON_SIZE: Record<Size, string> = {
   xs: "h-3.5 w-3.5",
@@ -32,6 +13,7 @@ const ICON_SIZE: Record<Size, string> = {
 
 type Props = {
   icon?: PkLoaderIcon;
+  element?: ElementKind;
   size?: Size;
   label?: string;
   sublabel?: string;
@@ -41,13 +23,15 @@ type Props = {
 
 export function PkIconLoader({
   icon = "default",
+  element,
   size = "md",
   label,
   sublabel,
   className,
   inline = false,
 }: Props) {
-  const Icon = ICONS[icon];
+  const resolvedElement = element ?? loaderElementFromIcon(icon);
+  const NavIcon = loaderNavIconFromIcon(icon);
 
   return (
     <div
@@ -55,18 +39,23 @@ export function PkIconLoader({
         inline ? "inline-flex items-center gap-2" : "flex flex-col items-center text-center",
         "pk-icon-loader",
         `pk-icon-loader--${size}`,
+        `pk-icon-loader--element-${resolvedElement}`,
         className,
       )}
       role="status"
       aria-live="polite"
       aria-label={label ?? "Loading"}
+      data-pk-element={resolvedElement}
     >
       <span className="pk-icon-loader__stage" aria-hidden>
+        {size === "md" || size === "lg" ? <span className="pk-icon-loader__plate" aria-hidden /> : null}
         <span className="pk-icon-loader__ring" />
-        <Icon className={cn("pk-icon-loader__icon", ICON_SIZE[size])} strokeWidth={2.1} />
+        <NavIcon className={cn("pk-icon-loader__icon", ICON_SIZE[size])} strokeWidth={1.85} />
       </span>
       {label ? <p className="pk-icon-loader__label">{label}</p> : null}
       {sublabel ? <p className="pk-icon-loader__sublabel">{sublabel}</p> : null}
     </div>
   );
 }
+
+export type { PkLoaderIcon } from "@/lib/loaderIcons";

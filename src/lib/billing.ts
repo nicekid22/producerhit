@@ -1,8 +1,13 @@
 import toast from "react-hot-toast";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import { buildAuthUrl } from "@/lib/authRoutes";
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
 import { PLAN_RANK, type PaidPlanId, type PlanId, normalizePlanId } from "@/lib/planEntitlements";
+import { useStripeCheckoutStore } from "@/stores/stripeCheckoutStore";
+import { useVisualThemeStore } from "@/stores/visualThemeStore";
+import { useCloudAccentStore } from "@/stores/cloudAccentStore";
 
+import type { AppLocale } from "@/i18n/config";
 export type PaidPlan = PaidPlanId;
 export type PlanTier = PlanId;
 
@@ -20,7 +25,7 @@ export function comparePlans(current: string | null | undefined, target: PaidPla
   return PLAN_RANK[target] > PLAN_RANK[cur] ? "upgrade" : "downgrade";
 }
 
-function paidPlanLabel(plan: PaidPlan, locale: "en" | "fr"): string {
+function paidPlanLabel(plan: PaidPlan, locale: AppLocale): string {
   const isFr = locale === "fr";
   if (plan === "plus") return "Plus";
   if (plan === "studio") return isFr ? "Studio" : "Studio";
@@ -71,13 +76,37 @@ export function extractInvokeError(err: unknown): { status?: number; message: st
   return { status, message };
 }
 
+async function readCheckoutPayload(data: unknown, error: unknown): Promise<CheckoutPayload> {
+  if (data && typeof data === "object") {
+    const payload = data as CheckoutPayload;
+    if (payload.error || payload.clientSecret || payload.url || payload.mock || payload.upgraded) {
+      return payload;
+    }
+  }
+
+  if (error instanceof FunctionsHttpError) {
+    try {
+      return (await error.context.json()) as CheckoutPayload;
+    } catch {
+      return {};
+    }
+  }
+
+  return (data ?? {}) as CheckoutPayload;
+}
+
 type CheckoutPayload = {
   url?: string;
+  clientSecret?: string;
+  uiMode?: string;
+  fallback?: boolean;
   mock?: boolean;
   message?: string;
   upgraded?: boolean;
   alreadySubscribed?: boolean;
   plan?: string;
+  error?: string;
+  code?: string | null;
 };
 
 type CheckoutOptions = {
@@ -85,7 +114,7 @@ type CheckoutOptions = {
   location: string;
   successUrl?: string;
   cancelUrl?: string;
-  locale?: "en" | "fr";
+  locale?: AppLocale;
 };
 
 export async function startCheckout({
@@ -96,31 +125,60 @@ export async function startCheckout({
   locale = "en",
 }: CheckoutOptions): Promise<boolean> {
   const isFr = locale === "fr";
-  trackClientEvent("checkout_start", { plan, location });
+  trackClientEvent("checkout_start", { plan, location, ui_mode: "embedded" });
+
+  const visualTheme = useVisualThemeStore.getState().theme;
+  const cloudAccent = useCloudAccentStore.getState().accent;
 
   const { data, error } = await supabase.functions.invoke("create-checkout", {
-    body: { plan, successUrl, cancelUrl },
+    body: { plan, successUrl, cancelUrl, uiMode: "embedded", visualTheme, cloudAccent, locale },
   });
-  if (error) throw error;
 
-  const payload = data as CheckoutPayload | null;
-  if (payload?.mock) {
+  const payload = await readCheckoutPayload(data, error);
+
+  if (payload.error) {
+    throw new Error(payload.error);
+  }
+  if (error && !payload.clientSecret && !payload.url && !payload.mock && !payload.upgraded) {
+    throw error;
+  }
+  if (payload.mock) {
     toast(payload.message || (isFr ? "Stripe arrive bientôt — contacte le support." : "Stripe coming soon — contact support."));
     return false;
   }
 
-  if (payload?.upgraded || payload?.alreadySubscribed) {
+  if (payload.upgraded || payload.alreadySubscribed) {
     window.location.href = successUrl;
     return true;
   }
 
-  const url = payload?.url;
+  const clientSecret = payload.clientSecret;
+  if (clientSecret) {
+    if (!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY) {
+      throw new Error(
+        isFr
+          ? "Clé Stripe publishable manquante (VITE_STRIPE_PUBLISHABLE_KEY)."
+          : "Missing Stripe publishable key (VITE_STRIPE_PUBLISHABLE_KEY).",
+      );
+    }
+    useStripeCheckoutStore.getState().openCheckout({ clientSecret, returnUrl: successUrl, plan });
+    return true;
+  }
+
+  const url = payload.url;
   if (url) {
+    if (payload.fallback) {
+      toast(
+        isFr
+          ? "Ouverture du paiement Stripe (mode secours)."
+          : "Opening Stripe checkout (fallback mode).",
+      );
+    }
     window.location.href = url;
     return true;
   }
 
-  throw new Error("Missing checkout URL");
+  throw new Error("Missing checkout session");
 }
 
 export async function runCheckoutWithAuth({
@@ -130,7 +188,7 @@ export async function runCheckoutWithAuth({
 }: {
   plan: PaidPlan;
   location: string;
-  locale?: "en" | "fr";
+  locale?: AppLocale;
 }): Promise<void> {
   const isFr = locale === "fr";
   try {
@@ -152,7 +210,7 @@ export async function runCheckoutWithAuth({
   }
 }
 
-export async function openBillingPortal(returnUrl: string, locale: "en" | "fr" = "en"): Promise<void> {
+export async function openBillingPortal(returnUrl: string, locale: AppLocale = "en"): Promise<void> {
   const isFr = locale === "fr";
   const { data, error } = await supabase.functions.invoke("create-portal", {
     body: { returnUrl },
@@ -161,6 +219,54 @@ export async function openBillingPortal(returnUrl: string, locale: "en" | "fr" =
   const url = (data as { url?: string } | null)?.url;
   if (!url) throw new Error(isFr ? "Portail indisponible" : "Portal unavailable");
   window.location.href = url;
+}
+
+/** Extract Checkout Session ID from embedded client secret (`cs_…_secret_…`). */
+export function checkoutSessionIdFromClientSecret(clientSecret: string): string | null {
+  const marker = "_secret_";
+  const idx = clientSecret.indexOf(marker);
+  if (idx <= 0) return null;
+  const id = clientSecret.slice(0, idx);
+  return id.startsWith("cs_") ? id : null;
+}
+
+/** Backup activation when webhook is delayed — idempotent profile update from Stripe session. */
+export async function confirmCheckoutSession(sessionId: string): Promise<{ ok: boolean; plan?: string }> {
+  const { data, error } = await supabase.functions.invoke("confirm-checkout", {
+    body: { sessionId },
+  });
+  if (error) {
+    const { message } = extractInvokeError(error);
+    throw new Error(message);
+  }
+  return (data ?? {}) as { ok: boolean; plan?: string; pending?: boolean };
+}
+
+/** Poll profile until paid plan is active (webhook or confirm-checkout). */
+export async function waitForPlanActivation(
+  refreshProfile: () => Promise<{ plan?: string | null } | null>,
+  expectedPlan?: string,
+  maxAttempts = 10,
+  delayMs = 1200,
+): Promise<string | null> {
+  for (let i = 0; i < maxAttempts; i += 1) {
+    try {
+      await supabase.rpc("sync_profile_plan_from_billing");
+    } catch {
+      /* best-effort sync */
+    }
+    const profile = await refreshProfile().catch(() => null);
+    const activePlan = profile?.plan ?? null;
+    if (activePlan && activePlan !== "free") {
+      if (!expectedPlan || activePlan === expectedPlan || planRank(activePlan) >= planRank(expectedPlan)) {
+        return activePlan;
+      }
+    }
+    if (i < maxAttempts - 1) {
+      await new Promise((r) => window.setTimeout(r, delayMs));
+    }
+  }
+  return null;
 }
 
 export type PricingCtaKind = "current" | "upgrade" | "start_free" | "included";
@@ -183,7 +289,7 @@ export function isRecommendedPlan(tier: PlanTier, currentPlan: string | null | u
 export function pricingCtaMeta(
   tier: PlanTier,
   currentPlan: string | null | undefined,
-  locale: "en" | "fr",
+  locale: AppLocale,
   options?: { isLoggedIn?: boolean },
 ): PricingCtaMeta {
   const isFr = locale === "fr";
@@ -245,7 +351,7 @@ export function pricingCtaMeta(
 export function pricingCtaLabel(
   tier: PlanTier,
   currentPlan: string | null | undefined,
-  locale: "en" | "fr",
+  locale: AppLocale,
   isLoggedIn = false,
 ): string {
   return pricingCtaMeta(tier, currentPlan, locale, { isLoggedIn }).label;

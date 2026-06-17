@@ -18,7 +18,7 @@ export function DashboardMobileTabs({
 }) {
   return (
     <div
-      className="pk-dashboard-mobile-tabs flex gap-0.5 rounded-2xl bg-black/35 p-1 ring-1 ring-white/[0.1]"
+      className="pk-dashboard-mobile-tabs flex gap-0.5 rounded-[14px] bg-black/25 p-0.5 ring-1 ring-white/[0.08]"
       role="tablist"
       aria-label="Dashboard"
     >
@@ -38,9 +38,9 @@ export function DashboardMobileTabs({
             aria-selected={active}
             onClick={() => onChange(item.id)}
             className={cn(
-              "relative flex flex-1 items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-[11px] font-semibold tracking-wide transition-[background-color,color,box-shadow,transform] duration-200 ease-out active:scale-[0.98] sm:px-3 sm:text-xs",
+              "relative flex flex-1 items-center justify-center gap-1 rounded-[11px] px-2 py-2 text-[12px] font-semibold tracking-tight transition-[background-color,color,box-shadow,transform] duration-200 ease-out active:scale-[0.98] sm:px-2.5 sm:text-[13px]",
               active
-                ? "pk-prism-pill-active pk-mobile-tab-active"
+                ? "pk-prism-pill-active pk-mobile-tab-active shadow-sm"
                 : "text-white/55 hover:bg-white/[0.06] hover:text-white/85",
             )}
           >

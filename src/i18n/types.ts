@@ -1,0 +1,56 @@
+export type MessageCatalog = {
+  nav: {
+    howItWorks: string;
+    features: string;
+    pricing: string;
+    community: string;
+    blog: string;
+    login: string;
+    startFree: string;
+    openStudio: string;
+    homePage: string;
+    menu: string;
+    mobileMenu: string;
+  };
+  seo: {
+    homeTitle: string;
+    homeDescription: string;
+    blogTitle: string;
+    blogDescription: string;
+    exploreTitle: string;
+    exploreDescription: string;
+    loopTitle: string;
+    loopDescription: string;
+    pricingTitle: string;
+    pricingDescription: string;
+    authTitle: string;
+    dashboardTitle: string;
+    libraryTitle: string;
+    sampleLabTitle: string;
+    settingsTitle: string;
+    aiBeatGeneratorTitle: string;
+    aiBeatGeneratorDescription: string;
+    aiMusicGeneratorTitle: string;
+    aiMusicGeneratorDescription: string;
+    typeBeatGeneratorTitle: string;
+    typeBeatGeneratorDescription: string;
+    generateBeatsFreeTitle: string;
+    generateBeatsFreeDescription: string;
+    legalTitle: string;
+    defaultTitle: string;
+    defaultDescription: string;
+    exploreCollectionName: string;
+    exploreCollectionDescription: string;
+  };
+  landing: {
+    heroTagline: string;
+    heroLead: string;
+    heroReassurance: string;
+    heroScrollCue: string;
+    heroCtaPrimary: string;
+    heroCtaDashboard: string;
+    ctaTitle: string;
+    ctaLead: string;
+    ctaButton: string;
+  };
+};

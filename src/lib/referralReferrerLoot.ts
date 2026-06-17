@@ -3,6 +3,7 @@ import { REFERRAL_REFERRER_SIGNUP_BONUS } from "@/lib/referralConfig";
 import { trackClientEvent } from "@/lib/supabaseClient";
 import { useLootRevealStore } from "@/stores/lootRevealStore";
 
+import type { AppLocale } from "@/i18n/config";
 const STORAGE_PREFIX = "producerhit_referral_bonus_seen_";
 
 function readStoredReferralBonus(userId: string): number | null {
@@ -43,7 +44,7 @@ export function notifyReferrerReferralBonusIfIncreased(
   userId: string,
   previousBonus: number | null | undefined,
   nextBonus: number,
-  locale: "en" | "fr" = "fr",
+  locale: AppLocale = "fr",
 ): void {
   if (typeof window === "undefined" || !userId) return;
 

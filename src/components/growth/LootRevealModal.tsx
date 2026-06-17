@@ -8,6 +8,7 @@ import { useLootRevealStore } from "@/stores/lootRevealStore";
 import { useLocaleStore } from "@/stores/localeStore";
 import { cn } from "@/lib/utils";
 
+import type { AppLocale } from "@/i18n/config";
 const ITEM_W = 96;
 const SPIN_SPEED = 16;
 const AUTO_STOP_MS = 2200;
@@ -16,7 +17,7 @@ const STOP_MS = 520;
 type ReelItem = { id: string; label: string; sub: string; win?: boolean };
 type Phase = "teaser" | "spin" | "stopping" | "won";
 
-function buildSegment(winCredits: number, locale: "en" | "fr"): ReelItem[] {
+function buildSegment(winCredits: number, locale: AppLocale): ReelItem[] {
   const decoys: ReelItem[] = [
     { id: "d1", label: "+1", sub: "GEN" },
     { id: "d2", label: "XP", sub: "BOOST" },

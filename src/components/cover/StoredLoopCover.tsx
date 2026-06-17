@@ -34,8 +34,20 @@ export function StoredLoopCover({ coverUrl, className, loading = "lazy", imageCl
     }
     setFailed(false);
     preloadCoverImage(src);
-    markLoadedIfReady();
-    if (imgRef.current?.complete && imgRef.current.naturalWidth > 0) return;
+
+    const img = imgRef.current;
+    if (img?.complete && img.naturalWidth > 0) {
+      setLoaded(true);
+      return;
+    }
+
+    const probe = new Image();
+    probe.src = src;
+    if (probe.complete && probe.naturalWidth > 0) {
+      setLoaded(true);
+      return;
+    }
+
     setLoaded(false);
     const t = window.setTimeout(markLoadedIfReady, 80);
     return () => window.clearTimeout(t);

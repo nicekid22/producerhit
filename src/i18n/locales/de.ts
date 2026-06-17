@@ -1,0 +1,66 @@
+import type { MessageCatalog } from "../types";
+
+export const de: MessageCatalog = {
+  nav: {
+    howItWorks: "So funktioniert’s",
+    features: "Funktionen",
+    pricing: "Preise",
+    community: "Community",
+    blog: "Blog",
+    login: "Anmelden",
+    startFree: "Kostenlos testen",
+    openStudio: "Studio öffnen",
+    homePage: "Startseite",
+    menu: "Navigationsmenü",
+    mobileMenu: "Mobiles Menü",
+  },
+  seo: {
+    homeTitle: "ProducerHit — KI-Song-Creator & Type-Beat-Generator | Royalty-free",
+    homeDescription:
+      "ProducerHit ist ein KI-Song-Creator und Type-Beat-Generator: Song Mode, Remix-Cover, royalty-free MP3/WAV-Exporte, Video-Clips und Mastering — Spotify Ready.",
+    blogTitle: "Blog — ProducerHit",
+    blogDescription:
+      "ProducerHit Blog: Guides, Prompts und Workflows für KI-Beat- und Musikgeneratoren.",
+    exploreTitle: "Community KI-Beats — hören, remixen & erstellen | ProducerHit",
+    exploreDescription:
+      "Höre öffentliche KI-Beats auf ProducerHit: Community-Feed, Bewertungen, Kommentare, Remix und Vibe-Seiten (Trap, Lo-Fi, R&B…).",
+    loopTitle: "Track — ProducerHit",
+    loopDescription:
+      "Höre einen öffentlichen Track mit ProducerHit und remixe eine ähnliche Version mit Seed-Variationen.",
+    pricingTitle: "Preise — ProducerHit",
+    pricingDescription: "Einfache Preise für KI-Beats und Songs. Upgrade für mehr Credits und WAV-Export.",
+    authTitle: "Kostenlos registrieren — ProducerHit",
+    dashboardTitle: "Mein Studio — ProducerHit",
+    libraryTitle: "Meine Bibliothek — ProducerHit",
+    sampleLabTitle: "AI Sample Lab — ProducerHit",
+    settingsTitle: "Einstellungen — ProducerHit",
+    aiBeatGeneratorTitle: "KI-Beat-Generator — Type Beats online | ProducerHit",
+    aiBeatGeneratorDescription:
+      "Nutze ProducerHit als KI-Beat-Generator: Type Beats schnell erstellen, 2 Versionen testen und mit Seed-Variationen verfeinern. MP3/WAV-Export.",
+    aiMusicGeneratorTitle: "KI-Musikgenerator — Songs & Beats | ProducerHit",
+    aiMusicGeneratorDescription:
+      "KI-Musikgenerator für Songs und Type Beats. Beschreibe eine Vibe, generiere, iteriere mit Variationen und exportiere deinen Track.",
+    typeBeatGeneratorTitle: "Type Beat Generator KI — Producer-ready Beats | ProducerHit",
+    typeBeatGeneratorDescription:
+      "Type-Beat-Generator KI für Producer: moderne Genres, sauberer Mix, schnelle Iterationen und reproduzierbare Seeds.",
+    generateBeatsFreeTitle: "Beats online kostenlos generieren — KI | ProducerHit",
+    generateBeatsFreeDescription:
+      "Generiere Beats online kostenlos mit ProducerHit. Starte mit kurzen Clips, wähle die beste Version und iteriere mit Variationen. MP3 (gratis) und WAV (Pro).",
+    legalTitle: "Rechtliches — ProducerHit",
+    defaultTitle: "ProducerHit — KI-Beat-Generator",
+    defaultDescription: "ProducerHit ist ein KI-Beat-Generator für Type Beats online.",
+    exploreCollectionName: "ProducerHit Community Feed",
+    exploreCollectionDescription: "Öffentliche KI-Beats, Remix-Kultur und Community-Vibes",
+  },
+  landing: {
+    heroTagline: "KI-Studio · Songs & Type Beats",
+    heroLead: "Beschreibe eine Vibe → Track in Sekunden. Gratis MP3, WAV mit Pro.",
+    heroReassurance: "Kostenlos starten · Keine Karte · MP3-Export",
+    heroScrollCue: "Generator testen",
+    heroCtaPrimary: "ProducerHit testen",
+    heroCtaDashboard: "Mein Studio öffnen →",
+    ctaTitle: "Deine nächste Idee verdient es, gehört zu werden",
+    ctaLead: "{{free}} kostenlose Gens / Monat. Pro ({{proPrice}}/mo) für WAV und kommerzielle Nutzung.",
+    ctaButton: "ProducerHit kostenlos testen →",
+  },
+};

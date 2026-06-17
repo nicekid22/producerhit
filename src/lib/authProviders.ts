@@ -1,6 +1,7 @@
 import type { User } from "@supabase/supabase-js";
 import { extractErrorMessage } from "@/lib/profileBootstrap";
 
+import type { AppLocale } from "@/i18n/config";
 export type AuthProviderKind = "email" | "google" | "other";
 
 export function getLinkedProviders(user: User | null | undefined): AuthProviderKind[] {
@@ -31,7 +32,7 @@ export function hasGoogleAuth(user: User | null | undefined): boolean {
 
 export function mapAuthError(
   error: unknown,
-  locale: "en" | "fr",
+  locale: AppLocale,
   context: "login" | "signup" | "google" | "link" | "password",
 ): string {
   const raw = extractErrorMessage(error).toLowerCase();

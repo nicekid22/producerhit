@@ -6,6 +6,7 @@ import { getSocialProfile } from "@/lib/socialLinks";
 import { useLazyInView } from "@/hooks/useLazyInView";
 import { cn } from "@/lib/utils";
 
+import type { AppLocale } from "@/i18n/config";
 function TikTokIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden fill="currentColor">
@@ -15,10 +16,10 @@ function TikTokIcon({ className }: { className?: string }) {
 }
 
 type Props = {
-  locale: "en" | "fr";
+  locale: AppLocale;
 };
 
-function SocialPostCard({ post, locale }: { post: LandingSocialPost; locale: "en" | "fr" }) {
+function SocialPostCard({ post, locale }: { post: LandingSocialPost; locale: AppLocale }) {
   const isFr = locale === "fr";
   const profile = getSocialProfile(post.platform);
   const isIg = post.platform === "instagram";
