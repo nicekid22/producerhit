@@ -91,37 +91,25 @@
     0 12px 36px rgba(0, 0, 0, 0.22);
 }
 
-.pk-landing-pricing-teaser__glow {
-  pointer-events: none;
-  position: absolute;
-  inset: -20% -10% auto;
-  height: 55%;
-  background: radial-gradient(
-    ellipse 70% 90% at 50% 0%,
-    var(--pk-pricing-accent-soft, rgba(124, 58, 237, 0.22)),
-    transparent 68%
-  );
-  opacity: 0.85;
+.pk-landing-pricing-teaser__card--launch {
+  isolation: isolate;
 }
 
-.pk-landing-pricing-teaser__card--pro .pk-landing-pricing-teaser__price {
-  font-size: clamp(1.85rem, 4vw, 2.35rem);
-  font-weight: 800;
+.pk-landing-pricing-teaser__launch-badge {
+  /* statique — pas d'animation flottante */
+}
+
+.pk-landing-pricing-teaser__price-free {
   letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
-  background: linear-gradient(120deg, #fff 0%, #ddd6fe 45%, #67c3ff 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
 }
 
 .pk-landing-pricing-teaser__value {
-  margin-top: 0.35rem;
+  margin-top: 0;
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--pk-pricing-accent, var(--prism-violet));
-  opacity: 0.92;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.42);
 }
 
 .pk-landing-pricing-teaser__features {

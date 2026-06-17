@@ -50,6 +50,8 @@ export type CreatorProfileDraft = {
   bio: string;
   creator_type: CreatorType | "";
   social: CreatorSocialLinks;
+  legal_first_name?: string;
+  legal_last_name?: string;
 };
 
 export const AVATAR_PRESETS = [
@@ -269,6 +271,8 @@ async function saveCreatorProfileDirect(
   if (payload.bio !== undefined) extended.bio = payload.bio;
   if (payload.creator_type !== undefined) extended.creator_type = payload.creator_type;
   if (payload.social !== undefined) extended.social = payload.social;
+  if (payload.legal_first_name !== undefined) extended.legal_first_name = payload.legal_first_name;
+  if (payload.legal_last_name !== undefined) extended.legal_last_name = payload.legal_last_name;
 
   if (Object.keys(extended).length === 0) return { ok: true };
 
@@ -290,6 +294,8 @@ export async function saveCreatorProfile(draft: CreatorProfileDraft): Promise<{ 
     bio: draft.bio.trim() || null,
     creator_type: draft.creator_type || null,
     social: normalizeSocial(draft.social),
+    ...(draft.legal_first_name !== undefined ? { legal_first_name: draft.legal_first_name.trim() || null } : {}),
+    ...(draft.legal_last_name !== undefined ? { legal_last_name: draft.legal_last_name.trim() || null } : {}),
   };
 
   const { data, error } = await supabase.rpc("update_creator_profile", { p_payload: payload });

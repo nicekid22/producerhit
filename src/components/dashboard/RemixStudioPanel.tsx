@@ -1,29 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { Loader2, Music2, Sparkles, Upload, Wand2, X } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { Upload, X } from "lucide-react";
+import { Dropdown } from "@/components/ui/Dropdown";
 import { Slider } from "@/components/ui/Slider";
+import { GeneratorSection } from "@/components/dashboard/GeneratorSection";
+import type { PanelGenerateBridge } from "@/components/dashboard/panelGenerateBridge";
 import type { Loop } from "@/types/loop";
 import { REMIX_ACCEPT, validateRemixFile, type AceRemixTaskType } from "@/lib/aceRemix";
 import type { PendingRemix } from "@/lib/pendingRemix";
 import { REMIX_VIBE_FALLBACK_COPY } from "@/lib/remixVibeFallback";
 import { fetchRemixSourceLoop, loopToRemixSource, remixSourceSummary, remixSourceToLoop } from "@/lib/remixSourceLoop";
 import { isSongLoop } from "@/lib/vocalLanguages";
-import { resolveLoopDisplayCoverUrl } from "@/lib/coverArt";
-import { GenerationCreditAmount } from "@/components/GenerationCreditIcon";
-import { cn, COVER_SURFACE_CLASS } from "@/lib/utils";
-import { useGrowthUpsellStore } from "@/stores/growthUpsellStore";
+import { cn } from "@/lib/utils";
 
 import type { AppLocale } from "@/i18n/config";
-function loopLibrarySubtitle(loop: Loop, isFr: boolean): string {
-  const parts: string[] = [];
-  if (loop.genre?.trim()) parts.push(loop.genre.trim());
-  if (loop.bpm > 0) parts.push(`${loop.bpm} BPM`);
-  const keyScale = [loop.key, loop.scale].filter(Boolean).join(" ");
-  if (keyScale) parts.push(keyScale);
-  if (!parts.length) return isFr ? "Track" : "Track";
-  return parts.join(" · ");
-}
 
 function loopLibraryChipLabel(loop: Loop, all: Loop[]): string {
   const name = loop.name.trim() || "Track";
@@ -40,19 +30,10 @@ type Props = {
   loops: Loop[];
   generating: boolean;
   remaining: number;
-  plan?: string;
   externalRemix?: PendingRemix | null;
   onExternalRemixConsumed?: () => void;
-  mobileDock?: boolean;
-  onMobileDockChange?: (
-    state: {
-      canSubmit: boolean;
-      generating: boolean;
-      submit: () => void;
-      idleLabel: string;
-      generatingLabel: string;
-    } | null,
-  ) => void;
+  compactSections?: boolean;
+  onGenerateBridgeChange?: (state: PanelGenerateBridge | null) => void;
   /** Recréation vibe (Song/Beat) — sans upload ACE. */
   vibeRecreateMode?: boolean;
   onGenerate: (input: {
@@ -74,11 +55,10 @@ export function RemixStudioPanel({
   loops,
   generating,
   remaining,
-  plan,
   externalRemix,
   onExternalRemixConsumed,
-  mobileDock = false,
-  onMobileDockChange,
+  compactSections = false,
+  onGenerateBridgeChange,
   vibeRecreateMode = false,
   onGenerate,
   onRecreateVibe,
@@ -97,27 +77,23 @@ export function RemixStudioPanel({
   const [durationSec, setDurationSec] = useState(60);
   const [bpmAuto, setBpmAuto] = useState(true);
   const [bpm, setBpm] = useState(120);
-  const [libraryQuery, setLibraryQuery] = useState("");
   const [sourceLoop, setSourceLoop] = useState<Loop | null>(null);
   const [styleTouch, setStyleTouch] = useState("");
-  const libraryRailRef = useRef<HTMLDivElement | null>(null);
 
-  /** Toutes les tracks bibliothèque — sélection métadonnées (comme le menu Genre), pas besoin d’audio jouable. */
+  /** Toutes les tracks bibliothèque — sélection métadonnées, pas besoin d’audio jouable. */
   const selectableLibraryLoops = useMemo(
     () => [...loops].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
     [loops],
   );
 
-  const filteredLibraryLoops = useMemo(() => {
-    const q = libraryQuery.trim().toLowerCase();
-    if (!q) return selectableLibraryLoops;
-    return selectableLibraryLoops.filter((l) => {
-      const hay = [l.name, l.genre, l.prompt, l.mood, l.key, l.scale].filter(Boolean).join(" ").toLowerCase();
-      return hay.includes(q);
-    });
-  }, [libraryQuery, selectableLibraryLoops]);
-
-  const quickPickLoops = useMemo(() => selectableLibraryLoops.slice(0, 6), [selectableLibraryLoops]);
+  const sourceTrackOptions = useMemo(
+    () =>
+      selectableLibraryLoops.map((loop) => ({
+        value: loop.id,
+        label: loopLibraryChipLabel(loop, selectableLibraryLoops),
+      })),
+    [selectableLibraryLoops],
+  );
 
   const onPickFile = (file: File | null) => {
     if (!file) return;
@@ -239,20 +215,10 @@ export function RemixStudioPanel({
         } else {
           await loadFromLoop(loop);
         }
-        requestAnimationFrame(() => {
-          const el = libraryRailRef.current?.querySelector(`[data-remix-loop-id="${loop.id}"]`);
-          el?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-        });
       })();
     },
     [applySourceLoop, loadFromLoop, vibeRecreateMode],
   );
-
-  useEffect(() => {
-    if (!sourceLoop?.id || !libraryRailRef.current) return;
-    const el = libraryRailRef.current.querySelector(`[data-remix-loop-id="${sourceLoop.id}"]`);
-    el?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-  }, [sourceLoop?.id]);
 
   const sourceSummary = useMemo(() => {
     if (!sourceLoop) return "";
@@ -302,378 +268,231 @@ export function RemixStudioPanel({
   ]);
 
   useEffect(() => {
-    if (!mobileDock || !onMobileDockChange) return;
-    onMobileDockChange({
+    if (!onGenerateBridgeChange) return;
+    onGenerateBridgeChange({
       canSubmit,
       generating,
       submit: runGenerate,
       idleLabel: vibeRecreateMode ? vibeCopy.ctaIdle : isFr ? "Lancer le remix" : "Run remix",
       generatingLabel: vibeRecreateMode ? vibeCopy.ctaGenerating : isFr ? "Remix en cours…" : "Remixing…",
     });
-    return () => onMobileDockChange(null);
-  }, [canSubmit, generating, isFr, mobileDock, onMobileDockChange, runGenerate]);
+    return () => onGenerateBridgeChange(null);
+  }, [canSubmit, generating, isFr, onGenerateBridgeChange, runGenerate, vibeCopy.ctaGenerating, vibeCopy.ctaIdle, vibeRecreateMode]);
 
   return (
-    <div className={cn("space-y-4", mobileDock ? "p-3 pb-2" : "p-4 pb-6")}>
-      <div className="rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-cyan-500/10 via-transparent to-violet-500/10 p-3 md:p-4">
-        <div className="flex items-center gap-2 text-sm font-semibold text-white">
-          <Sparkles className="h-4 w-4 shrink-0 text-cyan-300" />
-          {vibeRecreateMode ? vibeCopy.panelTitle : isFr ? "Remix Studio" : "Remix Studio"}
-          <span className="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-cyan-200/90">
-            {vibeRecreateMode ? vibeCopy.panelBadge : "ACE Cover"}
-          </span>
-        </div>
-        <p className="mt-2 text-xs leading-relaxed text-white/60">
-          {vibeRecreateMode
+    <>
+      <GeneratorSection
+        title={vibeRecreateMode ? vibeCopy.panelTitle : isFr ? "Remix" : "Remix"}
+        hint={
+          vibeRecreateMode
             ? vibeCopy.panelHint
             : isFr
-              ? "Upload ou choisis une track, décris le style, lance le cover/remix."
-              : "Upload or pick a track, describe the style, run your cover/remix."}
-        </p>
+              ? "Upload audio ou choisis une track, puis décris le style."
+              : "Upload audio or pick a track, then describe the style."
+        }
+        collapsible={compactSections}
+        defaultOpen
+      >
         {vibeRecreateMode && sourceLabel.trim() ? (
-          <p className="mt-2 text-[11px] font-medium text-cyan-200/80">{vibeCopy.inspiredBy(sourceLabel)}</p>
+          <p className="text-[11px] font-medium text-pk-muted">{vibeCopy.inspiredBy(sourceLabel)}</p>
         ) : null}
-      </div>
+      </GeneratorSection>
 
       {!vibeRecreateMode ? (
-      <div
-        className={cn(
-          "relative flex min-h-[120px] cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed p-4 text-center transition-colors md:min-h-[140px] md:p-5",
-          audioFile ? "border-cyan-400/40 bg-cyan-500/5" : "border-white/15 bg-white/[0.02] hover:border-white/25",
-        )}
-        onClick={() => inputRef.current?.click()}
-        onDragOver={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-        }}
-        onDrop={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          onPickFile(e.dataTransfer.files?.[0] ?? null);
-        }}
-      >
-        <input
-          ref={inputRef}
-          type="file"
-          accept={REMIX_ACCEPT}
-          className="hidden"
-          onChange={(e) => onPickFile(e.target.files?.[0] ?? null)}
-        />
-        <Upload className="mb-2 h-7 w-7 text-cyan-300/80 md:h-8 md:w-8" />
-        <div className="text-sm font-semibold text-white">{audioFile ? sourceLabel : isFr ? "Upload audio" : "Upload audio"}</div>
-        <div className="mt-1 text-xs text-white/45">
-          {isFr ? "MP3, WAV, FLAC · max 12 Mo" : "MP3, WAV, FLAC · max 12 MB"}
-        </div>
-        {audioFile ? (
-          <button
-            type="button"
-            className="mt-3 inline-flex items-center gap-1 text-xs text-white/50 hover:text-white"
-            onClick={(e) => {
+        <GeneratorSection title={isFr ? "Audio source" : "Audio source"} collapsible={compactSections} defaultOpen>
+          <div
+            className={cn(
+              "relative flex min-h-[100px] cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed p-4 text-center transition-colors",
+              audioFile ? "border-pk-accent/35 bg-pk-accent/5" : "border-pk-border bg-pk-bg hover:border-pk-accent/25",
+            )}
+            onClick={() => inputRef.current?.click()}
+            onDragOver={(e) => {
+              e.preventDefault();
               e.stopPropagation();
-              setAudioFile(null);
-              setSourceLabel("");
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onPickFile(e.dataTransfer.files?.[0] ?? null);
             }}
           >
-            <X className="h-3 w-3" />
-            {isFr ? "Retirer" : "Remove"}
-          </button>
-        ) : null}
-      </div>
+            <input
+              ref={inputRef}
+              type="file"
+              accept={REMIX_ACCEPT}
+              className="hidden"
+              onChange={(e) => onPickFile(e.target.files?.[0] ?? null)}
+            />
+            <Upload className="mb-2 h-6 w-6 text-pk-muted" />
+            <div className="text-sm font-semibold">{audioFile ? sourceLabel : isFr ? "Upload audio" : "Upload audio"}</div>
+            <div className="mt-1 text-xs text-pk-muted">
+              {isFr ? "MP3, WAV, FLAC · max 12 Mo" : "MP3, WAV, FLAC · max 12 MB"}
+            </div>
+            {audioFile ? (
+              <button
+                type="button"
+                className="mt-3 inline-flex items-center gap-1 text-xs text-pk-muted hover:text-pk-text"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setAudioFile(null);
+                  setSourceLabel("");
+                }}
+              >
+                <X className="h-3 w-3" />
+                {isFr ? "Retirer" : "Remove"}
+              </button>
+            ) : null}
+          </div>
+        </GeneratorSection>
       ) : null}
 
       {selectableLibraryLoops.length ? (
-        <div className="grid gap-3">
-          <div>
-            <div className="text-xs text-pk-muted">{isFr ? "Track source" : "Source track"}</div>
-            <p className="mt-1 text-[11px] leading-relaxed text-pk-muted">
-              {isFr
-                ? "Choisis une track comme pour le genre — on reprend ses infos, pas besoin de la lire ici."
-                : "Pick a track like a genre chip — we reuse its metadata, no need to play it here."}
-            </p>
-          </div>
-
-          <input
-            value={libraryQuery}
-            onChange={(e) => setLibraryQuery(e.target.value)}
-            placeholder={isFr ? "Chercher une track…" : "Search a track…"}
-            className="w-full rounded-xl border border-pk-border bg-pk-bg px-3 py-2 text-sm outline-none placeholder:text-pk-muted focus:border-pk-accent/40"
+        <GeneratorSection
+          title={isFr ? "Track source" : "Source track"}
+          hint={
+            isFr
+              ? "On reprend les infos de la track — pas besoin de la lire ici."
+              : "We reuse track metadata — no need to play it here."
+          }
+          collapsible={compactSections}
+          defaultOpen
+        >
+          <Dropdown
+            label={isFr ? "Bibliothèque" : "Library"}
+            menuTitle={isFr ? "Choisir une track" : "Pick a track"}
+            value={sourceLoop?.id ?? ""}
+            onChange={(id) => {
+              const loop = selectableLibraryLoops.find((l) => l.id === id);
+              if (loop) void selectLibraryLoop(loop);
+            }}
+            options={sourceTrackOptions}
+            placeholder={isFr ? "Sélectionne une track…" : "Select a track…"}
           />
-
-          <div ref={libraryRailRef} className="pk-remix-library-rail">
-            {filteredLibraryLoops.length ? (
-              filteredLibraryLoops.map((loop) => {
-                const selected = sourceLoop?.id === loop.id;
-                const coverUrl = resolveLoopDisplayCoverUrl(loop, 96);
-                return (
-                  <button
-                    key={loop.id}
-                    type="button"
-                    data-remix-loop-id={loop.id}
-                    onClick={() => selectLibraryLoop(loop)}
-                    className={cn(
-                      "pk-remix-library-pill shrink-0 text-left transition-colors",
-                      selected ? "pk-remix-library-pill--selected" : "",
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "pk-remix-library-pill__thumb relative block shrink-0 overflow-hidden rounded-lg",
-                        COVER_SURFACE_CLASS,
-                      )}
-                    >
-                      {coverUrl ? (
-                        <img src={coverUrl} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
-                      ) : (
-                        <span className="flex h-full w-full items-center justify-center text-white/30">
-                          <Music2 className="h-4 w-4" />
-                        </span>
-                      )}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-xs font-semibold leading-tight">{loop.name}</span>
-                      <span className="block truncate text-[10px] text-pk-muted">{loopLibrarySubtitle(loop, isFr)}</span>
-                    </span>
-                  </button>
-                );
-              })
-            ) : (
-              <p className="px-2 py-4 text-center text-xs text-pk-muted">
-                {isFr ? "Aucune track pour cette recherche." : "No tracks match your search."}
-              </p>
-            )}
-          </div>
-
-          {quickPickLoops.length && !libraryQuery.trim() ? (
-            <div>
-              <div className="text-xs text-pk-muted">{isFr ? "Raccourcis" : "Shortcuts"}</div>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {quickPickLoops.map((loop) => {
-                  const selected = sourceLoop?.id === loop.id;
-                  return (
-                    <button
-                      key={`chip-${loop.id}`}
-                      type="button"
-                      className={cn(
-                        "max-w-full rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
-                        selected
-                          ? "border-pk-accent/40 bg-pk-accent/15 text-pk-accent"
-                          : "border-pk-border bg-pk-bg text-pk-muted hover:bg-white/5 hover:text-pk-text",
-                      )}
-                      onClick={() => selectLibraryLoop(loop)}
-                    >
-                      {loopLibraryChipLabel(loop, selectableLibraryLoops)}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+          {sourceLoop && sourceSummary ? (
+            <p className="mt-2 text-[11px] leading-relaxed text-pk-muted">{sourceSummary}</p>
           ) : null}
-        </div>
+        </GeneratorSection>
       ) : null}
 
       {!vibeRecreateMode ? (
-      <div className="flex gap-2">
-        {(["cover", "repaint"] as const).map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => setTaskType(t)}
-            className={cn(
-              "rounded-full px-3 py-1 text-xs font-semibold transition-colors",
-              taskType === t ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white",
-            )}
-          >
-            {t === "cover" ? "Cover" : "Repaint"}
-          </button>
-        ))}
-        <span className="ml-auto self-center text-[10px] text-white/35">
-          {taskType === "cover"
-            ? isFr
-              ? "Proche de l'original"
-              : "Closer to original"
-            : isFr
-              ? "Transformation forte"
-              : "Bold transform"}
-        </span>
-      </div>
+        <GeneratorSection title="Mode" collapsible={compactSections} defaultOpen={false}>
+          <div className="flex flex-wrap gap-2">
+            {(["cover", "repaint"] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTaskType(t)}
+                className={cn(
+                  "rounded-full px-3 py-1 text-xs font-semibold transition-colors",
+                  taskType === t ? "pk-prism-pill-active" : "bg-white/5 text-pk-muted hover:text-pk-text",
+                )}
+              >
+                {t === "cover" ? "Cover" : "Repaint"}
+              </button>
+            ))}
+          </div>
+        </GeneratorSection>
       ) : null}
 
       {vibeRecreateMode ? (
-        <>
+        <GeneratorSection title={isFr ? "Style & sortie" : "Style & output"} collapsible={compactSections} defaultOpen>
           {!sourceLoop && !selectableLibraryLoops.length ? (
-            <p className="text-xs text-white/45">
+            <p className="text-xs text-pk-muted">
               {isFr ? "Génère d’abord une track, ou remix depuis la communauté." : "Generate a track first, or remix from the community."}
             </p>
           ) : null}
           <div>
-            <label className="text-xs text-white/55">{vibeCopy.basePromptLabel}</label>
-            <div className="mt-1 max-h-24 overflow-y-auto rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-xs leading-relaxed text-white/55">
-              {sourceLoop?.prompt?.trim() || "—"}
-            </div>
-          </div>
-          <div>
-            <label className="text-xs text-white/55">{vibeCopy.styleTouchLabel}</label>
+            <label className="text-xs text-pk-muted">{vibeCopy.styleTouchLabel}</label>
             <textarea
               value={styleTouch}
               onChange={(e) => setStyleTouch(e.target.value)}
               rows={2}
               placeholder={vibeCopy.styleTouchPlaceholder}
-              className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm outline-none placeholder:text-white/35 focus:border-cyan-400/40"
+              className="mt-1 w-full rounded-xl border border-pk-border bg-pk-bg px-3 py-2 text-sm outline-none placeholder:text-pk-muted focus:border-pk-accent/40"
             />
           </div>
-          <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2">
-            <span className="text-xs text-white/55">{isFr ? "Mode de sortie" : "Output mode"}</span>
+          <div className="mt-3 flex items-center justify-between rounded-xl border border-pk-border bg-pk-bg/60 px-3 py-2">
+            <span className="text-xs text-pk-muted">{isFr ? "Mode de sortie" : "Output mode"}</span>
             <button
               type="button"
               className={cn(
                 "rounded-full px-2.5 py-0.5 text-[10px] font-semibold transition-colors",
-                instrumental ? "bg-white/10 text-white/70" : "bg-cyan-500/15 text-cyan-200",
+                instrumental ? "bg-white/10 text-pk-muted" : "pk-prism-pill-active",
               )}
               onClick={() => setInstrumental((v) => !v)}
             >
-              {instrumental ? (isFr ? "Type Beat" : "Type Beat") : isFr ? "Song (paroles conservées)" : "Song (lyrics kept)"}
+              {instrumental ? (isFr ? "Type Beat" : "Type Beat") : isFr ? "Song (paroles)" : "Song (lyrics)"}
             </button>
           </div>
-          {!instrumental && sourceLoop?.details?.lyrics?.trim() ? (
-            <div>
-              <label className="text-xs text-white/55">{isFr ? "Paroles source (conservées)" : "Source lyrics (kept)"}</label>
-              <div className="mt-1 max-h-20 overflow-y-auto rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-[11px] leading-relaxed text-white/50">
-                {sourceLoop.details.lyrics}
-              </div>
-            </div>
-          ) : null}
-        </>
+        </GeneratorSection>
       ) : (
-        <>
-          <div>
-            <label className="text-xs text-white/55">{isFr ? "Prompt (style du remix)" : "Prompt (remix style)"}</label>
-            <textarea
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              rows={3}
-              placeholder={
-                isFr
-                  ? "Ex: trap dark remix, 808 lourds, mélodie émotionnelle…"
-                  : "Ex: dark trap remix, heavy 808s, emotional melody…"
-              }
-              className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm outline-none placeholder:text-white/35 focus:border-cyan-400/40"
-            />
+        <GeneratorSection title={isFr ? "Style du remix" : "Remix style"} collapsible={compactSections} defaultOpen>
+          <textarea
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            rows={3}
+            placeholder={
+              isFr
+                ? "Ex: trap dark remix, 808 lourds, mélodie émotionnelle…"
+                : "Ex: dark trap remix, heavy 808s, emotional melody…"
+            }
+            className="w-full rounded-xl border border-pk-border bg-pk-bg px-3 py-2 text-sm outline-none placeholder:text-pk-muted focus:border-pk-accent/40"
+          />
+          <div className="mt-3 flex items-center justify-between">
+            <label className="text-xs text-pk-muted">{isFr ? "Paroles (optionnel)" : "Lyrics (optional)"}</label>
+            <button
+              type="button"
+              className={cn(
+                "rounded-full px-2 py-0.5 text-[10px] font-semibold transition-colors",
+                instrumental ? "bg-white/10 text-pk-muted" : "pk-prism-pill-active",
+              )}
+              onClick={() => setInstrumental((v) => !v)}
+            >
+              {instrumental ? (isFr ? "Instrumental" : "Instrumental") : isFr ? "Avec voix" : "With vocals"}
+            </button>
           </div>
-          <div>
-            <div className="flex items-center justify-between">
-              <label className="text-xs text-white/55">{isFr ? "Paroles (optionnel)" : "Lyrics (optional)"}</label>
-              <button
-                type="button"
-                className={cn(
-                  "rounded-full px-2 py-0.5 text-[10px] font-semibold transition-colors",
-                  instrumental ? "bg-white/10 text-white/70" : "bg-cyan-500/15 text-cyan-200",
-                )}
-                onClick={() => setInstrumental((v) => !v)}
-              >
-                {instrumental ? (isFr ? "Instrumental" : "Instrumental") : isFr ? "Avec voix" : "With vocals"}
-              </button>
-            </div>
-            <textarea
-              value={lyrics}
-              onChange={(e) => setLyrics(e.target.value)}
-              rows={2}
-              disabled={instrumental}
-              placeholder={isFr ? "Laisse vide pour instrumental…" : "Leave blank for instrumental…"}
-              className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm outline-none placeholder:text-white/35 disabled:opacity-40"
-            />
-          </div>
-        </>
+          <textarea
+            value={lyrics}
+            onChange={(e) => setLyrics(e.target.value)}
+            rows={2}
+            disabled={instrumental}
+            placeholder={isFr ? "Laisse vide pour instrumental…" : "Leave blank for instrumental…"}
+            className="mt-1 w-full rounded-xl border border-pk-border bg-pk-bg px-3 py-2 text-sm outline-none placeholder:text-pk-muted disabled:opacity-40"
+          />
+        </GeneratorSection>
       )}
 
       {!vibeRecreateMode ? (
-      <div>
-        <div className="flex items-center justify-between text-xs text-white/55">
-          <span>{isFr ? "Force cover" : "Cover strength"}</span>
-          <span>{Math.round(coverStrength * 100)}%</span>
-        </div>
-        <Slider label="" min={15} max={100} value={Math.round(coverStrength * 100)} onChange={(v) => setCoverStrength(v / 100)} />
-        <div className="mt-1 text-[10px] text-white/35">
-          {isFr ? "Bas = plus proche de l'original · Haut = transformation forte" : "Low = closer to original · High = bold transform"}
-        </div>
-      </div>
-      ) : null}
-
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div>
-          <div className="flex items-center justify-between text-xs text-white/55">
-            <span>{isFr ? "Durée" : "Duration"}</span>
-            <button type="button" className="text-[10px] text-cyan-300/80" onClick={() => setDurationAuto((v) => !v)}>
-              {durationAuto ? "Auto" : `${durationSec}s`}
-            </button>
+        <GeneratorSection title={isFr ? "Réglages ACE" : "ACE settings"} collapsible defaultOpen={false}>
+          <div>
+            <div className="flex items-center justify-between text-xs text-pk-muted">
+              <span>{isFr ? "Force cover" : "Cover strength"}</span>
+              <span>{Math.round(coverStrength * 100)}%</span>
+            </div>
+            <Slider label="" min={15} max={100} value={Math.round(coverStrength * 100)} onChange={(v) => setCoverStrength(v / 100)} />
           </div>
-          {!durationAuto ? <Slider label="" min={10} max={240} value={durationSec} onChange={setDurationSec} /> : null}
-        </div>
-        <div>
-          <div className="flex items-center justify-between text-xs text-white/55">
-            <span>BPM</span>
-            <button type="button" className="text-[10px] text-cyan-300/80" onClick={() => setBpmAuto((v) => !v)}>
-              {bpmAuto ? "Auto" : String(bpm)}
-            </button>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div>
+              <div className="flex items-center justify-between text-xs text-pk-muted">
+                <span>{isFr ? "Durée" : "Duration"}</span>
+                <button type="button" className="text-[10px] text-pk-accent" onClick={() => setDurationAuto((v) => !v)}>
+                  {durationAuto ? "Auto" : `${durationSec}s`}
+                </button>
+              </div>
+              {!durationAuto ? <Slider label="" min={10} max={240} value={durationSec} onChange={setDurationSec} /> : null}
+            </div>
+            <div>
+              <div className="flex items-center justify-between text-xs text-pk-muted">
+                <span>BPM</span>
+                <button type="button" className="text-[10px] text-pk-accent" onClick={() => setBpmAuto((v) => !v)}>
+                  {bpmAuto ? "Auto" : String(bpm)}
+                </button>
+              </div>
+              {!bpmAuto ? <Slider label="" min={30} max={200} value={bpm} onChange={setBpm} /> : null}
+            </div>
           </div>
-          {!bpmAuto ? <Slider label="" min={30} max={200} value={bpm} onChange={setBpm} /> : null}
-        </div>
-      </div>
-
-      {!mobileDock ? (
-        <div className="space-y-2 border-t border-white/10 pt-4">
-          {remaining <= 0 ? (
-            <p className="text-xs text-amber-200/90">
-              {isFr ? "Plus de crédits ce mois-ci — " : "No credits left this month — "}
-              <button
-                type="button"
-                className="font-semibold text-cyan-200 underline-offset-2 hover:text-white hover:underline"
-                onClick={() =>
-              useGrowthUpsellStore.getState().openUpsell("credits_exhausted", {
-                source: "remix_studio",
-                plan,
-                remaining,
-              })
-            }
-              >
-                {isFr ? "voir les plans" : "view plans"}
-              </button>
-            </p>
-          ) : !vibeRecreateMode && !audioFile ? (
-            <p className="text-xs text-white/45">{isFr ? "Ajoute un audio pour activer le remix." : "Add audio to enable remix."}</p>
-          ) : vibeRecreateMode && !sourceLoop ? (
-            <p className="text-xs text-white/45">{isFr ? "Sélectionne une track source." : "Select a source track."}</p>
-          ) : !vibeRecreateMode && prompt.trim().length <= 3 ? (
-            <p className="text-xs text-white/45">{isFr ? "Décris le style du remix (4+ caractères)." : "Describe the remix style (4+ chars)."}</p>
-          ) : (
-            <p className="inline-flex flex-wrap items-center gap-1 text-xs text-white/45">
-              <GenerationCreditAmount amount={1} iconClassName="h-2.5 w-2.5" />
-              <span>
-                {vibeRecreateMode
-                  ? vibeCopy.creditHintSuffix
-                  : isFr
-                    ? " · résultat dans ta bibliothèque"
-                    : " · saved to your library"}
-                {plan ? ` · ${plan}` : ""}
-              </span>
-            </p>
-          )}
-
-          <Button variant="primary" className="w-full" disabled={!canSubmit} onClick={runGenerate}>
-            {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-            {generating
-              ? vibeRecreateMode
-                ? vibeCopy.ctaGenerating
-                : isFr
-                  ? "Remix en cours…"
-                  : "Remixing…"
-              : vibeRecreateMode
-                ? vibeCopy.ctaIdle
-                : isFr
-                  ? "Lancer le remix"
-                  : "Run remix"}
-          </Button>
-        </div>
+        </GeneratorSection>
       ) : null}
-    </div>
+    </>
   );
 }

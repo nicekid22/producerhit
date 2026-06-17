@@ -1,6 +1,7 @@
-import { useEffect, useState, type RefObject } from "react";
+import { useEffect, useMemo, useState, type RefObject } from "react";
 import { COVER_SURFACE_CLASS, cn } from "@/lib/utils";
 import { RandomPromptDiceButton } from "@/components/RandomPromptDiceButton";
+import { resolveRandomPromptLocale } from "@/lib/resolveRandomPromptLocale";
 import { SpeechDictationField } from "@/components/SpeechDictationField";
 import { ChevronDown, Music2, Pause, Play, SlidersHorizontal } from "lucide-react";
 import { GenerationCreditIcon } from "@/components/GenerationCreditIcon";
@@ -236,6 +237,10 @@ export function LandingGenerator({
   reduceMotion = false,
 }: Props) {
   const isFr = locale === "fr";
+  const promptLocale = useMemo(
+    () => resolveRandomPromptLocale({ surface: "landing", uiLocale: locale }),
+    [locale],
+  );
   const landing = getMessages(locale).landing;
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [shellTouched, setShellTouched] = useState(false);
@@ -283,8 +288,8 @@ export function LandingGenerator({
     >
       <div
         className={[
-          "pk-landing-gen__row flex w-full items-center",
-          showSideCards ? "justify-between gap-5 xl:gap-8 2xl:gap-10" : "justify-center",
+          "pk-landing-gen__row flex w-full items-center justify-center",
+          showSideCards ? "gap-5 lg:justify-between xl:gap-8 2xl:gap-10" : "",
         ].join(" ")}
       >
         {sideCards[0] ? (
@@ -299,7 +304,7 @@ export function LandingGenerator({
           />
         ) : null}
 
-        <div className="pk-landing-gen__center relative z-[1] w-full min-w-0 max-w-3xl flex-1 lg:max-w-4xl">
+        <div className="pk-landing-gen__center relative z-[1] mx-auto w-full min-w-0 max-w-3xl flex-1 lg:mx-0 lg:max-w-4xl">
           {embedded ? null : (
             <div className="relative z-[1] text-center">
               <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/40">
@@ -332,7 +337,13 @@ export function LandingGenerator({
                 >
                   <div className="pk-landing-gen__prompt-zone px-3 py-3.5 sm:px-4">
                     <div className="pk-landing-gen__prompt-head mb-2 flex items-center justify-end">
-                      <RandomPromptDiceButton locale={locale} mode={mode} onPick={setPrompt} variant="landing" />
+                      <RandomPromptDiceButton
+                        locale={locale}
+                        promptLocale={promptLocale}
+                        mode={mode}
+                        onPick={setPrompt}
+                        variant="landing"
+                      />
                     </div>
                     <SpeechDictationField
                       multiline
@@ -534,7 +545,13 @@ export function LandingGenerator({
 
                 <div className="pk-landing-gen__prompt-zone px-3 py-1 sm:px-4 sm:py-1.5">
                   <div className="pk-landing-gen__prompt-head mb-2 flex items-center justify-end">
-                    <RandomPromptDiceButton locale={locale} mode={mode} onPick={setPrompt} variant="landing" />
+                    <RandomPromptDiceButton
+                      locale={locale}
+                      promptLocale={promptLocale}
+                      mode={mode}
+                      onPick={setPrompt}
+                      variant="landing"
+                    />
                   </div>
                   <SpeechDictationField
                     multiline

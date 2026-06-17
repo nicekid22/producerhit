@@ -1,0 +1,257 @@
+/**
+ * Bibliothèque — covers playlists / mixtapes
+ * Uniquement dégradés du thème actif (Prism / Warm / Cloud) — pas de couleurs élément.
+ */
+
+.pk-apple-app .pk-library-collection-card__cover {
+  --pk-cover-a: var(--pk-apple-accent-from, var(--prism-cyan, #67c3ff));
+  --pk-cover-b: var(--pk-apple-accent-to, var(--prism-violet, #9d7cff));
+  --pk-cover-glow: color-mix(in srgb, var(--pk-cover-b) 38%, transparent);
+  --pk-cover-deep: color-mix(in srgb, var(--pk-cover-b) 18%, rgba(8, 8, 14, 0.92));
+  --pk-cover-blob-a-x: 22%;
+  --pk-cover-blob-a-y: 18%;
+  --pk-cover-blob-b-x: 78%;
+  --pk-cover-blob-b-y: 72%;
+  position: relative;
+  display: block;
+  aspect-ratio: 1;
+  border-radius: 1.05rem;
+  border: 1px solid var(--pk-apple-surface-border, rgba(255, 255, 255, 0.14));
+  background:
+    radial-gradient(
+      ellipse 88% 72% at var(--pk-cover-blob-a-x) var(--pk-cover-blob-a-y),
+      color-mix(in srgb, var(--pk-cover-a) 42%, transparent),
+      transparent 58%
+    ),
+    radial-gradient(
+      ellipse 72% 64% at var(--pk-cover-blob-b-x) var(--pk-cover-blob-b-y),
+      color-mix(in srgb, var(--pk-cover-b) 36%, transparent),
+      transparent 56%
+    ),
+    linear-gradient(
+      152deg,
+      color-mix(in srgb, var(--pk-cover-a) 16%, rgba(14, 12, 22, 0.78)) 0%,
+      var(--pk-cover-deep) 52%,
+      color-mix(in srgb, var(--pk-cover-b) 14%, rgba(6, 6, 12, 0.94)) 100%
+    );
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 20%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, #000 16%, transparent),
+    0 14px 36px color-mix(in srgb, #000 34%, transparent);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.pk-apple-app .pk-library-collection-card__cover[data-pk-cover-variant="1"] {
+  --pk-cover-blob-a-x: 78%;
+  --pk-cover-blob-a-y: 22%;
+  --pk-cover-blob-b-x: 18%;
+  --pk-cover-blob-b-y: 78%;
+}
+
+.pk-apple-app .pk-library-collection-card__cover[data-pk-cover-variant="2"] {
+  --pk-cover-blob-a-x: 50%;
+  --pk-cover-blob-a-y: 12%;
+  --pk-cover-blob-b-x: 50%;
+  --pk-cover-blob-b-y: 88%;
+}
+
+.pk-apple-app .pk-library-collection-card__cover[data-pk-cover-variant="3"] {
+  --pk-cover-blob-a-x: 12%;
+  --pk-cover-blob-a-y: 55%;
+  --pk-cover-blob-b-x: 88%;
+  --pk-cover-blob-b-y: 38%;
+}
+
+/* Mixtape — motif vinyle discret (neutre, thème) */
+.pk-apple-app .pk-library-collection-card--mixtape .pk-library-collection-card__cover-mesh {
+  background:
+    repeating-radial-gradient(
+      circle at 50% 50%,
+      transparent 0,
+      transparent 3px,
+      color-mix(in srgb, var(--pk-cover-a) 8%, transparent) 3px,
+      color-mix(in srgb, var(--pk-cover-a) 8%, transparent) 4px
+    ),
+    radial-gradient(circle at 50% 50%, color-mix(in srgb, #000 20%, transparent) 0%, transparent 42%);
+  opacity: 0.5;
+}
+
+.pk-apple-app .pk-library-collection-card__cover-bloom,
+.pk-apple-app .pk-library-collection-card__cover-mesh,
+.pk-apple-app .pk-library-collection-card__cover-grain,
+.pk-apple-app .pk-library-collection-card__cover-shine {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.pk-apple-app .pk-library-collection-card__cover-bloom {
+  background: radial-gradient(
+    ellipse 55% 48% at 68% 28%,
+    color-mix(in srgb, var(--pk-cover-a) 24%, transparent),
+    transparent 68%
+  );
+  mix-blend-mode: screen;
+  opacity: 0.7;
+}
+
+.pk-apple-app .pk-library-collection-card__cover-mesh {
+  background:
+    linear-gradient(125deg, color-mix(in srgb, #fff 5%, transparent) 0%, transparent 42%),
+    linear-gradient(305deg, color-mix(in srgb, var(--pk-cover-b) 10%, transparent) 0%, transparent 48%);
+  opacity: 0.85;
+}
+
+.pk-apple-app .pk-library-collection-card__cover-grain {
+  opacity: 0.18;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  background-size: 128px 128px;
+}
+
+.pk-apple-app .pk-library-collection-card__cover-shine {
+  top: -30%;
+  left: -20%;
+  right: -20%;
+  bottom: auto;
+  height: 65%;
+  background: linear-gradient(
+    108deg,
+    transparent 42%,
+    color-mix(in srgb, #fff 16%, transparent) 50%,
+    transparent 58%
+  );
+  transform: translateX(-120%) skewX(-14deg);
+  opacity: 0;
+}
+
+.pk-apple-app .pk-library-collection-card:hover .pk-library-collection-card__cover-shine {
+  opacity: 1;
+  animation: pkLibraryCoverShine 0.9s ease-out forwards;
+}
+
+@keyframes pkLibraryCoverShine {
+  from {
+    transform: translateX(-120%) skewX(-14deg);
+  }
+  to {
+    transform: translateX(120%) skewX(-14deg);
+  }
+}
+
+.pk-apple-app .pk-library-collection-card__cover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  background: linear-gradient(to top, color-mix(in srgb, #000 38%, transparent) 0%, transparent 52%);
+  opacity: 0.68;
+  transition: opacity 0.22s ease;
+}
+
+.pk-apple-app .pk-library-collection-card:hover .pk-library-collection-card__cover::after {
+  opacity: 0.48;
+}
+
+.pk-apple-app .pk-library-collection-card__kind-badge,
+.pk-apple-app .pk-library-collection-card__play {
+  z-index: 2;
+}
+
+.pk-apple-app .pk-library-collection-card__kind-badge {
+  border-color: color-mix(in srgb, var(--pk-cover-a) 24%, var(--pk-apple-pill-border, rgba(255, 255, 255, 0.14)));
+  background: color-mix(in srgb, var(--pk-cover-b) 14%, rgba(0, 0, 0, 0.38));
+  color: var(--pk-apple-title, #fff);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 16%, transparent);
+}
+
+.pk-apple-app .pk-library-collection-card:hover .pk-library-collection-card__cover {
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 24%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--pk-cover-b) 20%, transparent),
+    0 18px 42px color-mix(in srgb, var(--pk-cover-glow) 55%, rgba(0, 0, 0, 0.32));
+}
+
+.pk-apple-app .pk-library-collection-card--active .pk-library-collection-card__cover {
+  box-shadow:
+    inset 0 0 0 2px color-mix(in srgb, #fff 62%, transparent),
+    0 0 28px var(--pk-cover-glow),
+    0 18px 44px color-mix(in srgb, #000 38%, transparent);
+}
+
+/* Cloud — accent + glass uniquement */
+.pk-apple-app.pk-cloud-stage .pk-library-collection-card__cover {
+  --pk-cover-a: color-mix(in srgb, var(--cloud-accent) 72%, white);
+  --pk-cover-b: var(--cloud-accent);
+  --pk-cover-glow: color-mix(in srgb, var(--cloud-accent) 28%, transparent);
+  --pk-cover-deep: color-mix(in srgb, var(--cloud-glass-bg) 78%, rgba(255, 255, 255, 0.08));
+  border-color: var(--cloud-glass-border);
+  background:
+    radial-gradient(
+      ellipse 88% 72% at var(--pk-cover-blob-a-x) var(--pk-cover-blob-a-y),
+      color-mix(in srgb, var(--cloud-accent) 26%, transparent),
+      transparent 58%
+    ),
+    radial-gradient(
+      ellipse 72% 64% at var(--pk-cover-blob-b-x) var(--pk-cover-blob-b-y),
+      color-mix(in srgb, var(--cloud-accent) 18%, transparent),
+      transparent 56%
+    ),
+    linear-gradient(
+      152deg,
+      color-mix(in srgb, var(--cloud-glass-bg-elevated) 86%, transparent) 0%,
+      color-mix(in srgb, var(--cloud-glass-bg) 78%, transparent) 100%
+    );
+  box-shadow:
+    inset 0 1px 0 var(--cloud-glass-highlight),
+    0 14px 36px color-mix(in srgb, #000 7%, transparent);
+}
+
+.pk-apple-app.pk-cloud-stage .pk-library-collection-card__kind-badge {
+  background: color-mix(in srgb, var(--cloud-field-bg) 58%, rgba(255, 255, 255, 0.12));
+  color: var(--cloud-text);
+  border-color: var(--cloud-glass-border);
+}
+
+/* Warm Glass */
+.pk-apple-app.pk-warm-glass-stage .pk-library-collection-card__cover {
+  --pk-cover-a: var(--warm-icon-accent, #f5dc78);
+  --pk-cover-b: var(--warm-icon-accent-alt, #e87840);
+  --pk-cover-glow: color-mix(in srgb, var(--warm-icon-accent-alt, #e87840) 32%, transparent);
+  --pk-cover-deep: color-mix(in srgb, rgba(40, 20, 10, 0.82) 88%, var(--pk-cover-b) 8%);
+}
+
+/* Meta */
+.pk-apple-app .pk-library-collection-card__title {
+  color: var(--pk-apple-title);
+}
+
+.pk-apple-app .pk-library-collection-card__subtitle,
+.pk-apple-app .pk-library-collection-card__count,
+.pk-apple-app .pk-library-collection-card__kind {
+  color: var(--pk-apple-lead);
+}
+
+.pk-apple-app .pk-library-collections-row__title {
+  color: var(--pk-apple-title);
+}
+
+.pk-apple-app .pk-library-collections-row__subtitle {
+  color: var(--pk-apple-lead);
+}
+
+.pk-apple-app .pk-library-collections-row__icon {
+  border-color: var(--pk-apple-pill-border);
+  background: var(--pk-apple-pill-bg);
+  color: var(--pk-apple-icon);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pk-apple-app .pk-library-collection-card:hover .pk-library-collection-card__cover-shine {
+    animation: none;
+    opacity: 0;
+  }
+}

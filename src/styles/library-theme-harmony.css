@@ -1,0 +1,113 @@
+/**
+ * Bibliothèque — harmonie 100 % thème (hero, stats, filtres) — pas de couleurs arc-en-ciel.
+ */
+
+.pk-apple-app .pk-library-page .pk-library-hero__mesh {
+  background:
+    radial-gradient(ellipse 70% 55% at 12% 18%, color-mix(in srgb, var(--pk-apple-accent-from) 18%, transparent), transparent 62%),
+    radial-gradient(ellipse 58% 48% at 88% 72%, color-mix(in srgb, var(--pk-apple-accent-to) 14%, transparent), transparent 58%);
+}
+
+.pk-apple-app .pk-library-hero__orb--a {
+  background: color-mix(in srgb, var(--pk-apple-accent-from) 26%, transparent) !important;
+}
+
+.pk-apple-app .pk-library-hero__orb--b {
+  background: color-mix(in srgb, var(--pk-apple-accent-to) 20%, transparent) !important;
+}
+
+.pk-apple-app .pk-library-hero--cozy .pk-library-hero__eyebrow-icon {
+  color: var(--pk-apple-icon) !important;
+}
+
+.pk-apple-app .pk-library-stat-pill {
+  border-color: var(--pk-apple-pill-border) !important;
+  background: var(--pk-apple-pill-bg) !important;
+}
+
+.pk-apple-app .pk-library-stat-pill__icon {
+  color: var(--pk-apple-icon) !important;
+}
+
+.pk-apple-app .pk-library-stat-pill__value {
+  color: var(--pk-apple-title) !important;
+}
+
+.pk-apple-app .pk-library-stat-pill__label {
+  color: var(--pk-apple-lead) !important;
+}
+
+.pk-apple-app .pk-library-active-filter--collection {
+  border-color: color-mix(in srgb, var(--pk-apple-accent-to) 30%, var(--pk-apple-pill-border)) !important;
+  background: color-mix(in srgb, var(--pk-apple-accent-from) 12%, var(--pk-apple-pill-bg)) !important;
+}
+
+.pk-apple-app.pk-cloud-stage .pk-library-page .pk-library-hero__mesh {
+  background:
+    radial-gradient(ellipse 70% 55% at 12% 18%, color-mix(in srgb, var(--cloud-accent) 14%, transparent), transparent 62%),
+    radial-gradient(ellipse 58% 48% at 88% 72%, color-mix(in srgb, var(--cloud-accent) 10%, transparent), transparent 58%);
+}
+
+.pk-apple-app.pk-cloud-stage .pk-library-hero__orb--a,
+.pk-apple-app.pk-cloud-stage .pk-library-hero__orb--b {
+  background: color-mix(in srgb, var(--cloud-accent) 16%, transparent) !important;
+}
+
+.pk-apple-app.pk-warm-glass-stage .pk-library-hero__orb--a {
+  background: color-mix(in srgb, var(--warm-icon-accent, #f5dc78) 22%, transparent) !important;
+}
+
+.pk-apple-app.pk-warm-glass-stage .pk-library-hero__orb--b {
+  background: color-mix(in srgb, var(--warm-icon-accent-alt, #e87840) 18%, transparent) !important;
+}
+
+.pk-apple-app .pk-library-collections-row__icon {
+  border-color: var(--pk-apple-pill-border) !important;
+  background: var(--pk-apple-pill-bg) !important;
+  color: var(--pk-apple-icon) !important;
+}
+
+.pk-apple-app .pk-library-collections-row__title {
+  color: var(--pk-apple-title) !important;
+}
+
+.pk-apple-app .pk-library-collections-row__subtitle {
+  color: var(--pk-apple-lead) !important;
+}
+
+.pk-apple-app .pk-library-genre-tile {
+  border-color: var(--pk-apple-pill-border) !important;
+  background: var(--pk-apple-pill-bg) !important;
+}
+
+.pk-apple-app .pk-library-genre-tile:hover {
+  border-color: color-mix(in srgb, var(--pk-apple-accent-from) 28%, var(--pk-apple-pill-border)) !important;
+}
+
+.pk-apple-app .pk-library-genre-tile--active {
+  border-color: color-mix(in srgb, var(--pk-apple-accent-to) 42%, var(--pk-apple-pill-border)) !important;
+  box-shadow: 0 0 28px color-mix(in srgb, var(--pk-apple-accent-from) 14%, transparent) !important;
+}
+
+.pk-apple-app .pk-library-genre-tile__icon {
+  color: var(--pk-apple-icon) !important;
+  opacity: 0.85;
+}
+
+.pk-apple-app .pk-library-genre-tile__label {
+  color: var(--pk-apple-title) !important;
+}
+
+.pk-apple-app .pk-library-genre-tile__count {
+  color: var(--pk-apple-lead) !important;
+}
+
+.pk-apple-app .pk-library-collection-card__title {
+  color: var(--pk-apple-title) !important;
+}
+
+.pk-apple-app .pk-library-collection-card__subtitle,
+.pk-apple-app .pk-library-collection-card__kind,
+.pk-apple-app .pk-library-collection-card__count {
+  color: var(--pk-apple-lead) !important;
+}

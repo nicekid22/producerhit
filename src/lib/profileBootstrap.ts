@@ -11,6 +11,8 @@ type ReconcileResult = {
 
 export type UserProfileRow = {
   username: string | null;
+  legal_first_name: string | null;
+  legal_last_name: string | null;
   plan: string;
   loops_used_this_month: number;
   referral_bonus: number;
@@ -35,10 +37,10 @@ export type ProfileBootstrapResult = {
 };
 
 const PROFILE_SELECT_FULL =
-  "username, plan, loops_used_this_month, voice_to_song_used_this_month, voice_clone_used_this_month, referral_bonus, referral_code, level_bonus, daily_bonus_month, avatar_id, bio, creator_type, social, hosted_audio_expires_at";
+  "username, legal_first_name, legal_last_name, plan, loops_used_this_month, voice_to_song_used_this_month, voice_clone_used_this_month, referral_bonus, referral_code, level_bonus, daily_bonus_month, avatar_id, bio, creator_type, social, hosted_audio_expires_at";
 
 const PROFILE_SELECT_CREATOR =
-  "username, plan, loops_used_this_month, level_bonus, daily_bonus_month, avatar_id, bio, creator_type, social";
+  "username, legal_first_name, legal_last_name, plan, loops_used_this_month, level_bonus, daily_bonus_month, avatar_id, bio, creator_type, social";
 
 const PROFILE_SELECT_BASE = "username, plan, loops_used_this_month";
 
@@ -137,6 +139,8 @@ function normalizeProfileRow(data: Record<string, unknown> | null): UserProfileR
   if (!data) return null;
   return {
     username: typeof data.username === "string" ? data.username : null,
+    legal_first_name: typeof data.legal_first_name === "string" ? data.legal_first_name : null,
+    legal_last_name: typeof data.legal_last_name === "string" ? data.legal_last_name : null,
     plan: typeof data.plan === "string" ? data.plan : "free",
     loops_used_this_month: typeof data.loops_used_this_month === "number" ? data.loops_used_this_month : 0,
     voice_to_song_used_this_month:

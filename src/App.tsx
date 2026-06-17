@@ -17,9 +17,13 @@ import { GrowthBootstrap } from "@/components/GrowthBootstrap";
 import { GrowthPlatformBootstrap } from "@/components/growth/GrowthPlatformBootstrap";
 import { GrowthAdsBootstrap } from "@/components/growth/GrowthAdsBootstrap";
 import { PlayerDockBootstrap } from "@/components/PlayerDockBootstrap";
+import { AudioPlayer } from "@/components/AudioPlayer";
 
 const LootRevealModal = lazy(() =>
   import("@/components/growth/LootRevealModal").then((m) => ({ default: m.LootRevealModal })),
+);
+const CommercialLicenseHost = lazy(() =>
+  import("@/components/license/CommercialLicenseHost").then((m) => ({ default: m.CommercialLicenseHost })),
 );
 const GrowthUpsellHost = lazy(() =>
   import("@/components/growth/GrowthUpsellHost").then((m) => ({ default: m.GrowthUpsellHost })),
@@ -30,7 +34,6 @@ const StripeCheckoutModal = lazy(() =>
 const GenerationActivityPill = lazy(() =>
   import("@/components/generation/GenerationActivityPill").then((m) => ({ default: m.GenerationActivityPill })),
 );
-const AudioPlayer = lazy(() => import("@/components/AudioPlayer").then((m) => ({ default: m.AudioPlayer })));
 
 const LandingPage = lazy(() => import("@/pages/Landing"));
 const HomePage = lazy(() => import("@/pages/Home"));
@@ -45,6 +48,8 @@ const AuthPage = lazy(() => import("@/pages/Auth"));
 const AuthCallbackPage = lazy(() => import("@/pages/AuthCallback"));
 const PricingPage = lazy(() => import("@/pages/Pricing"));
 const LegalPage = lazy(() => import("@/pages/Legal"));
+const CommercialLicensePage = lazy(() => import("@/pages/CommercialLicense"));
+const CommercialLicenseExamplePage = lazy(() => import("@/pages/CommercialLicenseExample"));
 const DashboardPage = lazy(() => import("@/pages/Dashboard"));
 const LibraryPage = lazy(() => import("@/pages/Library"));
 const SettingsPage = lazy(() => import("@/pages/Settings"));
@@ -96,6 +101,8 @@ export default function App() {
                   <Route path="/auth/callback" element={<AuthCallbackPage />} />
                   <Route path="/pricing" element={<PricingPage />} />
                   <Route path="/legal" element={<LegalPage />} />
+                  <Route path="/commercial-license" element={<CommercialLicensePage />} />
+                  <Route path="/commercial-license/example" element={<CommercialLicenseExamplePage />} />
                   <Route path="/theme-preview/cloud" element={<CloudThemePreviewPage />} />
 
                   <Route element={<ProtectedRoute />}>
@@ -111,15 +118,16 @@ export default function App() {
                 </Routes>
               </Suspense>
             </RouteFade>
-            <Suspense fallback={null}>
-              <AudioPlayer />
-            </Suspense>
+            <AudioPlayer />
             <Suspense fallback={null}>
               <GenerationActivityPill />
             </Suspense>
             <SiteTextureVeil />
             <Suspense fallback={null}>
               <GrowthUpsellHost />
+            </Suspense>
+            <Suspense fallback={null}>
+              <CommercialLicenseHost />
             </Suspense>
             <Suspense fallback={null}>
               <StripeCheckoutModal />

@@ -1,0 +1,95 @@
+/**
+ * Mon espace / workspace header — évite dépassement recherche + contrôles (Cloud, Warm, Prism).
+ */
+
+.pk-studio-workspace-header {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.pk-studio-workspace-header__intro {
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.pk-studio-workspace-header__controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+@media (min-width: 768px) {
+  .pk-studio-workspace-header__controls {
+    flex: 1 1 auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem 0.65rem;
+  }
+}
+
+.pk-studio-workspace-header__tabs,
+.pk-studio-workspace-header__filters {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pk-studio-workspace-header__search {
+  position: relative;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  flex: 1 1 10rem;
+}
+
+@media (min-width: 768px) {
+  .pk-studio-workspace-header__search {
+    width: auto;
+    min-width: 9.5rem;
+    max-width: min(14rem, 100%);
+  }
+}
+
+.pk-workspace-search-field {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.pk-studio-workspace-header .pk-workspace-search-field:focus {
+  outline: none;
+}
+
+/* Filtres mobile résultats — même contrainte */
+.pk-mobile-results-filters {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.pk-mobile-results-filters .relative {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Panneau workspace — chaîne min-width pour flex split */
+.pk-studio-workspace-shell,
+.pk-studio-workspace-scroll {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.pk-studio-workspace-scroll > .mx-auto {
+  min-width: 0;
+  max-width: 100%;
+}

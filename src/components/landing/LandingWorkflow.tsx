@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Download, Sparkles, Wand2, type LucideIcon } from "lucide-react";
+import { LandingSectionHead } from "@/components/landing/LandingSectionHead";
 import { landingCopy } from "@/lib/landingContent";
 
 import type { AppLocale } from "@/i18n/config";
@@ -109,13 +110,12 @@ export function LandingWorkflow({ locale }: Props) {
       <div className="pk-landing-workflow__aura" aria-hidden />
       <div className="pk-landing-workflow__grid relative z-[1] grid gap-10 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-14">
         <div className="lg:sticky lg:top-28 lg:self-start">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/40">
-            {locale === "fr" ? "Workflow" : "Workflow"}
-          </p>
-          <h2 className="pk-landing-section-head__title mt-3 text-left">
-            <span className="pk-prism-holo-text">{copy.howTitle}</span>
-          </h2>
-          <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/58">{copy.howLead}</p>
+          <LandingSectionHead
+            align="left"
+            eyebrow={locale === "fr" ? "Workflow" : "Workflow"}
+            title={copy.howTitle}
+            lead={copy.howLead}
+          />
 
           <div className="pk-landing-workflow__rail mt-8 hidden sm:block">
             {steps.map((s, idx) => (

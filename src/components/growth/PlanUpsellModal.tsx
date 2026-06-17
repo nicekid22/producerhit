@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/Button";
 import { buildAuthNextUrl, runCheckoutWithAuth } from "@/lib/billing";
 import { getUpsellCopy, shouldShowPlanUpsell, type UpsellReason } from "@/lib/growthUpsell";
 import { planPriceLabel } from "@/lib/planPricing";
+import { LaunchOfferChips } from "@/components/marketing/LaunchOfferChips";
+import { LaunchPriceDisplay } from "@/components/marketing/LaunchPriceDisplay";
+import { producerWhispers } from "@/lib/producerLegends";
 import { trackClientEvent } from "@/lib/supabaseClient";
 import { useAuthStore } from "@/stores/authStore";
 import type { PaidPlanId } from "@/lib/planEntitlements";
@@ -58,7 +61,8 @@ export function PlanUpsellModal({
 
   const copy = getUpsellCopy(reason, locale, plan, ctx);
   const targetPlan = copy.targetPlan;
-  const price = targetPlan ? planPriceLabel(targetPlan, locale, { suffix: true }) : null;
+  const whisper = producerWhispers(locale).find((w) => w.kind === "workflow") ?? producerWhispers(locale)[0];
+  const showLaunch = targetPlan === "pro";
 
   const trackDismiss = () => {
     trackClientEvent("upgrade_prompt_dismissed", { source, reason, plan });
@@ -107,6 +111,7 @@ export function PlanUpsellModal({
       <div
         className={cn(
           "pk-paywall relative w-full max-w-md overflow-hidden rounded-t-[1.5rem] border border-white/10 bg-[#0a0812] shadow-[0_32px_100px_rgba(0,0,0,0.72)] sm:rounded-[1.5rem]",
+          showLaunch && "pk-paywall--launch",
         )}
         onClick={(e) => e.stopPropagation()}
       >
@@ -143,14 +148,14 @@ export function PlanUpsellModal({
                     ? "Quota atteint"
                     : "Limit reached"
                   : isFr
-                    ? "Passe au niveau supérieur"
-                    : "Level up"}
+                    ? "Passe Pro"
+                    : "Go Pro"}
               </p>
-              {price ? (
+              {!showLaunch && targetPlan ? (
                 <p className="mt-0.5 text-sm font-bold tabular-nums text-white">
-                  {price}
+                  {planPriceLabel(targetPlan, locale, { suffix: true })}
                   <span className="ml-1 text-xs font-medium text-white/45">
-                    {isFr ? "· annulable à tout moment" : "· cancel anytime"}
+                    {isFr ? "· annulable" : "· cancel anytime"}
                   </span>
                 </p>
               ) : null}
@@ -160,10 +165,26 @@ export function PlanUpsellModal({
           <h2 id="pk-paywall-title" className="mt-5 text-balance text-xl font-bold leading-snug tracking-tight text-white sm:text-[1.35rem]">
             {copy.title}
           </h2>
-          <p className="mt-2 text-sm leading-relaxed text-white/58">{copy.description}</p>
+
+          {showLaunch ? (
+            <div className="pk-paywall__price-hero">
+              <LaunchPriceDisplay tier="pro" locale={locale} size="hero" variant="hero" align="center" />
+              <LaunchOfferChips locale={locale} className="text-center" compact />
+            </div>
+          ) : (
+            <p className="mt-2 text-sm leading-relaxed text-white/58">{copy.description}</p>
+          )}
+
+          {showLaunch ? (
+            <p className="mt-3 text-center text-sm leading-relaxed text-white/52">{copy.description}</p>
+          ) : null}
+
+          {showLaunch && whisper ? (
+            <p className="pk-paywall__legend-foot">&ldquo;{whisper.quote}&rdquo; — {whisper.who}</p>
+          ) : null}
 
           <ul className="mt-5 space-y-2.5">
-            {copy.bullets.slice(0, 4).map((line) => (
+            {copy.bullets.slice(0, showLaunch ? 3 : 4).map((line) => (
               <li key={line} className="flex items-start gap-2.5 text-sm text-white/78">
                 <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-400/12 text-emerald-300">
                   <Check className="h-3 w-3" strokeWidth={2.5} aria-hidden />

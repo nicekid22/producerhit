@@ -1,0 +1,200 @@
+/**
+ * App shell — harmonie Apple (Dashboard, Community, Library, Settings, Pricing).
+ */
+
+/* Cartes & panneaux */
+.pk-apple-app .pk-prism-card,
+.pk-apple-app .pk-prism-section-card,
+.pk-marketing-page .pk-prism-card,
+.pk-marketing-page .pk-pricing-tier {
+  border-radius: 1.35rem;
+  border-color: var(--pk-apple-surface-border);
+  background: var(--pk-apple-surface-bg);
+  backdrop-filter: blur(var(--pk-apple-surface-blur)) saturate(1.1);
+  -webkit-backdrop-filter: blur(var(--pk-apple-surface-blur)) saturate(1.1);
+  box-shadow:
+    inset 0 1px 0 var(--pk-apple-surface-highlight),
+    var(--pk-apple-surface-shadow);
+}
+
+/* Titres holo → gradient Apple */
+.pk-apple-app .pk-prism-holo-text,
+.pk-marketing-page .pk-prism-holo-text {
+  background: var(--pk-apple-text-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ——— Community hub ——— */
+.pk-apple-app .pk-hub-hero {
+  border-color: var(--pk-apple-surface-border) !important;
+  background: var(--pk-apple-surface-bg) !important;
+  backdrop-filter: blur(var(--pk-apple-surface-blur)) saturate(1.1);
+  -webkit-backdrop-filter: blur(var(--pk-apple-surface-blur)) saturate(1.1);
+  box-shadow:
+    inset 0 1px 0 var(--pk-apple-surface-highlight),
+    var(--pk-apple-surface-shadow);
+  border-radius: 1.35rem !important;
+}
+
+.pk-apple-app .pk-hub-hero__title {
+  font-size: var(--pk-apple-title-size);
+  font-weight: var(--pk-apple-title-weight);
+  letter-spacing: var(--pk-apple-title-tracking);
+  line-height: 1.12;
+}
+
+.pk-apple-app .pk-hub-hero__tagline {
+  color: var(--pk-apple-lead) !important;
+}
+
+.pk-apple-app .pk-hub-hero__live-pill,
+.pk-apple-app .pk-hub-hero__stat-pill {
+  border-color: var(--pk-apple-pill-border) !important;
+  background: var(--pk-apple-pill-bg) !important;
+  color: var(--pk-apple-eyebrow) !important;
+}
+
+.pk-apple-app .pk-hub-hero__btn-primary {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--pk-apple-accent-from) 90%, white) 0%,
+    color-mix(in srgb, var(--pk-apple-accent-to) 86%, #3a2a6a) 100%
+  ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 6px 24px color-mix(in srgb, var(--pk-apple-accent-to) 28%, transparent) !important;
+}
+
+.pk-apple-app .pk-hub-hero__btn-ghost {
+  border-color: var(--pk-apple-pill-border) !important;
+  background: var(--pk-apple-pill-bg) !important;
+  color: var(--pk-apple-title) !important;
+}
+
+/* ——— Library ——— */
+.pk-apple-app .pk-library-hero {
+  border-color: var(--pk-apple-surface-border);
+  background: var(--pk-apple-surface-bg);
+  box-shadow:
+    inset 0 1px 0 var(--pk-apple-surface-highlight),
+    var(--pk-apple-surface-shadow);
+}
+
+.pk-apple-app .pk-library-hero__title {
+  font-weight: var(--pk-apple-title-weight);
+  letter-spacing: var(--pk-apple-title-tracking);
+  color: var(--pk-apple-title);
+}
+
+.pk-apple-app .pk-library-hero__subtitle,
+.pk-apple-app .pk-library-hero__eyebrow {
+  color: var(--pk-apple-lead);
+}
+
+.pk-apple-app .pk-library-stat-pill {
+  border-color: var(--pk-apple-pill-border);
+  background: var(--pk-apple-pill-bg);
+}
+
+.pk-apple-app .pk-library-hero__cta {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--pk-apple-accent-from) 90%, white) 0%,
+    color-mix(in srgb, var(--pk-apple-accent-to) 86%, #3a2a6a) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 6px 24px color-mix(in srgb, var(--pk-apple-accent-to) 28%, transparent);
+}
+
+/* ——— Settings ——— */
+.pk-apple-app .pk-settings-hero,
+.pk-apple-app .pk-settings-section {
+  border-color: var(--pk-apple-surface-border) !important;
+}
+
+.pk-apple-app .pk-settings-hero {
+  background: var(--pk-apple-surface-bg) !important;
+  box-shadow:
+    inset 0 1px 0 var(--pk-apple-surface-highlight),
+    var(--pk-apple-surface-shadow) !important;
+}
+
+.pk-apple-app .pk-settings-hero__name,
+.pk-apple-app .pk-prism-section-head .text-lg {
+  font-weight: var(--pk-apple-title-weight);
+  letter-spacing: var(--pk-apple-title-tracking);
+  color: var(--pk-apple-title);
+}
+
+.pk-apple-app .pk-settings-hero__email,
+.pk-apple-app .pk-prism-section-head .text-xs,
+.pk-apple-app .pk-settings-page .text-pk-muted {
+  color: var(--pk-apple-lead) !important;
+}
+
+/* ——— Dashboard workspace header ——— */
+.pk-apple-app .pk-studio-workspace-header {
+  border-color: var(--pk-apple-surface-border) !important;
+  background: var(--pk-apple-surface-bg) !important;
+  box-shadow: inset 0 1px 0 var(--pk-apple-surface-highlight) !important;
+}
+
+.pk-apple-app .pk-studio-workspace-header__title {
+  font-weight: var(--pk-apple-title-weight);
+  letter-spacing: var(--pk-apple-title-tracking);
+  color: var(--pk-apple-title);
+}
+
+.pk-apple-app .pk-workspace-search-field {
+  border-color: var(--pk-apple-pill-border) !important;
+  background: var(--pk-apple-pill-bg) !important;
+  color: var(--pk-apple-title) !important;
+}
+
+/* ——— Pricing (page marketing) ——— */
+.pk-marketing-page .pk-pricing-hero__title,
+.pk-marketing-page .pk-pricing-hero h1 {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: var(--pk-apple-title-weight);
+  letter-spacing: var(--pk-apple-title-tracking);
+  color: var(--pk-apple-title);
+}
+
+.pk-marketing-page .pk-pricing-hero__lead,
+.pk-marketing-page .pk-pricing-hero p {
+  color: var(--pk-apple-lead);
+}
+
+.pk-marketing-page .pk-pricing-compare,
+.pk-marketing-page .pk-pricing-faq {
+  border-color: var(--pk-apple-surface-border);
+}
+
+/* ——— Inputs & pills génériques ——— */
+.pk-apple-app .rounded-full.border.border-white\/10,
+.pk-apple-app .bg-white\/\[0\.04\] {
+  border-color: var(--pk-apple-pill-border);
+}
+
+.pk-apple-app .pk-prism-pill-active {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--pk-apple-accent-from) 22%, transparent) 0%,
+    color-mix(in srgb, var(--pk-apple-accent-to) 18%, transparent) 100%
+  ) !important;
+  color: rgba(255, 255, 255, 0.94) !important;
+}
+
+/* ——— Section rails community ——— */
+.pk-apple-app .pk-community-rail__title {
+  font-weight: var(--pk-apple-title-weight);
+  letter-spacing: var(--pk-apple-title-tracking);
+  color: var(--pk-apple-title);
+}
+
+.pk-apple-app .pk-community-rail__lead {
+  color: var(--pk-apple-lead);
+}

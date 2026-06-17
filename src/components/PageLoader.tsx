@@ -15,8 +15,8 @@ type Props = {
   className?: string;
 };
 
-/** Délai avant affichage — évite un flash sur navigations rapides (style Apple). */
-const SHOW_DELAY_MS = 140;
+/** Délai court — fond plein écran immédiat, contenu après (évite flash + pop). */
+const SHOW_DELAY_MS = 80;
 
 export function PageLoader({ variant = "full", className }: Props) {
   const { pathname } = useLocation();

@@ -1,0 +1,240 @@
+.pk-license-page {
+  background: #050508;
+}
+
+.pk-license-cert {
+  display: flex;
+  justify-content: center;
+}
+
+.pk-license-cert--preview {
+  opacity: 0.92;
+}
+
+.pk-license-cert__frame {
+  position: relative;
+  width: 100%;
+  max-width: 42rem;
+  padding: 2.5rem 2rem 2rem;
+  border-radius: 1.5rem;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  background:
+    linear-gradient(165deg, rgba(18, 12, 28, 0.98), rgba(8, 6, 14, 0.99)),
+    radial-gradient(ellipse 90% 70% at 50% -20%, rgba(139, 92, 246, 0.18), transparent 55%);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 32px 80px rgba(0, 0, 0, 0.55),
+    0 0 60px rgba(212, 175, 55, 0.08);
+}
+
+.pk-license-cert__holo {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    rgba(103, 195, 255, 0.06) 45%,
+    rgba(236, 72, 153, 0.05) 55%,
+    transparent 70%
+  );
+}
+
+.pk-license-cert__ornament {
+  position: absolute;
+  width: 4.5rem;
+  height: 4.5rem;
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  pointer-events: none;
+}
+
+.pk-license-cert__ornament--tl {
+  top: 1rem;
+  left: 1rem;
+  border-right: none;
+  border-bottom: none;
+  border-radius: 0.75rem 0 0 0;
+}
+
+.pk-license-cert__ornament--br {
+  right: 1rem;
+  bottom: 1rem;
+  border-left: none;
+  border-top: none;
+  border-radius: 0 0 0.75rem 0;
+}
+
+.pk-license-cert__header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.pk-license-cert__seal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  background: radial-gradient(circle at 30% 20%, rgba(253, 230, 138, 0.25), rgba(139, 92, 246, 0.15));
+  color: #fde68a;
+}
+
+.pk-license-cert__brand {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  background: linear-gradient(90deg, #fde68a, #c4b5fd, #67c3ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.pk-license-cert__doc-type {
+  margin-top: 0.15rem;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.48);
+}
+
+.pk-license-cert__divider {
+  margin: 1.5rem 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.45), transparent);
+}
+
+.pk-license-cert__grant {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.pk-license-cert__holder {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.pk-license-cert__plan {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.pk-license-cert__track {
+  margin-top: 0.35rem;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.pk-license-cert__track strong {
+  color: #fff;
+}
+
+.pk-license-cert__preview-tag {
+  color: #fbbf24;
+}
+
+.pk-license-cert__rights {
+  margin-top: 1.25rem;
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.pk-license-cert__bullets {
+  margin-top: 1rem;
+  padding-left: 1.1rem;
+  list-style: disc;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.58);
+}
+
+.pk-license-cert__bullets li + li {
+  margin-top: 0.35rem;
+}
+
+.pk-license-cert__footer {
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.pk-license-cert__meta-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.pk-license-cert__meta-value {
+  margin-top: 0.2rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.pk-license-cert__id {
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  color: #c4b5fd;
+}
+
+.pk-license-cert__legal {
+  margin-top: 1.25rem;
+  font-size: 11px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.pk-license-cert__example-badge {
+  position: absolute;
+  top: 1.1rem;
+  right: 1.1rem;
+  z-index: 2;
+  border-radius: 999px;
+  border: 1px solid rgba(251, 191, 36, 0.45);
+  background: rgba(251, 191, 36, 0.12);
+  padding: 0.2rem 0.55rem;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: rgba(253, 230, 138, 0.95);
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .pk-license-cert--print-target,
+  .pk-license-cert--print-target * {
+    visibility: visible;
+  }
+
+  .pk-license-cert--print-target {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  .pk-license-cert--print-target .pk-license-cert__frame {
+    box-shadow: none;
+    border-color: #c9a227;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

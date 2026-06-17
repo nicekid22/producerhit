@@ -1,5 +1,6 @@
 /** Routes that show the fixed mobile bottom tab bar (AppShell). */
-const MOBILE_BOTTOM_NAV_RE = /^\/(dashboard|library|settings|explore|community|admin\/growth)(\/|$)/;
+const MOBILE_BOTTOM_NAV_RE =
+  /^\/(dashboard|library|settings|explore|community|voice-studio|sample-lab|admin\/growth)(\/|$)/;
 
 export function routeHasMobileBottomNav(pathname: string): boolean {
   return MOBILE_BOTTOM_NAV_RE.test(pathname);

@@ -89,6 +89,7 @@ export const tr: BaseMessageCatalog = {
     tabResults: "Sonuçlar",
     tabMaster: "Stüdyo",
     modeRemix: "Remix",
+    modeCover: "Cover",
     advancedSettings: "Gelişmiş ayarlar",
   },
 };

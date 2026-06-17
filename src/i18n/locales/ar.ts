@@ -89,6 +89,7 @@ export const ar: BaseMessageCatalog = {
     tabResults: "النتائج",
     tabMaster: "الاستوديو",
     modeRemix: "Remix",
+    modeCover: "Cover",
     advancedSettings: "إعدادات متقدمة",
   },
 };

@@ -1,0 +1,371 @@
+/**
+ * Cartes gaming — activation skin Prism / Warm (discrètes, centrées)
+ */
+
+.pk-theme-skin-wow {
+  position: fixed;
+  inset: 0;
+  z-index: 9994;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right))
+    max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  pointer-events: none;
+  animation: pkThemeSkinWowRoot 2.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.pk-theme-skin-wow__backdrop {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(58% 48% at 50% 50%, var(--pk-skin-wow-glow, rgba(167, 139, 250, 0.18)), transparent 78%);
+  opacity: 0;
+  animation: pkThemeSkinWowBackdrop 2.4s ease-out forwards;
+}
+
+.pk-theme-skin-wow__panel {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  width: min(100%, 15.5rem);
+  padding: 0.72rem 0.82rem 0.78rem;
+  border-radius: 1.05rem;
+  border: 1px solid color-mix(in srgb, var(--pk-skin-wow-accent, #c4b5fd) 36%, rgba(255, 255, 255, 0.16));
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--pk-skin-wow-accent, #c4b5fd) 16%, rgba(10, 8, 18, 0.9)),
+    rgba(8, 8, 14, 0.94)
+  );
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 0 0 1px color-mix(in srgb, var(--pk-skin-wow-accent, #c4b5fd) 12%, transparent),
+    0 16px 42px color-mix(in srgb, var(--pk-skin-wow-glow, rgba(167, 139, 250, 0.28)) 48%, rgba(0, 0, 0, 0.38));
+  text-align: center;
+  transform: scale(0.92);
+  opacity: 0;
+  animation: pkThemeSkinWowPanel 2.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.pk-theme-skin-wow__shine {
+  position: absolute;
+  inset: -50% -25%;
+  background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.22) 50%, transparent 60%);
+  transform: translateX(-130%) skewX(-14deg);
+  animation: pkThemeSkinWowShine 2.4s ease-in-out forwards;
+  pointer-events: none;
+}
+
+.pk-theme-skin-wow__ring {
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--pk-skin-wow-accent, #c4b5fd) 72%, #fff),
+    transparent 44%,
+    color-mix(in srgb, var(--pk-skin-wow-accent-2, #67c3ff) 48%, transparent)
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.78;
+  pointer-events: none;
+}
+
+.pk-theme-skin-wow__facets {
+  position: absolute;
+  inset: -30%;
+  background: conic-gradient(
+    from 0deg,
+    #a78bfa 0deg,
+    #f472b6 72deg,
+    #67c3ff 144deg,
+    #c4b5fd 216deg,
+    #ec4899 288deg,
+    #a78bfa 360deg
+  );
+  opacity: 0.14;
+  filter: blur(18px);
+  animation: pkThemeSkinWowFacets 2.4s ease-in-out forwards;
+  pointer-events: none;
+}
+
+.pk-theme-skin-wow__heat {
+  position: absolute;
+  inset: -20% -10%;
+  background: radial-gradient(
+    58% 52% at 50% 88%,
+    rgba(251, 191, 36, 0.42),
+    rgba(251, 146, 60, 0.18) 42%,
+    transparent 72%
+  );
+  opacity: 0;
+  animation: pkThemeSkinWowHeat 2.4s ease-out forwards;
+  pointer-events: none;
+}
+
+.pk-theme-skin-wow__icon-wrap {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.35rem;
+  width: 2.35rem;
+  margin: 0 auto 0.42rem;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, var(--pk-skin-wow-accent, #c4b5fd) 48%, rgba(255, 255, 255, 0.28));
+  background:
+    radial-gradient(circle at 28% 20%, rgba(255, 255, 255, 0.48), transparent 48%),
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--pk-skin-wow-accent, #c4b5fd) 55%, #fff),
+      color-mix(in srgb, var(--pk-skin-wow-accent-2, #67c3ff) 38%, rgba(12, 8, 24, 0.9))
+    );
+  color: #fff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 0 22px color-mix(in srgb, var(--pk-skin-wow-glow, rgba(167, 139, 250, 0.35)) 65%, transparent);
+  animation: pkThemeSkinWowIcon 2.4s ease-in-out forwards;
+}
+
+.pk-theme-skin-wow__icon {
+  height: 1.1rem;
+  width: 1.1rem;
+  filter: drop-shadow(0 0 8px var(--pk-skin-wow-glow, rgba(167, 139, 250, 0.4)));
+}
+
+.pk-theme-skin-wow__label {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.pk-theme-skin-wow__tag {
+  position: relative;
+  z-index: 1;
+  margin: 0.14rem 0 0;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--pk-skin-wow-accent, #c4b5fd) 68%, #fff);
+}
+
+.pk-theme-skin-wow__moment {
+  position: relative;
+  z-index: 1;
+  margin: 0.32rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+/* Prism — diamant irisé */
+.pk-theme-skin-wow--prism {
+  --pk-skin-wow-accent: #a78bfa;
+  --pk-skin-wow-accent-2: #67c3ff;
+  --pk-skin-wow-glow: rgba(167, 139, 250, 0.32);
+}
+
+.pk-theme-skin-wow--prism .pk-theme-skin-wow__label {
+  background: linear-gradient(120deg, #fff 0%, #e9d5ff 35%, #f9a8d4 58%, #7dd3fc 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Warm — été / chaleur */
+.pk-theme-skin-wow--warm {
+  --pk-skin-wow-accent: #fb923c;
+  --pk-skin-wow-accent-2: #fbbf24;
+  --pk-skin-wow-glow: rgba(251, 146, 60, 0.34);
+}
+
+.pk-theme-skin-wow--warm .pk-theme-skin-wow__panel {
+  border-color: color-mix(in srgb, #fb923c 34%, rgba(255, 220, 160, 0.22));
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, #fb923c 18%, rgba(72, 28, 32, 0.9)),
+    rgba(48, 20, 24, 0.94)
+  );
+}
+
+.pk-theme-skin-wow--warm .pk-theme-skin-wow__label {
+  background: linear-gradient(120deg, #fff7e8 0%, #ffd080 42%, #ff9a68 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.pk-theme-skin-wow--warm .pk-theme-skin-wow__icon-wrap {
+  border-color: color-mix(in srgb, #fbbf24 52%, rgba(255, 220, 160, 0.32));
+  background:
+    radial-gradient(circle at 30% 18%, rgba(255, 248, 220, 0.55), transparent 50%),
+    linear-gradient(145deg, #fbbf24, #ea580c);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    0 0 24px rgba(251, 146, 60, 0.38);
+}
+
+/* Flash plein écran discret */
+html.pk-theme-skin-flash::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9987;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    62% 52% at 50% 50%,
+    color-mix(in srgb, var(--pk-skin-flash, rgba(167, 139, 250, 0.42)) 28%, transparent),
+    transparent 74%
+  );
+  animation: pkThemeSkinFlashWash 0.95s ease-out forwards;
+}
+
+html.pk-theme-skin-flash[data-pk-theme-skin-flash="prism"] {
+  --pk-skin-flash: rgba(167, 139, 250, 0.45);
+}
+
+html.pk-theme-skin-flash[data-pk-theme-skin-flash="warm-glass"] {
+  --pk-skin-flash: rgba(251, 146, 60, 0.42);
+}
+
+@keyframes pkThemeSkinWowRoot {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  10%,
+  72% {
+    opacity: 1;
+  }
+}
+
+@keyframes pkThemeSkinWowBackdrop {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  14%,
+  64% {
+    opacity: 1;
+  }
+}
+
+@keyframes pkThemeSkinWowPanel {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  14% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  72% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@keyframes pkThemeSkinWowShine {
+  0%,
+  16% {
+    transform: translateX(-130%) skewX(-14deg);
+  }
+  38% {
+    transform: translateX(130%) skewX(-14deg);
+  }
+  100% {
+    transform: translateX(130%) skewX(-14deg);
+  }
+}
+
+@keyframes pkThemeSkinWowIcon {
+  0%,
+  12% {
+    transform: scale(0.86) rotate(-6deg);
+  }
+  20% {
+    transform: scale(1.04) rotate(3deg);
+  }
+  30%,
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes pkThemeSkinWowFacets {
+  0%,
+  12% {
+    opacity: 0;
+    transform: rotate(0deg) scale(0.92);
+  }
+  22%,
+  68% {
+    opacity: 0.18;
+    transform: rotate(18deg) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(28deg) scale(1.02);
+  }
+}
+
+@keyframes pkThemeSkinWowHeat {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  18%,
+  66% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pkThemeSkinFlashWash {
+  0% {
+    opacity: 0;
+  }
+  22% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pk-theme-skin-wow,
+  .pk-theme-skin-wow__panel,
+  .pk-theme-skin-wow__shine,
+  .pk-theme-skin-wow__facets,
+  .pk-theme-skin-wow__heat,
+  .pk-theme-skin-wow__icon-wrap,
+  html.pk-theme-skin-flash::before {
+    animation: none !important;
+  }
+
+  .pk-theme-skin-wow {
+    opacity: 0;
+  }
+}

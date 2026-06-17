@@ -85,6 +85,7 @@ export const ko: BaseMessageCatalog = {
     tabResults: "결과",
     tabMaster: "스튜디오",
     modeRemix: "Remix",
+    modeCover: "Cover",
     advancedSettings: "고급 설정",
   },
 };

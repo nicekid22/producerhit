@@ -8,7 +8,7 @@ export const fr: BaseMessageCatalog = {
     community: "Communauté",
     blog: "Blog",
     login: "Connexion",
-    startFree: "Essayer gratuit — sans carte",
+    startFree: "Essayer gratuit",
     openStudio: "Ouvrir le studio",
     studio: "Studio",
     homePage: "Page d’accueil",
@@ -90,6 +90,7 @@ export const fr: BaseMessageCatalog = {
     tabResults: "Résultats",
     tabMaster: "Studio",
     modeRemix: "Remix",
+    modeCover: "Cover",
     advancedSettings: "Réglages avancés",
   },
 };

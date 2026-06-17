@@ -8,7 +8,7 @@ export const en: BaseMessageCatalog = {
     community: "Community",
     blog: "Blog",
     login: "Login",
-    startFree: "Start free — no card",
+    startFree: "Start free",
     openStudio: "Open studio",
     studio: "Studio",
     homePage: "Home page",
@@ -89,6 +89,7 @@ export const en: BaseMessageCatalog = {
     tabResults: "Results",
     tabMaster: "Studio",
     modeRemix: "Remix",
+    modeCover: "Cover",
     advancedSettings: "Advanced settings",
   },
 };

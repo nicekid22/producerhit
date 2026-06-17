@@ -23,12 +23,21 @@ export function LibraryCollectionCard({ collection, isFr, active, onSelect }: Pr
       className={cn(
         "pk-library-collection-card",
         `pk-library-collection-card--${collection.element}`,
+        isMixtape && "pk-library-collection-card--mixtape",
         active && "pk-library-collection-card--active",
       )}
       onClick={() => onSelect(active ? null : collection.id)}
       aria-pressed={active}
     >
-      <span className="pk-library-collection-card__cover" style={{ backgroundImage: collection.coverStyle }} aria-hidden>
+      <span
+        className="pk-library-collection-card__cover"
+        data-pk-cover-variant={collection.coverVariant}
+        aria-hidden
+      >
+        <span className="pk-library-collection-card__cover-bloom" />
+        <span className="pk-library-collection-card__cover-mesh" />
+        <span className="pk-library-collection-card__cover-grain" />
+        <span className="pk-library-collection-card__cover-shine" />
         <span className="pk-library-collection-card__kind-badge">
           <KindIcon className="h-4 w-4" aria-hidden />
         </span>

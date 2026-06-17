@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { ThemeBrandMark } from "@/components/ThemeBrandMark";
 import { cn } from "@/lib/utils";
 
-type StudioMode = "song" | "beat" | "remix";
+type StudioMode = "song" | "beat" | "remix" | "cover";
 
 type Props = {
   mode: StudioMode;
@@ -19,6 +19,7 @@ type Props = {
 function modeLabel(mode: StudioMode, locale: AppLocale): string {
   if (mode === "song") return locale === "fr" ? "Chanson" : "Song";
   if (mode === "beat") return "Beat";
+  if (mode === "cover") return "Cover";
   return "Remix";
 }
 

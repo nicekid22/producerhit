@@ -34,21 +34,21 @@ import {
 import { LandingPrismScene } from "@/components/landing/LandingPrismScene";
 import { BrandLogo } from "@/components/landing/BrandLogo";
 import { LandingFooter } from "@/components/landing/LandingFooter";
-import { LandingGeneratorBottomBand } from "@/components/landing/LandingGeneratorBottomBand";
 import { TestimonialsStrip } from "@/components/landing/TestimonialsStrip";
 import { LandingCommunityRail } from "@/components/landing/LandingCommunityRail";
 import { LandingBenefits } from "@/components/landing/LandingBenefits";
 import { LandingPricingTeaser } from "@/components/landing/LandingPricingTeaser";
-import { LandingCloudMoodsSection } from "@/components/landing/LandingCloudMoodsSection";
-import { LandingHeroMoodStrip } from "@/components/landing/LandingHeroMoodStrip";
+import { ProducerLegendsSection } from "@/components/marketing/ProducerLegendsSection";
+import { MusicMoneyPlaybookSection } from "@/components/marketing/MusicMoneyPlaybookSection";
 import { LandingStickyCta } from "@/components/landing/LandingStickyCta";
 import { BackdropTextureVeil } from "@/components/BackdropTextureVeil";
 import { LandingMobileTrendingStrip } from "@/components/landing/LandingMobileTrendingStrip";
 import { LandingGenerator, type GeneratorSideCard } from "@/components/landing/LandingGenerator";
-import { LandingWorkflow } from "@/components/landing/LandingWorkflow";
+import { LandingMobileMenuFooter } from "@/components/landing/LandingMobileMenuFooter";
 import { HeroCtaButton } from "@/components/landing/HeroCtaButton";
 import { HeroDreamHeadline } from "@/components/landing/HeroDreamHeadline";
 import { LandingHeroReassurance } from "@/components/landing/LandingHeroReassurance";
+import { LandingHeroMoodStrip } from "@/components/landing/LandingHeroMoodStrip";
 import { ThemeAndAccentPicker } from "@/components/ThemeAndAccentPicker";
 import { WarmGlassBackdrop } from "@/components/WarmGlassBackdrop";
 import { CloudBackdrop } from "@/components/CloudBackdrop";
@@ -56,6 +56,8 @@ import { useVisualThemeStore, isCloudTheme, isWarmGlassTheme } from "@/stores/vi
 import { useCloudAccentStore } from "@/stores/cloudAccentStore";
 import { landingCopy, landingFlowSectionClass, landingSectionClass } from "@/lib/landingContent";
 import { landingHeroDreamCopy } from "@/lib/landingHeroDreamCopy";
+import { getHeroPromptPool, getRandomPromptPool } from "@/lib/randomPromptIdeas";
+import { resolveRandomPromptLocale } from "@/lib/resolveRandomPromptLocale";
 import { croLandingFaqs } from "@/lib/croTrustCopy";
 import { ConversionTrustBar } from "@/components/marketing/ConversionTrustBar";
 import { clearLandingPendingGeneration, saveLandingPendingGeneration } from "@/lib/landingPendingGeneration";
@@ -292,35 +294,14 @@ export default function Landing() {
   };
 
   const placeholders = useMemo(() => {
-    const song =
-      locale === "fr"
-        ? [
-            "Une chanson R&B mélancolique sur les nuits en ville…",
-            "Un anthem dark trap avec une grosse hook et des vocals gritty…",
-            "Un hit Afrobeats d'été avec guitares lumineuses et refrain catchy…",
-            "Une ballade pop émotionnelle avec une montée cinématique…",
-          ]
-        : [
-            "A melancholic R&B song about late nights in the city...",
-            "A dark trap anthem with gritty vocals and a huge hook...",
-            "An Afrobeats summer song with bright guitars and a catchy chorus...",
-            "A pop ballad with emotional vocals and a cinematic build...",
-          ];
-    const beat =
-      locale === "fr"
-        ? [
-            "Type beat Metro Boomin avec dark bounce et 808 clean…",
-            "Type beat Drill avec bass qui slide et hats serrés…",
-            "Loop Trapsoul avec chords chauds et drums moody…",
-            "Type beat UK garage à 130 BPM avec swing et chords brillants…",
-          ]
-        : [
-            "Metro Boomin type beat with dark bounce and clean 808s...",
-            "Drill type beat with sliding bass and tight hats...",
-            "Trapsoul loop with warm chords and moody drums...",
-            "UK garage type beat at 130 BPM with swing and bright chords...",
-          ];
-    return mode === "beat" ? beat : song;
+    const promptLocale = resolveRandomPromptLocale({ surface: "landing", uiLocale: locale });
+    const pool =
+      mode === "beat" ? getRandomPromptPool(promptLocale, "beat") : getHeroPromptPool(promptLocale);
+    const picked = pool.slice(0, 4);
+    if (picked.length > 0) return [...picked];
+    return mode === "beat"
+      ? ["Melodic trap, sliding 808, crisp hi-hats, minor piano, airy pads"]
+      : ["A pop song about starting over…"];
   }, [locale, mode]);
 
   const [generatorSideCards, setGeneratorSideCards] = useState<GeneratorSideCard[]>([]);
@@ -1183,14 +1164,9 @@ export default function Landing() {
                   >
                     {m.nav.login}
                   </Link>
-                  <HeroCtaButton
-                    to={buildAuthUrl()}
-                    variant="spark"
-                    size="nav"
-                    className="pk-header-chrome__cta pk-header-chrome__cta--primary"
-                  >
+                  <Link to={buildAuthUrl()} className="pk-header-chrome__cta pk-landing-header__gen-cta">
                     {m.nav.startFree}
-                  </HeroCtaButton>
+                  </Link>
                 </>
               )}
               <span className="pk-header-chrome__sep" aria-hidden />
@@ -1201,7 +1177,14 @@ export default function Landing() {
             </div>
           </nav>
 
-          <div className="pk-header-chrome__mobile shrink-0">
+          <div className="pk-header-chrome__mobile flex shrink-0 items-center gap-2">
+            <Link
+              to={user ? "/dashboard" : buildAuthUrl({ next: "/dashboard?mode=song" })}
+              className="pk-landing-header__studio-btn inline-flex items-center justify-center md:hidden"
+              onClick={() => setMobileOpen(false)}
+            >
+              {m.nav.studio}
+            </Link>
             <button
               type="button"
               className={cn(
@@ -1253,15 +1236,13 @@ export default function Landing() {
                     >
                       {m.nav.login}
                     </Link>
-                    <HeroCtaButton
+                    <Link
                       to={buildAuthUrl()}
-                      variant="spark"
-                      size="nav"
-                      className="pk-landing-mobile-nav__item pk-landing-mobile-nav__item--cta w-full rounded-[0.875rem]"
+                      className="pk-landing-mobile-nav__item pk-landing-mobile-nav__item--cta pk-landing-header__gen-cta"
                       onClick={() => setMobileOpen(false)}
                     >
                       {m.nav.startFree}
-                    </HeroCtaButton>
+                    </Link>
                   </>
                 ) : (
                   <Link
@@ -1273,10 +1254,7 @@ export default function Landing() {
                   </Link>
                 )}
               </nav>
-              <div className="pk-landing-mobile-nav__utilities">
-                <ThemeAndAccentPicker variant="nav-icon" surface="header" />
-                <LanguagePicker variant="nav" onChange={() => setMobileOpen(false)} />
-              </div>
+              <LandingMobileMenuFooter onLocaleChange={() => setMobileOpen(false)} />
             </div>
           </div>
         ) : null}
@@ -1290,6 +1268,7 @@ export default function Landing() {
         ) : null}
         <RevealSection className={landingFlowSectionClass()}>
           <section
+            id="how"
             className={cn(
               "pk-landing-flow__stack w-full",
               mobileLandingFocus && "pk-landing-flow__stack--mobile",
@@ -1391,28 +1370,6 @@ export default function Landing() {
           </RevealSection>
         ) : null}
 
-        {CLOUD_THEME_ENABLED && !mobileLandingFocus ? (
-          <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
-            <LandingCloudMoodsSection locale={locale} user={!!user} cloudActive={cloud} />
-          </RevealSection>
-        ) : null}
-
-        {mobileLandingFocus ? (
-          <RevealSection className={`${landingSectionClass("pk-landing-section--trust pk-landing-section--trust-compact")} pk-landing-below-fold`}>
-            <LandingGeneratorBottomBand locale={locale} compact loggedIn={!!user} />
-          </RevealSection>
-        ) : (
-          <RevealSection className={`${landingSectionClass("pk-landing-section--trust")} pk-landing-below-fold`}>
-            <LandingGeneratorBottomBand locale={locale} loggedIn={!!user} />
-          </RevealSection>
-        )}
-
-        {CLOUD_THEME_ENABLED && !mobileLandingFocus ? (
-          <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
-            <LandingCloudMoodsSection locale={locale} user={!!user} cloudActive={cloud} />
-          </RevealSection>
-        ) : null}
-
         <RevealSection className={`${landingSectionClass()} pk-landing-below-fold${mobileLandingFocus ? " hidden lg:block" : ""}`}>
           <LandingCommunityRail
             locale={locale}
@@ -1427,8 +1384,8 @@ export default function Landing() {
             onRefresh={() => setTrendingRefreshKey((k) => k + 1)}
             footer={
               !trendingLoading && (trendingError || trendingTimedOut || typeof repairFixedCount === "number") ? (
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#2d2d3d] bg-[#0a0a0f] px-4 py-3">
-                  <div className="text-sm font-semibold text-white/80">
+                <div className="pk-landing-apple-banner mt-4">
+                  <div className="pk-landing-apple-banner__text">
                     {typeof repairFixedCount === "number"
                       ? locale === "fr"
                         ? `Réparation: ${repairFixedCount} lien(s) restauré(s).`
@@ -1445,7 +1402,7 @@ export default function Landing() {
                     <button
                       type="button"
                       onClick={() => setTrendingRefreshKey((k) => k + 1)}
-                      className="inline-flex h-10 items-center justify-center rounded-full border border-[#2d2d3d] bg-transparent px-5 text-sm font-semibold text-white/80 transition-all hover:border-[#7c3aed]/50 hover:text-white"
+                      className="pk-landing-apple-banner__btn"
                     >
                       {locale === "fr" ? "Réessayer" : "Retry"}
                     </button>
@@ -1454,10 +1411,7 @@ export default function Landing() {
                         type="button"
                         onClick={() => void repairMyPublicAudioLinks()}
                         disabled={repairingPublicLinks}
-                        className={[
-                          "inline-flex h-10 items-center justify-center rounded-full border border-[#2d2d3d] bg-transparent px-5 text-sm font-semibold transition-all",
-                          repairingPublicLinks ? "cursor-not-allowed text-white/40 opacity-70" : "text-white/80 hover:border-[#7c3aed]/50 hover:text-white",
-                        ].join(" ")}
+                        className="pk-landing-apple-banner__btn"
                       >
                     {repairingPublicLinks ? (locale === "fr" ? "Réparation…" : "Repairing…") : locale === "fr" ? "Réparer mes Public" : "Repair my Public"}
                       </button>
@@ -1469,15 +1423,16 @@ export default function Landing() {
           />
         </RevealSection>
 
-        <RevealSection className={`${landingSectionClass()} pk-landing-below-fold${mobileLandingFocus ? " hidden lg:block" : ""}`}>
+        <RevealSection id="features" className={`${landingSectionClass()} pk-landing-below-fold${mobileLandingFocus ? " hidden lg:block" : ""}`}>
           <LandingBenefits locale={locale} />
         </RevealSection>
 
-        <RevealSection
-          id="how"
-          className={`${landingSectionClass()} pk-landing-below-fold${mobileLandingFocus ? " hidden lg:block" : ""}`}
-        >
-          <LandingWorkflow locale={locale} />
+        <RevealSection className={`${landingSectionClass()} pk-landing-below-fold${mobileLandingFocus ? " hidden lg:block" : ""}`}>
+          <ProducerLegendsSection locale={locale} />
+        </RevealSection>
+
+        <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
+          <MusicMoneyPlaybookSection locale={locale} />
         </RevealSection>
 
         <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
@@ -1489,13 +1444,13 @@ export default function Landing() {
         </RevealSection>
 
         <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
-          <div className="pk-landing-apple-panel pk-prism-card relative overflow-hidden p-6 sm:p-10">
+          <div className="pk-landing-apple-panel pk-landing-apple-surface relative overflow-hidden p-6 sm:p-10">
             <div className="pointer-events-none absolute inset-0">
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(157,124,255,0.08)_0%,transparent_72%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,color-mix(in_srgb,var(--pk-apple-accent-to)_10%,transparent)_0%,transparent_72%)]" />
             </div>
             <div className="relative">
-              <div className="pk-landing-apple-panel__title text-balance font-extrabold tracking-tight text-white">{copy.ctaTitle}</div>
-              <div className="pk-landing-apple-panel__lead text-balance font-semibold leading-relaxed text-white/55">
+              <div className="pk-landing-apple-panel__title text-balance">{copy.ctaTitle}</div>
+              <div className="pk-landing-apple-panel__lead text-balance font-medium leading-relaxed">
                 {copy.ctaLead}
               </div>
               <div className="pk-landing-apple-panel__actions mt-8">
@@ -1508,8 +1463,8 @@ export default function Landing() {
         </RevealSection>
 
         <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
-          <div className="pk-landing-apple-faq pk-prism-card p-5 sm:p-8">
-            <h2 className="pk-landing-apple-faq__title pk-landing-section-head__title text-left">{locale === "fr" ? "Questions fréquentes" : "Frequently asked questions"}</h2>
+          <div className="pk-landing-apple-faq pk-landing-apple-surface p-5 sm:p-8">
+            <h2 className="pk-landing-apple-faq__title text-left">{locale === "fr" ? "Questions fréquentes" : "Frequently asked questions"}</h2>
             <div className="pk-landing-apple-faq__list mt-6 grid gap-2">
               {faqs.map((f, i) => {
                 const open = faqOpen === i;
@@ -1521,13 +1476,13 @@ export default function Landing() {
                       const isOpen = (e.currentTarget as HTMLDetailsElement).open;
                       setFaqOpen(isOpen ? i : null);
                     }}
-                    className="pk-landing-apple-faq__item rounded-2xl border border-white/10 bg-white/[0.03]"
+                    className="pk-landing-apple-faq__item rounded-2xl"
                   >
                     <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-left">
-                      <span className="text-sm font-semibold text-white">{f.q}</span>
-                      <span className="text-sm font-semibold text-white/45">{open ? "–" : "+"}</span>
+                      <span className="text-sm font-semibold">{f.q}</span>
+                      <span className="text-sm font-semibold opacity-45">{open ? "–" : "+"}</span>
                     </summary>
-                    <div className="px-5 pb-5 text-sm text-white/55">{f.a}</div>
+                    <div className="px-5 pb-5 text-sm">{f.a}</div>
                   </details>
                 );
               })}

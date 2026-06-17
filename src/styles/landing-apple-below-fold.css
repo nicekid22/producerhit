@@ -1,0 +1,425 @@
+/**
+ * Landing below-fold — harmonie Apple 2026 (hero intact).
+ * Tokens : voir apple-theme-tokens.css
+ */
+
+/* ——— Rythme sections ——— */
+.pk-prism-stage--landing .pk-landing-below-fold.pk-landing-section {
+  padding-top: clamp(2rem, 4.8vh, 3.35rem);
+  padding-bottom: clamp(2.25rem, 5.2vh, 4.25rem);
+}
+
+.pk-prism-stage--landing .pk-landing-below-fold.pk-landing-section--trust-compact.pk-landing-section {
+  padding-top: 1rem;
+  padding-bottom: 1.5rem;
+}
+
+/* ——— En-têtes de section unifiés (landing below-fold overrides) ——— */
+.pk-landing-below-fold .pk-landing-section-head__title {
+  font-size: var(--pk-apple-title-size);
+  font-weight: var(--pk-apple-title-weight);
+  letter-spacing: var(--pk-apple-title-tracking);
+  color: var(--pk-apple-title);
+}
+
+.pk-landing-below-fold .pk-landing-section-head__lead,
+.pk-landing-below-fold .pk-landing-section-head__eyebrow,
+.pk-landing-below-fold .pk-landing-section-head > p {
+  color: var(--pk-apple-lead);
+  letter-spacing: var(--pk-apple-eyebrow-tracking);
+}
+
+.pk-landing-below-fold .pk-prism-holo-text {
+  background: var(--pk-apple-text-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ——— Surface glass Apple (landing below-fold) ——— */
+.pk-landing-below-fold .pk-prism-card {
+  border-radius: 1.35rem;
+  border-color: var(--pk-apple-surface-border);
+  background: var(--pk-apple-surface-bg);
+  backdrop-filter: blur(var(--pk-apple-surface-blur)) saturate(1.1);
+  -webkit-backdrop-filter: blur(var(--pk-apple-surface-blur)) saturate(1.1);
+  box-shadow:
+    inset 0 1px 0 var(--pk-apple-surface-highlight),
+    var(--pk-apple-surface-shadow);
+}
+
+/* ——— Bandeau workflow sous générateur ——— */
+.pk-landing-below-fold .pk-workflow-rail {
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  border-radius: 1.35rem;
+  border: 1px solid var(--pk-apple-surface-border);
+  background: var(--pk-apple-surface-bg);
+  backdrop-filter: blur(var(--pk-apple-surface-blur)) saturate(1.1);
+  -webkit-backdrop-filter: blur(var(--pk-apple-surface-blur)) saturate(1.1);
+  box-shadow: inset 0 1px 0 var(--pk-apple-surface-highlight);
+}
+
+.pk-landing-below-fold .pk-workflow-rail__title {
+  font-size: clamp(1.125rem, 2.2vw, 1.3rem);
+  font-weight: var(--pk-apple-title-weight);
+  letter-spacing: var(--pk-apple-title-tracking);
+  color: var(--pk-apple-title);
+}
+
+.pk-landing-below-fold .pk-workflow-rail__mode {
+  border-color: var(--pk-apple-pill-border);
+  background: var(--pk-apple-pill-bg);
+  color: var(--pk-apple-eyebrow);
+}
+
+.pk-landing-below-fold .pk-workflow-rail__card {
+  border-color: var(--pk-apple-pill-border);
+  background: color-mix(in srgb, var(--pk-apple-pill-bg) 140%, transparent);
+}
+
+.pk-landing-below-fold .pk-workflow-rail__icon {
+  color: var(--pk-apple-icon);
+}
+
+.pk-landing-below-fold .pk-workflow-rail__step-title {
+  color: var(--pk-apple-title);
+}
+
+.pk-landing-below-fold .pk-workflow-rail__step-hint,
+.pk-landing-below-fold .pk-workflow-rail__note {
+  color: var(--pk-apple-lead);
+}
+
+.pk-landing-below-fold .pk-workflow-rail__pricing {
+  color: color-mix(in srgb, var(--pk-apple-accent-to) 72%, var(--pk-apple-title));
+  border-color: color-mix(in srgb, var(--pk-apple-accent-to) 32%, transparent);
+}
+
+/* ——— Benefits ——— */
+.pk-landing-below-fold .pk-landing-benefits__icon {
+  border-color: var(--pk-apple-pill-border);
+  background: var(--pk-apple-pill-bg);
+}
+
+.pk-landing-below-fold .pk-landing-benefits__icon svg {
+  color: var(--pk-apple-icon);
+}
+
+.pk-landing-below-fold .pk-landing-benefits__card h3 {
+  color: var(--pk-apple-title);
+  font-weight: 650;
+  letter-spacing: var(--pk-apple-title-tracking);
+}
+
+.pk-landing-below-fold .pk-landing-benefits__card p,
+.pk-landing-below-fold .pk-landing-benefits__card li {
+  color: var(--pk-apple-lead);
+}
+
+.pk-landing-below-fold .pk-landing-benefits__card li span[aria-hidden] {
+  background: var(--pk-apple-icon);
+}
+
+/* ——— Workflow steps — épuré Apple ——— */
+.pk-landing-below-fold .pk-landing-workflow-step__sheen,
+.pk-landing-below-fold .pk-landing-workflow-step__liquid {
+  display: none;
+}
+
+.pk-landing-below-fold .pk-landing-workflow-step {
+  border-radius: 1.25rem;
+  border: 1px solid var(--pk-apple-surface-border);
+  background: var(--pk-apple-surface-bg);
+  backdrop-filter: blur(14px) saturate(1.08);
+  -webkit-backdrop-filter: blur(14px) saturate(1.08);
+  box-shadow: inset 0 1px 0 var(--pk-apple-surface-highlight);
+  transition:
+    border-color 280ms ease,
+    box-shadow 280ms ease,
+    transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.pk-landing-below-fold .pk-landing-workflow-step--active {
+  border-color: color-mix(in srgb, var(--pk-apple-accent-to) 38%, var(--pk-apple-surface-border));
+  box-shadow:
+    inset 0 1px 0 var(--pk-apple-surface-highlight),
+    0 0 0 1px color-mix(in srgb, var(--pk-apple-accent-to) 12%, transparent),
+    0 16px 40px color-mix(in srgb, var(--pk-apple-accent-to) 10%, transparent);
+}
+
+.pk-landing-below-fold .pk-landing-workflow-step h3 {
+  color: var(--pk-apple-title);
+}
+
+.pk-landing-below-fold .pk-landing-workflow-step p {
+  color: var(--pk-apple-lead);
+}
+
+.pk-landing-below-fold .pk-landing-workflow-step__index {
+  color: var(--pk-apple-eyebrow);
+}
+
+.pk-landing-below-fold .pk-landing-workflow-step--active .pk-landing-workflow-step__index {
+  color: var(--pk-apple-accent-to);
+}
+
+.pk-landing-below-fold .pk-landing-workflow-step__orb {
+  border: 1px solid var(--pk-apple-pill-border);
+  background: var(--pk-apple-pill-bg);
+  box-shadow: none;
+}
+
+.pk-landing-below-fold .pk-landing-workflow-step__orb::before {
+  background: radial-gradient(circle, color-mix(in srgb, var(--pk-apple-accent-from) 35%, transparent), transparent 70%);
+}
+
+.pk-landing-below-fold .pk-landing-workflow > p,
+.pk-landing-below-fold .pk-landing-workflow .text-white\/58 {
+  color: var(--pk-apple-lead) !important;
+}
+
+/* ——— Communauté ——— */
+.pk-landing-below-fold .pk-landing-community h2 {
+  font-size: var(--pk-apple-title-size);
+  font-weight: var(--pk-apple-title-weight);
+  letter-spacing: var(--pk-apple-title-tracking);
+}
+
+.pk-landing-below-fold .pk-landing-community p {
+  color: var(--pk-apple-lead);
+}
+
+.pk-landing-below-fold .pk-landing-community .rounded-full.border {
+  border-color: var(--pk-apple-pill-border) !important;
+  background: var(--pk-apple-pill-bg) !important;
+  color: var(--pk-apple-eyebrow) !important;
+}
+
+/* ——— Pricing ——— */
+.pk-landing-below-fold .pk-landing-pricing-teaser {
+  --pk-pricing-accent: var(--pk-apple-accent-to);
+  --pk-pricing-accent-soft: color-mix(in srgb, var(--pk-apple-accent-to) 14%, transparent);
+  --pk-pricing-accent-border: color-mix(in srgb, var(--pk-apple-accent-to) 34%, transparent);
+}
+
+.pk-landing-below-fold .pk-landing-pricing-teaser__trust-pill {
+  border-color: var(--pk-apple-pill-border);
+  background: var(--pk-apple-pill-bg);
+  color: var(--pk-apple-eyebrow);
+}
+
+.pk-landing-below-fold .pk-landing-pricing-teaser__card h3,
+.pk-landing-below-fold .pk-landing-pricing-teaser__price {
+  color: var(--pk-apple-title);
+}
+
+.pk-landing-below-fold .pk-landing-pricing-teaser__card p,
+.pk-landing-below-fold .pk-landing-pricing-teaser__feature,
+.pk-landing-below-fold .pk-landing-pricing-teaser__footnote {
+  color: var(--pk-apple-lead);
+}
+
+.pk-landing-below-fold .pk-landing-pricing-teaser__feature-icon {
+  color: var(--pk-apple-icon);
+}
+
+.pk-landing-below-fold .pk-landing-pricing-teaser__footnote a {
+  color: var(--pk-apple-accent-from);
+}
+
+/* ——— Témoignages ——— */
+.pk-landing-below-fold .pk-landing-testimonials p,
+.pk-landing-below-fold .pk-landing-testimonials footer {
+  color: var(--pk-apple-lead);
+}
+
+.pk-landing-below-fold .pk-landing-testimonials h2,
+.pk-landing-below-fold .pk-landing-testimonials .font-bold {
+  font-size: var(--pk-apple-title-size);
+  font-weight: var(--pk-apple-title-weight);
+  letter-spacing: var(--pk-apple-title-tracking);
+  color: var(--pk-apple-title);
+}
+
+.pk-landing-below-fold .pk-landing-testimonials__card svg {
+  color: var(--pk-apple-accent-to);
+}
+
+.pk-landing-below-fold .pk-landing-testimonials--compact {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.pk-landing-below-fold .pk-landing-testimonials--compact .pk-landing-apple-head {
+  margin-bottom: 0.25rem;
+}
+
+.pk-landing-below-fold .pk-landing-testimonials--compact .pk-landing-testimonials__compact-grid {
+  margin-top: clamp(1.75rem, 4vw, 2.25rem);
+}
+
+/* ——— Retours studio (whispers) ——— */
+.pk-landing-below-fold .pk-producer-whispers {
+  padding-top: 0.25rem;
+  padding-bottom: 0.5rem;
+}
+
+.pk-landing-below-fold .pk-producer-whispers__eyebrow {
+  color: var(--pk-apple-eyebrow);
+  letter-spacing: var(--pk-apple-eyebrow-tracking);
+}
+
+.pk-landing-below-fold .pk-producer-whispers__card {
+  border-color: var(--pk-apple-surface-border);
+  background: color-mix(in srgb, var(--pk-apple-surface-bg) 85%, transparent);
+  box-shadow: inset 0 1px 0 var(--pk-apple-surface-highlight);
+}
+
+.pk-landing-below-fold .pk-producer-whispers__quote {
+  color: var(--pk-apple-lead);
+}
+
+.pk-landing-below-fold .pk-producer-whispers__who {
+  color: color-mix(in srgb, var(--pk-apple-eyebrow) 88%, transparent);
+}
+
+/* ——— Trending strip mobile ——— */
+.pk-landing-below-fold .pk-landing-trending-strip__eyebrow {
+  letter-spacing: var(--pk-apple-eyebrow-tracking);
+  color: var(--pk-apple-eyebrow);
+}
+
+.pk-landing-below-fold .pk-landing-trending-strip__title {
+  font-weight: var(--pk-apple-title-weight);
+  letter-spacing: var(--pk-apple-title-tracking);
+  color: var(--pk-apple-title);
+}
+
+.pk-landing-below-fold .pk-landing-trending-strip__link {
+  color: color-mix(in srgb, var(--pk-apple-accent-to) 78%, var(--pk-apple-title));
+}
+
+/* ——— CTA final + FAQ ——— */
+.pk-landing-below-fold .pk-landing-apple-panel,
+.pk-landing-below-fold .pk-landing-apple-faq {
+  border-radius: 1.5rem;
+}
+
+.pk-landing-below-fold .pk-landing-apple-panel__title,
+.pk-landing-below-fold .pk-landing-apple-faq__title {
+  font-size: clamp(1.35rem, 3vw, 1.85rem);
+  font-weight: var(--pk-apple-title-weight);
+  letter-spacing: var(--pk-apple-title-tracking);
+  color: var(--pk-apple-title);
+}
+
+.pk-landing-below-fold .pk-landing-apple-panel__lead {
+  color: var(--pk-apple-lead);
+}
+
+.pk-landing-below-fold .pk-landing-apple-faq__item {
+  border-color: var(--pk-apple-pill-border) !important;
+  background: var(--pk-apple-pill-bg) !important;
+}
+
+.pk-landing-below-fold .pk-landing-apple-faq__item summary {
+  color: var(--pk-apple-title);
+}
+
+.pk-landing-below-fold .pk-landing-apple-faq__item > div {
+  color: var(--pk-apple-lead);
+}
+
+/* ——— Bannière statut (erreur trending) ——— */
+.pk-landing-apple-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid var(--pk-apple-pill-border);
+  background: var(--pk-apple-pill-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.pk-landing-apple-banner__text {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--pk-apple-title);
+}
+
+.pk-landing-apple-banner__btn {
+  display: inline-flex;
+  height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid var(--pk-apple-pill-border);
+  background: transparent;
+  padding-inline: 1.1rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--pk-apple-title);
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.pk-landing-apple-banner__btn:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--pk-apple-accent-to) 42%, var(--pk-apple-pill-border));
+  color: var(--pk-apple-accent-to);
+}
+
+.pk-landing-apple-banner__btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+/* ——— Footer landing ——— */
+.pk-prism-stage--landing .pk-landing-footer-v2 {
+  border-top: 1px solid var(--pk-apple-pill-border);
+}
+
+.pk-prism-stage--landing .pk-landing-footer-v2__brand-lead,
+.pk-prism-stage--landing .pk-landing-footer-v2__nav-link,
+.pk-prism-stage--landing .pk-landing-footer-v2__ace {
+  color: var(--pk-apple-lead);
+}
+
+.pk-prism-stage--landing .pk-landing-footer-v2__nav-title,
+.pk-prism-stage--landing .pk-landing-footer-v2__social-label {
+  color: var(--pk-apple-eyebrow);
+  letter-spacing: var(--pk-apple-eyebrow-tracking);
+}
+
+.pk-prism-stage--landing .pk-landing-footer-v2__nav-link:hover {
+  color: var(--pk-apple-title);
+}
+
+/* ——— Cloud moods section ——— */
+.pk-landing-below-fold .pk-landing-cloud-moods__title {
+  color: var(--pk-apple-title);
+  font-weight: var(--pk-apple-title-weight);
+  letter-spacing: var(--pk-apple-title-tracking);
+}
+
+.pk-landing-below-fold .pk-landing-cloud-moods__lead {
+  color: var(--pk-apple-lead);
+}
+
+/* ——— Sticky CTA ——— */
+.pk-prism-stage--landing .pk-landing-sticky-cta {
+  border-color: var(--pk-apple-surface-border);
+  background: var(--pk-apple-surface-bg);
+  backdrop-filter: blur(20px) saturate(1.15);
+  -webkit-backdrop-filter: blur(20px) saturate(1.15);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pk-landing-below-fold .pk-landing-benefits__card,
+  .pk-landing-below-fold .pk-landing-workflow-step {
+    transition: none;
+  }
+}

@@ -106,6 +106,7 @@ import { useT } from "@/i18n";
 import { getRemainingBeats, PLAN_LIMITS, FREE_MASTERING_UPSELL_AT, getTotalGenerationLimit } from "@/lib/planLimits";
 import { planPriceLabel } from "@/lib/planPricing";
 import { canDualGeneration, canExportWav } from "@/lib/planEntitlements";
+import { hasLegalHolderName } from "@/lib/commercialLicenseDocument";
 import {
   creditsBlockedReason,
   markExhaustedCreditsPromptShown,
@@ -119,6 +120,8 @@ import {
 } from "@/lib/growthUpsell";
 import { useGrowthUpsellStore } from "@/stores/growthUpsellStore";
 import { RemixStudioPanel } from "@/components/dashboard/RemixStudioPanel";
+import { CoverStudioPanel } from "@/components/dashboard/CoverStudioPanel";
+import { coverResultTitle, prepareCoverGeneration } from "@/lib/coverGeneration";
 import { generateBeat, generateBeatDualBatch, remixLoopAce } from "@/lib/audioApi";
 import { ACE_REMIX_UNAVAILABLE_COPY, AceRemixUnavailableError } from "@/lib/aceRemix";
 import { buildAceCaption, type GenerateParams } from "@/lib/promptBuilder";
@@ -134,12 +137,14 @@ import { LoopDetailsPanel } from "@/components/dashboard/LoopDetailsPanel";
 import { LoopDetailsSheet, LoopDetailsSheetHeader } from "@/components/dashboard/LoopDetailsSheet";
 import { MasteringPanel } from "@/components/mastering/MasteringPanel";
 import { DashboardGenerateButton } from "@/components/dashboard/DashboardGenerateButton";
+import type { PanelGenerateBridge } from "@/components/dashboard/panelGenerateBridge";
 import {
   GeneratorAdvancedOutputControls,
   VOCAL_STYLE_OPTIONS,
   type VocalStyleValue,
 } from "@/components/dashboard/GeneratorAdvancedOutputControls";
 import { IdeaPromptSection, DASHBOARD_PROMPT_ROWS } from "@/components/dashboard/IdeaPromptSection";
+import { resolveRandomPromptLocale } from "@/lib/resolveRandomPromptLocale";
 import { InspirationChipRow } from "@/components/dashboard/InspirationChipRow";
 import { GenerationCreditAmount, GenerationCreditIcon } from "@/components/GenerationCreditIcon";
 import { triggerBeatReady } from "@/lib/delight/moments";
@@ -466,9 +471,10 @@ export default function Dashboard() {
     }
   });
   const [detailsId, setDetailsId] = useState<string | null>(null);
-  const [mode, setMode] = useState<"beat" | "song" | "remix">(() => {
+  const [mode, setMode] = useState<"beat" | "song" | "remix" | "cover">(() => {
     const saved = typeof window !== "undefined" ? window.localStorage.getItem("producerhit_mode") : null;
     if (saved === "remix") return "remix";
+    if (saved === "cover") return "cover";
     return saved === "beat" ? "beat" : "song";
   });
   const [advancedOpen, setAdvancedOpen] = useState<boolean>(() => {
@@ -498,6 +504,21 @@ export default function Dashboard() {
   const [songTimeSignatureMode, setSongTimeSignatureMode] = useState<"auto" | "manual">("auto");
   const [songVocalLanguageMode, setSongVocalLanguageMode] = useState<"auto" | "manual">("auto");
   const [manualVocalLanguage, setManualVocalLanguage] = useState("en");
+
+  const beatPromptLocale = useMemo(
+    () => resolveRandomPromptLocale({ surface: "dashboard-beat", uiLocale: locale }),
+    [locale],
+  );
+  const songPromptLocale = useMemo(
+    () =>
+      resolveRandomPromptLocale({
+        surface: "dashboard-song",
+        uiLocale: locale,
+        vocalLanguageMode: songVocalLanguageMode,
+        manualVocalLanguage,
+      }),
+    [locale, songVocalLanguageMode, manualVocalLanguage],
+  );
   const [songDurationSec, setSongDurationSec] = useState(30);
   const [songTimeSignature, setSongTimeSignature] = useState<(typeof timeSignatureOptions)[number]>("4/4");
   const [beatInstrumental] = useState(true);
@@ -752,6 +773,14 @@ export default function Dashboard() {
           if (nextPlan && nextPlan !== "free") {
             toast.success(locale === "fr" ? `Plan activé : ${nextPlan}` : `Plan activated: ${nextPlan}`);
             if (user?.id) useWavFormatCoachStore.getState().scheduleProTip(user.id, 6_000);
+            if (!hasLegalHolderName(fromStore)) {
+              toast(
+                locale === "fr"
+                  ? "Ajoute ton prénom et nom dans Réglages pour tes licences par titre."
+                  : "Add your legal name in Settings for per-track licenses.",
+                { icon: "📄", duration: 6000 },
+              );
+            }
             return;
           }
           await new Promise((r) => setTimeout(r, 1200));
@@ -847,7 +876,7 @@ export default function Dashboard() {
       setGenrePickMode("custom");
       setField("genre", urlGenre);
       const rawMode = params.get("mode");
-      if (rawMode === "beat" || rawMode === "song" || rawMode === "remix") setMode(rawMode);
+      if (rawMode === "beat" || rawMode === "song" || rawMode === "remix" || rawMode === "cover") setMode(rawMode);
     }
 
     if (urlPrompt) window.history.replaceState({}, "", "/dashboard");
@@ -1200,6 +1229,7 @@ export default function Dashboard() {
   const bars = barsFromLoopLength(form.loopLength);
   const isSong = mode === "song";
   const isRemix = mode === "remix";
+  const isCover = mode === "cover";
   const effectiveEngine = isSong ? "ace-step" : engine;
   const songIsCustom = isSong && songUiMode === "custom";
   /** MP3 par défaut (stockage DB inline ~3–8 Mo vs WAV ~20 Mo). WAV seulement si choisi explicitement. */
@@ -2642,6 +2672,193 @@ export default function Dashboard() {
     ],
   );
 
+  const handleCoverGenerate = useCallback(
+    async (input: { lyrics: string; styleHint: string }) => {
+      if (remaining < 1 || generating) return;
+      unlockAudioPlaybackFromGesture();
+      armGenerationAutoplay();
+      const coverSessionId = ++generateSessionRef.current;
+      setGenerating(true);
+      const generationKey =
+        typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `cover-${Date.now()}`;
+      const randomGenre =
+        genrePickMode === "custom" && isRandomGenreSelection(form.genre) ? pickRandomGenreValue() : undefined;
+      if (randomGenre) setLastRandomGenre(randomGenre);
+      const { promptGenre, displayGenre } = resolveGenreForGeneration(genrePickMode, form.genre, randomGenre);
+      const title = coverResultTitle(displayGenre, locale);
+      const coverSlots: GenerationSlot[] = [
+        { idx: 1, status: "generating", title, seed: 0, visible: true, previewReady: false, progressPct: 0 },
+      ];
+      setGenerationSlots(coverSlots);
+      syncRemixGenerationStart(coverSessionId, coverSlots);
+      let coverOk = false;
+
+      const { inputParams, generateOptions, prompt, seed, engine } = prepareCoverGeneration({
+        lyrics: input.lyrics,
+        genre: promptGenre,
+        styleHint: input.styleHint,
+        locale,
+      });
+
+      try {
+        trackClientEvent("cover_start", { plan, source: entrySource, genre: displayGenre });
+        const result = await generateBeat(inputParams, engine, {
+          ...generateOptions,
+          audioFormat: effectiveAudioFormat,
+          generationKey,
+        });
+        const rawAudioUrl = result.audioUrl;
+        if (!rawAudioUrl) throw new Error(locale === "fr" ? "Audio manquant" : "Missing audio");
+        const previewId = `preview-${generationKey}`;
+        const playbackUrl = await resolvePlaybackUrlForLoop(previewId, rawAudioUrl);
+        const previewLoop: Loop = {
+          id: previewId,
+          userId: user?.id,
+          createdAt: new Date().toISOString(),
+          engine: result.engine,
+          name: title,
+          genre: displayGenre,
+          influence: "",
+          key: result.meta?.keyScale?.split(" ")[0] ?? "",
+          scale: result.meta?.keyScale?.split(" ")[1] ?? "",
+          bpm: result.meta?.bpm && result.meta.bpm > 0 ? result.meta.bpm : 0,
+          loopLength: "8 bars",
+          swing: 0,
+          mood: form.mood || "Auto",
+          energyLevel: form.energyLevel || "Medium",
+          reverb: form.reverb || "Medium",
+          prompt,
+          audioUrl: playbackUrl,
+          seed: typeof result.meta?.seed === "number" && Number.isFinite(result.meta.seed) ? result.meta.seed : seed,
+          details: {
+            caption: result.meta?.prompt ?? prompt,
+            lyrics: result.meta?.lyrics ?? input.lyrics,
+            bpm: result.meta?.bpm ?? null,
+            duration: result.meta?.duration ?? generateOptions.duration ?? null,
+            keyScale: result.meta?.keyScale ?? "",
+            timeSignature: result.meta?.timeSignature ?? "",
+            audioFormat: result.meta?.audioFormat ?? effectiveAudioFormat,
+            coverPrompt: buildCoverPromptSnapshot({
+              prompt,
+              genre: displayGenre,
+              mood: form.mood,
+              influence: "",
+            }),
+          },
+          stemsUrl: null,
+          isSaved: false,
+          isPublic: true,
+        };
+        upsertLoop(previewLoop);
+        if (rawAudioUrl.startsWith("http")) primeAudioCache(previewId, rawAudioUrl);
+        autoplaySingleGenerationResult(previewLoop, {
+          versions: 1,
+          workspaceFilter: { query, savedOnly },
+          mobileV2,
+          goResults,
+          isActiveSession: () => true,
+        });
+
+        const loop = await createLoop({
+          engine: result.engine,
+          name: title,
+          genre: displayGenre,
+          influence: "",
+          key: previewLoop.key,
+          scale: previewLoop.scale,
+          bpm: previewLoop.bpm,
+          loopLength: "8 bars",
+          swing: 0,
+          mood: previewLoop.mood,
+          energyLevel: previewLoop.energyLevel,
+          reverb: previewLoop.reverb,
+          prompt,
+          audioUrl: rawAudioUrl,
+          seed: previewLoop.seed,
+          details: previewLoop.details,
+          stemsUrl: null,
+          isSaved: false,
+          isPublic: true,
+        });
+        await migrateAudioCache(previewId, loop.id);
+        removeLoop(previewId);
+        coverOk = true;
+        setGenerationSlots(null);
+        syncGenerationSlots(null);
+        autoplaySingleGenerationResult(loop, {
+          versions: 1,
+          workspaceFilter: { query, savedOnly },
+          mobileV2,
+          goResults,
+          isActiveSession: () => true,
+        });
+        trackClientEvent("generate_success", { loop_id: loop.id, mode: "cover", versions: 1, plan, source: entrySource });
+        consumeCredit();
+        const usedAfterCover = usedCountRef.current;
+        trackFreeGenMilestonesWithUpsell({
+          usedAfterGen: usedAfterCover,
+          loopId: loop.id,
+          mode: "cover",
+          source: entrySource,
+        });
+        triggerBeatReady(locale, loop.id, { isFirst: false, versionCount: 1 });
+        toast.success(locale === "fr" ? "Cover prêt — écoute le résultat 🎧" : "Cover ready — listen to the result 🎧");
+        if (shouldShowSharePromptAfterGeneration(usedAfterCover)) {
+          const shareLoop =
+            pickLoopForSharePrompt(useLoopsStore.getState().loops, [loop.id], loop.id) ?? loop;
+          trackClientEvent("growth_share_prompt", {
+            loop_id: shareLoop.id,
+            source: "post_cover",
+            suggested: shareLoop.id !== loop.id,
+          });
+          setShareMomentLoop(shareLoop);
+        }
+        if (mobileV2) goResults();
+        if (user) void refreshProfile({ silent: true });
+      } catch (err) {
+        const anyErr = err as { limitReached?: boolean };
+        if (anyErr?.limitReached) {
+          toast.error(locale === "fr" ? "Limite mensuelle atteinte" : "Monthly limit reached");
+          navigate("/pricing?plan=pro&checkout=1");
+        } else {
+          toast.error(err instanceof Error ? err.message : locale === "fr" ? "Cover échoué" : "Cover failed");
+        }
+        setGenerationSlots(null);
+        syncGenerationSlots(null);
+      } finally {
+        setGenerating(false);
+        syncRemixGenerationFinish(coverSessionId, { ok: coverOk, title });
+      }
+    },
+    [
+      consumeCredit,
+      createLoop,
+      effectiveAudioFormat,
+      entrySource,
+      form.energyLevel,
+      form.genre,
+      form.mood,
+      form.reverb,
+      generating,
+      genrePickMode,
+      goResults,
+      locale,
+      migrateAudioCache,
+      mobileV2,
+      navigate,
+      plan,
+      primeAudioCache,
+      refreshProfile,
+      remaining,
+      removeLoop,
+      query,
+      savedOnly,
+      setLastRandomGenre,
+      upsertLoop,
+      user,
+    ],
+  );
+
   useEffect(() => {
     if (!pendingLandingRequest || landingFormAppliedRef.current) return;
 
@@ -2841,14 +3058,9 @@ export default function Dashboard() {
 
   const showMasterWorkspace = mobileV2 ? mobileTab === "master" : workspaceView === "master";
 
-  type RemixMobileDock = {
-    canSubmit: boolean;
-    generating: boolean;
-    submit: () => void;
-    idleLabel: string;
-    generatingLabel: string;
-  };
-  const [remixMobileDock, setRemixMobileDock] = useState<RemixMobileDock | null>(null);
+  const [remixGenerateBridge, setRemixGenerateBridge] = useState<PanelGenerateBridge | null>(null);
+  const [coverGenerateBridge, setCoverGenerateBridge] = useState<PanelGenerateBridge | null>(null);
+  const altGenerateBridge = isRemix ? remixGenerateBridge : isCover ? coverGenerateBridge : null;
 
   const mobileResultsScrollClass = mobileV2
     ? cn(
@@ -2945,7 +3157,7 @@ export default function Dashboard() {
                   type="button"
                   onClick={() => setMode("song")}
                   className={cn(
-                    "rounded-xl px-3 py-2 text-xs font-semibold transition-all active:scale-[0.98]",
+                    "rounded-xl px-2.5 py-2 text-[11px] font-semibold transition-all active:scale-[0.98] sm:px-3 sm:text-xs",
                     mobileV2 && "min-h-11 min-w-0 flex-1 text-center",
                     mode === "song"
                       ? "pk-prism-pill-active"
@@ -2960,7 +3172,7 @@ export default function Dashboard() {
                   type="button"
                   onClick={() => setMode("beat")}
                   className={cn(
-                    "rounded-xl px-3 py-2 text-xs font-semibold transition-all active:scale-[0.98]",
+                    "rounded-xl px-2.5 py-2 text-[11px] font-semibold transition-all active:scale-[0.98] sm:px-3 sm:text-xs",
                     mobileV2 && "min-h-11 min-w-0 flex-1 text-center",
                     mode === "beat"
                       ? "pk-prism-pill-active"
@@ -2973,9 +3185,24 @@ export default function Dashboard() {
                 </button>
                 <button
                   type="button"
+                  onClick={() => setMode("cover")}
+                  className={cn(
+                    "rounded-xl px-2.5 py-2 text-[11px] font-semibold transition-all active:scale-[0.98] sm:px-3 sm:text-xs",
+                    mobileV2 && "min-h-11 min-w-0 flex-1 text-center",
+                    mode === "cover"
+                      ? "pk-prism-pill-active"
+                      : mobileV2
+                        ? "text-white/65 hover:text-white"
+                        : "text-white/50 hover:text-white",
+                  )}
+                >
+                  {t.app.modeCover}
+                </button>
+                <button
+                  type="button"
                   onClick={() => setMode("remix")}
                   className={cn(
-                    "rounded-xl px-3 py-2 text-xs font-semibold transition-all active:scale-[0.98]",
+                    "rounded-xl px-2.5 py-2 text-[11px] font-semibold transition-all active:scale-[0.98] sm:px-3 sm:text-xs",
                     mobileV2 && "min-h-11 min-w-0 flex-1 text-center",
                     mode === "remix"
                       ? "pk-prism-pill-active"
@@ -3016,8 +3243,8 @@ export default function Dashboard() {
                   className={cn(
                     "rounded-full px-3 py-1.5 text-[11px] font-semibold transition-colors",
                     (mode === "song" ? songUiMode === "custom" : advancedOpen)
-                      ? "bg-white/10 text-pk-text"
-                      : "bg-white/5 text-pk-muted hover:text-pk-text",
+                      ? "pk-prism-pill-active"
+                      : "bg-white/5 text-white/55 hover:text-white",
                   )}
                 >
                   {t.landing.modeAdvanced}
@@ -3038,14 +3265,29 @@ export default function Dashboard() {
                 loops={loops}
                 generating={generating}
                 remaining={remaining}
-                plan={plan}
                 vibeRecreateMode={isRemixVibeRecreateEnabled()}
                 externalRemix={externalRemix}
                 onExternalRemixConsumed={() => setExternalRemix(null)}
-                mobileDock={mobileV2}
-                onMobileDockChange={mobileV2 ? setRemixMobileDock : undefined}
+                compactSections={mobileV2}
+                onGenerateBridgeChange={setRemixGenerateBridge}
                 onGenerate={(input) => void handleRemixGenerate(input)}
                 onRecreateVibe={(input) => void handleRecreateVibe(input)}
+              />
+            ) : mode === "cover" ? (
+              <CoverStudioPanel
+                locale={locale}
+                genre={form.genre}
+                genrePickMode={genrePickMode}
+                lastRandomGenre={lastRandomGenre}
+                onGenreChange={(v) => {
+                  setGenrePickMode("custom");
+                  setField("genre", v);
+                }}
+                generating={generating}
+                remaining={remaining}
+                compactSections={mobileV2}
+                onGenerateBridgeChange={setCoverGenerateBridge}
+                onGenerate={(input) => void handleCoverGenerate(input)}
               />
             ) : mode === "beat" ? (
               <>
@@ -3099,6 +3341,7 @@ export default function Dashboard() {
 
                 <IdeaPromptSection
                   locale={locale}
+                  promptLocale={beatPromptLocale}
                   mode="beat"
                   value={form.prompt}
                   onChange={(v) => setField("prompt", v)}
@@ -3476,6 +3719,7 @@ export default function Dashboard() {
 
                 <IdeaPromptSection
                   locale={locale}
+                  promptLocale={songPromptLocale}
                   mode="song"
                   value={songDescription}
                   onChange={setSongDescription}
@@ -3938,60 +4182,72 @@ export default function Dashboard() {
               mobileV2 ? "pk-dashboard-mobile-footer border-t-white/10 px-3 pt-2.5 pb-2" : "pk-studio-generate-dock",
             )}
           >
-            {isRemix && mobileV2 && remixMobileDock ? (
-              <DashboardGenerateButton
-                generating={remixMobileDock.generating}
-                disabled={!remixMobileDock.canSubmit}
-                idleLabel={remixMobileDock.idleLabel}
-                generatingLabel={remixMobileDock.generatingLabel}
-                onClick={() => remixMobileDock.submit()}
-              />
-            ) : !isRemix ? (
-              <>
+            {isRemix || isCover ? (
+              altGenerateBridge ? (
                 <DashboardGenerateButton
-                  generating={generating}
-                  progressPct={generationProgressPct}
-                  disabled={!genreReady || generating || !quotaReady}
-                  creditBlocked={remaining < versions}
-                  idleLabel={
-                    mode === "song"
-                      ? locale === "fr"
-                        ? "Générer une chanson"
-                        : "Generate Song"
-                      : locale === "fr"
-                        ? "Générer un beat"
-                        : "Generate Beat"
-                  }
-                  generatingLabel={locale === "fr" ? "Génération" : "Generating"}
+                  generating={altGenerateBridge.generating}
+                  disabled={remaining >= 1 && !altGenerateBridge.canSubmit}
+                  creditBlocked={remaining < 1}
+                  idleLabel={altGenerateBridge.idleLabel}
+                  generatingLabel={altGenerateBridge.generatingLabel}
                   onClick={async () => {
-                    if (remaining < versions) {
-                      promptCreditsBlocked();
+                    if (remaining < 1) {
+                      promptCreditsBlocked(1);
                       return;
                     }
-                    if (generating) return;
                     if (!user) {
-                      window.localStorage.setItem(
-                        "producerhit_pending_generation",
-                        JSON.stringify({
-                          mode,
-                          engine,
-                          form,
-                          genrePickMode,
-                          lyricsMode,
-                          lyrics,
-                          songUiMode,
-                          songDescription,
-                          songVocalStyle,
-                        }),
-                      );
                       navigate("/auth", { state: { from: "/dashboard" } });
                       return;
                     }
-                    await handleGenerate();
+                    if (altGenerateBridge.generating) return;
+                    altGenerateBridge.submit();
                   }}
                 />
-              </>
-            ) : null}
+              ) : null
+            ) : (
+              <DashboardGenerateButton
+                generating={generating}
+                progressPct={generationProgressPct}
+                disabled={!genreReady || generating || !quotaReady}
+                creditBlocked={remaining < versions}
+                idleLabel={
+                  mode === "song"
+                    ? locale === "fr"
+                      ? "Générer une chanson"
+                      : "Generate Song"
+                    : locale === "fr"
+                      ? "Générer un beat"
+                      : "Generate Beat"
+                }
+                generatingLabel={locale === "fr" ? "Génération" : "Generating"}
+                onClick={async () => {
+                  if (remaining < versions) {
+                    promptCreditsBlocked();
+                    return;
+                  }
+                  if (generating) return;
+                  if (!user) {
+                    window.localStorage.setItem(
+                      "producerhit_pending_generation",
+                      JSON.stringify({
+                        mode,
+                        engine,
+                        form,
+                        genrePickMode,
+                        lyricsMode,
+                        lyrics,
+                        songUiMode,
+                        songDescription,
+                        songVocalStyle,
+                      }),
+                    );
+                    navigate("/auth", { state: { from: "/dashboard" } });
+                    return;
+                  }
+                  await handleGenerate();
+                }}
+              />
+            )}
             <div className={cn(mobileV2 ? "pk-dashboard-mobile-footer__meta mt-1.5" : "mt-3")}>
               {mobileV2 ? (
                 <div className="pk-dashboard-mobile-footer__quota-row pk-dashboard-mobile-footer__quota-row--compact">
@@ -4184,7 +4440,7 @@ export default function Dashboard() {
                   ? `${workspaceVisibleCount} / ${workspaceFilteredTotal} · ${libraryTotalCount}`
                   : `${workspaceVisibleCount} / ${libraryTotalCount}`}
             </p>
-            <div className="relative w-full">
+            <div className="relative min-w-0 w-full max-w-full">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-pk-muted" />
               <input
                 value={query}
@@ -4215,8 +4471,8 @@ export default function Dashboard() {
             </div>
           </div>
         ) : (
-        <div className="pk-studio-workspace-header flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
+        <div className="pk-studio-workspace-header flex min-w-0 flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div className="pk-studio-workspace-header__intro min-w-0">
             <div className="pk-studio-workspace-header__title text-lg font-semibold">{locale === "fr" ? "Mon espace" : "My Workspace"}</div>
             <div className="mt-1 text-sm text-pk-muted">
               {locale === "fr"
@@ -4224,8 +4480,8 @@ export default function Dashboard() {
                 : `Showing ${workspaceVisibleCount} of ${hasWorkspaceFilters ? workspaceFilteredTotal : libraryTotalCount}`}
             </div>
           </div>
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-            <div className="flex items-center gap-2">
+          <div className="pk-studio-workspace-header__controls">
+            <div className="pk-studio-workspace-header__tabs">
               <button
                 type="button"
                 onClick={() => setWorkspaceView("tracks")}
@@ -4248,7 +4504,7 @@ export default function Dashboard() {
                 {locale === "fr" ? "Mastering Studio" : "Mastering Studio"}
               </button>
             </div>
-            <div className="relative w-full sm:w-80">
+            <div className="pk-studio-workspace-header__search">
               <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-pk-muted" />
               <input
                 value={query}
@@ -4257,7 +4513,7 @@ export default function Dashboard() {
                 className="pk-workspace-search-field w-full rounded-pk border border-pk-border px-9 py-2 text-sm outline-none placeholder:text-pk-muted focus:border-pk-accent"
               />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="pk-studio-workspace-header__filters">
               <button
                 type="button"
                 onClick={() => setSavedOnly(false)}

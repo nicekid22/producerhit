@@ -25,32 +25,23 @@
 .pk-library-hero--cozy .pk-library-hero__eyebrow-icon {
   height: 0.9rem;
   width: 0.9rem;
-  color: rgba(167, 139, 250, 0.92);
+  color: var(--pk-apple-icon, rgba(167, 139, 250, 0.92));
   opacity: 0.95;
 }
 
 .pk-library-hero--cozy .pk-library-hero__orb--a {
-  background: color-mix(in srgb, rgba(167, 139, 250, 0.55) 28%, transparent);
+  background: color-mix(in srgb, var(--pk-apple-accent-from, rgba(167, 139, 250, 0.55)) 28%, transparent);
 }
 
 .pk-library-hero--cozy .pk-library-hero__orb--b {
-  background: color-mix(in srgb, rgba(103, 195, 255, 0.55) 22%, transparent);
+  background: color-mix(in srgb, var(--pk-apple-accent-to, rgba(103, 195, 255, 0.55)) 22%, transparent);
 }
 
-.pk-library-stat-pill--tracks .pk-library-stat-pill__icon {
-  color: rgba(103, 195, 255, 0.92);
-}
-
-.pk-library-stat-pill--saved .pk-library-stat-pill__icon {
-  color: rgba(251, 191, 36, 0.92);
-}
-
-.pk-library-stat-pill--playlists .pk-library-stat-pill__icon {
-  color: rgba(134, 239, 172, 0.92);
-}
-
+.pk-library-stat-pill--tracks .pk-library-stat-pill__icon,
+.pk-library-stat-pill--saved .pk-library-stat-pill__icon,
+.pk-library-stat-pill--playlists .pk-library-stat-pill__icon,
 .pk-library-stat-pill--mixtapes .pk-library-stat-pill__icon {
-  color: rgba(251, 146, 60, 0.92);
+  color: var(--pk-apple-icon, rgba(255, 255, 255, 0.72));
 }
 
 /* Rangées playlists / mixtapes */
@@ -141,26 +132,7 @@
   position: relative;
   display: block;
   aspect-ratio: 1;
-  border-radius: 1rem;
-  background-size: cover;
-  background-position: center;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    0 14px 36px rgba(0, 0, 0, 0.28);
   overflow: hidden;
-}
-
-.pk-library-collection-card__cover::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.45) 0%, transparent 55%);
-  opacity: 0.85;
-  transition: opacity 0.2s ease;
-}
-
-.pk-library-collection-card:hover .pk-library-collection-card__cover::after {
-  opacity: 0.65;
 }
 
 .pk-library-collection-card__kind-badge {
@@ -206,41 +178,6 @@
 .pk-library-collection-card--active .pk-library-collection-card__play {
   opacity: 1;
   transform: scale(1);
-}
-
-.pk-library-collection-card--active .pk-library-collection-card__cover {
-  box-shadow:
-    inset 0 0 0 2px rgba(255, 255, 255, 0.72),
-    0 0 24px var(--pk-el-earth-glow),
-    0 16px 40px rgba(0, 0, 0, 0.32);
-}
-
-.pk-library-collection-card--fire.pk-library-collection-card--active .pk-library-collection-card__cover {
-  box-shadow:
-    inset 0 0 0 2px rgba(255, 255, 255, 0.72),
-    0 0 24px var(--pk-el-fire-glow),
-    0 16px 40px rgba(0, 0, 0, 0.32);
-}
-
-.pk-library-collection-card--air.pk-library-collection-card--active .pk-library-collection-card__cover {
-  box-shadow:
-    inset 0 0 0 2px rgba(255, 255, 255, 0.72),
-    0 0 24px var(--pk-el-air-glow),
-    0 16px 40px rgba(0, 0, 0, 0.32);
-}
-
-.pk-library-collection-card--water.pk-library-collection-card--active .pk-library-collection-card__cover {
-  box-shadow:
-    inset 0 0 0 2px rgba(255, 255, 255, 0.72),
-    0 0 24px var(--pk-el-water-glow),
-    0 16px 40px rgba(0, 0, 0, 0.32);
-}
-
-.pk-library-collection-card--earth.pk-library-collection-card--active .pk-library-collection-card__cover {
-  box-shadow:
-    inset 0 0 0 2px rgba(255, 255, 255, 0.72),
-    0 0 24px var(--pk-el-earth-glow),
-    0 16px 40px rgba(0, 0, 0, 0.32);
 }
 
 .pk-library-collection-card__meta {
@@ -289,8 +226,8 @@
 }
 
 .pk-library-active-filter--collection {
-  border-color: color-mix(in srgb, var(--pk-el-earth) 32%, transparent);
-  background: color-mix(in srgb, var(--pk-el-earth-soft) 55%, transparent);
+  border-color: color-mix(in srgb, var(--pk-apple-accent-to, var(--prism-violet)) 30%, var(--pk-apple-pill-border, rgba(255, 255, 255, 0.12)));
+  background: color-mix(in srgb, var(--pk-apple-accent-from, var(--prism-cyan)) 10%, var(--pk-apple-pill-bg, rgba(255, 255, 255, 0.04)));
 }
 
 /* Loaders · couleurs par élément */

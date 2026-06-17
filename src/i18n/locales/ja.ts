@@ -85,6 +85,7 @@ export const ja: BaseMessageCatalog = {
     tabResults: "結果",
     tabMaster: "スタジオ",
     modeRemix: "Remix",
+    modeCover: "Cover",
     advancedSettings: "詳細設定",
   },
 };

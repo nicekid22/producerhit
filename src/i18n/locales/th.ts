@@ -85,6 +85,7 @@ export const th: BaseMessageCatalog = {
     tabResults: "ผลลัพธ์",
     tabMaster: "สตูดิโอ",
     modeRemix: "Remix",
+    modeCover: "Cover",
     advancedSettings: "การตั้งค่าขั้นสูง",
   },
 };

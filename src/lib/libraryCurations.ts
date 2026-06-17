@@ -1,6 +1,5 @@
 import type { ElementKind } from "@/components/icons/ElementIcons";
 import type { Loop } from "@/types/loop";
-import { genreCoverGradient } from "@/lib/genreCoverStyle";
 
 export type LibraryCollection = {
   id: string;
@@ -11,9 +10,16 @@ export type LibraryCollection = {
   subtitleFr: string;
   subtitleEn: string;
   loopIds: string[];
-  coverStyle: string;
+  /** Variante visuelle cover (0–3) — art CSS thème + élément */
+  coverVariant: number;
   trackCount: number;
 };
+
+function coverVariantFromId(id: string): number {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h + id.charCodeAt(i) * (i + 3)) % 4;
+  return h;
+}
 
 function sortRecent(loops: Loop[]): Loop[] {
   return loops.slice().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -47,7 +53,7 @@ export function buildLibraryCollections(loops: Loop[]): LibraryCollection[] {
       subtitleFr: "Tes sons à revisiter",
       subtitleEn: "Tracks you love",
       loopIds: saved.slice(0, 24).map((l) => l.id),
-      coverStyle: "linear-gradient(135deg, #8ec838 0%, #58a828 52%, #3d8820 100%)",
+      coverVariant: coverVariantFromId("playlist-favorites"),
       trackCount: saved.length,
     });
   }
@@ -61,7 +67,7 @@ export function buildLibraryCollections(loops: Loop[]): LibraryCollection[] {
     subtitleFr: "Reprends où tu t'es arrêté",
     subtitleEn: "Pick up where you left off",
     loopIds: recent.slice(0, 20).map((l) => l.id),
-    coverStyle: "linear-gradient(135deg, #b8e8ff 0%, #68b8f0 48%, #4898d8 100%)",
+    coverVariant: coverVariantFromId("playlist-recent"),
     trackCount: Math.min(recent.length, 20),
   });
 
@@ -75,7 +81,7 @@ export function buildLibraryCollections(loops: Loop[]): LibraryCollection[] {
       subtitleFr: "Créations d'aujourd'hui",
       subtitleEn: "Made today",
       loopIds: today.map((l) => l.id),
-      coverStyle: "linear-gradient(135deg, #ffd8c8 0%, #ff8868 48%, #e85868 100%)",
+      coverVariant: coverVariantFromId("playlist-today"),
       trackCount: today.length,
     });
   }
@@ -94,8 +100,9 @@ export function buildLibraryCollections(loops: Loop[]): LibraryCollection[] {
 
   for (const [genre, genreLoops] of topGenres) {
     if (genreLoops.length < 2) continue;
+    const slug = `mixtape-genre-${genre.toLowerCase().replace(/\s+/g, "-")}`;
     collections.push({
-      id: `mixtape-genre-${genre.toLowerCase().replace(/\s+/g, "-")}`,
+      id: slug,
       kind: "mixtape",
       element: "air",
       titleFr: `Mix · ${genre}`,
@@ -103,7 +110,7 @@ export function buildLibraryCollections(loops: Loop[]): LibraryCollection[] {
       subtitleFr: "Mixtape auto — vibe homogène",
       subtitleEn: "Auto mixtape — same vibe",
       loopIds: sortRecent(genreLoops).slice(0, 16).map((l) => l.id),
-      coverStyle: genreCoverGradient(genre),
+      coverVariant: coverVariantFromId(slug),
       trackCount: genreLoops.length,
     });
   }
@@ -119,7 +126,7 @@ export function buildLibraryCollections(loops: Loop[]): LibraryCollection[] {
       subtitleFr: "BPM lent · ambiance cozy",
       subtitleEn: "Slow BPM · cozy mood",
       loopIds: chill.slice(0, 14).map((l) => l.id),
-      coverStyle: "linear-gradient(145deg, #c8f0ff 0%, #78c0f0 55%, #4898d8 100%)",
+      coverVariant: coverVariantFromId("mixtape-chill"),
       trackCount: chill.length,
     });
   }
@@ -135,7 +142,7 @@ export function buildLibraryCollections(loops: Loop[]): LibraryCollection[] {
       subtitleFr: "High BPM · en feu",
       subtitleEn: "High BPM · on fire",
       loopIds: hype.slice(0, 14).map((l) => l.id),
-      coverStyle: "linear-gradient(145deg, #ffe8d8 0%, #ff9878 45%, #e85868 100%)",
+      coverVariant: coverVariantFromId("mixtape-hype"),
       trackCount: hype.length,
     });
   }
@@ -151,7 +158,7 @@ export function buildLibraryCollections(loops: Loop[]): LibraryCollection[] {
       subtitleFr: "Tes morceaux publics",
       subtitleEn: "Your public tracks",
       loopIds: sortRecent(publicLoops).slice(0, 16).map((l) => l.id),
-      coverStyle: "linear-gradient(135deg, #ffd4e8 0%, #c8b8ff 42%, #a8d4ff 100%)",
+      coverVariant: coverVariantFromId("playlist-public"),
       trackCount: publicLoops.length,
     });
   }

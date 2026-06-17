@@ -21,7 +21,7 @@ export function MarketingPageShell({ children, className, contentClassName }: Pr
   return (
     <div
       className={cn(
-        "pk-marketing-page relative min-h-screen text-white pk-prism-stage",
+        "pk-marketing-page pk-apple-app relative min-h-screen text-white pk-prism-stage",
         warmGlass && "pk-warm-glass-stage",
         cloud && "pk-cloud-stage",
         className,

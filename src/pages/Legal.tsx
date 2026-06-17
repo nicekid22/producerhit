@@ -119,7 +119,10 @@ export default function Legal() {
           <p>
             ProducerHit te permet de générer de la musique IA et de l’exporter selon ton abonnement. Cette section clarifie ce que tu peux faire
             commercialement avec tes exports — sans remplacer les règles des plateformes (Spotify, YouTube, BeatStars, etc.) ni celles du moteur IA sous-jacent
-            (ACE Step).
+            (ACE Step).{" "}
+            <a className="font-semibold text-pk-accent hover:underline" href="/commercial-license">
+              Télécharge ton certificat PDF premium →
+            </a>
           </p>
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[520px] border-collapse text-left text-sm">
@@ -188,7 +191,10 @@ export default function Legal() {
         <>
           <p>
             ProducerHit lets you generate AI music and export it according to your subscription. This section clarifies what you may do commercially with your
-            exports — without replacing platform rules (Spotify, YouTube, BeatStars, etc.) or the underlying AI engine terms (ACE Step).
+            exports — without replacing platform rules (Spotify, YouTube, BeatStars, etc.) or the underlying AI engine terms (ACE Step).{" "}
+            <a className="font-semibold text-pk-accent hover:underline" href="/commercial-license">
+              Download your premium PDF certificate →
+            </a>
           </p>
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[520px] border-collapse text-left text-sm">

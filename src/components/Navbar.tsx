@@ -4,7 +4,7 @@ import { Menu, X } from "lucide-react";
 import { buildAuthUrl } from "@/lib/authRoutes";
 import { useT } from "@/i18n";
 import { useAuthStore } from "@/stores/authStore";
-import { HeroCtaButton } from "@/components/landing/HeroCtaButton";
+import { LandingMobileMenuFooter } from "@/components/landing/LandingMobileMenuFooter";
 import { ThemeAndAccentPicker } from "@/components/ThemeAndAccentPicker";
 import { BrandLogo } from "@/components/landing/BrandLogo";
 import { LanguagePicker } from "@/components/LanguagePicker";
@@ -61,14 +61,9 @@ export function Navbar({ variant }: { variant: "marketing" | "auth" }) {
                   <Link to={buildAuthUrl({ mode: "login" })} className="pk-header-chrome__cta pk-header-chrome__cta--ghost">
                     {m.nav.login}
                   </Link>
-                  <HeroCtaButton
-                    to={buildAuthUrl()}
-                    variant="spark"
-                    size="nav"
-                    className="pk-header-chrome__cta pk-header-chrome__cta--primary"
-                  >
+                  <Link to={buildAuthUrl()} className="pk-header-chrome__cta pk-landing-header__gen-cta">
                     {m.nav.startFree}
-                  </HeroCtaButton>
+                  </Link>
                 </>
               )}
               <span className="pk-header-chrome__sep" aria-hidden />
@@ -136,19 +131,16 @@ export function Navbar({ variant }: { variant: "marketing" | "auth" }) {
                 <Link to={buildAuthUrl({ mode: "login" })} className="rounded-xl px-3 py-2.5 text-sm font-semibold text-pk-text hover:bg-white/5" onClick={() => setMobileOpen(false)}>
                   {m.nav.login}
                 </Link>
-                <HeroCtaButton to={buildAuthUrl()} variant="spark" size="nav" className="w-full rounded-xl" onClick={() => setMobileOpen(false)}>
+                <Link to={buildAuthUrl()} className="pk-landing-header__gen-cta w-full rounded-xl" onClick={() => setMobileOpen(false)}>
                   {m.nav.startFree}
-                </HeroCtaButton>
+                </Link>
               </>
             ) : (
               <Link to="/?home=1" className="rounded-xl px-3 py-2.5 text-sm font-semibold text-pk-muted hover:bg-white/5" onClick={() => setMobileOpen(false)}>
                 {m.nav.homePage}
               </Link>
             )}
-            <div className="pk-landing-mobile-nav__utilities mt-2">
-              <ThemeAndAccentPicker variant="nav-icon" surface="header" />
-              <LanguagePicker variant="nav" onChange={() => setMobileOpen(false)} />
-            </div>
+            <LandingMobileMenuFooter onLocaleChange={() => setMobileOpen(false)} />
           </div>
         </nav>
       ) : null}

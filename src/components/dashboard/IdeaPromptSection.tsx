@@ -9,6 +9,8 @@ export const DASHBOARD_PROMPT_ROWS = 4;
 
 type Props = {
   locale: AppLocale;
+  /** Locale des prompts aléatoires (dé) — défaut = locale UI. */
+  promptLocale?: AppLocale;
   mode: "beat" | "song";
   value: string;
   onChange: (value: string) => void;
@@ -18,6 +20,7 @@ type Props = {
 
 export function IdeaPromptSection({
   locale,
+  promptLocale,
   mode,
   value,
   onChange,
@@ -50,7 +53,7 @@ export function IdeaPromptSection({
       <div className="pk-idea-prompt-field">
         <div className="pk-dashboard-text-field" data-coach="prompt-field">
           <div className="pk-idea-prompt-tools">
-            <RandomPromptDiceButton locale={locale} mode={mode} onPick={onChange} />
+            <RandomPromptDiceButton locale={locale} promptLocale={promptLocale} mode={mode} onPick={onChange} />
           </div>
           <SpeechDictationField
             multiline

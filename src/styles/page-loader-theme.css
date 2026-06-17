@@ -5,11 +5,9 @@
 @keyframes pkPageLoaderEnter {
   from {
     opacity: 0;
-    transform: translateY(10px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
@@ -49,15 +47,16 @@
   inset: 0;
   z-index: 9990;
   isolation: isolate;
-  display: grid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   min-height: 100dvh;
   min-height: 100svh;
-  place-items: center;
   padding: 2rem 1.5rem;
   box-sizing: border-box;
   overflow: hidden;
-  animation: pkPageLoaderVeilIn 0.4s ease-out both;
+  opacity: 1;
 }
 
 .pk-page-loader--inline {
@@ -67,8 +66,14 @@
 }
 
 .pk-page-loader--pending {
-  opacity: 0;
   pointer-events: none;
+}
+
+.pk-page-loader--pending .pk-page-loader__card {
+  opacity: 0;
+  visibility: hidden;
+  transform: none;
+  animation: none !important;
 }
 
 /* Boot shell — fond aligné au thème sauvegardé, sans flash violet */
@@ -95,8 +100,9 @@
   width: 100%;
 }
 
-.pk-page-loader--inline.pk-page-loader--pending {
-  opacity: 1;
+.pk-page-loader--inline.pk-page-loader--pending .pk-page-loader__card {
+  opacity: 0;
+  visibility: hidden;
 }
 
 .pk-page-loader::before {
@@ -133,7 +139,8 @@
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   box-shadow: none;
-  animation: pkPageLoaderEnter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform: none;
+  animation: pkPageLoaderEnter 0.32s ease-out both;
 }
 
 .pk-page-loader__icon {
@@ -407,7 +414,8 @@ html.pk-cloud-active .pk-page-loader--cloud[data-pk-cloud-accent="blue"],
     animation: none !important;
   }
 
-  .pk-page-loader--pending {
+  .pk-page-loader--pending .pk-page-loader__card {
     opacity: 1;
+    visibility: visible;
   }
 }

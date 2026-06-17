@@ -118,9 +118,9 @@ export function Sidebar() {
   const homeLabel = m.app.home;
 
   return (
-    <div className="pk-sidebar-root flex h-full w-full min-w-0 items-center bg-transparent md:h-auto md:w-auto md:flex-col md:justify-between md:px-2 md:py-3">
-      <div className="flex min-w-0 flex-1 items-center md:flex-col md:gap-0">
-        <div className="pk-mobile-bottom-nav__routes flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto overscroll-x-contain px-1.5 py-1 [-webkit-overflow-scrolling:touch] md:mt-1 md:flex-col md:gap-0.5 md:overflow-visible md:px-0 md:py-0">
+    <div className="pk-sidebar-root flex h-full w-full min-w-0 items-center bg-transparent md:h-auto md:w-auto md:flex-col md:justify-between md:px-2">
+      <div className="flex min-w-0 flex-1 items-center md:w-full md:flex-col">
+        <div className="pk-mobile-bottom-nav__routes pk-sidebar-rail-nav flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto overscroll-x-contain px-1.5 py-1 [-webkit-overflow-scrolling:touch] md:flex-col md:overflow-visible md:px-0 md:py-0">
           <Link
             to="/?home=1"
             className={cn(
@@ -175,8 +175,8 @@ export function Sidebar() {
           })}
         </div>
 
-        <div className="pk-sidebar-footer hidden md:flex md:flex-col md:items-center md:gap-1.5 md:border-t md:border-white/[0.06] md:pt-2">
-          {user ? <NotificationBell locale={locale} /> : null}
+        <div className="pk-sidebar-footer hidden md:flex md:flex-col md:items-center md:border-t md:border-white/[0.06]">
+          {user ? <NotificationBell locale={locale} className="pk-sidebar-rail-slot" /> : null}
           <ThemeAndAccentPicker variant={CLOUD_THEME_ENABLED ? "sidebar-stack" : "nav-icon"} />
           {!CLOUD_THEME_ENABLED ? <LanguagePicker variant="sidebar" /> : null}
           {user ? (

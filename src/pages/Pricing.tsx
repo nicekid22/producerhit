@@ -28,6 +28,9 @@ import {
   type PricingCompareCell,
 } from "@/lib/pricingContent";
 import { croPricingHero } from "@/lib/croTrustCopy";
+import { LaunchOfferBanner } from "@/components/marketing/LaunchOfferBanner";
+import { LaunchPriceDisplay } from "@/components/marketing/LaunchPriceDisplay";
+import { MusicMoneyPlaybookSection } from "@/components/marketing/MusicMoneyPlaybookSection";
 import { cn } from "@/lib/utils";
 
 function CompareCell({ value }: { value: PricingCompareCell }) {
@@ -191,6 +194,8 @@ export default function Pricing() {
           </div>
         </header>
 
+        <LaunchOfferBanner locale={locale} className="mt-6" />
+
         {abandonedCheckout &&
         (abandonedCheckout.plan === "pro" ||
           abandonedCheckout.plan === "studio" ||
@@ -227,6 +232,7 @@ export default function Pricing() {
         {/* Plan cards */}
         <div className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4 xl:items-stretch">
           {plans.map((p) => {
+            const isPro = p.tier === "pro";
             const isCurrent = p.tier === currentPlan;
             const recommended = isRecommendedPlan(p.tier, currentPlan);
             const cta = pricingCtaMeta(p.tier, currentPlan, locale, { isLoggedIn: !!user });
@@ -262,18 +268,24 @@ export default function Pricing() {
                   </div>
                 </div>
 
-                <div className="mt-5 flex items-end gap-1.5">
-                  <span className="pk-pricing-tier__price text-[2rem] font-bold leading-none tracking-tight text-white sm:text-[2.15rem]">
-                    {p.price}
-                  </span>
-                  {p.tier !== "free" ? (
-                    <span className="pb-1 text-xs font-medium text-white/40">
-                      /{isFr ? "mois" : "mo"} · {PLAN_BILLING_CURRENCY}
-                    </span>
-                  ) : null}
+                <div className="mt-5">
+                  {isPro ? (
+                    <LaunchPriceDisplay tier="pro" locale={locale} size="lg" variant="card" />
+                  ) : (
+                    <div className="flex items-end gap-1.5">
+                      <span className="pk-pricing-tier__price text-[2rem] font-bold leading-none tracking-tight text-white sm:text-[2.15rem]">
+                        {p.price}
+                      </span>
+                      {p.tier !== "free" ? (
+                        <span className="pb-1 text-xs font-medium text-white/40">
+                          /{isFr ? "mois" : "mo"} · {PLAN_BILLING_CURRENCY}
+                        </span>
+                      ) : null}
+                    </div>
+                  )}
                 </div>
 
-                <ul className="mt-6 flex-1 space-y-3 border-t border-white/[0.07] pt-5">
+                <ul className="pk-pricing-tier__features mt-6 flex-1 space-y-3 border-t border-white/[0.07] pt-5">
                   {p.highlights.map((b) => (
                     <li key={b} className="flex items-start gap-2.5 text-[13px] leading-snug text-white/62">
                       <Check className="pk-pricing-tier__check mt-0.5 h-4 w-4 shrink-0" aria-hidden />
@@ -295,6 +307,10 @@ export default function Pricing() {
             );
           })}
         </div>
+
+        <section className="mt-14">
+          <MusicMoneyPlaybookSection locale={locale} />
+        </section>
 
         {currentPlan !== "free" ? (
           <p className="mt-8 text-center text-sm text-white/45">
@@ -388,6 +404,9 @@ export default function Pricing() {
             </Link>
             <Link to="/legal#terms" className="transition-colors hover:text-white">
               {isFr ? "Conditions" : "Terms"}
+            </Link>
+            <Link to="/commercial-license" className="transition-colors hover:text-white">
+              {isFr ? "Certificat licence PDF" : "License certificate PDF"}
             </Link>
             <Link to="/legal#commercial-license" className="transition-colors hover:text-white">
               {isFr ? "Licence commerciale" : "Commercial license"}

@@ -24,7 +24,17 @@ const LANDING_HERO_DREAM_FR = [
 
   "Pas de studio. Pas de limites. Juste l'envie.",
 
-  "De l'idée au morceau — avant que la magie s'éteigne.",
+  "De l'idée au morceau avant que la magie s'éteigne.",
+
+  "Imagine. Décris. Écoute-toi exister.",
+  
+  "Ta prochaine chanson existe déjà quelque part en toi.",
+
+  "Un beat. Une voix. Un monde. Le tien.",
+
+  "Pas de studio. Pas de limites. Juste l'envie.",
+
+  "De l'idée au morceau avant que la magie s'éteigne.",
 
   "Imagine. Décris. Écoute-toi exister.",
 
@@ -34,15 +44,33 @@ const LANDING_HERO_DREAM_FR = [
 
 const LANDING_HERO_DREAM_EN = [
 
-  "Your next song already exists — somewhere in you.",
+  "Your next song already exists somewhere in you.",
 
   "One beat. One voice. One world. Yours.",
 
   "No studio. No limits. Just the spark.",
 
-  "From idea to track — before the magic fades.",
+  "From idea to track before the magic fades.",
 
   "Imagine it. Name it. Hear yourself come alive.",
+
+  "Give an emotion a name. Hear what it becomes.",
+
+  "Before it was a track, it was a feeling.",
+
+  "The distance between imagination and music is now one click.",
+
+  "Turn a moment into something you can replay forever.",
+
+  "Every great song starts as something impossible to explain.",
+
+  "Capture the spark before reality catches up.",
+
+  "What if your favorite song hasn't been written yet?",
+
+  "A memory. A feeling. A song.",
+
+  "Hear the version of yourself words can't describe."
 
 ] as const;
 

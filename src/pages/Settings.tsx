@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
 import { readProfileCache, syncProfileCache } from "@/lib/profileBootstrap";
+import { validateLegalName } from "@/lib/saveLegalName";
 import {
   CREATOR_TYPE_OPTIONS,
   creatorProfileErrorMessage,
@@ -68,6 +69,8 @@ export default function Settings() {
   const [activeSection, setActiveSection] = useState("pk-settings-profile");
 
   const [username, setUsername] = useState("");
+  const [legalFirstName, setLegalFirstName] = useState("");
+  const [legalLastName, setLegalLastName] = useState("");
   const [bio, setBio] = useState("");
   const [creatorType, setCreatorType] = useState<CreatorType | "">("");
   const [socialIg, setSocialIg] = useState("");
@@ -147,6 +150,8 @@ export default function Settings() {
       if (!profileFormHydratedRef.current) {
         profileFormHydratedRef.current = true;
         setUsername(authProfile.username ?? "");
+        setLegalFirstName(authProfile.legal_first_name ?? "");
+        setLegalLastName(authProfile.legal_last_name ?? "");
         setBio(authProfile.bio ?? "");
         setCreatorType((authProfile.creator_type as CreatorType | null) ?? "");
         setSocialIg(authProfile.social?.ig ?? "");
@@ -266,6 +271,37 @@ export default function Settings() {
                 ) : null}
               </div>
 
+              <div className="rounded-pk border border-pk-border/80 bg-pk-input/40 p-4 sm:col-span-2">
+                <div className="text-sm font-semibold">{isFr ? "Nom légal (licence commerciale)" : "Legal name (commercial license)"}</div>
+                <p className="mt-1 text-[11px] leading-relaxed text-pk-muted">
+                  {isFr
+                    ? "Privé — utilisé sur tes certificats uniques par titre (Pro+). Non visible sur ton profil public."
+                    : "Private — used on your per-track unique certificates (Pro+). Not shown on your public profile."}
+                </p>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <div className="text-xs text-pk-muted">{isFr ? "Prénom" : "First name"}</div>
+                    <input
+                      value={legalFirstName}
+                      onChange={(e) => setLegalFirstName(e.target.value)}
+                      disabled={loading || saving}
+                      className="mt-2 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm outline-none focus:border-pk-accent"
+                      autoComplete="given-name"
+                    />
+                  </div>
+                  <div>
+                    <div className="text-xs text-pk-muted">{isFr ? "Nom" : "Last name"}</div>
+                    <input
+                      value={legalLastName}
+                      onChange={(e) => setLegalLastName(e.target.value)}
+                      disabled={loading || saving}
+                      className="mt-2 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm outline-none focus:border-pk-accent"
+                      autoComplete="family-name"
+                    />
+                  </div>
+                </div>
+              </div>
+
               <Dropdown
                 label={isFr ? "Type de créateur" : "Creator type"}
                 value={creatorType}
@@ -362,6 +398,14 @@ export default function Settings() {
                     toast.error(usernameError);
                     return;
                   }
+                  if (legalFirstName.trim() || legalLastName.trim()) {
+                    const firstErr = validateLegalName(legalFirstName, isFr);
+                    const lastErr = validateLegalName(legalLastName, isFr);
+                    if (firstErr || lastErr) {
+                      toast.error(firstErr ?? lastErr ?? (isFr ? "Nom légal invalide" : "Invalid legal name"));
+                      return;
+                    }
+                  }
                   setSaving(true);
                   try {
                     const social: CreatorSocialLinks = {
@@ -377,6 +421,8 @@ export default function Settings() {
                       bio,
                       creator_type: creatorType,
                       social,
+                      legal_first_name: legalFirstName.trim(),
+                      legal_last_name: legalLastName.trim(),
                     });
                     if (!result.ok) {
                       toast.error(creatorProfileErrorMessage("error" in result ? result.error : "save_failed", isFr));

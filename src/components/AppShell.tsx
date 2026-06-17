@@ -48,7 +48,7 @@ export function AppShell({
   return (
     <div
       className={cn(
-        "pk-app-shell relative z-[1] text-pk-text md:h-screen md:overflow-hidden",
+        "pk-app-shell pk-apple-app relative z-[1] text-pk-text md:h-screen md:overflow-hidden",
         mobileLayoutV2 && "pk-mobile-app-shell pt-[env(safe-area-inset-top,0px)]",
         isPrism ? "pk-prism-stage pk-prism-dashboard" : "bg-pk-bg",
         warmGlass && "pk-warm-glass-stage",

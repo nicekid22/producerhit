@@ -8,6 +8,8 @@ import { applyBrandChrome, resetBrandChrome } from "@/lib/brandChrome";
 import { CloudElementTransition } from "@/components/cloud/CloudElementTransition";
 import { LandingMoodWowHost } from "@/components/landing/LandingMoodWow";
 import { ThemeRoastPopup } from "@/components/theme/ThemeRoastPopup";
+import { ThemeSkinWowBridge } from "@/components/theme/ThemeSkinWowBridge";
+import { ThemeSkinWowHost } from "@/components/theme/ThemeSkinWow";
 import { useCloudAccentStore } from "@/stores/cloudAccentStore";
 import { useVisualThemeStore, isCloudTheme, isWarmGlassTheme } from "@/stores/visualThemeStore";
 
@@ -136,6 +138,8 @@ export function ThemeBootstrap({ children }: { children: React.ReactNode }) {
       <CloudElementTransition />
       <ThemeRoastPopup />
       <LandingMoodWowHost />
+      <ThemeSkinWowHost />
+      <ThemeSkinWowBridge />
       {children}
     </>
   );

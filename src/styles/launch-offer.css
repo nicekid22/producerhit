@@ -1,0 +1,318 @@
+/* Launch offer — prix & note discrets, style Apple */
+
+.pk-launch-note {
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.pk-launch-note--compact {
+  font-size: 10px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.pk-launch-note__sep {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.pk-launch-note__muted {
+  color: rgba(255, 255, 255, 0.32);
+}
+
+/* Prix carte — aligné sur pk-pricing-tier__price */
+
+.pk-launch-price--card {
+  display: block;
+}
+
+.pk-launch-price__row--card {
+  align-items: flex-end;
+  gap: 0.4rem;
+}
+
+.pk-launch-price__anchor-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.pk-launch-price--center .pk-launch-price__anchor-row,
+.pk-launch-price--center .pk-launch-price__row {
+  justify-content: center;
+}
+
+.pk-launch-price--left .pk-launch-price__anchor-row,
+.pk-launch-price--left .pk-launch-price__row {
+  justify-content: flex-start;
+}
+
+.pk-launch-price__row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.35rem;
+  line-height: 1;
+}
+
+.pk-launch-price__anchor-card {
+  padding-bottom: 0.32em;
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  color: rgba(255, 255, 255, 0.45);
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+  text-decoration-color: rgba(255, 255, 255, 0.38);
+}
+
+.pk-launch-price__save-note {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.36);
+}
+
+.pk-launch-price__amount-card {
+  font-size: clamp(2rem, 5vw, 2.15rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: #fff;
+}
+
+.pk-launch-price--hero .pk-launch-price__amount-card {
+  font-size: clamp(2.35rem, 6vw, 2.85rem);
+}
+
+.pk-launch-price__period-card {
+  padding-bottom: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Grille pricing — séparateur features aligné */
+.pk-pricing-tier__features {
+  margin-top: 1.5rem;
+}
+
+/* Bloc Pro réutilisable */
+
+.pk-launch-pro-block__per-track {
+  margin-top: 0.45rem;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+/* Banner /pricing */
+
+.pk-launch-offer--banner {
+  padding: 1.35rem 1.5rem;
+  border-radius: 1.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 18px 48px rgba(0, 0, 0, 0.2);
+}
+
+.pk-launch-offer__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border-radius: 999px;
+  padding: 0.28rem 0.65rem;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.pk-launch-offer__headline {
+  margin-top: 0.65rem;
+  font-size: clamp(1.05rem, 2.4vw, 1.3rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  color: #fff;
+  text-wrap: balance;
+}
+
+.pk-launch-offer-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.48);
+}
+
+/* Producer whispers — témoignages discrets, marquee */
+
+.pk-producer-whispers__eyebrow {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.32);
+}
+
+.pk-producer-whispers__viewport {
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+
+.pk-producer-whispers__track {
+  display: flex;
+  width: max-content;
+  gap: 0.65rem;
+}
+
+.pk-producer-whispers__track:not(.is-static) {
+  animation: pkMarquee 90s linear infinite;
+}
+
+.pk-producer-whispers__viewport:not(.is-active) .pk-producer-whispers__track {
+  animation: none;
+  flex-wrap: wrap;
+  width: 100%;
+  justify-content: center;
+}
+
+.pk-producer-whispers__card {
+  flex-shrink: 0;
+  width: min(78vw, 15.5rem);
+  padding: 0.85rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.pk-producer-whispers__quote {
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.58);
+}
+
+.pk-producer-whispers__who {
+  margin-top: 0.55rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.34);
+}
+
+.pk-producer-whispers__tag {
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.38);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+@media (min-width: 640px) {
+  .pk-producer-whispers__card {
+    width: 16.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pk-producer-whispers__track:not(.is-static) {
+    animation: none !important;
+  }
+}
+
+/* Money playbook — rail compact */
+
+.pk-money-playbook__rail {
+  display: flex;
+  gap: 0.65rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.pk-money-playbook__rail::-webkit-scrollbar {
+  display: none;
+}
+
+.pk-money-playbook__pill {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  min-width: 9.5rem;
+  padding: 0.85rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+@media (hover: hover) {
+  .pk-money-playbook__pill:hover {
+    border-color: rgba(124, 58, 237, 0.35);
+    transform: translateY(-2px);
+  }
+}
+
+.pk-money-playbook__pill-potential {
+  margin-top: 0.35rem;
+  font-size: 11px;
+  font-weight: 700;
+  color: #6ee7b7;
+}
+
+.pk-money-playbook__origin-glow {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 80% at 0% 50%, rgba(139, 92, 246, 0.16), transparent 65%);
+}
+
+/* Paywall Pro — hero prix */
+
+.pk-paywall--launch .pk-paywall__price-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 1rem;
+  padding: 1rem 0 0.25rem;
+}
+
+.pk-paywall__legend-foot {
+  margin-top: 0.75rem;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.45;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.36);
+}
+
+.pk-paywall__legend-foot strong {
+  color: rgba(255, 255, 255, 0.48);
+  font-weight: 600;
+  font-style: normal;
+}

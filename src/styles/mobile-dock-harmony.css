@@ -1,0 +1,267 @@
+/**
+ * Mobile dock — lecteur audio + barre navigation (dashboard)
+ * Player portaled hors .pk-app-shell : règles sans ancêtre stage obligatoire.
+ */
+
+@media (max-width: 767px) {
+  /* ——— Lecteur ——— */
+  .pk-prism-player--dock {
+    bottom: max(
+      var(--pk-player-dock-bottom, 80px),
+      calc(62px + 10px + env(safe-area-inset-bottom, 0px))
+    ) !important;
+    z-index: 50 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+
+  html.pk-cloud-active .pk-prism-player.pk-cloud-player,
+  html.pk-cloud-active .pk-prism-player.pk-cloud-player.pk-prism-player--dock,
+  html.pk-cloud-active .pk-prism-player.pk-cloud-player.pk-prism-player--dock-modern,
+  html.pk-warm-glass-active .pk-prism-player.pk-warm-glass-player.pk-prism-player--dock,
+  html.pk-warm-glass-active .pk-prism-player.pk-warm-glass-player.pk-prism-player--dock-modern,
+  .pk-prism-player--dock.pk-prism-player--dock-modern:not(.pk-cloud-player):not(.pk-warm-glass-player) {
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    max-width: calc(100vw - 24px);
+    margin-inline: 0 !important;
+    border-radius: 1.15rem !important;
+    overflow: hidden;
+  }
+
+  .pk-prism-player--mobile-mini.pk-prism-player--dock {
+    min-height: 2.625rem;
+    max-height: 2.75rem;
+  }
+
+  /* Mini mobile — toujours au-dessus de la barre nav flottante */
+  .pk-prism-player--mobile-mini.pk-prism-player--dock:not(.pk-cloud-player):not(.pk-warm-glass-player) {
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    max-width: calc(100vw - 24px);
+    margin-inline: 0 !important;
+    border-radius: 1.15rem !important;
+  }
+
+  .pk-prism-player--mobile-mini > .mx-auto.flex {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    min-height: 2.625rem !important;
+    max-height: 2.75rem;
+    padding-top: 0.35rem !important;
+    padding-bottom: 0.35rem !important;
+  }
+
+  .pk-prism-player--mobile-mini > .mx-auto.flex > .flex.min-w-0.flex-1 {
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .pk-prism-player--mobile-mini .pk-prism-player__mini-controls {
+    flex: 0 0 auto;
+  }
+
+  .pk-prism-player--mobile-mini .pk-prism-player__expanded {
+    display: none !important;
+  }
+
+  .pk-prism-player--mobile-mini .pk-player-cover-thumb,
+  .pk-prism-player--mobile-mini .pk-loop-cover-thumb {
+    width: 2rem !important;
+    height: 2rem !important;
+    min-width: 2rem;
+    min-height: 2rem;
+  }
+
+  .pk-prism-player--mobile-mini .truncate.text-sm.font-semibold {
+    font-size: 0.75rem;
+    line-height: 1.2;
+  }
+
+  .pk-prism-player--mobile-mini .text-\[11px\].text-white\/45 {
+    font-size: 0.625rem;
+    line-height: 1.2;
+  }
+
+  .pk-prism-player--mobile-mini .pk-prism-player__mini-controls .pk-prism-player-btn--primary {
+    width: 2.25rem !important;
+    height: 2.25rem !important;
+    min-width: 2.25rem;
+    min-height: 2.25rem;
+  }
+
+  .pk-prism-player--dock-modern:not(.pk-prism-player--mobile-mini) > .mx-auto.flex {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    align-items: center;
+    column-gap: 0.55rem;
+    row-gap: 0.35rem;
+    min-height: 3.15rem;
+    padding-top: 0.45rem !important;
+    padding-bottom: 0.45rem !important;
+  }
+
+  .pk-prism-player--dock-modern:not(.pk-prism-player--mobile-mini) > .mx-auto > div:first-child {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+  }
+
+  .pk-prism-player--dock-modern:not(.pk-prism-player--mobile-mini).pk-prism-player--collapsed > .mx-auto > div.flex.shrink-0 {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+  }
+
+  .pk-prism-player--dock-modern:not(.pk-prism-player--mobile-mini):not(.pk-prism-player--collapsed) .pk-prism-player__expanded {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: flex !important;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.55rem;
+    width: 100%;
+    min-width: 0;
+    flex: none !important;
+  }
+
+  .pk-prism-player--dock-modern:not(.pk-prism-player--mobile-mini):not(.pk-prism-player--collapsed) .pk-prism-player__expanded > .flex:first-child {
+    flex: 0 0 auto;
+    margin: 0;
+  }
+
+  .pk-prism-player--dock-modern:not(.pk-prism-player--mobile-mini):not(.pk-prism-player--collapsed) .pk-prism-player__expanded > .relative.mt-2 {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-top: 0 !important;
+    height: 1.25rem;
+  }
+
+  .pk-prism-player--dock-modern:not(.pk-prism-player--mobile-mini):not(.pk-prism-player--collapsed) .pk-prism-player__expanded > canvas,
+  .pk-prism-player--dock-modern:not(.pk-prism-player--mobile-mini):not(.pk-prism-player--collapsed) .pk-prism-player__expanded > .hidden.sm\:flex {
+    display: none !important;
+  }
+
+  .pk-prism-player--dock .truncate.text-sm.font-semibold {
+    font-size: 0.8125rem;
+    letter-spacing: -0.02em;
+  }
+
+  .pk-prism-player--dock .text-\[11px\].text-white\/45 {
+    font-size: 0.6875rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ——— Barre navigation mobile ——— */
+  .pk-app-shell-mobile-nav {
+    z-index: 40 !important;
+    box-sizing: border-box;
+  }
+
+  .pk-app-shell-mobile-nav > div {
+    height: var(--pk-mobile-nav-inner-h, 62px) !important;
+    min-height: var(--pk-mobile-nav-inner-h, 62px);
+  }
+
+  .pk-sidebar-root {
+    height: 100%;
+    min-height: 0;
+  }
+
+  .pk-mobile-bottom-nav__routes {
+    gap: 0.15rem !important;
+    padding-inline: 0.45rem !important;
+    padding-block: 0.35rem !important;
+    mask-image: linear-gradient(to right, transparent, #000 4px, #000 calc(100% - 14px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 4px, #000 calc(100% - 14px), transparent 100%);
+  }
+
+  .pk-mobile-bottom-nav__actions {
+    gap: 0.2rem !important;
+    padding: 0.35rem 0.55rem 0.35rem 0.4rem !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    flex: 0 0 auto;
+    align-items: center !important;
+  }
+
+  .pk-mobile-bottom-nav__action-slot {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 0;
+  }
+
+  .pk-mobile-bottom-nav__routes .pk-studio-nav-link,
+  .pk-mobile-bottom-nav__routes .pk-mobile-home-mark,
+  .pk-mobile-bottom-nav__actions .pk-sidebar-ctrl-btn,
+  .pk-mobile-bottom-nav__actions .pk-theme-cycle-btn,
+  .pk-mobile-bottom-nav__actions button,
+  .pk-mobile-bottom-nav__actions a {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+    min-width: 2.5rem !important;
+    min-height: 2.5rem !important;
+    border-radius: 0.75rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    line-height: 0;
+    vertical-align: middle;
+  }
+
+  .pk-mobile-bottom-nav__routes .pk-studio-nav-link svg,
+  .pk-mobile-home-mark svg {
+    width: 1.2rem !important;
+    height: 1.2rem !important;
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .pk-mobile-bottom-nav__actions .pk-sidebar-ctrl-btn svg,
+  .pk-mobile-bottom-nav__actions .pk-theme-cycle-btn svg {
+    width: 1.125rem !important;
+    height: 1.125rem !important;
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .pk-mobile-bottom-nav__actions .pk-theme-cycle-btn__icon--moon {
+    transform: translateY(-0.5px);
+  }
+
+  /* Locale dans Paramètres sur mobile — barre plus propre */
+  .pk-mobile-bottom-nav__actions .pk-language-picker,
+  .pk-mobile-bottom-nav__actions button[aria-label="English"],
+  .pk-mobile-bottom-nav__actions button[aria-label="Français"] {
+    display: none !important;
+  }
+
+  .pk-app-shell-mobile-nav--prism,
+  .pk-cloud-stage .pk-app-shell-mobile-nav,
+  .pk-warm-glass-stage .pk-app-shell-mobile-nav {
+    left: 12px;
+    right: 12px;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    width: auto;
+    max-width: calc(100vw - 24px);
+    margin: 0 auto;
+    padding-bottom: 0 !important;
+    border-radius: 1.25rem !important;
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 767px) and (prefers-reduced-motion: reduce) {
+  .pk-prism-player--dock {
+    transition: none !important;
+  }
+}

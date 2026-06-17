@@ -1,26 +1,37 @@
 import { useState } from "react";
 import { Dices } from "lucide-react";
 import type { AppLocale } from "@/i18n/config";
-import { legacyEnFr } from "@/i18n/config";
+import { dicePromptLabel } from "@/lib/randomPromptIdeas/diceLabels";
 import { pickRandomPrompt, type PromptMode } from "@/lib/randomPromptIdeas";
 import { cn } from "@/lib/utils";
 
 type Props = {
+  /** Langue UI (libellé bouton). */
   locale: AppLocale;
+  /** Langue des idées aléatoires — peut différer (ex. song + langue vocale manuelle). */
+  promptLocale?: AppLocale;
   mode: PromptMode;
   onPick: (prompt: string) => void;
   className?: string;
   variant?: "dashboard" | "landing";
 };
 
-export function RandomPromptDiceButton({ locale, mode, onPick, className, variant = "dashboard" }: Props) {
+export function RandomPromptDiceButton({
+  locale,
+  promptLocale,
+  mode,
+  onPick,
+  className,
+  variant = "dashboard",
+}: Props) {
   const [rolling, setRolling] = useState(false);
-  const label = legacyEnFr(locale, "Random prompt", "Prompt aléatoire");
+  const label = dicePromptLabel(locale);
+  const diceLocale = promptLocale ?? locale;
 
   const roll = () => {
     if (rolling) return;
     setRolling(true);
-    onPick(pickRandomPrompt(locale, mode));
+    onPick(pickRandomPrompt(diceLocale, mode));
     window.setTimeout(() => setRolling(false), 580);
   };
 

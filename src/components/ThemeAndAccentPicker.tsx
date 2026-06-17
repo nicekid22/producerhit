@@ -14,12 +14,16 @@ import { LanguagePicker } from "@/components/LanguagePicker";
 import { SIDEBAR_ICON_CLASS, SIDEBAR_ICON_PROPS } from "@/lib/sidebarIcons";
 
 type Props = {
-  /** nav-icon = cycle direct · sidebar-stack = cycle + accents · mobile = cycle · segmented = panneau settings */
+  /** nav-icon = cycle (sidebar) ou 3 skins (header) · sidebar-stack · mobile · segmented */
   variant?: "nav-icon" | "sidebar-stack" | "mobile" | "segmented";
   /** sidebar = rail studio · header = landing / marketing navbar */
   surface?: "sidebar" | "header";
   className?: string;
 };
+
+const HEADER_SKINS: VisualTheme[] = CLOUD_THEME_ENABLED
+  ? ["prism", "warm-glass", "cloud"]
+  : ["prism", "warm-glass"];
 
 function ThemeModeIcon({ theme, className }: { theme: VisualTheme; className?: string }) {
   const iconClass = cn(SIDEBAR_ICON_CLASS, className);
@@ -50,6 +54,10 @@ function themeShortLabel(theme: VisualTheme, isFr: boolean): string {
 
 /** Prism → Warm → Cloud — clic direct, sans menu */
 export function ThemeAndAccentPicker({ variant = "nav-icon", surface = "sidebar", className }: Props) {
+  if (surface === "header") {
+    return <HeaderThemeSkinRow className={className} skins={HEADER_SKINS} />;
+  }
+
   if (!CLOUD_THEME_ENABLED) {
     if (variant === "segmented") {
       return <ThemeToggleButton variant="segmented" className={className} />;
@@ -71,6 +79,52 @@ export function ThemeAndAccentPicker({ variant = "nav-icon", surface = "sidebar"
       size={variant === "mobile" ? "mobile" : "nav"}
       surface={surface}
     />
+  );
+}
+
+function HeaderThemeSkinRow({
+  className,
+  skins = HEADER_SKINS,
+}: {
+  className?: string;
+  skins?: VisualTheme[];
+}) {
+  const locale = useLocaleStore((s) => s.locale);
+  const isFr = locale === "fr";
+  const theme = useVisualThemeStore((s) => s.theme);
+  const setTheme = useVisualThemeStore((s) => s.setTheme);
+
+  return (
+    <div
+      className={cn("pk-header-theme-skins", className)}
+      role="group"
+      aria-label={isFr ? "Thèmes visuels" : "Visual themes"}
+    >
+      {skins.map((skin) => {
+        const active = theme === skin;
+        const label = themeShortLabel(skin, isFr);
+        return (
+          <button
+            key={skin}
+            type="button"
+            className={cn(
+              "pk-theme-skin-btn pk-theme-cycle-btn flex shrink-0 items-center justify-center focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/15",
+              "pk-header-chrome__pill pk-header-chrome__pill--icon",
+              active && "pk-header-chrome__pill--active",
+              skin === "warm-glass" && "pk-theme-cycle-btn--warm",
+              skin === "cloud" && "pk-theme-cycle-btn--cloud",
+              skin === "prism" && "pk-theme-cycle-btn--prism",
+            )}
+            aria-pressed={active}
+            aria-label={label}
+            title={label}
+            onClick={() => setTheme(skin)}
+          >
+            <ThemeModeIcon theme={skin} />
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -176,10 +230,10 @@ function MoodRow() {
 
 function SidebarThemeStack({ className }: { className?: string }) {
   return (
-    <div className={cn("pk-sidebar-controls flex flex-col items-center gap-1", className)}>
+    <div className={cn("pk-sidebar-controls flex flex-col items-center", className)}>
       <ThemeCycleButton />
       <CloudAccentElementPicker variant="sidebar" />
-      <LanguagePicker variant="sidebar" />
+      <LanguagePicker variant="sidebar" className="pk-sidebar-rail-slot" />
     </div>
   );
 }

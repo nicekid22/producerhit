@@ -89,6 +89,7 @@ export const hi: BaseMessageCatalog = {
     tabResults: "परिणाम",
     tabMaster: "स्टूडियो",
     modeRemix: "Remix",
+    modeCover: "Cover",
     advancedSettings: "उन्नत सेटिंग्स",
   },
 };

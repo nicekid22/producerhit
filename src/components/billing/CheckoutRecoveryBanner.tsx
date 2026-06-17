@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import type { AppLocale } from "@/i18n/config";
 import { runCheckoutWithAuth, type PaidPlan } from "@/lib/billing";
 import { clearCheckoutAbandoned, readCheckoutAbandoned } from "@/lib/checkoutRecovery";
+import { LAUNCH_BONUS_CREDITS } from "@/lib/launchOffer";
 import { trackClientEvent } from "@/lib/supabaseClient";
 import { cn } from "@/lib/utils";
 
@@ -59,8 +60,8 @@ export function CheckoutRecoveryBanner({ locale, location, className, currentPla
         </p>
         <p className="mt-0.5 text-xs text-white/60">
           {isFr
-            ? "Reprends en 1 clic. Activation instantanée après Stripe."
-            : "Resume in one click. Instant activation after Stripe."}
+            ? `Reprends en 1 clic. Activation instantanée + ${LAUNCH_BONUS_CREDITS.checkoutRecovery} crédits bonus si tu finalises aujourd'hui.`
+            : `Resume in one click. Instant activation + ${LAUNCH_BONUS_CREDITS.checkoutRecovery} bonus credits if you finish today.`}
         </p>
       </div>
       <div className="flex gap-2">

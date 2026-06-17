@@ -85,6 +85,7 @@ export const zh: BaseMessageCatalog = {
     tabResults: "结果",
     tabMaster: "工作室",
     modeRemix: "Remix",
+    modeCover: "Cover",
     advancedSettings: "高级设置",
   },
 };

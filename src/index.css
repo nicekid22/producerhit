@@ -1675,7 +1675,16 @@ a.pk-pricing-plan-btn {
 }
 
 .pk-landing-testimonials--compact .pk-landing-testimonials__card {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   min-height: 11rem;
+  flex-shrink: 1;
+}
+
+.pk-landing-testimonials--compact .pk-landing-testimonials__compact-grid {
+  width: 100%;
+  align-items: stretch;
 }
 
 .pk-mascot-wrap {
@@ -7436,14 +7445,14 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
   justify-content: center;
 }
 
-.pk-landing-testimonials__card {
+.pk-landing-testimonials__viewport .pk-landing-testimonials__card {
   width: min(88vw, 18.5rem);
   min-height: 10.5rem;
   flex-shrink: 0;
 }
 
 @media (min-width: 640px) {
-  .pk-landing-testimonials__card {
+  .pk-landing-testimonials__viewport .pk-landing-testimonials__card {
     width: 19.5rem;
     min-height: 11rem;
   }

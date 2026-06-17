@@ -360,10 +360,10 @@ export function LandingCommunityRail({
               </span>
             ) : null}
           </div>
-          <h2 className="mt-3 text-balance text-[clamp(1.5rem,3.2vw,2.25rem)] font-bold tracking-tight text-white">
-            <span className="pk-prism-holo-text">{title}</span>
+          <h2 className="pk-landing-apple-head__title mt-3 text-balance">
+            {title}
           </h2>
-          <p className={cn("mt-3 max-w-3xl text-balance text-sm leading-relaxed text-white/60", compactLead && "pk-landing-community__lead--compact")}>
+          <p className={cn("pk-landing-apple-head__lead mt-3 max-w-3xl text-left", compactLead && "pk-landing-community__lead--compact")}>
             {lead}
           </p>
         </div>

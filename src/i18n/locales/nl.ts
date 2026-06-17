@@ -89,6 +89,7 @@ export const nl: BaseMessageCatalog = {
     tabResults: "Resultaten",
     tabMaster: "Studio",
     modeRemix: "Remix",
+    modeCover: "Cover",
     advancedSettings: "Geavanceerde instellingen",
   },
 };

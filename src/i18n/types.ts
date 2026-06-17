@@ -28,6 +28,7 @@ export type MessageCatalog = {
     tabResults: string;
     tabMaster: string;
     modeRemix: string;
+    modeCover: string;
     advancedSettings: string;
   };
   seo: {

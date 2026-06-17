@@ -64,7 +64,8 @@
     min-height: 0;
     max-width: 100%;
     margin: 0;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: visible;
     padding-top: clamp(0.35rem, 1.2vh, 0.65rem);
     padding-inline: clamp(0.15rem, 1vw, 0.35rem);
     animation: none;

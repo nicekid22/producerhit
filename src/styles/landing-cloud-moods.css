@@ -184,7 +184,7 @@ html.pk-landing-mood-flash::after {
   pointer-events: none;
   opacity: 0;
   background: radial-gradient(
-    ellipse 80% 60% at 50% 42%,
+    ellipse 80% 60% at 50% 50%,
     color-mix(in srgb, var(--pk-flash-accent, #c4b5fd) 16%, transparent),
     transparent 72%
   );

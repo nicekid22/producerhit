@@ -28,7 +28,8 @@ import { prepareLoopVariantGeneration, variantResultTitle } from "@/lib/loopVari
 import { extractLoopVocalLanguage, formatVocalLanguageLabel, isSongLoop } from "@/lib/vocalLanguages";
 import { resolveLoopVoiceCloneInfo, voiceCloneStatusLabel } from "@/lib/voiceCloneMeta";
 import { resolveStemsDownloadUrl } from "@/lib/stemsDownload";
-import { canDownloadStems, hasCommercialUseRights } from "@/lib/planEntitlements";
+import { canDownloadStems } from "@/lib/planEntitlements";
+import { downloadCommercialBeat, triggerStemsLicenseModal } from "@/lib/commercialBeatDownload";
 import { useGrowthUpsellStore } from "@/stores/growthUpsellStore";
 import { GenerationCreditAmount } from "@/components/GenerationCreditIcon";
 import { rerollLoopCover, LOOP_COVER_REROLL_CREDIT_COST } from "@/lib/loopCoverReroll";
@@ -469,54 +470,19 @@ export const LoopCardItem = memo(function LoopCardItem({
   const handleDownloadBeat = useCallback(() => {
     void (async () => {
       if (!loop.audioUrl || isDownloading) return;
-      if (!hasCommercialUseRights(plan)) {
-        useGrowthUpsellStore.getState().openUpsell("feature_commercial_download", {
-          source: "loop_card_download",
-          plan,
-        });
-        return;
-      }
       setIsDownloading(true);
       try {
-        const response = await fetch(loop.audioUrl);
-        const blob = await response.blob();
-        const formatHint = (loop.details?.audioFormat || "").toLowerCase();
-        const type = (blob.type || "").toLowerCase();
-        const ext =
-          formatHint === "wav" || formatHint === "wav32"
-            ? "wav"
-            : formatHint === "flac"
-              ? "flac"
-              : formatHint === "opus"
-                ? "opus"
-                : formatHint === "aac"
-                  ? "aac"
-                  : type.includes("wav")
-                    ? "wav"
-                    : type.includes("flac")
-                      ? "flac"
-                      : type.includes("opus")
-                        ? "opus"
-                        : type.includes("aac")
-                          ? "aac"
-                          : "mp3";
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        const cleanName = loop.name.replace(/[^a-zA-Z0-9\s-]/g, "").replace(/\s+/g, "-").toLowerCase();
-        a.download = `${cleanName}-producerhit.${ext}`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        toast.success("Beat downloaded!");
-      } catch {
-        toast.error("Download failed — try again");
+        await downloadCommercialBeat({
+          loop,
+          plan,
+          locale,
+          source: "loop_card_download",
+        });
       } finally {
         setIsDownloading(false);
       }
     })();
-  }, [isDownloading, loop.audioUrl, loop.details?.audioFormat, loop.name, plan]);
+  }, [isDownloading, locale, loop, plan]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -569,6 +535,7 @@ export const LoopCardItem = memo(function LoopCardItem({
               a.target = "_blank";
               a.rel = "noopener noreferrer";
               a.click();
+              triggerStemsLicenseModal(loop, "loop_card_stems");
             } finally {
               setIsDownloadingStems(false);
             }
@@ -1165,25 +1132,7 @@ export const LoopCardItem = memo(function LoopCardItem({
                   onClick={(e) => {
                     e.stopPropagation();
                     setMenuOpen(false);
-                    void (async () => {
-                      if (!loop.audioUrl || isDownloading) return;
-                      setIsDownloading(true);
-                      try {
-                        const response = await fetch(loop.audioUrl);
-                        const blob = await response.blob();
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement("a");
-                        a.href = url;
-                        a.download = `${loop.name.replace(/[^a-zA-Z0-9\s-]/g, "").replace(/\s+/g, "-").toLowerCase()}-producerhit.mp3`;
-                        a.click();
-                        URL.revokeObjectURL(url);
-                        toast.success("Beat downloaded!");
-                      } catch {
-                        toast.error("Download failed — try again");
-                      } finally {
-                        setIsDownloading(false);
-                      }
-                    })();
+                    handleDownloadBeat();
                   }}
                 >
                   <Download className="h-3.5 w-3.5" />
@@ -1367,51 +1316,7 @@ export const LoopCardItem = memo(function LoopCardItem({
           size="sm"
           onClick={(e) => {
             e.stopPropagation();
-            void (async () => {
-              if (!loop.audioUrl || isDownloading) return;
-              setIsDownloading(true);
-              try {
-                const response = await fetch(loop.audioUrl);
-                const blob = await response.blob();
-                const formatHint = (loop.details?.audioFormat || "").toLowerCase();
-                const type = (blob.type || "").toLowerCase();
-                const ext =
-                  formatHint === "wav" || formatHint === "wav32"
-                    ? "wav"
-                    : formatHint === "flac"
-                      ? "flac"
-                      : formatHint === "opus"
-                        ? "opus"
-                        : formatHint === "aac"
-                          ? "aac"
-                          : type.includes("wav")
-                            ? "wav"
-                            : type.includes("flac")
-                              ? "flac"
-                              : type.includes("opus")
-                                ? "opus"
-                                : type.includes("aac")
-                                  ? "aac"
-                                  : "mp3";
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                const cleanName = loop.name
-                  .replace(/[^a-zA-Z0-9\s-]/g, "")
-                  .replace(/\s+/g, "-")
-                  .toLowerCase();
-                a.download = `${cleanName}-producerhit.${ext}`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                toast.success("Beat downloaded!");
-              } catch {
-                toast.error("Download failed — try again");
-              } finally {
-                setIsDownloading(false);
-              }
-            })();
+            handleDownloadBeat();
           }}
           disabled={isDownloading || !loop.audioUrl}
           title={
@@ -1444,6 +1349,7 @@ export const LoopCardItem = memo(function LoopCardItem({
                 a.target = "_blank";
                 a.rel = "noopener noreferrer";
                 a.click();
+                triggerStemsLicenseModal(loop, "loop_card_stems");
               } finally {
                 setIsDownloadingStems(false);
               }

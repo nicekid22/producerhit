@@ -1,4 +1,5 @@
 import { HeroCtaButton } from "@/components/landing/HeroCtaButton";
+import { LandingSectionHead } from "@/components/landing/LandingSectionHead";
 import type { AppLocale } from "@/i18n/config";
 import { landingCloudMoodsCopy } from "@/lib/landingContent";
 import { pickLandingCloudMood } from "@/lib/landingCloudMoodPick";
@@ -24,15 +25,12 @@ export function LandingCloudMoodsSection({ locale, user, cloudActive }: Props) {
 
   return (
     <section id="cloud-moods" className="pk-landing-cloud-moods" aria-labelledby="pk-landing-cloud-moods-title">
-      <div className="pk-landing-cloud-moods__intro mx-auto max-w-xl text-center">
-        <h2
-          id="pk-landing-cloud-moods-title"
-          className="pk-landing-cloud-moods__title text-balance text-[clamp(1.5rem,3.4vw,2rem)] font-semibold tracking-tight"
-        >
-          {copy.title}
-        </h2>
-        <p className="pk-landing-cloud-moods__lead mx-auto mt-3 max-w-md text-sm leading-relaxed">{copy.lead}</p>
-      </div>
+      <LandingSectionHead
+        id="pk-landing-cloud-moods-title"
+        title={copy.title}
+        lead={copy.lead}
+        className="mx-auto max-w-xl"
+      />
 
       <div
         className="pk-landing-cloud-moods__grid mx-auto mt-8 grid max-w-3xl grid-cols-2 gap-2 sm:gap-2.5 lg:grid-cols-4 lg:gap-3"
