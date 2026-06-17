@@ -5,6 +5,7 @@ import { getPricingPlans } from "@/lib/pricingContent";
 import { PricingPlanButton } from "@/components/pricing/PricingPlanButton";
 import { PLAN_MONTHLY_USD, planPriceLabel } from "@/lib/planPricing";
 import { PLAN_LIMITS } from "@/lib/planLimits";
+import { croPricingTeaser } from "@/lib/croTrustCopy";
 import { cn } from "@/lib/utils";
 
 import type { AppLocale } from "@/i18n/config";
@@ -25,6 +26,7 @@ function perGenerationHint(locale: AppLocale): string {
 
 export function LandingPricingTeaser({ locale, user, currentPlan }: Props) {
   const isFr = locale === "fr";
+  const teaser = croPricingTeaser(locale);
   const plans = getPricingPlans(locale).filter((p) => TEASER_TIERS.includes(p.tier));
   const trustPills = isFr
     ? ["Sans engagement", "Annulable à tout moment", "Paiement sécurisé"]
@@ -34,17 +36,13 @@ export function LandingPricingTeaser({ locale, user, currentPlan }: Props) {
     <section id="pricing" className="pk-landing-pricing-teaser" aria-labelledby="pk-landing-pricing-title">
       <div className="pk-landing-section-head text-center">
         <p className="pk-landing-section-head__eyebrow mb-2 text-[11px] font-bold uppercase tracking-[0.2em] text-white/45">
-          {isFr ? "Tarifs simples" : "Simple pricing"}
+          {teaser.eyebrow}
         </p>
         <h2 id="pk-landing-pricing-title" className="pk-landing-section-head__title">
-          <span className="pk-prism-holo-text">
-            {isFr ? "Commence free. Passe Pro quand tu veux." : "Start free. Go Pro when you’re ready."}
-          </span>
+          <span className="pk-prism-holo-text">{teaser.title}</span>
         </h2>
         <p className="pk-landing-section-head__lead mx-auto mt-3 max-w-lg">
-          {isFr
-            ? `${PLAN_LIMITS.free} générations offertes chaque mois. Upgrade en un clic — pas de piège.`
-            : `${PLAN_LIMITS.free} free generations every month. Upgrade in one click — no tricks.`}
+          {teaser.lead}
         </p>
 
         <div className="pk-landing-pricing-teaser__trust mt-5">

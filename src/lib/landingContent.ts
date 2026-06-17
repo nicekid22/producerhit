@@ -207,13 +207,13 @@ export function landingCopy(locale: Locale) {
     heroCtaPrimary: landing.heroCtaPrimary,
     heroCtaDashboard: landing.heroCtaDashboard,
 
-    trustEyebrow: isFr ? "Adopté par les meilleurs créateurs" : "Trusted by the creators",
-    trustTitle: isFr ? "Une suite complète pour produire, remixer et publier" : "A complete suite to produce, remix, and publish",
+    trustEyebrow: isFr ? "Adopté par des créateurs du monde entier" : "Trusted by creators worldwide",
+    trustTitle: isFr ? "De l'idée au morceau exportable — en un seul studio" : "From idea to export-ready track — one studio",
     trustLead: isFr
-      ? "Producteurs, artistes indépendants, créateurs de contenus et passionnés utilisent ProducerHit pour passer du prompt au morceau fini — sans studio physique ni workflow fragmenté."
-      : "Producers, indie artists, and content creators use ProducerHit to go from prompt to finished track — no physical studio or fragmented workflow required.",
+      ? "Producteurs, artistes et créateurs utilisent ProducerHit pour générer, remixer et publier — sans studio physique ni workflow éclaté."
+      : "Producers, artists, and creators use ProducerHit to generate, remix, and publish — no physical studio or fragmented workflow.",
 
-    suiteTitle: isFr ? "Donne vie à tes idées en quelques secondes." : "Bring your creativity to life.",
+    suiteTitle: isFr ? "Passe de l'inspiration au morceau en minutes." : "Go from inspiration to finished track in minutes.",
     suiteLead: isFr
       ? "De la génération IA de chansons aux covers audio, en passant par l’export vidéo vertical et le mastering intégré : tout est réuni pour passer de l’idée à une release royalty-free."
       : "From AI song generation to ACE audio covers, vertical video export, and built-in mastering — everything you need to move from idea to royalty-free release in one place.",
@@ -256,8 +256,8 @@ export function landingCopy(locale: Locale) {
 
     footerSocialLabel: isFr ? "Réseaux" : "Social",
 
-    testimonialsTitle: isFr ? "Ils produisent avec ProducerHit" : "They produce with ProducerHit",
-    testimonialsHeadline: isFr ? "Retours de producteurs et artistes" : "Feedback from producers and artists",
+    testimonialsTitle: isFr ? "Ils sortent avec ProducerHit" : "They ship with ProducerHit",
+    testimonialsHeadline: isFr ? "4,9/5 — retours de producteurs & artistes" : "4.9/5 — from producers & artists",
     testimonialsLead: isFr
       ? "Song Mode, Type Beat, Remix ACE, export MP3/WAV — des workflows concrets, pas des promesses marketing."
       : "Song Mode, Type Beat, Remix, MP3/WAV export — real workflows, not marketing fluff.",

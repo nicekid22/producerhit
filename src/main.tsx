@@ -14,7 +14,7 @@ import "./styles/page-loader-theme.css";
 import "./styles/gen-loading-theme.css";
 import "./styles/toast-theme.css";
 import "./styles/theme-roast-popup.css";
-import "./styles/theme-mobile-harmony.css";
+import "./styles/cro-trust.css";
 import "./styles/theme-overlays-harmony.css";
 import "./styles/dropdown-theme.css";
 import "./styles/dashboard-idea-prompt.css";

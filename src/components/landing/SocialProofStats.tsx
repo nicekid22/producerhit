@@ -1,5 +1,6 @@
-import { Globe2, Music2, ShieldCheck, Waves } from "lucide-react";
+import { Music2, ShieldCheck, Waves } from "lucide-react";
 import { landingCopy } from "@/lib/landingContent";
+import { PLAN_LIMITS } from "@/lib/planLimits";
 
 import type { AppLocale } from "@/i18n/config";
 type Props = {
@@ -13,16 +14,16 @@ export function SocialProofStats({ locale, compact = false }: Props) {
   const stats =
     locale === "fr"
       ? [
+          { icon: Music2, value: `${PLAN_LIMITS.free} free/mois`, label: "Sans carte bancaire" },
           { icon: Music2, value: "Studio 3-en-1", label: "Song · Beat · Remix" },
-          { icon: ShieldCheck, value: "Royalty-free", label: "Usage commercial" },
+          { icon: ShieldCheck, value: "Royalty-free", label: "Usage commercial Pro+" },
           { icon: Waves, value: "MP3 / WAV", label: "Export Spotify Ready" },
-          { icon: Globe2, value: "Communauté", label: "Remix feed + export TikTok" },
         ]
       : [
+          { icon: Music2, value: `${PLAN_LIMITS.free} free/mo`, label: "No credit card" },
           { icon: Music2, value: "3-in-1 studio", label: "Song · Beat · Remix" },
-          { icon: ShieldCheck, value: "Royalty-free", label: "Commercial use" },
+          { icon: ShieldCheck, value: "Royalty-free", label: "Commercial on Pro+" },
           { icon: Waves, value: "MP3 / WAV", label: "Spotify Ready export" },
-          { icon: Globe2, value: "Community", label: "Remix feed + TikTok export" },
         ];
 
   return (

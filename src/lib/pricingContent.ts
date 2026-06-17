@@ -38,7 +38,7 @@ export function getPricingPlans(locale: AppLocale): PricingPlanContent[] {
     {
       tier: "free",
       name: "Free",
-      tagline: isFr ? "Découvrir le studio" : "Explore the studio",
+      tagline: isFr ? "Teste sans risque" : "Zero-risk trial",
       price: planPriceLabel("free"),
       highlights: [
         gen(PLAN_LIMITS.free),
@@ -51,7 +51,7 @@ export function getPricingPlans(locale: AppLocale): PricingPlanContent[] {
     {
       tier: "pro",
       name: "Pro",
-      tagline: isFr ? "Sortir et monétiser" : "Release and monetize",
+      tagline: isFr ? "Monétise sur Spotify & YouTube" : "Monetize on Spotify & YouTube",
       price: planPriceLabel("pro"),
       highlights: [
         gen(PLAN_LIMITS.pro),

@@ -1,0 +1,82 @@
+/* CRO — trust bar, testimonial stars, hero reassurance */
+
+.pk-cro-trust {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem 0.625rem;
+}
+
+.pk-cro-trust--compact {
+  gap: 0.375rem 0.5rem;
+}
+
+.pk-cro-trust__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.375rem 0.75rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: rgba(255, 252, 255, 0.78);
+  backdrop-filter: blur(8px);
+}
+
+.pk-cro-trust--compact .pk-cro-trust__pill {
+  padding: 0.3rem 0.625rem;
+  font-size: 0.625rem;
+}
+
+.pk-cro-trust__icon {
+  color: var(--prism-cyan, #67c3ff);
+  opacity: 0.92;
+}
+
+.pk-landing-hero-reassurance {
+  color: rgba(255, 252, 255, 0.62) !important;
+}
+
+.pk-landing-hero-trust {
+  margin-top: 0.875rem;
+}
+
+.pk-landing-section-head__lead {
+  color: rgba(255, 252, 255, 0.68);
+}
+
+.pk-testimonial-stars {
+  margin-bottom: 0.125rem;
+}
+
+.pk-landing-testimonials__card footer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.pk-auth-trust {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pk-landing-sticky-cta__inner {
+  border-color: rgba(157, 124, 255, 0.22) !important;
+  box-shadow:
+    0 -8px 40px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(103, 195, 255, 0.08) !important;
+}
+
+.pk-landing-sticky-cta__inner p:first-child {
+  color: rgba(255, 252, 255, 0.95);
+}
+
+.pk-landing-sticky-cta__inner p:last-of-type {
+  color: rgba(255, 252, 255, 0.58) !important;
+}

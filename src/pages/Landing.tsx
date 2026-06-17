@@ -54,6 +54,8 @@ import { useVisualThemeStore, isCloudTheme, isWarmGlassTheme } from "@/stores/vi
 import { useCloudAccentStore } from "@/stores/cloudAccentStore";
 import { landingCopy, landingFlowSectionClass, landingSectionClass } from "@/lib/landingContent";
 import { landingHeroDreamCopy } from "@/lib/landingHeroDreamCopy";
+import { croLandingFaqs } from "@/lib/croTrustCopy";
+import { ConversionTrustBar } from "@/components/marketing/ConversionTrustBar";
 import { clearLandingPendingGeneration, saveLandingPendingGeneration } from "@/lib/landingPendingGeneration";
 import { handoffRemixToDashboard } from "@/lib/remixHandoff";
 import { buildAuthUrl, resolvePostAuthRedirect } from "@/lib/authRoutes";
@@ -1060,44 +1062,45 @@ export default function Landing() {
   }, [authStatus, location.search, navigate, user]);
 
   const faqs = useMemo(() => {
-    if (locale === "fr") {
-      return [
-        {
-          q: "ProducerHit est-il un générateur de chansons IA royalty-free ?",
-          a: "Oui — crée, écoute et exporte pour tes projets perso en Free. Pour monétiser (Spotify, YouTube, clients), passe Pro, Studio ou Plus.",
-        },
-        {
-          q: "Usage commercial & propriété ?",
-          a: COMMERCIAL_RIGHTS_FAQ.fr.a,
-        },
-        {
-          q: "Puis-je exporter en WAV ?",
-          a: "Oui — l'export WAV est disponible sur les offres Pro, Studio et Plus.",
-        },
-        {
-          q: "Les liens audio expirent-ils ?",
-          a: hostedAudioRetentionSummary("fr"),
-        },
-      ];
-    }
-    return [
-      {
-        q: "Is ProducerHit a royalty-free AI song creator?",
-        a: "Yes — create, preview, and export tracks for personal projects on Free. Commercial monetization requires Pro, Studio, or Plus.",
-      },
-      {
-        q: "Commercial use & ownership?",
-        a: COMMERCIAL_RIGHTS_FAQ.en.a,
-      },
-      {
-        q: "Can I download WAV?",
-        a: "Yes — WAV export is available on Pro, Studio, and Plus plans.",
-      },
-      {
-        q: "Do hosted audio links expire?",
-        a: hostedAudioRetentionSummary("en"),
-      },
-    ];
+    const base =
+      locale === "fr"
+        ? [
+            {
+              q: "ProducerHit est-il un générateur de chansons IA royalty-free ?",
+              a: "Oui — crée, écoute et exporte pour tes projets perso en Free. Pour monétiser (Spotify, YouTube, clients), passe Pro, Studio ou Plus.",
+            },
+            {
+              q: "Usage commercial & propriété ?",
+              a: COMMERCIAL_RIGHTS_FAQ.fr.a,
+            },
+            {
+              q: "Puis-je exporter en WAV ?",
+              a: "Oui — l'export WAV est disponible sur les offres Pro, Studio et Plus.",
+            },
+            {
+              q: "Les liens audio expirent-ils ?",
+              a: hostedAudioRetentionSummary("fr"),
+            },
+          ]
+        : [
+            {
+              q: "Is ProducerHit a royalty-free AI song creator?",
+              a: "Yes — create, preview, and export tracks for personal projects on Free. Commercial monetization requires Pro, Studio, or Plus.",
+            },
+            {
+              q: "Commercial use & ownership?",
+              a: COMMERCIAL_RIGHTS_FAQ.en.a,
+            },
+            {
+              q: "Can I download WAV?",
+              a: "Yes — WAV export is available on Pro, Studio, and Plus plans.",
+            },
+            {
+              q: "Do hosted audio links expire?",
+              a: hostedAudioRetentionSummary("en"),
+            },
+          ];
+    return [...base, ...croLandingFaqs(locale)];
   }, [locale]);
 
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
@@ -1295,6 +1298,7 @@ export default function Landing() {
               >
                 {dreamCopy.subline}
               </p>
+              <ConversionTrustBar locale={locale} compact className="pk-landing-hero-trust" />
               {CLOUD_THEME_ENABLED ? (
                 <LandingHeroMoodStrip
                   locale={locale}
@@ -1478,7 +1482,7 @@ export default function Landing() {
 
         <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
           <div className="pk-prism-card p-5 sm:p-8">
-            <h2 className="pk-landing-section-head__title text-left">FAQ</h2>
+            <h2 className="pk-landing-section-head__title text-left">{locale === "fr" ? "Questions fréquentes" : "Frequently asked questions"}</h2>
             <div className="mt-6 grid gap-2">
               {faqs.map((f, i) => {
                 const open = faqOpen === i;

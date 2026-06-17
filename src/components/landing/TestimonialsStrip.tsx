@@ -3,6 +3,7 @@ import { Quote } from "lucide-react";
 import { landingCopy, landingTestimonials } from "@/lib/landingContent";
 import { shuffleArray } from "@/lib/utils";
 import { useLazyInView } from "@/hooks/useLazyInView";
+import { TestimonialStars } from "@/components/marketing/TestimonialStars";
 
 import type { AppLocale } from "@/i18n/config";
 type Props = {
@@ -31,7 +32,8 @@ export function TestimonialsStrip({ locale, compact = false }: Props) {
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           {items.map((t) => (
             <blockquote key={t.id} className="pk-landing-testimonials__card pk-prism-card flex h-full flex-col p-5">
-              <Quote className="h-5 w-5 shrink-0 text-[var(--prism-violet)]" aria-hidden />
+              <TestimonialStars />
+              <Quote className="mt-2 h-5 w-5 shrink-0 text-[var(--prism-violet)]" aria-hidden />
               <p className="mt-3 flex-1 text-sm leading-relaxed text-white/75">&ldquo;{t.q}&rdquo;</p>
               <footer className="mt-3 text-xs font-semibold text-white/45">{t.who}</footer>
             </blockquote>
@@ -60,7 +62,8 @@ export function TestimonialsStrip({ locale, compact = false }: Props) {
         >
           {trackItems.map((t, i) => (
             <blockquote key={`${t.id}-${i}`} className="pk-landing-testimonials__card pk-prism-card flex h-full flex-col p-4 sm:p-5">
-              <Quote className="h-5 w-5 shrink-0 text-[var(--prism-violet)]" aria-hidden />
+              <TestimonialStars />
+              <Quote className="mt-2 h-5 w-5 shrink-0 text-[var(--prism-violet)]" aria-hidden />
               <p className="mt-3 flex-1 text-sm leading-relaxed text-white/75">&ldquo;{t.q}&rdquo;</p>
               <footer className="mt-3 text-xs font-semibold text-white/45">{t.who}</footer>
             </blockquote>

@@ -25,6 +25,7 @@ import {
   getPricingPlans,
   type PricingCompareCell,
 } from "@/lib/pricingContent";
+import { croPricingHero } from "@/lib/croTrustCopy";
 import { cn } from "@/lib/utils";
 
 function CompareCell({ value }: { value: PricingCompareCell }) {
@@ -117,6 +118,7 @@ export default function Pricing() {
   const trustPoints = isFr
     ? ["Paiement Stripe sécurisé", "Facturation USD", "Annulation à tout moment", "Activation instantanée"]
     : ["Secure Stripe checkout", "USD billing", "Cancel anytime", "Instant activation"];
+  const pricingHero = useMemo(() => croPricingHero(locale), [locale]);
 
   return (
     <MarketingPageShell contentClassName="pk-pricing-page">
@@ -132,15 +134,13 @@ export default function Pricing() {
           <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
               <p className="pk-pricing-hero__eyebrow text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--prism-cyan)]">
-                {isFr ? "Tarifs simples" : "Simple pricing"}
+                {pricingHero.eyebrow}
               </p>
               <h1 className="mt-3 text-balance text-[clamp(1.85rem,4.2vw,2.65rem)] font-bold leading-[1.08] tracking-tight">
-                <span className="pk-prism-holo-text">{isFr ? "Un plan pour chaque étape" : "One plan for every stage"}</span>
+                <span className="pk-prism-holo-text">{pricingHero.title}</span>
               </h1>
               <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/58 sm:text-[15px]">
-                {isFr
-                  ? "Commence gratuit. Passe Pro pour monétiser, Studio pour produire en volume, Plus pour les stems et la priorité. Tous les prix en USD, facturés mensuellement."
-                  : "Start free. Go Pro to monetize, Studio for volume, Plus for stems and priority. All prices in USD, billed monthly."}
+                {pricingHero.lead}
               </p>
               <div className="mt-5 flex flex-wrap gap-2">
                 {trustPoints.map((t) => (

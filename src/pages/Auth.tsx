@@ -10,6 +10,8 @@ import { getAttributionProps } from "@/lib/attribution";
 import { useLocaleStore } from "@/stores/localeStore";
 import { mapAuthError } from "@/lib/authProviders";
 import { markJustAuthenticated, sanitizePostAuthPath } from "@/lib/postAuthRedirect";
+import { ConversionTrustBar } from "@/components/marketing/ConversionTrustBar";
+import { croAuthHeadline } from "@/lib/croTrustCopy";
 import { resolveAuthModeFromSearch, resolvePostAuthRedirect, type AuthMode } from "@/lib/authRoutes";
 
 export default function Auth() {
@@ -193,13 +195,7 @@ export default function Auth() {
               </div>
             </div>
             <p className="mt-2 text-sm text-pk-muted">
-              {mode === "login"
-                ? isFr
-                  ? "Connecte-toi — email ou Google, même compte."
-                  : "Sign in — email or Google, same account."
-                : isFr
-                  ? "Crée ton compte gratuit — prêt en quelques secondes."
-                  : "Create your free account — ready in seconds."}
+              {croAuthHeadline(locale, mode === "login" ? "login" : "signup")}
             </p>
           </div>
 
@@ -303,6 +299,8 @@ export default function Auth() {
               {isFr ? "Mot de passe oublié / créer un mot de passe" : "Forgot password / set a password"}
             </button>
           </form>
+
+          <ConversionTrustBar locale={locale} compact className="pk-auth-trust" />
         </div>
       </div>
     </MarketingPageShell>
