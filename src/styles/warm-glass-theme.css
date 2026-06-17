@@ -50,6 +50,11 @@
   --ph-mark-1: #f0c848;
   --ph-mark-2: #e87838;
   --ph-mark-3: #f5dc70;
+  --ph-mark-bg-0: rgba(255, 248, 238, 0.78);
+  --ph-mark-bg-1: rgba(255, 220, 180, 0.14);
+  --ph-mark-border-0: rgba(255, 220, 170, 0.68);
+  --ph-mark-border-1: rgba(240, 200, 120, 0.52);
+  --ph-mark-border-2: rgba(255, 235, 210, 0.34);
   --warm-glass-surface: rgba(38, 16, 10, 0.42);
   --warm-glass-surface-elevated: rgba(48, 22, 14, 0.56);
   --warm-glass-border: rgba(255, 195, 150, 0.24);
@@ -1638,6 +1643,11 @@ html.pk-warm-glass-active {
   --ph-mark-1: #f0c848;
   --ph-mark-2: #e87838;
   --ph-mark-3: #f5dc70;
+  --ph-mark-bg-0: rgba(255, 248, 238, 0.78);
+  --ph-mark-bg-1: rgba(255, 220, 180, 0.14);
+  --ph-mark-border-0: rgba(255, 220, 170, 0.68);
+  --ph-mark-border-1: rgba(240, 200, 120, 0.52);
+  --ph-mark-border-2: rgba(255, 235, 210, 0.34);
 }
 
 /* Logo waveform + wordmark holo — hors stage (marketing, auth, navbar…) */
@@ -1656,6 +1666,26 @@ html.pk-warm-glass-active .pk-brand-mark {
 
 .pk-warm-glass-stage .pk-brand-mark {
   filter: drop-shadow(0 0 10px rgba(240, 192, 64, 0.28));
+}
+
+/* Wordmark dashboard (animé + statique) — aligné Terre */
+html.pk-warm-glass-active .pk-dashboard-studio-brand__logo .text-white\/90,
+.pk-warm-glass-stage .pk-dashboard-studio-brand__logo .text-white\/90 {
+  color: rgba(255, 248, 240, 0.92) !important;
+}
+
+html.pk-warm-glass-active .pk-dashboard-studio-brand--static .pk-dashboard-studio-brand__static-wordmark,
+.pk-warm-glass-stage .pk-dashboard-studio-brand--static .pk-dashboard-studio-brand__static-wordmark {
+  color: rgba(255, 248, 240, 0.92) !important;
+}
+
+html.pk-warm-glass-active .pk-dashboard-studio-brand--static .pk-dashboard-studio-brand__static-hit,
+.pk-warm-glass-stage .pk-dashboard-studio-brand--static .pk-dashboard-studio-brand__static-hit {
+  background: var(--warm-accent-gradient-holo) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
 }
 
 /* Accents portaled (dropdowns, modales) — même palette que .pk-warm-glass-stage */

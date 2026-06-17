@@ -66,14 +66,16 @@
 
 /* —— Prism (défaut, fond sombre) —— */
 html:not(.pk-cloud-active):not(.pk-warm-glass-active) .pk-brand-logo,
-.pk-prism-stage .pk-brand-logo:not(.pk-cloud-stage *) {
+.pk-prism-stage:not(.pk-warm-glass-stage):not(.pk-cloud-stage) .pk-brand-logo {
   --pk-logo-base: rgba(255, 255, 255, 0.74);
   --pk-logo-accent: linear-gradient(92deg, #8fd4ff 0%, #67c3ff 38%, #9d7cff 100%);
 }
 
 /* —— Cloud (fond clair + accents dynamiques) —— */
 html.pk-cloud-active .pk-brand-logo,
-.pk-cloud-stage .pk-brand-logo {
+.pk-cloud-stage .pk-brand-logo,
+html.pk-cloud-active .pk-prism-stage.pk-cloud-stage .pk-brand-logo,
+.pk-prism-stage.pk-cloud-stage .pk-brand-logo {
   --pk-logo-base: color-mix(in srgb, var(--cloud-text, #1c1c20) 52%, transparent);
   --pk-logo-accent: var(--cloud-accent-gradient, linear-gradient(135deg, #ffd4e8, #c8b8ff, #a8d4ff));
 }
@@ -99,11 +101,13 @@ html.pk-cloud-active body[data-pk-cloud-accent="transparent"] .pk-brand-logo,
   --pk-logo-accent: linear-gradient(92deg, #ffd4e8 0%, #c8b8ff 42%, #a8d4ff 100%);
 }
 
-/* —— Warm glass —— */
+/* —— Warm glass (Terre) —— */
 html.pk-warm-glass-active .pk-brand-logo,
-.pk-warm-glass-stage .pk-brand-logo {
-  --pk-logo-base: rgba(255, 235, 210, 0.62);
-  --pk-logo-accent: linear-gradient(92deg, #f0c878 0%, #e8a060 45%, #d4845a 100%);
+.pk-warm-glass-stage .pk-brand-logo,
+html.pk-warm-glass-active .pk-prism-stage.pk-warm-glass-stage .pk-brand-logo,
+.pk-prism-stage.pk-warm-glass-stage .pk-brand-logo {
+  --pk-logo-base: rgba(255, 235, 210, 0.78);
+  --pk-logo-accent: linear-gradient(92deg, #f5dc78 0%, #e8a858 42%, #e87838 100%);
 }
 
 @media (prefers-reduced-motion: reduce) {

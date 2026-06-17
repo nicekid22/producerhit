@@ -150,6 +150,11 @@ body {
   --ph-mark-1: #67c3ff;
   --ph-mark-2: #9d7cff;
   --ph-mark-3: #cbd5e1;
+  --ph-mark-bg-0: rgba(255, 255, 255, 0.72);
+  --ph-mark-bg-1: rgba(255, 255, 255, 0.08);
+  --ph-mark-border-0: rgba(255, 255, 255, 0.72);
+  --ph-mark-border-1: rgba(200, 184, 255, 0.45);
+  --ph-mark-border-2: rgba(255, 255, 255, 0.28);
 }
 
 @keyframes prismAurora {

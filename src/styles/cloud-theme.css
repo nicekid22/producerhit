@@ -51,6 +51,11 @@
   --ph-mark-1: #c8b8ff;
   --ph-mark-2: #8a9cff;
   --ph-mark-3: #a8d4ff;
+  --ph-mark-bg-0: rgba(255, 255, 255, 0.82);
+  --ph-mark-bg-1: rgba(255, 255, 255, 0.16);
+  --ph-mark-border-0: rgba(255, 255, 255, 0.78);
+  --ph-mark-border-1: rgba(200, 184, 255, 0.48);
+  --ph-mark-border-2: rgba(255, 255, 255, 0.36);
   --cloud-accent-glow: rgba(180, 170, 255, 0.24);
   --cloud-electric-a: #c8b8ff;
   --cloud-electric-b: #a8d4ff;
@@ -1285,6 +1290,20 @@ html.pk-cloud-active .pk-dashboard-studio-brand__mode .pk-prism-holo-text {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+
+html.pk-cloud-active .pk-dashboard-studio-brand--static .pk-dashboard-studio-brand__static-wordmark,
+.pk-cloud-stage .pk-dashboard-studio-brand--static .pk-dashboard-studio-brand__static-wordmark {
+  color: var(--cloud-text) !important;
+}
+
+html.pk-cloud-active .pk-dashboard-studio-brand--static .pk-dashboard-studio-brand__static-hit,
+.pk-cloud-stage .pk-dashboard-studio-brand--static .pk-dashboard-studio-brand__static-hit {
+  background: var(--cloud-accent-gradient) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
