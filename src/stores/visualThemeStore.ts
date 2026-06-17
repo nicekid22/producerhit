@@ -1,12 +1,13 @@
 import { create } from "zustand";
-import { WARM_GLASS_THEME_DEFAULT } from "@/lib/featureFlags";
+import { CLOUD_THEME_ENABLED, WARM_GLASS_THEME_DEFAULT } from "@/lib/featureFlags";
 
 export type VisualTheme = "prism" | "warm-glass" | "cloud";
 
 const STORAGE_KEY = "producerhit_visual_theme_v1";
 
 function normalizeTheme(raw: string | null | undefined): VisualTheme | null {
-  if (raw === "prism" || raw === "warm-glass" || raw === "cloud") return raw;
+  if (raw === "prism" || raw === "warm-glass") return raw;
+  if (raw === "cloud") return CLOUD_THEME_ENABLED ? "cloud" : null;
   return null;
 }
 

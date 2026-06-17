@@ -60,13 +60,10 @@ export const PINTEREST_PINIMG_FALLBACK = import.meta.env.VITE_PINTEREST_PINIMG_F
 export const WARM_GLASS_THEME_DEFAULT = import.meta.env.VITE_WARM_GLASS_THEME === "1";
 
 /**
- * Thème Cloud — actif en dev par défaut ; prod : VITE_CLOUD_THEME=1.
- * Désactiver partout : VITE_CLOUD_THEME=0 — voir CLOUD_THEME_ROLLBACK.md
+ * Thème Cloud — actif par défaut (prod + dev). Rollback : VITE_CLOUD_THEME=0
+ * Ancien gate prod-only : VITE_CLOUD_THEME=1 — voir CLOUD_THEME_ROLLBACK.md
  */
-export const CLOUD_THEME_ENABLED =
-  import.meta.env.VITE_CLOUD_THEME === "0"
-    ? false
-    : import.meta.env.DEV || import.meta.env.VITE_CLOUD_THEME === "1";
+export const CLOUD_THEME_ENABLED = import.meta.env.VITE_CLOUD_THEME !== "0";
 
 /**
  * Dashboard — import voix + picker « Voix chantée » (WIP).

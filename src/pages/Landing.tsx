@@ -46,7 +46,6 @@ import { LandingGenerator, type GeneratorSideCard } from "@/components/landing/L
 import { LandingWorkflow } from "@/components/landing/LandingWorkflow";
 import { HeroCtaButton } from "@/components/landing/HeroCtaButton";
 import { HeroDreamHeadline } from "@/components/landing/HeroDreamHeadline";
-import { HeroTypewriterPrompt } from "@/components/landing/HeroTypewriterPrompt";
 import { ThemeAndAccentPicker } from "@/components/ThemeAndAccentPicker";
 import { WarmGlassBackdrop } from "@/components/WarmGlassBackdrop";
 import { CloudBackdrop } from "@/components/CloudBackdrop";
@@ -1276,50 +1275,24 @@ export default function Landing() {
                 mobileLandingFocus && "pk-landing-flow__intro--mobile",
               )}
             >
-              {!CLOUD_THEME_ENABLED || !mobileLandingFocus ? (
-                <p
-                  className={cn(
-                    "font-semibold uppercase tracking-[0.18em] text-white/45",
-                    mobileLandingFocus ? "pk-landing-flow__tagline--mobile text-[9px] tracking-[0.2em]" : "text-[10px] text-white/40",
-                  )}
-                >
+              {!mobileLandingFocus ? (
+                <p className="font-semibold uppercase tracking-[0.18em] text-[10px] text-white/40">
                   {copy.heroTagline}
                 </p>
               ) : null}
-              {CLOUD_THEME_ENABLED ? (
-                <HeroDreamHeadline
-                  locale={locale}
-                  reduceMotion={reduceMotion}
-                  className={mobileLandingFocus ? "pk-hero-dream-wrap--mobile mt-3" : "mt-2"}
-                />
-              ) : (
-                <HeroTypewriterPrompt
-                  locale={locale}
-                  reduceMotion={reduceMotion}
-                  className={mobileLandingFocus ? "pk-hero-prompt-wrap--mobile mt-3" : "mt-2"}
-                />
-              )}
-              {CLOUD_THEME_ENABLED ? (
-                <p
-                  className={cn(
-                    "pk-landing-hero-dream-sub mx-auto max-w-md text-pretty leading-relaxed text-white/55",
-                    mobileLandingFocus ? "mt-2 text-[11px]" : "mt-3 text-xs sm:text-[13px]",
-                  )}
-                >
-                  {dreamCopy.subline}
-                </p>
-              ) : (
-                <p
-                  className={cn(
-                    "mx-auto max-w-lg text-pretty leading-relaxed text-white/50",
-                    mobileLandingFocus
-                      ? "pk-landing-flow__lead--mobile mt-2 text-[11px]"
-                      : "mt-2 text-xs sm:text-[13px] text-white/45",
-                  )}
-                >
-                  {copy.heroLead}
-                </p>
-              )}
+              <HeroDreamHeadline
+                locale={locale}
+                reduceMotion={reduceMotion}
+                className={mobileLandingFocus ? "pk-hero-dream-wrap--mobile mt-3" : "mt-2"}
+              />
+              <p
+                className={cn(
+                  "pk-landing-hero-dream-sub mx-auto max-w-md text-pretty leading-relaxed text-white/55",
+                  mobileLandingFocus ? "mt-2 text-[11px]" : "mt-3 text-xs sm:text-[13px]",
+                )}
+              >
+                {dreamCopy.subline}
+              </p>
               {CLOUD_THEME_ENABLED ? (
                 <LandingHeroMoodStrip
                   locale={locale}

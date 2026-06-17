@@ -16,15 +16,15 @@ Active Cloud + accent sauvegardé, puis ouvre le **vrai** Dashboard (pas de text
 
 Autres cibles : `?go=landing`, `?go=library`, `?go=settings`
 
-## Activer en production
+## Production
 
-`.env` :
+Cloud est **activé par défaut** (build prod inclus). Rollback uniquement :
 
 ```
-VITE_CLOUD_THEME=1
+VITE_CLOUD_THEME=0
 ```
 
-Désactiver : `VITE_CLOUD_THEME=0`
+(L’ancien gate `VITE_CLOUD_THEME=1` n’est plus nécessaire.)
 
 Puis **Paramètres → Apparence** : Prism / Warm Glass / Cloud + 4 accents.
 
