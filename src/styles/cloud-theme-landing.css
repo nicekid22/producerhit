@@ -276,23 +276,44 @@ html.pk-cloud-active .pk-landing-header .border-white\/10.bg-white\/\[0\.03\],
       radial-gradient(ellipse at 50% 58%, color-mix(in srgb, var(--cloud-accent) 12%, transparent) 0%, transparent 68%);
   }
 
-  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus .pk-landing-gen__cta--apple {
-    background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--cloud-accent) 88%, white) 0%,
-      color-mix(in srgb, var(--cloud-accent) 72%, #4a5568) 100%
-    ) !important;
-    box-shadow:
-      inset 0 1px 0 var(--cloud-glass-highlight),
-      0 6px 28px color-mix(in srgb, var(--cloud-accent) 22%, transparent) !important;
-  }
-
   .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus .pk-landing-gen__mobile-segment-btn--active {
     background: linear-gradient(
       135deg,
       color-mix(in srgb, var(--cloud-accent) 18%, transparent) 0%,
       color-mix(in srgb, var(--cloud-field-bg) 40%, transparent) 100%
     );
+  }
+
+  /* CTA « Créer » mobile — même gradient & glow que desktop Cloud */
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus
+    .pk-landing-gen__cta-shell--mobile
+    .pk-landing-gen__cta-field {
+    background:
+      radial-gradient(ellipse 70% 88% at 24% 50%, color-mix(in srgb, var(--cloud-electric-a) 34%, transparent), transparent 58%),
+      radial-gradient(ellipse 64% 78% at 76% 48%, color-mix(in srgb, var(--cloud-electric-b) 28%, transparent), transparent 54%) !important;
+    opacity: 0.78 !important;
+    filter: blur(18px) saturate(1.25) !important;
+  }
+
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus .pk-landing-gen__cta--mobile:not(.is-generating) {
+    background: var(--cloud-btn-gradient) !important;
+    color: var(--cloud-text-inverse, rgba(255, 255, 255, 0.94)) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.28),
+      0 10px 32px color-mix(in srgb, var(--cloud-accent) 24%, transparent) !important;
+  }
+
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus
+    .pk-landing-gen__cta--mobile:not(.is-generating)
+    .pk-landing-gen__cta-rim {
+    opacity: 0.9 !important;
+  }
+
+  .pk-cloud-stage.pk-prism-stage--landing.pk-landing--mobile-focus
+    .pk-landing-gen__cta--mobile:not(.is-generating)
+    .pk-landing-gen__cta-inner {
+    color: var(--cloud-text-inverse, rgba(255, 255, 255, 0.94)) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
   }
 
   /* Trending strip mobile */

@@ -466,16 +466,24 @@ export function LandingGenerator({
                         {landing.modeAdvanced}
                       </button>
                     ) : null}
-                    <div className="pk-landing-gen__cta-shell pk-landing-gen__cta-shell--apple relative w-full">
+                    <div className="pk-landing-gen__cta-shell pk-landing-gen__cta-shell--mobile pk-landing-gen__cta-shell--apple relative w-full">
+                      <span className="pk-landing-gen__cta-field" aria-hidden />
                       <button
                         type="button"
                         onClick={() => void onGenerate()}
                         disabled={generating}
                         className={cn(
-                          "pk-landing-gen__cta pk-landing-gen__cta--mobile pk-landing-gen__cta--apple group inline-flex h-12 w-full items-center justify-center rounded-full px-6",
+                          "pk-landing-gen__cta pk-landing-gen__cta--mobile group inline-flex h-12 w-full items-center justify-center rounded-full px-6",
                           generating && "is-generating",
                         )}
                       >
+                        <span className="pk-landing-gen__cta-rim" aria-hidden />
+                        <span className="pk-landing-gen__cta-spark" aria-hidden />
+                        <span className="pk-landing-gen__cta-spark pk-landing-gen__cta-spark--alt" aria-hidden />
+                        <span className="pk-landing-gen__cta-glass" aria-hidden>
+                          <span className="pk-landing-gen__cta-liquid" aria-hidden />
+                          <span className="pk-landing-gen__cta-shine" aria-hidden />
+                        </span>
                         <span className="pk-landing-gen__cta-inner inline-flex items-center justify-center gap-2 text-[15px] font-semibold tracking-tight">
                           {generating ? (
                             <PkIconLoader icon="generator" size="xs" inline />

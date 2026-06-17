@@ -62,11 +62,7 @@
   .pk-cloud-stage.pk-landing--mobile-focus {
     --pk-apple-accent-from: color-mix(in srgb, var(--cloud-accent) 78%, white);
     --pk-apple-accent-to: color-mix(in srgb, var(--cloud-accent) 88%, #2a3040);
-    --pk-apple-cta-gradient: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--cloud-accent) 88%, white) 0%,
-      color-mix(in srgb, var(--cloud-accent) 72%, #4a5568) 100%
-    );
+    --pk-apple-cta-gradient: var(--cloud-btn-gradient);
     --pk-apple-cta-shadow: 0 6px 28px color-mix(in srgb, var(--cloud-accent) 24%, transparent);
     --pk-apple-segment-active: linear-gradient(
       135deg,
@@ -98,13 +94,7 @@
     background: var(--pk-apple-segment-active);
   }
 
-  .pk-landing--mobile-focus .pk-landing-gen__cta--apple {
-    background: var(--pk-apple-cta-gradient) !important;
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.28),
-      var(--pk-apple-cta-shadow) !important;
-  }
-
+  /* CTA mobile : effets liquid glass via .pk-landing-gen__cta (thèmes cloud / warm / prism) */
   .pk-landing--mobile-focus .pk-landing-flow__gen-zone::before {
     background: radial-gradient(
       ellipse at center,
