@@ -3,6 +3,7 @@
  * Voir GENERATION_ASYNC.md
  */
 
+import { usesDirectAceFromBrowser } from "@/lib/aceBrowserKeys";
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
 import type { AceMeta } from "@/lib/audioApi";
 
@@ -17,9 +18,16 @@ export type GenerationJobResult = {
 const POLL_MS_DEFAULT = 3_000;
 const JOB_TIMEOUT_MS = 600_000;
 
-/** Activer après migration 046 + secrets Edge (GENERATION_ASYNC.md). */
+/**
+ * Jobs async (start_job + poll) — évite le mur 150s Supabase Edge en prod.
+ * Local avec VITE_ACE_* : appel direct navigateur → sync OK.
+ * Prod sans clés VITE : auto async sauf VITE_ACE_ASYNC_JOBS=0 explicite.
+ */
 export function asyncGenerationJobsEnabled(): boolean {
-  return import.meta.env.VITE_ACE_ASYNC_JOBS === "1";
+  const raw = import.meta.env.VITE_ACE_ASYNC_JOBS as string | undefined;
+  if (raw === "1") return true;
+  if (raw === "0") return false;
+  return !usesDirectAceFromBrowser();
 }
 
 function pollIntervalMs(): number {

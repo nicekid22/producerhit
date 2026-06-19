@@ -10,7 +10,7 @@
 
 import { nextAceKeyPreferIndex } from "@/lib/aceKeyRotation";
 
-import { aceKeyIndexForGenerationSlot } from "@/lib/aceBrowserKeys";
+import { aceKeyIndexForGenerationSlot, usesDirectAceFromBrowser } from "@/lib/aceBrowserKeys";
 
 
 
@@ -79,6 +79,9 @@ export function dualGenerationFastPath(): DualGenerationMode {
   if (raw === "sequential") return "sequential";
 
   if (import.meta.env.VITE_ACE_DUAL_BATCH_PROD === "1") return "batch";
+
+  // Prod Edge (sans clés VITE) : parallel ×2 = 2 appels lourds + 429/timeouts
+  if (!usesDirectAceFromBrowser()) return "sequential";
 
   return "parallel";
 
