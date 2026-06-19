@@ -17,6 +17,49 @@ export type GenerationJobResult = {
 
 const POLL_MS_DEFAULT = 3_000;
 const JOB_TIMEOUT_MS = 600_000;
+/** Aligné sur jobResponsePayload côté Edge — au-delà, fetch binaire get_job_audio. */
+const INLINE_AUDIO_MAX_CHARS = 400_000;
+
+async function fetchGenerationJobAudioBlobUrl(jobId: string): Promise<string> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session?.access_token) throw new Error("Authentication required");
+  const base = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.replace(/\/$/, "") ?? "";
+  const anon = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim() ?? "";
+  const res = await fetch(`${base}/functions/v1/generate-loop-ace`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+      "Content-Type": "application/json",
+      ...(anon ? { apikey: anon } : {}),
+    },
+    body: JSON.stringify({ action: "get_job_audio", jobId }),
+  });
+  if (!res.ok) throw new Error(`get_job_audio failed (${res.status})`);
+  const blob = await res.blob();
+  if (!blob.size) throw new Error("Empty job audio");
+  return URL.createObjectURL(blob);
+}
+
+async function resolveJobAudioUrl(jobId: string, audioUrl: string): Promise<string> {
+  const raw = audioUrl.trim();
+  if (!raw) return "";
+  if (raw.startsWith("http://") || raw.startsWith("https://") || raw.startsWith("blob:")) return raw;
+  if (raw.startsWith("data:") && raw.length > INLINE_AUDIO_MAX_CHARS) {
+    return fetchGenerationJobAudioBlobUrl(jobId);
+  }
+  if (raw.startsWith("data:")) {
+    try {
+      const res = await fetch(raw);
+      const blob = await res.blob();
+      if (blob.size) return URL.createObjectURL(blob);
+    } catch {
+      return fetchGenerationJobAudioBlobUrl(jobId).catch(() => "");
+    }
+  }
+  return raw;
+}
 
 /**
  * Jobs async (start_job + poll) — évite le mur 150s Supabase Edge en prod.
@@ -85,12 +128,19 @@ export async function pollGenerationJob(jobId: string): Promise<{
     jobId: string;
     status: GenerationJobStatus;
     audioUrl?: string;
+    audioInline?: boolean;
     meta?: AceMeta | null;
     error?: string;
   }>({ action: "poll_job", jobId });
+  let audioUrl = res.audioUrl;
+  if (res.status === "completed" && (!audioUrl || res.audioInline)) {
+    audioUrl = await fetchGenerationJobAudioBlobUrl(jobId).catch(() => audioUrl);
+  } else if (audioUrl) {
+    audioUrl = await resolveJobAudioUrl(jobId, audioUrl);
+  }
   return {
     status: res.status,
-    audioUrl: res.audioUrl,
+    audioUrl,
     meta: res.meta ?? null,
     error: res.error,
   };
@@ -142,11 +192,20 @@ export async function waitForGenerationJob(
       options?.onStatus?.(status);
     }
     if (status === "completed" && row.audio_url) {
-      return finish({
-        jobId,
-        audioUrl: row.audio_url,
-        meta: (row.meta as AceMeta | null) ?? null,
-      });
+      void resolveJobAudioUrl(jobId, row.audio_url)
+        .then((audioUrl) => {
+          if (!settled && audioUrl) {
+            finish({
+              jobId,
+              audioUrl,
+              meta: (row.meta as AceMeta | null) ?? null,
+            });
+          }
+        })
+        .catch(() => {
+          /* poll de secours */
+        });
+      return null;
     }
     if (status === "failed") {
       fail(row.error ?? "Generation job failed");
@@ -187,6 +246,12 @@ export async function waitForGenerationJob(
       options?.onStatus?.(polled.status);
       if (polled.status === "completed" && polled.audioUrl) {
         return finish({ jobId, audioUrl: polled.audioUrl, meta: polled.meta ?? null });
+      }
+      if (polled.status === "completed" && !polled.audioUrl) {
+        const blobUrl = await fetchGenerationJobAudioBlobUrl(jobId).catch(() => "");
+        if (blobUrl) {
+          return finish({ jobId, audioUrl: blobUrl, meta: polled.meta ?? null });
+        }
       }
       if (polled.status === "failed") {
         fail(polled.error ?? "Generation job failed");

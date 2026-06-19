@@ -95,7 +95,7 @@ export function AudioPlayer() {
   const applyAudioCrossOrigin = useCallback((url: string) => {
     const audio = audioRef.current;
     if (!audio) return;
-    const needsCors = url.startsWith("blob:") || url.startsWith("data:") || shouldUsePlaybackOutputGraph(url);
+    const needsCors = url.startsWith("blob:") || shouldUsePlaybackOutputGraph(url);
     if (needsCors) {
       audio.crossOrigin = "anonymous";
     } else {

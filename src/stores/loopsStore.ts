@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { resolvePlayableAudioUrl } from "@/lib/playableAudio";
-import { isPublicAceStreamEnabled, pickInlineProviderAudioUrl } from "@/lib/publicAcePlayback";
+import { isPublicAceStreamEnabled, isPublicAceStreamUrl, pickInlineProviderAudioUrl, withSupabaseFunctionAuth } from "@/lib/publicAcePlayback";
 import { supabase } from "@/lib/supabaseClient";
 import {
   extractAceTaskId as extractAceTaskIdFromStemsUrl,
@@ -313,7 +313,7 @@ export async function resolvePlaybackUrlForLoop(id: string, src: string): Promis
     try {
       const res = await fetch(raw);
       const blob = await res.blob();
-      if (!blob.size) return raw;
+      if (!blob.size) return "";
       const probeUrl = URL.createObjectURL(blob);
       const durationSec = await probeDurationSec(probeUrl);
       URL.revokeObjectURL(probeUrl);
@@ -327,8 +327,15 @@ export async function resolvePlaybackUrlForLoop(id: string, src: string): Promis
       }
       return blobUrl;
     } catch {
-      return raw;
+      return "";
     }
+  }
+
+  if (raw.startsWith("http://") || raw.startsWith("https://")) {
+    const playable = isPublicAceStreamUrl(raw) ? withSupabaseFunctionAuth(raw) : raw;
+    void cacheLoopAudioFromSrc(id, playable);
+    patchLoopPlaybackUrl(id, playable);
+    return playable;
   }
 
   if (raw.startsWith("blob:")) {
@@ -336,9 +343,7 @@ export async function resolvePlaybackUrlForLoop(id: string, src: string): Promis
     return raw;
   }
 
-  void cacheLoopAudioFromSrc(id, raw);
-  patchLoopPlaybackUrl(id, raw);
-  return raw;
+  return "";
 }
 
 async function cacheLoopAudioFromSrc(id: string, src: string | null | undefined, options?: { force?: boolean }): Promise<void> {

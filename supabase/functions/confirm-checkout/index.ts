@@ -7,8 +7,24 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const HOSTED_AUDIO_GRACE_DAYS = 7;
+
 function asString(v: unknown) {
   return typeof v === "string" ? v : "";
+}
+
+function hostedAudioExpiresAtIso(days = HOSTED_AUDIO_GRACE_DAYS): string {
+  return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+}
+
+function profilePlanPatch(prevPlan: string, nextPlan: string): Record<string, unknown> {
+  const patch: Record<string, unknown> = { plan: nextPlan };
+  if (nextPlan === "plus") {
+    patch.hosted_audio_expires_at = null;
+  } else if (prevPlan === "plus") {
+    patch.hosted_audio_expires_at = hostedAudioExpiresAtIso();
+  }
+  return patch;
 }
 
 async function planFromPriceId(
@@ -17,10 +33,13 @@ async function planFromPriceId(
   pricePro: string,
   priceStudio: string,
   pricePlus: string,
+  priceProAnnual: string,
+  priceStudioAnnual: string,
+  pricePlusAnnual: string,
 ) {
-  if (priceId && priceId === pricePro) return "pro";
-  if (priceId && priceId === priceStudio) return "studio";
-  if (priceId && priceId === pricePlus) return "plus";
+  if (priceId && (priceId === pricePro || priceId === priceProAnnual)) return "pro";
+  if (priceId && (priceId === priceStudio || priceId === priceStudioAnnual)) return "studio";
+  if (priceId && (priceId === pricePlus || priceId === pricePlusAnnual)) return "plus";
   if (!priceId) return "free";
 
   const { data } = await supabase.from("billing_stripe_prices").select("plan").eq("stripe_price_id", priceId).maybeSingle();
@@ -48,6 +67,9 @@ serve(async (req) => {
     const pricePro = Deno.env.get("STRIPE_PRICE_ID_PRO") ?? "";
     const priceStudio = Deno.env.get("STRIPE_PRICE_ID_STUDIO") ?? "";
     const pricePlus = Deno.env.get("STRIPE_PRICE_ID_PLUS") ?? "";
+    const priceProAnnual = Deno.env.get("STRIPE_PRICE_ID_PRO_ANNUAL") ?? "";
+    const priceStudioAnnual = Deno.env.get("STRIPE_PRICE_ID_STUDIO_ANNUAL") ?? "";
+    const pricePlusAnnual = Deno.env.get("STRIPE_PRICE_ID_PLUS_ANNUAL") ?? "";
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SERVICE_ROLE_KEY") ?? "";
@@ -111,15 +133,41 @@ serve(async (req) => {
       });
     }
 
-    const subscriptionId = asString(session.subscription);
+    const admin = createClient(supabaseUrl, serviceRoleKey);
+    const mode = asString(session.mode);
     const customerId = asString(session.customer);
+
+    if (mode === "payment") {
+      const creditPack = asString(metadata.credit_pack);
+      const creditsRaw = asString(metadata.credits);
+      const credits = Number.parseInt(creditsRaw, 10);
+      if (!creditPack || !Number.isFinite(credits) || credits <= 0) {
+        return new Response(JSON.stringify({ ok: false, error: "Invalid credit pack session" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: granted, error: grantError } = await admin.rpc("grant_purchased_bonus_credits", {
+        p_stripe_event_id: `confirm:${sessionId}`,
+        p_user_id: user.id,
+        p_pack_id: creditPack,
+        p_credits: credits,
+      });
+      if (grantError) throw grantError;
+
+      return new Response(JSON.stringify({ ok: true, product: "credit_pack", granted: Boolean(granted) }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const subscriptionId = asString(session.subscription);
     if (!subscriptionId) {
       return new Response(JSON.stringify({ ok: false, pending: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const admin = createClient(supabaseUrl, serviceRoleKey);
     const sub = await fetchSubscription(stripeKey, subscriptionId);
     const items = (sub.items as { data?: unknown } | undefined)?.data;
     const firstItem = Array.isArray(items) && items[0] && typeof items[0] === "object" ? (items[0] as Record<string, unknown>) : null;
@@ -128,7 +176,16 @@ serve(async (req) => {
     const currentPeriodEnd = typeof sub.current_period_end === "number" ? sub.current_period_end : null;
     const periodEndIso = currentPeriodEnd ? new Date(currentPeriodEnd * 1000).toISOString() : null;
 
-    const plan = await planFromPriceId(admin, priceId, pricePro, priceStudio, pricePlus);
+    const plan = await planFromPriceId(
+      admin,
+      priceId,
+      pricePro,
+      priceStudio,
+      pricePlus,
+      priceProAnnual,
+      priceStudioAnnual,
+      pricePlusAnnual,
+    );
     if (plan === "free") {
       return new Response(JSON.stringify({ ok: false, error: "Unknown price" }), {
         status: 400,
@@ -136,10 +193,13 @@ serve(async (req) => {
       });
     }
 
+    const { data: prevProfile } = await admin.from("profiles").select("plan").eq("id", user.id).maybeSingle();
+    const prevPlan = typeof prevProfile?.plan === "string" ? prevProfile.plan : "free";
+
     const { error: updateError } = await admin
       .from("profiles")
       .update({
-        plan,
+        ...profilePlanPatch(prevPlan, plan),
         stripe_customer_id: customerId || null,
         stripe_subscription_id: subscriptionId,
         stripe_price_id: priceId || null,

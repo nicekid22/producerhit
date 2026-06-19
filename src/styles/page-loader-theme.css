@@ -15,11 +15,9 @@
   0%,
   100% {
     opacity: 0.92;
-    transform: scale(1);
   }
   50% {
     opacity: 1;
-    transform: scale(1.04);
   }
 }
 
@@ -65,17 +63,6 @@
   z-index: auto;
 }
 
-.pk-page-loader--pending {
-  pointer-events: none;
-}
-
-.pk-page-loader--pending .pk-page-loader__card {
-  opacity: 0;
-  visibility: hidden;
-  transform: none;
-  animation: none !important;
-}
-
 /* Boot shell — fond aligné au thème sauvegardé, sans flash violet */
 .pk-page-loader--boot {
   position: fixed;
@@ -98,11 +85,6 @@
   min-height: min(52vh, 28rem);
   animation: none;
   width: 100%;
-}
-
-.pk-page-loader--inline.pk-page-loader--pending .pk-page-loader__card {
-  opacity: 0;
-  visibility: hidden;
 }
 
 .pk-page-loader::before {
@@ -132,7 +114,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 1rem;
+  min-height: 7.5rem;
+  min-width: 12rem;
   padding: 0;
   border: none;
   background: transparent;
@@ -140,7 +125,7 @@
   -webkit-backdrop-filter: none;
   box-shadow: none;
   transform: none;
-  animation: pkPageLoaderEnter 0.32s ease-out both;
+  animation: pkPageLoaderEnter 0.28s ease-out both;
 }
 
 .pk-page-loader__icon {
@@ -149,8 +134,9 @@
 
 .pk-page-loader__icon .pk-icon-loader__stage {
   position: relative;
-  width: auto;
-  height: auto;
+  width: 3.5rem;
+  height: 3.5rem;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -414,8 +400,4 @@ html.pk-cloud-active .pk-page-loader--cloud[data-pk-cloud-accent="blue"],
     animation: none !important;
   }
 
-  .pk-page-loader--pending .pk-page-loader__card {
-    opacity: 1;
-    visibility: visible;
-  }
 }

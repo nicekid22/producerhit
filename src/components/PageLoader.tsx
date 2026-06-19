@@ -15,8 +15,8 @@ type Props = {
   className?: string;
 };
 
-/** Délai court — fond plein écran immédiat, contenu après (évite flash + pop). */
-const SHOW_DELAY_MS = 80;
+/** Évite le flash « Studio… » quand le chunk lazy est déjà en cache (< ~220ms). */
+const SHOW_CONTENT_MS = 220;
 
 export function PageLoader({ variant = "full", className }: Props) {
   const { pathname } = useLocation();
@@ -25,44 +25,55 @@ export function PageLoader({ variant = "full", className }: Props) {
   const cloudAccent = useCloudAccentStore((s) => s.accent);
   const cloud = isCloudTheme(visualTheme);
   const warmGlass = isWarmGlassTheme(visualTheme);
-  const [visible, setVisible] = useState(false);
+  const [showContent, setShowContent] = useState(variant !== "full");
+
+  useEffect(() => {
+    if (variant !== "full") {
+      setShowContent(true);
+      return;
+    }
+    setShowContent(false);
+    const timer = window.setTimeout(() => setShowContent(true), SHOW_CONTENT_MS);
+    return () => window.clearTimeout(timer);
+  }, [pathname, variant]);
 
   const icon = loaderIconFromPath(pathname);
   const element = elementFromPath(pathname);
   const { label, sublabel } = loaderCopyFromIcon(icon, locale);
 
-  useEffect(() => {
-    setVisible(false);
-    const showTimer = window.setTimeout(() => setVisible(true), SHOW_DELAY_MS);
-    return () => window.clearTimeout(showTimer);
-  }, [pathname]);
-
   const node = (
     <div
       className={cn(
         "pk-page-loader",
+        variant === "full" && !showContent && "pk-page-loader--boot",
         variant === "inline" && "pk-page-loader--inline",
         cloud && "pk-page-loader--cloud",
         warmGlass && "pk-page-loader--warm",
         !cloud && !warmGlass && "pk-page-loader--prism",
-        !visible && "pk-page-loader--pending",
+        !cloud && !warmGlass && variant === "full" && !showContent && "pk-page-loader--neutral",
         className,
       )}
       data-pk-cloud-accent={cloud ? cloudAccent : undefined}
     >
-      <div className="pk-page-loader__card" role="status" aria-live="polite" aria-label={label}>
-        <PkIconLoader
-          icon={icon}
-          element={element}
-          size="md"
-          label={label}
-          sublabel={variant === "full" ? sublabel : undefined}
-          className="pk-page-loader__icon"
-        />
-        <div className="pk-page-loader__bar" aria-hidden>
-          <span className="pk-page-loader__bar-fill" />
+      {showContent ? (
+        <div className="pk-page-loader__card" role="status" aria-live="polite" aria-label={label}>
+          <PkIconLoader
+            icon={icon}
+            element={element}
+            size="md"
+            label={label}
+            sublabel={variant === "full" ? sublabel : undefined}
+            className="pk-page-loader__icon"
+          />
+          <div className="pk-page-loader__bar" aria-hidden>
+            <span className="pk-page-loader__bar-fill" />
+          </div>
         </div>
-      </div>
+      ) : (
+        <span className="sr-only" aria-live="polite">
+          {label}
+        </span>
+      )}
     </div>
   );
 

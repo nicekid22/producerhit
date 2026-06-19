@@ -102,7 +102,7 @@ import { loopToRemixSource } from "@/lib/remixSourceLoop";
 import { MobileOnboardingSheet, hasSeenMobileOnboarding } from "@/components/dashboard/MobileOnboardingSheet";
 import { OnboardingCoach } from "@/components/onboarding/OnboardingCoach";
 import { WavFormatCoach } from "@/components/onboarding/WavFormatCoach";
-import { shouldShowCoachTour } from "@/lib/onboarding/coachStorage";
+import { loadCoachProgress, shouldShowCoachTour } from "@/lib/onboarding/coachStorage";
 import { useOnboardingCoachStore } from "@/stores/onboardingCoachStore";
 import { useWavFormatCoachStore } from "@/stores/wavFormatCoachStore";
 import { useAuthStore } from "@/stores/authStore";
@@ -763,16 +763,20 @@ export default function Dashboard() {
   }, [audioFormat, plan]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id || !profileReady || !authProfile) return;
     try {
-      const key = "producerhit_dashboard_welcome_v1";
+      const key = `producerhit_dashboard_welcome_${user.id}`;
       if (window.localStorage.getItem(key)) return;
+      if (authProfile.loops_used_this_month > 0 || loadCoachProgress(user.id).tourDone) {
+        window.localStorage.setItem(key, "1");
+        return;
+      }
       window.localStorage.setItem(key, "1");
       toast(d.studioLoaded, { icon: "✨" });
     } catch {
       void 0;
     }
-  }, [locale, user]);
+  }, [authProfile, d.studioLoaded, profileReady, user?.id]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -913,16 +917,18 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    if (!mobileV2 || !user || !profileReady || hasSeenMobileOnboarding()) return;
-    if (shouldShowCoachTour(user.id, authProfile?.loops_used_this_month ?? 0)) return;
+    if (!mobileV2 || !user?.id || !profileReady || !authProfile || hasSeenMobileOnboarding()) return;
+    if (shouldShowCoachTour(user.id, authProfile.loops_used_this_month)) return;
     const timer = window.setTimeout(() => setMobileOnboardingOpen(true), 900);
     return () => window.clearTimeout(timer);
-  }, [authProfile?.loops_used_this_month, mobileV2, profileReady, user]);
+  }, [authProfile, mobileV2, profileReady, user?.id]);
 
   useEffect(() => {
-    if (!user?.id || !profileReady) return;
-    useOnboardingCoachStore.getState().hydrate(user.id, authProfile?.loops_used_this_month ?? 0, true);
-  }, [authProfile?.loops_used_this_month, profileReady, user?.id]);
+    if (!user?.id || !profileReady || !authProfile) return;
+    useOnboardingCoachStore
+      .getState()
+      .hydrate(user.id, authProfile.loops_used_this_month, true);
+  }, [authProfile, profileReady, user?.id]);
 
   useEffect(() => {
     trackClientEvent("dashboard_view", { source: entrySource });
@@ -4361,7 +4367,13 @@ export default function Dashboard() {
         {!mobileV2 ? dashboardPromoAndGaming : null}
         <div className="mb-4 space-y-4">
           <OnboardingChecklist locale={locale} />
-          <AudioRetentionBanner locale={locale} plan={plan} loops={loops} />
+          <AudioRetentionBanner
+            locale={locale}
+            plan={authProfile?.plan ?? plan}
+            loops={loops}
+            ready={profileReady && loopsHydrated && !loopsLoading}
+            hostedAudioExpiresAt={authProfile?.hosted_audio_expires_at ?? null}
+          />
         </div>
         {showMasterWorkspace ? (
           <MasteringPanel

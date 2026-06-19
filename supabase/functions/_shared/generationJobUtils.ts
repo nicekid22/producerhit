@@ -364,12 +364,77 @@ export async function updateGenerationJob(
   if (error) console.error("updateGenerationJob", error.message);
 }
 
+const LOOP_AUDIO_BUCKET = "loop-audio";
+/** Évite de renvoyer 4+ Mo de base64 dans les réponses JSON poll_job. */
+const INLINE_AUDIO_MAX_JSON_CHARS = 400_000;
+
+function decodeDataUrl(dataUrl: string): { bytes: Uint8Array; mime: string } | null {
+  const raw = dataUrl.trim();
+  const m = raw.match(/^data:([^;,]+)?(?:;[^,]*)?;base64,(.+)$/i);
+  if (!m) return null;
+  try {
+    const mime = m[1] || "audio/mpeg";
+    const bin = atob(m[2]!);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return { bytes, mime };
+  } catch {
+    return null;
+  }
+}
+
+/** Upload data:audio vers loop-audio pour lecture HTTP immédiate (prod async jobs). */
+export async function persistInlineJobAudioUrl(
+  svc: SupabaseClient,
+  userId: string,
+  jobId: string,
+  audioUrl: string,
+): Promise<{ audioUrl: string; providerDataUrl?: string }> {
+  const raw = audioUrl.trim();
+  if (!raw.startsWith("data:")) return { audioUrl: raw };
+  const decoded = decodeDataUrl(raw);
+  if (!decoded?.bytes.byteLength) return { audioUrl: raw };
+  const ext = decoded.mime.includes("wav") ? "wav" : "mp3";
+  const path = `${userId}/job-${jobId}.${ext}`;
+  const { error } = await svc.storage.from(LOOP_AUDIO_BUCKET).upload(path, decoded.bytes, {
+    upsert: true,
+    contentType: decoded.mime,
+    cacheControl: "public, max-age=604800",
+  });
+  if (error) {
+    console.warn("persistInlineJobAudioUrl", error.message);
+    return { audioUrl: raw };
+  }
+  const { data } = svc.storage.from(LOOP_AUDIO_BUCKET).getPublicUrl(path);
+  const publicUrl = data?.publicUrl?.trim() || "";
+  if (!publicUrl) return { audioUrl: raw };
+  return { audioUrl: publicUrl, providerDataUrl: raw };
+}
+
 export function jobResponsePayload(job: GenerationJobRow) {
+  const meta = job.meta ?? undefined;
+  const httpFromMeta =
+    meta && typeof meta === "object" && typeof meta.httpAudioUrl === "string"
+      ? meta.httpAudioUrl.trim()
+      : "";
+  let audioUrl = typeof job.audio_url === "string" ? job.audio_url.trim() : "";
+  if (httpFromMeta.startsWith("http")) {
+    audioUrl = httpFromMeta;
+  } else if (audioUrl.startsWith("data:") && audioUrl.length > INLINE_AUDIO_MAX_JSON_CHARS) {
+    return {
+      jobId: job.id,
+      status: job.status,
+      audioInline: true,
+      meta,
+      error: job.error ?? undefined,
+      generationKey: job.generation_key ?? undefined,
+    };
+  }
   return {
     jobId: job.id,
     status: job.status,
-    audioUrl: job.audio_url ?? undefined,
-    meta: job.meta ?? undefined,
+    audioUrl: audioUrl || undefined,
+    meta,
     error: job.error ?? undefined,
     generationKey: job.generation_key ?? undefined,
   };

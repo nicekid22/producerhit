@@ -8,6 +8,7 @@ import {
   internalJobSecret,
   jobResponsePayload,
   loadGenerationJob,
+  persistInlineJobAudioUrl,
   pollAceTaskOnce,
   resolveAceStemsZipUrl,
   scheduleRunJob,
@@ -392,12 +393,15 @@ async function handleAceRemixMultipart(req: Request, corsHeaders: Record<string,
     useIdempotentUsage = true;
   } else {
     await authedSupabase.rpc("reset_loops_usage_if_needed");
-    const { data: profile } = await authedSupabase.from("profiles").select("plan, loops_used_this_month, referral_bonus, level_bonus, daily_bonus_month").eq("id", user.id).single();
+    const { data: profile } = await authedSupabase.from("profiles").select("plan, loops_used_this_month, referral_bonus, level_bonus, daily_bonus_month, purchased_bonus").eq("id", user.id).single();
     const plan = typeof profile?.plan === "string" ? profile.plan : "free";
     const used = typeof profile?.loops_used_this_month === "number" ? profile.loops_used_this_month : 0;
     const base = LIMITS[plan as keyof typeof LIMITS] ?? LIMITS.free;
     const bonus =
-      Math.max(0, profile?.referral_bonus ?? 0) + Math.max(0, profile?.level_bonus ?? 0) + Math.max(0, profile?.daily_bonus_month ?? 0);
+      Math.max(0, profile?.referral_bonus ?? 0) +
+      Math.max(0, profile?.level_bonus ?? 0) +
+      Math.max(0, profile?.daily_bonus_month ?? 0) +
+      Math.max(0, profile?.purchased_bonus ?? 0);
     const limit = base + bonus;
     if (used >= limit) {
       return new Response(JSON.stringify({ error: `Monthly limit reached (${limit} beats for ${plan} plan).`, limitReached: true, plan, limit, used }), {
@@ -1058,7 +1062,7 @@ async function generateViaChatCompletionsAce(input: {
   const fallbackKeyScale = !input.autoMeta && input.key && input.scale ? `${input.key} ${input.scale}` : "";
 
   return {
-    audioUrl: parsed.audioUrl,
+    audioUrl: (parsed.httpAudioUrl && isHttpUrl(parsed.httpAudioUrl) ? parsed.httpAudioUrl : "") || parsed.audioUrl,
     chatJson: json,
     meta: {
       prompt: parsedContent.prompt || input.baseCaption || input.prompt,
@@ -1642,6 +1646,13 @@ serve(async (req) => {
           const msg = lastErr instanceof Error ? lastErr.message : "ACE chat/completions failed";
           throw new Error(msg);
         }
+        if (audioUrl.startsWith("data:")) {
+          const persisted = await persistInlineJobAudioUrl(svc, job.user_id, jobId, audioUrl);
+          audioUrl = persisted.audioUrl;
+          if (persisted.providerDataUrl) {
+            meta = { ...(meta ?? {}), providerDataUrl: persisted.providerDataUrl, sessionOnly: false };
+          }
+        }
         await updateGenerationJob(svc, jobId, {
           status: "completed",
           audio_url: audioUrl,
@@ -1725,7 +1736,7 @@ serve(async (req) => {
               if (resetErr) console.error("reset_loops_usage_if_needed error:", resetErr.message);
               const { data: profile, error: profileError } = await supabase
                 .from("profiles")
-                .select("plan, loops_used_this_month, referral_bonus, level_bonus, daily_bonus_month")
+                .select("plan, loops_used_this_month, referral_bonus, level_bonus, daily_bonus_month, purchased_bonus")
                 .eq("id", user.id)
                 .single();
 
@@ -1739,7 +1750,8 @@ serve(async (req) => {
                 const referralBonus = typeof profile?.referral_bonus === "number" ? profile.referral_bonus : 0;
                 const levelBonus = typeof profile?.level_bonus === "number" ? profile.level_bonus : 0;
                 const dailyBonus = typeof profile?.daily_bonus_month === "number" ? profile.daily_bonus_month : 0;
-                const limit = baseLimit + Math.max(0, referralBonus) + Math.max(0, levelBonus) + Math.max(0, dailyBonus);
+                const purchasedBonus = typeof profile?.purchased_bonus === "number" ? profile.purchased_bonus : 0;
+                const limit = baseLimit + Math.max(0, referralBonus) + Math.max(0, levelBonus) + Math.max(0, dailyBonus) + Math.max(0, purchasedBonus);
                 if (used >= limit) {
                   return new Response(
                     JSON.stringify({
@@ -1832,6 +1844,53 @@ serve(async (req) => {
       );
     }
 
+    if (action === "get_job_audio") {
+      const jobId = asString(body?.jobId) || asString(body?.job_id);
+      if (!jobId) {
+        return new Response(JSON.stringify({ error: "Missing jobId" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const job = await loadGenerationJob(authedSupabase, jobId);
+      if (!job || job.user_id !== authedUserId) {
+        return new Response(JSON.stringify({ error: "Job not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (job.status !== "completed") {
+        return new Response(JSON.stringify({ error: "Job not ready" }), {
+          status: 409,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const raw = typeof job.audio_url === "string" ? job.audio_url.trim() : "";
+      if (!raw) {
+        return new Response(JSON.stringify({ error: "No audio" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (raw.startsWith("http://") || raw.startsWith("https://")) {
+        return Response.redirect(raw, 302);
+      }
+      const decoded = decodeDataUrl(raw);
+      if (!decoded) {
+        return new Response(JSON.stringify({ error: "Invalid audio" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(decoded.bytes, {
+        headers: {
+          ...corsHeaders,
+          "Content-Type": decoded.mime,
+          "Cache-Control": "private, max-age=3600",
+        },
+      });
+    }
+
     if (action === "poll_job") {
       const jobId = asString(body?.jobId) || asString(body?.job_id);
       if (!jobId) {
@@ -1879,10 +1938,19 @@ serve(async (req) => {
           if (poll.status === "ready") {
             const svc = createServiceSupabase();
             const db = svc ?? authedSupabase;
+            let finalAudioUrl = poll.audioUrl;
+            let pollMeta = poll.meta;
+            if (svc && finalAudioUrl?.startsWith("data:")) {
+              const persisted = await persistInlineJobAudioUrl(svc, job.user_id, jobId, finalAudioUrl);
+              finalAudioUrl = persisted.audioUrl;
+              if (persisted.providerDataUrl) {
+                pollMeta = { ...(pollMeta ?? {}), providerDataUrl: persisted.providerDataUrl, sessionOnly: false };
+              }
+            }
             await updateGenerationJob(db, jobId, {
               status: "completed",
-              audio_url: poll.audioUrl,
-              meta: poll.meta,
+              audio_url: finalAudioUrl,
+              meta: pollMeta,
             });
             if (job.generation_key) {
               await db.rpc("bump_loops_usage_idempotent", { p_key: job.generation_key });

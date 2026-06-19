@@ -69,7 +69,7 @@ serve(async (req) => {
 
             const { data: profile, error: profileError } = await supabase
               .from("profiles")
-              .select("plan, loops_used_this_month, referral_bonus, level_bonus, daily_bonus_month")
+              .select("plan, loops_used_this_month, referral_bonus, level_bonus, daily_bonus_month, purchased_bonus")
               .eq("id", user.id)
               .single();
 
@@ -83,7 +83,8 @@ serve(async (req) => {
               const referralBonus = typeof profile?.referral_bonus === "number" ? profile.referral_bonus : 0;
               const levelBonus = typeof profile?.level_bonus === "number" ? profile.level_bonus : 0;
               const dailyBonus = typeof profile?.daily_bonus_month === "number" ? profile.daily_bonus_month : 0;
-              const limit = baseLimit + Math.max(0, referralBonus) + Math.max(0, levelBonus) + Math.max(0, dailyBonus);
+              const purchasedBonus = typeof profile?.purchased_bonus === "number" ? profile.purchased_bonus : 0;
+              const limit = baseLimit + Math.max(0, referralBonus) + Math.max(0, levelBonus) + Math.max(0, dailyBonus) + Math.max(0, purchasedBonus);
 
               const { data: existing, error: existingErr } = await supabase
                 .from("generation_usage_keys")
@@ -110,7 +111,7 @@ serve(async (req) => {
             if (resetErr) console.error("reset_loops_usage_if_needed error:", resetErr.message);
             const { data: profile, error: profileError } = await supabase
               .from("profiles")
-              .select("plan, loops_used_this_month, referral_bonus, level_bonus, daily_bonus_month")
+              .select("plan, loops_used_this_month, referral_bonus, level_bonus, daily_bonus_month, purchased_bonus")
               .eq("id", user.id)
               .single();
 
@@ -124,7 +125,8 @@ serve(async (req) => {
               const referralBonus = typeof profile?.referral_bonus === "number" ? profile.referral_bonus : 0;
               const levelBonus = typeof profile?.level_bonus === "number" ? profile.level_bonus : 0;
               const dailyBonus = typeof profile?.daily_bonus_month === "number" ? profile.daily_bonus_month : 0;
-              const limit = baseLimit + Math.max(0, referralBonus) + Math.max(0, levelBonus) + Math.max(0, dailyBonus);
+              const purchasedBonus = typeof profile?.purchased_bonus === "number" ? profile.purchased_bonus : 0;
+              const limit = baseLimit + Math.max(0, referralBonus) + Math.max(0, levelBonus) + Math.max(0, dailyBonus) + Math.max(0, purchasedBonus);
 
               if (used >= limit) {
                 return new Response(
@@ -179,11 +181,11 @@ serve(async (req) => {
     }
 
     if (generationKey) {
-      const { data: reserveData, error: reserveError } = await authedSupabase.rpc("check_and_bump_loops_usage_idempotent", {
+      const { data: reserveData, error: reserveError } = await authedSupabase.rpc("check_loops_usage_idempotent", {
         p_key: generationKey,
       });
       if (reserveError) {
-        console.error("check_and_bump_loops_usage_idempotent error:", reserveError.message);
+        console.error("check_loops_usage_idempotent error:", reserveError.message);
       } else {
         type UsageReserveRow = { ok?: unknown; plan?: unknown; used?: unknown; limit?: unknown };
         const row: UsageReserveRow | null = Array.isArray(reserveData)
@@ -270,9 +272,14 @@ serve(async (req) => {
 
       if (status === "GENERATING_STREAMING_READY") {
         const audioUrl = `https://api-stream.sonauto.ai/stream/${taskId}`;
-        if (authedSupabase && authedUserId && !useIdempotentUsage) {
-          const { error: bumpErr } = await authedSupabase.rpc("bump_loops_usage");
-          if (bumpErr) console.error("bump_loops_usage error:", bumpErr.message);
+        if (authedSupabase && authedUserId) {
+          if (useIdempotentUsage && generationKey) {
+            const { error: bumpErr } = await authedSupabase.rpc("bump_loops_usage_idempotent", { p_key: generationKey });
+            if (bumpErr) console.error("bump_loops_usage_idempotent error:", bumpErr.message);
+          } else {
+            const { error: bumpErr } = await authedSupabase.rpc("bump_loops_usage");
+            if (bumpErr) console.error("bump_loops_usage error:", bumpErr.message);
+          }
         }
         return new Response(JSON.stringify({ audioUrl }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -287,9 +294,14 @@ serve(async (req) => {
         const songPaths = doneJson?.song_paths;
         const audioUrl = Array.isArray(songPaths) && typeof songPaths[0] === "string" ? songPaths[0] : null;
         if (!audioUrl) throw new Error("No audio URL returned");
-        if (authedSupabase && authedUserId && !useIdempotentUsage) {
-          const { error: bumpErr } = await authedSupabase.rpc("bump_loops_usage");
-          if (bumpErr) console.error("bump_loops_usage error:", bumpErr.message);
+        if (authedSupabase && authedUserId) {
+          if (useIdempotentUsage && generationKey) {
+            const { error: bumpErr } = await authedSupabase.rpc("bump_loops_usage_idempotent", { p_key: generationKey });
+            if (bumpErr) console.error("bump_loops_usage_idempotent error:", bumpErr.message);
+          } else {
+            const { error: bumpErr } = await authedSupabase.rpc("bump_loops_usage");
+            if (bumpErr) console.error("bump_loops_usage error:", bumpErr.message);
+          }
         }
         return new Response(JSON.stringify({ audioUrl }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },

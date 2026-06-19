@@ -68,31 +68,13 @@ async function grantLaunchBonusCredits(
   const { idempotencyKey, userId, grantType, credits } = opts;
   if (credits <= 0) return;
 
-  const { error: insertError } = await supabase.from("stripe_launch_bonus_grants").insert({
-    stripe_event_id: idempotencyKey,
-    user_id: userId,
-    grant_type: grantType,
-    credits,
+  const { error } = await supabase.rpc("grant_launch_bonus_credits", {
+    p_stripe_event_id: idempotencyKey,
+    p_user_id: userId,
+    p_grant_type: grantType,
+    p_credits: credits,
   });
-
-  if (insertError) {
-    if (insertError.code === "23505") return;
-    throw insertError;
-  }
-
-  const { data: profile, error: readError } = await supabase
-    .from("profiles")
-    .select("referral_bonus")
-    .eq("id", userId)
-    .maybeSingle();
-  if (readError) throw readError;
-
-  const current = typeof profile?.referral_bonus === "number" ? profile.referral_bonus : 0;
-  const { error: updateError } = await supabase
-    .from("profiles")
-    .update({ referral_bonus: current + credits })
-    .eq("id", userId);
-  if (updateError) throw updateError;
+  if (error) throw error;
 }
 
 async function grantCreditPackCredits(
@@ -102,31 +84,13 @@ async function grantCreditPackCredits(
   const { idempotencyKey, userId, packId, credits } = opts;
   if (credits <= 0) return;
 
-  const { error: insertError } = await supabase.from("stripe_credit_pack_grants").insert({
-    stripe_event_id: idempotencyKey,
-    user_id: userId,
-    pack_id: packId,
-    credits,
+  const { error } = await supabase.rpc("grant_purchased_bonus_credits", {
+    p_stripe_event_id: idempotencyKey,
+    p_user_id: userId,
+    p_pack_id: packId,
+    p_credits: credits,
   });
-
-  if (insertError) {
-    if (insertError.code === "23505") return;
-    throw insertError;
-  }
-
-  const { data: profile, error: readError } = await supabase
-    .from("profiles")
-    .select("purchased_bonus")
-    .eq("id", userId)
-    .maybeSingle();
-  if (readError) throw readError;
-
-  const current = typeof profile?.purchased_bonus === "number" ? profile.purchased_bonus : 0;
-  const { error: updateError } = await supabase
-    .from("profiles")
-    .update({ purchased_bonus: current + credits })
-    .eq("id", userId);
-  if (updateError) throw updateError;
+  if (error) throw error;
 }
 
 async function applyLaunchOfferBonuses(

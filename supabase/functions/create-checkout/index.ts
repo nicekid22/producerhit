@@ -171,9 +171,9 @@ function priceIdForPlan(
   pricePlusAnnual: string,
 ): string {
   const annual = interval === "year";
-  if (plan === "pro") return (annual && priceProAnnual) ? priceProAnnual : pricePro;
-  if (plan === "studio") return (annual && priceStudioAnnual) ? priceStudioAnnual : priceStudio;
-  if (plan === "plus") return (annual && pricePlusAnnual) ? pricePlusAnnual : pricePlus;
+  if (plan === "pro") return annual ? priceProAnnual : pricePro;
+  if (plan === "studio") return annual ? priceStudioAnnual : priceStudio;
+  if (plan === "plus") return annual ? pricePlusAnnual : pricePlus;
   return "";
 }
 
@@ -587,14 +587,18 @@ serve(async (req) => {
       priceStudioAnnual,
       pricePlusAnnual,
     );
-    if (!priceId) throw new Error("Invalid plan: " + plan);
+    if (!priceId) {
+      if (billingInterval === "year") {
+        return new Response(
+          JSON.stringify({
+            error: "Annual billing is not configured yet. Please choose monthly billing or contact support.",
+          }),
+          { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+      throw new Error("Invalid plan: " + plan);
+    }
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("stripe_customer_id, stripe_subscription_id, plan")
-      .eq("id", user.id)
-      .maybeSingle();
-    const customerId = typeof profile?.stripe_customer_id === "string" ? profile.stripe_customer_id : "";
     let subscriptionId = typeof profile?.stripe_subscription_id === "string" ? profile.stripe_subscription_id : "";
     let currentPlan = typeof profile?.plan === "string" ? profile.plan : "free";
 

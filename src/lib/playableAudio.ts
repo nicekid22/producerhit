@@ -121,6 +121,14 @@ export async function fetchAudioAsBlobUrl(
   }
 
   if (isBlobOrDataUrl(trimmed)) {
+    if (trimmed.startsWith("data:")) {
+      const res = await fetch(trimmed);
+      const blob = await res.blob();
+      if (!blob.size) throw new Error("empty data url");
+      const blobUrl = URL.createObjectURL(blob);
+      blobCache.set(cacheKey, blobUrl);
+      return blobUrl;
+    }
     blobCache.set(cacheKey, trimmed);
     return trimmed;
   }

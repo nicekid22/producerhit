@@ -9,7 +9,7 @@ export function ProtectedRoute() {
   const location = useLocation();
 
   if (status !== "ready") {
-    return <PageLoader variant="inline" />;
+    return <PageLoader />;
   }
 
   if (!user) {

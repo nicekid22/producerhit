@@ -18,16 +18,32 @@ type Props = {
   locale: AppLocale;
   plan: string;
   loops: Loop[];
+  /** Attendre profil + loops hydratés — évite le flash plan=free / loops partiels. */
+  ready?: boolean;
+  hostedAudioExpiresAt?: string | null;
   className?: string;
 };
 
-export function AudioRetentionBanner({ locale, plan, loops, className }: Props) {
+export function AudioRetentionBanner({
+  locale,
+  plan,
+  loops,
+  ready = true,
+  hostedAudioExpiresAt = null,
+  className,
+}: Props) {
   const navigate = useNavigate();
   const openUpsell = useGrowthUpsellStore((s) => s.openUpsell);
   const isFr = locale === "fr";
   const normalizedPlan = normalizePlanId(plan);
 
+  const retentionCtx = useMemo(
+    () => ({ plan, hostedAudioExpiresAt }),
+    [plan, hostedAudioExpiresAt],
+  );
+
   const summary = useMemo(() => {
+    if (!ready) return null;
     if (isLoopAudioRetentionDisabled() || hasPermanentHostedAudio(plan)) return null;
 
     let expiring = 0;
@@ -36,21 +52,21 @@ export function AudioRetentionBanner({ locale, plan, loops, className }: Props) 
 
     for (const loop of loops) {
       if (!loop.createdAt || !isHostedLoopAudioUrl(loop.audioUrl)) continue;
-      const state = getLoopAudioRetentionState(loop.createdAt, { plan });
+      const state = getLoopAudioRetentionState(loop.createdAt, retentionCtx);
       if (state === "expired") {
         expired += 1;
         continue;
       }
       if (state === "expiring") {
         expiring += 1;
-        const days = getDaysUntilAudioExpiry(loop.createdAt, { plan });
+        const days = getDaysUntilAudioExpiry(loop.createdAt, retentionCtx);
         if (soonestDays === null || days < soonestDays) soonestDays = days;
       }
     }
 
     if (expired === 0 && expiring === 0) return null;
     return { expiring, expired, soonestDays };
-  }, [loops, plan]);
+  }, [loops, plan, ready, retentionCtx]);
 
   if (!summary) return null;
 

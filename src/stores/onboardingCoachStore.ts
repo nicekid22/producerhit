@@ -51,7 +51,7 @@ export const useOnboardingCoachStore = create<CoachState>((set, get) => ({
       set({ visible: false, phase: "idle", stepIndex: 0, userId });
       return;
     }
-    if (!profileReady) {
+    if (!profileReady || loopsUsedThisMonth == null || !Number.isFinite(loopsUsedThisMonth)) {
       set({ userId, visible: false, phase: "idle", stepIndex: 0 });
       return;
     }

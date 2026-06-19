@@ -29,7 +29,7 @@ export type SocialVideoCredits = {
 export async function fetchSocialVideoCredits(userId: string): Promise<SocialVideoCredits | null> {
   const { data, error } = await supabase
     .from("profiles")
-    .select("plan, loops_used_this_month, referral_bonus, level_bonus, daily_bonus_month")
+    .select("plan, loops_used_this_month, referral_bonus, level_bonus, daily_bonus_month, purchased_bonus")
     .eq("id", userId)
     .maybeSingle();
   if (error || !data) return null;
@@ -39,8 +39,9 @@ export async function fetchSocialVideoCredits(userId: string): Promise<SocialVid
   const referralBonus = typeof data.referral_bonus === "number" ? data.referral_bonus : 0;
   const levelBonus = typeof data.level_bonus === "number" ? data.level_bonus : 0;
   const dailyBonusMonth = typeof data.daily_bonus_month === "number" ? data.daily_bonus_month : 0;
+  const purchasedBonus = typeof data.purchased_bonus === "number" ? data.purchased_bonus : 0;
 
-  const limit = getTotalGenerationLimit(plan, { referralBonus, levelBonus, dailyBonusMonth });
+  const limit = getTotalGenerationLimit(plan, { referralBonus, levelBonus, dailyBonusMonth, purchasedBonus });
 
   return { remaining: Math.max(0, limit - used), used, limit, plan };
 }
