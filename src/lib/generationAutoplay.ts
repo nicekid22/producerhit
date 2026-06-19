@@ -45,19 +45,6 @@ function generationAutoplayBlocked(override: PlaybackOverride, allowNextAfterPau
 async function loopForPlayback(loop: Loop): Promise<Loop | null> {
   const url = loop.audioUrl?.trim();
   if (!url) return null;
-  // http(s) / blob / data: — lecture immédiate (résolution blob = cache arrière-plan).
-  if (
-    url.startsWith("http://") ||
-    url.startsWith("https://") ||
-    url.startsWith("blob:") ||
-    url.startsWith("data:")
-  ) {
-    const fresh = useLoopsStore.getState().loops.find((l) => l.id === loop.id) ?? loop;
-    if (url.startsWith("http://") || url.startsWith("https://")) {
-      void resolvePlaybackUrlForLoop(loop.id, url).catch(() => undefined);
-    }
-    return { ...fresh, audioUrl: url };
-  }
   try {
     const resolved = await resolvePlaybackUrlForLoop(loop.id, url);
     if (!resolved.trim()) return null;

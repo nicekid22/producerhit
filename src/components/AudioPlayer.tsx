@@ -83,7 +83,6 @@ export function AudioPlayer() {
   const loadGenRef = useRef(0);
   const ignorePauseSyncRef = useRef(false);
   const graphAttachedRef = useRef(false);
-  const autoplayBlockedToastRef = useRef(false);
   const [audioMountKey, setAudioMountKey] = useState(0);
 
   const stopRaf = useCallback(() => {
@@ -296,52 +295,37 @@ export function AudioPlayer() {
   }, []);
 
   useEffect(() => {
-    if (!storeIsPlaying) setIsPlaying(false);
+    setIsPlaying(storeIsPlaying);
   }, [storeIsPlaying]);
 
-  const tryPlayAudio = useCallback(async (): Promise<boolean> => {
+  const tryPlayAudio = useCallback(() => {
     const audio = audioRef.current;
     if (!audio || !audio.src) return false;
     ensureAudioGraph(audio.currentSrc || audio.src);
     const ctx = audioCtxRef.current;
-    if (ctx && ctx.state === "suspended") await ctx.resume().catch(() => undefined);
-    try {
-      await audio.play();
-      autoplayBlockedToastRef.current = false;
-      return true;
-    } catch (e) {
-      const blocked = e instanceof DOMException && e.name === "NotAllowedError";
-      if (blocked) {
-        setIsPlaying(false);
-        if (!autoplayBlockedToastRef.current) {
-          autoplayBlockedToastRef.current = true;
-          toast("Appuyez sur Play pour écouter", { icon: "▶️", id: "pk-autoplay-blocked" });
-        }
-      }
-      return false;
-    }
+    if (ctx && ctx.state === "suspended") void ctx.resume().catch(() => undefined);
+    void audio.play().catch(() => {
+      /* Ne pas effacer isPlaying store — retry via playbackRequest / canplay */
+    });
+    return true;
   }, [ensureAudioGraph]);
 
   const scheduleEarlyPlay = useCallback(
     (audio: HTMLAudioElement, gen: number) => {
       const playNow = () => {
         if (gen !== loadGenRef.current) return;
-        void tryPlayAudio();
+        tryPlayAudio();
       };
-      if (audio.readyState >= 2) {
+      if (audio.readyState >= 3) {
         playNow();
         return;
       }
-      const onReady = () => {
-        audio.removeEventListener("canplaythrough", onReady);
-        audio.removeEventListener("canplay", onReady);
-        audio.removeEventListener("loadeddata", onReady);
+      const onCanPlayThrough = () => {
+        audio.removeEventListener("canplaythrough", onCanPlayThrough);
         playNow();
       };
-      audio.addEventListener("canplaythrough", onReady);
-      audio.addEventListener("canplay", onReady);
-      audio.addEventListener("loadeddata", onReady);
-      if (audio.readyState >= 2) onReady();
+      audio.addEventListener("canplaythrough", onCanPlayThrough);
+      if (audio.readyState >= 3) onCanPlayThrough();
     },
     [tryPlayAudio],
   );
@@ -351,11 +335,10 @@ export function AudioPlayer() {
     if (!audio) return;
 
     if (storeIsPlaying === true) {
-      void tryPlayAudio().then((ok) => {
-        if (ok) return;
-        if (!audio.src) return;
-        scheduleEarlyPlay(audio, loadGenRef.current);
-      });
+      if (tryPlayAudio()) return;
+      if (!audio.src) return;
+      const gen = loadGenRef.current;
+      scheduleEarlyPlay(audio, gen);
       return;
     }
 
@@ -371,7 +354,7 @@ export function AudioPlayer() {
     if (!audio.paused && !audio.ended) return;
     const gen = loadGenRef.current;
     if (audio.src) {
-      void tryPlayAudio();
+      tryPlayAudio();
       return;
     }
     scheduleEarlyPlay(audio, gen);
@@ -388,15 +371,13 @@ export function AudioPlayer() {
       const { isPlaying } = usePlayerStore.getState();
       if (!isPlaying || !audio.src) return;
       if (!audio.paused) return;
-      void tryPlayAudio();
+      tryPlayAudio();
     };
 
     playWhenReady();
-    audio.addEventListener("canplaythrough", playWhenReady);
     audio.addEventListener("canplay", playWhenReady);
     audio.addEventListener("loadeddata", playWhenReady);
     return () => {
-      audio.removeEventListener("canplaythrough", playWhenReady);
       audio.removeEventListener("canplay", playWhenReady);
       audio.removeEventListener("loadeddata", playWhenReady);
     };
@@ -595,7 +576,7 @@ export function AudioPlayer() {
       const resolvedKey = playableUrl;
       if (lastLoadedKeyRef.current === resolvedKey && audio.src) {
         applyAudioCrossOrigin(playableUrl);
-        if (storeIsPlaying && audio.paused) void tryPlayAudio();
+        if (storeIsPlaying && audio.paused) tryPlayAudio();
         return;
       }
 

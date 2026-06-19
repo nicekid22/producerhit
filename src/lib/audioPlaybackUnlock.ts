@@ -48,30 +48,6 @@ export function unlockAudioPlaybackFromGesture(): void {
     .catch(() => {
       resumeMainAudioContext();
     });
-
-  // Prépare aussi le lecteur principal (même geste) — améliore l’autoplay post-génération sur mobile.
-  const main = document.getElementById("pk-audio") as HTMLAudioElement | null;
-  if (main) {
-    const hadSrc = Boolean(main.src);
-    if (!hadSrc) main.src = SILENT_WAV;
-    main.muted = true;
-    void main
-      .play()
-      .then(() => {
-        main.pause();
-        main.currentTime = 0;
-        main.muted = false;
-        if (!hadSrc) {
-          main.removeAttribute("src");
-          main.load();
-        }
-        resumeMainAudioContext();
-      })
-      .catch(() => {
-        main.muted = false;
-        resumeMainAudioContext();
-      });
-  }
 }
 
 export function resetAudioPlaybackUnlock(): void {
