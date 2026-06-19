@@ -1,4 +1,5 @@
 import type { AppLocale } from "./config";
+import { buildDashboardSection } from "./dashboardCatalog";
 import { L, resolveSection } from "./localized";
 import type { MessageCatalog } from "./types";
 
@@ -857,6 +858,86 @@ const CRO = {
     zh: "每月 {{count}} 次免费 — 无套路，无需银行卡即可开始。",
     th: "{{count}} ครั้งฟรีทุกเดือน — ไม่มีกับดัก ไม่ต้องใช้บัตรเพื่อเริ่ม",
   }),
+  pricingTeaserLaunchBadge: L({
+    en: "Launch rate",
+    fr: "Tarif lancement",
+    es: "Tarifa de lanzamiento",
+    pt: "Tarifa de lançamento",
+    de: "Launch-Preis",
+    it: "Tariffa lancio",
+    nl: "Lanceringsprijs",
+    ar: "سعر الإطلاق",
+    ja: "ローンチ価格",
+    ko: "런칭 요금",
+    tr: "Lansman fiyatı",
+    hi: "लॉन्च दर",
+    zh: "首发价",
+    th: "ราคาเปิดตัว",
+  }),
+  pricingTeaserPopular: L({
+    en: "Popular",
+    fr: "Populaire",
+    es: "Popular",
+    pt: "Popular",
+    de: "Beliebt",
+    it: "Popolare",
+    nl: "Populair",
+    ar: "الأكثر شعبية",
+    ja: "人気",
+    ko: "인기",
+    tr: "Popüler",
+    hi: "लोकप्रिय",
+    zh: "热门",
+    th: "ยอดนิยม",
+  }),
+  pricingTeaserCurrent: L({
+    en: "Current",
+    fr: "Actuel",
+    es: "Actual",
+    pt: "Atual",
+    de: "Aktuell",
+    it: "Attuale",
+    nl: "Huidig",
+    ar: "الحالي",
+    ja: "現在",
+    ko: "현재",
+    tr: "Mevcut",
+    hi: "वर्तमान",
+    zh: "当前",
+    th: "ปัจจุบัน",
+  }),
+  pricingTeaserStudioPlus: L({
+    en: "Studio & Plus — ",
+    fr: "Studio & Plus — ",
+    es: "Studio y Plus — ",
+    pt: "Studio e Plus — ",
+    de: "Studio & Plus — ",
+    it: "Studio e Plus — ",
+    nl: "Studio & Plus — ",
+    ar: "Studio وPlus — ",
+    ja: "Studio & Plus — ",
+    ko: "Studio & Plus — ",
+    tr: "Studio ve Plus — ",
+    hi: "Studio और Plus — ",
+    zh: "Studio 与 Plus — ",
+    th: "Studio และ Plus — ",
+  }),
+  pricingTeaserAllPlans: L({
+    en: "all plans",
+    fr: "voir tous les plans",
+    es: "ver todos los planes",
+    pt: "ver todos os planos",
+    de: "alle Pläne ansehen",
+    it: "tutti i piani",
+    nl: "alle plannen",
+    ar: "كل الخطط",
+    ja: "全プランを見る",
+    ko: "모든 플랜 보기",
+    tr: "tüm planlar",
+    hi: "सभी प्लान देखें",
+    zh: "查看全部方案",
+    th: "ดูแพ็กเกจทั้งหมด",
+  }),
   stickyTitle: L({
     en: "Your next track is waiting",
     fr: "Ta prochaine track t'attend",
@@ -1438,11 +1519,14 @@ const FOOTER = {
   }),
 } as const;
 
-export function buildExtraSections(locale: AppLocale): Pick<MessageCatalog, "common" | "blog" | "cro" | "footer"> {
+export function buildExtraSections(
+  locale: AppLocale,
+): Pick<MessageCatalog, "common" | "blog" | "cro" | "footer" | "dashboard"> {
   return {
     common: resolveSection(COMMON, locale),
     blog: resolveSection(BLOG, locale),
     cro: resolveSection(CRO, locale),
     footer: resolveSection(FOOTER, locale),
+    dashboard: buildDashboardSection(locale),
   };
 }

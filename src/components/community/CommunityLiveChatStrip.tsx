@@ -3,10 +3,12 @@ import { MessageCircle, Radio } from "lucide-react";
 import { AVATAR_PRESETS } from "@/lib/creatorProfile";
 import { formatCommentAge, type FluxCommentPreview } from "@/lib/loopComments";
 import type { PublicLoopRow } from "@/lib/publicLoops";
+import type { AppLocale } from "@/i18n/config";
+import { buildCommunityHubUiCopy } from "@/i18n/communityHubUiCatalog";
 import { cn } from "@/lib/utils";
 
 type Props = {
-  isFr: boolean;
+  locale: AppLocale;
   comments: FluxCommentPreview[];
   loading: boolean;
   rowsById: Record<string, PublicLoopRow>;
@@ -17,7 +19,8 @@ function commentGlyph(avatarId: number): string {
   return AVATAR_PRESETS.find((a) => a.id === avatarId)?.glyph ?? "🎹";
 }
 
-export function CommunityLiveChatStrip({ isFr, comments, loading, rowsById, onOpenTrack }: Props) {
+export function CommunityLiveChatStrip({ locale, comments, loading, rowsById, onOpenTrack }: Props) {
+  const copy = useMemo(() => buildCommunityHubUiCopy(locale), [locale]);
   const [activeIdx, setActiveIdx] = useState(0);
   const visible = useMemo(() => comments.filter((c) => rowsById[c.loop_id]), [comments, rowsById]);
 
@@ -31,10 +34,10 @@ export function CommunityLiveChatStrip({ isFr, comments, loading, rowsById, onOp
 
   if (loading && !visible.length) {
     return (
-      <section className="pk-flux-live" aria-label={isFr ? "Chat live du flux" : "Feed live chat"}>
+      <section className="pk-flux-live" aria-label={copy.feedLiveChat}>
         <div className="pk-flux-live__inner pk-flux-live__inner--loading">
           <Radio className="h-4 w-4 animate-pulse text-[var(--pk-community-accent,#67e8f9)]" aria-hidden />
-          <span className="text-sm text-white/50">{isFr ? "Le chat s'allume…" : "Warming up the chat…"}</span>
+          <span className="text-sm text-white/50">{copy.warmingUpChat}</span>
         </div>
       </section>
     );
@@ -46,18 +49,14 @@ export function CommunityLiveChatStrip({ isFr, comments, loading, rowsById, onOp
   const row = rowsById[active.loop_id];
 
   return (
-    <section id="flux-live-chat" className="pk-flux-live" aria-label={isFr ? "Chat live du flux" : "Feed live chat"}>
+    <section id="flux-live-chat" className="pk-flux-live" aria-label={copy.feedLiveChat}>
       <div className="pk-flux-live__inner">
         <div className="pk-flux-live__head">
           <span className="pk-flux-live__badge">
             <span className="pk-flux-live__dot" aria-hidden />
-            {isFr ? "Chat live" : "Live chat"}
+            {copy.liveChat}
           </span>
-          <p className="pk-flux-live__hint">
-            {isFr
-              ? "La commu parle en direct — tape pour répondre sur un son."
-              : "The community talks in real time — tap to reply on a track."}
-          </p>
+          <p className="pk-flux-live__hint">{copy.liveChatHint}</p>
         </div>
 
         <div className="pk-flux-live__ticker">
@@ -80,12 +79,12 @@ export function CommunityLiveChatStrip({ isFr, comments, loading, rowsById, onOp
                   <span className="pk-flux-live__meta">
                     <strong>@{comment.displayName}</strong>
                     <span aria-hidden>·</span>
-                    <span>{formatCommentAge(comment.created_at, isFr)}</span>
+                    <span>{formatCommentAge(comment.created_at, locale)}</span>
                   </span>
                   <span className="pk-flux-live__body">{comment.body}</span>
                   <span className="pk-flux-live__track">
                     <MessageCircle className="h-3 w-3 shrink-0" aria-hidden />
-                    {comment.loopName ?? track.name ?? (isFr ? "Sans titre" : "Untitled")}
+                    {comment.loopName ?? track.name ?? copy.untitled}
                   </span>
                 </span>
               </button>
@@ -94,12 +93,8 @@ export function CommunityLiveChatStrip({ isFr, comments, loading, rowsById, onOp
         </div>
 
         {row ? (
-          <button
-            type="button"
-            onClick={() => onOpenTrack(row, true)}
-            className="pk-flux-live__cta"
-          >
-            {isFr ? "Rejoins la conv" : "Join the convo"}
+          <button type="button" onClick={() => onOpenTrack(row, true)} className="pk-flux-live__cta">
+            {copy.joinConvo}
           </button>
         ) : null}
       </div>

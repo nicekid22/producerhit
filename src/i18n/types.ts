@@ -1,3 +1,5 @@
+import type { DashboardMessages } from "./dashboardCatalog";
+
 export type MessageCatalog = {
   nav: {
     howItWorks: string;
@@ -139,6 +141,11 @@ export type MessageCatalog = {
     pricingTeaserEyebrow: string;
     pricingTeaserTitle: string;
     pricingTeaserLead: string;
+    pricingTeaserLaunchBadge: string;
+    pricingTeaserPopular: string;
+    pricingTeaserCurrent: string;
+    pricingTeaserStudioPlus: string;
+    pricingTeaserAllPlans: string;
     stickyTitle: string;
     stickySub: string;
     stickyButton: string;
@@ -178,7 +185,8 @@ export type MessageCatalog = {
     startFree: string;
     legalPage: string;
   };
+  dashboard: DashboardMessages;
 };
 
 /** Contenu par locale dans locales/*.ts (sections extra fusionnées dans getMessages). */
-export type BaseMessageCatalog = Omit<MessageCatalog, "common" | "blog" | "cro" | "footer">;
+export type BaseMessageCatalog = Omit<MessageCatalog, "common" | "blog" | "cro" | "footer" | "dashboard">;

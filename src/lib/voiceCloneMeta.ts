@@ -1,4 +1,5 @@
 import type { AceMeta } from "@/lib/audioApi";
+import type { AppLocale } from "@/i18n/config";
 
 export type VoiceCloneAceMeta = {
   voiceClone?: boolean;
@@ -84,9 +85,10 @@ export function voiceCloneStatusLabel(info: LoopVoiceCloneInfo | null, isFr: boo
 
 export function voiceCloneToastMessage(
   meta: AceMeta | null | undefined,
-  isFr: boolean,
+  locale: AppLocale,
   requestedProfileName?: string | null,
 ): { type: "success" | "warning" | "info"; message: string } | null {
+  const isFr = locale === "fr";
   const info = voiceCloneFromAceMeta(meta);
   if (!info && !requestedProfileName) return null;
   if (info?.applied && !info.fallback) {

@@ -1,5 +1,6 @@
 import toast from "react-hot-toast";
 import type { AppLocale } from "@/i18n/config";
+import { buildDashboardSection } from "@/i18n/dashboardCatalog";
 import { useMemo } from "react";
 import { Clock, Copy, Gauge, Info, KeyRound, Loader2, Sigma } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -42,7 +43,7 @@ export function LoopDetailsPanel({
   /** Mobile bottom sheet — tighter spacing, taller lyrics area */
   compact?: boolean;
 }) {
-  const isFr = locale === "fr";
+  const d = buildDashboardSection(locale);
   const dur = (loop.details?.duration ?? durationSec) as number | null | undefined;
   const durationLabel =
     typeof dur === "number" && isFinite(dur) && dur > 0 ? formatTime(dur) : "—";
@@ -61,9 +62,9 @@ export function LoopDetailsPanel({
     void (async () => {
       try {
         await navigator.clipboard.writeText(text);
-        toast.success(isFr ? "Paroles copiées" : "Lyrics copied");
+        toast.success(d.lyricsCopied);
       } catch {
-        toast.error(isFr ? "Copie impossible" : "Copy failed");
+        toast.error(d.copyFailed);
       }
     })();
   };
@@ -96,19 +97,19 @@ export function LoopDetailsPanel({
         <div className="border-t border-pk-border pt-3">
           <div className="flex items-center gap-1.5 text-xs font-semibold text-pk-text">
             <Info className="h-3.5 w-3.5 text-pk-muted" aria-hidden />
-            {isFr ? "Détails" : "Details"}
+            {d.trackDetails}
           </div>
           <p className="mt-2 text-sm leading-relaxed text-pk-text break-words whitespace-pre-wrap">{detailsText}</p>
         </div>
 
         <div className="border-t border-pk-border pt-3">
           <div className="flex items-center justify-between gap-2">
-            <div className="text-xs font-semibold text-pk-text">{isFr ? "Paroles" : "Lyrics"}</div>
+            <div className="text-xs font-semibold text-pk-text">{d.lyrics}</div>
             <button
               type="button"
               disabled={!loop.details?.lyrics?.trim()}
               onClick={copyLyrics}
-              aria-label={isFr ? "Copier les paroles" : "Copy lyrics"}
+              aria-label={d.copyLyricsAria}
               className="flex h-7 w-7 items-center justify-center rounded-pk text-pk-muted transition-colors hover:bg-white/5 hover:text-pk-text disabled:opacity-35"
             >
               <Copy className="h-3.5 w-3.5" />
@@ -118,13 +119,13 @@ export function LoopDetailsPanel({
         </div>
 
         <div className="border-t border-pk-border pt-3">
-          <div className="text-xs font-semibold text-pk-text">{isFr ? "Titre" : "Title"}</div>
+          <div className="text-xs font-semibold text-pk-text">{d.titleShort}</div>
           <div className="mt-2 flex items-center gap-2">
             <input
               value={detailsTitle}
               onChange={(e) => onDetailsTitleChange(e.target.value)}
               className="w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2 text-sm font-semibold text-pk-text outline-none placeholder:text-pk-muted focus:border-pk-accent"
-              placeholder={isFr ? "Titre…" : "Title…"}
+              placeholder={d.titleInputPlaceholder}
             />
             <Button
               variant="secondary"
@@ -133,7 +134,7 @@ export function LoopDetailsPanel({
               onClick={onSaveTitle}
               className="shrink-0"
             >
-              {savingDetailsTitle ? <Loader2 className="h-4 w-4 animate-spin" /> : isFr ? "OK" : "Save"}
+              {savingDetailsTitle ? <Loader2 className="h-4 w-4 animate-spin" /> : d.saveShort}
             </Button>
           </div>
         </div>
@@ -164,21 +165,21 @@ export function LoopDetailsPanel({
         <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-2.5">
           <div className="pk-loop-details-stat-label flex items-center gap-1">
             <Clock className="h-3.5 w-3.5" />
-            {isFr ? "Durée" : "Duration"}
+            {d.duration}
           </div>
           <div className="mt-1 font-semibold text-pk-text">{durationLabel}</div>
         </div>
         <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-2.5">
           <div className="pk-loop-details-stat-label flex items-center gap-1">
             <KeyRound className="h-3.5 w-3.5" />
-            {isFr ? "Tonalité" : "Key"}
+            {d.musicalKey}
           </div>
           <div className="mt-1 font-semibold text-pk-text">{loop.details?.keyScale || "—"}</div>
         </div>
         <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-2.5">
           <div className="pk-loop-details-stat-label flex items-center gap-1">
             <Sigma className="h-3.5 w-3.5" />
-            {isFr ? "Signature" : "Time Sig"}
+            {d.timeSigShort}
           </div>
           <div className="mt-1 font-semibold text-pk-text">{loop.details?.timeSignature || "—"}</div>
         </div>
@@ -187,7 +188,7 @@ export function LoopDetailsPanel({
       <div className="mt-4">
         <div className="flex items-center gap-2 text-xs font-semibold text-pk-text">
           <Info className="pk-loop-details-stat-label h-4 w-4" />
-          {isFr ? "Détails" : "Details"}
+          {d.trackDetails}
         </div>
         <div className="mt-2 rounded-xl border border-white/[0.08] bg-white/[0.04] p-3 text-xs leading-relaxed text-pk-text break-words whitespace-pre-wrap">
           {detailsText}
@@ -196,13 +197,13 @@ export function LoopDetailsPanel({
 
       <div className="mt-4">
         <div className="flex items-center justify-between gap-2">
-          <div className="text-xs font-semibold text-pk-text">{isFr ? "Paroles" : "Lyrics"}</div>
+          <div className="text-xs font-semibold text-pk-text">{d.lyrics}</div>
           <Button
             variant="secondary"
             size="sm"
             disabled={!loop.details?.lyrics?.trim()}
             onClick={copyLyrics}
-            aria-label={isFr ? "Copier les paroles" : "Copy lyrics"}
+            aria-label={d.copyLyricsAria}
           >
             <Copy className="h-4 w-4" />
           </Button>
@@ -213,13 +214,13 @@ export function LoopDetailsPanel({
       </div>
 
       <div className="mt-4">
-        <div className="text-xs font-semibold text-pk-text">{isFr ? "Titre" : "Title"}</div>
+        <div className="text-xs font-semibold text-pk-text">{d.titleShort}</div>
         <div className="mt-2 flex items-center gap-2">
           <input
             value={detailsTitle}
             onChange={(e) => onDetailsTitleChange(e.target.value)}
             className="w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2 text-sm font-semibold text-pk-text outline-none placeholder:text-pk-muted focus:border-pk-accent"
-            placeholder={isFr ? "Titre…" : "Title…"}
+            placeholder={d.titleInputPlaceholder}
           />
           <Button
             variant="secondary"
@@ -227,7 +228,7 @@ export function LoopDetailsPanel({
             disabled={savingDetailsTitle || detailsTitle.trim().length === 0 || detailsTitle.trim() === loop.name}
             onClick={onSaveTitle}
           >
-            {savingDetailsTitle ? <Loader2 className="h-4 w-4 animate-spin" /> : isFr ? "OK" : "Save"}
+            {savingDetailsTitle ? <Loader2 className="h-4 w-4 animate-spin" /> : d.saveShort}
           </Button>
         </div>
       </div>

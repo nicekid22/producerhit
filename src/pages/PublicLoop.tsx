@@ -26,6 +26,7 @@ import { COVER_SURFACE_CLASS, cn } from "@/lib/utils";
 import { fetchLoopCommentCounts } from "@/lib/loopComments";
 import { supabase } from "@/lib/supabaseClient";
 import { useLocaleStore } from "@/stores/localeStore";
+import { buildPublicLoopPageCopy } from "@/i18n/publicLoopPageCatalog";
 import { useAuthStore } from "@/stores/authStore";
 import { usePlayerStore } from "@/stores/playerStore";
 import type { Loop } from "@/types/loop";
@@ -57,7 +58,7 @@ export default function PublicLoop() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const locale = useLocaleStore((s) => s.locale);
-  const isFr = locale === "fr";
+  const copy = useMemo(() => buildPublicLoopPageCopy(locale), [locale]);
   const user = useAuthStore((s) => s.user);
   const current = usePlayerStore((s) => s.current);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
@@ -115,9 +116,9 @@ export default function PublicLoop() {
       authorName: author?.username ?? null,
       ratingValue: avgRating,
       ratingCount,
-      isFr,
+      locale,
     });
-  }, [author?.username, avgRating, coverUrl, id, isFr, ratingCount, row]);
+  }, [author?.username, avgRating, coverUrl, id, locale, ratingCount, row]);
 
   const toLoop = (r: LoopRow): Loop => {
     return {
@@ -316,7 +317,7 @@ export default function PublicLoop() {
       });
       setResolvingAudio(false);
       if (!ok) {
-        toast.error(isFr ? "Audio indisponible" : "Audio unavailable");
+        toast.error(copy.audioUnavailable);
       }
     })();
   };
@@ -324,9 +325,9 @@ export default function PublicLoop() {
   const copyLink = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
-      toast.success(isFr ? "Lien copié" : "Link copied");
+      toast.success(copy.linkCopied);
     } catch {
-      toast.error(isFr ? "Impossible de copier" : "Could not copy");
+      toast.error(copy.couldNotCopy);
     }
   };
 
@@ -370,7 +371,7 @@ export default function PublicLoop() {
         }
         navigate("/dashboard?remix=1");
       } catch {
-        toast.error(isFr ? "Audio indisponible pour remix" : "Audio unavailable for remix");
+        toast.error(copy.audioUnavailableRemix);
       } finally {
         setRemixLoading(false);
       }
@@ -380,7 +381,7 @@ export default function PublicLoop() {
   const setRating = (value: number) => {
     const next = Math.max(1, Math.min(5, Math.round(value)));
     if (!user) {
-      toast(isFr ? "Connecte-toi pour noter" : "Login to rate");
+      toast(copy.loginToRate);
       window.location.href = "/auth";
       return;
     }
@@ -392,7 +393,7 @@ export default function PublicLoop() {
         .from("loop_ratings")
         .upsert({ loop_id: id, user_id: user.id, rating: next }, { onConflict: "loop_id,user_id" });
       if (error) {
-        toast.error(isFr ? "Impossible de noter" : "Could not rate");
+        toast.error(copy.couldNotRate);
         setSavingRating(false);
         return;
       }
@@ -403,28 +404,8 @@ export default function PublicLoop() {
       setSavingRating(false);
     })();
   };
+  const faqItems = copy.faqItems;
 
-  const faqItems = isFr
-    ? [
-        {
-          q: "Puis-je remixer ce beat ?",
-          a: "Oui — clique sur Remix this vibe pour repartir du même style dans le studio ProducerHit.",
-        },
-        {
-          q: "C’est gratuit ?",
-          a: "L’écoute est gratuite. Tu peux créer tes propres beats IA avec le plan free, puis upgrade pour plus de crédits et l’export WAV.",
-        },
-      ]
-    : [
-        {
-          q: "Can I remix this beat?",
-          a: "Yes — click Remix this vibe to start from the same style in the ProducerHit studio.",
-        },
-        {
-          q: "Is it free?",
-          a: "Listening is free. Create your own AI beats on the free plan, then upgrade for more credits and WAV export.",
-        },
-      ];
 
   return (
     <MarketingPageShell className="pk-public-loop text-pk-text">
@@ -436,29 +417,27 @@ export default function PublicLoop() {
           </Link>
           <span className="px-2">/</span>
           <Link className="font-semibold text-pk-accent hover:underline" to="/community">
-            {isFr ? "Communauté" : "Community"}
+            {copy.community}
           </Link>
           <span className="px-2">/</span>
-          <span className="text-pk-text">{row?.name ?? (isFr ? "Track" : "Track")}</span>
+          <span className="text-pk-text">{row?.name ?? copy.track}</span>
         </nav>
 
         {fromShorts && row ? (
           <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-pk-accent/30 bg-gradient-to-r from-pk-accent/15 to-transparent p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-pk-accent">
-                {isFr ? "Vu sur Shorts" : "From Shorts"}
+                {copy.fromShorts}
               </p>
               <p className="mt-1 text-sm font-semibold text-pk-text sm:text-base">
-                {isFr
-                  ? "Ce son a été créé en quelques secondes avec l'IA — fais le tien."
-                  : "This track was made in seconds with AI — make yours."}
+                {copy.shortsPitch}
               </p>
             </div>
             <Link
               to={createCtaHref}
               className="pk-prism-btn inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold"
             >
-              {isFr ? "Créer gratuitement" : "Create free"}
+              {copy.createFree}
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -466,7 +445,7 @@ export default function PublicLoop() {
 
         {loading || !row ? (
           <div className="mt-16 flex flex-col items-center py-16 text-center">
-            <PkIconLoader icon="community" size="md" label={isFr ? "Chargement du morceau…" : "Loading track…"} />
+            <PkIconLoader icon="community" size="md" label={copy.loadingTrack} />
           </div>
         ) : (
           <>
@@ -502,7 +481,7 @@ export default function PublicLoop() {
                       </span>
                     ) : null}
                     <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-white/90 backdrop-blur-sm">
-                      {row.bpm > 0 ? `${row.bpm} BPM` : isFr ? "Auto BPM" : "Auto BPM"}
+                      {row.bpm > 0 ? `${row.bpm} BPM` : copy.autoBpm}
                     </span>
                   </div>
 
@@ -511,14 +490,12 @@ export default function PublicLoop() {
                   </h1>
 
                   <p className="mt-3 max-w-2xl text-sm text-white/75 sm:text-base">
-                    {isFr
-                      ? "Beat IA public — écoute, remixe la vibe et crée ton propre type beat en quelques secondes."
-                      : "Public AI beat — listen, remix the vibe, and create your own type beat in seconds."}
+                    {copy.heroLead}
                   </p>
 
                   {author ? (
                     <div className="mt-4">
-                      <ProfileAuthorChip author={author} isFr={isFr} size="md" />
+                      <ProfileAuthorChip author={author} locale={locale} size="md" />
                     </div>
                   ) : null}
 
@@ -536,7 +513,7 @@ export default function PublicLoop() {
                       ) : (
                         <Play className="h-4 w-4" />
                       )}
-                      {playingNow ? (isFr ? "Pause" : "Pause") : isFr ? "Écouter" : "Listen"}
+                      {playingNow ? copy.pause : copy.listen}
                     </button>
                     <button
                       type="button"
@@ -545,7 +522,7 @@ export default function PublicLoop() {
                       className="pk-glass-btn pk-glass-btn--ghost inline-flex min-h-[48px] items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold disabled:opacity-60"
                     >
                       {remixLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                      {isFr ? "Remix this vibe" : "Remix this vibe"}
+                      {copy.remixVibe}
                     </button>
                     <button
                       type="button"
@@ -553,7 +530,7 @@ export default function PublicLoop() {
                       className="pk-glass-btn pk-glass-btn--ghost inline-flex min-h-[48px] items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold"
                     >
                       <Share2 className="h-4 w-4" />
-                      {isFr ? "Partager" : "Share"}
+                      {copy.share}
                     </button>
                   </div>
                 </div>
@@ -562,12 +539,12 @@ export default function PublicLoop() {
               <div className="grid gap-6 border-t border-pk-border p-6 sm:grid-cols-[1fr_auto] sm:p-8">
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-wide text-pk-muted">
-                    {isFr ? "Prompt producteur" : "Producer prompt"}
+                    {copy.producerPrompt}
                   </div>
                   <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-pk-text">{row.prompt || "—"}</p>
                 </div>
                 <div className="flex flex-col items-start gap-2 sm:items-end">
-                  <div className="text-xs font-semibold text-pk-muted">{isFr ? "Note communauté" : "Community rating"}</div>
+                  <div className="text-xs font-semibold text-pk-muted">{copy.communityRating}</div>
                   <div className="flex items-center gap-1">
                     {Array.from({ length: 5 }).map((_, i) => {
                       const star = i + 1;
@@ -579,7 +556,7 @@ export default function PublicLoop() {
                           disabled={savingRating}
                           onClick={() => setRating(star)}
                           className="inline-flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:bg-white/5"
-                          aria-label={isFr ? `Noter ${star} sur 5` : `Rate ${star} of 5`}
+                          aria-label={copy.rateStar(star)}
                         >
                           <Star className={on ? "h-5 w-5 fill-yellow-400 text-yellow-400" : "h-5 w-5 text-[#d1d5db]"} />
                         </button>
@@ -587,26 +564,22 @@ export default function PublicLoop() {
                     })}
                   </div>
                   <div className="text-sm font-semibold text-pk-muted">
-                    {ratingCount > 0 ? `${avgRating?.toFixed(1)} (${ratingCount})` : isFr ? "Pas encore de note" : "No ratings yet"}
+                    {ratingCount > 0 ? `${avgRating?.toFixed(1)} (${ratingCount})` : copy.noRatingsYet}
                   </div>
                 </div>
               </div>
             </article>
 
-            <section className="mt-10 grid gap-4 sm:grid-cols-3" aria-label={isFr ? "Actions" : "Actions"}>
+            <section className="mt-10 grid gap-4 sm:grid-cols-3" aria-label={copy.actions}>
               <Link
                 to={user ? "/dashboard" : "/auth"}
                 className="pk-public-loop__cta group rounded-2xl border border-pk-border bg-pk-panel/50 p-5 transition hover:border-pk-accent/40 hover:bg-pk-panel/80"
               >
                 <Zap className="h-5 w-5 text-pk-accent" />
-                <h2 className="mt-3 text-lg font-bold">{isFr ? "Crée le tien" : "Create yours"}</h2>
-                <p className="mt-2 text-sm text-pk-muted">
-                  {isFr
-                    ? "Génère 2 versions, choisis la meilleure et exporte en MP3 ou WAV."
-                    : "Generate 2 versions, pick the best, and export MP3 or WAV."}
-                </p>
+                <h2 className="mt-3 text-lg font-bold">{copy.createYours}</h2>
+                <p className="mt-2 text-sm text-pk-muted">{copy.createYoursHint}</p>
                 <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-pk-accent">
-                  {isFr ? "Ouvrir le studio" : "Open studio"}
+                  {copy.openStudio}
                   <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
                 </span>
               </Link>
@@ -616,12 +589,10 @@ export default function PublicLoop() {
                 className="pk-public-loop__cta group rounded-2xl border border-pk-border bg-pk-panel/50 p-5 transition hover:border-pk-accent/40 hover:bg-pk-panel/80"
               >
                 <Music2 className="h-5 w-5 text-pk-accent" />
-                <h2 className="mt-3 text-lg font-bold">{isFr ? "Explorer la communauté" : "Explore community"}</h2>
-                <p className="mt-2 text-sm text-pk-muted">
-                  {isFr ? "Découvre d’autres beats IA publics et trouve l’inspiration." : "Discover more public AI beats and find inspiration."}
-                </p>
+                <h2 className="mt-3 text-lg font-bold">{copy.exploreCommunity}</h2>
+                <p className="mt-2 text-sm text-pk-muted">{copy.exploreCommunityHint}</p>
                 <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-pk-accent">
-                  {isFr ? "Voir les tracks" : "Browse tracks"}
+                  {copy.browseTracks}
                   <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
                 </span>
               </Link>
@@ -634,10 +605,10 @@ export default function PublicLoop() {
                   <Sparkles className="h-5 w-5 text-pk-accent" />
                   <h2 className="mt-3 text-lg font-bold">{genreSeo.label}</h2>
                   <p className="mt-2 text-sm text-pk-muted">
-                    {isFr ? "Guide SEO + workflow pour ce genre sur ProducerHit." : "SEO guide + workflow for this genre on ProducerHit."}
+                    {copy.genreSeoHint}
                   </p>
                   <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-pk-accent">
-                    {isFr ? "En savoir plus" : "Learn more"}
+                    {copy.learnMore}
                     <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
                   </span>
                 </Link>
@@ -647,12 +618,12 @@ export default function PublicLoop() {
                   className="pk-public-loop__cta group rounded-2xl border border-pk-border bg-pk-panel/50 p-5 transition hover:border-pk-accent/40 hover:bg-pk-panel/80"
                 >
                   <Sparkles className="h-5 w-5 text-pk-accent" />
-                  <h2 className="mt-3 text-lg font-bold">{isFr ? "Générateur beats IA" : "AI beat generator"}</h2>
+                  <h2 className="mt-3 text-lg font-bold">{copy.aiBeatGenerator}</h2>
                   <p className="mt-2 text-sm text-pk-muted">
-                    {isFr ? "Type beats, Song Mode, remix covers — tout en un." : "Type beats, Song Mode, remix covers — all in one."}
+                    {copy.aiBeatGeneratorHint}
                   </p>
                   <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-pk-accent">
-                    {isFr ? "Commencer" : "Get started"}
+                    {copy.getStarted}
                     <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
                   </span>
                 </Link>
@@ -662,18 +633,10 @@ export default function PublicLoop() {
             {row && playbackQueue.length > 1 ? (
               <section className="mt-10 rounded-2xl border border-pk-border bg-pk-panel/40 p-6 sm:p-8" aria-labelledby="similar-tracks-title">
                 <h2 id="similar-tracks-title" className="text-xl font-bold">
-                  {isFr
-                    ? row.genre
-                      ? `Plus de beats ${row.genre} à remixer`
-                      : "Tracks similaires à remixer"
-                    : row.genre
-                      ? `More ${row.genre} beats to remix`
-                      : "Similar tracks to remix"}
+                  {copy.similarTracksTitle(row.genre)}
                 </h2>
                 <p className="mt-2 text-sm text-pk-muted">
-                  {isFr
-                    ? "Écoute d'autres tracks publics du même genre — chaque page est indexable pour le SEO."
-                    : "Listen to more public tracks in the same genre — each page is indexable for SEO."}
+                  {copy.similarTracksHint}
                 </p>
                 <ul className="mt-5 grid gap-2 sm:grid-cols-2">
                   {playbackQueue
@@ -705,13 +668,13 @@ export default function PublicLoop() {
                     </Link>
                     {" · "}
                     <Link to="/trending" className="font-semibold text-pk-accent hover:underline">
-                      {isFr ? "Trending beats IA →" : "Trending AI beats →"}
+                      {copy.trendingAiBeats}
                     </Link>
                   </p>
                 ) : (
                   <p className="mt-4 text-sm">
                     <Link to="/trending" className="font-semibold text-pk-accent hover:underline">
-                      {isFr ? "Trending beats IA →" : "Trending AI beats →"}
+                      {copy.trendingAiBeats}
                     </Link>
                   </p>
                 )}
@@ -721,7 +684,7 @@ export default function PublicLoop() {
             <LoopCommentsSection
               loopId={row.id}
               loopOwnerId={row.user_id}
-              isFr={isFr}
+              locale={locale}
               userId={user?.id ?? null}
               commentCount={commentCount}
               onCommentCountChange={setCommentCount}
@@ -729,7 +692,7 @@ export default function PublicLoop() {
 
             <section className="mt-10 rounded-2xl border border-pk-border bg-pk-panel/40 p-6 sm:p-8" aria-labelledby="loop-faq">
               <h2 id="loop-faq" className="text-xl font-bold">
-                {isFr ? "Questions fréquentes" : "FAQ"}
+                {copy.faq}
               </h2>
               <dl className="mt-5 space-y-5">
                 {faqItems.map((item) => (
@@ -752,16 +715,16 @@ export default function PublicLoop() {
         <footer className="mt-14 border-t border-pk-border pt-8 text-sm text-pk-muted">
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
             <Link to="/blog" className="hover:text-pk-text">
-              {isFr ? "Blog" : "Blog"}
+              {copy.blog}
             </Link>
             <Link to="/pricing" className="hover:text-pk-text">
-              {isFr ? "Tarifs" : "Pricing"}
+              {copy.pricing}
             </Link>
             <Link to="/legal#privacy" className="hover:text-pk-text">
-              {isFr ? "Confidentialité" : "Privacy"}
+              {copy.privacy}
             </Link>
             <Link to="/legal#terms" className="hover:text-pk-text">
-              {isFr ? "Conditions" : "Terms"}
+              {copy.terms}
             </Link>
           </div>
           <div className="mt-4">© 2026 ProducerHit</div>

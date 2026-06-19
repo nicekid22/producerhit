@@ -14,12 +14,11 @@ export function LaunchOfferChips({ locale, className, compact = false }: Props) 
   if (!isLaunchOfferActive()) return null;
   const copy = getLaunchOfferCopy(locale);
   const micro = getLaunchOfferMicro(locale);
-  const isFr = locale === "fr";
 
   if (compact) {
     return (
       <p className={cn("pk-launch-note pk-launch-note--compact", className)}>
-        {isFr ? "Prix fondateur" : "Founder rate locked"}
+        {micro.locked}
         <span className="pk-launch-note__sep" aria-hidden>
           {" "}
           ·{" "}

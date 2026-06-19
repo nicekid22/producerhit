@@ -9,6 +9,7 @@ import { useVisualThemeStore } from "@/stores/visualThemeStore";
 import { useCloudAccentStore } from "@/stores/cloudAccentStore";
 
 import type { AppLocale } from "@/i18n/config";
+import { buildBillingSection } from "@/i18n/systemCatalog";
 export type PaidPlan = PaidPlanId;
 export type PlanTier = PlanId;
 
@@ -26,10 +27,9 @@ export function comparePlans(current: string | null | undefined, target: PaidPla
   return PLAN_RANK[target] > PLAN_RANK[cur] ? "upgrade" : "downgrade";
 }
 
-function paidPlanLabel(plan: PaidPlan, locale: AppLocale): string {
-  const isFr = locale === "fr";
+function paidPlanLabel(plan: PaidPlan, _locale: AppLocale): string {
   if (plan === "plus") return "Plus";
-  if (plan === "studio") return isFr ? "Studio" : "Studio";
+  if (plan === "studio") return "Studio";
   return "Pro";
 }
 
@@ -125,14 +125,23 @@ export async function startCheckout({
   cancelUrl = `${window.location.origin}/pricing?checkout=cancelled&plan=${plan}`,
   locale = "en",
 }: CheckoutOptions): Promise<boolean> {
-  const isFr = locale === "fr";
+  const b = buildBillingSection(locale);
   trackClientEvent("checkout_start", { plan, location, ui_mode: "embedded" });
 
   const visualTheme = useVisualThemeStore.getState().theme;
   const cloudAccent = useCloudAccentStore.getState().accent;
 
   const { data, error } = await supabase.functions.invoke("create-checkout", {
-    body: { plan, successUrl, cancelUrl, uiMode: "embedded", visualTheme, cloudAccent, locale },
+    body: {
+      plan,
+      successUrl,
+      cancelUrl,
+      uiMode: "embedded",
+      visualTheme,
+      cloudAccent,
+      locale,
+      checkoutRecovery: location === "checkout_recovery",
+    },
   });
 
   const payload = await readCheckoutPayload(data, error);
@@ -144,7 +153,7 @@ export async function startCheckout({
     throw error;
   }
   if (payload.mock) {
-    toast(payload.message || (isFr ? "Stripe arrive bientôt — contacte le support." : "Stripe coming soon — contact support."));
+    toast(payload.message || b.stripeComingSoon);
     return false;
   }
 
@@ -157,11 +166,7 @@ export async function startCheckout({
   const clientSecret = payload.clientSecret;
   if (clientSecret) {
     if (!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY) {
-      throw new Error(
-        isFr
-          ? "Clé Stripe publishable manquante (VITE_STRIPE_PUBLISHABLE_KEY)."
-          : "Missing Stripe publishable key (VITE_STRIPE_PUBLISHABLE_KEY).",
-      );
+      throw new Error(b.missingPublishableKey);
     }
     useStripeCheckoutStore.getState().openCheckout({ clientSecret, returnUrl: successUrl, plan });
     return true;
@@ -170,11 +175,7 @@ export async function startCheckout({
   const url = payload.url;
   if (url) {
     if (payload.fallback) {
-      toast(
-        isFr
-          ? "Ouverture du paiement Stripe (mode secours)."
-          : "Opening Stripe checkout (fallback mode).",
-      );
+      toast(b.checkoutFallback);
     }
     window.location.href = url;
     return true;
@@ -192,34 +193,34 @@ export async function runCheckoutWithAuth({
   location: string;
   locale?: AppLocale;
 }): Promise<void> {
-  const isFr = locale === "fr";
+  const b = buildBillingSection(locale);
   try {
     await startCheckout({ plan, location, locale });
   } catch (err) {
     const { status, message } = extractInvokeError(err);
     const lower = message.toLowerCase();
     if (status === 401 || lower.includes("not authenticated") || lower.includes("jwt") || lower.includes("auth")) {
-      toast(isFr ? "Connecte-toi pour upgrader" : "Sign in to upgrade");
+      toast(b.signInToUpgrade);
       window.location.href = buildAuthNextUrl(plan);
       return;
     }
     if (lower.includes("billing portal")) {
-      toast(isFr ? "Utilise le portail de facturation pour changer de plan." : "Use the billing portal to change your plan.");
+      toast(b.useBillingPortal);
       window.location.href = "/settings";
       return;
     }
-    toast.error(message || (isFr ? "Impossible de démarrer le paiement" : "Could not start checkout"));
+    toast.error(message || b.checkoutStartFailed);
   }
 }
 
 export async function openBillingPortal(returnUrl: string, locale: AppLocale = "en"): Promise<void> {
-  const isFr = locale === "fr";
+  const b = buildBillingSection(locale);
   const { data, error } = await supabase.functions.invoke("create-portal", {
     body: { returnUrl },
   });
   if (error) throw error;
   const url = (data as { url?: string } | null)?.url;
-  if (!url) throw new Error(isFr ? "Portail indisponible" : "Portal unavailable");
+  if (!url) throw new Error(b.portalUnavailable);
   window.location.href = url;
 }
 
@@ -294,14 +295,14 @@ export function pricingCtaMeta(
   locale: AppLocale,
   options?: { isLoggedIn?: boolean },
 ): PricingCtaMeta {
-  const isFr = locale === "fr";
+  const b = buildBillingSection(locale);
   const cur = normalizePlanId(currentPlan);
   const isLoggedIn = options?.isLoggedIn ?? false;
 
   if (tier === cur) {
     return {
       kind: "current",
-      label: isFr ? "Plan actuel" : "Current plan",
+      label: b.currentPlan,
       disabled: true,
       isPrimary: false,
     };
@@ -311,7 +312,7 @@ export function pricingCtaMeta(
     if (!isLoggedIn) {
       return {
         kind: "start_free",
-        label: isFr ? "Commencer gratuit" : "Start free",
+        label: b.startFree,
         disabled: false,
         isPrimary: false,
       };
@@ -319,14 +320,14 @@ export function pricingCtaMeta(
     if (cur !== "free") {
       return {
         kind: "included",
-        label: isFr ? "Inclus dans ton plan" : "Included in your plan",
+        label: b.includedInPlan,
         disabled: true,
         isPrimary: false,
       };
     }
     return {
       kind: "current",
-      label: isFr ? "Plan actuel" : "Current plan",
+      label: b.currentPlan,
       disabled: true,
       isPrimary: false,
     };
@@ -336,7 +337,7 @@ export function pricingCtaMeta(
   if (comparePlans(cur, paid) === "upgrade") {
     return {
       kind: "upgrade",
-      label: isFr ? `Passer ${paidPlanLabel(paid, locale)}` : `Upgrade to ${paidPlanLabel(paid, locale)}`,
+      label: `${b.upgradeTo}${paidPlanLabel(paid, locale)}`,
       disabled: false,
       isPrimary: true,
     };
@@ -344,7 +345,7 @@ export function pricingCtaMeta(
 
   return {
     kind: "included",
-    label: isFr ? "Inclus dans ton plan" : "Included in your plan",
+    label: b.includedInPlan,
     disabled: true,
     isPrimary: false,
   };

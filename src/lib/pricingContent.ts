@@ -9,7 +9,14 @@ import {
   hostedAudioRetentionSummary,
   plusPermanentAudioBenefit,
 } from "@/lib/loopAudioRetention";
-import { COMMERCIAL_RIGHTS_FAQ, planPriceLabel } from "@/lib/planPricing";
+import { planPriceLabel } from "@/lib/planPricing";
+import {
+  buildPricingPageSection,
+  formatGenPerMonth,
+  pricingFaqsFromCatalog,
+  PRICING_CATALOG,
+} from "@/i18n/pricingCatalog";
+import { pickL } from "@/i18n/localized";
 
 export type PricingPlanContent = {
   tier: PlanTier;
@@ -30,172 +37,111 @@ export type PricingCompareRow = {
 };
 
 export function getPricingPlans(locale: AppLocale): PricingPlanContent[] {
-  const isFr = locale === "fr";
-  const gen = (n: number) =>
-    isFr ? `${n} générations / mois` : `${n} generations / month`;
+  const s = buildPricingPageSection(locale);
+  const gen = (n: number) => formatGenPerMonth(locale, n);
 
   return [
     {
       tier: "free",
       name: "Free",
-      tagline: isFr ? "Teste sans risque" : "Zero-risk trial",
+      tagline: s.freeTagline,
       price: planPriceLabel("free"),
       highlights: [
         gen(PLAN_LIMITS.free),
-        isFr ? "Export MP3 — usage personnel" : "MP3 export — personal use",
-        isFr ? "Bibliothèque cloud + player" : "Cloud library + player",
+        s.mp3Personal,
+        s.cloudLibrary,
         hostedAudioRetentionDaysLabel(locale, "free"),
-        isFr ? "Pas de droits commerciaux" : "No commercial rights",
+        s.noCommercial,
       ],
     },
     {
       tier: "pro",
       name: "Pro",
-      tagline: isFr ? "Monétise sur Spotify & YouTube" : "Monetize on Spotify & YouTube",
+      tagline: s.proTagline,
       price: planPriceLabel("pro"),
       highlights: [
         gen(PLAN_LIMITS.pro),
-        isFr ? "Export WAV + MP3 Spotify Ready" : "WAV + MP3 Spotify Ready",
-        isFr ? "Droits commerciaux inclus" : "Commercial rights included",
+        s.wavSpotify,
+        s.commercialIncluded,
         hostedAudioRetentionDaysLabel(locale, "pro"),
-        isFr ? "Song, Type Beat & Remix" : "Song, Type Beat & Remix",
-        isFr ? "Bibliothèque cloud + liens publics" : "Cloud library + public links",
+        s.modesAll,
+        s.cloudPublicLinks,
       ],
     },
     {
       tier: "studio",
       name: "Studio",
-      tagline: isFr ? "Production intensive" : "Heavy production",
+      tagline: s.studioTagline,
       price: planPriceLabel("studio"),
       highlights: [
         gen(PLAN_LIMITS.studio),
-        isFr ? "Tout Pro + mastering complet" : "Everything in Pro + full mastering",
-        isFr ? "Versions ×2 en parallèle" : "Parallel ×2 versions",
+        s.allProMastering,
+        s.parallelVersions,
         hostedAudioRetentionDaysLabel(locale, "studio"),
-        isFr ? "Export vidéo vertical" : "Vertical video export",
-        isFr ? "Idéal releases & clients" : "Built for releases & clients",
+        s.verticalVideo,
+        s.releasesClients,
       ],
     },
     {
       tier: "plus",
       name: "Plus",
-      tagline: isFr ? "Volume & stems pro" : "Volume & pro stems",
+      tagline: s.plusTagline,
       price: planPriceLabel("plus"),
       highlights: [
         gen(PLAN_LIMITS.plus),
         plusPermanentAudioBenefit(locale),
-        isFr ? "File prioritaire — génération rapide" : "Priority queue — faster generation",
-        isFr ? "Stems séparés ZIP (ACE)" : "Separate stems ZIP (ACE)",
-        isFr ? "Tout Studio inclus" : "Everything in Studio",
+        s.priorityQueue,
+        s.stemsZip,
+        s.allStudio,
       ],
     },
   ];
 }
 
 export function getPricingCompareRows(locale: AppLocale): PricingCompareRow[] {
-  const isFr = locale === "fr";
+  const s = buildPricingPageSection(locale);
+  const day = pickL(PRICING_CATALOG.daySuffix, locale);
   const yes = true;
   const no = false;
 
   return [
     {
-      label: isFr ? "Générations / mois" : "Generations / month",
+      label: s.compareGenMonth,
       free: String(PLAN_LIMITS.free),
       pro: String(PLAN_LIMITS.pro),
       studio: String(PLAN_LIMITS.studio),
       plus: String(PLAN_LIMITS.plus),
     },
+    { label: s.compareCommercial, free: no, pro: yes, studio: yes, plus: yes },
+    { label: "MP3", free: yes, pro: yes, studio: yes, plus: yes },
+    { label: "WAV", free: no, pro: yes, studio: yes, plus: yes },
+    { label: s.compareModes, free: yes, pro: yes, studio: yes, plus: yes },
+    { label: s.compareParallel, free: no, pro: no, studio: yes, plus: yes },
     {
-      label: isFr ? "Droits commerciaux" : "Commercial rights",
-      free: no,
-      pro: yes,
-      studio: yes,
-      plus: yes,
-    },
-    {
-      label: "MP3",
-      free: yes,
-      pro: yes,
-      studio: yes,
-      plus: yes,
-    },
-    {
-      label: "WAV",
-      free: no,
-      pro: yes,
-      studio: yes,
-      plus: yes,
-    },
-    {
-      label: isFr ? "Song + Beat + Remix" : "Song + Beat + Remix",
-      free: yes,
-      pro: yes,
-      studio: yes,
-      plus: yes,
-    },
-    {
-      label: isFr ? "Versions ×2 parallèles" : "Parallel ×2 versions",
-      free: no,
+      label: s.compareMastering,
+      free: s.preview,
       pro: no,
       studio: yes,
       plus: yes,
     },
+    { label: s.compareStems, free: no, pro: no, studio: no, plus: yes },
     {
-      label: isFr ? "Mastering Studio" : "Mastering Studio",
-      free: isFr ? "Preview" : "Preview",
-      pro: no,
-      studio: yes,
-      plus: yes,
-    },
-    {
-      label: isFr ? "Stems ZIP" : "Stems ZIP",
-      free: no,
-      pro: no,
-      studio: no,
-      plus: yes,
-    },
-    {
-      label: isFr ? "Priorité génération" : "Generation priority",
+      label: s.comparePriority,
       free: no,
       pro: yes,
       studio: yes,
-      plus: isFr ? "Max" : "Max",
+      plus: s.max,
     },
     {
-      label: isFr ? "Audio hébergé" : "Hosted audio",
-      free: `${LOOP_AUDIO_RETENTION_DAYS_FREE}${isFr ? " j" : "d"}`,
-      pro: `${LOOP_AUDIO_RETENTION_DAYS_PRO}${isFr ? " j" : "d"}`,
-      studio: `${LOOP_AUDIO_RETENTION_DAYS_STUDIO}${isFr ? " j" : "d"}`,
-      plus: isFr ? "Permanent" : "Permanent",
+      label: s.compareHosted,
+      free: `${LOOP_AUDIO_RETENTION_DAYS_FREE}${day}`,
+      pro: `${LOOP_AUDIO_RETENTION_DAYS_PRO}${day}`,
+      studio: `${LOOP_AUDIO_RETENTION_DAYS_STUDIO}${day}`,
+      plus: s.permanent,
     },
   ];
 }
 
 export function getPricingFaqs(locale: AppLocale) {
-  const isFr = locale === "fr";
-  return [
-    COMMERCIAL_RIGHTS_FAQ[isFr ? "fr" : "en"],
-    {
-      q: isFr ? "Quand mes crédits sont-ils activés ?" : "When are credits activated?",
-      a: isFr
-        ? "Immédiatement après paiement Stripe. Plan et quota mis à jour en quelques secondes."
-        : "Immediately after Stripe payment. Plan and quota update within seconds.",
-    },
-    {
-      q: isFr ? "Passer à un plan supérieur ?" : "Upgrade to a higher plan?",
-      a: isFr
-        ? "Un clic sur « Passer Pro / Studio / Plus » — paiement Stripe sécurisé, crédits activés immédiatement, facturation au prorata. Annulation possible à tout moment depuis Paramètres."
-        : "One click on « Upgrade to Pro / Studio / Plus » — secure Stripe checkout, credits unlock instantly, prorated billing. Cancel anytime from Settings.",
-    },
-    {
-      q: isFr ? "Export stems (Plus)" : "Stems export (Plus)",
-      a: isFr
-        ? "Archive ZIP des pistes séparées quand ACE les fournit — bouton Stems dans ta bibliothèque."
-        : "Separate tracks ZIP when ACE provides them — Stems button in your library.",
-    },
-    {
-      q: isFr ? "Les liens audio expirent-ils ?" : "Do hosted audio links expire?",
-      a: hostedAudioRetentionSummary(isFr ? "fr" : "en"),
-    },
-  ];
+  return pricingFaqsFromCatalog(locale, hostedAudioRetentionSummary(locale));
 }

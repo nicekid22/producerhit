@@ -5,11 +5,11 @@ import { resolveRandomPromptLocale } from "@/lib/resolveRandomPromptLocale";
 import { SpeechDictationField } from "@/components/SpeechDictationField";
 import { ChevronDown, Music2, Pause, Play, SlidersHorizontal } from "lucide-react";
 import { GenerationCreditIcon } from "@/components/GenerationCreditIcon";
-import { PLAN_LIMITS } from "@/lib/planLimits";
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
 import { LandingFreeHighlight } from "@/components/landing/LandingFreeHighlight";
 
 import type { AppLocale } from "@/i18n/config";
+import { buildLandingGeneratorCopy } from "@/i18n/landingGeneratorCatalog";
 import { getMessages } from "@/i18n/locales";
 type CreateMode = "song" | "beat";
 
@@ -76,7 +76,7 @@ function FloatingCard({
   isPlaying: boolean;
   onPlay: (card: GeneratorSideCard) => void;
 }) {
-  const isFr = locale === "fr";
+  const copy = buildLandingGeneratorCopy(locale);
   const playingNow = isActive && isPlaying;
   const [coverReady, setCoverReady] = useState(false);
 
@@ -95,15 +95,7 @@ function FloatingCard({
         type="button"
         onClick={() => onPlay(card)}
         className="pk-landing-gen-card__btn group w-full text-left"
-        aria-label={
-          playingNow
-            ? isFr
-              ? `Pause ${card.title}`
-              : `Pause ${card.title}`
-            : isFr
-              ? `Écouter ${card.title}`
-              : `Play ${card.title}`
-        }
+        aria-label={playingNow ? copy.pauseAria(card.title) : copy.playAria(card.title)}
       >
         <div className="pk-landing-gen-card__frame pk-landing-gen-card__frame--swap-in overflow-hidden rounded-2xl border border-white/10 shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
           <div
@@ -176,15 +168,13 @@ function GeneratorReassurance({
   compact?: boolean;
   freeLabel: string;
 }) {
-  const isFr = locale === "fr";
+  const copy = buildLandingGeneratorCopy(locale);
   if (compact) {
     return (
       <>
         <div className={cn("pk-landing-gen__reassurance", "pk-landing-gen__reassurance--mobile", "pk-landing-gen__reassurance--apple")}>
           <LandingFreeHighlight className="pk-landing-gen__reassurance-free">{freeLabel}</LandingFreeHighlight>
-          <p className="pk-landing-gen__reassurance-foot">
-            {isFr ? "Sans carte · Aucun engagement" : "No card · Cancel anytime"}
-          </p>
+          <p className="pk-landing-gen__reassurance-foot">{copy.noCardCancel}</p>
         </div>
         <span className="pk-landing-gen__scroll-bridge" aria-hidden>
           <ChevronDown strokeWidth={2.25} />
@@ -201,7 +191,7 @@ function GeneratorReassurance({
           {" "}
           ·{" "}
         </span>
-        {isFr ? "Décris ton idée, on s’occupe du reste." : "Describe your idea, we handle the rest."}
+        {copy.describeIdea}
       </span>
     </p>
   );
@@ -236,7 +226,7 @@ export function LandingGenerator({
   compactMobile = false,
   reduceMotion = false,
 }: Props) {
-  const isFr = locale === "fr";
+  const genCopy = buildLandingGeneratorCopy(locale);
   const promptLocale = useMemo(
     () => resolveRandomPromptLocale({ surface: "landing", uiLocale: locale }),
     [locale],
@@ -245,9 +235,7 @@ export function LandingGenerator({
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [shellTouched, setShellTouched] = useState(false);
   const [shellIdle, setShellIdle] = useState(false);
-  const freeLabel = isFr
-    ? `${PLAN_LIMITS.free} générations gratuites / mois`
-    : `${PLAN_LIMITS.free} free generations / month`;
+  const freeLabel = genCopy.freeLabel;
 
   useEffect(() => {
     if (!compactMobile || focused || generating || shellTouched || reduceMotion) {
@@ -258,23 +246,8 @@ export function LandingGenerator({
     return () => window.clearTimeout(start);
   }, [compactMobile, focused, generating, shellTouched, reduceMotion]);
 
-  const headline =
-    mode === "song"
-      ? isFr
-        ? "Décris ta prochaine chanson."
-        : "Describe your next song."
-      : isFr
-        ? "Décris ton prochain type beat."
-        : "Describe your next type beat.";
-
-  const sub =
-    mode === "song"
-      ? isFr
-        ? "Un prompt suffit — voix, structure et hook prêts à itérer."
-        : "One prompt is enough — vocals, structure, and hook ready to iterate."
-      : isFr
-        ? "BPM et mood optionnels. Instrumentale royalty-free en un clic."
-        : "Optional BPM and mood. Royalty-free instrumental in one click.";
+  const headline = genCopy.headline(mode);
+  const sub = genCopy.sub(mode);
 
   const showSideCards = sideCards.length >= 2;
 
@@ -308,7 +281,7 @@ export function LandingGenerator({
           {embedded ? null : (
             <div className="relative z-[1] text-center">
               <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/40">
-                {isFr ? "Générateur" : "Generator"}
+                {genCopy.generatorEyebrow}
               </p>
               <h2 className="mt-3 text-balance text-[clamp(1.65rem,4.5vw,2.75rem)] font-bold leading-tight tracking-tight text-white">
                 {headline}
@@ -371,12 +344,12 @@ export function LandingGenerator({
                       <div className="grid gap-3 sm:grid-cols-2">
                         <label className="block">
                           <span className="text-[11px] font-semibold uppercase tracking-wide text-white/45">
-                            {isFr ? "Style artiste" : "Artist style"}
+                            {genCopy.artistStyle}
                           </span>
                           <input
                             value={beatArtist}
                             onChange={(e) => setBeatArtist(e.target.value)}
-                            placeholder={isFr ? "Drake, Travis Scott…" : "Drake, Travis Scott…"}
+                            placeholder="Drake, Travis Scott…"
                             className="mt-1.5 h-10 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-[var(--prism-cyan)]/40"
                           />
                         </label>
@@ -427,7 +400,7 @@ export function LandingGenerator({
                   ) : null}
 
                   <div className="pk-landing-gen__toolbar-foot pk-landing-gen__mobile-toolbar pk-landing-gen__mobile-toolbar--apple px-3 pb-3.5 pt-1 sm:px-4">
-                    <div className="pk-landing-gen__mobile-segment" role="tablist" aria-label={isFr ? "Type de création" : "Creation type"}>
+                    <div className="pk-landing-gen__mobile-segment" role="tablist" aria-label={genCopy.creationType}>
                       <button
                         type="button"
                         role="tab"
@@ -545,7 +518,7 @@ export function LandingGenerator({
                         ].join(" ")}
                       >
                         <SlidersHorizontal className="h-3.5 w-3.5" />
-                        {isFr ? "Avancé" : "Advanced"}
+                        {genCopy.advanced}
                       </button>
                     ) : null}
                   </div>
@@ -587,12 +560,12 @@ export function LandingGenerator({
                     <div className="grid gap-3 sm:grid-cols-2">
                       <label className="block">
                         <span className="text-[11px] font-semibold uppercase tracking-wide text-white/45">
-                          {isFr ? "Style artiste" : "Artist style"}
+                          {genCopy.artistStyle}
                         </span>
                         <input
                           value={beatArtist}
                           onChange={(e) => setBeatArtist(e.target.value)}
-                          placeholder={isFr ? "Drake, Travis Scott…" : "Drake, Travis Scott…"}
+                          placeholder="Drake, Travis Scott…"
                           className="mt-1.5 h-10 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-[var(--prism-cyan)]/40"
                         />
                       </label>
@@ -644,7 +617,7 @@ export function LandingGenerator({
 
                 <div className="pk-landing-gen__toolbar-foot flex flex-col gap-3 px-3 pb-3 pt-1 sm:flex-row sm:items-center sm:justify-between sm:px-4 sm:pb-3.5 sm:pt-1.5">
                   <p className="hidden text-xs text-white/45 sm:block">
-                    {isFr ? "Entre ton texte et clique sur Créer · Shift+Entrée pour une nouvelle ligne" : "Enter to generate · Shift+Enter new line"}
+                    {genCopy.enterHint}
                   </p>
                   <div className="pk-landing-gen__cta-shell relative inline-flex w-full sm:w-auto sm:min-w-[148px]">
                     <span className="pk-landing-gen__cta-field" aria-hidden />

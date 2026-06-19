@@ -28,6 +28,7 @@ import {
   type PricingCompareCell,
 } from "@/lib/pricingContent";
 import { croPricingHero } from "@/lib/croTrustCopy";
+import { buildPricingPageSection, pricingTrustPoints } from "@/i18n/pricingCatalog";
 import { LaunchOfferBanner } from "@/components/marketing/LaunchOfferBanner";
 import { LaunchPriceDisplay } from "@/components/marketing/LaunchPriceDisplay";
 import { MusicMoneyPlaybookSection } from "@/components/marketing/MusicMoneyPlaybookSection";
@@ -56,7 +57,7 @@ export default function Pricing() {
   const profile = useAuthStore((s) => s.profile);
   const refreshProfile = useAuthStore((s) => s.refreshProfile);
   const locale = useLocaleStore((s) => s.locale);
-  const isFr = locale === "fr";
+  const px = useMemo(() => buildPricingPageSection(locale), [locale]);
   const currentPlan = normalizePlan(profile?.plan);
   const [searchParams, setSearchParams] = useSearchParams();
   const [open, setOpen] = useState<number | null>(0);
@@ -120,9 +121,7 @@ export default function Pricing() {
     if (!profile) void refreshProfile();
   }, [profile, refreshProfile, userId]);
 
-  const trustPoints = isFr
-    ? ["Paiement Stripe sécurisé", "Facturation USD", "Annulation à tout moment", "Activation instantanée"]
-    : ["Secure Stripe checkout", "USD billing", "Cancel anytime", "Instant activation"];
+  const trustPoints = useMemo(() => pricingTrustPoints(locale), [locale]);
   const pricingHero = useMemo(() => croPricingHero(locale), [locale]);
   const abandonedCheckout = useMemo(() => readCheckoutAbandoned(), []);
 
@@ -182,12 +181,12 @@ export default function Pricing() {
             {user && profile ? (
               <div className="pk-pricing-current shrink-0 rounded-2xl border px-5 py-4 text-sm">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/45">
-                  {isFr ? "Ton plan" : "Your plan"}
+                  {px.yourPlan}
                 </div>
                 <div className="mt-1 text-lg font-bold text-white">{currentPlan.toUpperCase()}</div>
                 <div className="mt-1 tabular-nums text-white/55">
                   {profile.loops_used_this_month ?? 0} / {getPlanBaseLimit(currentPlan)}{" "}
-                  {isFr ? "gen ce mois" : "gen this month"}
+                  {px.genThisMonth}
                 </div>
               </div>
             ) : null}
@@ -203,11 +202,11 @@ export default function Pricing() {
           <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-violet-400/30 bg-violet-500/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-semibold text-white">
-                {isFr ? "Tu étais à un clic du plan" : "You were one click away"}{" "}
+                {px.abandonedTitle}{" "}
                 {abandonedCheckout.plan.charAt(0).toUpperCase() + abandonedCheckout.plan.slice(1)}
               </p>
               <p className="mt-1 text-xs text-white/60">
-                {isFr ? "Reprends le paiement Stripe — activation instantanée." : "Resume Stripe checkout — instant activation."}
+                {px.abandonedLead}
               </p>
             </div>
             <div className="flex gap-2">
@@ -216,14 +215,14 @@ export default function Pricing() {
                 onClick={() => void resumeAbandonedCheckout()}
                 className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500"
               >
-                {isFr ? "Reprendre" : "Resume"}
+                {px.resume}
               </button>
               <button
                 type="button"
                 onClick={() => clearCheckoutAbandoned()}
                 className="rounded-xl border border-white/15 px-4 py-2 text-sm text-white/70 hover:bg-white/5"
               >
-                {isFr ? "Fermer" : "Dismiss"}
+                {px.dismiss}
               </button>
             </div>
           </div>
@@ -251,12 +250,12 @@ export default function Pricing() {
                   {recommended ? (
                     <div className="pk-pricing-tier__badge absolute left-1/2 top-0 flex -translate-x-1/2 items-center gap-1 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em]">
                       <Sparkles className="h-3 w-3" aria-hidden />
-                      {isFr ? "Recommandé" : "Recommended"}
+                      {px.recommended}
                     </div>
                   ) : null}
                   {isCurrent ? (
                     <div className="pk-pricing-tier__active absolute right-0 top-0 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide">
-                      {isFr ? "Actif" : "Active"}
+                      {px.active}
                     </div>
                   ) : null}
                 </div>
@@ -278,7 +277,7 @@ export default function Pricing() {
                       </span>
                       {p.tier !== "free" ? (
                         <span className="pb-1 text-xs font-medium text-white/40">
-                          /{isFr ? "mois" : "mo"} · {PLAN_BILLING_CURRENCY}
+                          /{px.perMonth} · {PLAN_BILLING_CURRENCY}
                         </span>
                       ) : null}
                     </div>
@@ -314,9 +313,9 @@ export default function Pricing() {
 
         {currentPlan !== "free" ? (
           <p className="mt-8 text-center text-sm text-white/45">
-            {isFr ? "Abonnement actif — " : "Active subscription — "}
+            {px.activeSub}
             <Link to="/settings" className="font-semibold text-[var(--prism-cyan)] hover:text-white">
-              {isFr ? "gérer dans Paramètres" : "manage in Settings"}
+              {px.manageSettings}
             </Link>
           </p>
         ) : null}
@@ -325,17 +324,17 @@ export default function Pricing() {
         <section className="pk-pricing-compare pk-prism-card mt-14 overflow-hidden">
           <div className="border-b border-white/[0.08] px-6 py-5 sm:px-8">
             <h2 className="text-lg font-bold tracking-tight text-white">
-              {isFr ? "Comparatif détaillé" : "Full comparison"}
+              {px.compareTitle}
             </h2>
             <p className="mt-1 text-sm text-white/48">
-              {isFr ? "Tout ce qui différencie chaque plan, en un coup d'œil." : "Everything that sets each plan apart, at a glance."}
+              {px.compareLead}
             </p>
           </div>
           <div className="overflow-x-auto">
             <table className="pk-pricing-compare__table w-full min-w-[640px] border-collapse text-left">
               <thead>
                 <tr className="border-b border-white/[0.07] text-[11px] font-semibold uppercase tracking-[0.14em] text-white/42">
-                  <th className="px-6 py-4 sm:px-8">{isFr ? "Fonctionnalité" : "Feature"}</th>
+                  <th className="px-6 py-4 sm:px-8">{px.featureCol}</th>
                   <th className="px-3 py-4 text-center">Free</th>
                   <th className="px-3 py-4 text-center">Pro</th>
                   <th className="px-3 py-4 text-center">Studio</th>
@@ -397,19 +396,19 @@ export default function Pricing() {
         <footer className="mt-14 border-t border-white/10 pt-8 text-sm text-white/45">
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
             <Link to="/legal#privacy" className="transition-colors hover:text-white">
-              {isFr ? "Confidentialité" : "Privacy"}
+              {px.privacy}
             </Link>
             <Link to="/legal#cookies" className="transition-colors hover:text-white">
               Cookies
             </Link>
             <Link to="/legal#terms" className="transition-colors hover:text-white">
-              {isFr ? "Conditions" : "Terms"}
+              {px.terms}
             </Link>
             <Link to="/commercial-license" className="transition-colors hover:text-white">
-              {isFr ? "Certificat licence PDF" : "License certificate PDF"}
+              {px.licensePdf}
             </Link>
             <Link to="/legal#commercial-license" className="transition-colors hover:text-white">
-              {isFr ? "Licence commerciale" : "Commercial license"}
+              {px.commercialLicense}
             </Link>
             <a
               href={discordCommunityUrl("pricing_footer")}
@@ -420,7 +419,7 @@ export default function Pricing() {
               Discord
             </a>
             <Link to="/legal#refunds" className="transition-colors hover:text-white">
-              {isFr ? "Paiements & remboursements" : "Payments & Refunds"}
+              {px.paymentsRefunds}
             </Link>
             <Link to="/legal#contact" className="transition-colors hover:text-white">
               Support

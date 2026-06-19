@@ -20,12 +20,16 @@ import { cn } from "@/lib/utils";
 import { LibraryVaultHero } from "@/components/library/LibraryVaultHero";
 import { LibraryCollectionsRow } from "@/components/library/LibraryCollectionsRow";
 import { buildLibraryCollections, loopsForCollection } from "@/lib/libraryCurations";
+import { buildLibrarySection, libraryCollectionTitle } from "@/i18n/libraryCatalog";
+import { buildCommonSection } from "@/i18n/systemCatalog";
 import { markActivationStepLocal } from "@/components/onboarding/OnboardingChecklist";
 
 type Filter = "all" | "genre" | "key" | "bpm";
 
 export default function Library() {
   const locale = useLocaleStore((s) => s.locale);
+  const lb = buildLibrarySection(locale);
+  const common = buildCommonSection(locale);
   const loops = useLoopsStore((s) => s.loops);
   const loopsTotalCount = useLoopsStore((s) => s.loopsTotalCount);
   const loopsLoading = useLoopsStore((s) => s.loading);
@@ -115,21 +119,19 @@ export default function Library() {
       setSavingDetailsTitle(true);
       try {
         await renameLoopRemote(detailsLoop.id, next);
-        toast.success(locale === "fr" ? "Titre mis à jour" : "Title updated");
+        toast.success(common.titleUpdated);
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : locale === "fr" ? "Erreur" : "Error");
+        toast.error(err instanceof Error ? err.message : common.error);
       } finally {
         setSavingDetailsTitle(false);
       }
     })();
-  }, [detailsLoop, detailsTitle, locale, renameLoopRemote]);
-  const isFr = locale === "fr";
-
+  }, [detailsLoop, detailsTitle, locale, renameLoopRemote, common.error, common.titleUpdated]);
   return (
     <AppShell theme="prism" variant="single">
       <div className="pk-library-page h-full space-y-4 px-4 pb-6 pt-4 md:pb-24 md:pt-6">
         <LibraryVaultHero
-          isFr={isFr}
+          locale={locale}
           totalCount={libraryTotalCount}
           savedCount={savedCount}
           playlistCount={playlists.length}
@@ -139,21 +141,21 @@ export default function Library() {
         {!loopsLoading && libraryLoops.length > 0 ? (
           <div className="pk-library-collections space-y-5">
             <LibraryCollectionsRow
-              title={isFr ? "Tes playlists" : "Your playlists"}
-              subtitle={isFr ? "Tes morceaux, classés pour revenir écouter" : "Your tracks, curated to replay"}
+              title={lb.playlistsTitle}
+              subtitle={lb.playlistsSubtitle}
               icon={ListMusic}
               collections={playlists}
               activeId={collectionId}
-              isFr={isFr}
+              locale={locale}
               onSelect={setCollectionId}
             />
             <LibraryCollectionsRow
-              title={isFr ? "Mixtapes pour toi" : "Mixtapes for you"}
-              subtitle={isFr ? "Comme Spotify — vibes auto-générées" : "Spotify-style — auto-generated vibes"}
+              title={lb.mixtapesTitle}
+              subtitle={lb.mixtapesSubtitle}
               icon={Disc3}
               collections={mixtapes}
               activeId={collectionId}
-              isFr={isFr}
+              locale={locale}
               onSelect={setCollectionId}
             />
           </div>
@@ -162,19 +164,13 @@ export default function Library() {
         {activeCollection ? (
           <div className="pk-library-active-filter pk-library-active-filter--collection">
             <span>
-              {activeCollection.kind === "mixtape"
-                ? isFr
-                  ? "Mixtape"
-                  : "Mixtape"
-                : isFr
-                  ? "Playlist"
-                  : "Playlist"}
+              {activeCollection.kind === "mixtape" ? lb.kindMixtape : lb.kindPlaylist}
               {" · "}
-              <strong>{isFr ? activeCollection.titleFr : activeCollection.titleEn}</strong>
+              <strong>{libraryCollectionTitle(activeCollection, locale)}</strong>
             </span>
             <button type="button" className="pk-library-active-filter__clear" onClick={() => setCollectionId(null)}>
               <X className="h-3.5 w-3.5" />
-              {isFr ? "Tout afficher" : "Show all"}
+              {lb.showAll}
             </button>
           </div>
         ) : null}
@@ -182,12 +178,8 @@ export default function Library() {
         <div className="flex flex-col gap-3">
           {loopsSyncError ? (
             <div className="rounded-pk pk-prism-card-soft p-4">
-              <div className="text-sm font-semibold">{locale === "fr" ? "Sync en problème" : "Sync issue"}</div>
-              <div className="mt-1 text-sm text-pk-muted">
-                {locale === "fr"
-                  ? "Affichage en cache. Clique sur Réessayer pour recharger depuis la base."
-                  : "Showing cached data. Click Retry to reload from the database."}
-              </div>
+              <div className="text-sm font-semibold">{lb.syncIssue}</div>
+              <div className="mt-1 text-sm text-pk-muted">{lb.syncIssueBody}</div>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button
                   variant="primary"
@@ -196,7 +188,7 @@ export default function Library() {
                     void loadMyLoops();
                   }}
                 >
-                  {locale === "fr" ? "Réessayer" : "Retry"}
+                  {common.retry}
                 </Button>
                 <Button
                   variant="secondary"
@@ -204,7 +196,7 @@ export default function Library() {
                   disabled={loopsLoading}
                   onClick={() => window.location.reload()}
                 >
-                  {locale === "fr" ? "Recharger la page" : "Reload page"}
+                  {common.reloadPage}
                 </Button>
               </div>
             </div>
@@ -213,8 +205,8 @@ export default function Library() {
               <PkIconLoader
                 icon="library"
                 size="md"
-                label={locale === "fr" ? "Synchronisation…" : "Syncing…"}
-                sublabel={locale === "fr" ? "On prépare ta bibliothèque cozy." : "Setting up your cozy library."}
+                label={lb.syncing}
+                sublabel={lb.syncingSub}
               />
             </div>
           ) : null}
@@ -230,7 +222,7 @@ export default function Library() {
                 onClick={() => setGenreFilter(null)}
               >
                 <Music2 className="pk-library-genre-tile__icon" aria-hidden />
-                <span className="pk-library-genre-tile__label">{isFr ? "Tout le vault" : "All vault"}</span>
+                <span className="pk-library-genre-tile__label">{lb.allVault}</span>
                 <span className="pk-library-genre-tile__count">{libraryLoops.length}</span>
               </button>
               {topGenres.map(([g, n]) => (
@@ -257,11 +249,11 @@ export default function Library() {
           {genreFilter ? (
             <div className="pk-library-active-filter">
               <span>
-                {isFr ? "Filtre" : "Filter"} · <strong>{genreFilter}</strong>
+                {lb.filterGenre} · <strong>{genreFilter}</strong>
               </span>
               <button type="button" className="pk-library-active-filter__clear" onClick={() => setGenreFilter(null)}>
                 <X className="h-3.5 w-3.5" />
-                {isFr ? "Effacer" : "Clear"}
+                {lb.clear}
               </button>
             </div>
           ) : null}
@@ -270,13 +262,13 @@ export default function Library() {
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="flex flex-wrap gap-2 pk-chip-scroll md:overflow-visible">
                 <PrismFilterPill active={filter === "all"} onClick={() => setFilter("all")}>
-                  {isFr ? "Tout" : "All"}
+                  {lb.filterAll}
                 </PrismFilterPill>
                 <PrismFilterPill active={filter === "genre"} onClick={() => setFilter("genre")}>
-                  {isFr ? "Genre" : "Genre"}
+                  {lb.filterGenreTab}
                 </PrismFilterPill>
                 <PrismFilterPill active={filter === "key"} onClick={() => setFilter("key")}>
-                  {isFr ? "Tonalité" : "Key"}
+                  {lb.filterKey}
                 </PrismFilterPill>
                 <PrismFilterPill active={filter === "bpm"} onClick={() => setFilter("bpm")}>
                   BPM
@@ -288,7 +280,7 @@ export default function Library() {
                 <input
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
-                  placeholder={isFr ? "Rechercher un beat, mood, clé…" : "Search beat, mood, key…"}
+                  placeholder={lb.searchPlaceholder}
                 />
               </div>
             </div>
@@ -297,7 +289,7 @@ export default function Library() {
           {filter === "bpm" ? (
             <div className="pk-prism-section-card grid gap-3 px-4 py-3 md:grid-cols-2">
               <div>
-                <div className="text-xs text-pk-muted">{locale === "fr" ? "BPM min" : "Min BPM"}</div>
+                <div className="text-xs text-pk-muted">{lb.bpmMin}</div>
                 <input
                   type="number"
                   min={60}
@@ -308,7 +300,7 @@ export default function Library() {
                 />
               </div>
               <div>
-                <div className="text-xs text-pk-muted">{locale === "fr" ? "BPM max" : "Max BPM"}</div>
+                <div className="text-xs text-pk-muted">{lb.bpmMax}</div>
                 <input
                   type="number"
                   min={60}
@@ -325,8 +317,8 @@ export default function Library() {
         <div className="mt-2">
           {filtered.length === 0 ? (
             <EmptyState
-              title={locale === "fr" ? "Aucun beat pour l'instant" : "No beats yet"}
-              description={locale === "fr" ? "Génère ton premier beat pour démarrer." : "Generate your first beat to get started."}
+              title={lb.emptyTitle}
+              description={lb.emptyDescription}
             />
           ) : detailsLoop && !mobileUiV2 ? (
             <div className="md:grid md:grid-cols-[minmax(0,1fr)_400px] md:gap-4">
@@ -353,7 +345,7 @@ export default function Library() {
                       title={detailsLoop.name}
                       subtitle={detailsLoop.genre}
                       onClose={() => setDetailsId(null)}
-                      closeLabel={isFr ? "Fermer" : "Close"}
+                      closeLabel={common.close}
                     />
                     <LoopDetailsPanel
                       loop={detailsLoop}
@@ -392,7 +384,7 @@ export default function Library() {
           onClose={() => setDetailsId(null)}
           title={detailsLoop.name}
           subtitle={detailsLoop.genre}
-          closeLabel={isFr ? "Fermer" : "Close"}
+          closeLabel={common.close}
         >
           <LoopDetailsPanel
             loop={detailsLoop}

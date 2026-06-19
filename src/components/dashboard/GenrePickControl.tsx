@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import type { AppLocale } from "@/i18n/config";
+import { getMessages } from "@/i18n/locales";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { GenreOptionIcon } from "@/lib/genres/genreIcons";
 import { buildPrecisionGenreOptions } from "@/lib/genres/genreMenuOrder";
@@ -30,7 +31,7 @@ export function GenrePickControl({
   ideaFilled = false,
   compact = false,
 }: GenrePickProps) {
-  const isFr = locale === "fr";
+  const d = getMessages(locale).dashboard;
 
   const genreOptions = useMemo(() => {
     return buildPrecisionGenreOptions(locale).map((o) => ({
@@ -48,12 +49,12 @@ export function GenrePickControl({
   return (
     <div className={cn("min-w-0 max-w-full", compact ? "gap-2" : "gap-2.5")}>
       <Dropdown
-        label={compact ? undefined : isFr ? "Genre" : "Genre"}
-        menuTitle={isFr ? "Genre" : "Genre"}
+        label={compact ? undefined : d.genre}
+        menuTitle={d.genre}
         value={dropdownValue}
         onChange={onGenreChange}
         options={genreOptions}
-        placeholder={isFr ? "Sélectionner…" : "Select…"}
+        placeholder={d.selectPlaceholder}
       />
       {compact ? null : (
         <p className="text-[11px] leading-relaxed text-pk-muted">

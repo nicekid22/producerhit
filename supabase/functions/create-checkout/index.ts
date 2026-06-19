@@ -253,6 +253,7 @@ function buildBaseCheckoutParams(
   visualTheme: string,
   cloudAccent: string,
   locale: string,
+  checkoutRecovery = false,
 ): URLSearchParams {
   const params = new URLSearchParams({
     mode: "subscription",
@@ -267,6 +268,10 @@ function buildBaseCheckoutParams(
     "subscription_data[metadata][supabase_user_id]": userId,
     "subscription_data[metadata][price_id]": priceId,
   });
+  if (checkoutRecovery) {
+    params.set("metadata[checkout_recovery]", "true");
+    params.set("subscription_data[metadata][checkout_recovery]", "true");
+  }
   if (customerId) params.set("customer", customerId);
   else if (customerEmail) params.set("customer_email", customerEmail);
   params.set("locale", locale === "fr" ? "fr" : "auto");
@@ -382,6 +387,7 @@ serve(async (req) => {
       visualTheme?: unknown;
       cloudAccent?: unknown;
       locale?: unknown;
+      checkoutRecovery?: unknown;
     };
     const plan = String(body.plan ?? "");
     const successUrl = String(body.successUrl ?? "");
@@ -390,6 +396,7 @@ serve(async (req) => {
     const visualTheme = String(body.visualTheme ?? "prism");
     const cloudAccent = String(body.cloudAccent ?? "transparent");
     const checkoutLocale = String(body.locale ?? "auto");
+    const checkoutRecovery = body.checkoutRecovery === true || body.checkoutRecovery === "true";
     const embedded = uiMode === "embedded";
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
@@ -531,6 +538,7 @@ serve(async (req) => {
       visualTheme,
       cloudAccent,
       checkoutLocale,
+      checkoutRecovery,
     );
 
     if (embedded) {

@@ -8,7 +8,8 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
-
+import type { AppLocale } from "@/i18n/config";
+import { loaderCopyFromIcon as loaderCopyFromIconI18n } from "@/i18n/loaderCatalog";
 export type PkLoaderIcon =
   | "generator"
   | "library"
@@ -19,43 +20,8 @@ export type PkLoaderIcon =
   | "pricing"
   | "default";
 
-export function loaderCopyFromIcon(icon: PkLoaderIcon, isFr: boolean): { label: string; sublabel: string } {
-  const copy: Record<PkLoaderIcon, { fr: [string, string]; en: [string, string] }> = {
-    generator: {
-      fr: ["Studio…", "On prépare ton espace"],
-      en: ["Studio…", "Setting up your studio"],
-    },
-    library: {
-      fr: ["Bibliothèque…", "On charge tes sons"],
-      en: ["Library…", "Loading your tracks"],
-    },
-    community: {
-      fr: ["Communauté…", "On ouvre le feed"],
-      en: ["Community…", "Opening the feed"],
-    },
-    settings: {
-      fr: ["Réglages…", "Un instant"],
-      en: ["Settings…", "Just a moment"],
-    },
-    voice: {
-      fr: ["Voice Studio…", "On branche le micro"],
-      en: ["Voice Studio…", "Warming up the mic"],
-    },
-    growth: {
-      fr: ["Growth…", "On charge les stats"],
-      en: ["Growth…", "Loading insights"],
-    },
-    pricing: {
-      fr: ["Tarifs…", "Presque prêt"],
-      en: ["Pricing…", "Almost there"],
-    },
-    default: {
-      fr: ["Chargement…", "Un instant"],
-      en: ["Loading…", "Just a moment"],
-    },
-  };
-  const [label, sublabel] = isFr ? copy[icon].fr : copy[icon].en;
-  return { label, sublabel };
+export function loaderCopyFromIcon(icon: PkLoaderIcon, locale: AppLocale): { label: string; sublabel: string } {
+  return loaderCopyFromIconI18n(icon, locale);
 }
 
 export function loaderIconFromPath(pathname: string): PkLoaderIcon {

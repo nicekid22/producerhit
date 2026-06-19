@@ -2,6 +2,14 @@
 
 import type { AppLocale } from "@/i18n/config";
 import { getMessages } from "@/i18n/locales";
+import {
+  buildLandingMarketingSection,
+  landingBenefitPillarsFromCatalog,
+  landingCloudMoodsFromCatalog,
+  landingFeatureCardsFromCatalog,
+  landingSuitePoints,
+  landingValueBlocksFromCatalog,
+} from "@/i18n/landingMarketingCatalog";
 
 function interpolate(template: string, vars: Record<string, string | number>): string {
   return template.replace(/\{\{(\w+)\}\}/g, (_, key: string) => String(vars[key] ?? ""));
@@ -124,60 +132,200 @@ export type LandingTestimonial = {
   who: string;
 };
 
+const TESTIMONIALS_EN: LandingTestimonial[] = [
+  { id: "en-1", q: "Found my bounce in 3 generations. Seeds make variations actually usable.", who: "Trap producer · NYC" },
+  { id: "en-2", q: "Song Mode gave me a hook I kept — finished the track the same night.", who: "Indie artist · LA" },
+  { id: "en-3", q: "Type Beat + variations = a solid catalog in one session.", who: "Beatmaker · London" },
+  { id: "en-4", q: "Community remix surfaced directions I would never have tried solo.", who: "R&B producer · Toronto" },
+  { id: "en-5", q: "WAV export straight into my DAW — two-click workflow.", who: "Mix engineer · Atlanta" },
+  { id: "en-6", q: "Hook ideas finally leave as clean demos, not fuzzy sketches.", who: "Vocalist · Chicago" },
+  { id: "en-7", q: "Locked BPM in Type Beat Mode — perfect for cohesive pack drops.", who: "Drill producer · Manchester" },
+  { id: "en-8", q: "Auto covers give a visual identity before release day.", who: "Pop artist · Miami" },
+  { id: "en-9", q: "Seed variations let me A/B ideas for clients — huge time saver.", who: "Producer for hire · Austin" },
+  { id: "en-10", q: "First public track in an hour. Community even rated the bounce.", who: "TikTok creator · Berlin" },
+  { id: "en-11", q: "Song Mode vocals actually hold structure — rare for AI tools.", who: "Rapper · Houston" },
+  { id: "en-12", q: "My Afrobeats loops became sellable instrumentals on BeatStars.", who: "Afrobeats prod · Lagos" },
+  { id: "en-13", q: "I share the public link to validate a concept before studio time.", who: "Artist manager · NYC" },
+  { id: "en-14", q: "Beat mode locked a dark vibe without an all-nighter on 808s.", who: "Producer · Seattle" },
+  { id: "en-15", q: "Clean library, targeted regen — I keep 1 in 4 takes and that's plenty.", who: "Beatmaker · Dublin" },
+  { id: "en-16", q: "Students learn hit structure by generating then breaking tracks down.", who: "Music teacher · Boston" },
+  { id: "en-17", q: "Metallic cover + track = Insta posts that pop without a designer.", who: "Content creator · Paris" },
+  { id: "en-18", q: "Shipped a sketch EP in a week — all from simple prompts.", who: "Lo-fi artist · Portland" },
+  { id: "en-19", q: "Free tier is enough to test ideas before Pro for WAV export.", who: "New beatmaker · Phoenix" },
+  { id: "en-20", q: "Remixing a public track = instant inspiration when I'm stuck.", who: "House producer · Amsterdam" },
+  { id: "en-21", q: "Collabs start with a ProducerHit link — no more rough voice memos.", who: "Artist · Johannesburg" },
+  { id: "en-22", q: "x2 variations on the same seed — best take picked in five minutes.", who: "Pop producer · Sydney" },
+  { id: "en-23", q: "Clean UI, zero friction — I stay locked on vibe, not menus.", who: "Producer · Tokyo" },
+];
+
+const TESTIMONIALS_FR: LandingTestimonial[] = [
+  { id: "fr-1", q: "J'ai trouvé mon bounce en 3 générations. Le seed change tout pour les variations.", who: "Producteur trap · Paris" },
+  { id: "fr-2", q: "Song Mode m'a sorti un hook utilisable — j'ai fini le track le soir même.", who: "Artiste indie · Montréal" },
+  { id: "fr-3", q: "Type Beat + variations = un catalogue solide en une session.", who: "Beatmaker · Lyon" },
+  { id: "fr-4", q: "Le remix communauté m'a fait découvrir des directions que je n'aurais jamais testées seul.", who: "Producteur R&B · Bruxelles" },
+  { id: "fr-5", q: "Export WAV direct, import FL en deux clics — workflow nickel.", who: "Ingé son · Marseille" },
+  { id: "fr-6", q: "Mes idées de hooks partent enfin en démo propre, pas en sketch flou.", who: "Chanteuse · Toulouse" },
+  { id: "fr-7", q: "Type Beat Mode avec BPM verrouillé : parfait pour enchaîner des packs cohérents.", who: "Beatmaker drill · Lille" },
+  { id: "fr-8", q: "La cover auto donne une identité visuelle même avant la sortie.", who: "Artiste pop · Genève" },
+  { id: "fr-9", q: "J'utilise les variations seed pour A/B test mes clients — gain de temps énorme.", who: "Prod pour artistes · Bordeaux" },
+  { id: "fr-10", q: "Premier track public en une heure. La communauté m'a même noté le bounce.", who: "Créateur TikTok · Nantes" },
+  { id: "fr-11", q: "Song Mode en français : les couplets tiennent la route, rare pour de l'IA.", who: "Rappeur · Strasbourg" },
+  { id: "fr-12", q: "Mes loops Afrobeats sont devenues des instrumentales vendables sur BeatStars.", who: "Prod Afrobeats · Abidjan" },
+  { id: "fr-13", q: "Je partage le lien public pour valider un concept avant d'aller en studio.", who: "Manager artiste · Paris" },
+  { id: "fr-14", q: "Le mode beat m'a aidé à verrouiller une vibe dark sans passer la nuit sur les 808.", who: "Producteur · Rennes" },
+  { id: "fr-15", q: "Bibliothèque claire, regen ciblée — je garde 1 take sur 4, c'est déjà énorme.", who: "Beatmaker · Nice" },
+  { id: "fr-16", q: "Mes élèves comprennent la structure d'un hit en générant puis en décomposant.", who: "Prof MAO · Liège" },
+  { id: "fr-17", q: "Cover métallique + track = posts Insta qui performent sans designer.", who: "Créatrice contenu · Lyon" },
+  { id: "fr-18", q: "J'ai sorti un EP de sketches en une semaine — tous partis de prompts simples.", who: "Artiste lo-fi · Lausanne" },
+  { id: "fr-19", q: "Le plan free suffit pour tester des idées avant de passer Pro pour l'export WAV.", who: "Beatmaker débutant · Orléans" },
+  { id: "fr-20", q: "Remix d'un track public = inspiration instantanée quand je suis bloqué.", who: "Producteur house · Montpellier" },
+  { id: "fr-21", q: "Mes collabs commencent par un lien ProducerHit, plus besoin d'envoyer des maquettes moches.", who: "Artiste · Dakar" },
+  { id: "fr-22", q: "Variations x2 sur le même seed : je choisis la meilleure prise en 5 minutes.", who: "Prod pop · Québec" },
+  { id: "fr-23", q: "Interface épurée, zéro friction — je reste focus sur le vibe, pas sur les menus.", who: "Producteur · Berlin" },
+];
+
+const TESTIMONIALS_ES: LandingTestimonial[] = [
+  { id: "es-1", q: "Encontré mi bounce en 3 generaciones. Los seeds hacen las variaciones realmente útiles.", who: "Productor trap · Madrid" },
+  { id: "es-2", q: "Song Mode me dio un hook que guardé — terminé la pista esa misma noche.", who: "Artista indie · Barcelona" },
+  { id: "es-3", q: "Type Beat + variaciones = un catálogo sólido en una sesión.", who: "Beatmaker · Valencia" },
+  { id: "es-4", q: "El remix de la comunidad me mostró direcciones que nunca habría probado solo.", who: "Productor R&B · México DF" },
+  { id: "es-5", q: "Exportación WAV directa a mi DAW — flujo en dos clics.", who: "Ingeniero de mezcla · Bogotá" },
+  { id: "es-6", q: "Las ideas de hooks salen como demos limpias, no bocetos borrosos.", who: "Vocalista · Sevilla" },
+  { id: "es-7", q: "BPM bloqueado en Type Beat Mode — perfecto para packs coherentes.", who: "Productor drill · Buenos Aires" },
+  { id: "es-8", q: "Las covers automáticas dan identidad visual antes del lanzamiento.", who: "Artista pop · Lima" },
+  { id: "es-9", q: "Variaciones seed para A/B con clientes — ahorro de tiempo enorme.", who: "Productor freelance · Santiago" },
+  { id: "es-10", q: "Primera pista pública en una hora. La comunidad incluso valoró el bounce.", who: "Creador TikTok · Medellín" },
+  { id: "es-11", q: "Las voces de Song Mode mantienen estructura — raro en herramientas IA.", who: "Rapper · Miami" },
+  { id: "es-12", q: "Mis loops Afrobeats se volvieron instrumentales vendibles en BeatStars.", who: "Prod Afrobeats · Lagos" },
+  { id: "es-13", q: "Comparto el enlace público para validar un concepto antes del estudio.", who: "Manager de artistas · NYC" },
+  { id: "es-14", q: "Beat mode fijó una vibe oscura sin pasar la noche en los 808.", who: "Productor · Seattle" },
+  { id: "es-15", q: "Biblioteca clara, regen dirigida — guardo 1 de cada 4 takes y basta.", who: "Beatmaker · Dublín" },
+  { id: "es-16", q: "Mis alumnos aprenden la estructura de un hit generando y descomponiendo.", who: "Profesor de música · Boston" },
+  { id: "es-17", q: "Cover metálica + track = posts de Insta que destacan sin diseñador.", who: "Creadora de contenido · París" },
+  { id: "es-18", q: "Lancé un EP de bocetos en una semana — todo desde prompts simples.", who: "Artista lo-fi · Portland" },
+  { id: "es-19", q: "El plan free basta para probar ideas antes de Pro para exportar WAV.", who: "Beatmaker novato · Phoenix" },
+  { id: "es-20", q: "Remezclar una pista pública = inspiración instantánea cuando estoy bloqueado.", who: "Productor house · Ámsterdam" },
+  { id: "es-21", q: "Las colabs empiezan con un enlace ProducerHit — sin más notas de voz feas.", who: "Artista · Johannesburgo" },
+  { id: "es-22", q: "Variaciones x2 en el mismo seed — mejor take elegida en cinco minutos.", who: "Productor pop · Sídney" },
+  { id: "es-23", q: "UI limpia, cero fricción — me quedo en el vibe, no en los menús.", who: "Productor · Tokio" },
+];
+
+const TESTIMONIALS_PT: LandingTestimonial[] = [
+  { id: "pt-1", q: "Achei meu bounce em 3 gerações. Seeds tornam as variações realmente úteis.", who: "Produtor trap · São Paulo" },
+  { id: "pt-2", q: "Song Mode me deu um hook que mantive — finalizei a faixa na mesma noite.", who: "Artista indie · Rio" },
+  { id: "pt-3", q: "Type Beat + variações = catálogo sólido em uma sessão.", who: "Beatmaker · Lisboa" },
+  { id: "pt-4", q: "Remix da comunidade mostrou direções que eu nunca testaria sozinho.", who: "Produtor R&B · Toronto" },
+  { id: "pt-5", q: "Exportação WAV direto para o DAW — fluxo em dois cliques.", who: "Engenheiro de mixagem · Atlanta" },
+  { id: "pt-6", q: "Ideias de hook saem como demos limpas, não rascunhos embaçados.", who: "Vocalista · Chicago" },
+  { id: "pt-7", q: "BPM travado no Type Beat Mode — perfeito para packs coerentes.", who: "Produtor drill · Manchester" },
+  { id: "pt-8", q: "Covers automáticas dão identidade visual antes do lançamento.", who: "Artista pop · Miami" },
+  { id: "pt-9", q: "Variações seed para A/B com clientes — economia de tempo enorme.", who: "Produtor freelancer · Austin" },
+  { id: "pt-10", q: "Primeira faixa pública em uma hora. A comunidade até avaliou o bounce.", who: "Criador TikTok · Berlim" },
+  { id: "pt-11", q: "Vocais do Song Mode mantêm estrutura — raro em ferramentas de IA.", who: "Rapper · Houston" },
+  { id: "pt-12", q: "Meus loops Afrobeats viraram instrumentais vendáveis no BeatStars.", who: "Prod Afrobeats · Lagos" },
+  { id: "pt-13", q: "Compartilho o link público para validar um conceito antes do estúdio.", who: "Manager de artistas · NYC" },
+  { id: "pt-14", q: "Beat mode travou uma vibe dark sem virar a noite nos 808.", who: "Produtor · Seattle" },
+  { id: "pt-15", q: "Biblioteca limpa, regen direcionada — guardo 1 em 4 takes e já basta.", who: "Beatmaker · Dublin" },
+  { id: "pt-16", q: "Alunos aprendem estrutura de hit gerando e decompondo faixas.", who: "Professor de música · Boston" },
+  { id: "pt-17", q: "Cover metálica + faixa = posts no Insta que destacam sem designer.", who: "Criadora de conteúdo · Paris" },
+  { id: "pt-18", q: "Lancei um EP de rascunhos em uma semana — tudo de prompts simples.", who: "Artista lo-fi · Portland" },
+  { id: "pt-19", q: "O plano free basta para testar ideias antes do Pro para exportar WAV.", who: "Beatmaker iniciante · Phoenix" },
+  { id: "pt-20", q: "Remixar uma faixa pública = inspiração instantânea quando estou travado.", who: "Produtor house · Amsterdã" },
+  { id: "pt-21", q: "Colabs começam com um link ProducerHit — sem mais áudios feios.", who: "Artista · Joanesburgo" },
+  { id: "pt-22", q: "Variações x2 no mesmo seed — melhor take escolhida em cinco minutos.", who: "Produtor pop · Sydney" },
+  { id: "pt-23", q: "UI limpa, zero atrito — fico no vibe, não nos menus.", who: "Produtor · Tóquio" },
+];
+
+const TESTIMONIALS_DE: LandingTestimonial[] = [
+  { id: "de-1", q: "Meinen Bounce in 3 Generierungen gefunden. Seeds machen Variationen wirklich nutzbar.", who: "Trap-Produzent · Berlin" },
+  { id: "de-2", q: "Song Mode lieferte einen Hook, den ich behalten habe — Track noch am selben Abend fertig.", who: "Indie-Künstler · Hamburg" },
+  { id: "de-3", q: "Type Beat + Variationen = solider Katalog in einer Session.", who: "Beatmaker · München" },
+  { id: "de-4", q: "Community-Remix zeigte Richtungen, die ich allein nie probiert hätte.", who: "R&B-Produzent · Köln" },
+  { id: "de-5", q: "WAV-Export direkt ins DAW — Zwei-Klick-Workflow.", who: "Mix-Engineer · Frankfurt" },
+  { id: "de-6", q: "Hook-Ideen werden endlich saubere Demos, keine unscharfen Skizzen.", who: "Sängerin · Stuttgart" },
+  { id: "de-7", q: "Fixiertes BPM im Type Beat Mode — perfekt für kohärente Pack-Drops.", who: "Drill-Produzent · Leipzig" },
+  { id: "de-8", q: "Auto-Covers geben visuelle Identität vor dem Release.", who: "Pop-Künstlerin · Wien" },
+  { id: "de-9", q: "Seed-Variationen für A/B mit Kunden — riesige Zeitersparnis.", who: "Produzent für Hire · Zürich" },
+  { id: "de-10", q: "Erster öffentlicher Track in einer Stunde. Community bewertete sogar den Bounce.", who: "TikTok-Creator · Düsseldorf" },
+  { id: "de-11", q: "Song Mode Vocals halten Struktur — selten bei KI-Tools.", who: "Rapper · Bremen" },
+  { id: "de-12", q: "Meine Afrobeats-Loops wurden verkaufbare Instrumentals auf BeatStars.", who: "Afrobeats-Prod · Lagos" },
+  { id: "de-13", q: "Ich teile den öffentlichen Link, um ein Konzept vor Studiozeit zu validieren.", who: "Artist Manager · NYC" },
+  { id: "de-14", q: "Beat Mode fixierte eine dunkle Vibe ohne Allnighter an den 808s.", who: "Produzent · Seattle" },
+  { id: "de-15", q: "Saubere Bibliothek, gezielte Regen — ich behalte 1 von 4 Takes, das reicht.", who: "Beatmaker · Dublin" },
+  { id: "de-16", q: "Schüler lernen Hit-Struktur durch Generieren und Zerlegen.", who: "Musiklehrer · Boston" },
+  { id: "de-17", q: "Metallic Cover + Track = Insta-Posts, die ohne Designer auffallen.", who: "Content Creator · Paris" },
+  { id: "de-18", q: "Sketch-EP in einer Woche veröffentlicht — alles aus einfachen Prompts.", who: "Lo-fi-Künstler · Portland" },
+  { id: "de-19", q: "Free-Tier reicht zum Testen, bevor Pro für WAV-Export.", who: "Neuer Beatmaker · Phoenix" },
+  { id: "de-20", q: "Remix eines öffentlichen Tracks = sofortige Inspiration bei Blockade.", who: "House-Produzent · Amsterdam" },
+  { id: "de-21", q: "Collabs starten mit einem ProducerHit-Link — keine hässlichen Sprachmemos mehr.", who: "Künstler · Johannesburg" },
+  { id: "de-22", q: "x2 Variationen auf demselben Seed — beste Take in fünf Minuten gewählt.", who: "Pop-Produzent · Sydney" },
+  { id: "de-23", q: "Saubere UI, null Reibung — Fokus auf Vibe, nicht Menüs.", who: "Produzent · Tokio" },
+];
+
+const TESTIMONIALS_JA: LandingTestimonial[] = [
+  { id: "ja-1", q: "3回の生成でバウンスが見つかった。seedでバリエーションが本当に使える。", who: "トラッププロデューサー · 東京" },
+  { id: "ja-2", q: "Song Modeで残せるフックが出た — その夜に曲を仕上げた。", who: "インディーアーティスト · 大阪" },
+  { id: "ja-3", q: "Type Beat + バリエーション = 1セッションで堅いカタログ。", who: "ビートメーカー · ロンドン" },
+  { id: "ja-4", q: "コミュニティリミックスで、一人では試さない方向が見えた。", who: "R&Bプロデューサー · トロント" },
+  { id: "ja-5", q: "WAVをDAWに直行 — 2クリックのワークフロー。", who: "ミックスエンジニア · アトランタ" },
+  { id: "ja-6", q: "フックのアイデアがぼやけたスケッチではなく、きれいなデモになる。", who: "ボーカリスト · シカゴ" },
+  { id: "ja-7", q: "Type Beat ModeでBPM固定 — まとまったパックに最適。", who: "ドリルプロデューサー · マンチェスター" },
+  { id: "ja-8", q: "自動カバーでリリース前からビジュアルアイデンティティ。", who: "ポップアーティスト · マイアミ" },
+  { id: "ja-9", q: "seedバリエーションでクライアント向けA/B — 時間の節約が巨大。", who: "受託プロデューサー · オースティン" },
+  { id: "ja-10", q: "1時間で初の公開トラック。コミュニティがバウンスまで評価。", who: "TikTokクリエイター · ベルリン" },
+  { id: "ja-11", q: "Song Modeのボーカルは構造を保つ — AIツールでは珍しい。", who: "ラッパー · ヒューストン" },
+  { id: "ja-12", q: "アフロビーツのループがBeatStarsで売れるインストに。", who: "アフロビーツProd · ラゴス" },
+  { id: "ja-13", q: "スタジオ前にコンセプトを検証するため公開リンクを共有。", who: "アーティストマネージャー · NYC" },
+  { id: "ja-14", q: "ビートモードで808に徹夜せずダークな雰囲気を固定。", who: "プロデューサー · シアトル" },
+  { id: "ja-15", q: "きれいなライブラリ、狙った再生成 — 4テイクに1つ残せば十分。", who: "ビートメーカー · ダブリン" },
+  { id: "ja-16", q: "生成して分解することでヒット構造を学ぶ生徒たち。", who: "音楽教師 · ボストン" },
+  { id: "ja-17", q: "メタリックカバー + トラック = デザイナー不要で目立つInsta投稿。", who: "コンテンツクリエイター · パリ" },
+  { id: "ja-18", q: "1週間でスケッチEPをリリース — すべてシンプルなプロンプトから。", who: "ローファイアーティスト · ポートランド" },
+  { id: "ja-19", q: "Freeでアイデアを試し、WAVはProで — それで十分。", who: "新米ビートメーカー · フェニックス" },
+  { id: "ja-20", q: "公開トラックのリミックス = 行き詰まったときの即インスピレーション。", who: "ハウスプロデューサー · アムステルダム" },
+  { id: "ja-21", q: "コラボはProducerHitリンクから — 粗いボイスメモはもう不要。", who: "アーティスト · ヨハネスブルグ" },
+  { id: "ja-22", q: "同じseedでx2バリエーション — 5分でベストテイクを選ぶ。", who: "ポッププロデューサー · シドニー" },
+  { id: "ja-23", q: "すっきりしたUI、摩擦ゼロ — メニューではなくヴァイブに集中。", who: "プロデューサー · 東京" },
+];
+
+const TESTIMONIALS_KO: LandingTestimonial[] = [
+  { id: "ko-1", q: "3번 생성 만에 바운스를 찾았어요. seed로 변형이 진짜 쓸 만해집니다.", who: "트랩 프로듀서 · 서울" },
+  { id: "ko-2", q: "Song Mode에서 훅이 나왔고 그대로 썼어요 — 같은 밤에 트랙을 마쳤습니다.", who: "인디 아티스트 · 부산" },
+  { id: "ko-3", q: "Type Beat + 변형 = 한 세션에 탄탄한 카탈로그.", who: "비트메이커 · 런던" },
+  { id: "ko-4", q: "커뮤니티 리믹스가 혼자서는 못 해볼 방향을 보여줬어요.", who: "R&B 프로듀서 · 토론토" },
+  { id: "ko-5", q: "WAV를 DAW로 바로 — 두 번 클릭 워크플로.", who: "믹스 엔지니어 · 애틀랜타" },
+  { id: "ko-6", q: "훅 아이디어가 흐릿한 스케치가 아니라 깔끔한 데모로 나갑니다.", who: "보컬리스트 · 시카고" },
+  { id: "ko-7", q: "Type Beat Mode에서 BPM 고정 — 일관된 팩 드롭에 딱.", who: "드릴 프로듀서 · 맨체스터" },
+  { id: "ko-8", q: "자동 커버가 발매 전 비주얼 아이덴티티를 줍니다.", who: "팝 아티스트 · 마이애미" },
+  { id: "ko-9", q: "seed 변형으로 클라이언트 A/B — 시간 절약이 엄청나요.", who: "외주 프로듀서 · 오스틴" },
+  { id: "ko-10", q: "한 시간 만에 첫 공개 트랙. 커뮤니티가 바운스까지 평가했어요.", who: "틱톡 크리에이터 · 베를린" },
+  { id: "ko-11", q: "Song Mode 보컬이 구조를 유지해요 — AI 도구에서는 드뭅니다.", who: "래퍼 · 휴스턴" },
+  { id: "ko-12", q: "아프로비츠 루프가 BeatStars에서 팔리는 인스트가 됐어요.", who: "아프로비츠 Prod · 라고스" },
+  { id: "ko-13", q: "스튜디오 전에 컨셉 검증하려고 공개 링크를 공유합니다.", who: "아티스트 매니저 · NYC" },
+  { id: "ko-14", q: "비트 모드로 808 밤샘 없이 다크 바이브를 잡았어요.", who: "프로듀서 · 시애틀" },
+  { id: "ko-15", q: "깔끔한 라이브러리, 타겟 재생성 — 4테이크 중 1개면 충분해요.", who: "비트메이커 · 더블린" },
+  { id: "ko-16", q: "학생들이 생성 후 분해하며 히트 구조를 배웁니다.", who: "음악 교사 · 보스턴" },
+  { id: "ko-17", q: "메탈릭 커버 + 트랙 = 디자이너 없이 눈에 띄는 인스타 포스트.", who: "콘텐츠 크리에이터 · 파리" },
+  { id: "ko-18", q: "일주일 만에 스케치 EP 발매 — 모두 간단한 프롬프트에서.", who: "로파이 아티스트 · 포틀랜드" },
+  { id: "ko-19", q: "Free로 아이디어 테스트, WAV는 Pro — 그걸로 충분해요.", who: "신입 비트메이커 · 피닉스" },
+  { id: "ko-20", q: "공개 트랙 리믹스 = 막혔을 때 즉각 영감.", who: "하우스 프로듀서 · 암스테르담" },
+  { id: "ko-21", q: "콜라보는 ProducerHit 링크로 시작 — 지저분한 보이스 메모 끝.", who: "아티스트 · 요하네스버그" },
+  { id: "ko-22", q: "같은 seed로 x2 변형 — 5분 만에 베스트 테이크 선택.", who: "팝 프로듀서 · 시드니" },
+  { id: "ko-23", q: "깔끔한 UI, 마찰 제로 — 메뉴가 아니라 바이브에 집중.", who: "프로듀서 · 도쿄" },
+];
+
+export const TESTIMONIALS_BY_LOCALE: Partial<Record<Locale, LandingTestimonial[]>> = {
+  en: TESTIMONIALS_EN,
+  fr: TESTIMONIALS_FR,
+  es: TESTIMONIALS_ES,
+  pt: TESTIMONIALS_PT,
+  de: TESTIMONIALS_DE,
+  ja: TESTIMONIALS_JA,
+  ko: TESTIMONIALS_KO,
+};
+
 export function landingTestimonials(locale: Locale): LandingTestimonial[] {
-  const isFr = locale === "fr";
-  if (isFr) {
-    return [
-      { id: "fr-1", q: "J’ai trouvé mon bounce en 3 générations. Le seed change tout pour les variations.", who: "Producteur trap · Paris" },
-      { id: "fr-2", q: "Song Mode m’a sorti un hook utilisable — j’ai fini le track le soir même.", who: "Artiste indie · Montréal" },
-      { id: "fr-3", q: "Type Beat + variations = un catalogue solide en une session.", who: "Beatmaker · Lyon" },
-      { id: "fr-4", q: "Le remix communauté m’a fait découvrir des directions que je n’aurais jamais testées seul.", who: "Producteur R&B · Bruxelles" },
-      { id: "fr-5", q: "Export WAV direct, import FL en deux clics — workflow nickel.", who: "Ingé son · Marseille" },
-      { id: "fr-6", q: "Mes idées de hooks partent enfin en démo propre, pas en sketch flou.", who: "Chanteuse · Toulouse" },
-      { id: "fr-7", q: "Type Beat Mode avec BPM verrouillé : parfait pour enchaîner des packs cohérents.", who: "Beatmaker drill · Lille" },
-      { id: "fr-8", q: "La cover auto donne une identité visuelle même avant la sortie.", who: "Artiste pop · Genève" },
-      { id: "fr-9", q: "J’utilise les variations seed pour A/B test mes clients — gain de temps énorme.", who: "Prod pour artistes · Bordeaux" },
-      { id: "fr-10", q: "Premier track public en une heure. La communauté m’a même noté le bounce.", who: "Créateur TikTok · Nantes" },
-      { id: "fr-11", q: "Song Mode en français : les couplets tiennent la route, rare pour de l’IA.", who: "Rappeur · Strasbourg" },
-      { id: "fr-12", q: "Mes loops Afrobeats sont devenues des instrumentales vendables sur BeatStars.", who: "Prod Afrobeats · Abidjan" },
-      { id: "fr-13", q: "Je partage le lien public pour valider un concept avant d’aller en studio.", who: "Manager artiste · Paris" },
-      { id: "fr-14", q: "Le mode beat m’a aidé à verrouiller une vibe dark sans passer la nuit sur les 808.", who: "Producteur · Rennes" },
-      { id: "fr-15", q: "Bibliothèque claire, regen ciblée — je garde 1 take sur 4, c’est déjà énorme.", who: "Beatmaker · Nice" },
-      { id: "fr-16", q: "Mes élèves comprennent la structure d’un hit en générant puis en décomposant.", who: "Prof MAO · Liège" },
-      { id: "fr-17", q: "Cover métallique + track = posts Insta qui performent sans designer.", who: "Créatrice contenu · Lyon" },
-      { id: "fr-18", q: "J’ai sorti un EP de sketches en une semaine — tous partis de prompts simples.", who: "Artiste lo-fi · Lausanne" },
-      { id: "fr-19", q: "Le plan free suffit pour tester des idées avant de passer Pro pour l’export WAV.", who: "Beatmaker débutant · Orléans" },
-      { id: "fr-20", q: "Remix d’un track public = inspiration instantanée quand je suis bloqué.", who: "Producteur house · Montpellier" },
-      { id: "fr-21", q: "Mes collabs commencent par un lien ProducerHit, plus besoin d’envoyer des maquettes moches.", who: "Artiste · Dakar" },
-      { id: "fr-22", q: "Variations x2 sur le même seed : je choisis la meilleure prise en 5 minutes.", who: "Prod pop · Québec" },
-      { id: "fr-23", q: "Interface épurée, zéro friction — je reste focus sur le vibe, pas sur les menus.", who: "Producteur · Berlin" },
-    ];
-  }
-  return [
-    { id: "en-1", q: "Found my bounce in 3 generations. Seeds make variations actually usable.", who: "Trap producer · NYC" },
-    { id: "en-2", q: "Song Mode gave me a hook I kept — finished the track the same night.", who: "Indie artist · LA" },
-    { id: "en-3", q: "Type Beat + variations = a solid catalog in one session.", who: "Beatmaker · London" },
-    { id: "en-4", q: "Community remix surfaced directions I would never have tried solo.", who: "R&B producer · Toronto" },
-    { id: "en-5", q: "WAV export straight into my DAW — two-click workflow.", who: "Mix engineer · Atlanta" },
-    { id: "en-6", q: "Hook ideas finally leave as clean demos, not fuzzy sketches.", who: "Vocalist · Chicago" },
-    { id: "en-7", q: "Locked BPM in Type Beat Mode — perfect for cohesive pack drops.", who: "Drill producer · Manchester" },
-    { id: "en-8", q: "Auto covers give a visual identity before release day.", who: "Pop artist · Miami" },
-    { id: "en-9", q: "Seed variations let me A/B ideas for clients — huge time saver.", who: "Producer for hire · Austin" },
-    { id: "en-10", q: "First public track in an hour. Community even rated the bounce.", who: "TikTok creator · Berlin" },
-    { id: "en-11", q: "Song Mode vocals actually hold structure — rare for AI tools.", who: "Rapper · Houston" },
-    { id: "en-12", q: "My Afrobeats loops became sellable instrumentals on BeatStars.", who: "Afrobeats prod · Lagos" },
-    { id: "en-13", q: "I share the public link to validate a concept before studio time.", who: "Artist manager · NYC" },
-    { id: "en-14", q: "Beat mode locked a dark vibe without an all-nighter on 808s.", who: "Producer · Seattle" },
-    { id: "en-15", q: "Clean library, targeted regen — I keep 1 in 4 takes and that’s plenty.", who: "Beatmaker · Dublin" },
-    { id: "en-16", q: "Students learn hit structure by generating then breaking tracks down.", who: "Music teacher · Boston" },
-    { id: "en-17", q: "Metallic cover + track = Insta posts that pop without a designer.", who: "Content creator · Paris" },
-    { id: "en-18", q: "Shipped a sketch EP in a week — all from simple prompts.", who: "Lo-fi artist · Portland" },
-    { id: "en-19", q: "Free tier is enough to test ideas before Pro for WAV export.", who: "New beatmaker · Phoenix" },
-    { id: "en-20", q: "Remixing a public track = instant inspiration when I’m stuck.", who: "House producer · Amsterdam" },
-    { id: "en-21", q: "Collabs start with a ProducerHit link — no more rough voice memos.", who: "Artist · Johannesburg" },
-    { id: "en-22", q: "x2 variations on the same seed — best take picked in five minutes.", who: "Pop producer · Sydney" },
-    { id: "en-23", q: "Clean UI, zero friction — I stay locked on vibe, not menus.", who: "Producer · Tokyo" },
-  ];
+  return TESTIMONIALS_BY_LOCALE[locale] ?? TESTIMONIALS_EN;
 }
 
 export function landingSectionClass(extra?: string): string {
@@ -196,9 +344,10 @@ export function landingFlowSectionClass(extra?: string): string {
 }
 
 export function landingCopy(locale: Locale) {
-  const isFr = locale === "fr";
   const landing = getMessages(locale).landing;
-  const proPrice = planPriceLabel("pro", isFr ? "fr" : "en", { suffix: true });
+  const m = buildLandingMarketingSection(locale);
+  const proPrice = planPriceLabel("pro", locale, { suffix: true });
+  const free = PLAN_LIMITS.free;
   return {
     heroTagline: landing.heroTagline,
     heroLead: landing.heroLead,
@@ -207,77 +356,51 @@ export function landingCopy(locale: Locale) {
     heroCtaPrimary: landing.heroCtaPrimary,
     heroCtaDashboard: landing.heroCtaDashboard,
 
-    trustEyebrow: isFr ? "Adopté par des créateurs du monde entier" : "Trusted by creators worldwide",
-    trustTitle: isFr ? "De l'idée au morceau exportable — en un seul studio" : "From idea to export-ready track — one studio",
-    trustLead: isFr
-      ? "Producteurs, artistes et créateurs utilisent ProducerHit pour générer, remixer et publier — sans studio physique ni workflow éclaté."
-      : "Producers, artists, and creators use ProducerHit to generate, remix, and publish — no physical studio or fragmented workflow.",
+    trustEyebrow: m.trustEyebrow,
+    trustTitle: m.trustTitle,
+    trustLead: m.trustLead,
 
-    suiteTitle: isFr ? "Passe de l'inspiration au morceau en minutes." : "Go from inspiration to finished track in minutes.",
-    suiteLead: isFr
-      ? "De la génération IA de chansons aux covers audio, en passant par l’export vidéo vertical et le mastering intégré : tout est réuni pour passer de l’idée à une release royalty-free."
-      : "From AI song generation to ACE audio covers, vertical video export, and built-in mastering — everything you need to move from idea to royalty-free release in one place.",
-    suitePoints: isFr
-      ? ["Song Mode & Type Beat Mode", "Remix — covers IA depuis ton audio", "Export vidéo, MP3/WAV & mastering", "Usage commercial (Pro, Studio, Plus)"]
-      : ["Song Mode & Type Beat Mode", "Remix — AI covers from your audio", "Video export, MP3/WAV & mastering", "Commercial use (Pro, Studio, Plus)"],
+    suiteTitle: m.suiteTitle,
+    suiteLead: m.suiteLead,
+    suitePoints: landingSuitePoints(locale),
 
-    dreamTitle: isFr ? "Imagine. Décris. Écoute." : "Imagine. Describe. Listen.",
-    dreamLead: isFr
-      ? "La musique n’a pas de frontières — crée, écoute et partage depuis n’importe quel appareil. Liens publics, bibliothèque perso, export vers ton DAW : ton workflow reste fluide, où que tu sois."
-      : "Music has no boundaries — create, listen, and share from any device. Public links, personal library, DAW export: your workflow stays smooth wherever you are.",
+    dreamTitle: m.dreamTitle,
+    dreamLead: m.dreamLead,
 
-    qualityTitle: isFr ? "Qualité studio, pas des maquettes floues" : "Studio-grade quality, not fuzzy demos",
-    qualityLead: isFr
-      ? "Tu as une mélodie en tête, des paroles notées ou juste une émotion à traduire — ProducerHit génère des chansons structurées et des type beats royalty-free, avec mix propre et itérations rapides via seed."
-      : "You have a melody in mind, written lyrics, or just a feeling to capture — ProducerHit generates structured songs and royalty-free type beats with clean mixes and fast seed-based iterations.",
+    qualityTitle: m.qualityTitle,
+    qualityLead: m.qualityLead,
 
-    featuresTitle: isFr ? "Tout ce qu’il faut pour créer et sortir un morceau" : "Everything you need to create and release music",
-    featuresLead: isFr
-      ? "Générateur de musique IA pensé pour 2026 : Song Mode, Type Beat, Remix, variations seed, export vidéo et fichiers royalty-free — un seul studio en ligne."
-      : "An AI music generator built for 2026: Song Mode, Type Beat,Remix, seed variations, video export, and royalty-free files — one online studio.",
+    featuresTitle: m.featuresTitle,
+    featuresLead: m.featuresLead,
 
-    howTitle: isFr ? "3 étapes. Workflow pro." : "Three steps. Pro workflow.",
-    howLead: isFr
-      ? "De la première idée à l’export Spotify Ready : prompt, génération, itération, mastering et publication — sans quitter le navigateur."
-      : "From first idea to Spotify Ready export: prompt, generate, iterate, master, and publish — without leaving your browser.",
+    howTitle: m.howTitle,
+    howLead: m.howLead,
 
-    communityTitle: isFr ? "Écoute ce que la communauté sort" : "Hear what creators ship",
-    communityLead: isFr
-      ? "Tracks publics en direct — écoute, remixe, publie le tien."
-      : "Live public tracks — listen, remix, publish yours.",
+    communityTitle: m.communityTitle,
+    communityLead: m.communityLead,
 
-    partnersLabel: isFr ? "Compatible avec tes plateformes" : "Works with your platforms",
+    partnersLabel: m.partnersLabel,
 
-    socialEyebrow: isFr ? "Réseaux sociaux" : "Social",
-    socialTitle: isFr ? "Suis ProducerHit sur Instagram & TikTok" : "Follow ProducerHit on Instagram & TikTok",
-    socialLead: isFr
-      ? "Workflows producteur, extraits de morceaux, tutos Versions×2 et coulisses du studio — le feed défile, les liens sont en bio."
-      : "Producer workflows, track snippets, Versions×2 tips, and studio BTS — scroll the feed, links in bio.",
+    socialEyebrow: m.socialEyebrow,
+    socialTitle: m.socialTitle,
+    socialLead: m.socialLead,
 
-    footerSocialLabel: isFr ? "Réseaux" : "Social",
+    footerSocialLabel: m.footerSocialLabel,
 
-    testimonialsTitle: isFr ? "Ils sortent avec ProducerHit" : "They ship with ProducerHit",
-    testimonialsHeadline: isFr ? "4,9/5 — retours de producteurs & artistes" : "4.9/5 — from producers & artists",
-    testimonialsLead: isFr
-      ? "Song Mode, Type Beat, Remix ACE, export MP3/WAV — des workflows concrets, pas des promesses marketing."
-      : "Song Mode, Type Beat, Remix, MP3/WAV export — real workflows, not marketing fluff.",
+    testimonialsTitle: m.testimonialsTitle,
+    testimonialsHeadline: m.testimonialsHeadline,
+    testimonialsLead: m.testimonialsLead,
 
     ctaTitle: landing.ctaTitle,
     ctaLead: interpolate(landing.ctaLead, { free: PLAN_LIMITS.free, proPrice }),
     ctaButton: landing.ctaButton,
 
-    freeSpotlightTitle: isFr
-      ? `${PLAN_LIMITS.free} générations gratuites, chaque mois`
-      : `${PLAN_LIMITS.free} free generations, every month`,
-    freeSpotlightLead: isFr
-      ? "Transforme un moment, une blague ou une humeur en morceau personnalisé — même quand les mots ne suffisent pas. Commence sans carte bancaire, upgrade seulement si tu en as besoin."
-      : "Turn a moment, an inside joke, or a mood into a custom track — even when words aren't enough. Start without a credit card; upgrade only when you need more.",
+    freeSpotlightTitle: interpolate(m.freeSpotlightTitle, { free }),
+    freeSpotlightLead: m.freeSpotlightLead,
 
-    exploreCtaTitle: isFr ? "Explore et laisse-toi inspirer" : "Explore and get inspired",
-    exploreCtaLead: isFr
-      ? `Rejoins le feed communauté : remix, prompts publics, type beats et covers — ${PLAN_LIMITS.free} générations offertes chaque mois pour lancer ta prochaine idée.`
-      : `Join the community feed: remix, public prompts, type beats, and covers — ${PLAN_LIMITS.free} free generations every month to kick off your next idea.`,
-    exploreCtaButton: isFr ? "Découvrir la communauté" : "Explore community",
+    exploreCtaTitle: m.exploreCtaTitle,
+    exploreCtaLead: interpolate(m.exploreCtaLead, { free }),
+    exploreCtaButton: m.exploreCtaButton,
   };
 }
 
@@ -289,49 +412,7 @@ export type LandingBenefitPillar = {
 };
 
 export function landingBenefitPillars(locale: Locale): LandingBenefitPillar[] {
-  const isFr = locale === "fr";
-  if (isFr) {
-    return [
-      {
-        id: "create",
-        title: "Crée en une phrase",
-        body: "Song Mode, Type Beat ou Remix — décris le mood, l’IA structure le morceau.",
-        points: ["Voix + instrumentales", "Remix depuis un audio", "Variations seed ×2"],
-      },
-      {
-        id: "export",
-        title: "Export propre",
-        body: "Bibliothèque cloud, covers auto, fichiers prêts pour ton DAW ou Spotify.",
-        points: ["MP3 gratuit (usage perso)", "WAV sur Pro+", "Mastering Studio inclus"],
-      },
-      {
-        id: "monetize",
-        title: "Monétise sur Pro+",
-        body: "BeatStars, YouTube, clients — droits commerciaux sur les plans payants.",
-        points: ["Usage commercial Pro+", "Liens publics & communauté", "Upgrade sans friction"],
-      },
-    ];
-  }
-  return [
-    {
-      id: "create",
-      title: "Create in one prompt",
-      body: "Song Mode, Type Beat, or Remix — describe the mood, AI structures the track.",
-      points: ["Vocals + instrumentals", "Remix from your audio", "Seed ×2 variations"],
-    },
-    {
-      id: "export",
-      title: "Clean exports",
-      body: "Cloud library, auto covers, files ready for your DAW or Spotify.",
-      points: ["Free MP3 (personal use)", "WAV on Pro+", "Mastering Studio included"],
-    },
-    {
-      id: "monetize",
-      title: "Monetize on Pro+",
-      body: "BeatStars, YouTube, clients — commercial rights on paid plans.",
-      points: ["Commercial use on Pro+", "Public links & community", "Frictionless upgrade"],
-    },
-  ];
+  return landingBenefitPillarsFromCatalog(locale);
 }
 
 export type LandingValueBlock = {
@@ -342,90 +423,7 @@ export type LandingValueBlock = {
 };
 
 export function landingValueBlocks(locale: Locale): LandingValueBlock[] {
-  const isFr = locale === "fr";
-  const free = PLAN_LIMITS.free;
-  const pro = PLAN_LIMITS.pro;
-  const studio = PLAN_LIMITS.studio;
-
-  if (isFr) {
-    return [
-      {
-        id: "generator",
-        eyebrow: "Générateur IA gratuit",
-        title: "Découvre ce que la création ouverte permet",
-        body: "Song Mode, type beats, covers remix et feed communautaire — génère, écoute, itère et exporte sans quitter ton navigateur.",
-      },
-      {
-        id: "share",
-        eyebrow: "Partage au monde",
-        title: "De la chambre au feed",
-        body: "Crée des morceaux qui comptent pour toi, puis partage-les : liens publics, export vidéo 9:16, captions auto — de tes proches à une audience plus large.",
-      },
-      {
-        id: "rights",
-        eyebrow: "Droits commerciaux",
-        title: "Tes exports, tes règles (plans payants)",
-        body: "Les abonnés Pro, Studio et Plus bénéficient d'exports MP3/WAV pour un usage commercial — vidéos, BeatStars, streaming. Free = usage perso uniquement. Détails : /legal#commercial-license.",
-      },
-      {
-        id: "workspace",
-        eyebrow: "Studio créatif en ligne",
-        title: "Un workspace complet, sans DAW lourd",
-        body: "Contrôles producteur + génération IA : bibliothèque, mastering, Remix Studio et export — le workflow d'un studio moderne, directement dans le navigateur.",
-      },
-      {
-        id: "maker",
-        eyebrow: "Song maker moderne",
-        title: "Crée, remixe, affine",
-        body: "Upload audio pour un cover ACE, variations seed, bascule Song ↔ Type Beat, mastering intégré — repars de ta meilleure prise et pousse-la plus loin.",
-      },
-      {
-        id: "volume",
-        eyebrow: "Crée chaque mois. Garde tout.",
-        title: `Jusqu'à ${studio} générations / mois`,
-        body: `Free : ${free}/mois · Pro : ${pro}/mois · Studio : ${studio}/mois. Bibliothèque perso, exports royalty-free sur plans payants — construis un catalogue sans friction.`,
-      },
-    ];
-  }
-
-  return [
-    {
-      id: "generator",
-      eyebrow: "Free AI music generator",
-      title: "Discover what open creation unlocks",
-      body: "Song Mode, type beats, Remix covers, and a community feed — generate, listen, iterate, and export without leaving your browser.",
-    },
-    {
-      id: "share",
-      eyebrow: "Share with the world",
-      title: "From your room to the feed",
-      body: "Make tracks that matter to you, then share them — public links, 9:16 video export, auto captions — from close friends to a wider audience.",
-    },
-    {
-      id: "rights",
-      eyebrow: "Commercial rights",
-      title: "Your exports, your rules (paid plans)",
-      body: "Pro, Studio, and Plus subscribers get MP3/WAV exports for commercial use — videos, BeatStars, streaming. Free = personal use only. Details: /legal#commercial-license.",
-    },
-    {
-      id: "workspace",
-      eyebrow: "Online creative studio",
-      title: "A complete workspace, no heavy DAW",
-      body: "Producer controls plus AI generation: library, mastering, Remix Studio, and export — a modern studio workflow, right in the browser.",
-    },
-    {
-      id: "maker",
-      eyebrow: "Modern song maker",
-      title: "Create, remix, refine",
-      body: "Upload audio for remix/covers, seed variations, switch Song ↔ Type Beat, built-in mastering — start from your best take and push it further.",
-    },
-    {
-      id: "volume",
-      eyebrow: "Create every month. Keep it all.",
-      title: `Up to ${studio} generations / month`,
-      body: `Free: ${free}/mo · Pro: ${pro}/mo · Studio: ${studio}/mo. Personal library, royalty-free exports on paid plans — build a catalog without friction.`,
-    },
-  ];
+  return landingValueBlocksFromCatalog(locale);
 }
 
 export type LandingFeatureCard = {
@@ -434,61 +432,7 @@ export type LandingFeatureCard = {
 };
 
 export function landingFeatureCards(locale: Locale): LandingFeatureCard[] {
-  const isFr = locale === "fr";
-  if (isFr) {
-    return [
-      {
-        title: "Song Mode",
-        description: "Chansons complètes avec voix, couplets et hooks — structure pro, prête à itérer ou publier en royalty-free.",
-      },
-      {
-        title: "Type Beat Mode",
-        description: "Instrumentales IA pour producteurs : BPM, mood, tags — bounce propre en quelques clics, usage commercial inclus.",
-      },
-      {
-        title: "Remix & covers IA",
-        description: "Importe ton audio, obtiens un cover ou remix IA — workflow cover studio sans quitter ProducerHit.",
-      },
-      {
-        title: "Export vidéo & partage",
-        description: "Clips 9:16, captions auto et liens publics — prêt pour les réseaux et la promo de ta release.",
-      },
-      {
-        title: "Variations seed",
-        description: "Versions x2 et regen ciblée — garde la meilleure prise, explore des directions sans brûler ton quota.",
-      },
-      {
-        title: "Mastering & export",
-        description: "MP3/WAV, mastering intégré, bibliothèque cloud — Spotify Ready, BeatStars et import DAW direct.",
-      },
-    ];
-  }
-  return [
-    {
-      title: "Song Mode",
-      description: "Full songs with vocals, verses, and hooks — pro structure, ready to iterate or publish royalty-free.",
-    },
-    {
-      title: "Type Beat Mode",
-      description: "AI instrumentals for producers: BPM, mood, tags — clean bounce in clicks, commercial use included.",
-    },
-    {
-      title: "Remix & AI covers",
-      description: "Upload your audio, get an AI cover or remix — studio cover workflow without leaving ProducerHit.",
-    },
-    {
-      title: "Video export & sharing",
-      description: "9:16 clips, auto captions, and public links — ready for social promo and your next release.",
-    },
-    {
-      title: "Seed variations",
-      description: "Versions x2 and targeted regen — keep the best take, explore directions without burning credits.",
-    },
-    {
-      title: "Mastering & export",
-      description: "MP3/WAV, built-in mastering, cloud library — Spotify Ready, BeatStars, and direct DAW import.",
-    },
-  ];
+  return landingFeatureCardsFromCatalog(locale);
 }
 
 export type LandingCloudMoodCard = {
@@ -502,131 +446,23 @@ export type LandingCloudMoodCard = {
 };
 
 export function landingCloudMoodsCopy(locale: Locale) {
-  const isFr = locale === "fr";
-  if (isFr) {
-    return {
-      eyebrow: "Cloud · 4 humeurs",
-      title: "Quatre humeurs. Un studio.",
-      lead: "Air, Terre, Feu ou Eau — choisis l’ambiance, le studio s’aligne.",
-      heroLine: "Règle l’humeur avant la première note.",
-      heroStripLabel: "4 humeurs Cloud",
-      scrollToMoods: "Tout voir",
-      footnote: "Pas un filtre. Une sensation. Change d’élément quand tu veux — le studio suit ton flow.",
-      cta: "Trouver mon mood",
-      ctaHint: "Essaie Cloud dans le studio",
-      moods: [
-        {
-          id: "transparent" as const,
-          element: "air" as const,
-          label: "Air",
-          tag: "Clarté",
-          moment: "3h du matin, fenêtre ouverte, tête enfin légère.",
-          unlock: "Espace pour respirer — et entendre la mélodie que tu chuchotais sans t’en rendre compte.",
-          toast: "Air — tête légère, idées claires.",
-        },
-        {
-          id: "green" as const,
-          element: "earth" as const,
-          label: "Terre",
-          tag: "Ancrage",
-          moment: "Après-midi lent, café, rien à prouver.",
-          unlock: "Des grooves ancrés, des idées organiques — la musique qui sent le vrai, pas le rush.",
-          toast: "Terre — ancré, chaleureux, sans rush.",
-        },
-        {
-          id: "red" as const,
-          element: "fire" as const,
-          label: "Feu",
-          tag: "Intensité",
-          moment: "Tu en as marre de jouer small. Aujourd’hui, tu crèves l’écran.",
-          unlock: "L’énergie qui pousse une hook agressive, un beat qui claque, une prise de risque assumée.",
-          toast: "Feu — drive activé, pas d’excuses.",
-        },
-        {
-          id: "blue" as const,
-          element: "water" as const,
-          label: "Eau",
-          tag: "Flow",
-          moment: "Pluie dehors, émotion à fleur de peau, session intime.",
-          unlock: "Le flow où les paroles viennent seules — mélancolie, R&B, cinéma intérieur.",
-          toast: "Eau — flow intime, émotion à fleur.",
-        },
-      ] satisfies LandingCloudMoodCard[],
-    };
-  }
-
-  return {
-    eyebrow: "Cloud · 4 moods",
-    title: "Four moods. One studio.",
-    lead: "Air, Earth, Fire, or Water — pick a vibe, the studio adapts.",
-    heroLine: "Set the mood before the first note.",
-    heroStripLabel: "Cloud · 4 moods",
-    scrollToMoods: "See all",
-    footnote: "Not a filter. A feeling. Switch elements anytime — the studio moves with you.",
-    cta: "Find my mood",
-    ctaHint: "Try Cloud in the studio",
-    moods: [
-      {
-        id: "transparent",
-        element: "air",
-        label: "Air",
-        tag: "Clarity",
-        moment: "3 a.m., window cracked, mind finally quiet.",
-        unlock: "Room to breathe — and hear the melody you were humming without knowing it.",
-        toast: "Air — light head, clear ideas.",
-      },
-      {
-        id: "green",
-        element: "earth",
-        label: "Earth",
-        tag: "Grounded",
-        moment: "Slow afternoon, coffee, nothing to prove.",
-        unlock: "Grounded grooves, organic ideas — music that feels real, not rushed.",
-        toast: "Earth — grounded, warm, no rush.",
-      },
-      {
-        id: "red",
-        element: "fire",
-        label: "Fire",
-        tag: "Intensity",
-        moment: "You’re done playing small. Tonight, you break through.",
-        unlock: "The energy behind a bold hook, a hard beat, a take you don’t apologize for.",
-        toast: "Fire — drive on, no apologies.",
-      },
-      {
-        id: "blue",
-        element: "water",
-        label: "Water",
-        tag: "Flow",
-        moment: "Rain outside, feelings close to the surface, private session.",
-        unlock: "The flow where lyrics write themselves — melancholy, R&B, inner cinema.",
-        toast: "Water — intimate flow, feelings up front.",
-      },
-    ] satisfies LandingCloudMoodCard[],
-  };
+  return landingCloudMoodsFromCatalog(locale);
 }
 
 export function landingGeneratorBottomCopy(locale: Locale) {
-  const isFr = locale === "fr";
+  const m = buildLandingMarketingSection(locale);
+  const free = PLAN_LIMITS.free;
   return {
-    title: isFr ? "De l'idée à l'export" : "From idea to export",
-    modes: isFr ? ["Song", "Type Beat", "Remix"] : ["Song", "Type Beat", "Remix"],
-    steps: isFr
-      ? [
-          { title: "Décris", hint: "Style, mood\net paroles" },
-          { title: "Génère", hint: "Plusieurs versions\nau choix" },
-          { title: "Exporte", hint: "MP3 · WAV\nTikTok & plus" },
-        ]
-      : [
-          { title: "Describe", hint: "Style, mood\n& lyrics" },
-          { title: "Generate", hint: "Multiple takes\nin one click" },
-          { title: "Export", hint: "MP3 · WAV\nTikTok & more" },
-        ],
-    ctaPrimary: isFr ? "Créer mon premier morceau →" : "Create my first track →",
-    ctaStudio: isFr ? "Ouvrir mon studio →" : "Open my studio →",
-    note: isFr
-      ? `${PLAN_LIMITS.free} générations gratuites / mois · Sans carte · Export MP3`
-      : `${PLAN_LIMITS.free} free gens / month · No card · MP3 export`,
-    pricingLink: isFr ? "Voir les tarifs Pro & Studio" : "See Pro & Studio pricing",
+    title: m.genBottomTitle,
+    modes: ["Song", "Type Beat", "Remix"],
+    steps: [
+      { title: m.genBottomStep1Title, hint: m.genBottomStep1Hint },
+      { title: m.genBottomStep2Title, hint: m.genBottomStep2Hint },
+      { title: m.genBottomStep3Title, hint: m.genBottomStep3Hint },
+    ],
+    ctaPrimary: m.genBottomCtaPrimary,
+    ctaStudio: m.genBottomCtaStudio,
+    note: interpolate(m.genBottomNote, { free }),
+    pricingLink: m.genBottomPricingLink,
   };
 }

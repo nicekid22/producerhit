@@ -6,6 +6,8 @@ import { CLOUD_THEME_ENABLED } from "@/lib/featureFlags";
 import { isCloudContrastDebugEnabled, setCloudContrastDebug } from "@/lib/cloudContrastDebug";
 import { CloudAccentElementPicker } from "@/components/CloudAccentElementPicker";
 import { useLocaleStore } from "@/stores/localeStore";
+import type { AppLocale } from "@/i18n/config";
+import { L, pickL } from "@/i18n/localized";
 import { useVisualThemeStore, type VisualTheme } from "@/stores/visualThemeStore";
 
 export function CloudThemeSettingsBlock() {
@@ -126,12 +128,60 @@ function ThemeChip({
   );
 }
 
-export function visualThemeDescription(theme: VisualTheme, isFr: boolean): string {
-  if (theme === "warm-glass") {
-    return isFr ? "Warm Glass — or, rose, liquid glass." : "Warm Glass — gold, pink, liquid glass.";
-  }
-  if (theme === "cloud") {
-    return isFr ? "Cloud — verre Apple, 4 accents." : "Cloud — Apple glass, 4 accents.";
-  }
-  return isFr ? "Prism — cyan, violet, chrome." : "Prism — cyan, violet, chrome.";
+const THEME_DESC = {
+  warmGlass: L({
+    en: "Warm Glass — gold, pink, liquid glass.",
+    fr: "Warm Glass — or, rose, liquid glass.",
+    es: "Warm Glass — oro, rosa, cristal líquido.",
+    pt: "Warm Glass — ouro, rosa, vidro líquido.",
+    de: "Warm Glass — Gold, Pink, Liquid Glass.",
+    it: "Warm Glass — oro, rosa, vetro liquido.",
+    nl: "Warm Glass — goud, roze, liquid glass.",
+    ar: "Warm Glass — ذهبي، وردي، زجاج سائل.",
+    ja: "Warm Glass — ゴールド、ピンク、リキッドガラス。",
+    ko: "Warm Glass — 골드, 핑크, 리퀴드 글래스.",
+    tr: "Warm Glass — altın, pembe, sıvı cam.",
+    hi: "Warm Glass — सोना, गुलाबी, liquid glass.",
+    zh: "Warm Glass — 金、粉、液态玻璃。",
+    th: "Warm Glass — ทอง ชมพู กระจกเหลว",
+  }),
+  cloud: L({
+    en: "Cloud — Apple glass, 4 accents.",
+    fr: "Cloud — verre Apple, 4 accents.",
+    es: "Cloud — cristal Apple, 4 acentos.",
+    pt: "Cloud — vidro Apple, 4 acentos.",
+    de: "Cloud — Apple-Glas, 4 Akzente.",
+    it: "Cloud — vetro Apple, 4 accenti.",
+    nl: "Cloud — Apple-glas, 4 accenten.",
+    ar: "Cloud — زجاج Apple، 4 لمسات.",
+    ja: "Cloud — Appleガラス、4アクセント。",
+    ko: "Cloud — Apple 글래스, 4 accents.",
+    tr: "Cloud — Apple cam, 4 vurgu.",
+    hi: "Cloud — Apple glass, 4 accents.",
+    zh: "Cloud — Apple 玻璃，4 种强调色。",
+    th: "Cloud — กระจก Apple 4 โทน",
+  }),
+  prism: L({
+    en: "Prism — cyan, violet, chrome.",
+    fr: "Prism — cyan, violet, chrome.",
+    es: "Prism — cian, violeta, cromo.",
+    pt: "Prism — ciano, violeta, cromo.",
+    de: "Prism — Cyan, Violett, Chrome.",
+    it: "Prism — ciano, viola, cromo.",
+    nl: "Prism — cyan, violet, chroom.",
+    ar: "Prism — سماوي، بنفسجي، كروم.",
+    ja: "Prism — シアン、バイオレット、クロム。",
+    ko: "Prism — 시안, 바이올렛, 크롬.",
+    tr: "Prism — camgöbeği, mor, krom.",
+    hi: "Prism — cyan, violet, chrome.",
+    zh: "Prism — 青、紫、铬色。",
+    th: "Prism — ฟ้า ม่วง โครเมียม",
+  }),
+};
+
+export function visualThemeDescription(theme: VisualTheme, locale: AppLocale): string {
+  if (theme === "warm-glass") return pickL(THEME_DESC.warmGlass, locale);
+  if (theme === "cloud") return pickL(THEME_DESC.cloud, locale);
+  return pickL(THEME_DESC.prism, locale);
 }
+

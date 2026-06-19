@@ -1,3 +1,5 @@
+import type { AppLocale } from "@/i18n/config";
+
 export type BlogBlock =
   | { type: "p"; text: string }
   | { type: "h2"; text: string }
@@ -32,7 +34,7 @@ export type BlogPost = {
   tags?: string[];
   authorId?: BlogAuthorId;
   /** Primary language for hreflang hints */
-  locale?: "en" | "fr";
+  locale?: AppLocale;
 };
 
 export type EnrichedBlogPost = BlogPost & {

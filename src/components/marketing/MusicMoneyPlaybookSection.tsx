@@ -12,7 +12,6 @@ type Props = {
 export function MusicMoneyPlaybookSection({ locale, className }: Props) {
   const copy = musicMoneySectionCopy(locale);
   const plays = musicMoneyPlaybook(locale);
-  const isFr = locale === "fr";
 
   return (
     <section className={cn("pk-money-playbook", className)} aria-labelledby="pk-money-playbook-title">
@@ -31,7 +30,7 @@ export function MusicMoneyPlaybookSection({ locale, className }: Props) {
             className="inline-flex shrink-0 items-center gap-2 self-start rounded-full border border-white/12 bg-white/[0.05] px-3.5 py-2 text-[11px] font-bold text-white transition hover:bg-white/10"
           >
             <Mic2 className="h-3.5 w-3.5 opacity-70" aria-hidden />
-            {isFr ? "Exemple licence" : "Sample license"}
+            {copy.sampleLicense}
             <ArrowRight className="h-3 w-3" aria-hidden />
           </Link>
         </div>

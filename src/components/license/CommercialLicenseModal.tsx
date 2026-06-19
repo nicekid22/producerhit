@@ -12,13 +12,14 @@ import { useAuthStore } from "@/stores/authStore";
 import { useCommercialLicenseStore } from "@/stores/commercialLicenseStore";
 import { useLocaleStore } from "@/stores/localeStore";
 import toast from "react-hot-toast";
+import { buildCommercialLicenseModalCopy } from "@/i18n/commercialLicenseModalCatalog";
 
 export function CommercialLicenseModal() {
   const locale = useLocaleStore((s) => s.locale);
   const profile = useAuthStore((s) => s.profile);
   const refreshProfile = useAuthStore((s) => s.refreshProfile);
   const { open, ctx, closeLicense } = useCommercialLicenseStore();
-  const isFr = locale === "fr";
+  const copy = useMemo(() => buildCommercialLicenseModalCopy(locale), [locale]);
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -64,10 +65,10 @@ export function CommercialLicenseModal() {
   }, []);
 
   const handleSaveLegalName = async () => {
-    const firstErr = validateLegalName(firstName, isFr);
-    const lastErr = validateLegalName(lastName, isFr);
+    const firstErr = validateLegalName(firstName, locale);
+    const lastErr = validateLegalName(lastName, locale);
     if (firstErr || lastErr) {
-      toast.error(firstErr ?? lastErr ?? (isFr ? "Nom invalide" : "Invalid name"));
+      toast.error(firstErr ?? lastErr ?? copy.invalidName);
       return;
     }
     setSaving(true);
@@ -76,19 +77,13 @@ export function CommercialLicenseModal() {
       if (result.ok === false) {
         const errCode = result.error;
         toast.error(
-          errCode === "legal_name_invalid"
-            ? isFr
-              ? "Prénom ou nom invalide"
-              : "Invalid first or last name"
-            : isFr
-              ? "Échec de l'enregistrement"
-              : "Could not save",
+          errCode === "legal_name_invalid" ? copy.invalidFirstLast : copy.saveFailed,
         );
         return;
       }
       const refreshed = await refreshProfile();
       setLocalProfile(refreshed);
-      toast.success(isFr ? "Nom enregistré — ta licence est prête" : "Name saved — your license is ready");
+      toast.success(copy.nameSaved);
     } finally {
       setSaving(false);
     }
@@ -115,16 +110,10 @@ export function CommercialLicenseModal() {
             </div>
             <div>
               <h2 id="pk-license-modal-title" className="text-base font-bold text-white">
-                {isFr ? "Ta licence commerciale" : "Your commercial license"}
+                {copy.title}
               </h2>
               <p className="mt-0.5 text-xs text-white/50">
-                {ctx.exportKind === "stems"
-                  ? isFr
-                    ? `Licence unique pour les stems de « ${ctx.trackTitle} »`
-                    : `Unique license for stems of « ${ctx.trackTitle} »`
-                  : isFr
-                    ? `Licence unique pour « ${ctx.trackTitle} »`
-                    : `Unique license for « ${ctx.trackTitle} »`}
+                {copy.subtitle(ctx.trackTitle, ctx.exportKind)}
               </p>
             </div>
           </div>
@@ -132,7 +121,7 @@ export function CommercialLicenseModal() {
             type="button"
             onClick={closeLicense}
             className="rounded-full p-2 text-white/50 hover:bg-white/10 hover:text-white"
-            aria-label={isFr ? "Fermer" : "Close"}
+            aria-label={copy.close}
           >
             <X className="h-5 w-5" />
           </button>
@@ -141,14 +130,10 @@ export function CommercialLicenseModal() {
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-5">
           {needsLegalName ? (
             <div className="mx-auto max-w-md">
-              <p className="text-sm leading-relaxed text-white/65">
-                {isFr
-                  ? "Pour générer une licence personnelle et unique par titre, indique ton prénom et nom légaux (comme sur un contrat). Ces infos restent privées."
-                  : "To generate a personal, unique license per track, enter your legal first and last name (as on a contract). This stays private."}
-              </p>
+              <p className="text-sm leading-relaxed text-white/65">{copy.legalNameIntro}</p>
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
                 <label className="block">
-                  <span className="text-xs font-semibold text-white/45">{isFr ? "Prénom" : "First name"}</span>
+                  <span className="text-xs font-semibold text-white/45">{copy.firstName}</span>
                   <input
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
@@ -157,7 +142,7 @@ export function CommercialLicenseModal() {
                   />
                 </label>
                 <label className="block">
-                  <span className="text-xs font-semibold text-white/45">{isFr ? "Nom" : "Last name"}</span>
+                  <span className="text-xs font-semibold text-white/45">{copy.lastName}</span>
                   <input
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
@@ -167,16 +152,12 @@ export function CommercialLicenseModal() {
                 </label>
               </div>
               <Button variant="primary" className="mt-5 w-full" disabled={saving} onClick={() => void handleSaveLegalName()}>
-                {saving ? (isFr ? "Enregistrement…" : "Saving…") : isFr ? "Continuer vers la licence" : "Continue to license"}
+                {saving ? copy.saving : copy.continueToLicense}
               </Button>
             </div>
           ) : doc ? (
             <>
-              <p className="mb-4 text-center text-xs text-white/45">
-                {isFr
-                  ? "Téléchargement réussi — enregistre ou imprime ce certificat pour ce titre."
-                  : "Download complete — save or print this certificate for this track."}
-              </p>
+              <p className="mb-4 text-center text-xs text-white/45">{copy.downloadHint}</p>
               <CommercialLicenseCertificate doc={doc} printTarget />
             </>
           ) : null}
@@ -186,16 +167,14 @@ export function CommercialLicenseModal() {
           <footer className="flex shrink-0 flex-wrap gap-2 border-t border-white/8 px-5 py-4">
             <Button variant="primary" className="flex-1 sm:flex-none" onClick={printCert}>
               <Printer className="h-4 w-4" />
-              {isFr ? "Imprimer / PDF" : "Print / Save PDF"}
+              {copy.printPdf}
             </Button>
             <Button variant="secondary" onClick={closeLicense}>
-              {isFr ? "Fermer" : "Close"}
+              {copy.close}
             </Button>
             <p className="w-full text-center text-[11px] text-white/35">
               <Download className="mr-1 inline h-3 w-3" aria-hidden />
-              {isFr
-                ? "Imprimer → « Enregistrer au format PDF » pour envoyer à un client."
-                : "Print → « Save as PDF » to send to a client."}
+              {copy.printTip}
             </p>
           </footer>
         ) : null}

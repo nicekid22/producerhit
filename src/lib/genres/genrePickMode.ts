@@ -1,6 +1,7 @@
 import { ALL_GENRE_OPTIONS } from "@/lib/genres";
 
 import type { AppLocale } from "@/i18n/config";
+import { genreSelectionHintI18n } from "@/i18n/dashboardCatalog";
 
 /** Genre piloté par l'idée — pas d'injection catalogue. */
 export const FROM_IDEA_GENRE_VALUE = "Auto";
@@ -90,32 +91,12 @@ export function genreSelectionHint(
   ideaFilled: boolean,
   lastRandom?: string,
 ): string {
-  const isFr = locale === "fr";
-  if (isFromIdeaGenreSelection(genre)) {
-    return ideaFilled
-      ? isFr
-        ? "Le style est lu depuis ton idée — aucun genre catalogue ajouté."
-        : "Style comes from your idea — no extra catalog genre."
-      : isFr
-        ? "Remplis l’idée ou choisis Aléatoire / un genre du catalogue."
-        : "Add an idea, or pick Random / a catalog genre.";
-  }
-  if (isRandomGenreSelection(genre)) {
-    if (ideaFilled) {
-      return isFr
-        ? "Idée remplie : le style vient de l’idée (pas de second tirage)."
-        : "Idea filled: style comes from your idea (no extra random pick).";
-    }
-    if (lastRandom) {
-      return isFr
-        ? `Dernier tirage : ${lastRandom}. Un genre catalogue est tiré à chaque génération.`
-        : `Last pick: ${lastRandom}. A catalog genre is rolled each generation.`;
-    }
-    return isFr
-      ? "Un genre du catalogue est tiré à chaque génération."
-      : "A catalog genre is rolled on each generation.";
-  }
-  return isFr
-    ? `Genre fixe : ${genre}. Tu peux le combiner avec ton idée.`
-    : `Fixed genre: ${genre}. You can combine it with your idea.`;
+  return genreSelectionHintI18n(
+    genre,
+    locale,
+    ideaFilled,
+    lastRandom,
+    isFromIdeaGenreSelection,
+    isRandomGenreSelection,
+  );
 }

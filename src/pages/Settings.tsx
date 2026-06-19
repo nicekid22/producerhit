@@ -6,7 +6,6 @@ import { supabase } from "@/lib/supabaseClient";
 import { readProfileCache, syncProfileCache } from "@/lib/profileBootstrap";
 import { validateLegalName } from "@/lib/saveLegalName";
 import {
-  CREATOR_TYPE_OPTIONS,
   creatorProfileErrorMessage,
   profilePath,
   saveCreatorProfile,
@@ -14,6 +13,10 @@ import {
   type CreatorSocialLinks,
   type CreatorType,
 } from "@/lib/creatorProfile";
+import {
+  buildSettingsSection,
+  creatorTypeOptionsI18n,
+} from "@/i18n/settingsCatalog";
 import { useAuthStore } from "@/stores/authStore";
 import { getRemainingBeats, getTotalGenerationLimit } from "@/lib/planLimits";
 import { buildReferralInviteUrl, ensureReferralCode } from "@/lib/referral";
@@ -60,7 +63,7 @@ export default function Settings() {
   const setPassword = useAuthStore((s) => s.setPassword);
   const locale = useLocaleStore((s) => s.locale);
   const visualTheme = useVisualThemeStore((s) => s.theme);
-  const isFr = locale === "fr";
+  const copy = useMemo(() => buildSettingsSection(locale), [locale]);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -105,25 +108,18 @@ export default function Settings() {
     return src.slice(0, 2).toUpperCase();
   }, [username, user?.email]);
   const publicProfileUrl = username.trim().length >= 3 ? profilePath(username.trim()) : null;
-  const displayName = username.trim() || user?.email?.split("@")[0] || (isFr ? "Producer" : "Producer");
-  const creatorTypeOptions = useMemo(
-    () =>
-      CREATOR_TYPE_OPTIONS.map((opt) => ({
-        value: opt.value,
-        label: isFr ? opt.labelFr : opt.labelEn,
-      })),
-    [isFr],
-  );
+  const displayName = username.trim() || user?.email?.split("@")[0] || "Producer";
+  const creatorTypeOptions = useMemo(() => creatorTypeOptionsI18n(locale), [locale]);
 
   const navItems = useMemo(
     () => [
-      { id: "pk-settings-profile", label: isFr ? "Profil" : "Profile" },
-      { id: "pk-settings-progression", label: isFr ? "Progression" : "Progress" },
-      { id: "pk-settings-referral", label: isFr ? "Parrainage" : "Referral" },
-      { id: "pk-settings-plan", label: isFr ? "Plan" : "Plan" },
-      { id: "pk-settings-security", label: isFr ? "Sécurité" : "Security" },
+      { id: "pk-settings-profile", label: copy.navProfile },
+      { id: "pk-settings-progression", label: copy.navProgress },
+      { id: "pk-settings-referral", label: copy.navReferral },
+      { id: "pk-settings-plan", label: copy.navPlan },
+      { id: "pk-settings-security", label: copy.navSecurity },
     ],
-    [isFr],
+    [copy],
   );
 
   const scrollToSection = useCallback((id: string) => {
@@ -214,13 +210,13 @@ export default function Settings() {
             <PkIconLoader
               icon="settings"
               size="md"
-              label={isFr ? "Chargement du profil…" : "Loading profile…"}
+              label={copy.loadingProfile}
             />
           </div>
         ) : (
           <>
             <SettingsIdentityHero
-              isFr={isFr}
+              copy={copy}
               initials={initials}
               displayName={displayName}
               email={user?.email ?? ""}
@@ -245,42 +241,38 @@ export default function Settings() {
                 <UserRound className="h-4 w-4" />
               </div>
               <div>
-                <div className="text-lg font-semibold">{isFr ? "Profil" : "Profile"}</div>
-                <div className="text-xs text-pk-muted">{isFr ? "Identité publique du studio" : "Your studio identity"}</div>
+                <div className="text-lg font-semibold">{copy.navProfile}</div>
+                <div className="text-xs text-pk-muted">{copy.studioIdentity}</div>
               </div>
             </div>
             <div className="mt-5 grid gap-4">
               <div>
-                <div className="text-xs text-pk-muted">{isFr ? "Username public" : "Public username"}</div>
+                <div className="text-xs text-pk-muted">{copy.publicUsername}</div>
                 <input
                   id="settings-username"
-                  aria-label={isFr ? "Username public" : "Public username"}
+                  aria-label={copy.publicUsername}
                   value={username}
                   onChange={(e) => setUsername(e.target.value.replace(/\s/g, ""))}
                   disabled={loading || saving}
                   className="mt-2 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm outline-none focus:border-pk-accent"
-                  placeholder={isFr ? "ton_pseudo" : "your_handle"}
+                  placeholder={copy.usernamePlaceholder}
                 />
                 <div className="mt-1 text-[11px] text-pk-muted">
-                  {isFr ? "3–24 caractères · lettres, chiffres, _ · visible sur tes tracks publics" : "3–24 chars · letters, numbers, _ · shown on your public tracks"}
+                  {copy.usernameHint}
                 </div>
                 {publicProfileUrl ? (
                   <Link to={publicProfileUrl} className="mt-2 inline-block text-xs font-semibold text-pk-accent hover:underline">
-                    {isFr ? "Voir mon profil public →" : "View public profile →"}
+                    {copy.viewPublicProfile}
                   </Link>
                 ) : null}
               </div>
 
               <div className="rounded-pk border border-pk-border/80 bg-pk-input/40 p-4 sm:col-span-2">
-                <div className="text-sm font-semibold">{isFr ? "Nom légal (licence commerciale)" : "Legal name (commercial license)"}</div>
-                <p className="mt-1 text-[11px] leading-relaxed text-pk-muted">
-                  {isFr
-                    ? "Privé — utilisé sur tes certificats uniques par titre (Pro+). Non visible sur ton profil public."
-                    : "Private — used on your per-track unique certificates (Pro+). Not shown on your public profile."}
-                </p>
+                <div className="text-sm font-semibold">{copy.legalNameTitle}</div>
+                <p className="mt-1 text-[11px] leading-relaxed text-pk-muted">{copy.legalNameHint}</p>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <div>
-                    <div className="text-xs text-pk-muted">{isFr ? "Prénom" : "First name"}</div>
+                    <div className="text-xs text-pk-muted">{copy.firstName}</div>
                     <input
                       value={legalFirstName}
                       onChange={(e) => setLegalFirstName(e.target.value)}
@@ -290,7 +282,7 @@ export default function Settings() {
                     />
                   </div>
                   <div>
-                    <div className="text-xs text-pk-muted">{isFr ? "Nom" : "Last name"}</div>
+                    <div className="text-xs text-pk-muted">{copy.lastName}</div>
                     <input
                       value={legalLastName}
                       onChange={(e) => setLegalLastName(e.target.value)}
@@ -303,11 +295,11 @@ export default function Settings() {
               </div>
 
               <Dropdown
-                label={isFr ? "Type de créateur" : "Creator type"}
+                label={copy.creatorType}
                 value={creatorType}
                 onChange={(value) => setCreatorType(value as CreatorType | "")}
                 options={creatorTypeOptions}
-                placeholder={isFr ? "Choisir…" : "Choose…"}
+                placeholder={copy.choose}
                 disabled={loading || saving}
                 className="[&_button]:py-2.5"
               />
@@ -320,7 +312,7 @@ export default function Settings() {
                   disabled={loading || saving}
                   rows={3}
                   className="mt-2 w-full resize-none rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm outline-none focus:border-pk-accent"
-                  placeholder={isFr ? "Beatmaker, artiste, TikTok…" : "Beatmaker, artist, TikTok…"}
+                  placeholder={copy.bioPlaceholder}
                 />
                 <div className="mt-1 text-[11px] text-pk-muted">{bio.length}/280</div>
               </div>
@@ -367,7 +359,7 @@ export default function Settings() {
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <div className="text-xs text-pk-muted">{isFr ? "Site web" : "Website"}</div>
+                  <div className="text-xs text-pk-muted">{copy.website}</div>
                   <input
                     value={socialWeb}
                     onChange={(e) => setSocialWeb(e.target.value)}
@@ -393,16 +385,16 @@ export default function Settings() {
                 disabled={loading || saving || !user}
                 onClick={async () => {
                   if (!user) return;
-                  const usernameError = validateUsername(username, isFr, true);
+                  const usernameError = validateUsername(username, locale, true);
                   if (usernameError) {
                     toast.error(usernameError);
                     return;
                   }
                   if (legalFirstName.trim() || legalLastName.trim()) {
-                    const firstErr = validateLegalName(legalFirstName, isFr);
-                    const lastErr = validateLegalName(legalLastName, isFr);
+                    const firstErr = validateLegalName(legalFirstName, locale);
+                    const lastErr = validateLegalName(legalLastName, locale);
                     if (firstErr || lastErr) {
-                      toast.error(firstErr ?? lastErr ?? (isFr ? "Nom légal invalide" : "Invalid legal name"));
+                      toast.error(firstErr ?? lastErr ?? copy.invalidLegalName);
                       return;
                     }
                   }
@@ -425,12 +417,12 @@ export default function Settings() {
                       legal_last_name: legalLastName.trim(),
                     });
                     if (!result.ok) {
-                      toast.error(creatorProfileErrorMessage("error" in result ? result.error : "save_failed", isFr));
+                      toast.error(creatorProfileErrorMessage("error" in result ? result.error : "save_failed", locale));
                       return;
                     }
                     const trimmed = username.trim();
                     setUsername(trimmed);
-                    toast.success(isFr ? "Profil sauvegardé" : "Profile saved");
+                    toast.success(copy.profileSaved);
                     void refreshProfile().then((refreshed) => {
                       if (refreshed?.username) setUsername(refreshed.username);
                     });
@@ -442,7 +434,7 @@ export default function Settings() {
                   }
                 }}
               >
-                {isFr ? "Sauvegarder le profil" : "Save profile"}
+                {copy.saveProfile}
               </Button>
             </div>
           </div>
@@ -454,15 +446,15 @@ export default function Settings() {
                       <Palette className="h-4 w-4" />
                     </div>
                     <div>
-                      <div className="text-base font-semibold">{isFr ? "Apparence" : "Appearance"}</div>
+                      <div className="text-base font-semibold">{copy.appearance}</div>
                       <div className="text-xs text-pk-muted">
-                        {isFr ? "Thème studio" : "Studio theme"}
+                        {copy.studioTheme}
                       </div>
                     </div>
                   </div>
                   <div className="mt-4 flex flex-col gap-3">
                     <p className="text-xs leading-relaxed text-pk-muted">
-                      {visualThemeDescription(visualTheme, isFr)}
+                      {visualThemeDescription(visualTheme, locale)}
                     </p>
                     {CLOUD_THEME_ENABLED ? (
                       <CloudThemeSettingsBlock />
@@ -480,8 +472,8 @@ export default function Settings() {
                       <CreditCard className="h-4 w-4" />
                     </div>
                     <div>
-                      <div className="text-base font-semibold">{isFr ? "Abonnement" : "Subscription"}</div>
-                      <div className="text-xs text-pk-muted">{isFr ? "Plan & facturation" : "Plan & billing"}</div>
+                      <div className="text-base font-semibold">{copy.subscription}</div>
+                      <div className="text-xs text-pk-muted">{copy.planBilling}</div>
                     </div>
                   </div>
                   <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -491,13 +483,13 @@ export default function Settings() {
                     </span>
                   </div>
                   <div className="pk-prism-chip-cloud mt-3">
-                    <span className="pk-prism-vibe-chip">{isFr ? "Exports HD" : "HD exports"}</span>
-                    <span className="pk-prism-vibe-chip">{isFr ? "Cloud" : "Cloud"}</span>
-                    <span className="pk-prism-vibe-chip">{isFr ? "Communauté" : "Community"}</span>
+                    <span className="pk-prism-vibe-chip">{copy.hdExports}</span>
+                    <span className="pk-prism-vibe-chip">{copy.cloud}</span>
+                    <span className="pk-prism-vibe-chip">{copy.community}</span>
                   </div>
                   <div className="mt-4 flex flex-wrap gap-2">
                     <Link to="/pricing">
-                      <Button variant="primary" size="sm">{isFr ? "Upgrade" : "Upgrade"}</Button>
+                      <Button variant="primary" size="sm">{copy.upgrade}</Button>
                     </Link>
                     {plan !== "free" ? (
                       <Button
@@ -522,7 +514,7 @@ export default function Settings() {
                           }
                         }}
                       >
-                        {portalLoading ? (isFr ? "Chargement…" : "Loading…") : isFr ? "Gérer" : "Manage"}
+                        {portalLoading ? copy.loading : copy.manage}
                       </Button>
                     ) : null}
                   </div>
@@ -535,27 +527,17 @@ export default function Settings() {
                     <Sparkles className="h-4 w-4" />
                   </div>
                   <div>
-                    <div className="text-lg font-semibold">{isFr ? "Parrainage" : "Referral program"}</div>
+                    <div className="text-lg font-semibold">{copy.referralProgram}</div>
                     <div className="text-xs text-pk-muted">
-                      {isFr
-                        ? `+${REFERRAL_REFERRER_SIGNUP_BONUS} gen pour toi · ${REFERRAL_REFEREE_START_TOTAL} gen pour eux`
-                        : `+${REFERRAL_REFERRER_SIGNUP_BONUS} for you · ${REFERRAL_REFEREE_START_TOTAL} for them`}
+                      {copy.referralSubtitle(REFERRAL_REFERRER_SIGNUP_BONUS, REFERRAL_REFEREE_START_TOTAL)}
                     </div>
                   </div>
                 </div>
                 <div className="pk-settings-referral-highlight text-sm leading-relaxed text-white/75">
-                  <p className="font-semibold text-white">{isFr ? "Comment ça marche" : "How it works"}</p>
+                  <p className="font-semibold text-white">{copy.howItWorks}</p>
                   <ul className="mt-2 space-y-1.5 text-xs sm:text-sm">
-                    <li>
-                      {isFr
-                        ? `Envoie ton lien — ${REFERRAL_REFEREE_START_TOTAL} générations dès l'inscription.`
-                        : `Share your link — ${REFERRAL_REFEREE_START_TOTAL} generations on signup.`}
-                    </li>
-                    <li>
-                      {isFr
-                        ? `Tu reçois +${REFERRAL_REFERRER_SIGNUP_BONUS} gen par filleul inscrit.`
-                        : `You get +${REFERRAL_REFERRER_SIGNUP_BONUS} gen per signup.`}
-                    </li>
+                    <li>{copy.referralStep1(REFERRAL_REFEREE_START_TOTAL)}</li>
+                    <li>{copy.referralStep2(REFERRAL_REFERRER_SIGNUP_BONUS)}</li>
                   </ul>
                 </div>
                 <ReferralStatsPanel locale={locale} className="mt-4" />
@@ -563,21 +545,21 @@ export default function Settings() {
                 {referralBonus > 0 || levelBonus > 0 || dailyBonusMonth > 0 ? (
                   <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[var(--prism-cyan)]">
                     {referralBonus > 0 ? (
-                      <span>{isFr ? `Parrainage +${referralBonus}` : `Referral +${referralBonus}`}</span>
+                      <span>{copy.referralBonusLabel(referralBonus)}</span>
                     ) : null}
                     {levelBonus > 0 ? (
-                      <span>{isFr ? `Niveaux +${levelBonus}` : `Levels +${levelBonus}`}</span>
+                      <span>{copy.levelsBonusLabel(levelBonus)}</span>
                     ) : null}
                     {dailyBonusMonth > 0 ? (
-                      <span>{isFr ? `Daily +${dailyBonusMonth}` : `Daily +${dailyBonusMonth}`}</span>
+                      <span>{copy.dailyBonusLabel(dailyBonusMonth)}</span>
                     ) : null}
                   </div>
                 ) : null}
                 <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
                   <div>
-                    <div className="text-xs text-pk-muted">{isFr ? "Lien d'invitation" : "Invite link"}</div>
+                    <div className="text-xs text-pk-muted">{copy.inviteLink}</div>
                     <input
-                      value={referralLinkLoading ? (isFr ? "Génération…" : "Generating…") : referralLink}
+                      value={referralLinkLoading ? copy.generating : referralLink}
                       readOnly
                       className="mt-2 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm text-pk-muted outline-none"
                     />
@@ -588,28 +570,24 @@ export default function Settings() {
                     onClick={() => {
                       void navigator.clipboard.writeText(referralLink).then(() => {
                         markActivationStepLocal("referral_share");
-                        toast.success(isFr ? "Lien copié" : "Link copied");
+                        toast.success(copy.linkCopied);
                       });
                     }}
                   >
-                    {isFr ? "Copier" : "Copy"}
+                    {copy.copy}
                   </Button>
                 </div>
                 {referralCode ? (
                   <div className="mt-2 text-xs text-pk-muted">
-                    {isFr ? "Code" : "Code"}: <span className="font-semibold text-white">{referralCode}</span>
+                    {copy.code}: <span className="font-semibold text-white">{referralCode}</span>
                   </div>
                 ) : null}
                 {referralLink ? (
                   <div className="mt-4">
-                    <div className="mb-2 text-xs text-pk-muted">{isFr ? "Partager" : "Share"}</div>
+                    <div className="mb-2 text-xs text-pk-muted">{copy.share}</div>
                     <ViralShareBar
                       url={referralLink}
-                      shareText={
-                        isFr
-                          ? "Je crée mes beats avec ProducerHit — essaie avec mon lien"
-                          : "I make beats with ProducerHit — try with my link"
-                      }
+                      shareText={copy.referralShareText}
                       locale={locale}
                       channel="referral"
                       onShare={() => markActivationStepLocal("referral_share")}
@@ -626,7 +604,7 @@ export default function Settings() {
                   <div>
                     <div className="text-lg font-semibold">Discord</div>
                     <div className="text-xs text-pk-muted">
-                      {isFr ? "Challenges · crédits bonus · salons FR/ES/PT" : "Challenges · bonus credits · FR/ES/PT lounges"}
+                      {copy.discordHint}
                     </div>
                   </div>
                 </div>
@@ -637,10 +615,10 @@ export default function Settings() {
                     rel="noopener noreferrer"
                     className="pk-prism-btn inline-flex h-9 items-center justify-center rounded-full px-4 text-sm font-semibold"
                   >
-                    {isFr ? "Rejoindre" : "Join"}
+                    {copy.join}
                   </a>
                   <Link to="/community" className="pk-glass-btn inline-flex h-9 items-center justify-center rounded-full px-4 text-sm font-semibold">
-                    {isFr ? "Hub" : "Hub"}
+                    {copy.hub}
                   </Link>
                 </div>
               </div>
@@ -651,10 +629,8 @@ export default function Settings() {
                     <Shield className="h-4 w-4" />
                   </div>
                   <div>
-                    <div className="text-lg font-semibold">{isFr ? "Compte & sécurité" : "Account & security"}</div>
-                    <div className="text-xs text-pk-muted">
-                      {isFr ? "Connexion, mot de passe, session" : "Sign-in, password, session"}
-                    </div>
+                    <div className="text-lg font-semibold">{copy.accountSecurity}</div>
+                    <div className="text-xs text-pk-muted">{copy.signInSession}</div>
                   </div>
                 </div>
 
@@ -666,7 +642,7 @@ export default function Settings() {
                         emailLinked ? "bg-emerald-500/15 text-emerald-200" : "bg-white/5 text-pk-muted",
                       ].join(" ")}
                     >
-                      {isFr ? "Email" : "Email"} {emailLinked ? "✓" : "—"}
+                      {copy.email} {emailLinked ? "✓" : "—"}
                     </span>
                     <span
                       className={[
@@ -693,21 +669,21 @@ export default function Settings() {
                           }
                         }}
                       >
-                        {linkingGoogle ? (isFr ? "Redirection…" : "Redirecting…") : isFr ? "Lier Google" : "Link Google"}
+                        {linkingGoogle ? copy.redirecting : copy.linkGoogle}
                       </Button>
                     </div>
                   ) : null}
                   {!emailLinked ? (
                     <div className="mt-3 space-y-3 rounded-pk border border-pk-border/80 bg-white/[0.02] p-3">
                       <p className="text-xs text-pk-muted">
-                        {isFr ? "Définis un mot de passe pour te connecter sans Google." : "Set a password to sign in without Google."}
+                        {copy.setPasswordHint}
                       </p>
                       <input
                         type="password"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                         minLength={6}
-                        placeholder={isFr ? "Mot de passe (6+ car.)" : "Password (6+ chars)"}
+                        placeholder={copy.passwordPlaceholder}
                         className="w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2 text-sm outline-none focus:border-pk-accent"
                       />
                       <Button
@@ -719,7 +695,7 @@ export default function Settings() {
                           try {
                             await setPassword(newPassword);
                             setNewPassword("");
-                            toast.success(isFr ? "Mot de passe enregistré" : "Password saved");
+                            toast.success(copy.passwordSaved);
                           } catch (err) {
                             toast.error(mapAuthError(err, locale, "password"));
                           } finally {
@@ -727,7 +703,7 @@ export default function Settings() {
                           }
                         }}
                       >
-                        {savingPassword ? (isFr ? "Enregistrement…" : "Saving…") : isFr ? "Créer mot de passe" : "Set password"}
+                        {savingPassword ? copy.saving : copy.setPassword}
                       </Button>
                     </div>
                   ) : null}
@@ -744,18 +720,16 @@ export default function Settings() {
                         if (!email) return;
                         try {
                           await resetPassword(email);
-                          toast.success(
-                            isFr ? "Email envoyé" : "Email sent",
-                          );
+                          toast.success(copy.emailSent);
                         } catch (err) {
                           toast.error(mapAuthError(err, locale, "password"));
                         }
                       }}
                     >
-                      {isFr ? "Changer mot de passe" : "Change password"}
+                      {copy.changePassword}
                     </Button>
                     <Button variant="danger" size="sm" onClick={() => setConfirmDelete(true)}>
-                      {isFr ? "Supprimer compte" : "Delete account"}
+                      {copy.deleteAccount}
                     </Button>
                     <Button
                       variant="secondary"
@@ -763,7 +737,7 @@ export default function Settings() {
                       onClick={async () => {
                         try {
                           await signOut();
-                          toast.success(isFr ? "Déconnecté" : "Signed out");
+                          toast.success(copy.signedOut);
                           navigate("/auth", { replace: true });
                         } catch (err) {
                           const message = err instanceof Error ? err.message : "Sign out failed";
@@ -772,11 +746,11 @@ export default function Settings() {
                       }}
                     >
                       <LogOut className="h-3.5 w-3.5" />
-                      {isFr ? "Déconnexion" : "Sign out"}
+                      {copy.signOut}
                     </Button>
                   </div>
                   <p className="mt-2 text-[11px] text-pk-muted">
-                    {isFr ? "Suppression de compte gérée manuellement (MVP)." : "Account deletion is manual (MVP)."}
+                    {copy.deleteManual}
                   </p>
                 </div>
               </div>

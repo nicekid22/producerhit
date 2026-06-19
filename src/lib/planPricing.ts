@@ -1,4 +1,6 @@
 import type { AppLocale } from "@/i18n/config";
+import { UI_LOCALES } from "@/i18n/config";
+import { buildPricingPageSection } from "@/i18n/pricingCatalog";
 import { formatPlanPrice, planMonthlySuffix } from "@/i18n/format";
 
 /** Affichage UI — facturation Stripe en USD ($8 / $24 / $47). */
@@ -25,13 +27,12 @@ export function planPriceUpsellLabel(tier: keyof typeof PLAN_MONTHLY_USD, locale
   return `$${amount} / ${per}`;
 }
 
-export const COMMERCIAL_RIGHTS_FAQ = {
-  en: {
-    q: "Commercial rights",
-    a: "The Free tier does not grant you commercial rights to your music. If you plan to monetize your tracks on Spotify, YouTube, or for client work, you must upgrade to the Pro, Studio or Plus plan. These rights usually only apply to songs generated while the subscription is active, not retroactively.",
-  },
-  fr: {
-    q: "Droits commerciaux",
-    a: "Le plan Free ne te confère pas de droits commerciaux sur ta musique. Pour monétiser sur Spotify, YouTube ou pour des clients, passe Pro, Studio ou Plus. Ces droits s'appliquent en général aux morceaux générés pendant l'abonnement actif, pas rétroactivement.",
-  },
-} as const;
+export function commercialRightsFaq(locale: AppLocale): { q: string; a: string } {
+  const s = buildPricingPageSection(locale);
+  return { q: s.faqCommercialQ, a: s.faqCommercialA };
+}
+
+/** @deprecated Use commercialRightsFaq(locale) — 14 langues via pricingCatalog */
+export const COMMERCIAL_RIGHTS_FAQ = Object.fromEntries(
+  UI_LOCALES.map((loc) => [loc, commercialRightsFaq(loc)]),
+) as Record<AppLocale, { q: string; a: string }>;

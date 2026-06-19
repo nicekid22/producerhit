@@ -25,12 +25,11 @@ export function PageLoader({ variant = "full", className }: Props) {
   const cloudAccent = useCloudAccentStore((s) => s.accent);
   const cloud = isCloudTheme(visualTheme);
   const warmGlass = isWarmGlassTheme(visualTheme);
-  const isFr = locale === "fr";
   const [visible, setVisible] = useState(false);
 
   const icon = loaderIconFromPath(pathname);
   const element = elementFromPath(pathname);
-  const { label, sublabel } = loaderCopyFromIcon(icon, isFr);
+  const { label, sublabel } = loaderCopyFromIcon(icon, locale);
 
   useEffect(() => {
     setVisible(false);

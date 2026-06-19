@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import type { BlogBlock } from "@/content/blog";
 import { getH2SectionIcon } from "@/lib/blogMeta";
+import { parseBlogListItemLink } from "@/lib/blogListItemLink";
 import { cn } from "@/lib/utils";
 import { Lightbulb, ListChecks } from "lucide-react";
 
@@ -47,12 +48,21 @@ export function BlogBlockRenderer({ blocks, locale }: Props) {
         if (b.type === "ul") {
           return (
             <ul key={idx} className="space-y-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] p-4">
-              {b.items.map((it) => (
-                <li key={it} className="flex gap-2.5 text-sm leading-relaxed text-white/75">
-                  <ListChecks className="mt-0.5 h-4 w-4 shrink-0 text-cyan-300/80" aria-hidden />
-                  <span>{it}</span>
-                </li>
-              ))}
+              {b.items.map((it) => {
+                const { label, href } = parseBlogListItemLink(it);
+                return (
+                  <li key={it} className="flex gap-2.5 text-sm leading-relaxed text-white/75">
+                    <ListChecks className="mt-0.5 h-4 w-4 shrink-0 text-cyan-300/80" aria-hidden />
+                    {href ? (
+                      <Link to={href} className="font-medium text-violet-200/95 underline-offset-2 hover:text-violet-100 hover:underline">
+                        {label}
+                      </Link>
+                    ) : (
+                      <span>{label}</span>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           );
         }

@@ -1,20 +1,27 @@
 import type { LucideIcon } from "lucide-react";
 import { Disc3, ListMusic, Play } from "lucide-react";
+import type { AppLocale } from "@/i18n/config";
+import {
+  buildLibrarySection,
+  libraryCollectionSubtitle,
+  libraryCollectionTitle,
+} from "@/i18n/libraryCatalog";
 import { cn } from "@/lib/utils";
 import type { LibraryCollection } from "@/lib/libraryCurations";
 
 type Props = {
   collection: LibraryCollection;
-  isFr: boolean;
+  locale: AppLocale;
   active: boolean;
   onSelect: (id: string | null) => void;
 };
 
-export function LibraryCollectionCard({ collection, isFr, active, onSelect }: Props) {
-  const title = isFr ? collection.titleFr : collection.titleEn;
-  const subtitle = isFr ? collection.subtitleFr : collection.subtitleEn;
+export function LibraryCollectionCard({ collection, locale, active, onSelect }: Props) {
+  const lb = buildLibrarySection(locale);
+  const title = libraryCollectionTitle(collection, locale);
+  const subtitle = libraryCollectionSubtitle(collection, locale);
   const isMixtape = collection.kind === "mixtape";
-  const kindLabel = isMixtape ? (isFr ? "Mixtape" : "Mixtape") : isFr ? "Playlist" : "Playlist";
+  const kindLabel = isMixtape ? lb.kindMixtape : lb.kindPlaylist;
   const KindIcon = isMixtape ? Disc3 : ListMusic;
 
   return (
@@ -50,7 +57,7 @@ export function LibraryCollectionCard({ collection, isFr, active, onSelect }: Pr
         <span className="pk-library-collection-card__title">{title}</span>
         <span className="pk-library-collection-card__subtitle">{subtitle}</span>
         <span className="pk-library-collection-card__count">
-          {collection.trackCount} {isFr ? "morceaux" : "tracks"}
+          {collection.trackCount} {lb.trackCount}
         </span>
       </span>
     </button>
@@ -63,11 +70,11 @@ type RowProps = {
   icon: LucideIcon;
   collections: LibraryCollection[];
   activeId: string | null;
-  isFr: boolean;
+  locale: AppLocale;
   onSelect: (id: string | null) => void;
 };
 
-export function LibraryCollectionsRow({ title, subtitle, icon: RowIcon, collections, activeId, isFr, onSelect }: RowProps) {
+export function LibraryCollectionsRow({ title, subtitle, icon: RowIcon, collections, activeId, locale, onSelect }: RowProps) {
   if (!collections.length) return null;
 
   return (
@@ -88,7 +95,7 @@ export function LibraryCollectionsRow({ title, subtitle, icon: RowIcon, collecti
           <LibraryCollectionCard
             key={c.id}
             collection={c}
-            isFr={isFr}
+            locale={locale}
             active={activeId === c.id}
             onSelect={onSelect}
           />

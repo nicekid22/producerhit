@@ -1,19 +1,9 @@
+import type { AppLocale } from "@/i18n/config";
+import { validateLegalNameI18n } from "@/i18n/settingsCatalog";
 import { supabase } from "@/lib/supabaseClient";
 
-const LEGAL_NAME_PATTERN = /[0-9@#$%^&*()+={}\[\]|\\;:"<>?/`~]/;
-
-export function validateLegalName(value: string, isFr: boolean): string | null {
-  const trimmed = value.trim();
-  if (trimmed.length < 2) {
-    return isFr ? "Minimum 2 caractères" : "At least 2 characters";
-  }
-  if (trimmed.length > 60) {
-    return isFr ? "Maximum 60 caractères" : "Maximum 60 characters";
-  }
-  if (LEGAL_NAME_PATTERN.test(trimmed)) {
-    return isFr ? "Caractères invalides" : "Invalid characters";
-  }
-  return null;
+export function validateLegalName(value: string, locale: AppLocale): string | null {
+  return validateLegalNameI18n(value, locale);
 }
 
 export async function saveLegalName(

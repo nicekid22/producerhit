@@ -52,7 +52,7 @@ export default function CommunityTrending() {
   const current = usePlayerStore((s) => s.current);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
 
-  const seo = useMemo(() => buildTrendingSeo(isFr), [isFr]);
+  const seo = useMemo(() => buildTrendingSeo(locale), [locale]);
 
   const trending = useMemo(
     () => sortByCommunityLove(rows, ratingsById, playsById).slice(0, 24),
@@ -74,11 +74,11 @@ export default function CommunityTrending() {
       pageUrl: seo.pageUrl,
       jsonLd: buildCommunityItemListSchema({
         pageUrl: seo.pageUrl,
-        listName: isFr ? "Beats IA trending ProducerHit" : "ProducerHit trending AI beats",
+        listName: seo.listName ?? "ProducerHit trending AI beats",
         items: trending,
       }),
     });
-  }, [isFr, seo, trending]);
+  }, [locale, seo, trending]);
 
   useEffect(() => {
     let cancelled = false;
@@ -202,7 +202,7 @@ export default function CommunityTrending() {
   };
 
   const railProps = {
-    isFr,
+    locale,
     currentId: current?.id ?? null,
     isPlaying,
     resolvingId,
@@ -281,7 +281,7 @@ export default function CommunityTrending() {
                   <CommunityTrackCard
                     key={r.id}
                     row={r}
-                    isFr={isFr}
+                    locale={locale}
                     isActive={current?.id === r.id}
                     isPlaying={isPlaying}
                     resolving={resolvingId === r.id}
@@ -304,7 +304,7 @@ export default function CommunityTrending() {
           </>
         )}
 
-        <CommunitySeoFooter isFr={isFr} variant="trending" />
+        <CommunitySeoFooter locale={locale} variant="trending" />
       </div>
 
       <CommunityTrackSheet
@@ -314,7 +314,7 @@ export default function CommunityTrending() {
           setSheetFocusComments(false);
         }}
         row={sheetTrack}
-        isFr={isFr}
+        locale={locale}
         isActive={sheetTrack ? current?.id === sheetTrack.id : false}
         isPlaying={isPlaying}
         resolving={sheetTrack ? resolvingId === sheetTrack.id : false}

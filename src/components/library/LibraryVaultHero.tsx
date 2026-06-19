@@ -1,41 +1,24 @@
 import { Link } from "react-router-dom";
 import { AudioWaveform, Bookmark, Disc3, Grid3X3, ListMusic, Music2 } from "lucide-react";
+import type { AppLocale } from "@/i18n/config";
+import { buildLibrarySection } from "@/i18n/libraryCatalog";
 import { cn } from "@/lib/utils";
 
 type Props = {
-  isFr: boolean;
+  locale: AppLocale;
   totalCount: number;
   savedCount: number;
   playlistCount: number;
   mixtapeCount: number;
 };
 
-export function LibraryVaultHero({ isFr, totalCount, savedCount, playlistCount, mixtapeCount }: Props) {
+export function LibraryVaultHero({ locale, totalCount, savedCount, playlistCount, mixtapeCount }: Props) {
+  const lb = buildLibrarySection(locale);
   const stats = [
-    {
-      label: isFr ? "Morceaux" : "Tracks",
-      value: totalCount,
-      icon: Music2,
-      tone: "tracks" as const,
-    },
-    {
-      label: isFr ? "Favoris" : "Saved",
-      value: savedCount,
-      icon: Bookmark,
-      tone: "saved" as const,
-    },
-    {
-      label: isFr ? "Playlists" : "Playlists",
-      value: playlistCount,
-      icon: ListMusic,
-      tone: "playlists" as const,
-    },
-    {
-      label: isFr ? "Mixtapes" : "Mixtapes",
-      value: mixtapeCount,
-      icon: Disc3,
-      tone: "mixtapes" as const,
-    },
+    { label: lb.statTracks, value: totalCount, icon: Music2, tone: "tracks" as const },
+    { label: lb.statSaved, value: savedCount, icon: Bookmark, tone: "saved" as const },
+    { label: lb.statPlaylists, value: playlistCount, icon: ListMusic, tone: "playlists" as const },
+    { label: lb.statMixtapes, value: mixtapeCount, icon: Disc3, tone: "mixtapes" as const },
   ];
 
   return (
@@ -48,17 +31,13 @@ export function LibraryVaultHero({ isFr, totalCount, savedCount, playlistCount, 
         <div className="min-w-0">
           <p className="pk-library-hero__eyebrow">
             <Grid3X3 className="pk-library-hero__eyebrow-icon" aria-hidden />
-            {isFr ? "Ton espace sonore" : "Your sound space"}
+            {lb.eyebrow}
           </p>
-          <h1 className="pk-library-hero__title">{isFr ? "Bibliothèque" : "Library"}</h1>
-          <p className="pk-library-hero__subtitle">
-            {isFr
-              ? "Playlists, mixtapes et morceaux — un endroit cozy pour revenir écouter."
-              : "Playlists, mixtapes and tracks — a cozy place you'll want to return to."}
-          </p>
+          <h1 className="pk-library-hero__title">{lb.title}</h1>
+          <p className="pk-library-hero__subtitle">{lb.subtitle}</p>
         </div>
 
-        <div className="pk-library-hero__stats" aria-label={isFr ? "Statistiques bibliothèque" : "Library stats"}>
+        <div className="pk-library-hero__stats" aria-label={lb.statsAria}>
           {stats.map(({ label, value, icon: Icon, tone }) => (
             <div key={label} className={cn("pk-library-stat-pill", `pk-library-stat-pill--${tone}`)}>
               <Icon className="pk-library-stat-pill__icon" aria-hidden />
@@ -70,7 +49,7 @@ export function LibraryVaultHero({ isFr, totalCount, savedCount, playlistCount, 
 
         <Link to="/dashboard" className="pk-library-hero__cta">
           <AudioWaveform className="h-4 w-4" aria-hidden />
-          {isFr ? "Créer un morceau" : "Create a track"}
+          {lb.createTrack}
         </Link>
       </div>
     </header>

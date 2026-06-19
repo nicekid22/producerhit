@@ -1,6 +1,5 @@
 import { supabase } from "@/lib/supabaseClient";
-
-import type { AppLocale } from "@/i18n/config";
+import { extractErrorMessage, isBenignProfileSyncError } from "@/lib/errorMessage";
 type ReconcileResult = {
   ok?: boolean;
   status?: string;
@@ -56,21 +55,6 @@ function isBenignProfileWriteError(message: string): boolean {
   return msg.includes("duplicate") || msg.includes("conflict") || msg.includes("already exists");
 }
 
-function isAuthNotReadyError(message: string): boolean {
-  const msg = message.toLowerCase();
-  return msg.includes("not authenticated") || msg.includes("jwt") || msg.includes("auth session missing");
-}
-
-function isBenignProfileSyncError(message: string): boolean {
-  const raw = message.toLowerCase();
-  return (
-    isAuthNotReadyError(raw) ||
-    raw.includes("pkce") ||
-    raw.includes("code verifier") ||
-    raw.includes("oauth_session_missing")
-  );
-}
-
 export type ProfileCacheSnapshot = {
   plan: string;
   usedThisMonth: number;
@@ -115,14 +99,7 @@ export function readProfileCache(userId: string): ProfileCacheSnapshot | null {
   }
 }
 
-export function extractErrorMessage(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  if (typeof error === "object" && error !== null && "message" in error) {
-    const message = (error as { message?: unknown }).message;
-    if (typeof message === "string") return message;
-  }
-  return String(error ?? "unknown_error");
-}
+export { extractErrorMessage } from "@/lib/errorMessage";
 
 function parseSocialField(raw: unknown): Record<string, string> {
   if (!raw || typeof raw !== "object") return {};
@@ -378,40 +355,7 @@ export function syncProfileCache(
   }
 }
 
-export function profileLoadErrorMessage(error: unknown, locale: AppLocale): string {
-  const detail = extractErrorMessage(error);
-  const raw = detail.toLowerCase();
-
-  if (isAuthNotReadyError(raw)) {
-    return locale === "fr" ? "Session expirée — reconnecte-toi." : "Session expired — sign in again.";
-  }
-  if (raw.includes("pgrst116") || raw.includes("0 rows") || raw.includes("profile missing") || raw.includes("profile_not_found")) {
-    return locale === "fr"
-      ? "Profil introuvable — vérifie que ton compte a une ligne dans profiles."
-      : "Profile not found — check that your account has a row in profiles.";
-  }
-  if (raw.includes("could not find the function") || raw.includes("schema cache")) {
-    return locale === "fr"
-      ? "Fonction SQL manquante — exécute les migrations 022–027 dans Supabase."
-      : "Missing SQL function — run migrations 022–027 in Supabase.";
-  }
-  if (raw.includes("permission denied") || raw.includes("row-level security")) {
-    return locale === "fr" ? "Accès profil refusé (RLS) — reconnecte-toi." : "Profile access denied (RLS) — sign in again.";
-  }
-  if (isBenignProfileSyncError(raw)) {
-    return locale === "fr" ? "Connexion en cours… réessaie dans un instant." : "Signing in… try again in a moment.";
-  }
-
-  const debug =
-    import.meta.env.DEV ||
-    (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("debug") === "1");
-
-  if (debug && detail && detail !== "unknown_error") {
-    return locale === "fr" ? `Impossible de charger le profil : ${detail}` : `Failed to load profile: ${detail}`;
-  }
-
-  return locale === "fr" ? "Impossible de charger le profil." : "Failed to load profile.";
-}
+export { profileLoadErrorMessage } from "@/i18n/systemCatalog";
 
 export function shouldShowProfileLoadToast(error: unknown): boolean {
   return !isBenignProfileSyncError(extractErrorMessage(error));

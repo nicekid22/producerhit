@@ -1,6 +1,10 @@
 export type { BlogBlock, BlogPost, BlogCategoryId, BlogAuthorId } from "./blog/types";
 import type { BlogPost } from "./blog/types";
 import { SEO_BATCH_2026_POSTS } from "./blog/posts/seo-batch-2026";
+import { COUNTRY_MARKETS_2026_POSTS } from "./blog/posts/country-markets-2026";
+import { COUNTRY_MARKETS_WAVE2_2026_POSTS } from "./blog/posts/country-markets-wave2-2026";
+import { MONETIZATION_ACADEMY_2026_POSTS } from "./blog/posts/monetization-academy-2026";
+import { MONETIZATION_ACADEMY_WAVE2_2026_POSTS } from "./blog/posts/monetization-academy-wave2-2026";
 
 const LEGACY_BLOG_POSTS: BlogPost[] = [
   {
@@ -1200,7 +1204,14 @@ const LEGACY_BLOG_POSTS: BlogPost[] = [
   },
 ];
 
-export const BLOG_POSTS: BlogPost[] = [...LEGACY_BLOG_POSTS, ...SEO_BATCH_2026_POSTS];
+export const BLOG_POSTS: BlogPost[] = [
+  ...LEGACY_BLOG_POSTS,
+  ...SEO_BATCH_2026_POSTS,
+  ...COUNTRY_MARKETS_2026_POSTS,
+  ...COUNTRY_MARKETS_WAVE2_2026_POSTS,
+  ...MONETIZATION_ACADEMY_2026_POSTS,
+  ...MONETIZATION_ACADEMY_WAVE2_2026_POSTS,
+];
 
 export function getBlogPostBySlug(slug: string): BlogPost | null {
   return BLOG_POSTS.find((p) => p.slug === slug) ?? null;

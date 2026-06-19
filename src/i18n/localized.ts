@@ -15,6 +15,11 @@ export function pickL(map: Record<AppLocale, string>, locale: AppLocale): string
   return map[locale] ?? map.en;
 }
 
+/** Binaire FR/EN — les autres locales retombent sur EN. */
+export function pickFrEn<T>(locale: AppLocale, fr: T, en: T): T {
+  return locale === "fr" ? fr : en;
+}
+
 export function resolveSection<T extends Record<string, Record<AppLocale, string>>>(
   section: T,
   locale: AppLocale,

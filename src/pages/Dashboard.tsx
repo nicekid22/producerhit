@@ -16,7 +16,6 @@ import {
   RANDOM_GENRE_VALUE,
   shouldPickRandomGenreAtGenerate,
 } from "@/lib/genres/genrePickMode";
-import { pickRandomPrompt } from "@/lib/randomPromptIdeas";
 import { vocalLanguageAutoOption, vocalLanguageDropdownOptions, resolveSongVocalLanguage } from "@/lib/vocalLanguages";
 import { Slider } from "@/components/ui/Slider";
 import { Button } from "@/components/ui/Button";
@@ -96,7 +95,7 @@ import {
   readLandingPendingGeneration,
   type LandingPendingGeneration,
 } from "@/lib/landingPendingGeneration";
-import { isRemixVibeRecreateEnabled, REMIX_VIBE_FALLBACK_COPY } from "@/lib/remixVibeFallback";
+import { isRemixVibeRecreateEnabled, getRemixVibeCopy } from "@/lib/remixVibeFallback";
 import { prepareLoopVariantGeneration, variantResultTitle } from "@/lib/loopVariantGeneration";
 import { loopToRemixSource } from "@/lib/remixSourceLoop";
 import { MobileOnboardingSheet, hasSeenMobileOnboarding } from "@/components/dashboard/MobileOnboardingSheet";
@@ -108,6 +107,7 @@ import { useWavFormatCoachStore } from "@/stores/wavFormatCoachStore";
 import { useAuthStore } from "@/stores/authStore";
 import { useLocaleStore } from "@/stores/localeStore";
 import { useT } from "@/i18n";
+import { pickFrEn } from "@/i18n/localized";
 import { getRemainingBeats, PLAN_LIMITS, FREE_MASTERING_UPSELL_AT, getTotalGenerationLimit } from "@/lib/planLimits";
 import { planPriceLabel } from "@/lib/planPricing";
 import { canDualGeneration, canExportWav } from "@/lib/planEntitlements";
@@ -390,6 +390,7 @@ export default function Dashboard() {
   const authProfileError = useAuthStore((s) => s.lastError);
   const locale = useLocaleStore((s) => s.locale);
   const { m: t } = useT();
+  const d = t.dashboard;
   const ambianceDropdownOptions = useMemo(() => beatAmbianceDropdownOptions(locale), [locale]);
   const energyDropdownOptions = useMemo(() => beatEnergyDropdownOptions(locale), [locale]);
   const influenceDropdownOptions = useMemo(() => beatInfluenceDropdownOptions(locale), [locale]);
@@ -615,7 +616,7 @@ export default function Dashboard() {
     const loopList = useLoopsStore.getState().loops;
     const shareLoop = pickLoopForSharePrompt(loopList, [], loopList[0]?.id ?? "") ?? loopList[0] ?? null;
     if (!shareLoop) {
-      toast.error(locale === "fr" ? "Génère une track d'abord" : "Generate a track first");
+      toast.error(d.generateTrackFirst);
       return;
     }
     trackClientEvent("growth_billboard_share", { loop_id: shareLoop.id, source: "dashboard_billboard" });
@@ -629,7 +630,7 @@ export default function Dashboard() {
       if (code) void refreshAuthProfile();
     }
     if (!code) {
-      toast.error(locale === "fr" ? "Lien indisponible — réessaie" : "Link unavailable — try again");
+      toast.error(d.linkUnavailable);
       return;
     }
     setReferralCodeForPrompt(code);
@@ -756,7 +757,7 @@ export default function Dashboard() {
       const key = "producerhit_dashboard_welcome_v1";
       if (window.localStorage.getItem(key)) return;
       window.localStorage.setItem(key, "1");
-      toast(locale === "fr" ? "Studio chargé — fais du bruit 🎧" : "Studio loaded — make some noise 🎧", { icon: "✨" });
+      toast(d.studioLoaded, { icon: "✨" });
     } catch {
       void 0;
     }
@@ -766,28 +767,23 @@ export default function Dashboard() {
     const params = new URLSearchParams(window.location.search);
     if (params.get("upgraded") === "true") {
       trackClientEvent("subscription_activated", { source: "stripe_return" });
-      toast.success(locale === "fr" ? "🎉 Paiement reçu. Activation de ton plan…" : "🎉 Payment received. Activating your plan…");
+      toast.success(d.paymentReceived);
       window.history.replaceState({}, "", "/dashboard");
       void (async () => {
         for (let i = 0; i < 8; i++) {
           const fromStore = await refreshAuthProfile().catch(() => null);
           const nextPlan = fromStore?.plan ?? (await refreshProfile());
           if (nextPlan && nextPlan !== "free") {
-            toast.success(locale === "fr" ? `Plan activé : ${nextPlan}` : `Plan activated: ${nextPlan}`);
+            toast.success(`${d.planActivatedPrefix}${nextPlan}`);
             if (user?.id) useWavFormatCoachStore.getState().scheduleProTip(user.id, 6_000);
             if (!hasLegalHolderName(fromStore)) {
-              toast(
-                locale === "fr"
-                  ? "Ajoute ton prénom et nom dans Réglages pour tes licences par titre."
-                  : "Add your legal name in Settings for per-track licenses.",
-                { icon: "📄", duration: 6000 },
-              );
+              toast(d.addLegalName, { icon: "📄", duration: 6000 });
             }
             return;
           }
           await new Promise((r) => setTimeout(r, 1200));
         }
-        toast(locale === "fr" ? "Plan en cours d'activation — rafraîchis dans quelques secondes." : "Plan activating — refresh in a few seconds.");
+        toast(d.planActivating);
       })();
     }
   }, [locale, refreshAuthProfile, refreshProfile, user?.id]);
@@ -953,10 +949,10 @@ export default function Dashboard() {
 
   const chipGenre = useMemo(() => {
     if (isFromIdeaGenreSelection(form.genre)) {
-      return locale === "fr" ? "Depuis l'idée" : "From idea";
+      return d.fromIdea;
     }
     if (isRandomGenreSelection(form.genre)) {
-      return lastRandomGenre || (locale === "fr" ? "Aléatoire" : "Random");
+      return lastRandomGenre || (d.random);
     }
     return form.genre;
   }, [form.genre, lastRandomGenre, locale]);
@@ -1030,11 +1026,7 @@ export default function Dashboard() {
   const handleNeedCredits = useCallback(() => {
     if (remaining >= LOOP_COVER_REROLL_CREDIT_COST) {
       trackClientEvent("quota_desync", { remaining, plan, source: "dashboard" });
-      toast.error(
-        locale === "fr"
-          ? "Quota serveur désynchronisé — actualisation en cours, réessaie dans un instant."
-          : "Quota out of sync with server — refreshing, try again in a moment.",
-      );
+      toast.error(d.quotaOutOfSync);
       void refreshProfile();
       return;
     }
@@ -1324,23 +1316,6 @@ export default function Dashboard() {
     let runSongDescription = landingSnap && runAsSong ? landingSnap.prompt : songDescription;
     let runFormPrompt = landingSnap && !runAsSong ? landingSnap.prompt : form.prompt;
 
-    const ideaProbe = runAsSong ? runSongDescription.trim() : (runFormPrompt?.trim() ?? "");
-    if (!ideaProbe && !isCatalogGenreSelection(runFormGenre)) {
-      const randomPrompt = pickRandomPrompt(
-        runAsSong ? songPromptLocale : beatPromptLocale,
-        runAsSong ? "song" : "beat",
-      );
-      if (randomPrompt.trim()) {
-        if (runAsSong) {
-          runSongDescription = randomPrompt;
-          setSongDescription(randomPrompt);
-        } else {
-          runFormPrompt = randomPrompt;
-          setField("prompt", randomPrompt);
-        }
-      }
-    }
-
     const ideaTextForGenre = runAsSong ? runSongDescription.trim() : (runFormPrompt?.trim() ?? "");
 
     const runUiPrompt =
@@ -1460,7 +1435,7 @@ export default function Dashboard() {
       ? titleCase(inferredWords.join(" "))
       : excerptTitle.length > 0
         ? excerptTitle
-        : titleCase(displayGenre === FROM_IDEA_GENRE_VALUE ? (locale === "fr" ? "Nouvelle piste" : "New track") : displayGenre);
+        : titleCase(displayGenre === FROM_IDEA_GENRE_VALUE ? (d.newTrack) : displayGenre);
     const baseTitle = normalizeTitle(requestedTitle) || defaultBase;
 
     const titleIndexStart = (() => {
@@ -1755,11 +1730,7 @@ export default function Dashboard() {
           };
           upsertLoop(temp);
           enqueuePendingSave(draft, id, createdAt);
-          toast.error(
-            locale === "fr"
-              ? `Généré, mais l’enregistrement a échoué : ${message}`
-              : `Generated, but saving to your library failed: ${message}`,
-          );
+          toast.error(`${d.generatedSaveFailedPrefix}${message}`);
           return temp;
         }
       };
@@ -1797,7 +1768,7 @@ export default function Dashboard() {
         generationKey: string,
       ) => {
         const audioUrl = value.audioUrl;
-        if (!audioUrl) throw new Error(locale === "fr" ? "Audio manquant" : "Missing audio");
+        if (!audioUrl) throw new Error(d.missingAudio);
         didGenerate = true;
         const title = allocatePersistedTitle();
         setSlot(idx, { title });
@@ -1852,7 +1823,7 @@ export default function Dashboard() {
         const loop = await persistDraft(draft, audioUrl, value.engine, previewId);
         persistCompleted = true;
         if (mode === "song" && voiceCloneConfigRef.current.profileId) {
-          const voiceToast = voiceCloneToastMessage(value.meta, locale === "fr");
+          const voiceToast = voiceCloneToastMessage(value.meta, locale);
           if (voiceToast?.type === "success") toast.success(voiceToast.message, { id: `voice-clone-${loop.id}` });
           else if (voiceToast?.type === "warning") toast(voiceToast.message, { icon: "⚠️", id: `voice-clone-${loop.id}` });
         }
@@ -1948,9 +1919,7 @@ export default function Dashboard() {
           const rawMessage = normalizeGenerationRawError(err instanceof Error ? err.message : String(err));
           if (import.meta.env.DEV) console.warn("[generate] slot failed", { idx, rawMessage, err });
           const errorText = anyErr?.limitReached
-            ? locale === "fr"
-              ? "Limite mensuelle atteinte"
-              : "Monthly limit reached"
+            ? d.monthlyLimitReached
             : formatGenerationErrorMessage(rawMessage, locale, { plan });
           if (plan === "free" && isGenerationCapacityError(rawMessage) && shouldPromptPriorityUpsellAfterCapacityError(plan)) {
             markPriorityUpsellPrompted(plan);
@@ -1992,7 +1961,7 @@ export default function Dashboard() {
         trackClientEvent("generate_dual_fallback", { from: fromMode, to: "sequential", slots: indices.join(",") });
         if (import.meta.env.DEV) console.info("[generate] dual fallback → sequential", { from: fromMode, indices });
         toast.loading(
-          locale === "fr" ? "Relance en file (plus stable)…" : "Retrying in queue mode (more stable)…",
+          d.retryingQueue,
           { id: "dual-fallback", duration: 5000 },
         );
 
@@ -2111,10 +2080,7 @@ export default function Dashboard() {
           if (rows.length < 2 && isActiveSession()) {
             const failedIdx = rows.length === 0 ? 1 : 2;
             const failedTitle = failedIdx === 1 ? title1 : title2;
-            const batchPartialErr =
-              locale === "fr"
-                ? "Batch ACE incomplet — réessaie en mode séquentiel"
-                : "Incomplete ACE batch — retry in sequential mode";
+            const batchPartialErr = d.batchIncomplete;
             slotErrors[failedIdx] = batchPartialErr;
             setSlot(failedIdx, {
               status: "error",
@@ -2153,7 +2119,7 @@ export default function Dashboard() {
 
       if (!created.length) {
         const allFailed = new Error(
-          locale === "fr" ? "Échec de génération — réessaie" : "Generation failed — please try again",
+          d.generationFailed,
         ) as Error & { allSlotsFailed?: boolean };
         allFailed.allSlotsFailed = true;
         throw allFailed;
@@ -2219,7 +2185,7 @@ export default function Dashboard() {
       if (isFirstEver) useOnboardingCoachStore.getState().celebrateFirstGeneration();
       if (effectiveVersions === 2 && successCount === 1) {
         toast.error(
-          locale === "fr" ? "1 version sur 2 — l'autre a flop, réessaie" : "1 of 2 versions — the other flopped, retry",
+          d.oneOfTwoFailed,
         );
       }
     } catch (err) {
@@ -2232,9 +2198,7 @@ export default function Dashboard() {
         const failMsg =
           err instanceof Error
             ? err.message
-            : locale === "fr"
-              ? "Échec de génération — réessaie"
-              : "Generation failed — please try again";
+            : d.generationFailed;
         toast.error(formatGenerationErrorMessage(failMsg, locale, { plan }));
         return;
       }
@@ -2329,7 +2293,7 @@ export default function Dashboard() {
       const remixSessionId = ++generateSessionRef.current;
       setGenerating(true);
       const generationKey = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `remix-${Date.now()}`;
-      const baseTitle = (input.sourceLoopName || (locale === "fr" ? "Remix" : "Remix")).replace(/\.[^.]+$/, "").slice(0, 48);
+      const baseTitle = (input.sourceLoopName || (d.remix)).replace(/\.[^.]+$/, "").slice(0, 48);
       const title = `${baseTitle} Remix`;
       const remixSlots: GenerationSlot[] = [{ idx: 1, status: "generating", title, seed: 0, visible: true, previewReady: false, progressPct: 0 }];
       setGenerationSlots(remixSlots);
@@ -2406,7 +2370,7 @@ export default function Dashboard() {
           source: entrySource,
         });
         triggerBeatReady(locale, loop.id, { isFirst: false, versionCount: 1 });
-        toast.success(locale === "fr" ? "Remix prêt — écoute le résultat 🎧" : "Remix ready — listen to the result 🎧");
+        toast.success(d.remixReady);
         if (shouldShowSharePromptAfterGeneration(usedAfterRemix)) {
             const shareLoop =
               pickLoopForSharePrompt(useLoopsStore.getState().loops, [loop.id], loop.id) ?? loop;
@@ -2422,14 +2386,14 @@ export default function Dashboard() {
       } catch (err) {
         const anyErr = err as { limitReached?: boolean };
         if (anyErr?.limitReached) {
-          toast.error(locale === "fr" ? "Limite mensuelle atteinte" : "Monthly limit reached");
+          toast.error(d.monthlyLimitReached);
           navigate("/pricing?plan=pro&checkout=1");
         } else if (err instanceof AceRemixUnavailableError) {
-          toast.error(locale === "fr" ? ACE_REMIX_UNAVAILABLE_COPY.fr : ACE_REMIX_UNAVAILABLE_COPY.en, {
+          toast.error(pickFrEn(locale, ACE_REMIX_UNAVAILABLE_COPY.fr, ACE_REMIX_UNAVAILABLE_COPY.en), {
             duration: 10_000,
           });
         } else {
-          toast.error(err instanceof Error ? err.message : locale === "fr" ? "Remix échoué" : "Remix failed");
+          toast.error(err instanceof Error ? err.message : d.remixFailed);
         }
         setGenerationSlots(null);
         syncGenerationSlots(null);
@@ -2499,7 +2463,7 @@ export default function Dashboard() {
           generationKey,
         });
         const rawAudioUrl = result.audioUrl;
-        if (!rawAudioUrl) throw new Error(locale === "fr" ? "Audio manquant" : "Missing audio");
+        if (!rawAudioUrl) throw new Error(d.missingAudio);
         const previewId = `preview-${generationKey}`;
         const playbackUrl = await resolvePlaybackUrlForLoop(previewId, rawAudioUrl);
         const previewLoop: Loop = {
@@ -2642,7 +2606,7 @@ export default function Dashboard() {
           source: entrySource,
         });
         triggerBeatReady(locale, loop.id, { isFirst: false, versionCount: 1 });
-        toast.success(locale === "fr" ? REMIX_VIBE_FALLBACK_COPY.fr.successToast : REMIX_VIBE_FALLBACK_COPY.en.successToast);
+        toast.success(getRemixVibeCopy(locale).successToast);
         if (shouldShowSharePromptAfterGeneration(usedAfterVibe)) {
           const shareLoop =
             pickLoopForSharePrompt(useLoopsStore.getState().loops, [loop.id], loop.id) ?? loop;
@@ -2658,10 +2622,10 @@ export default function Dashboard() {
       } catch (err) {
         const anyErr = err as { limitReached?: boolean };
         if (anyErr?.limitReached) {
-          toast.error(locale === "fr" ? "Limite mensuelle atteinte" : "Monthly limit reached");
+          toast.error(d.monthlyLimitReached);
           navigate("/pricing?plan=pro&checkout=1");
         } else {
-          toast.error(err instanceof Error ? err.message : locale === "fr" ? "Remix échoué" : "Remix failed");
+          toast.error(err instanceof Error ? err.message : d.remixFailed);
         }
         setGenerationSlots(null);
         syncGenerationSlots(null);
@@ -2730,7 +2694,7 @@ export default function Dashboard() {
           generationKey,
         });
         const rawAudioUrl = result.audioUrl;
-        if (!rawAudioUrl) throw new Error(locale === "fr" ? "Audio manquant" : "Missing audio");
+        if (!rawAudioUrl) throw new Error(d.missingAudio);
         const previewId = `preview-${generationKey}`;
         const playbackUrl = await resolvePlaybackUrlForLoop(previewId, rawAudioUrl);
         const previewLoop: Loop = {
@@ -2824,7 +2788,7 @@ export default function Dashboard() {
           source: entrySource,
         });
         triggerBeatReady(locale, loop.id, { isFirst: false, versionCount: 1 });
-        toast.success(locale === "fr" ? "Cover prêt — écoute le résultat 🎧" : "Cover ready — listen to the result 🎧");
+        toast.success(d.coverReady);
         if (shouldShowSharePromptAfterGeneration(usedAfterCover)) {
           const shareLoop =
             pickLoopForSharePrompt(useLoopsStore.getState().loops, [loop.id], loop.id) ?? loop;
@@ -2840,10 +2804,10 @@ export default function Dashboard() {
       } catch (err) {
         const anyErr = err as { limitReached?: boolean };
         if (anyErr?.limitReached) {
-          toast.error(locale === "fr" ? "Limite mensuelle atteinte" : "Monthly limit reached");
+          toast.error(d.monthlyLimitReached);
           navigate("/pricing?plan=pro&checkout=1");
         } else {
-          toast.error(err instanceof Error ? err.message : locale === "fr" ? "Cover échoué" : "Cover failed");
+          toast.error(err instanceof Error ? err.message : d.coverFailed);
         }
         setGenerationSlots(null);
         syncGenerationSlots(null);
@@ -2945,12 +2909,8 @@ export default function Dashboard() {
     trackClientEvent("landing_auto_generate_start", { entry_source: entrySource, mobile: mobileV2 });
     toast.success(
       snap.genreStrategy === "random" || !snap.prompt.trim()
-        ? locale === "fr"
-          ? "Surprise lancée — on tire un style pour toi."
-          : "Surprise started — we're picking a style for you."
-        : locale === "fr"
-          ? "Génération lancée — ton idée prend forme."
-          : "Generating from your idea.",
+        ? d.surpriseStarted
+        : d.generatingFromIdea,
       { duration: 3200 },
     );
     if (mobileV2) goResults();
@@ -3055,9 +3015,9 @@ export default function Dashboard() {
       setSavingDetailsTitle(true);
       try {
         await renameLoopRemote(detailsLoop.id, next);
-        toast.success(locale === "fr" ? "Titre mis à jour" : "Title updated");
+        toast.success(d.titleUpdated);
       } catch (err) {
-        const message = err instanceof Error ? err.message : locale === "fr" ? "Erreur" : "Error";
+        const message = err instanceof Error ? err.message : d.error;
         toast.error(message);
       } finally {
         setSavingDetailsTitle(false);
@@ -3313,12 +3273,8 @@ export default function Dashboard() {
             ) : mode === "beat" ? (
               <>
                 <GeneratorSection
-                  title={locale === "fr" ? "Style & Vibe" : "Style & Vibe"}
-                  hint={
-                    locale === "fr"
-                      ? "Depuis l'idée, Aléatoire ou un genre du catalogue."
-                      : "From your idea, Random, or a catalog genre."
-                  }
+                  title={d.styleVibe}
+                  hint={d.genreMenuHint}
                   collapsible={mobileV2}
                   defaultOpen={mobileV2 ? mobileSectionDefaultOpen : true}
                 >
@@ -3332,24 +3288,24 @@ export default function Dashboard() {
                       lastRandomGenre={lastRandomGenre}
                     />
                     <Dropdown
-                      label={locale === "fr" ? "Ambiance" : "Mood"}
-                      menuTitle={locale === "fr" ? "Ambiance" : "Mood"}
+                      label={d.mood}
+                      menuTitle={d.mood}
                       value={form.mood}
                       onChange={(v) => setField("mood", v)}
                       options={ambianceDropdownOptions}
                     />
 
                     <Dropdown
-                      label={locale === "fr" ? "Énergie" : "Energy"}
-                      menuTitle={locale === "fr" ? "Énergie" : "Energy"}
+                      label={d.energy}
+                      menuTitle={d.energy}
                       value={form.energyLevel}
                       onChange={(v) => setField("energyLevel", v)}
                       options={energyDropdownOptions}
                     />
 
                     <Dropdown
-                      label={locale === "fr" ? "Influence" : "Influence"}
-                      menuTitle={locale === "fr" ? "Influence producteur" : "Producer influence"}
+                      label={d.influence}
+                      menuTitle={d.producerInfluence}
                       value={form.influence}
                       onChange={(v) => setField("influence", v)}
                       options={influenceDropdownOptions}
@@ -3368,7 +3324,7 @@ export default function Dashboard() {
                 />
 
                 <GeneratorSection
-                  title={locale === "fr" ? "Titre du son" : "Sound Title"}
+                  title={d.soundTitle}
                   collapsible={mobileV2}
                   defaultOpen={false}
                 >
@@ -3377,7 +3333,7 @@ export default function Dashboard() {
                     value={requestedTitle}
                     onChange={(e) => setRequestedTitle(e.target.value)}
                     className="w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2 text-sm outline-none placeholder:text-pk-muted focus:border-pk-accent"
-                    placeholder={locale === "fr" ? "ex: Pluie sur la ville" : "e.g. Rainy city nights"}
+                    placeholder={d.titlePlaceholder}
                   />
                 </GeneratorSection>
 
@@ -3407,9 +3363,9 @@ export default function Dashboard() {
                           void (async () => {
                             try {
                               await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
-                              toast.success(locale === "fr" ? "Copié" : "Copied");
+                              toast.success(d.copied);
                             } catch {
-                              toast.error(locale === "fr" ? "Copie impossible" : "Copy failed");
+                              toast.error(d.copyFailed);
                             }
                           })();
                         }}
@@ -3440,7 +3396,7 @@ export default function Dashboard() {
 
                 {advancedOpen && (
                   <div className={cn("min-w-0 max-w-full overflow-x-clip border-b border-pk-border", generatorSectionPad)}>
-                    <div className="text-sm font-semibold">{locale === "fr" ? "Tempo & Tonalité" : "Tempo & Key"}</div>
+                    <div className="text-sm font-semibold">{d.tempoKey}</div>
 
                     <div className="mt-4 grid min-w-0 max-w-full gap-4">
                       <div>
@@ -3470,7 +3426,7 @@ export default function Dashboard() {
                         {beatTempoMode === "manual" ? (
                           <>
                             <div className="flex items-center justify-between">
-                              <div className="text-[11px] text-pk-muted">{locale === "fr" ? "BPM manuel" : "Manual BPM"}</div>
+                              <div className="text-[11px] text-pk-muted">{d.manualBpm}</div>
                               <input
                                 type="number"
                                 min={60}
@@ -3499,14 +3455,14 @@ export default function Dashboard() {
                           </>
                         ) : (
                           <div className="text-[10px] text-pk-muted italic">
-                            {locale === "fr" ? "L’IA choisit le meilleur BPM pour ton style." : "The AI will decide the best BPM for your style."}
+                            {d.aiPicksBpm}
                           </div>
                         )}
                       </div>
 
                       <div className="grid gap-3">
                         <div className="pk-gen-inline-toggle-row flex min-w-0 items-center justify-between gap-2">
-                          <div className="min-w-0 shrink text-xs text-pk-muted">{locale === "fr" ? "Tonalité" : "Musical Key"}</div>
+                          <div className="min-w-0 shrink text-xs text-pk-muted">{d.musicalKey}</div>
                           <div className="flex shrink-0 items-center rounded-full border border-pk-border bg-pk-bg p-0.5">
                             <button
                               type="button"
@@ -3550,7 +3506,7 @@ export default function Dashboard() {
                           </div>
                         ) : (
                           <div className="text-[10px] text-pk-muted italic">
-                            {locale === "fr" ? "L’IA choisit la meilleure tonalité/gamme." : "The AI will pick the best key/scale."}
+                            {d.aiPicksKey}
                           </div>
                         )}
                       </div>
@@ -3560,7 +3516,7 @@ export default function Dashboard() {
 
                 {advancedOpen && (
                   <div className={cn("pk-studio-section min-w-0 max-w-full overflow-x-clip border-b border-pk-border bg-pk-bg/30", generatorSectionPad)}>
-                    <div className="text-sm font-semibold">{locale === "fr" ? "Avancé" : "Advanced"}</div>
+                    <div className="text-sm font-semibold">{d.advanced}</div>
                     <div className="mt-4 grid min-w-0 max-w-full gap-4">
                       <GeneratorAdvancedOutputControls
                         locale={locale}
@@ -3572,7 +3528,7 @@ export default function Dashboard() {
                         onDualLocked={handleDualLocked}
                       />
                       <div>
-                        <div className="text-xs text-pk-muted mb-2">{locale === "fr" ? "Longueur" : "Length"}</div>
+                        <div className="text-xs text-pk-muted mb-2">{d.length}</div>
                         <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4">
                           {lengths.map((l) => {
                             const active = form.loopLength === l;
@@ -3612,7 +3568,7 @@ export default function Dashboard() {
 
                       <div data-coach="audio-format">
                         <div className="flex items-center justify-between mb-2">
-                          <div className="text-xs text-pk-muted">{locale === "fr" ? "Format audio" : "Audio Format"}</div>
+                          <div className="text-xs text-pk-muted">{d.audioFormat}</div>
                           <div className="flex bg-pk-bg rounded-full p-0.5 border border-pk-border">
                             <button
                               type="button"
@@ -3636,11 +3592,11 @@ export default function Dashboard() {
                         </div>
                         {plan === "free" ? (
                           <div className="text-[10px] text-pk-muted italic">
-                            {locale === "fr" ? "WAV se débloque avec Pro — tap pour voir." : "WAV unlocks with Pro — tap to peek."}
+                            {d.wavUnlockPro}
                           </div>
                         ) : (
                           <div className="text-[10px] text-pk-muted italic">
-                            {locale === "fr" ? "Pro+ : toggle MP3 ou WAV à chaque gen." : "Pro+: toggle MP3 or WAV each gen."}
+                            {d.proToggleWav}
                           </div>
                         )}
                       </div>
@@ -3653,7 +3609,7 @@ export default function Dashboard() {
                   <details className="group">
                     <summary className="cursor-pointer select-none text-xs font-semibold text-pk-muted hover:text-pk-text flex items-center gap-1">
                       <Search className="h-3 w-3" />
-                      <span>{locale === "fr" ? "Préréglages" : "Quick Presets"}</span>
+                      <span>{d.quickPresets}</span>
                     </summary>
                     <div className="mt-3 grid gap-2">
                       {presets.map((p) => (
@@ -3686,12 +3642,8 @@ export default function Dashboard() {
             {mode === "song" ? (
               <>
                 <GeneratorSection
-                  title={locale === "fr" ? "Le Style" : "The Style"}
-                  hint={
-                    locale === "fr"
-                      ? "Depuis l'idée, Aléatoire ou un genre du catalogue."
-                      : "From your idea, Random, or a catalog genre."
-                  }
+                  title={d.theStyle}
+                  hint={d.genreMenuHint}
                   collapsible={mobileV2}
                   defaultOpen={mobileV2 ? mobileSectionDefaultOpen : true}
                 >
@@ -3706,17 +3658,13 @@ export default function Dashboard() {
                 </GeneratorSection>
 
                 <GeneratorSection
-                  title={locale === "fr" ? "La Langue" : "Language"}
-                  hint={
-                    locale === "fr"
-                      ? "Auto détecte la langue depuis ton idée ou tes paroles manuelles."
-                      : "Auto detects language from your idea or manual lyrics."
-                  }
+                  title={d.language}
+                  hint={d.languageHint}
                   collapsible={mobileV2}
                   defaultOpen={mobileV2 ? mobileSectionDefaultOpen : true}
                 >
                   <Dropdown
-                    menuTitle={locale === "fr" ? "Langue" : "Language"}
+                    menuTitle={d.languageMenu}
                     value={songVocalLanguageMode === "auto" ? "auto" : manualVocalLanguage}
                     onChange={(v) => {
                       if (v === "auto") {
@@ -3741,7 +3689,7 @@ export default function Dashboard() {
                 />
 
                 <GeneratorSection
-                  title={locale === "fr" ? "Paroles" : "The Lyrics"}
+                  title={d.lyrics}
                   collapsible={mobileV2}
                   defaultOpen={mobileV2 ? mobileSectionDefaultOpen : true}
                 >
@@ -3753,7 +3701,7 @@ export default function Dashboard() {
                         lyricsMode === "manual" ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
                       }`}
                     >
-                      {locale === "fr" ? "✏️ J’écris" : "✏️ I write"}
+                      {d.iWrite}
                     </button>
                     <button
                       type="button"
@@ -3762,7 +3710,7 @@ export default function Dashboard() {
                         lyricsMode === "ai" ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
                       }`}
                     >
-                      {locale === "fr" ? "✨ IA écrit" : "✨ AI writes"}
+                      {d.aiWrites}
                     </button>
                   </div>
                   {lyricsMode === "manual" ? (
@@ -3791,11 +3739,7 @@ export default function Dashboard() {
                           micPlacement="inside"
                           wrapperClassName="pk-dashboard-text-field-wrap"
                           className="pk-dashboard-text-field__control bg-pk-input border border-pk-border text-sm text-pk-text placeholder:text-pk-muted focus:border-pk-accent"
-                          placeholder={
-                            locale === "fr"
-                              ? "[Couplet]\nÉcris tes paroles ici...\n\n[Refrain]\nÉcris ton hook ici..."
-                              : "[Verse]\nWrite your lyrics here...\n\n[Chorus]\nWrite your hook here..."
-                          }
+                          placeholder={d.lyricsPlaceholder}
                           showStatus={false}
                         />
                       </div>
@@ -3803,9 +3747,7 @@ export default function Dashboard() {
                   ) : (
                     <div className="mt-3 rounded-pk border border-pk-border bg-pk-bg p-4 text-center">
                       <p className="text-[11px] italic text-pk-muted leading-relaxed">
-                        {locale === "fr"
-                          ? "✨ L’IA écrira des paroles originales selon ton genre et ton idée."
-                          : "✨ AI will write original lyrics based on your genre and idea — you'll hear them in the generated song."}
+                        {d.aiWritesLyricsHint}
                       </p>
                     </div>
                   )}
@@ -3813,12 +3755,8 @@ export default function Dashboard() {
 
                 {DASHBOARD_VOICE_SECTIONS_ENABLED && user?.id ? (
                   <GeneratorSection
-                    title={locale === "fr" ? "Voix chantée" : "Singing voice"}
-                    hint={
-                      locale === "fr"
-                        ? "Profil vocal ACE — géré dans Voice Studio"
-                        : "ACE voice profile — managed in Voice Studio"
-                    }
+                    title={d.singingVoice}
+                    hint={d.voiceProfileHint}
                     collapsible={mobileV2}
                     defaultOpen={mobileV2 ? mobileSectionDefaultOpen : true}
                   >
@@ -3844,7 +3782,7 @@ export default function Dashboard() {
                 ) : null}
 
                 <GeneratorSection
-                  title={locale === "fr" ? "Titre de la chanson" : "Song Title"}
+                  title={d.songTitle}
                   collapsible={mobileV2}
                   defaultOpen={false}
                 >
@@ -3852,13 +3790,13 @@ export default function Dashboard() {
                     value={requestedTitle}
                     onChange={(e) => setRequestedTitle(e.target.value)}
                     className="w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2 text-sm outline-none placeholder:text-pk-muted focus:border-pk-accent"
-                    placeholder={locale === "fr" ? "ex: Pluie sur la ville" : "e.g. Rainy city nights"}
+                    placeholder={d.titlePlaceholder}
                   />
                 </GeneratorSection>
 
                 {songIsCustom && (
                   <div className={cn("pk-studio-section min-w-0 max-w-full overflow-x-clip border-b border-pk-border bg-pk-bg/30", generatorSectionPad)}>
-                    <div className="text-sm font-semibold">{locale === "fr" ? "Réglages avancés" : "Advanced Settings"}</div>
+                    <div className="text-sm font-semibold">{d.advancedSettings}</div>
                     <div className="mt-4 grid min-w-0 max-w-full gap-4">
                       <GeneratorAdvancedOutputControls
                         locale={locale}
@@ -3873,7 +3811,7 @@ export default function Dashboard() {
                         onVocalStyleChange={setSongVocalStyle}
                       />
                       <Dropdown
-                        label={locale === "fr" ? "Influence" : "Influence"}
+                        label={d.influence}
                         value={form.influence}
                         onChange={(v) => setField("influence", v)}
                         options={influenceDropdownOptions}
@@ -3935,14 +3873,14 @@ export default function Dashboard() {
                           </>
                         ) : (
                           <div className="text-[10px] text-pk-muted italic">
-                            {locale === "fr" ? "L’IA choisit le meilleur tempo." : "The AI picks the best tempo."}
+                            {d.aiPicksTempo}
                           </div>
                         )}
                       </div>
 
                       <div className="min-w-0">
                         <div className="pk-gen-inline-toggle-row mb-2 flex min-w-0 items-center justify-between gap-2">
-                          <div className="min-w-0 shrink text-xs text-pk-muted">{locale === "fr" ? "Durée" : "Duration"}</div>
+                          <div className="min-w-0 shrink text-xs text-pk-muted">{d.duration}</div>
                           <div className="flex shrink-0 items-center rounded-full border border-pk-border bg-pk-bg p-0.5">
                             <button
                               type="button"
@@ -3967,7 +3905,7 @@ export default function Dashboard() {
                         {songDurationMode === "manual" ? (
                           <>
                             <div className="flex items-center justify-between">
-                              <div className="text-[11px] text-pk-muted">{locale === "fr" ? "Secondes" : "Seconds"}</div>
+                              <div className="text-[11px] text-pk-muted">{d.seconds}</div>
                               <input
                                 type="number"
                                 min={10}
@@ -3996,14 +3934,14 @@ export default function Dashboard() {
                           </>
                         ) : (
                           <div className="text-[10px] text-pk-muted italic">
-                            {locale === "fr" ? "L’IA choisit la durée." : "The AI picks the duration."}
+                            {d.aiPicksDuration}
                           </div>
                         )}
                       </div>
 
                       <div data-coach="audio-format">
                         <div className="flex items-center justify-between mb-2">
-                          <div className="text-xs text-pk-muted">{locale === "fr" ? "Format audio" : "Audio Format"}</div>
+                          <div className="text-xs text-pk-muted">{d.audioFormat}</div>
                           <div className="flex bg-pk-bg rounded-full p-0.5 border border-pk-border">
                             <button
                               type="button"
@@ -4027,18 +3965,18 @@ export default function Dashboard() {
                         </div>
                         {plan === "free" ? (
                           <div className="text-[10px] text-pk-muted italic">
-                            {locale === "fr" ? "WAV se débloque avec Pro — tap pour voir." : "WAV unlocks with Pro — tap to peek."}
+                            {d.wavUnlockPro}
                           </div>
                         ) : (
                           <div className="text-[10px] text-pk-muted italic">
-                            {locale === "fr" ? "Pro+ : toggle MP3 ou WAV à chaque gen." : "Pro+: toggle MP3 or WAV each gen."}
+                            {d.proToggleWav}
                           </div>
                         )}
                       </div>
 
                       <div className="bg-pk-bg/50 rounded-pk p-3 border border-pk-border/30">
                         <div className="text-xs text-pk-muted mb-2">
-                          {locale === "fr" ? "Contexte & inspiration (chips)" : "Context & Inspiration (Chips)"}
+                          {d.contextChips}
                         </div>
                         <InspirationChipRow
                           className="mt-0"
@@ -4064,7 +4002,7 @@ export default function Dashboard() {
 
                       <div>
                         <div className="flex items-center justify-between mb-2">
-                          <div className="text-xs text-pk-muted">{locale === "fr" ? "Tonalité" : "Musical Key"}</div>
+                          <div className="text-xs text-pk-muted">{d.musicalKey}</div>
                           <div className="flex bg-pk-bg rounded-full p-0.5 border border-pk-border">
                             <button
                               type="button"
@@ -4116,14 +4054,14 @@ export default function Dashboard() {
                           </div>
                         ) : (
                           <div className="text-[10px] text-pk-muted italic">
-                            {locale === "fr" ? "L’IA choisit la tonalité & la gamme." : "The AI picks key & scale."}
+                            {d.aiPicksKeyScale}
                           </div>
                         )}
                       </div>
 
                       <div>
                         <div className="flex items-center justify-between mb-2">
-                          <div className="text-xs text-pk-muted">{locale === "fr" ? "Signature rythmique" : "Time Signature"}</div>
+                          <div className="text-xs text-pk-muted">{d.timeSignature}</div>
                           <div className="flex bg-pk-bg rounded-full p-0.5 border border-pk-border">
                             <button
                               type="button"
@@ -4164,7 +4102,7 @@ export default function Dashboard() {
                           </div>
                         ) : (
                           <div className="text-[10px] text-pk-muted italic">
-                            {locale === "fr" ? "L’IA choisit la signature." : "The AI picks the signature."}
+                            {d.aiPicksSignature}
                           </div>
                         )}
                       </div>
@@ -4222,16 +4160,8 @@ export default function Dashboard() {
                 progressPct={generationProgressPct}
                 disabled={!genreReady || generating || !quotaReady}
                 creditBlocked={remaining < versions}
-                idleLabel={
-                  mode === "song"
-                    ? locale === "fr"
-                      ? "Générer une chanson"
-                      : "Generate Song"
-                    : locale === "fr"
-                      ? "Générer un beat"
-                      : "Generate Beat"
-                }
-                generatingLabel={locale === "fr" ? "Génération" : "Generating"}
+                idleLabel={mode === "song" ? d.generateSong : d.generateBeat}
+                generatingLabel={d.generating}
                 onClick={async () => {
                   if (remaining < versions) {
                     promptCreditsBlocked();
@@ -4264,16 +4194,12 @@ export default function Dashboard() {
                 <div className="pk-dashboard-mobile-footer__quota-row pk-dashboard-mobile-footer__quota-row--compact">
                   {showQuotaLoading ? (
                     <span className="text-white/50">
-                      {locale === "fr" ? "Chargement du quota…" : "Loading quota…"}
+                      {d.loadingQuota}
                     </span>
                   ) : (
                     <span
                       className="pk-dashboard-mobile-footer__quota-compact inline-flex min-w-0 max-w-full items-center gap-1 overflow-hidden text-white/50"
-                      title={
-                        locale === "fr"
-                          ? `${remaining}/${totalLimit} restantes ce mois-ci · Plan ${plan}${bonusCreditsTotal > 0 ? ` · +${bonusCreditsTotal} bonus actifs` : ""}`
-                          : `${remaining}/${totalLimit} left this month · ${plan} plan${bonusCreditsTotal > 0 ? ` · +${bonusCreditsTotal} active bonus` : ""}`
-                      }
+                      title={`${remaining}/${totalLimit} ${d.leftThisMonth} · ${d.planPrefixFr}${plan}${bonusCreditsTotal > 0 ? ` · +${bonusCreditsTotal} ${d.activeBonus}` : ""}`}
                     >
                       <span className="shrink-0 tabular-nums font-medium text-white/72">
                         {remaining}/{totalLimit}
@@ -4304,29 +4230,21 @@ export default function Dashboard() {
                   <div className="flex items-center justify-between text-xs">
                     <span className="inline-flex min-w-0 flex-wrap items-center gap-1 text-gray-500">
                       {showQuotaLoading ? (
-                        locale === "fr" ? (
-                          "Chargement du quota…"
-                        ) : (
-                          "Loading quota…"
-                        )
+                        d.loadingQuota
                       ) : (
                         <>
                           <span className="tabular-nums font-medium">
                             {remaining}/{totalLimit}
                           </span>
                           <GenerationCreditIcon className="h-3 w-3 shrink-0" />
-                          <span>{locale === "fr" ? "restantes ce mois-ci" : "left this month"}</span>
+                          <span>{d.leftThisMonth}</span>
                         </>
                       )}
                     </span>
                     <span className="shrink-0 text-gray-600">
                       {showQuotaLoading
-                        ? locale === "fr"
-                          ? "Plan…"
-                          : "Plan…"
-                        : locale === "fr"
-                          ? `Plan ${plan}`
-                          : `${plan} plan`}
+                        ? d.planEllipsis
+                        : `${d.planPrefixFr}${plan}`}
                     </span>
                   </div>
                   <div
@@ -4345,9 +4263,7 @@ export default function Dashboard() {
                           className="pk-dashboard-bonus-meta__amount"
                         />
                         <span>
-                          {locale === "fr"
-                            ? "bonus actifs (niveau, parrainage, daily)"
-                            : "active bonus (level, referral, daily)"}
+                          {d.activeBonus}
                         </span>
                       </div>
                     ) : null}
@@ -4358,24 +4274,20 @@ export default function Dashboard() {
             {plan === "free" && remaining > 0 && remaining <= 2 ? (
               <div className="pk-dashboard-mobile-footer__upsell mt-2 flex flex-col gap-2 rounded-lg border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-100/90">
                 <span>
-                  {locale === "fr"
-                    ? `Plus que ${remaining} génération${remaining !== 1 ? "s" : ""} ce mois-ci — passe Pro pour 75 tracks, priorité et export WAV.`
-                    : `Only ${remaining} generation${remaining !== 1 ? "s" : ""} left this month — go Pro for 75 tracks, priority, and WAV export.`}
+                  {remaining === 1
+                    ? d.upsellRemainingSingular
+                    : `${d.upsellRemainingPluralPrefix}${remaining}${d.upsellRemainingPluralMid}`}
                 </span>
                 <Link to="/pricing" className="font-semibold text-amber-200 hover:text-white">
-                  {locale === "fr" ? `Voir Pro — ${planPriceLabel("pro", "fr", { suffix: true })}` : `See Pro — ${planPriceLabel("pro", "en", { suffix: true })}`}
+                  {`${d.seeProPrefix}${planPriceLabel("pro", locale, { suffix: true })}`}
                 </Link>
               </div>
             ) : null}
             {remaining === 0 ? (
               <div className="pk-dashboard-mobile-footer__upsell mt-2 flex flex-col gap-2 text-xs text-gray-500">
                 {plan === "free"
-                  ? locale === "fr"
-                    ? `Quota mensuel épuisé (${usedThisMonth}/${totalLimit}) — monte de niveau ou reviens demain pour des bonus`
-                    : `Monthly quota used (${usedThisMonth}/${totalLimit}) — level up or come back tomorrow for bonuses`
-                  : locale === "fr"
-                    ? "Plus de crédits — upgrade ton plan"
-                    : "No credits remaining — upgrade your plan"}
+                  ? `${d.quotaExhaustedFree} (${usedThisMonth}/${totalLimit})${d.quotaExhaustedFreeSuffix}`
+                  : d.noCreditsUpgrade}
                 <div className="flex flex-wrap items-center gap-3">
                   <button
                     type="button"
@@ -4383,15 +4295,11 @@ export default function Dashboard() {
                     onClick={() => promptPlanUpsell("credits_exhausted")}
                   >
                     {recommendedUpgradePlan(plan)
-                      ? locale === "fr"
-                        ? `Passer ${recommendedUpgradePlan(plan) === "plus" ? "Plus" : recommendedUpgradePlan(plan) === "studio" ? "Studio" : "Pro"}`
-                        : `Upgrade to ${recommendedUpgradePlan(plan) === "plus" ? "Plus" : recommendedUpgradePlan(plan) === "studio" ? "Studio" : "Pro"}`
-                      : locale === "fr"
-                        ? "Voir les options"
-                        : "See options"}
+                      ? `${d.upgradeTo}${recommendedUpgradePlan(plan) === "plus" ? "Plus" : recommendedUpgradePlan(plan) === "studio" ? "Studio" : "Pro"}`
+                      : d.seeOptions}
                   </button>
                   <Link to="/pricing" className="text-white/45 hover:text-white/70">
-                    {locale === "fr" ? "Comparer les tarifs" : "Compare plans"}
+                    {d.comparePlans}
                   </Link>
                 </div>
               </div>
@@ -4443,20 +4351,16 @@ export default function Dashboard() {
         {mobileV2 && mobileTab === "results" ? (
           <div className="pk-mobile-gen-notice pk-mobile-results-filters mb-3 flex flex-col gap-3 rounded-2xl border px-3 py-3 backdrop-blur-xl">
             <p className="pk-workspace-track-count text-xs tabular-nums text-white/50">
-              {locale === "fr"
-                ? hasWorkspaceFilters
-                  ? `${workspaceVisibleCount} / ${workspaceFilteredTotal} · ${libraryTotalCount}`
-                  : `${workspaceVisibleCount} / ${libraryTotalCount}`
-                : hasWorkspaceFilters
-                  ? `${workspaceVisibleCount} / ${workspaceFilteredTotal} · ${libraryTotalCount}`
-                  : `${workspaceVisibleCount} / ${libraryTotalCount}`}
+              {hasWorkspaceFilters
+                ? `${workspaceVisibleCount} / ${workspaceFilteredTotal} · ${libraryTotalCount}`
+                : `${workspaceVisibleCount} / ${libraryTotalCount}`}
             </p>
             <div className="relative min-w-0 w-full max-w-full">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-pk-muted" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder={locale === "fr" ? "Rechercher…" : "Search your creations..."}
+                placeholder={d.searchCreations}
                 className="pk-workspace-search-field w-full rounded-xl border border-pk-border py-2.5 pl-9 pr-3 text-sm outline-none placeholder:text-pk-muted focus:border-pk-accent"
               />
             </div>
@@ -4468,7 +4372,7 @@ export default function Dashboard() {
                   !savedOnly ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
                 }`}
               >
-                {locale === "fr" ? "Tout" : "All"}
+                {d.all}
               </button>
               <button
                 type="button"
@@ -4477,18 +4381,16 @@ export default function Dashboard() {
                   savedOnly ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
                 }`}
               >
-                {locale === "fr" ? "Sauvegardés" : "Saved"}
+                {d.saved}
               </button>
             </div>
           </div>
         ) : (
         <div className="pk-studio-workspace-header flex min-w-0 flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div className="pk-studio-workspace-header__intro min-w-0">
-            <div className="pk-studio-workspace-header__title text-lg font-semibold">{locale === "fr" ? "Mon espace" : "My Workspace"}</div>
+            <div className="pk-studio-workspace-header__title text-lg font-semibold">{d.myWorkspace}</div>
             <div className="mt-1 text-sm text-pk-muted">
-              {locale === "fr"
-                ? `Affichage ${workspaceVisibleCount} sur ${hasWorkspaceFilters ? workspaceFilteredTotal : libraryTotalCount}`
-                : `Showing ${workspaceVisibleCount} of ${hasWorkspaceFilters ? workspaceFilteredTotal : libraryTotalCount}`}
+              {`${d.showingOfPrefix}${workspaceVisibleCount}${d.showingOfMid}${hasWorkspaceFilters ? workspaceFilteredTotal : libraryTotalCount}`}
             </div>
           </div>
           <div className="pk-studio-workspace-header__controls">
@@ -4500,7 +4402,7 @@ export default function Dashboard() {
                   workspaceView === "tracks" ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
                 }`}
               >
-                {locale === "fr" ? "Tracks" : "Tracks"}
+                {d.tracks}
               </button>
               <button
                 type="button"
@@ -4512,7 +4414,7 @@ export default function Dashboard() {
                   workspaceView === "master" ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
                 }`}
               >
-                {locale === "fr" ? "Mastering Studio" : "Mastering Studio"}
+                {d.masteringStudio}
               </button>
             </div>
             <div className="pk-studio-workspace-header__search">
@@ -4520,7 +4422,7 @@ export default function Dashboard() {
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder={locale === "fr" ? "Rechercher…" : "Search your creations..."}
+                placeholder={d.searchCreations}
                 className="pk-workspace-search-field w-full rounded-pk border border-pk-border px-9 py-2 text-sm outline-none placeholder:text-pk-muted focus:border-pk-accent"
               />
             </div>
@@ -4532,7 +4434,7 @@ export default function Dashboard() {
                   !savedOnly ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
                 }`}
               >
-                {locale === "fr" ? "Tout" : "All"}
+                {d.all}
               </button>
               <button
                 type="button"
@@ -4541,7 +4443,7 @@ export default function Dashboard() {
                   savedOnly ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
                 }`}
               >
-                {locale === "fr" ? "Sauvegardés" : "Saved"}
+                {d.saved}
               </button>
             </div>
           </div>
@@ -4564,7 +4466,7 @@ export default function Dashboard() {
                       <LoopCardSkeleton
                         key={slot.idx}
                         title={slot.title}
-                        sub={locale === "fr" ? "En attente de la version 1…" : "Waiting for version 1…"}
+                        sub={d.waitingVersion1}
                       />
                     );
                   }
@@ -4573,35 +4475,20 @@ export default function Dashboard() {
                       <LoopCardSkeleton
                         key={slot.idx}
                         title={slot.title}
-                        sub={
-                          locale === "fr"
-                            ? "Version 1 prête — lancement de la version 2…"
-                            : "Version 1 ready — starting version 2…"
-                        }
+                        sub={d.version2Starting}
                       />
                     );
                   }
                   if (slot.visible && slot.status === "generating") {
                     const pct = slot.progressPct ?? 0;
-                    const sub =
-                      pct >= 90
-                        ? locale === "fr"
-                          ? "Finalisation…"
-                          : "Finishing up…"
-                        : locale === "fr"
-                          ? "Création en cours…"
-                          : "Generating…";
+                    const sub = pct >= 90 ? d.finishingUp : d.generatingProgress;
                     return (
                       <LoopCardSkeleton
                         key={slot.idx}
                         title={slot.title}
                         sub={sub}
                         progressPct={pct}
-                        progressLabel={
-                          locale === "fr"
-                            ? "Progression estimée pendant la génération"
-                            : "Estimated progress during generation"
-                        }
+                        progressLabel={d.progressLabel}
                       />
                     );
                   }
@@ -4613,7 +4500,7 @@ export default function Dashboard() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-sm font-semibold text-pk-text">{slot.title}</div>
-                          <div className="mt-0.5 text-xs text-pk-muted">{slot.errorText || (locale === "fr" ? "Échec de génération" : "Generation failed")}</div>
+                          <div className="mt-0.5 text-xs text-pk-muted">{slot.errorText || d.generationFailedShort}</div>
                         </div>
                         <button
                           type="button"
@@ -4627,7 +4514,7 @@ export default function Dashboard() {
                             });
                           }}
                         >
-                          {locale === "fr" ? "Fermer" : "Dismiss"}
+                          {d.dismiss}
                         </button>
                       </div>
                     );
@@ -4645,8 +4532,8 @@ export default function Dashboard() {
               {Array.from({ length: 2 }).map((_, i) => (
                 <LoopCardSkeleton
                   key={i}
-                  title={locale === "fr" ? "Chargement de tes créations…" : "Loading your creations..."}
-                  sub={locale === "fr" ? "Récupération depuis ton compte" : "Fetching from your account"}
+                  title={d.loadingCreations}
+                  sub={d.fetchingAccount}
                 />
               ))}
             </div>
@@ -4655,12 +4542,10 @@ export default function Dashboard() {
               <div className="rounded-pk bg-gradient-to-br from-[rgba(157,124,255,0.22)] via-transparent to-[rgba(103,195,255,0.08)] p-[1px] shadow-[0_0_0_1px_rgba(157,124,255,0.08),0_0_24px_rgba(157,124,255,0.10)]">
                 <div className="flex flex-col items-center justify-center rounded-pk border border-dashed border-pk-border bg-pk-panel p-10 text-center">
                   <div className="mt-2 text-sm font-semibold text-pk-text">
-                    {locale === "fr" ? "Impossible de charger tes créations" : "Failed to load your creations"}
+                    {d.failedLoadCreations}
                   </div>
                   <div className="mt-1 text-sm text-pk-muted">
-                    {locale === "fr"
-                      ? "Ton compte est bien connecté, mais la récupération depuis la base de données a échoué. Clique sur Réessayer."
-                      : "You're logged in, but fetching from the database failed. Click Retry."}
+                    {d.loadCreationsErrorBody}
                   </div>
                   <div className="mt-5 flex flex-wrap justify-center gap-2">
                     <Button
@@ -4669,7 +4554,7 @@ export default function Dashboard() {
                         void loadMyLoops();
                       }}
                     >
-                      {locale === "fr" ? "Réessayer" : "Retry"}
+                      {d.retry}
                     </Button>
                     <Button
                       variant="secondary"
@@ -4677,7 +4562,7 @@ export default function Dashboard() {
                         window.location.reload();
                       }}
                     >
-                      {locale === "fr" ? "Recharger" : "Reload"}
+                      {d.reload}
                     </Button>
                   </div>
                 </div>
@@ -4685,22 +4570,18 @@ export default function Dashboard() {
             ) : (
               <div className="space-y-4">
                 <EmptyState
-                  title={locale === "fr" ? "Tes créations apparaîtront ici" : "Your creations will appear here"}
+                  title={d.creationsAppearHere}
                   description={
                     mobileV2
-                      ? locale === "fr"
-                        ? "Onglet Créer : choisis ton style, puis lance la génération."
-                        : "Create tab: pick your style, then hit generate."
-                      : locale === "fr"
-                        ? `Configure ton son et clique sur ${mode === "song" ? "Générer une chanson" : "Générer un beat"}.`
-                        : `Configure your sound and hit ${mode === "song" ? "Generate Song" : "Generate Beat"}.`
+                      ? d.emptyCreateMobile
+                      : `${d.emptyCreateConfigurePrefix}${mode === "song" ? d.generateSong : d.generateBeat}${d.emptyCreateConfigureSuffix}`
                   }
                   accent
                 />
                 {mobileV2 ? (
                   <div className="flex justify-center">
                     <Button variant="primary" onClick={goCreate}>
-                      {locale === "fr" ? "Aller à Créer" : "Go to Create"}
+                      {d.goToCreate}
                     </Button>
                   </div>
                 ) : null}
@@ -4736,7 +4617,7 @@ export default function Dashboard() {
                       title={detailsLoop.name}
                       subtitle={detailsLoop.genre}
                       onClose={() => setDetailsId(null)}
-                      closeLabel={locale === "fr" ? "Fermer" : "Close"}
+                      closeLabel={d.close}
                     />
                     <LoopDetailsPanel
                       loop={detailsLoop}
@@ -4783,7 +4664,7 @@ export default function Dashboard() {
           onClose={() => setDetailsId(null)}
           title={detailsLoop.name}
           subtitle={detailsLoop.genre}
-          closeLabel={locale === "fr" ? "Fermer" : "Close"}
+          closeLabel={d.close}
         >
           <LoopDetailsPanel
             loop={detailsLoop}
@@ -4819,9 +4700,9 @@ export default function Dashboard() {
                     await togglePublicRemote(shareMomentLoop.id);
                     const updated = useLoopsStore.getState().loops.find((l) => l.id === shareMomentLoop.id);
                     if (updated) setShareMomentLoop(updated);
-                    toast.success(locale === "fr" ? "Track publique — lien /loop actif" : "Track public — /loop link live");
+                    toast.success(d.trackPublicLive);
                   } catch (err) {
-                    toast.error(err instanceof Error ? err.message : locale === "fr" ? "Erreur" : "Error");
+                    toast.error(err instanceof Error ? err.message : d.error);
                   }
                 })();
               }

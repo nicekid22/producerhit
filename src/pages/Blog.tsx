@@ -31,8 +31,9 @@ export default function Blog() {
         categoryId: category?.id,
         tag: tagSlug,
         page,
+        uiLocale: locale,
       }),
-    [category?.id, page, query, searchParams, tagSlug],
+    [category?.id, locale, page, query, searchParams, tagSlug],
   );
 
   const onQueryChange = (q: string) => {

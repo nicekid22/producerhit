@@ -54,6 +54,8 @@ import {
 } from "@/lib/communityPlaybackQueue";
 import { usePlayerStore } from "@/stores/playerStore";
 import { markActivationStepLocal } from "@/components/onboarding/OnboardingChecklist";
+import { buildCommunityHubUiCopy } from "@/i18n/communityHubUiCatalog";
+import { buildPublicLoopPageCopy } from "@/i18n/publicLoopPageCatalog";
 
 type RatingStats = { sum: number; count: number; myRating: number | null };
 
@@ -61,7 +63,8 @@ export default function Explore() {
   const navigate = useNavigate();
   const { vibeId: vibeIdParam } = useParams<{ vibeId?: string }>();
   const locale = useLocaleStore((s) => s.locale);
-  const isFr = locale === "fr";
+  const hubCopy = useMemo(() => buildCommunityHubUiCopy(locale), [locale]);
+  const loopCopy = useMemo(() => buildPublicLoopPageCopy(locale), [locale]);
   const user = useAuthStore((s) => s.user);
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<PublicLoopRow[]>([]);
@@ -146,7 +149,7 @@ export default function Explore() {
         }
         navigate("/dashboard?remix=1");
       } catch {
-        toast.error(isFr ? "Audio indisponible pour remix" : "Audio unavailable for remix");
+        toast.error(loopCopy.audioUnavailableRemix);
       } finally {
         setResolvingId(null);
       }
@@ -190,12 +193,8 @@ export default function Explore() {
           setRows([]);
           const msg =
             err instanceof Error && err.message === "timeout"
-              ? isFr
-                ? "Chargement trop long. Réessaie."
-                : "Loading is taking too long. Try again."
-              : isFr
-                ? "Impossible de charger le flux."
-                : "Failed to load the feed.";
+              ? hubCopy.loadTimeout
+              : hubCopy.loadFailed;
           setFetchError(msg);
           if (err instanceof Error && err.message === "timeout") toast.error(msg);
         }
@@ -206,7 +205,7 @@ export default function Explore() {
     return () => {
       cancelled = true;
     };
-  }, [isFr, refetchToken]);
+  }, [hubCopy.loadFailed, hubCopy.loadTimeout, refetchToken]);
 
   useEffect(() => {
     const refresh = () => setRefetchToken((x) => x + 1);
@@ -399,7 +398,7 @@ export default function Explore() {
     if (!activeCategory) return;
     const seo = buildCommunityVibeSeo({
       vibe: activeCategory,
-      isFr,
+      locale,
       trackCount: filtered.length,
     });
     applyCommunityPageSeo({
@@ -413,48 +412,20 @@ export default function Explore() {
         items: filtered.slice(0, 12),
       }),
     });
-  }, [activeCategory, filtered, isFr]);
+  }, [activeCategory, filtered, locale]);
 
   const handleVibeChange = (id: string | null) => {
     setActiveVibeId(id);
     navigate(id ? communityVibePath(id) : "/community");
   };
 
-  const categoryRailSubtitle = (sort: CommunityRailSort, isFr: boolean) => {
-    switch (sort) {
-      case "newest":
-        return isFr ? "Nouveautés de la vibe" : "Fresh in this vibe";
-      case "plays":
-        return isFr ? "Les plus écoutés" : "Most played";
-      case "comments":
-        return isFr ? "Le plus de feedback" : "Most discussed";
-      case "shuffle":
-        return isFr ? "Sélection du jour" : "Daily picks";
-      default:
-        return isFr ? "Les plus kiffés de la vibe" : "Top loved in vibe";
-    }
-  };
-
   const hasActiveFilters = query.trim().length > 0 || activeVibeId !== null || sort !== "new";
-  const catalogTitle = activeCategory
-    ? isFr
-      ? activeCategory.title.fr
-      : activeCategory.title.en
-    : sort === "top"
-      ? isFr
-        ? "Top du flux"
-        : "Feed top picks"
-      : sort === "random"
-        ? isFr
-          ? "Sélection aléatoire"
-          : "Random picks"
-        : hasActiveFilters
-          ? isFr
-            ? `${filtered.length} résultat${filtered.length > 1 ? "s" : ""}`
-            : `${filtered.length} result${filtered.length === 1 ? "" : "s"}`
-          : isFr
-            ? "Tout le catalogue"
-            : "Full catalog";
+  const catalogTitle = hubCopy.catalogTitle({
+    activeCategory,
+    sort,
+    hasActiveFilters,
+    count: filtered.length,
+  });
 
   const queuePlayOptions = {
     source: COMMUNITY_QUEUE_SOURCE,
@@ -473,7 +444,7 @@ export default function Explore() {
 
     const ok = await playPublicRowsInQueue(list, startIndex, queuePlayOptions);
     if (!ok) {
-      toast.error(isFr ? "Audio indisponible" : "Audio unavailable");
+      toast.error(loopCopy.audioUnavailable);
       return;
     }
     trackClientEvent("community_play", { loop_id: startRow.id, source: "queue" });
@@ -495,7 +466,7 @@ export default function Explore() {
   const setRating = (loopId: string, rating: number) => {
     const r = Math.max(1, Math.min(5, Math.round(rating)));
     if (!user) {
-      toast(isFr ? "Connecte-toi pour noter" : "Login to rate");
+      toast(loopCopy.loginToRate);
       navigate("/auth", { state: { from: "/community" } });
       return;
     }
@@ -506,7 +477,7 @@ export default function Explore() {
         { onConflict: "loop_id,user_id" },
       );
       if (error) {
-        toast.error(isFr ? "Impossible de noter" : "Could not rate");
+        toast.error(loopCopy.couldNotRate);
         return;
       }
       setRatingsById((state) => {
@@ -546,7 +517,7 @@ export default function Explore() {
   }, [loading]);
 
   const railProps = {
-    isFr,
+    locale,
     currentId: current?.id ?? null,
     isPlaying,
     resolvingId,
@@ -563,7 +534,7 @@ export default function Explore() {
     <AppShell theme="prism" variant="single">
       <div className="pk-community pk-hub mx-auto w-full max-w-[1320px] space-y-6 px-4 pb-4 pt-4 md:px-6 md:pb-10 md:pt-5">
         <CommunityHubHero
-          isFr={isFr}
+          locale={locale}
           liveCount={rows.length}
           newTodayCount={newTodayCount}
           totalComments={totalComments}
@@ -580,10 +551,10 @@ export default function Explore() {
           onJoinChat={scrollToLiveChat}
         />
 
-        <CommunityPulseStrip items={pulseItems} isFr={isFr} />
+        <CommunityPulseStrip items={pulseItems} locale={locale} />
 
         <CommunityLiveChatStrip
-          isFr={isFr}
+          locale={locale}
           comments={fluxComments}
           loading={fluxCommentsLoading}
           rowsById={rowsById}
@@ -591,7 +562,7 @@ export default function Explore() {
         />
 
         <CommunityVibeNav
-          isFr={isFr}
+          locale={locale}
           categories={vibeNavItems}
           activeVibeId={activeVibeId}
           query={query}
@@ -605,7 +576,7 @@ export default function Explore() {
           <div className="space-y-9">
             {myTracks.length > 0 ? (
               <CommunityRail
-                title={isFr ? "Tes créations sur le flux" : "Your tracks on the feed"}
+                title={hubCopy.myTracksRail}
                 icon={<Flame className="h-4 w-4 text-orange-400" />}
                 items={myTracksRail}
                 {...railProps}
@@ -614,7 +585,7 @@ export default function Explore() {
             ) : null}
 
             <CommunityRail
-              title={isFr ? "Fraîchement sortis" : "Fresh drops"}
+              title={hubCopy.freshDrops}
               icon={<Sparkles className="h-4 w-4 text-cyan-300" />}
               items={newestRailItems}
               {...railProps}
@@ -627,7 +598,7 @@ export default function Explore() {
             />
 
             <CommunityRail
-              title={isFr ? "Les plus kiffés" : "Most loved"}
+              title={hubCopy.mostLoved}
               icon={<Trophy className="h-4 w-4 text-yellow-400" />}
               items={topRailItems}
               {...railProps}
@@ -641,8 +612,8 @@ export default function Explore() {
 
             {discoverRailItems.length > 0 ? (
               <CommunityRail
-                title={isFr ? "Découvertes" : "Discoveries"}
-                subtitle={isFr ? "Vibes improbables — hors catégorie, 100% surprise" : "Wildcard vibes — off-category, pure surprise"}
+                title={hubCopy.discoveries}
+                subtitle={hubCopy.discoveriesSub}
                 icon={<Compass className="h-4 w-4 text-emerald-300" />}
                 items={discoverRailItems}
                 {...railProps}
@@ -658,8 +629,8 @@ export default function Explore() {
             {categoryRailPlans.map(({ category, sort, tracks: rail }) => (
               <CommunityRail
                 key={category.id}
-                title={isFr ? category.title.fr : category.title.en}
-                subtitle={categoryRailSubtitle(sort, isFr)}
+                title={hubCopy.categoryTitle(category)}
+                subtitle={hubCopy.categoryRailSubtitle(sort)}
                 icon={<Waves className="h-4 w-4 text-violet-300" />}
                 items={rail}
                 {...railProps}
@@ -679,7 +650,7 @@ export default function Explore() {
             <div>
               <h2 className="text-lg font-semibold text-white">{catalogTitle}</h2>
               {activeCategory ? (
-                <p className="mt-1 text-xs text-white/45">{isFr ? activeCategory.subtitle.fr : activeCategory.subtitle.en}</p>
+                <p className="mt-1 text-xs text-white/45">{hubCopy.categorySubtitle(activeCategory)}</p>
               ) : null}
             </div>
             {!loading ? <span className="text-xs font-medium text-white/40">{filtered.length}</span> : null}
@@ -687,19 +658,16 @@ export default function Explore() {
 
           {!loading && filtered.length === 0 ? (
             <div className="rounded-2xl pk-prism-card-soft p-8 text-center">
-              <div className="text-sm font-semibold">{isFr ? "Rien ici pour l’instant" : "Nothing here yet"}</div>
+              <div className="text-sm font-semibold">{hubCopy.nothingHere}</div>
               <div className="mt-2 text-sm text-pk-muted">
-                {fetchError ??
-                  (isFr
-                    ? "Aucune track avec audio public dans cette vibe. Essaie une autre catégorie ou crée le premier son."
-                    : "No public playable tracks in this vibe. Try another category or create the first one.")}
+                {fetchError ?? hubCopy.emptyVibe}
               </div>
               <div className="mt-4 flex justify-center gap-2">
                 <Button variant="secondary" onClick={() => setRefetchToken((x) => x + 1)}>
-                  {isFr ? "Réessayer" : "Retry"}
+                  {hubCopy.retry}
                 </Button>
                 <Link to="/dashboard">
-                  <Button variant="primary">{isFr ? "Créer un track" : "Create a track"}</Button>
+                  <Button variant="primary">{hubCopy.createTrack}</Button>
                 </Link>
               </div>
             </div>
@@ -709,7 +677,7 @@ export default function Explore() {
             {loading ? (
               <>
                 <div className="col-span-full flex justify-center py-8">
-                  <PkIconLoader icon="community" size="md" label={isFr ? "Chargement…" : "Loading…"} />
+                  <PkIconLoader icon="community" size="md" label={hubCopy.loading} />
                 </div>
                 {Array.from({ length: 8 }).map((_, i) => (
                   <div key={i} className="rounded-2xl pk-prism-card-soft p-3 animate-pulse">
@@ -723,7 +691,7 @@ export default function Explore() {
                 <CommunityTrackCard
                   key={r.id}
                   row={r}
-                  isFr={isFr}
+                  locale={locale}
                   isActive={current?.id === r.id}
                   isPlaying={isPlaying}
                   resolving={resolvingId === r.id}
@@ -743,14 +711,14 @@ export default function Explore() {
         </section>
 
         <CommunitySeoFooter
-          isFr={isFr}
+          locale={locale}
           variant={activeCategory ? "vibe" : "hub"}
-          vibeTitle={activeCategory ? (isFr ? activeCategory.title.fr : activeCategory.title.en) : undefined}
+          vibeTitle={activeCategory ? hubCopy.categoryTitle(activeCategory) : undefined}
         />
 
         <div className="flex justify-center pb-2">
           <Link to="/library" className="pk-accent-link text-xs font-semibold">
-            {isFr ? "Ma bibliothèque privée →" : "My private library →"}
+            {hubCopy.privateLibrary}
           </Link>
         </div>
       </div>
@@ -762,7 +730,7 @@ export default function Explore() {
           setSheetFocusComments(false);
         }}
         row={sheetTrack}
-        isFr={isFr}
+        locale={locale}
         isActive={sheetTrack ? current?.id === sheetTrack.id : false}
         isPlaying={isPlaying}
         resolving={sheetTrack ? resolvingId === sheetTrack.id : false}

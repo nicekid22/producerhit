@@ -1,3 +1,6 @@
+import type { AppLocale } from "@/i18n/config";
+import { buildLoopPageSeoCopy } from "@/i18n/loopPageSeoCatalog";
+
 export function setDocumentMeta(nameOrProp: string, value: string, kind: "name" | "property") {
   if (typeof document === "undefined") return;
   const selector = kind === "name" ? `meta[name="${nameOrProp}"]` : `meta[property="${nameOrProp}"]`;
@@ -39,36 +42,12 @@ export function buildLoopKeywords(opts: {
   genre?: string;
   mood?: string;
   bpm?: number | null;
+  locale?: AppLocale;
+  /** @deprecated use locale */
   isFr?: boolean;
 }): string[] {
-  const genre = (opts.genre ?? "").trim();
-  const mood = (opts.mood ?? "").trim();
-  const name = (opts.name ?? "").trim();
-  const bpm = typeof opts.bpm === "number" && opts.bpm > 0 ? `${opts.bpm} BPM` : "";
-  if (opts.isFr) {
-    return [
-      "beat IA",
-      "type beat IA",
-      "générateur beats IA",
-      genre ? `beat ${genre} IA` : "",
-      mood ? `beat ${mood}` : "",
-      name,
-      bpm,
-      "ProducerHit",
-      "remix IA",
-    ].filter(Boolean);
-  }
-  return [
-    "AI beat",
-    "AI type beat",
-    "AI beat generator",
-    genre ? `${genre} AI beat` : "",
-    mood ? `${mood} beat` : "",
-    name,
-    bpm,
-    "ProducerHit",
-    "AI remix",
-  ].filter(Boolean);
+  const locale: AppLocale = opts.locale ?? (opts.isFr ? "fr" : "en");
+  return buildLoopPageSeoCopy(locale).keywords(opts);
 }
 
 export function buildLoopStructuredData(opts: {
@@ -85,12 +64,14 @@ export function buildLoopStructuredData(opts: {
   authorName?: string | null;
   ratingValue?: number | null;
   ratingCount?: number;
+  locale?: AppLocale;
+  /** @deprecated use locale */
   isFr?: boolean;
 }) {
+  const locale: AppLocale = opts.locale ?? (opts.isFr ? "fr" : "en");
+  const seo = buildLoopPageSeoCopy(locale);
   const descriptionParts = [opts.genre, opts.mood, opts.bpm && opts.bpm > 0 ? `${opts.bpm} BPM` : null].filter(Boolean);
-  const description =
-    descriptionParts.join(" · ") ||
-    (opts.isFr ? "Track IA public sur ProducerHit" : "Public AI track on ProducerHit");
+  const description = descriptionParts.join(" · ") || seo.defaultDescription;
 
   const recording: Record<string, unknown> = {
     "@type": "MusicRecording",
@@ -101,7 +82,7 @@ export function buildLoopStructuredData(opts: {
     description,
     genre: opts.genre || undefined,
     datePublished: opts.createdAt || undefined,
-    inLanguage: opts.isFr ? "fr" : "en",
+    inLanguage: seo.inLanguage,
     isAccessibleForFree: true,
     publisher: { "@type": "Organization", name: "ProducerHit", url: "https://www.producerhit.com" },
   };
@@ -124,11 +105,11 @@ export function buildLoopStructuredData(opts: {
       {
         "@type": "BreadcrumbList",
         itemListElement: [
-          { "@type": "ListItem", position: 1, name: opts.isFr ? "Accueil" : "Home", item: "https://www.producerhit.com/" },
+          { "@type": "ListItem", position: 1, name: seo.home, item: "https://www.producerhit.com/" },
           {
             "@type": "ListItem",
             position: 2,
-            name: opts.isFr ? "Communauté" : "Community",
+            name: seo.community,
             item: "https://www.producerhit.com/community",
           },
           { "@type": "ListItem", position: 3, name: opts.name, item: opts.pageUrl },
@@ -187,22 +168,21 @@ export function setLoopPageSeo(opts: {
   authorName?: string | null;
   ratingValue?: number | null;
   ratingCount?: number;
+  locale?: AppLocale;
+  /** @deprecated use locale */
   isFr?: boolean;
 }) {
+  const locale: AppLocale = opts.locale ?? (opts.isFr ? "fr" : "en");
+  const seo = buildLoopPageSeoCopy(locale);
   const pageUrl = `https://www.producerhit.com/loop/${opts.id}`;
-  const genreLabel = (opts.genre ?? "").trim();
-  const title = genreLabel
-    ? `${opts.name} — ${genreLabel} ${opts.isFr ? "IA" : "AI"} | ProducerHit`
-    : `${opts.name} — ${opts.isFr ? "Track IA" : "AI Track"} | ProducerHit`;
+  const title = seo.pageTitle(opts.name, opts.genre);
 
   const description = [
     opts.name,
-    genreLabel,
+    (opts.genre ?? "").trim(),
     opts.mood,
     opts.bpm && opts.bpm > 0 ? `${opts.bpm} BPM` : null,
-    opts.isFr
-      ? "Écoute ce beat IA, remixe la vibe et crée le tien gratuitement sur ProducerHit."
-      : "Listen to this AI beat, remix the vibe, and create your own free on ProducerHit.",
+    seo.ogPitch,
   ]
     .filter(Boolean)
     .join(" · ");
@@ -220,7 +200,7 @@ export function setLoopPageSeo(opts: {
     genre: opts.genre,
     mood: opts.mood,
     bpm: opts.bpm,
-    isFr: opts.isFr,
+    locale,
   });
 
   setLoopOpenGraph({
@@ -248,7 +228,7 @@ export function setLoopPageSeo(opts: {
       authorName: opts.authorName,
       ratingValue: opts.ratingValue,
       ratingCount: opts.ratingCount,
-      isFr: opts.isFr,
+      locale,
     }),
   );
 }

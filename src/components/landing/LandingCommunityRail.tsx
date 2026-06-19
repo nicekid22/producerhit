@@ -8,8 +8,9 @@ import { publicRowToCoverLoop, resolveLoopDisplayCoverUrl } from "@/lib/coverArt
 import { COVER_SURFACE_CLASS, cn } from "@/lib/utils";
 import { isPlayablePublicLoop } from "@/lib/publicLoops";
 import { ProfileAuthorChip } from "@/components/profile/ProfileAuthorChip";
-
 import type { AppLocale } from "@/i18n/config";
+import { buildLandingCommunityRailCopy } from "@/i18n/landingCommunityRailCatalog";
+
 export type LandingCommunityTrack = {
   id: string;
   name: string;
@@ -70,13 +71,13 @@ function LandingCommunityCardCover({
   track,
   coverPriority,
   playingNow,
-  isFr,
+  copy,
   onPlay,
 }: {
   track: LandingCommunityTrack;
   coverPriority: boolean;
   playingNow: boolean;
-  isFr: boolean;
+  copy: ReturnType<typeof buildLandingCommunityRailCopy>;
   onPlay: () => void;
 }) {
   const loopForCover = toCoverLoop(track);
@@ -86,15 +87,7 @@ function LandingCommunityCardCover({
       type="button"
       onClick={onPlay}
       className="pk-landing-community__cover-btn w-full text-left"
-      aria-label={
-        playingNow
-          ? isFr
-            ? `Pause ${track.name}`
-            : `Pause ${track.name}`
-          : isFr
-            ? `Écouter ${track.name}`
-            : `Play ${track.name}`
-      }
+      aria-label={playingNow ? copy.ariaPause(track.name) : copy.ariaPlay(track.name)}
     >
       <div
         className={cn(
@@ -119,7 +112,7 @@ function LandingCommunityCardCover({
         {track.createdAt && isNew(track.createdAt) ? (
           <div className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/45 px-2.5 py-1 text-[10px] font-semibold text-white backdrop-blur-sm">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-            {isFr ? "Nouveau" : "New"}
+            {copy.newBadge}
           </div>
         ) : null}
         {playingNow ? (
@@ -236,7 +229,7 @@ export function LandingCommunityRail({
   footer,
   compactLead = false,
 }: Props) {
-  const isFr = locale === "fr";
+  const copy = useMemo(() => buildLandingCommunityRailCopy(locale), [locale]);
   const reduceMotion = useReducedMotion();
   const railRef = useRef<HTMLDivElement | null>(null);
   const loadSentinelRef = useRef<HTMLDivElement | null>(null);
@@ -352,11 +345,11 @@ export function LandingCommunityRail({
           <div className="flex flex-wrap items-center gap-2">
             <span className="pk-prism-live-badge">
               <span className="pk-prism-live-badge__dot" aria-hidden />
-              {isFr ? "Live" : "Live"}
+              {copy.live}
             </span>
             {!loading && totalLabel ? (
               <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white/45">
-                {totalLabel} {isFr ? "tracks" : "tracks"}
+                {totalLabel} {copy.tracks}
               </span>
             ) : null}
           </div>
@@ -375,14 +368,14 @@ export function LandingCommunityRail({
             className="pk-glass-btn pk-glass-btn--ghost inline-flex h-10 items-center gap-2 rounded-full px-4 text-xs font-semibold disabled:opacity-40"
           >
             <Shuffle className="h-3.5 w-3.5" />
-            {isFr ? "Aléatoire" : "Shuffle"}
+            {copy.shuffle}
           </button>
           <Link
             to="/community"
             className="pk-glass-btn pk-glass-btn--primary inline-flex h-10 items-center gap-2 rounded-full px-4 text-xs font-semibold"
           >
             <Radio className="h-3.5 w-3.5" />
-            {isFr ? "Toute la communauté" : "Full community"}
+            {copy.fullCommunity}
           </Link>
         </div>
       </div>
@@ -399,7 +392,7 @@ export function LandingCommunityRail({
           onClick={() => scrollByStep(-1)}
           disabled={!canScrollLeft}
           className={cn("pk-landing-community__nav pk-landing-community__nav--left", canScrollLeft && "is-visible")}
-          aria-label={isFr ? "Précédent" : "Previous"}
+          aria-label={copy.previous}
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
@@ -408,7 +401,7 @@ export function LandingCommunityRail({
           onClick={() => scrollByStep(1)}
           disabled={!canScrollRight}
           className={cn("pk-landing-community__nav pk-landing-community__nav--right", canScrollRight && "is-visible")}
-          aria-label={isFr ? "Suivant" : "Next"}
+          aria-label={copy.next}
         >
           <ChevronRight className="h-5 w-5" />
         </button>
@@ -449,7 +442,7 @@ export function LandingCommunityRail({
                         track={t}
                         coverPriority={dist <= 1}
                         playingNow={playingNow}
-                        isFr={isFr}
+                        copy={copy}
                         onPlay={() => onPlay(t)}
                       />
 
@@ -457,7 +450,7 @@ export function LandingCommunityRail({
                         <div className="truncate text-sm font-semibold text-white">{t.name}</div>
                         {t.author ? (
                           <div className="mt-1.5">
-                            <ProfileAuthorChip author={t.author} isFr={isFr} hideAvatar size="sm" className="max-w-full" />
+                            <ProfileAuthorChip author={t.author} locale={locale} hideAvatar size="sm" className="max-w-full" />
                           </div>
                         ) : null}
                         <div className="mt-2 flex flex-wrap gap-1.5">
@@ -483,7 +476,7 @@ export function LandingCommunityRail({
                             )}
                           >
                             {playingNow ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
-                            {playingNow ? (isFr ? "Pause" : "Pause") : isFr ? "Écouter" : "Listen"}
+                            {playingNow ? copy.pause : copy.listen}
                           </button>
                           <button
                             type="button"
@@ -491,7 +484,7 @@ export function LandingCommunityRail({
                             className="pk-glass-btn pk-glass-btn--ghost inline-flex h-9 items-center justify-center gap-1.5 rounded-full px-3 text-xs font-semibold"
                           >
                             <Sparkles className="h-3.5 w-3.5 text-violet-300" />
-                            {isFr ? "Remixer" : "Remix"}
+                            {copy.remix}
                           </button>
                         </div>
                       </div>
@@ -525,20 +518,16 @@ export function LandingCommunityRail({
               : (
                 <div className="pk-landing-community__empty pk-prism-card p-6" role="listitem">
                   <div className="text-sm font-semibold text-white">
-                    {isFr ? "Aucun aperçu audio pour le moment" : "No audio previews right now"}
+                    {copy.emptyTitle}
                   </div>
-                  <div className="mt-2 text-sm text-white/55">
-                    {isFr
-                      ? "Les tracks publiques apparaissent ici dès qu’elles sont prêtes."
-                      : "Public tracks show up here as soon as they’re ready."}
-                  </div>
+                  <div className="mt-2 text-sm text-white/55">{copy.emptyHint}</div>
                   {onRefresh ? (
                     <button
                       type="button"
                       onClick={onRefresh}
                       className="pk-glass-btn pk-glass-btn--ghost mt-4 inline-flex h-10 items-center justify-center rounded-full px-5 text-sm font-semibold"
                     >
-                      {isFr ? "Rafraîchir" : "Refresh"}
+                      {copy.refresh}
                     </button>
                   ) : null}
                 </div>
@@ -550,7 +539,7 @@ export function LandingCommunityRail({
         </div>
 
         {!loading && tracks.length > 1 ? (
-          <div className="pk-landing-community__filmstrip" role="tablist" aria-label={isFr ? "Navigation des tracks" : "Track navigation"}>
+          <div className="pk-landing-community__filmstrip" role="tablist" aria-label={copy.trackNavigation}>
             {tracks.map((t, i) => {
               const mounted = i < visibleCount;
               const isActive = i === focusedIndex && mounted;
@@ -581,7 +570,7 @@ export function LandingCommunityRail({
 
         {!loading && visibleTracks.length > 3 && visibleCount < tracks.length ? (
           <p className="pk-landing-community__scroll-hint">
-            {isFr ? "Continue à défiler — d’autres tracks arrivent" : "Keep scrolling — more tracks loading"}
+            {copy.scrollHint}
           </p>
         ) : null}
       </div>

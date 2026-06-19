@@ -14,6 +14,7 @@ import type { PaidPlanId } from "@/lib/planEntitlements";
 import { cn } from "@/lib/utils";
 
 import type { AppLocale } from "@/i18n/config";
+import { buildPlanUpsellModalCopy } from "@/i18n/planUpsellModalCatalog";
 type Props = {
   open: boolean;
   reason: UpsellReason | null;
@@ -41,7 +42,7 @@ export function PlanUpsellModal({
   const [busy, setBusy] = useState(false);
   const ctx = { source, plan, remaining, totalLimit, usedThisMonth };
   const visible = reason ? shouldShowPlanUpsell(plan, reason, ctx) : false;
-  const isFr = locale === "fr";
+  const ui = buildPlanUpsellModalCopy(locale);
 
   useEffect(() => {
     if (!reason) return;
@@ -123,7 +124,7 @@ export function PlanUpsellModal({
         <button
           type="button"
           className="absolute right-4 top-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white/60 transition hover:text-white"
-          aria-label={isFr ? "Fermer" : "Close"}
+          aria-label={ui.close}
           onClick={trackDismiss}
         >
           <X className="h-4 w-4" aria-hidden />
@@ -143,19 +144,13 @@ export function PlanUpsellModal({
             </div>
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/42">
-                {urgent
-                  ? isFr
-                    ? "Quota atteint"
-                    : "Limit reached"
-                  : isFr
-                    ? "Passe Pro"
-                    : "Go Pro"}
+                {ui.eyebrow(urgent)}
               </p>
               {!showLaunch && targetPlan ? (
                 <p className="mt-0.5 text-sm font-bold tabular-nums text-white">
                   {planPriceLabel(targetPlan, locale, { suffix: true })}
                   <span className="ml-1 text-xs font-medium text-white/45">
-                    {isFr ? "· annulable" : "· cancel anytime"}
+                    {ui.cancelAnytime}
                   </span>
                 </p>
               ) : null}
@@ -202,7 +197,7 @@ export function PlanUpsellModal({
               disabled={busy}
               onClick={() => void startUpgrade(targetPlan)}
             >
-              {busy ? (isFr ? "Ouverture du paiement…" : "Opening checkout…") : copy.primaryLabel}
+              {busy ? ui.openingCheckout : copy.primaryLabel}
             </Button>
             <button
               type="button"
@@ -216,7 +211,7 @@ export function PlanUpsellModal({
 
           <p className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-white/38">
             <Lock className="h-3 w-3 shrink-0" aria-hidden />
-            {isFr ? "Paiement Stripe · Apple Pay · Google Pay" : "Stripe checkout · Apple Pay · Google Pay"}
+            {ui.stripeFooter}
           </p>
         </div>
       </div>

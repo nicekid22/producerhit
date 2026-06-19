@@ -21,6 +21,7 @@ import { COVER_SURFACE_CLASS, cn } from "@/lib/utils";
 import { resolveLoopDisplayCoverUrl } from "@/lib/coverArt";
 import { useAuthStore } from "@/stores/authStore";
 import { useLocaleStore } from "@/stores/localeStore";
+import { buildCreatorProfilePageCopy } from "@/i18n/creatorProfilePageCatalog";
 import type { Loop } from "@/types/loop";
 
 function toLoop(row: UserPublicLoop): Loop {
@@ -52,7 +53,7 @@ export default function CreatorProfile() {
   const { username } = useParams();
   const navigate = useNavigate();
   const locale = useLocaleStore((s) => s.locale);
-  const isFr = locale === "fr";
+  const copy = useMemo(() => buildCreatorProfilePageCopy(locale), [locale]);
   const user = useAuthStore((s) => s.user);
 
   const [loading, setLoading] = useState(true);
@@ -91,7 +92,7 @@ export default function CreatorProfile() {
       tt: "TikTok",
       yt: "YouTube",
       x: "X",
-      web: isFr ? "Site web" : "Website",
+      web: copy.website,
     };
     return (Object.entries(profile.social) as [keyof typeof profile.social, string][])
       .filter(([, v]) => typeof v === "string" && v.trim())
@@ -100,7 +101,7 @@ export default function CreatorProfile() {
         label: labels[key] ?? key,
         href: socialUrl(key, value),
       }));
-  }, [isFr, profile]);
+  }, [copy.website, profile]);
 
   const onFollow = () => {
     if (!profile) return;
@@ -113,7 +114,7 @@ export default function CreatorProfile() {
     void (async () => {
       const result = await toggleProfileFollow(profile.id);
       if (!result.ok) {
-        toast.error(creatorProfileErrorMessage("error" in result ? result.error : "follow_failed", isFr));
+        toast.error(creatorProfileErrorMessage("error" in result ? result.error : "follow_failed", locale));
         setFollowBusy(false);
         return;
       }
@@ -126,15 +127,7 @@ export default function CreatorProfile() {
             }
           : prev,
       );
-      toast.success(
-        result.following
-          ? isFr
-            ? "Abonnement activé"
-            : "Following"
-          : isFr
-            ? "Abonnement retiré"
-            : "Unfollowed",
-      );
+      toast.success(result.following ? copy.followActivated : copy.unfollowed);
       setFollowBusy(false);
     })();
   };
@@ -147,7 +140,7 @@ export default function CreatorProfile() {
       <main className="mx-auto max-w-4xl px-4 py-10">
         <div className="text-sm text-pk-muted">
           <Link className="font-semibold text-pk-accent hover:underline" to="/community">
-            {isFr ? "Communauté" : "Community"}
+            {copy.community}
           </Link>
           <span className="px-2">/</span>
           <span>@{username}</span>
@@ -155,19 +148,17 @@ export default function CreatorProfile() {
 
         {loading ? (
           <div className="mt-16 flex justify-center">
-            <PkIconLoader icon="community" size="md" label={isFr ? "Chargement du profil…" : "Loading profile…"} />
+            <PkIconLoader icon="community" size="md" label={copy.loadingProfile} />
           </div>
         ) : !profile ? (
           <div className="mt-12 rounded-2xl border border-pk-border bg-pk-panel/70 p-8 text-center">
-            <div className="text-lg font-semibold">{isFr ? "Profil introuvable" : "Profile not found"}</div>
+            <div className="text-lg font-semibold">{copy.profileNotFound}</div>
             <p className="mt-2 text-sm text-pk-muted">
-              {isFr
-                ? "Ce username n’existe pas ou n’a pas encore été configuré."
-                : "This username does not exist or has not been set up yet."}
+              {copy.profileNotFoundHint}
             </p>
             <div className="mt-5">
               <Link to="/community">
-                <Button variant="primary">{isFr ? "Explorer la communauté" : "Explore community"}</Button>
+                <Button variant="primary">{copy.exploreCommunity}</Button>
               </Link>
             </div>
           </div>
@@ -181,17 +172,17 @@ export default function CreatorProfile() {
                     <h1 className="truncate text-2xl font-bold">@{profile.username}</h1>
                     {profile.creator_type ? (
                       <div className="mt-2 inline-flex rounded-full border border-violet-400/30 bg-violet-500/10 px-3 py-1 text-xs font-semibold text-violet-200">
-                        {creatorTypeLabel(profile.creator_type, isFr)}
+                        {creatorTypeLabel(profile.creator_type, locale)}
                       </div>
                     ) : null}
                     {profile.bio ? <p className="mt-3 max-w-xl text-sm leading-relaxed text-pk-muted">{profile.bio}</p> : null}
                     <div className="mt-4 flex flex-wrap gap-4 text-xs font-semibold text-pk-muted">
                       <span className="inline-flex items-center gap-1.5">
                         <Users className="h-3.5 w-3.5" />
-                        {profile.followers_count} {isFr ? "abonnés" : "followers"}
+                        {profile.followers_count} {copy.followers}
                       </span>
                       <span>
-                        {profile.public_loops_count} {isFr ? "tracks publiques" : "public tracks"}
+                        {profile.public_loops_count} {copy.publicTracks}
                       </span>
                     </div>
                   </div>
@@ -203,14 +194,14 @@ export default function CreatorProfile() {
                       {followBusy ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : profile.is_following ? (
-                        isFr ? "Abonné" : "Following"
+                        copy.following
                       ) : (
-                        isFr ? "S’abonner" : "Follow"
+                        copy.follow
                       )}
                     </Button>
                   ) : (
                     <Link to="/settings">
-                      <Button variant="secondary">{isFr ? "Modifier mon profil" : "Edit profile"}</Button>
+                      <Button variant="secondary">{copy.editProfile}</Button>
                     </Link>
                   )}
                 </div>
@@ -236,13 +227,13 @@ export default function CreatorProfile() {
 
             <section className="mt-8">
               <div className="mb-4 flex items-center justify-between gap-3">
-                <h2 className="text-lg font-semibold">{isFr ? "Tracks publiques" : "Public tracks"}</h2>
+                <h2 className="text-lg font-semibold">{copy.publicTracksTitle}</h2>
                 <span className="text-xs text-pk-muted">{loops.length}</span>
               </div>
 
               {loops.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-pk-border p-8 text-center text-sm text-pk-muted">
-                  {isFr ? "Aucune track publique pour l’instant." : "No public tracks yet."}
+                  {copy.noPublicTracks}
                 </div>
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -1,4 +1,5 @@
 import type { AppLocale } from "@/i18n/config";
+import { buildCommonSection } from "@/i18n/systemCatalog";
 import toast from "react-hot-toast";
 import type { Loop } from "@/types/loop";
 import { hasCommercialUseRights } from "@/lib/planEntitlements";
@@ -60,7 +61,7 @@ export async function downloadCommercialBeat({
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    toast.success(locale === "fr" ? "Beat téléchargé !" : "Beat downloaded!");
+    toast.success(buildCommonSection(locale).beatDownloaded);
 
     useCommercialLicenseStore.getState().openLicense({
       loopId: loop.id,
@@ -72,7 +73,7 @@ export async function downloadCommercialBeat({
 
     return true;
   } catch {
-    toast.error(locale === "fr" ? "Échec du téléchargement — réessaie" : "Download failed — try again");
+    toast.error(buildCommonSection(locale).downloadFailed);
     return false;
   }
 }

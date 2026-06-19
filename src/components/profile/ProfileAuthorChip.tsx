@@ -1,12 +1,15 @@
 import { Link } from "react-router-dom";
 import type { MouseEvent } from "react";
+import type { AppLocale } from "@/i18n/config";
 import { cn } from "@/lib/utils";
 import { creatorTypeLabel, profilePath, type PublicProfileCard } from "@/lib/creatorProfile";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 
 type ProfileAuthorChipProps = {
   author: PublicProfileCard | null | undefined;
-  isFr: boolean;
+  locale?: AppLocale;
+  /** @deprecated use locale */
+  isFr?: boolean;
   size?: "sm" | "md";
   className?: string;
   hideAvatar?: boolean;
@@ -15,6 +18,7 @@ type ProfileAuthorChipProps = {
 
 export function ProfileAuthorChip({
   author,
+  locale,
   isFr,
   size = "sm",
   className,
@@ -23,7 +27,8 @@ export function ProfileAuthorChip({
 }: ProfileAuthorChipProps) {
   if (!author?.username) return null;
 
-  const type = creatorTypeLabel(author.creator_type, isFr);
+  const resolvedLocale = locale ?? (isFr ? "fr" : "en");
+  const type = creatorTypeLabel(author.creator_type, resolvedLocale);
 
   return (
     <Link

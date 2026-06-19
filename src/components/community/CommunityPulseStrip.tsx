@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import type { CommunityPulseItem } from "@/lib/communityPulse";
+import type { AppLocale } from "@/i18n/config";
+import { buildCommunityHubUiCopy } from "@/i18n/communityHubUiCatalog";
 import { cn } from "@/lib/utils";
 
 type Props = {
   items: CommunityPulseItem[];
-  isFr: boolean;
+  locale: AppLocale;
 };
 
-export function CommunityPulseStrip({ items, isFr }: Props) {
+export function CommunityPulseStrip({ items, locale }: Props) {
+  const copy = useMemo(() => buildCommunityHubUiCopy(locale), [locale]);
   const [activeIdx, setActiveIdx] = useState(0);
   const visible = useMemo(() => items.filter(Boolean), [items]);
 
@@ -23,7 +26,7 @@ export function CommunityPulseStrip({ items, isFr }: Props) {
   if (!visible.length) return null;
 
   const item = visible[activeIdx % visible.length];
-  const text = isFr ? item.textFr : item.textEn;
+  const text = locale === "fr" ? item.textFr : item.textEn;
 
   const body = (
     <>
@@ -35,9 +38,9 @@ export function CommunityPulseStrip({ items, isFr }: Props) {
   );
 
   return (
-    <section className="pk-hub-pulse" aria-live="polite" aria-label={isFr ? "Actu du flux" : "Feed pulse"}>
+    <section className="pk-hub-pulse" aria-live="polite" aria-label={copy.feedPulse}>
       <div className="pk-hub-pulse__track">
-        <span className="pk-hub-pulse__live">{isFr ? "LIVE" : "LIVE"}</span>
+        <span className="pk-hub-pulse__live">LIVE</span>
         {item.href ? (
           <Link
             to={item.href}

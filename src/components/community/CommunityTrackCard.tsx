@@ -1,17 +1,21 @@
+import { useMemo } from "react";
 import { Info, MessageCircle, Pause, Play, Sparkles, Star } from "lucide-react";
 import { ProfileAuthorChip } from "@/components/profile/ProfileAuthorChip";
 import { StoredLoopCover } from "@/components/cover/StoredLoopCover";
-import { publicRowToCoverLoop, resolveCommunityDisplayCoverUrl, resolvePublicRowCoverUrl } from "@/lib/coverArt";
+import { resolveCommunityDisplayCoverUrl, resolvePublicRowCoverUrl } from "@/lib/coverArt";
 import { displayProducerInfluence } from "@/lib/beatInfluence";
 import { useLazyPinterestCover } from "@/hooks/useLazyPinterestCover";
 import { COVER_SURFACE_CLASS, cn } from "@/lib/utils";
 import type { PublicLoopRow } from "@/lib/publicLoops";
+import type { AppLocale } from "@/i18n/config";
+import { buildCommunityHubUiCopy } from "@/i18n/communityHubUiCatalog";
+import { buildPublicLoopPageCopy } from "@/i18n/publicLoopPageCatalog";
 
 type RatingStats = { sum: number; count: number; myRating: number | null };
 
 type Props = {
   row: PublicLoopRow;
-  isFr: boolean;
+  locale: AppLocale;
   variant?: "grid" | "rail";
   isActive: boolean;
   isPlaying: boolean;
@@ -29,7 +33,7 @@ type Props = {
 
 function CardSocialFooter({
   compact,
-  isFr,
+  locale,
   rating,
   commentCount,
   resolving,
@@ -38,7 +42,7 @@ function CardSocialFooter({
   onOpenDetail,
 }: {
   compact: boolean;
-  isFr: boolean;
+  locale: AppLocale;
   rating?: RatingStats;
   commentCount: number;
   resolving: boolean;
@@ -46,6 +50,8 @@ function CardSocialFooter({
   onRemix: () => void;
   onOpenDetail?: (focusComments?: boolean) => void;
 }) {
+  const hub = useMemo(() => buildCommunityHubUiCopy(locale), [locale]);
+  const loop = useMemo(() => buildPublicLoopPageCopy(locale), [locale]);
   const my = rating?.myRating ?? 0;
   const avg = rating && rating.count > 0 ? (rating.sum / rating.count).toFixed(1) : null;
 
@@ -66,7 +72,7 @@ function CardSocialFooter({
                 type="button"
                 onClick={() => onRate(star)}
                 className="rounded p-0.5 transition-colors hover:bg-white/5"
-                aria-label={isFr ? `Noter ${star}/5` : `Rate ${star}/5`}
+                aria-label={loop.rateStar(star)}
               >
                 <Star
                   className={cn(
@@ -91,8 +97,8 @@ function CardSocialFooter({
           type="button"
           onClick={() => onOpenDetail?.(true)}
           className="pk-community-card__action pk-community-card__action--comment"
-          aria-label={isFr ? "Commenter" : "Comment"}
-          title={isFr ? "Commenter" : "Comment"}
+          aria-label={hub.comment}
+          title={hub.comment}
         >
           <MessageCircle className="h-3.5 w-3.5" />
           {commentCount > 0 ? <span>{commentCount}</span> : null}
@@ -111,8 +117,8 @@ function CardSocialFooter({
           type="button"
           onClick={() => onOpenDetail?.(false)}
           className="pk-community-card__action"
-          aria-label={isFr ? "Ouvrir" : "Open"}
-          title={isFr ? "Ouvrir" : "Open"}
+          aria-label={hub.open}
+          title={hub.open}
         >
           <Info className="h-3.5 w-3.5" />
         </button>
@@ -123,7 +129,7 @@ function CardSocialFooter({
 
 export function CommunityTrackCard({
   row,
-  isFr,
+  locale,
   variant = "grid",
   isActive,
   isPlaying,
@@ -138,7 +144,7 @@ export function CommunityTrackCard({
   onOpenDetail,
   slotIndex = 0,
 }: Props) {
-  const loop = publicRowToCoverLoop(row);
+  const hub = useMemo(() => buildCommunityHubUiCopy(locale), [locale]);
   const storedCover = resolvePublicRowCoverUrl(row);
   const needsLazyPinterest = !storedCover.startsWith("http");
   const { ref: coverRef, url: lazyCover } = useLazyPinterestCover(
@@ -154,6 +160,7 @@ export function CommunityTrackCard({
   const producerInfluence = displayProducerInfluence(row.influence);
   const playingNow = isActive && isPlaying;
   const compact = variant === "rail";
+  const trackName = row.name ?? hub.untitled;
 
   return (
     <article
@@ -168,7 +175,7 @@ export function CommunityTrackCard({
         type="button"
         onClick={onPlay}
         className="pk-community-card__cover-btn w-full text-left"
-        aria-label={playingNow ? (isFr ? `Pause ${row.name}` : `Pause ${row.name}`) : isFr ? `Écouter ${row.name}` : `Play ${row.name}`}
+        aria-label={playingNow ? hub.ariaPause(trackName) : hub.ariaPlay(trackName)}
       >
         <div className={cn("pk-community-card__cover relative overflow-hidden rounded-2xl", COVER_SURFACE_CLASS)}>
           <StoredLoopCover coverUrl={coverUrl} className="absolute inset-0 h-full w-full" loading="lazy" />
@@ -186,13 +193,13 @@ export function CommunityTrackCard({
             ) : null}
             {isMine ? (
               <span className="pk-accent-badge rounded-full px-2 py-0.5 text-[10px] font-semibold backdrop-blur-sm">
-                {isFr ? "Ton son" : "Yours"}
+                {hub.yours}
               </span>
             ) : null}
             {isNew ? (
               <span className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-black/45 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                {isFr ? "Nouveau" : "New"}
+                {hub.badgeNew}
               </span>
             ) : null}
           </div>
@@ -218,13 +225,9 @@ export function CommunityTrackCard({
       </button>
 
       <div className="pk-community-card__body mt-3 min-w-0">
-        <button
-          type="button"
-          onClick={() => onOpenDetail?.(false)}
-          className="w-full text-left"
-        >
+        <button type="button" onClick={() => onOpenDetail?.(false)} className="w-full text-left">
           <h3 className="truncate text-sm font-semibold text-white transition-colors group-hover:text-[var(--pk-community-accent,#a5f3fc)]">
-            {row.name ?? "Untitled"}
+            {trackName}
           </h3>
           <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-white/50">
             {producerInfluence ? (
@@ -246,13 +249,13 @@ export function CommunityTrackCard({
         </button>
         {row.author ? (
           <div className="mt-2">
-            <ProfileAuthorChip author={row.author} isFr={isFr} size="sm" hideAvatar />
+            <ProfileAuthorChip author={row.author} locale={locale} size="sm" hideAvatar />
           </div>
         ) : null}
 
         <CardSocialFooter
           compact={compact}
-          isFr={isFr}
+          locale={locale}
           rating={rating}
           commentCount={commentCount}
           resolving={resolving}

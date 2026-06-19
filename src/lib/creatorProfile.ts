@@ -1,4 +1,10 @@
 import { supabase } from "@/lib/supabaseClient";
+import type { AppLocale } from "@/i18n/config";
+import {
+  creatorProfileErrorMessageI18n,
+  creatorTypeLabelI18n,
+  validateUsernameI18n,
+} from "@/i18n/settingsCatalog";
 
 export type CreatorType =
   | "beatmaker"
@@ -78,11 +84,9 @@ export const CREATOR_TYPE_OPTIONS: { value: CreatorType; labelEn: string; labelF
   { value: "other", labelEn: "Other", labelFr: "Autre" },
 ];
 
-export function creatorTypeLabel(type: CreatorType | null | undefined, isFr: boolean): string {
-  if (!type) return "";
-  const hit = CREATOR_TYPE_OPTIONS.find((o) => o.value === type);
-  if (!hit) return type;
-  return isFr ? hit.labelFr : hit.labelEn;
+export function creatorTypeLabel(type: CreatorType | null | undefined, locale: AppLocale | boolean): string {
+  const resolved: AppLocale = typeof locale === "boolean" ? (locale ? "fr" : "en") : locale;
+  return creatorTypeLabelI18n(type, resolved);
 }
 
 export function avatarPreset(id: number) {
@@ -108,48 +112,12 @@ export function normalizeSocial(input: CreatorSocialLinks): CreatorSocialLinks {
   return out;
 }
 
-export function validateUsername(username: string, isFr: boolean, required = false): string | null {
-  const value = username.trim();
-  if (!value) {
-    return required ? (isFr ? "Username requis" : "Username required") : null;
-  }
-  if (value.length < 3 || value.length > 24) {
-    return isFr ? "3 à 24 caractères" : "3 to 24 characters";
-  }
-  if (!/^[A-Za-z0-9_]+$/.test(value)) {
-    return isFr ? "Lettres, chiffres et _ uniquement" : "Letters, numbers and _ only";
-  }
-  return null;
+export function validateUsername(username: string, locale: AppLocale, required = false): string | null {
+  return validateUsernameI18n(username, locale, required);
 }
 
-export function creatorProfileErrorMessage(code: string, isFr: boolean): string {
-  const lower = code.toLowerCase();
-  if (
-    lower.includes("username_taken") ||
-    lower.includes("duplicate key") ||
-    lower.includes("unique constraint") ||
-    lower.includes("23505")
-  ) {
-    return isFr ? "Ce username est déjà pris" : "Username already taken";
-  }
-  if (lower.includes("profile_not_found")) {
-    return isFr ? "Profil introuvable — reconnecte-toi." : "Profile not found — sign in again.";
-  }
-  switch (code) {
-    case "username_taken":
-      return isFr ? "Ce username est déjà pris" : "Username already taken";
-    case "username_length":
-      return isFr ? "Username : 3 à 24 caractères" : "Username: 3 to 24 characters";
-    case "username_format":
-      return isFr ? "Format invalide (a-z, 0-9, _)" : "Invalid format (a-z, 0-9, _)";
-    case "not_authenticated":
-      return isFr ? "Connecte-toi pour continuer" : "Sign in to continue";
-    default:
-      if (import.meta.env.DEV && code && code !== "save_failed") {
-        return isFr ? `Impossible de sauvegarder : ${code}` : `Could not save: ${code}`;
-      }
-      return isFr ? "Impossible de sauvegarder" : "Could not save";
-  }
+export function creatorProfileErrorMessage(code: string, locale: AppLocale): string {
+  return creatorProfileErrorMessageI18n(code, locale);
 }
 
 function parseSocial(raw: unknown): CreatorSocialLinks {

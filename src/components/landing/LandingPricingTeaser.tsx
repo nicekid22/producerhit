@@ -7,6 +7,7 @@ import { PricingPlanButton } from "@/components/pricing/PricingPlanButton";
 import { PLAN_MONTHLY_USD } from "@/lib/planPricing";
 import { PLAN_LIMITS } from "@/lib/planLimits";
 import { croPricingTeaser } from "@/lib/croTrustCopy";
+import { useT } from "@/i18n";
 import { LaunchPriceDisplay } from "@/components/marketing/LaunchPriceDisplay";
 import { isLaunchOfferActive } from "@/lib/launchOffer";
 import { cn } from "@/lib/utils";
@@ -26,7 +27,7 @@ function perGenerationHint(locale: AppLocale): string {
 }
 
 export function LandingPricingTeaser({ locale, user, currentPlan }: Props) {
-  const isFr = locale === "fr";
+  const { m } = useT();
   const teaser = croPricingTeaser(locale);
   const launchActive = isLaunchOfferActive();
   const plans = getPricingPlans(locale).filter((p) => TEASER_TIERS.includes(p.tier));
@@ -63,12 +64,12 @@ export function LandingPricingTeaser({ locale, user, currentPlan }: Props) {
                 {isPro ? (
                   <div className="pk-pricing-tier__badge pk-landing-pricing-teaser__launch-badge absolute left-1/2 top-0 flex -translate-x-1/2 items-center gap-1 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em]">
                     <Sparkles className="h-3 w-3" aria-hidden />
-                    {launchActive ? (isFr ? "Tarif lancement" : "Launch rate") : isFr ? "Populaire" : "Popular"}
+                    {launchActive ? m.cro.pricingTeaserLaunchBadge : m.cro.pricingTeaserPopular}
                   </div>
                 ) : null}
                 {isCurrent ? (
                   <span className="pk-pricing-tier__active absolute right-0 top-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide">
-                    {isFr ? "Actuel" : "Current"}
+                    {m.cro.pricingTeaserCurrent}
                   </span>
                 ) : null}
               </div>
@@ -112,9 +113,9 @@ export function LandingPricingTeaser({ locale, user, currentPlan }: Props) {
       </div>
 
       <p className="pk-landing-pricing-teaser__footnote mt-10 text-center text-xs text-white/42">
-        {isFr ? "Studio & Plus — " : "Studio & Plus — "}
+        {m.cro.pricingTeaserStudioPlus}
         <Link to="/pricing" className="font-semibold text-[var(--prism-cyan)] hover:text-white">
-          {isFr ? "voir tous les plans" : "all plans"}
+          {m.cro.pricingTeaserAllPlans}
         </Link>
       </p>
     </section>

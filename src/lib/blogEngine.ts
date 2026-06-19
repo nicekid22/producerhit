@@ -109,6 +109,8 @@ export type BlogSearchParams = {
   tag?: string;
   page?: number;
   perPage?: number;
+  /** Boost posts written for the visitor's UI locale (e.g. fr, ja). */
+  uiLocale?: string;
 };
 
 export function searchBlogPosts(allPosts: BlogPost[], params: BlogSearchParams): {
@@ -135,6 +137,15 @@ export function searchBlogPosts(allPosts: BlogPost[], params: BlogSearchParams):
     filtered = filtered.filter((p) => {
       const hay = [p.title, p.description, p.keywords.join(" "), p.tags.join(" "), p.slug].join(" ").toLowerCase();
       return hay.includes(q);
+    });
+  }
+
+  if (params.uiLocale) {
+    filtered = filtered.slice().sort((a, b) => {
+      const boost = (p: EnrichedBlogPost) => (p.locale === params.uiLocale ? 1 : 0);
+      const diff = boost(b) - boost(a);
+      if (diff !== 0) return diff;
+      return a.publishedAt < b.publishedAt ? 1 : -1;
     });
   }
 

@@ -3,6 +3,13 @@ import {
   type CommunityVibeCategory,
 } from "@/lib/communityHub";
 import type { PublicLoopRow } from "@/lib/publicLoops";
+import type { AppLocale } from "@/i18n/config";
+import {
+  buildCommunityVibeSeoMeta,
+  buildTrendingSeoMeta,
+  vibeCategorySubtitle,
+  vibeCategoryTitle,
+} from "@/i18n/communityHubUiCatalog";
 
 export const COMMUNITY_VIBE_BASE = "/community/vibe";
 export const TRENDING_PATH = "/trending";
@@ -23,75 +30,32 @@ export function isValidCommunityVibeId(id: string): boolean {
 
 export function buildCommunityVibeSeo(opts: {
   vibe: CommunityVibeCategory;
-  isFr: boolean;
+  locale: AppLocale;
   trackCount?: number;
+  /** @deprecated use locale */
+  isFr?: boolean;
 }) {
-  const { vibe, isFr, trackCount } = opts;
-  const title = isFr ? vibe.title.fr : vibe.title.en;
-  const subtitle = isFr ? vibe.subtitle.fr : vibe.subtitle.en;
+  const locale = opts.locale ?? (opts.isFr ? "fr" : "en");
+  const { vibe, trackCount } = opts;
+  const title = vibeCategoryTitle(vibe, locale);
+  const subtitle = vibeCategorySubtitle(vibe, locale);
   const path = communityVibePath(vibe.id);
   const pageUrl = `${ORIGIN}${path}`;
+  const meta = buildCommunityVibeSeoMeta(locale, { title, subtitle, trackCount });
 
-  const titleMeta = isFr
-    ? `${title} — beats IA communauté | ProducerHit`
-    : `${title} — community AI beats | ProducerHit`;
-
-  const countHint = trackCount && trackCount > 0 ? (isFr ? `${trackCount} tracks` : `${trackCount} tracks`) : "";
-
-  const description = isFr
-    ? `Écoute des beats IA ${title.toLowerCase()} sur ProducerHit : ${subtitle}. Remixe, commente et crée le tien — flux communautaire gratuit.${countHint ? ` ${countHint} publics.` : ""}`
-    : `Listen to ${title.toLowerCase()} AI beats on ProducerHit: ${subtitle}. Remix, comment, and create your own — free community feed.${countHint ? ` ${countHint} public.` : ""}`;
-
-  const keywords = isFr
-    ? [
-        `beat ${title.toLowerCase()} IA`,
-        "beats IA communauté",
-        "remix beat IA",
-        "type beat IA",
-        "générateur beats IA",
-        subtitle,
-        "ProducerHit",
-      ]
-    : [
-        `${title.toLowerCase()} AI beat`,
-        "community AI beats",
-        "AI beat remix",
-        "AI type beat",
-        "AI beat generator",
-        subtitle,
-        "ProducerHit",
-      ];
-
-  return { titleMeta, description, keywords, pageUrl, path, title, subtitle };
+  return { titleMeta: meta.titleMeta, description: meta.description, keywords: meta.keywords, pageUrl, path, title, subtitle };
 }
 
-export function buildTrendingSeo(isFr: boolean) {
+export function buildTrendingSeo(localeOrIsFr: AppLocale | boolean) {
+  const locale: AppLocale = typeof localeOrIsFr === "boolean" ? (localeOrIsFr ? "fr" : "en") : localeOrIsFr;
+  const meta = buildTrendingSeoMeta(locale);
   const pageUrl = `${ORIGIN}${TRENDING_PATH}`;
   return {
-    titleMeta: isFr
-      ? "Trending beats IA 2026 — remix & vibes du moment | ProducerHit"
-      : "Trending AI beats 2026 — remix hot vibes | ProducerHit",
-    description: isFr
-      ? "Les beats IA les plus kiffés du moment sur ProducerHit. Écoute le trending TikTok-ready, remixe les vibes du flux et crée ton type beat en 30 secondes."
-      : "Most-loved AI beats right now on ProducerHit. Stream TikTok-ready trending tracks, remix community vibes, and create your type beat in 30 seconds.",
-    keywords: isFr
-      ? [
-          "trending beats IA",
-          "beat viral TikTok IA",
-          "remix beat tendance",
-          "meilleur générateur beats IA",
-          "type beat IA 2026",
-          "ProducerHit trending",
-        ]
-      : [
-          "trending AI beats",
-          "viral TikTok AI beat",
-          "trending beat remix",
-          "best AI beat generator 2026",
-          "AI type beat",
-          "ProducerHit trending",
-        ],
+    titleMeta: meta.titleMeta,
+    description: meta.description,
+    keywords: meta.keywords,
     pageUrl,
+    listName: meta.listName,
   };
 }
 

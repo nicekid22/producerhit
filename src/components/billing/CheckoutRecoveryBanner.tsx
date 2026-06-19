@@ -3,7 +3,7 @@ import toast from "react-hot-toast";
 import type { AppLocale } from "@/i18n/config";
 import { runCheckoutWithAuth, type PaidPlan } from "@/lib/billing";
 import { clearCheckoutAbandoned, readCheckoutAbandoned } from "@/lib/checkoutRecovery";
-import { LAUNCH_BONUS_CREDITS } from "@/lib/launchOffer";
+import { getCheckoutRecoveryCopy } from "@/lib/launchOffer";
 import { trackClientEvent } from "@/lib/supabaseClient";
 import { cn } from "@/lib/utils";
 
@@ -20,7 +20,7 @@ function isPaidPlan(value: string | undefined): value is PaidPlan {
 }
 
 export function CheckoutRecoveryBanner({ locale, location, className, currentPlan }: Props) {
-  const isFr = locale === "fr";
+  const copy = getCheckoutRecoveryCopy(locale);
   const abandoned = useMemo(() => readCheckoutAbandoned(), []);
   const [dismissed, setDismissed] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -55,14 +55,9 @@ export function CheckoutRecoveryBanner({ locale, location, className, currentPla
     >
       <div>
         <p className="text-sm font-semibold text-white">
-          {isFr ? "Paiement interrompu — plan" : "Checkout paused —"}{" "}
-          {planLabel}
+          {copy.titlePrefix} {planLabel}
         </p>
-        <p className="mt-0.5 text-xs text-white/60">
-          {isFr
-            ? `Reprends en 1 clic. Activation instantanée + ${LAUNCH_BONUS_CREDITS.checkoutRecovery} crédits bonus si tu finalises aujourd'hui.`
-            : `Resume in one click. Instant activation + ${LAUNCH_BONUS_CREDITS.checkoutRecovery} bonus credits if you finish today.`}
-        </p>
+        <p className="mt-0.5 text-xs text-white/60">{copy.body}</p>
       </div>
       <div className="flex gap-2">
         <button
@@ -71,18 +66,18 @@ export function CheckoutRecoveryBanner({ locale, location, className, currentPla
           onClick={() => void resume()}
           className="rounded-lg bg-violet-600 px-3 py-2 text-xs font-semibold text-white hover:bg-violet-500 disabled:opacity-60"
         >
-          {loading ? (isFr ? "Chargement…" : "Loading…") : isFr ? "Reprendre" : "Resume"}
+          {loading ? copy.loading : copy.resume}
         </button>
         <button
           type="button"
           onClick={() => {
             clearCheckoutAbandoned();
             setDismissed(true);
-            toast.success(isFr ? "OK — on te laisse créer" : "OK — back to creating");
+            toast.success(copy.dismissToast);
           }}
           className="rounded-lg border border-white/15 px-3 py-2 text-xs text-white/70 hover:bg-white/5"
         >
-          {isFr ? "Plus tard" : "Later"}
+          {copy.later}
         </button>
       </div>
     </div>

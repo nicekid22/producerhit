@@ -1,5 +1,6 @@
-import { cn } from "@/lib/utils";
 import type { AppLocale } from "@/i18n/config";
+import { buildLoopCardSection } from "@/i18n/loopCardCatalog";
+import { cn } from "@/lib/utils";
 import type { Loop } from "@/types/loop";
 import { resolveStemsDownloadUrl } from "@/lib/stemsDownload";
 
@@ -10,16 +11,17 @@ export type LoopCardFooterHint = {
 
 /** Info positive en bas de carte (remplace le countdown d’expiration). */
 export function getLoopCardFooterHint(loop: Loop, locale: AppLocale): LoopCardFooterHint | null {
+  const lc = buildLoopCardSection(locale);
   if (loop.isPublic) {
     return {
-      label: locale === "fr" ? "En ligne · Communauté" : "Live · Community",
+      label: lc.footerLiveCommunity,
       variant: "public",
     };
   }
   const stemsZip = resolveStemsDownloadUrl(loop.stemsUrl);
   if (stemsZip) {
     return {
-      label: locale === "fr" ? "Stems prêts" : "Stems ready",
+      label: lc.footerStemsReady,
       variant: "stems",
     };
   }

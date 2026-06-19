@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { MessageCircle, Pause, Play, Sparkles, Star, X } from "lucide-react";
@@ -9,6 +9,9 @@ import { resolveCommunityDisplayCoverUrl, resolvePublicRowCoverUrl } from "@/lib
 import { displayProducerInfluence } from "@/lib/beatInfluence";
 import { COVER_SURFACE_CLASS, cn } from "@/lib/utils";
 import type { PublicLoopRow } from "@/lib/publicLoops";
+import type { AppLocale } from "@/i18n/config";
+import { buildCommunityHubUiCopy } from "@/i18n/communityHubUiCatalog";
+import { buildPublicLoopPageCopy } from "@/i18n/publicLoopPageCatalog";
 
 type RatingStats = { sum: number; count: number; myRating: number | null };
 
@@ -16,7 +19,7 @@ type Props = {
   open: boolean;
   onClose: () => void;
   row: PublicLoopRow | null;
-  isFr: boolean;
+  locale: AppLocale;
   isActive: boolean;
   isPlaying: boolean;
   resolving: boolean;
@@ -34,7 +37,7 @@ export function CommunityTrackSheet({
   open,
   onClose,
   row,
-  isFr,
+  locale,
   isActive,
   isPlaying,
   resolving,
@@ -47,6 +50,8 @@ export function CommunityTrackSheet({
   onRate,
   onCommentCountChange,
 }: Props) {
+  const hub = useMemo(() => buildCommunityHubUiCopy(locale), [locale]);
+  const loop = useMemo(() => buildPublicLoopPageCopy(locale), [locale]);
   const commentsRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -82,32 +87,21 @@ export function CommunityTrackSheet({
   const avg = rating && rating.count > 0 ? (rating.sum / rating.count).toFixed(1) : null;
   const myRating = rating?.myRating ?? 0;
   const producerInfluence = displayProducerInfluence(row.influence);
+  const trackName = row.name ?? hub.untitled;
 
   return createPortal(
-    <div className="pk-community-sheet fixed inset-0 z-[130]" role="dialog" aria-modal="true" aria-label={row.name ?? "Track"}>
-      <button
-        type="button"
-        className="pk-community-sheet__backdrop absolute inset-0"
-        onClick={onClose}
-        aria-label={isFr ? "Fermer" : "Close"}
-      />
+    <div className="pk-community-sheet fixed inset-0 z-[130]" role="dialog" aria-modal="true" aria-label={trackName}>
+      <button type="button" className="pk-community-sheet__backdrop absolute inset-0" onClick={onClose} aria-label={hub.close} />
 
       <div className="pk-community-sheet__panel" onClick={(e) => e.stopPropagation()}>
         <div className="pk-community-sheet__header">
           <div className="pk-community-sheet__grab" aria-hidden />
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <MessageCircle className="h-4 w-4 shrink-0 text-[var(--pk-community-accent,#67e8f9)]" aria-hidden />
-            <span className="truncate text-sm font-semibold text-white">
-              {isFr ? "Dans le flux" : "On the feed"}
-            </span>
-            <span className="pk-community-sheet__live">{isFr ? "LIVE" : "LIVE"}</span>
+            <span className="truncate text-sm font-semibold text-white">{hub.onFeed}</span>
+            <span className="pk-community-sheet__live">LIVE</span>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="pk-community-sheet__close"
-            aria-label={isFr ? "Fermer" : "Close"}
-          >
+          <button type="button" onClick={onClose} className="pk-community-sheet__close" aria-label={hub.close}>
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -118,7 +112,7 @@ export function CommunityTrackSheet({
               type="button"
               onClick={onPlay}
               className={cn("pk-community-sheet__cover relative shrink-0 overflow-hidden rounded-xl", COVER_SURFACE_CLASS)}
-              aria-label={playingNow ? (isFr ? "Pause" : "Pause") : isFr ? "Écouter" : "Play"}
+              aria-label={playingNow ? loop.pause : loop.listen}
             >
               <StoredLoopCover coverUrl={coverUrl} className="absolute inset-0 h-full w-full" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
@@ -128,7 +122,7 @@ export function CommunityTrackSheet({
             </button>
 
             <div className="min-w-0 flex-1">
-              <h2 className="text-base font-bold leading-snug text-white">{row.name ?? "Untitled"}</h2>
+              <h2 className="text-base font-bold leading-snug text-white">{trackName}</h2>
               <div className="mt-1 flex flex-wrap gap-1.5 text-[11px] font-medium text-white/55">
                 {row.genre ? <span className="rounded-full border border-white/10 px-2 py-0.5">{row.genre}</span> : null}
                 {producerInfluence ? (
@@ -139,7 +133,7 @@ export function CommunityTrackSheet({
               </div>
               {row.author ? (
                 <div className="mt-2">
-                  <ProfileAuthorChip author={row.author} isFr={isFr} size="sm" />
+                  <ProfileAuthorChip author={row.author} locale={locale} size="sm" />
                 </div>
               ) : null}
             </div>
@@ -148,9 +142,7 @@ export function CommunityTrackSheet({
           <div className="pk-community-sheet__rating mt-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-white/45">
-                  {isFr ? "Note la commu" : "Community rating"}
-                </p>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-white/45">{loop.communityRating}</p>
                 <div className="mt-1.5 flex items-center gap-0.5">
                   {Array.from({ length: 5 }).map((_, i) => {
                     const star = i + 1;
@@ -160,7 +152,7 @@ export function CommunityTrackSheet({
                         type="button"
                         onClick={() => onRate(star)}
                         className="rounded p-1 transition-colors hover:bg-white/5"
-                        aria-label={isFr ? `Noter ${star}/5` : `Rate ${star}/5`}
+                        aria-label={loop.rateStar(star)}
                       >
                         <Star
                           className={cn(
@@ -180,7 +172,7 @@ export function CommunityTrackSheet({
                   <span className="text-[10px] font-medium text-white/45">({rating?.count})</span>
                 </div>
               ) : (
-                <p className="text-[11px] font-medium text-white/40">{isFr ? "Sois le premier" : "Be the first"}</p>
+                <p className="text-[11px] font-medium text-white/40">{hub.beFirst}</p>
               )}
             </div>
           </div>
@@ -199,7 +191,7 @@ export function CommunityTrackSheet({
               to={`/loop/${row.id}`}
               className="inline-flex h-9 items-center rounded-full border border-white/10 bg-white/[0.04] px-4 text-xs font-semibold text-white/75 hover:text-white"
             >
-              {isFr ? "Page complète" : "Full page"}
+              {hub.fullPage}
             </Link>
           </div>
 
@@ -207,7 +199,7 @@ export function CommunityTrackSheet({
             <LoopCommentsSection
               loopId={row.id}
               loopOwnerId={row.user_id ?? ""}
-              isFr={isFr}
+              locale={locale}
               userId={userId}
               commentCount={commentCount}
               onCommentCountChange={onCommentCountChange}

@@ -1,5 +1,8 @@
 import type { AppLocale } from "@/i18n/config";
-import { pickLocalized } from "@/i18n/resolve";
+import {
+  blogCategoryDescriptionI18n,
+  blogCategoryLabelI18n,
+} from "@/i18n/blogCategoryCatalog";
 import type { BlogCategoryId } from "./types";
 
 export type BlogCategory = {
@@ -65,8 +68,8 @@ export const BLOG_CATEGORIES: BlogCategory[] = [
     slug: "monetization",
     labelEn: "Monetization",
     labelFr: "Monétisation",
-    descriptionEn: "Commercial rights, YouTube, Spotify, and royalty-free use.",
-    descriptionFr: "Droits commerciaux, YouTube, Spotify et usage royalty-free.",
+    descriptionEn: "Commercial rights, YouTube, Spotify, beat sales, sync — free monetization academy for beatmakers, singers & AI artists.",
+    descriptionFr: "Droits commerciaux, YouTube, Spotify, vente de beats, sync — académie gratuite beatmaker, chanteur & artiste IA.",
   },
   {
     id: "community",
@@ -90,29 +93,9 @@ export function getBlogCategoryBySlug(slug: string): BlogCategory | null {
 }
 
 export function blogCategoryLabel(id: BlogCategoryId, locale: AppLocale): string {
-  const c = getBlogCategory(id);
-  return pickLocalized(locale, {
-    en: c.labelEn,
-    fr: c.labelFr,
-    es: c.labelEn,
-    de: c.labelEn,
-    it: c.labelEn,
-    nl: c.labelEn,
-    pt: c.labelEn,
-    ar: c.labelEn,
-    ja: c.labelEn,
-    ko: c.labelEn,
-    tr: c.labelEn,
-    hi: c.labelEn,
-    zh: c.labelEn,
-    th: c.labelEn,
-  });
+  return blogCategoryLabelI18n(id, locale);
 }
 
 export function blogCategoryDescription(id: BlogCategoryId, locale: AppLocale): string {
-  const c = getBlogCategory(id);
-  return pickLocalized(locale, {
-    en: c.descriptionEn,
-    fr: c.descriptionFr,
-  });
+  return blogCategoryDescriptionI18n(id, locale);
 }

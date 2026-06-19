@@ -1,28 +1,18 @@
 import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";
 import { Navbar } from "@/components/Navbar";
+import { buildLegalPageLabels, legalContentLocale } from "@/i18n/legalPageCatalog";
 import { useLocaleStore } from "@/stores/localeStore";
 
 export default function Legal() {
   const locale = useLocaleStore((s) => s.locale);
 
-  const isFr = locale === "fr";
-  const title = isFr ? "Mentions légales & politiques" : "Legal & Policies";
+  const isFr = legalContentLocale(locale) === "fr";
+  const labels = buildLegalPageLabels(locale);
+  const title = labels.pageTitle;
   const email = "info.producermarket@gmail.com";
 
   const updatedAt = "2026-06-05";
 
-  const labels = {
-    toc: isFr ? "Accès rapide" : "Quick links",
-    updatedAt: isFr ? "Dernière mise à jour" : "Last updated",
-    privacy: isFr ? "Politique de confidentialité" : "Privacy Policy",
-    terms: isFr ? "Conditions d’utilisation" : "Terms of Service",
-    commercialLicense: isFr ? "Licence commerciale & droits" : "Commercial license & rights",
-    cookies: isFr ? "Politique cookies" : "Cookie Policy",
-    refunds: isFr ? "Paiements & remboursements" : "Payments & Refunds",
-    acceptableUse: isFr ? "Règles d’usage (Acceptable Use)" : "Acceptable Use",
-    dmca: isFr ? "Signalement / droits d’auteur (DMCA)" : "Copyright / DMCA",
-    contact: isFr ? "Support / Contact" : "Support / Contact",
-  };
 
   const sections = [
     {

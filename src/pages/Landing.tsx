@@ -7,6 +7,8 @@ import { supabase, trackClientEvent } from "@/lib/supabaseClient";
 import { trackLandingView } from "@/lib/growthFunnelEvents";
 import { useLocaleStore } from "@/stores/localeStore";
 import { useT } from "@/i18n";
+import { buildLandingUiSection, formatRepairFixedCount } from "@/i18n/landingUiCatalog";
+import { buildCommonSection } from "@/i18n/systemCatalog";
 import { LanguagePicker } from "@/components/LanguagePicker";
 import { Menu, Mic2, X } from "lucide-react";
 import { usePlayerStore } from "@/stores/playerStore";
@@ -65,8 +67,7 @@ import { handoffRemixToDashboard } from "@/lib/remixHandoff";
 import { buildAuthUrl, resolvePostAuthRedirect } from "@/lib/authRoutes";
 import { cn } from "@/lib/utils";
 import { normalizePlan } from "@/lib/billing";
-import { hostedAudioRetentionSummary } from "@/lib/loopAudioRetention";
-import { COMMERCIAL_RIGHTS_FAQ } from "@/lib/planPricing";
+import { landingCoreFaqs } from "@/i18n/landingFaqCatalog";
 import { LANDING_MOBILE_V2 } from "@/lib/featureFlags";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { PublicProfileCard } from "@/lib/creatorProfile";
@@ -196,6 +197,8 @@ export default function Landing() {
   const refreshProfile = useAuthStore((s) => s.refreshProfile);
   const locale = useLocaleStore((s) => s.locale);
   const { m } = useT();
+  const landingUi = useMemo(() => buildLandingUiSection(locale), [locale]);
+  const common = useMemo(() => buildCommonSection(locale), [locale]);
   const visualTheme = useVisualThemeStore((s) => s.theme);
   const warmGlass = isWarmGlassTheme(visualTheme);
   const cloud = isCloudTheme(visualTheme);
@@ -533,9 +536,7 @@ export default function Landing() {
         "landing",
       );
       if (!result.ok) {
-        toast.error(
-          locale === "fr" ? "Remix indisponible — prompt copié dans le générateur" : "Remix unavailable — prompt copied to generator",
-        );
+        toast.error(landingUi.remixUnavailable);
         applyTrackPrompt(track.prompt, track.kind);
         return;
       }
@@ -755,7 +756,7 @@ export default function Landing() {
 
   const handlePlay = (track: PublicTrack, queueTracks?: PublicTrack[]) => {
     if (track.id.startsWith("ph-")) {
-      toast(locale === "fr" ? "Aperçu bientôt disponible" : "Preview coming soon");
+      toast(common.previewComingSoon);
       return;
     }
     if (current?.id === track.id) {
@@ -787,7 +788,7 @@ export default function Landing() {
         },
       });
       if (!ok) {
-        toast.error(locale === "fr" ? "Audio indisponible" : "Audio unavailable");
+        toast.error(common.audioUnavailable);
       }
     })();
   };
@@ -795,7 +796,7 @@ export default function Landing() {
   const handlePlaySideCard = (card: GeneratorSideCard) => {
     trackClientEvent("landing_gen_card_play", { loop_id: card.id });
     if (card.id.startsWith("ph-")) {
-      toast(locale === "fr" ? "Aperçu bientôt disponible" : "Preview coming soon");
+      toast(common.previewComingSoon);
       return;
     }
     if (current?.id === card.id) {
@@ -824,7 +825,7 @@ export default function Landing() {
         },
       });
       if (!ok) {
-        toast.error(locale === "fr" ? "Audio indisponible" : "Audio unavailable");
+        toast.error(common.audioUnavailable);
       }
     })();
   };
@@ -1021,7 +1022,7 @@ export default function Landing() {
         if (!cancelled) {
           window.clearTimeout(slowTimer);
           setTrendingTimedOut(false);
-          setTrendingError(locale === "fr" ? "Impossible de charger la section communauté." : "Failed to load community section.");
+          setTrendingError(landingUi.communityLoadFailed);
           if (!loadedFromCache) setTrending([]);
           setTrendingLoading(false);
         }
@@ -1051,45 +1052,7 @@ export default function Landing() {
   }, [authStatus, location.search, navigate, user]);
 
   const faqs = useMemo(() => {
-    const base =
-      locale === "fr"
-        ? [
-            {
-              q: "ProducerHit est-il un générateur de chansons IA royalty-free ?",
-              a: "Oui — crée, écoute et exporte pour tes projets perso en Free. Pour monétiser (Spotify, YouTube, clients), passe Pro, Studio ou Plus.",
-            },
-            {
-              q: "Usage commercial & propriété ?",
-              a: COMMERCIAL_RIGHTS_FAQ.fr.a,
-            },
-            {
-              q: "Puis-je exporter en WAV ?",
-              a: "Oui — l'export WAV est disponible sur les offres Pro, Studio et Plus.",
-            },
-            {
-              q: "Les liens audio expirent-ils ?",
-              a: hostedAudioRetentionSummary("fr"),
-            },
-          ]
-        : [
-            {
-              q: "Is ProducerHit a royalty-free AI song creator?",
-              a: "Yes — create, preview, and export tracks for personal projects on Free. Commercial monetization requires Pro, Studio, or Plus.",
-            },
-            {
-              q: "Commercial use & ownership?",
-              a: COMMERCIAL_RIGHTS_FAQ.en.a,
-            },
-            {
-              q: "Can I download WAV?",
-              a: "Yes — WAV export is available on Pro, Studio, and Plus plans.",
-            },
-            {
-              q: "Do hosted audio links expire?",
-              a: hostedAudioRetentionSummary("en"),
-            },
-          ];
-    return [...base, ...croLandingFaqs(locale)];
+    return [...landingCoreFaqs(locale), ...croLandingFaqs(locale)];
   }, [locale]);
 
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
@@ -1374,7 +1337,7 @@ export default function Landing() {
           <LandingCommunityRail
             locale={locale}
             title={copy.communityTitle}
-            lead={mobileLandingFocus ? (locale === "fr" ? "Tracks publics — écoute, remixe, publie." : "Public tracks — listen, remix, publish.") : copy.communityLead}
+            lead={mobileLandingFocus ? landingUi.communityLeadMobile : copy.communityLead}
             tracks={homeTrendingCards}
             loading={trendingLoading || !shouldLoadTrending}
             activeTrackId={current?.id ?? null}
@@ -1387,15 +1350,11 @@ export default function Landing() {
                 <div className="pk-landing-apple-banner mt-4">
                   <div className="pk-landing-apple-banner__text">
                     {typeof repairFixedCount === "number"
-                      ? locale === "fr"
-                        ? `Réparation: ${repairFixedCount} lien(s) restauré(s).`
-                        : `Repair: ${repairFixedCount} link(s) restored.`
+                      ? formatRepairFixedCount(repairFixedCount, locale)
                       : trendingError
                         ? trendingError
                         : trendingTimedOut
-                          ? locale === "fr"
-                        ? "Chargement lent…"
-                        : "Slow load…"
+                          ? landingUi.slowLoad
                           : ""}
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -1404,7 +1363,7 @@ export default function Landing() {
                       onClick={() => setTrendingRefreshKey((k) => k + 1)}
                       className="pk-landing-apple-banner__btn"
                     >
-                      {locale === "fr" ? "Réessayer" : "Retry"}
+                      {common.retry}
                     </button>
                     {user ? (
                       <button
@@ -1413,7 +1372,7 @@ export default function Landing() {
                         disabled={repairingPublicLinks}
                         className="pk-landing-apple-banner__btn"
                       >
-                    {repairingPublicLinks ? (locale === "fr" ? "Réparation…" : "Repairing…") : locale === "fr" ? "Réparer mes Public" : "Repair my Public"}
+                    {repairingPublicLinks ? landingUi.repairingPublic : landingUi.repairPublic}
                       </button>
                     ) : null}
                   </div>
@@ -1464,7 +1423,7 @@ export default function Landing() {
 
         <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
           <div className="pk-landing-apple-faq pk-landing-apple-surface p-5 sm:p-8">
-            <h2 className="pk-landing-apple-faq__title text-left">{locale === "fr" ? "Questions fréquentes" : "Frequently asked questions"}</h2>
+            <h2 className="pk-landing-apple-faq__title text-left">{landingUi.faqTitle}</h2>
             <div className="pk-landing-apple-faq__list mt-6 grid gap-2">
               {faqs.map((f, i) => {
                 const open = faqOpen === i;

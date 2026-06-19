@@ -50,6 +50,87 @@ function profilePlanPatch(prevPlan: string, nextPlan: string): Record<string, un
   return patch;
 }
 
+const LAUNCH_OFFER_END_ISO = Deno.env.get("LAUNCH_OFFER_END_ISO") ?? "2026-07-31T23:59:59Z";
+const LAUNCH_BONUS_PRO = Number.parseInt(Deno.env.get("LAUNCH_BONUS_PRO") ?? "20", 10);
+const LAUNCH_BONUS_RECOVERY = Number.parseInt(Deno.env.get("LAUNCH_BONUS_RECOVERY") ?? "5", 10);
+
+function isLaunchOfferActive(now = Date.now()): boolean {
+  const end = new Date(LAUNCH_OFFER_END_ISO).getTime();
+  return Number.isFinite(end) && now < end;
+}
+
+type LaunchGrantType = "pro_first_month" | "checkout_recovery";
+
+async function grantLaunchBonusCredits(
+  supabase: ReturnType<typeof createClient>,
+  opts: { idempotencyKey: string; userId: string; grantType: LaunchGrantType; credits: number },
+): Promise<void> {
+  const { idempotencyKey, userId, grantType, credits } = opts;
+  if (credits <= 0) return;
+
+  const { error: insertError } = await supabase.from("stripe_launch_bonus_grants").insert({
+    stripe_event_id: idempotencyKey,
+    user_id: userId,
+    grant_type: grantType,
+    credits,
+  });
+
+  if (insertError) {
+    if (insertError.code === "23505") return;
+    throw insertError;
+  }
+
+  const { data: profile, error: readError } = await supabase
+    .from("profiles")
+    .select("referral_bonus")
+    .eq("id", userId)
+    .maybeSingle();
+  if (readError) throw readError;
+
+  const current = typeof profile?.referral_bonus === "number" ? profile.referral_bonus : 0;
+  const { error: updateError } = await supabase
+    .from("profiles")
+    .update({ referral_bonus: current + credits })
+    .eq("id", userId);
+  if (updateError) throw updateError;
+}
+
+async function applyLaunchOfferBonuses(
+  supabase: ReturnType<typeof createClient>,
+  opts: {
+    stripeEventId: string;
+    userId: string;
+    plan: string;
+    prevPlan: string;
+    hadSubscription: boolean;
+    metadata: Record<string, unknown>;
+  },
+): Promise<void> {
+  if (!isLaunchOfferActive()) return;
+
+  const { stripeEventId, userId, plan, prevPlan, hadSubscription, metadata } = opts;
+  const isRecovery = asString(metadata.checkout_recovery) === "true";
+
+  if (isRecovery) {
+    await grantLaunchBonusCredits(supabase, {
+      idempotencyKey: `${stripeEventId}:checkout_recovery`,
+      userId,
+      grantType: "checkout_recovery",
+      credits: LAUNCH_BONUS_RECOVERY,
+    });
+  }
+
+  const isFirstProMonth = plan === "pro" && prevPlan === "free" && !hadSubscription;
+  if (isFirstProMonth) {
+    await grantLaunchBonusCredits(supabase, {
+      idempotencyKey: `${stripeEventId}:pro_first_month`,
+      userId,
+      grantType: "pro_first_month",
+      credits: LAUNCH_BONUS_PRO,
+    });
+  }
+}
+
 async function planFromPriceId(supabase: ReturnType<typeof createClient>, priceId: string) {
   const pro = Deno.env.get("STRIPE_PRICE_ID_PRO") ?? "";
   const studio = Deno.env.get("STRIPE_PRICE_ID_STUDIO") ?? "";
@@ -126,8 +207,9 @@ serve(async (req) => {
   }
   if (!ok) return new Response("invalid signature", { status: 400 });
 
-  const event = (JSON.parse(rawBody) as { type?: unknown; data?: unknown }) ?? {};
+  const event = (JSON.parse(rawBody) as { id?: unknown; type?: unknown; data?: unknown }) ?? {};
   const type = asString(event.type);
+  const stripeEventId = asString(event.id);
   const dataObj =
     typeof event.data === "object" && event.data && typeof (event.data as { object?: unknown }).object === "object"
       ? ((event.data as { object: unknown }).object as Record<string, unknown>)
@@ -157,8 +239,13 @@ serve(async (req) => {
       if (plan === "free" && priceId) {
         console.error("checkout.session.completed: unknown price id", priceId);
       }
-      const { data: prevProfile } = await supabase.from("profiles").select("plan").eq("id", userId).maybeSingle();
+      const { data: prevProfile } = await supabase
+        .from("profiles")
+        .select("plan, stripe_subscription_id")
+        .eq("id", userId)
+        .maybeSingle();
       const prevPlan = typeof prevProfile?.plan === "string" ? prevProfile.plan : "free";
+      const hadSubscription = !!asString(prevProfile?.stripe_subscription_id);
       const { error: checkoutUpdateError } = await supabase
         .from("profiles")
         .update({
@@ -170,6 +257,17 @@ serve(async (req) => {
         })
         .eq("id", userId);
       if (checkoutUpdateError) throw checkoutUpdateError;
+
+      if (stripeEventId) {
+        await applyLaunchOfferBonuses(supabase, {
+          stripeEventId,
+          userId,
+          plan,
+          prevPlan,
+          hadSubscription,
+          metadata,
+        });
+      }
 
       return new Response("ok");
     }

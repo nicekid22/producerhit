@@ -23,10 +23,12 @@ import { unlockAudioPlaybackFromGesture } from "@/lib/audioPlaybackUnlock";
 import { resolvePlaybackUrlForLoop } from "@/stores/loopsStore";
 import { playLoopInContext, usePlayerStore } from "@/stores/playerStore";
 import { useLocaleStore } from "@/stores/localeStore";
+import { buildDashboardSection } from "@/i18n/dashboardCatalog";
+import { buildLoopCardSection, loopCardCoverRerollAria, loopCardVoiceCloneLabel } from "@/i18n/loopCardCatalog";
 import type { Loop } from "@/types/loop";
 import { prepareLoopVariantGeneration, variantResultTitle } from "@/lib/loopVariantGeneration";
 import { extractLoopVocalLanguage, formatVocalLanguageLabel, isSongLoop } from "@/lib/vocalLanguages";
-import { resolveLoopVoiceCloneInfo, voiceCloneStatusLabel } from "@/lib/voiceCloneMeta";
+import { resolveLoopVoiceCloneInfo } from "@/lib/voiceCloneMeta";
 import { resolveStemsDownloadUrl } from "@/lib/stemsDownload";
 import { canDownloadStems } from "@/lib/planEntitlements";
 import { downloadCommercialBeat, triggerStemsLicenseModal } from "@/lib/commercialBeatDownload";
@@ -95,6 +97,8 @@ export const LoopCardItem = memo(function LoopCardItem({
   onOpenMaster?: (loop: Loop) => void;
 }) {
   const locale = useLocaleStore((s) => s.locale);
+  const d = buildDashboardSection(locale);
+  const lc = buildLoopCardSection(locale);
   const plan = (() => {
     try {
       const raw = window.localStorage.getItem("producerhit_plan");
@@ -202,9 +206,7 @@ export const LoopCardItem = memo(function LoopCardItem({
         const pin = await rerollLoopCover(latest);
         if (pin.skipped) {
           toast.error(
-            locale === "fr"
-              ? "Aucune autre image disponible — réessaie plus tard"
-              : "No other image available — try again later",
+            lc.coverNoOtherImage,
           );
           return;
         }
@@ -213,16 +215,10 @@ export const LoopCardItem = memo(function LoopCardItem({
           onCoverRerollUsed?.();
           const changed = pin.coverUrl.split("?")[0] !== prevDisplay.split("?")[0];
           toast.success(
-            locale === "fr"
-              ? changed
-                ? "Nouvelle image appliquée"
-                : "Image mise à jour"
-              : changed
-                ? "New cover applied"
-                : "Cover refreshed",
+            changed ? lc.coverNewApplied : lc.coverRefreshed,
           );
         } else {
-          toast.error(locale === "fr" ? "Impossible de charger une nouvelle image" : "Could not load a new image");
+          toast.error(lc.coverLoadFailed);
         }
       } catch (err) {
         const code = err instanceof Error ? err.message : "";
@@ -231,14 +227,10 @@ export const LoopCardItem = memo(function LoopCardItem({
           return;
         }
         if (code === "pinterest_all_used") {
-          toast.error(
-            locale === "fr"
-              ? "Plus d’images uniques pour ce style — réessaie plus tard"
-              : "No unique images left for this style — try again later",
-          );
+          toast.error(lc.coverPinterestExhausted);
           return;
         }
-        toast.error(locale === "fr" ? "Échec du changement d’image" : "Cover change failed");
+        toast.error(lc.coverChangeFailed);
       } finally {
         setIsRerollingCover(false);
       }
@@ -275,10 +267,10 @@ export const LoopCardItem = memo(function LoopCardItem({
       setSavingTitle(true);
       try {
         await renameLoopRemote(loop.id, next);
-        toast.success(locale === "fr" ? "Titre mis à jour" : "Title updated");
+        toast.success(d.titleUpdated);
         setIsEditingTitle(false);
       } catch (err) {
-        const msg = err instanceof Error ? err.message : locale === "fr" ? "Erreur" : "Error";
+        const msg = err instanceof Error ? err.message : d.error;
         toast.error(msg);
       } finally {
         setSavingTitle(false);
@@ -292,7 +284,7 @@ export const LoopCardItem = memo(function LoopCardItem({
       setIsVarying(true);
       const stopJob = onStartWorkspaceJob?.(
         `${loop.name} — ${kind === "remix" ? "Remix" : "Variation"}`,
-        locale === "fr" ? "Création en cours…" : "Generating...",
+        lc.generating,
       );
       let audioUrl: string | null = null;
       try {
@@ -358,7 +350,7 @@ export const LoopCardItem = memo(function LoopCardItem({
         try {
           const created = await createLoop(draft);
           startPlayback(created, true);
-          toast.success(kind === "remix" ? (locale === "fr" ? "Remix généré !" : "Remix generated!") : locale === "fr" ? "Variation générée !" : "Variation generated!");
+          toast.success(kind === "remix" ? lc.remixGenerated : lc.variationGenerated);
           onGenerationUsed?.();
         } catch (err) {
           const message = err instanceof Error ? err.message : "Saving failed";
@@ -391,7 +383,7 @@ export const LoopCardItem = memo(function LoopCardItem({
             upsertLoop(temp);
             enqueuePendingSave(draft, id, createdAt);
             startPlayback(temp, true);
-            toast.error(locale === "fr" ? `Généré, mais l’enregistrement a échoué : ${message}` : `Generated, but saving failed: ${message}`);
+            toast.error(`${lc.generatedSaveFailedPrefix}${message}`);
             onGenerationUsed?.();
           } else {
             throw err;
@@ -417,9 +409,9 @@ export const LoopCardItem = memo(function LoopCardItem({
             lower.includes("504");
 
           if (isTemporaryNetwork) {
-            toast.error("Réseau chargé — réessaie dans quelques secondes. Upgrade pour avoir la priorité.");
+            toast.error(lc.networkBusyRetry);
           } else {
-            const message = rawMessage || (kind === "remix" ? "Remix failed — try again" : "Variation failed — try again");
+            const message = rawMessage || (kind === "remix" ? lc.remixFailed : lc.variationFailed);
             toast.error(message);
           }
         }
@@ -456,7 +448,7 @@ export const LoopCardItem = memo(function LoopCardItem({
         }
         if (!url) {
           toast.error(
-            locale === "fr" ? "Audio indisponible — réessaie dans un instant" : "Audio unavailable — try again in a moment",
+            lc.audioUnavailable,
           );
           return;
         }
@@ -497,7 +489,7 @@ export const LoopCardItem = memo(function LoopCardItem({
   const vocalLangCode = songCard ? extractLoopVocalLanguage(loop) : null;
   const vocalLangLabel = vocalLangCode ? formatVocalLanguageLabel(vocalLangCode, locale) : null;
   const voiceCloneInfo = songCard ? resolveLoopVoiceCloneInfo(loop) : null;
-  const voiceCloneLabel = voiceCloneInfo ? voiceCloneStatusLabel(voiceCloneInfo, locale === "fr") : null;
+  const voiceCloneLabel = voiceCloneInfo ? loopCardVoiceCloneLabel(voiceCloneInfo, locale) : null;
   const footerHint = getLoopCardFooterHint(loop, locale);
   const producerInfluence = displayProducerInfluence(loop.influence);
 
@@ -514,7 +506,7 @@ export const LoopCardItem = memo(function LoopCardItem({
         }}
       >
         {isDownloading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-        {locale === "fr" ? "Télécharger" : "Download"}
+        {lc.download}
       </button>
       {stemsDownloadUrl ? (
         <button
@@ -557,7 +549,7 @@ export const LoopCardItem = memo(function LoopCardItem({
           }}
         >
           {isRerollingCover ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCcw className="h-3.5 w-3.5" />}
-          {locale === "fr" ? "Autre image" : "New inspo"}
+          {lc.newInspo}
         </button>
       ) : null}
       <button
@@ -611,7 +603,7 @@ export const LoopCardItem = memo(function LoopCardItem({
           }}
         >
           <Trash2 className="h-3.5 w-3.5" />
-          {locale === "fr" ? "Supprimer" : "Delete"}
+          {lc.delete}
         </button>
       ) : null}
     </>
@@ -700,10 +692,10 @@ export const LoopCardItem = memo(function LoopCardItem({
               className={cn("pk-library-card__icon-btn", loop.isSaved && "pk-library-card__icon-btn--on")}
               onClick={() => {
                 void toggleSavedRemote(loop.id)
-                  .then((next) => toast.success(next ? "Sauvegardé" : "Retiré de la bibliothèque"))
-                  .catch((err) => toast.error(err instanceof Error ? err.message : "Erreur"));
+                  .then((next) => toast.success(next ? lc.savedToLibrary : lc.removedFromLibrary))
+                  .catch((err) => toast.error(err instanceof Error ? err.message : d.error));
               }}
-              title={loop.isSaved ? (locale === "fr" ? "Retirer" : "Unsave") : "Save"}
+              title={loop.isSaved ? lc.unsave : lc.saveAction}
               aria-pressed={loop.isSaved}
             >
               <Bookmark className={cn("h-4 w-4", loop.isSaved && "fill-current")} />
@@ -713,10 +705,10 @@ export const LoopCardItem = memo(function LoopCardItem({
               className={cn("pk-library-card__icon-btn", loop.isPublic && "pk-library-card__icon-btn--public")}
               onClick={() => {
                 void togglePublicRemote(loop.id)
-                  .then((next) => toast.success(next ? "Public" : "Private"))
-                  .catch((err) => toast.error(err instanceof Error ? err.message : "Erreur"));
+                  .then((next) => toast.success(next ? lc.publicLabel : lc.privateLabel))
+                  .catch((err) => toast.error(err instanceof Error ? err.message : d.error));
               }}
-              title={loop.isPublic ? (locale === "fr" ? "Passer privé" : "Make private") : locale === "fr" ? "Rendre public" : "Make public"}
+              title={loop.isPublic ? lc.makePrivate : lc.makePublic}
               aria-pressed={loop.isPublic}
             >
               <Globe className="h-4 w-4" />
@@ -725,7 +717,7 @@ export const LoopCardItem = memo(function LoopCardItem({
               type="button"
               className="pk-library-card__icon-btn"
               onClick={() => setShareOpen(true)}
-              title={locale === "fr" ? "Partager" : "Share"}
+              title={lc.share}
             >
               <Share2 className="h-4 w-4" />
             </button>
@@ -734,7 +726,7 @@ export const LoopCardItem = memo(function LoopCardItem({
                 type="button"
                 className="pk-library-card__icon-btn"
                 onClick={() => setMenuOpen((v) => !v)}
-                aria-label={locale === "fr" ? "Plus d'actions" : "More actions"}
+                aria-label={lc.moreActions}
                 aria-expanded={menuOpen}
               >
                 <MoreHorizontal className="h-4 w-4" />
@@ -758,9 +750,9 @@ export const LoopCardItem = memo(function LoopCardItem({
                   void (async () => {
                     try {
                       await togglePublicRemote(shareLoop.id);
-                      toast.success(locale === "fr" ? "Track publique — lien actif" : "Track public — link live");
+                      toast.success(lc.trackPublicLinkLive);
                     } catch (err) {
-                      toast.error(err instanceof Error ? err.message : locale === "fr" ? "Erreur" : "Error");
+                      toast.error(err instanceof Error ? err.message : d.error);
                     }
                   })();
                 }
@@ -805,8 +797,8 @@ export const LoopCardItem = memo(function LoopCardItem({
             e.stopPropagation();
             onOpenDetails(loop, computeAnchorTop());
           }}
-          aria-label={locale === "fr" ? "Infos" : "Details"}
-          title={locale === "fr" ? "Infos" : "Details"}
+          aria-label={lc.infoDetails}
+          title={lc.infoDetails}
         >
           <Info className="h-3.5 w-3.5" />
         </button>
@@ -873,7 +865,7 @@ export const LoopCardItem = memo(function LoopCardItem({
                     onChange={(e) => setDraftTitle(e.target.value)}
                     autoFocus
                     className="w-full min-w-0 rounded-pk border border-pk-border bg-pk-input px-2 py-1 text-sm font-semibold text-pk-text outline-none placeholder:text-pk-muted focus:border-pk-accent"
-                    placeholder={locale === "fr" ? "Titre…" : "Title…"}
+                    placeholder={d.titleInputPlaceholder}
                     onClick={(e) => e.stopPropagation()}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
@@ -899,8 +891,8 @@ export const LoopCardItem = memo(function LoopCardItem({
                       e.stopPropagation();
                       if (!savingTitle) commitTitle();
                     }}
-                    aria-label={locale === "fr" ? "Valider" : "Save"}
-                    title={locale === "fr" ? "Valider" : "Save"}
+                    aria-label={lc.validate}
+                    title={lc.validate}
                   >
                     {savingTitle ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                   </Button>
@@ -914,8 +906,8 @@ export const LoopCardItem = memo(function LoopCardItem({
                       setDraftTitle(loop.name);
                       setIsEditingTitle(false);
                     }}
-                    aria-label={locale === "fr" ? "Annuler" : "Cancel"}
-                    title={locale === "fr" ? "Annuler" : "Cancel"}
+                    aria-label={lc.cancel}
+                    title={lc.cancel}
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -931,8 +923,8 @@ export const LoopCardItem = memo(function LoopCardItem({
                       e.stopPropagation();
                       setIsEditingTitle(true);
                     }}
-                    aria-label={locale === "fr" ? "Modifier le titre" : "Edit title"}
-                    title={locale === "fr" ? "Modifier le titre" : "Edit title"}
+                    aria-label={lc.editTitle}
+                    title={lc.editTitle}
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
@@ -954,11 +946,7 @@ export const LoopCardItem = memo(function LoopCardItem({
                   e.stopPropagation();
                   handleRerollCover();
                 }}
-                aria-label={
-                  locale === "fr"
-                    ? `Changer la cover (${LOOP_COVER_REROLL_CREDIT_COST} crédit)`
-                    : `Change cover (${LOOP_COVER_REROLL_CREDIT_COST} credit)`
-                }
+                aria-label={loopCardCoverRerollAria(locale, LOOP_COVER_REROLL_CREDIT_COST)}
               >
                 {isRerollingCover ? (
                   <Loader2 className="h-3 w-3 shrink-0 animate-spin" aria-hidden />
@@ -966,7 +954,7 @@ export const LoopCardItem = memo(function LoopCardItem({
                   <RefreshCcw className="h-3 w-3 shrink-0 opacity-75" aria-hidden />
                 )}
                 <span className="inline-flex items-center gap-1 max-[380px]:hidden">
-                  <span>{locale === "fr" ? "Autre image" : "New inspo"}</span>
+                  <span>{lc.newInspo}</span>
                   <GenerationCreditAmount
                     amount={LOOP_COVER_REROLL_CREDIT_COST}
                     showPlus
@@ -1073,7 +1061,7 @@ export const LoopCardItem = memo(function LoopCardItem({
                   url = "";
                 }
                 if (!url) {
-                  toast.error(locale === "fr" ? "Audio indisponible — réessaie dans un instant" : "Audio unavailable — try again in a moment");
+                  toast.error(lc.audioUnavailable);
                   return;
                 }
                 const fresh = useLoopsStore.getState().loops.find((l) => l.id === loop.id) ?? loop;
@@ -1090,9 +1078,9 @@ export const LoopCardItem = memo(function LoopCardItem({
             className={loopToggleButtonClass(loop.isSaved, "min-h-11 min-w-11 px-0")}
             onClick={(e) => {
               e.stopPropagation();
-              void toggleSavedRemote(loop.id).then((next) => toast.success(next ? "Sauvegardé" : "Retiré de la bibliothèque")).catch((err) => toast.error(err instanceof Error ? err.message : "Erreur"));
+              void toggleSavedRemote(loop.id).then((next) => toast.success(next ? lc.savedToLibrary : lc.removedFromLibrary)).catch((err) => toast.error(err instanceof Error ? err.message : d.error));
             }}
-            title={loop.isSaved ? (locale === "fr" ? "Retirer" : "Unsave") : "Save"}
+            title={loop.isSaved ? lc.unsave : lc.saveAction}
             aria-pressed={loop.isSaved}
           >
             <Bookmark className={cn("h-4 w-4", loop.isSaved && "fill-current")} />
@@ -1103,9 +1091,9 @@ export const LoopCardItem = memo(function LoopCardItem({
             className={loopPublicButtonClass(loop.isPublic, "min-h-11 min-w-11 px-0")}
             onClick={(e) => {
               e.stopPropagation();
-              void togglePublicRemote(loop.id).then((next) => toast.success(next ? "Public" : "Private")).catch((err) => toast.error(err instanceof Error ? err.message : "Erreur"));
+              void togglePublicRemote(loop.id).then((next) => toast.success(next ? lc.publicLabel : lc.privateLabel)).catch((err) => toast.error(err instanceof Error ? err.message : d.error));
             }}
-            title={loop.isPublic ? (locale === "fr" ? "Passer privé" : "Make private") : locale === "fr" ? "Public" : "Public"}
+            title={loop.isPublic ? lc.makePrivate : lc.publicLabel}
             aria-pressed={loop.isPublic}
           >
             <Globe className="h-4 w-4" />
@@ -1119,7 +1107,7 @@ export const LoopCardItem = memo(function LoopCardItem({
                 e.stopPropagation();
                 setMenuOpen((v) => !v);
               }}
-              aria-label={locale === "fr" ? "Plus d’actions" : "More actions"}
+              aria-label={lc.moreActions}
             >
               <MoreHorizontal className="h-4 w-4" />
             </Button>
@@ -1136,7 +1124,7 @@ export const LoopCardItem = memo(function LoopCardItem({
                   }}
                 >
                   <Download className="h-3.5 w-3.5" />
-                  Download
+                  {lc.download}
                 </button>
                 <button
                   type="button"
@@ -1161,7 +1149,7 @@ export const LoopCardItem = memo(function LoopCardItem({
                     }}
                   >
                     <Sparkles className="h-3.5 w-3.5" />
-                    {locale === "fr" ? "Mastering Studio" : "Mastering Studio"}
+                    {lc.masteringStudio}
                   </button>
                 ) : null}
                 <button
@@ -1231,7 +1219,7 @@ export const LoopCardItem = memo(function LoopCardItem({
                 url = "";
               }
               if (!url) {
-                toast.error(locale === "fr" ? "Audio indisponible — réessaie dans un instant" : "Audio unavailable — try again in a moment");
+                toast.error(lc.audioUnavailable);
                 return;
               }
 
@@ -1245,9 +1233,7 @@ export const LoopCardItem = memo(function LoopCardItem({
               ? "Pause"
               : canPlay
                 ? "Play"
-                : locale === "fr"
-                  ? "Préparation audio…"
-                  : "Preparing audio…"
+                : lc.preparingAudio
           }
         >
           {activePlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
@@ -1262,18 +1248,18 @@ export const LoopCardItem = memo(function LoopCardItem({
             void (async () => {
               try {
                 const next = await toggleSavedRemote(loop.id);
-                toast.success(next ? "Sauvegardé" : "Retiré de la bibliothèque");
+                toast.success(next ? lc.savedToLibrary : lc.removedFromLibrary);
               } catch (err) {
-                const message = err instanceof Error ? err.message : "Erreur inconnue";
+                const message = err instanceof Error ? err.message : d.error;
                 toast.error(message);
               }
             })();
           }}
-          title={loop.isSaved ? (locale === "fr" ? "Retirer" : "Unsave") : "Save"}
+          title={loop.isSaved ? lc.unsave : lc.saveAction}
           aria-pressed={loop.isSaved}
         >
           <Bookmark className={cn("h-4 w-4", loop.isSaved && "fill-current")} />
-          Save
+          {lc.saveAction}
         </Button>
         <Button
           variant="secondary"
@@ -1284,18 +1270,18 @@ export const LoopCardItem = memo(function LoopCardItem({
             void (async () => {
               try {
                 const next = await togglePublicRemote(loop.id);
-                toast.success(next ? "Public" : "Private");
+                toast.success(next ? lc.publicLabel : lc.privateLabel);
               } catch (err) {
-                const message = err instanceof Error ? err.message : "Erreur inconnue";
+                const message = err instanceof Error ? err.message : d.error;
                 toast.error(message);
               }
             })();
           }}
-          title={loop.isPublic ? (locale === "fr" ? "Passer privé" : "Make private") : locale === "fr" ? "Rendre public" : "Make public"}
+          title={loop.isPublic ? lc.makePrivate : lc.makePublic}
           aria-pressed={loop.isPublic}
         >
           <Globe className="h-4 w-4" />
-          {loop.isPublic ? (locale === "fr" ? "Privé" : "Private") : locale === "fr" ? "Public" : "Public"}
+          {loop.isPublic ? lc.privateLabel : lc.publicLabel}
         </Button>
         {onOpenMaster ? (
           <Button
@@ -1305,7 +1291,7 @@ export const LoopCardItem = memo(function LoopCardItem({
               e.stopPropagation();
               onOpenMaster(loop);
             }}
-            title={locale === "fr" ? "Ouvrir Mastering Studio" : "Open Mastering Studio"}
+            title={lc.openMasteringStudio}
           >
             <Sparkles className="h-4 w-4" />
             Studio
@@ -1319,16 +1305,10 @@ export const LoopCardItem = memo(function LoopCardItem({
             handleDownloadBeat();
           }}
           disabled={isDownloading || !loop.audioUrl}
-          title={
-            !loop.audioUrl
-              ? locale === "fr"
-                ? "Audio indisponible"
-                : "Audio unavailable"
-              : "Download"
-          }
+          title={!loop.audioUrl ? lc.audioUnavailableShort : lc.download}
         >
           {isDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-          Download
+          {lc.download}
         </Button>
         {stemsDownloadUrl ? (
           <Button
@@ -1337,7 +1317,7 @@ export const LoopCardItem = memo(function LoopCardItem({
             onClick={(e) => {
               e.stopPropagation();
               if (!canDownloadStems(plan)) {
-                toast(locale === "fr" ? "Stems séparés ZIP : plan Plus" : "Separate stems ZIP: Plus plan");
+                toast(lc.stemsPlusPlan);
                 window.location.href = "/pricing?plan=plus&checkout=1";
                 return;
               }
@@ -1355,10 +1335,10 @@ export const LoopCardItem = memo(function LoopCardItem({
               }
             }}
             disabled={isDownloadingStems}
-            title={locale === "fr" ? "Télécharger les stems" : "Download stems"}
+            title={lc.downloadStems}
           >
             {isDownloadingStems ? <Loader2 className="h-4 w-4 animate-spin" /> : <Layers className="h-4 w-4" />}
-            {locale === "fr" ? "Stems" : "Stems"}
+            {lc.stemsLabel}
           </Button>
         ) : null}
         <Button
@@ -1368,8 +1348,8 @@ export const LoopCardItem = memo(function LoopCardItem({
             e.stopPropagation();
             setShareOpen(true);
           }}
-          aria-label={locale === "fr" ? "Partager" : "Share"}
-          title={locale === "fr" ? "Partager" : "Share"}
+          aria-label={lc.share}
+          title={lc.share}
         >
           <Share2 className="h-4 w-4" />
           Share
@@ -1385,7 +1365,7 @@ export const LoopCardItem = memo(function LoopCardItem({
           title="Regenerate"
         >
           {isVarying ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
-          {isVarying ? (locale === "fr" ? "Génération…" : "Generating...") : "Variation"}
+          {isVarying ? lc.generating : lc.variationBtn}
         </Button>
         <Button
           variant="secondary"
@@ -1398,7 +1378,7 @@ export const LoopCardItem = memo(function LoopCardItem({
           title="Remix"
         >
           {isVarying ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
-          {isVarying ? (locale === "fr" ? "Génération…" : "Generating...") : "Remix"}
+          {isVarying ? lc.generating : lc.remixBtn}
         </Button>
         {onDelete ? (
           <Button
@@ -1428,9 +1408,9 @@ export const LoopCardItem = memo(function LoopCardItem({
                 void (async () => {
                   try {
                     await togglePublicRemote(shareLoop.id);
-                    toast.success(locale === "fr" ? "Track publique — lien d'écoute actif" : "Track public — listen link live");
+                    toast.success(lc.trackPublicListenLive);
                   } catch (err) {
-                    toast.error(err instanceof Error ? err.message : locale === "fr" ? "Erreur" : "Error");
+                    toast.error(err instanceof Error ? err.message : d.error);
                   }
                 })();
               }

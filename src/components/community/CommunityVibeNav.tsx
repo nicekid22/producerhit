@@ -3,9 +3,12 @@ import { Search } from "lucide-react";
 import { PrismFilterPill } from "@/components/prism/PrismFilterPill";
 import type { CommunityVibeCategory } from "@/lib/communityHub";
 import { communityVibePath } from "@/lib/communitySeo";
+import type { AppLocale } from "@/i18n/config";
+import { buildCommunityHubUiCopy } from "@/i18n/communityHubUiCatalog";
+import { useMemo } from "react";
 
 type Props = {
-  isFr: boolean;
+  locale: AppLocale;
   categories: Array<{ category: CommunityVibeCategory; count: number }>;
   activeVibeId: string | null;
   query: string;
@@ -16,7 +19,7 @@ type Props = {
 };
 
 export function CommunityVibeNav({
-  isFr,
+  locale,
   categories,
   activeVibeId,
   query,
@@ -25,6 +28,8 @@ export function CommunityVibeNav({
   onQueryChange,
   onSortChange,
 }: Props) {
+  const copy = useMemo(() => buildCommunityHubUiCopy(locale), [locale]);
+
   return (
     <div className="pk-hub-nav sticky top-0 z-20 space-y-3 rounded-2xl border border-white/10 bg-[#06060c]/90 px-4 py-3 backdrop-blur-xl">
       <div className="pk-prism-input-shell">
@@ -32,7 +37,7 @@ export function CommunityVibeNav({
         <input
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
-          placeholder={isFr ? "Titre, artiste, vibe, genre…" : "Title, artist, vibe, genre…"}
+          placeholder={copy.searchPlaceholder}
         />
       </div>
 
@@ -42,7 +47,7 @@ export function CommunityVibeNav({
           onClick={() => onVibeChange(null)}
           className={["pk-hub-vibe-tile", !activeVibeId ? "pk-hub-vibe-tile--active" : ""].join(" ")}
         >
-          <span className="pk-hub-vibe-tile__title">{isFr ? "Tout le flux" : "All vibes"}</span>
+          <span className="pk-hub-vibe-tile__title">{copy.allVibes}</span>
         </Link>
         {categories.map(({ category, count }) => {
           const active = activeVibeId === category.id;
@@ -54,8 +59,8 @@ export function CommunityVibeNav({
               className={["pk-hub-vibe-tile", active ? "pk-hub-vibe-tile--active" : ""].join(" ")}
               data-vibe={category.id}
             >
-              <span className="pk-hub-vibe-tile__title">{isFr ? category.title.fr : category.title.en}</span>
-              <span className="pk-hub-vibe-tile__sub">{isFr ? category.subtitle.fr : category.subtitle.en}</span>
+              <span className="pk-hub-vibe-tile__title">{copy.categoryTitle(category)}</span>
+              <span className="pk-hub-vibe-tile__sub">{copy.categorySubtitle(category)}</span>
               <span className="pk-hub-vibe-tile__count">{count}</span>
             </Link>
           );
@@ -63,17 +68,15 @@ export function CommunityVibeNav({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <span className="mr-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/35">
-          {isFr ? "Tri" : "Sort"}
-        </span>
+        <span className="mr-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/35">{copy.sort}</span>
         <PrismFilterPill active={sort === "new"} onClick={() => onSortChange("new")}>
-          {isFr ? "Nouveaux" : "New"}
+          {copy.sortNew}
         </PrismFilterPill>
         <PrismFilterPill active={sort === "top"} onClick={() => onSortChange("top")}>
           Top
         </PrismFilterPill>
         <PrismFilterPill active={sort === "random"} onClick={() => onSortChange("random")}>
-          {isFr ? "Aléatoire" : "Random"}
+          {copy.sortRandom}
         </PrismFilterPill>
       </div>
     </div>

@@ -1,7 +1,10 @@
 import type { ReactNode } from "react";
+import { useMemo } from "react";
 import { ChevronRight } from "lucide-react";
 import type { PublicLoopRow } from "@/lib/publicLoops";
 import { CommunityTrackCard } from "@/components/community/CommunityTrackCard";
+import type { AppLocale } from "@/i18n/config";
+import { buildCommunityHubUiCopy } from "@/i18n/communityHubUiCatalog";
 
 type RatingStats = { sum: number; count: number; myRating: number | null };
 
@@ -10,7 +13,7 @@ type Props = {
   subtitle?: string;
   icon?: ReactNode;
   items: PublicLoopRow[];
-  isFr: boolean;
+  locale: AppLocale;
   currentId: string | null;
   isPlaying: boolean;
   resolvingId: string | null;
@@ -30,7 +33,7 @@ export function CommunityRail({
   subtitle,
   icon,
   items,
-  isFr,
+  locale,
   currentId,
   isPlaying,
   resolvingId,
@@ -44,6 +47,8 @@ export function CommunityRail({
   onOpenDetail,
   onSeeAll,
 }: Props) {
+  const copy = useMemo(() => buildCommunityHubUiCopy(locale), [locale]);
+
   if (!items.length) return null;
 
   return (
@@ -62,7 +67,7 @@ export function CommunityRail({
             onClick={onSeeAll}
             className="pk-accent-link pk-accent-link--bright inline-flex items-center gap-1 text-xs font-semibold"
           >
-            {isFr ? "Tout voir" : "See all"}
+            {copy.seeAll}
             <ChevronRight className="h-3.5 w-3.5" />
           </button>
         ) : null}
@@ -72,7 +77,7 @@ export function CommunityRail({
           <CommunityTrackCard
             key={row.id}
             row={row}
-            isFr={isFr}
+            locale={locale}
             variant="rail"
             isActive={currentId === row.id}
             isPlaying={isPlaying}

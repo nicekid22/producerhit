@@ -1,3 +1,5 @@
+import type { AppLocale } from "@/i18n/config";
+import { formatCommentAgeI18n } from "@/i18n/loopCommentsSectionCatalog";
 import { supabase } from "@/lib/supabaseClient";
 import { fetchPublicProfileCards, type PublicProfileCard } from "@/lib/creatorProfile";
 
@@ -113,14 +115,7 @@ export async function hideLoopComment(commentId: string): Promise<void> {
   if (error) throw error;
 }
 
-export function formatCommentAge(iso: string, isFr: boolean): string {
-  const ms = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(ms / 60000);
-  if (mins < 2) return isFr ? "à l'instant" : "just now";
-  if (mins < 60) return isFr ? `il y a ${mins} min` : `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return isFr ? `il y a ${hours} h` : `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 14) return isFr ? `il y a ${days} j` : `${days}d ago`;
-  return new Date(iso).toLocaleDateString(isFr ? "fr-FR" : "en-US", { month: "short", day: "numeric" });
+export function formatCommentAge(iso: string, locale: AppLocale | boolean): string {
+  const resolved: AppLocale = typeof locale === "boolean" ? (locale ? "fr" : "en") : locale;
+  return formatCommentAgeI18n(iso, resolved);
 }
