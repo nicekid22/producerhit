@@ -106,9 +106,7 @@ function pickLoop(loops, idx = 0) {
 
 function buildReport(loops) {
   const beat = pickLoop(loops, 0);
-  const beat2 = pickLoop(loops, 1);
   const beatUrl = loopUrl(beat.id);
-  const beat2Url = loopUrl(beat2.id);
   const today = new Date().toISOString().slice(0, 10);
 
   const redditWatm = `[OC] Made this ${beat.genre} beat with an AI tool built for producers (BPM/key/seeds) — feedback welcome
@@ -121,14 +119,17 @@ If you want the generator: ${utm("/type-beat-generator-ai", "reddit", "watm_demo
 
 Happy to share prompt + settings in comments.`;
 
-  const redditMhh = `Free type beat workflow: AI generator → seed variations → export MP3
+  const redditTypebeats = `[FREE] ${beat.genre ?? "Trap"} Type Beat — ${beat.name} (producer workflow / AI sketch)
 
-Track: "${beat2.name}" (${beat2.genre})
-${beat2Url}
+${beatUrl}
 
-Tool: ProducerHit — 10 free gens/month, community remix. Not affiliated, just testing alternatives to scrolling BeatStars.
+Not a finished type beat — loop starting point. Feedback welcome.`;
 
-Comparison vs Suno for beatmakers: ${utm("/suno-alternatives", "reddit", "mhh_compare")}`;
+  const redditMhhComment = `Suno = full songs/vocals. For producer loops (BPM/key/seeds) I wrote a comparison: ${utm("/suno-alternatives", "reddit", "mhh_compare")}
+
+I use AI as sketch, then redo drums/808/mix manually — happy to detail workflow if useful.
+
+(Do not post beat links as standalone posts here — Rule 3.)`;
 
   const discordPost = `**🎧 Beat du jour — remix challenge**
 > **${beat.name}** · ${beat.genre}
@@ -157,7 +158,7 @@ ${utm("/ai-trap-beat-generator", "twitter", "type_beat_demo")}`;
 1. **Google Search Console** → Ajouter propriété → Soumettre \`${SITE}/sitemap-index.xml\`
 2. **Bing Webmaster** → même sitemap
 3. **IndexNow** → lancé par ce script (vérifie la console ci-dessus)
-4. Poster **1 beat** (lien loop) sur Reddit — pas la homepage
+4. Poster **1 beat** sur **r/Typebeats** — pas r/makinghiphop (Rule 3)
 
 ---
 
@@ -170,16 +171,26 @@ ${loops
 
 ---
 
-## Reddit — r/WeAreTheMusicMakers
+## Reddit — r/Typebeats (post beat)
+
+\`\`\`
+${redditTypebeats}
+\`\`\`
+
+Compose: https://www.reddit.com/submit?sr=Typebeats
+
+## Reddit — r/WeAreTheMusicMakers (feedback thread only)
 
 \`\`\`
 ${redditWatm}
 \`\`\`
 
-## Reddit — r/makinghiphop
+## Reddit — r/makinghiphop (comment only — Rule 3)
+
+Cherche un thread question prod / AI, colle ceci en **commentaire** (pas un post beat) :
 
 \`\`\`
-${redditMhh}
+${redditMhhComment}
 \`\`\`
 
 ---

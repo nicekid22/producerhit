@@ -5,6 +5,8 @@ import {
   buildGrowthUrl,
   facebookShareUrl,
   telegramShareUrl,
+  linkedInShareUrl,
+  redditSubmitUrl,
   twitterShareIntent,
   whatsAppShareUrl,
   type GrowthChannel,
@@ -27,6 +29,8 @@ type Props = {
 
 const CHANNELS: { id: GrowthChannel; labelFr: string; labelEn: string }[] = [
   { id: "twitter", labelFr: "X", labelEn: "X" },
+  { id: "reddit", labelFr: "Reddit", labelEn: "Reddit" },
+  { id: "linkedin", labelFr: "LinkedIn", labelEn: "LinkedIn" },
   { id: "whatsapp", labelFr: "WhatsApp", labelEn: "WhatsApp" },
   { id: "telegram", labelFr: "Telegram", labelEn: "Telegram" },
   { id: "facebook", labelFr: "Facebook", labelEn: "Facebook" },
@@ -71,7 +75,8 @@ export function ViralShareBar({ url, shareText, locale, channel = "twitter", loo
       tiktok: shareUrl,
       instagram: shareUrl,
       youtube: shareUrl,
-      reddit: shareUrl,
+      reddit: redditSubmitUrl({ title: shareText, url: shareUrl }),
+      linkedin: linkedInShareUrl(shareUrl),
       discord: shareUrl,
       email: shareUrl,
       referral: shareUrl,

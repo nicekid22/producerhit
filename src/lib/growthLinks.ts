@@ -11,6 +11,7 @@ export type GrowthChannel =
   | "youtube"
   | "facebook"
   | "reddit"
+  | "linkedin"
   | "discord"
   | "whatsapp"
   | "telegram"
@@ -26,6 +27,7 @@ const CHANNEL_UTM: Record<GrowthChannel, { utm_source: string; utm_medium: strin
   youtube: { utm_source: "youtube", utm_medium: "social" },
   facebook: { utm_source: "facebook", utm_medium: "social" },
   reddit: { utm_source: "reddit", utm_medium: "social" },
+  linkedin: { utm_source: "linkedin", utm_medium: "social" },
   discord: { utm_source: "discord", utm_medium: "social" },
   whatsapp: { utm_source: "whatsapp", utm_medium: "social" },
   telegram: { utm_source: "telegram", utm_medium: "social" },
@@ -76,4 +78,17 @@ export function whatsAppShareUrl(text: string, url: string): string {
 
 export function telegramShareUrl(text: string, url: string): string {
   return `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+}
+
+export function redditSubmitUrl(opts: { subreddit?: string; title: string; url?: string; selftext?: string }): string {
+  const u = new URL("https://www.reddit.com/submit");
+  if (opts.subreddit) u.searchParams.set("sr", opts.subreddit.replace(/^r\//i, ""));
+  u.searchParams.set("title", opts.title);
+  if (opts.selftext) u.searchParams.set("selftext", opts.selftext);
+  else if (opts.url) u.searchParams.set("url", opts.url);
+  return u.toString();
+}
+
+export function linkedInShareUrl(url: string): string {
+  return `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
 }
