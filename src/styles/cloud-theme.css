@@ -705,11 +705,21 @@ html.pk-cloud-active .pk-sidebar-root .pk-sidebar-ctrl-btn--open,
     0 0 16px var(--cloud-accent-glow) !important;
 }
 
+html.pk-warm-glass-active .pk-sidebar-root .pk-language-btn--warm::before,
+.pk-warm-glass-stage .pk-sidebar-root .pk-language-btn--warm::before {
+  opacity: 0.85;
+}
+
 html.pk-cloud-active .pk-sidebar-root .pk-language-btn--cloud,
 .pk-cloud-stage .pk-sidebar-root .pk-language-btn--cloud {
   background: rgba(255, 255, 255, 0.04) !important;
   border-color: color-mix(in srgb, var(--cloud-accent) 18%, transparent) !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+html.pk-cloud-active .pk-sidebar-root .pk-language-btn--cloud::before,
+.pk-cloud-stage .pk-sidebar-root .pk-language-btn--cloud::before {
+  opacity: 0.85;
 }
 
 /* ——— Scrollbars globales + tokens portaled (dropdowns sur body) ——— */

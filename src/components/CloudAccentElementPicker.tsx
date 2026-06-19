@@ -47,7 +47,7 @@ export function CloudAccentElementPicker({ variant = "settings", className, onAc
     return (
       <div
         className={cn(
-          "pk-cloud-accent-elements pk-cloud-accent-elements--sidebar flex flex-col gap-1",
+          "pk-cloud-accent-elements pk-cloud-accent-elements--sidebar flex flex-col",
           !cloudActive && "pk-cloud-accent-elements--dormant",
           className,
         )}

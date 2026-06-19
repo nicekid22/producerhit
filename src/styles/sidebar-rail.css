@@ -128,6 +128,99 @@
     align-items: center;
     width: 100%;
   }
+
+  /*
+   * Mood Cloud (4 éléments) — styles de base toujours chargés.
+   * cloud-theme.css (lazy) ajoute les dégradés quand le skin Cloud est actif.
+   */
+  .pk-sidebar-root .pk-cloud-accent-element--nav {
+    position: relative;
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: var(--pk-sidebar-rail-btn-size);
+    height: var(--pk-sidebar-rail-btn-size);
+    min-width: var(--pk-sidebar-rail-btn-size);
+    min-height: var(--pk-sidebar-rail-btn-size);
+    padding: 0;
+    margin: 0;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.04);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    cursor: pointer;
+    line-height: 0;
+    overflow: hidden;
+    transition:
+      transform 0.15s ease,
+      border-color 0.15s ease,
+      box-shadow 0.15s ease,
+      background 0.15s ease;
+  }
+
+  .pk-sidebar-root .pk-cloud-accent-element--nav::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  .pk-sidebar-root .pk-cloud-accent-element--nav .pk-cloud-accent-element__icon {
+    position: relative;
+    z-index: 1;
+    color: rgba(255, 255, 255, 0.52);
+    filter: none !important;
+  }
+
+  .pk-sidebar-root .pk-cloud-accent-elements--dormant .pk-cloud-accent-element--nav,
+  .pk-sidebar-root .pk-cloud-accent-elements--sidebar .pk-cloud-accent-element--nav:not(.pk-cloud-accent-element--active) {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-color: transparent !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+    transform: none;
+  }
+
+  .pk-sidebar-root .pk-cloud-accent-elements--dormant .pk-cloud-accent-element--nav::before,
+  .pk-sidebar-root .pk-cloud-accent-elements--sidebar .pk-cloud-accent-element--nav:not(.pk-cloud-accent-element--active)::before {
+    opacity: 0 !important;
+  }
+
+  .pk-sidebar-root .pk-cloud-accent-elements--dormant .pk-cloud-accent-element--nav:hover,
+  .pk-sidebar-root .pk-cloud-accent-elements--sidebar .pk-cloud-accent-element--nav:not(.pk-cloud-accent-element--active):hover {
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    background: rgba(255, 255, 255, 0.07) !important;
+    transform: scale(1.03);
+  }
+
+  .pk-sidebar-root .pk-cloud-accent-element--nav:active {
+    transform: scale(0.96);
+  }
+
+  .pk-sidebar-root .pk-cloud-accent-element--nav:focus-visible {
+    outline: 2px solid rgba(103, 195, 255, 0.45);
+    outline-offset: 2px;
+  }
+
+  /* Langue — même shell plat que cloche / logout sur Prism */
+  .pk-sidebar-root .pk-language-btn--sidebar::before {
+    opacity: 0;
+  }
+
+  .pk-sidebar-root .pk-language-btn--sidebar {
+    border: 2px solid transparent;
+    background: rgba(255, 255, 255, 0.04);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  .pk-sidebar-root .pk-language-btn--sidebar:hover:not(.pk-language-btn--open) {
+    transform: scale(1.03);
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.07);
+  }
 }
 
 /* Cloud — icônes footer blanches (cloche / logout), nav inactive = muted existant */

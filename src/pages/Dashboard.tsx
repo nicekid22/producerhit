@@ -1840,13 +1840,19 @@ export default function Dashboard() {
         const quickUrl = audioUrl.trim();
         if (quickUrl) {
           if (audioUrl.startsWith("http")) void primeAudioCache(previewId, audioUrl);
+          const previewLoop = buildPreviewLoop(quickUrl);
+          upsertLoop(previewLoop);
+          hideGenerationSlot(idx, { previewLoopId: previewId, previewReady: true });
+          void generationAutoplay.playWhenReady(idx, previewLoop, { preview: true });
           void (async () => {
             const playbackUrl = ((await resolvePlaybackUrlForLoop(previewId, audioUrl)) || quickUrl).trim();
-            if (!playbackUrl || !isActiveSession() || persistCompleted) return;
-            const previewLoop = buildPreviewLoop(playbackUrl);
-            upsertLoop(previewLoop);
-            hideGenerationSlot(idx, { previewLoopId: previewId, previewReady: true });
-            await generationAutoplay.playWhenReady(idx, previewLoop, { preview: true });
+            if (!playbackUrl || playbackUrl === quickUrl || !isActiveSession() || persistCompleted) return;
+            const resolvedPreview = buildPreviewLoop(playbackUrl);
+            upsertLoop(resolvedPreview);
+            const player = usePlayerStore.getState();
+            if (player.current?.id === previewId || player.queue.some((l) => l.id === previewId)) {
+              player.promoteLoop(previewId, resolvedPreview);
+            }
           })();
         }
 
