@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Check, Lock, Sparkles, X, Zap } from "lucide-react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/Button";
-import { buildAuthNextUrl, runCheckoutWithAuth } from "@/lib/billing";
+import { buildAuthNextUrl, runCheckoutWithAuth, runCreditPackCheckout } from "@/lib/billing";
+import { getCreditPackCtaLabel } from "@/lib/creditPacks";
 import { getUpsellCopy, shouldShowPlanUpsell, type UpsellReason } from "@/lib/growthUpsell";
 import { planPriceLabel } from "@/lib/planPricing";
 import { LaunchOfferChips } from "@/components/marketing/LaunchOfferChips";
@@ -100,6 +101,33 @@ export function PlanUpsellModal({
   };
 
   const urgent = reason === "credits_exhausted" || reason === "limit_reached";
+  const showCreditPack = urgent && !!user;
+
+  const startCreditPack = async () => {
+    trackClientEvent("credit_pack_click", { source, reason, location: "plan_upsell_modal" });
+    setBusy(true);
+    try {
+      await runCreditPackCheckout({ product: "credit_pack_50", location: `upsell_${reason}`, locale });
+      onClose();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const primaryAction = async () => {
+    if (targetPlan) {
+      await startUpgrade(targetPlan);
+      return;
+    }
+    if (showCreditPack) {
+      await startCreditPack();
+      return;
+    }
+    await startUpgrade(null);
+  };
+
+  const primaryLabel =
+    !targetPlan && showCreditPack ? getCreditPackCtaLabel(locale) : copy.primaryLabel;
 
   return createPortal(
     <div
@@ -195,10 +223,21 @@ export function PlanUpsellModal({
               size="md"
               className="h-12 w-full rounded-full text-sm font-bold"
               disabled={busy}
-              onClick={() => void startUpgrade(targetPlan)}
+              onClick={() => void primaryAction()}
             >
-              {busy ? ui.openingCheckout : copy.primaryLabel}
+              {busy ? ui.openingCheckout : primaryLabel}
             </Button>
+            {targetPlan && showCreditPack ? (
+              <Button
+                variant="secondary"
+                size="md"
+                className="h-11 w-full rounded-full text-sm font-semibold"
+                disabled={busy}
+                onClick={() => void startCreditPack()}
+              >
+                {getCreditPackCtaLabel(locale)}
+              </Button>
+            ) : null}
             <button
               type="button"
               className="w-full py-2 text-center text-xs font-semibold text-white/42 transition hover:text-white/70"

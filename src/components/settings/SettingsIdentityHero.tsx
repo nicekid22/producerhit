@@ -22,6 +22,7 @@ type Props = {
   navItems: NavItem[];
   activeSection?: string;
   onNav: (id: string) => void;
+  onUpgrade?: () => void;
 };
 
 export function SettingsIdentityHero({
@@ -39,6 +40,7 @@ export function SettingsIdentityHero({
   navItems,
   activeSection,
   onNav,
+  onUpgrade,
 }: Props) {
   return (
     <header className="pk-settings-hero">
@@ -87,9 +89,15 @@ export function SettingsIdentityHero({
                 {usedThisMonth}/{limit} {copy.thisMonth}
               </span>
             </div>
-            <Link to="/pricing" className="pk-settings-hero__upgrade">
-              {copy.upgrade}
-            </Link>
+            {onUpgrade ? (
+              <button type="button" onClick={onUpgrade} className="pk-settings-hero__upgrade">
+                {copy.upgrade}
+              </button>
+            ) : (
+              <Link to="/pricing" className="pk-settings-hero__upgrade">
+                {copy.upgrade}
+              </Link>
+            )}
           </div>
         </div>
       </div>

@@ -1,3 +1,5 @@
+import { readCheckoutAbandoned } from "@/lib/checkoutRecovery";
+import { isPaidPlanTier } from "@/lib/billingInterval";
 import { buildDashboardUrlFromLandingPending } from "@/lib/landingPendingGeneration";
 import { sanitizePostAuthPath } from "@/lib/postAuthRedirect";
 
@@ -27,6 +29,11 @@ export function resolvePostAuthRedirect(explicitNext: string | null | undefined)
   const safe = sanitizePostAuthPath(explicitNext);
   const isBareDashboard = safe === "/dashboard";
   if (!isBareDashboard) return safe;
+
+  const abandoned = readCheckoutAbandoned();
+  if (abandoned?.plan && isPaidPlanTier(abandoned.plan)) {
+    return `/pricing?plan=${abandoned.plan}&checkout=1`;
+  }
 
   const fromLanding = buildDashboardUrlFromLandingPending();
   if (fromLanding) return fromLanding;

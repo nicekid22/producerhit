@@ -47,6 +47,10 @@ import { fetchLoopCommentCounts, fetchRecentFluxComments, type FluxCommentPrevie
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
 import { useLocaleStore } from "@/stores/localeStore";
 import { useAuthStore } from "@/stores/authStore";
+import { normalizePlan } from "@/lib/billing";
+import { CheckoutRecoveryBanner } from "@/components/billing/CheckoutRecoveryBanner";
+import { FreeUpgradeStrip } from "@/components/billing/FreeUpgradeStrip";
+import { readProfileCache } from "@/lib/profileBootstrap";
 import {
   COMMUNITY_QUEUE_SOURCE,
   findPublicRowIndex,
@@ -66,6 +70,15 @@ export default function Explore() {
   const hubCopy = useMemo(() => buildCommunityHubUiCopy(locale), [locale]);
   const loopCopy = useMemo(() => buildPublicLoopPageCopy(locale), [locale]);
   const user = useAuthStore((s) => s.user);
+  const profile = useAuthStore((s) => s.profile);
+  const userPlan = useMemo(() => {
+    if (profile?.plan) return normalizePlan(profile.plan);
+    if (user?.id) {
+      const cached = readProfileCache(user.id);
+      if (cached?.plan) return normalizePlan(cached.plan);
+    }
+    return user ? "free" : "free";
+  }, [profile?.plan, user]);
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<PublicLoopRow[]>([]);
   const [refetchToken, setRefetchToken] = useState(0);
@@ -533,6 +546,16 @@ export default function Explore() {
   return (
     <AppShell theme="prism" variant="single">
       <div className="pk-community pk-hub mx-auto w-full max-w-[1320px] space-y-6 px-4 pb-4 pt-4 md:px-6 md:pb-10 md:pt-5">
+        {user ? (
+          <>
+            <CheckoutRecoveryBanner locale={locale} location="community" currentPlan={userPlan} />
+            {userPlan === "free" ? (
+              <FreeUpgradeStrip locale={locale} location="community_strip" plan={userPlan} />
+            ) : null}
+          </>
+        ) : (
+          <CheckoutRecoveryBanner locale={locale} location="community_anon" />
+        )}
         <CommunityHubHero
           locale={locale}
           liveCount={rows.length}

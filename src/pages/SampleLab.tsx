@@ -14,6 +14,8 @@ import { useGrowthUpsellStore } from "@/stores/growthUpsellStore";
 import { readProfileCache } from "@/lib/profileBootstrap";
 import { getRemainingBeats } from "@/lib/planLimits";
 import { shouldShowPlanUpsell } from "@/lib/growthUpsell";
+import { normalizePlan, runCreditPackCheckout } from "@/lib/billing";
+import { CheckoutRecoveryBanner } from "@/components/billing/CheckoutRecoveryBanner";
 import { estimateGenerationDurationMs } from "@/lib/aceDuration";
 import { generateSampleLabLoop } from "@/lib/sampleLabGenerate";
 import {
@@ -141,6 +143,10 @@ function SampleLabContent() {
   const onGenerate = useCallback(async () => {
     if (generating) return;
     if (remaining < 1) {
+      if (plan === "plus" || plan === "studio") {
+        void runCreditPackCheckout({ product: "credit_pack_50", location: "sample_lab_quota", locale });
+        return;
+      }
       if (shouldShowPlanUpsell(plan, "credits_exhausted", { source: "sample_lab", plan, remaining })) {
         openUpsell("credits_exhausted", { source: "sample_lab", plan, remaining });
       } else {
@@ -324,6 +330,7 @@ function SampleLabContent() {
     >
       <div className="pk-prism-page flex min-h-0 flex-1 flex-col overflow-y-auto">
         <div className="mx-auto w-full max-w-5xl flex-1 px-4 pb-24 pt-4 md:px-6">
+          <CheckoutRecoveryBanner locale={locale} location="sample_lab" currentPlan={normalizePlan(plan)} className="mb-4" />
           <PrismPageHero
             eyebrow={t("ProducerHit Samples · Beta", "ProducerHit Samples · Bêta")}
             title={t("AI Sample Lab", "AI Sample Lab")}

@@ -7,15 +7,17 @@ import toast from "react-hot-toast";
 import {
   checkoutSessionIdFromClientSecret,
   confirmCheckoutSession,
+  waitForCreditPackActivation,
   waitForPlanActivation,
 } from "@/lib/billing";
+import { getCreditPack } from "@/lib/creditPacks";
 import { useStripeCheckoutStore } from "@/stores/stripeCheckoutStore";
 import { useLocaleStore } from "@/stores/localeStore";
 import { useAuthStore } from "@/stores/authStore";
 import { useVisualThemeStore } from "@/stores/visualThemeStore";
 import { useCloudAccentStore } from "@/stores/cloudAccentStore";
 import { cn } from "@/lib/utils";
-import { clearCheckoutAbandoned, markCheckoutAbandoned } from "@/lib/checkoutRecovery";
+import { clearCheckoutAbandoned, markCheckoutAbandoned, syncCheckoutAbandonNurture } from "@/lib/checkoutRecovery";
 import { trackClientEvent } from "@/lib/supabaseClient";
 import "@/styles/stripe-checkout-modal.css";
 
@@ -38,7 +40,10 @@ export function StripeCheckoutModal() {
   const clientSecret = useStripeCheckoutStore((s) => s.clientSecret);
   const returnUrl = useStripeCheckoutStore((s) => s.returnUrl);
   const plan = useStripeCheckoutStore((s) => s.plan);
+  const kind = useStripeCheckoutStore((s) => s.kind);
+  const product = useStripeCheckoutStore((s) => s.product);
   const closeCheckout = useStripeCheckoutStore((s) => s.closeCheckout);
+  const profile = useAuthStore((s) => s.profile);
   const refreshProfile = useAuthStore((s) => s.refreshProfile);
   const locale = useLocaleStore((s) => s.locale);
   const visualTheme = useVisualThemeStore((s) => s.theme);
@@ -62,13 +67,30 @@ export function StripeCheckoutModal() {
 
   if (!open || !clientSecret || typeof document === "undefined") return null;
 
-  const planLabel = plan ? plan.charAt(0).toUpperCase() + plan.slice(1) : "";
-  const perks = plan ? (isFr ? PLAN_PERKS_FR[plan] : PLAN_PERKS_EN[plan]) ?? [] : [];
+  const planLabel = kind === "credit_pack" && product
+    ? getCreditPack(product).credits + (isFr ? " générations" : " generations")
+    : plan
+      ? plan.charAt(0).toUpperCase() + plan.slice(1)
+      : "";
+  const perks =
+    kind === "credit_pack"
+      ? isFr
+        ? ["Crédits sans expiration", "Activation immédiate", "Sans changer de plan"]
+        : ["Credits never expire", "Instant activation", "Keep your current plan"]
+      : plan
+        ? ((isFr ? PLAN_PERKS_FR[plan] : PLAN_PERKS_EN[plan]) ?? [])
+        : [];
 
   const handleCloseCheckout = () => {
-    if (plan && !activating) {
-      markCheckoutAbandoned(plan, "embedded_modal");
-      trackClientEvent("checkout_abandoned", { plan, ui_mode: "embedded" });
+    const abandonKey = kind === "credit_pack" ? product : plan;
+    if (abandonKey && !activating) {
+      markCheckoutAbandoned(abandonKey, "embedded_modal");
+      syncCheckoutAbandonNurture(abandonKey, locale, "embedded_modal");
+      trackClientEvent("checkout_abandoned", {
+        plan: abandonKey,
+        ui_mode: "embedded",
+        kind,
+      });
     }
     closeCheckout();
   };
@@ -80,6 +102,30 @@ export function StripeCheckoutModal() {
       if (sessionId) {
         await confirmCheckoutSession(sessionId).catch(() => undefined);
       }
+
+      if (kind === "credit_pack" && product) {
+        const pack = getCreditPack(product);
+        const before = profile?.purchased_bonus ?? 0;
+        const activated = await waitForCreditPackActivation(refreshProfile, before);
+        clearCheckoutAbandoned();
+        if (activated != null) {
+          toast.success(
+            isFr
+              ? `+${pack.credits} crédits ajoutés — total acheté : ${activated}`
+              : `+${pack.credits} credits added — purchased total: ${activated}`,
+          );
+        } else {
+          toast(
+            isFr
+              ? "Paiement reçu — crédits en cours d'activation."
+              : "Payment received — credits activating shortly.",
+          );
+        }
+        closeCheckout();
+        if (returnUrl) window.location.href = returnUrl;
+        return;
+      }
+
       const activatedPlan = await waitForPlanActivation(refreshProfile, plan ?? undefined);
       if (activatedPlan) {
         clearCheckoutAbandoned();

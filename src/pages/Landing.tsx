@@ -38,6 +38,7 @@ import { BrandLogo } from "@/components/landing/BrandLogo";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { TestimonialsStrip } from "@/components/landing/TestimonialsStrip";
 import { LandingCommunityRail } from "@/components/landing/LandingCommunityRail";
+import { LandingTrafficStrip } from "@/components/landing/LandingTrafficStrip";
 import { LandingBenefits } from "@/components/landing/LandingBenefits";
 import { LandingPricingTeaser } from "@/components/landing/LandingPricingTeaser";
 import { ProducerLegendsSection } from "@/components/marketing/ProducerLegendsSection";
@@ -66,11 +67,15 @@ import { clearLandingPendingGeneration, saveLandingPendingGeneration } from "@/l
 import { handoffRemixToDashboard } from "@/lib/remixHandoff";
 import { buildAuthUrl, resolvePostAuthRedirect } from "@/lib/authRoutes";
 import { cn } from "@/lib/utils";
-import { normalizePlan } from "@/lib/billing";
+import { normalizePlan, runCheckoutWithAuth } from "@/lib/billing";
 import { landingCoreFaqs } from "@/i18n/landingFaqCatalog";
 import { LANDING_MOBILE_V2 } from "@/lib/featureFlags";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { PublicProfileCard } from "@/lib/creatorProfile";
+import { LaunchOfferBanner } from "@/components/marketing/LaunchOfferBanner";
+import { CheckoutRecoveryBanner } from "@/components/billing/CheckoutRecoveryBanner";
+import { FreeUpgradeStrip } from "@/components/billing/FreeUpgradeStrip";
+import { getLaunchOfferCtaButton, isLaunchOfferActive } from "@/lib/launchOffer";
 
 type CreateMode = "song" | "beat";
 
@@ -1037,6 +1042,23 @@ export default function Landing() {
   }, [shouldLoadTrending, trendingRefreshKey, locale]);
 
   const currentPlan = normalizePlan(profile?.plan);
+  const [launchCheckoutLoading, setLaunchCheckoutLoading] = useState(false);
+  const showLaunchProCta = !user || currentPlan === "free";
+
+  const handleLaunchProCheckout = useCallback(async () => {
+    trackClientEvent("pricing_cta_click", {
+      tier: "pro",
+      kind: "upgrade",
+      current_plan: currentPlan,
+      location: "landing_launch_banner",
+    });
+    setLaunchCheckoutLoading(true);
+    try {
+      await runCheckoutWithAuth({ plan: "pro", location: "landing_launch_banner", locale });
+    } finally {
+      setLaunchCheckoutLoading(false);
+    }
+  }, [currentPlan, locale]);
 
   useEffect(() => {
     if (!user?.id || profile) return;
@@ -1334,6 +1356,7 @@ export default function Landing() {
         ) : null}
 
         <RevealSection className={`${landingSectionClass()} pk-landing-below-fold${mobileLandingFocus ? " hidden lg:block" : ""}`}>
+          <LandingTrafficStrip locale={locale} className="mb-6" />
           <LandingCommunityRail
             locale={locale}
             title={copy.communityTitle}
@@ -1395,6 +1418,24 @@ export default function Landing() {
         </RevealSection>
 
         <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
+          <CheckoutRecoveryBanner
+            locale={locale}
+            location="landing"
+            currentPlan={user ? currentPlan : undefined}
+            className="mb-6"
+          />
+          {user && currentPlan === "free" ? (
+            <FreeUpgradeStrip locale={locale} location="landing_strip" plan={currentPlan} className="mb-6" />
+          ) : null}
+          {isLaunchOfferActive() && showLaunchProCta ? (
+            <LaunchOfferBanner
+              locale={locale}
+              className="mb-8"
+              showCta
+              ctaLoading={launchCheckoutLoading}
+              onCtaClick={() => void handleLaunchProCheckout()}
+            />
+          ) : null}
           <LandingPricingTeaser locale={locale} user={!!user} currentPlan={currentPlan} />
         </RevealSection>
 
@@ -1413,9 +1454,20 @@ export default function Landing() {
                 {copy.ctaLead}
               </div>
               <div className="pk-landing-apple-panel__actions mt-8">
-                <HeroCtaButton to={buildAuthUrl()} variant="beam" size="lg">
-                  {copy.ctaButton}
-                </HeroCtaButton>
+                {user && currentPlan === "free" && isLaunchOfferActive() ? (
+                  <button
+                    type="button"
+                    disabled={launchCheckoutLoading}
+                    onClick={() => void handleLaunchProCheckout()}
+                    className="pk-landing-gen__cta inline-flex items-center justify-center rounded-full px-8 py-3.5 text-sm font-bold text-white disabled:opacity-60"
+                  >
+                    {launchCheckoutLoading ? "…" : getLaunchOfferCtaButton(locale)}
+                  </button>
+                ) : (
+                  <HeroCtaButton to={buildAuthUrl()} variant="beam" size="lg">
+                    {copy.ctaButton}
+                  </HeroCtaButton>
+                )}
               </div>
             </div>
           </div>
@@ -1452,7 +1504,7 @@ export default function Landing() {
         <LandingFooter locale={locale} user={user} />
       </main>
 
-      <LandingStickyCta locale={locale} user={!!user} visible={!mobileLandingFocus} />
+      <LandingStickyCta locale={locale} user={!!user} visible={!mobileLandingFocus} currentPlan={currentPlan} />
     </div>
   );
 }

@@ -2,6 +2,9 @@ import { AppShell } from "@/components/AppShell";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router-dom";
+import { normalizePlan, runCheckoutWithAuth } from "@/lib/billing";
+import { CheckoutRecoveryBanner } from "@/components/billing/CheckoutRecoveryBanner";
+import { FreeUpgradeStrip } from "@/components/billing/FreeUpgradeStrip";
 import { supabase } from "@/lib/supabaseClient";
 import { readProfileCache, syncProfileCache } from "@/lib/profileBootstrap";
 import { validateLegalName } from "@/lib/saveLegalName";
@@ -164,6 +167,7 @@ export default function Settings() {
       setReferralCode(authProfile.referral_code ?? "");
       syncProfileCache(authProfile.plan, authProfile.loops_used_this_month, user?.id, {
         referral_bonus: authProfile.referral_bonus,
+        purchased_bonus: authProfile.purchased_bonus ?? 0,
         level_bonus: authProfile.level_bonus,
         daily_bonus_month: authProfile.daily_bonus_month,
       });
@@ -230,6 +234,13 @@ export default function Settings() {
               navItems={navItems}
               activeSection={activeSection}
               onNav={scrollToSection}
+              onUpgrade={
+                plan === "free"
+                  ? () => void runCheckoutWithAuth({ plan: "pro", location: "settings_hero", locale })
+                  : remaining === 0
+                    ? () => navigate("/pricing")
+                    : undefined
+              }
             />
 
             <SettingsGrowthExtras locale={locale} plan={plan} compact />
@@ -467,6 +478,10 @@ export default function Settings() {
                 </div>
 
                 <div id="pk-settings-plan" className="pk-prism-section-card pk-settings-section pk-settings-section--compact">
+                  <CheckoutRecoveryBanner locale={locale} location="settings" currentPlan={plan} className="mb-4" />
+                  {plan === "free" ? (
+                    <FreeUpgradeStrip locale={locale} location="settings_strip" plan={plan} className="mb-4" />
+                  ) : null}
                   <div className="pk-prism-section-head">
                     <div className="pk-prism-section-head__icon">
                       <CreditCard className="h-4 w-4" />
@@ -488,9 +503,19 @@ export default function Settings() {
                     <span className="pk-prism-vibe-chip">{copy.community}</span>
                   </div>
                   <div className="mt-4 flex flex-wrap gap-2">
-                    <Link to="/pricing">
-                      <Button variant="primary" size="sm">{copy.upgrade}</Button>
-                    </Link>
+                    {plan === "free" ? (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => void runCheckoutWithAuth({ plan: "pro", location: "settings_upgrade", locale })}
+                      >
+                        {copy.upgrade}
+                      </Button>
+                    ) : (
+                      <Link to="/pricing">
+                        <Button variant="primary" size="sm">{copy.upgrade}</Button>
+                      </Link>
+                    )}
                     {plan !== "free" ? (
                       <Button
                         variant="secondary"

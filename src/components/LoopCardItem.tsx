@@ -31,6 +31,7 @@ import { extractLoopVocalLanguage, formatVocalLanguageLabel, isSongLoop } from "
 import { resolveLoopVoiceCloneInfo } from "@/lib/voiceCloneMeta";
 import { resolveStemsDownloadUrl } from "@/lib/stemsDownload";
 import { canDownloadStems } from "@/lib/planEntitlements";
+import { runCheckoutWithAuth } from "@/lib/billing";
 import { downloadCommercialBeat, triggerStemsLicenseModal } from "@/lib/commercialBeatDownload";
 import { useGrowthUpsellStore } from "@/stores/growthUpsellStore";
 import { GenerationCreditAmount } from "@/components/GenerationCreditIcon";
@@ -1318,7 +1319,7 @@ export const LoopCardItem = memo(function LoopCardItem({
               e.stopPropagation();
               if (!canDownloadStems(plan)) {
                 toast(lc.stemsPlusPlan);
-                window.location.href = "/pricing?plan=plus&checkout=1";
+                void runCheckoutWithAuth({ plan: "plus", location: "loop_card_stems", locale });
                 return;
               }
               if (isDownloadingStems) return;

@@ -19,6 +19,7 @@
     "analytics:funnel": "node -e \"console.log('Exécuter supabase/scripts/funnel_weekly.sql dans Supabase SQL Editor ou via MCP execute_sql')\"",
     "blog:auto": "node scripts/auto-blog.mjs",
     "growth:sync": "node scripts/growth-sync.mjs",
+    "traffic:blast": "node scripts/traffic-blast-today.mjs",
     "growth:social": "node scripts/auto-social.mjs",
     "social:publish": "node scripts/social-publish-trigger.mjs",
     "tiktok:oauth": "node --use-system-ca scripts/tiktok-oauth.mjs --sandbox --open",

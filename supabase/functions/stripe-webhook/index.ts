@@ -95,6 +95,40 @@ async function grantLaunchBonusCredits(
   if (updateError) throw updateError;
 }
 
+async function grantCreditPackCredits(
+  supabase: ReturnType<typeof createClient>,
+  opts: { idempotencyKey: string; userId: string; packId: string; credits: number },
+): Promise<void> {
+  const { idempotencyKey, userId, packId, credits } = opts;
+  if (credits <= 0) return;
+
+  const { error: insertError } = await supabase.from("stripe_credit_pack_grants").insert({
+    stripe_event_id: idempotencyKey,
+    user_id: userId,
+    pack_id: packId,
+    credits,
+  });
+
+  if (insertError) {
+    if (insertError.code === "23505") return;
+    throw insertError;
+  }
+
+  const { data: profile, error: readError } = await supabase
+    .from("profiles")
+    .select("purchased_bonus")
+    .eq("id", userId)
+    .maybeSingle();
+  if (readError) throw readError;
+
+  const current = typeof profile?.purchased_bonus === "number" ? profile.purchased_bonus : 0;
+  const { error: updateError } = await supabase
+    .from("profiles")
+    .update({ purchased_bonus: current + credits })
+    .eq("id", userId);
+  if (updateError) throw updateError;
+}
+
 async function applyLaunchOfferBonuses(
   supabase: ReturnType<typeof createClient>,
   opts: {
@@ -135,9 +169,12 @@ async function planFromPriceId(supabase: ReturnType<typeof createClient>, priceI
   const pro = Deno.env.get("STRIPE_PRICE_ID_PRO") ?? "";
   const studio = Deno.env.get("STRIPE_PRICE_ID_STUDIO") ?? "";
   const plus = Deno.env.get("STRIPE_PRICE_ID_PLUS") ?? "";
-  if (priceId && priceId === pro) return "pro";
-  if (priceId && priceId === studio) return "studio";
-  if (priceId && priceId === plus) return "plus";
+  const proAnnual = Deno.env.get("STRIPE_PRICE_ID_PRO_ANNUAL") ?? "";
+  const studioAnnual = Deno.env.get("STRIPE_PRICE_ID_STUDIO_ANNUAL") ?? "";
+  const plusAnnual = Deno.env.get("STRIPE_PRICE_ID_PLUS_ANNUAL") ?? "";
+  if (priceId && (priceId === pro || priceId === proAnnual)) return "pro";
+  if (priceId && (priceId === studio || priceId === studioAnnual)) return "studio";
+  if (priceId && (priceId === plus || priceId === plusAnnual)) return "plus";
   if (!priceId) return "free";
 
   const { data } = await supabase.from("billing_stripe_prices").select("plan").eq("stripe_price_id", priceId).maybeSingle();
@@ -221,10 +258,27 @@ serve(async (req) => {
     if (!dataObj) return new Response("ok");
 
     if (type === "checkout.session.completed") {
-      const subscriptionId = asString(dataObj.subscription);
+      const mode = asString(dataObj.mode);
       const customerId = asString(dataObj.customer);
       const metadata = (dataObj.metadata ?? {}) as Record<string, unknown>;
       const userId = asString(metadata.supabase_user_id) || asString(dataObj.client_reference_id);
+
+      if (mode === "payment") {
+        const creditPack = asString(metadata.credit_pack);
+        const creditsRaw = asString(metadata.credits);
+        const credits = Number.parseInt(creditsRaw, 10);
+        if (userId && creditPack && Number.isFinite(credits) && credits > 0 && stripeEventId) {
+          await grantCreditPackCredits(supabase, {
+            idempotencyKey: stripeEventId,
+            userId,
+            packId: creditPack,
+            credits,
+          });
+        }
+        return new Response("ok");
+      }
+
+      const subscriptionId = asString(dataObj.subscription);
       if (!userId || !subscriptionId) return new Response("ok");
 
       const sub = await fetchSubscription(stripeKey, subscriptionId);

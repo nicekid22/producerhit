@@ -10,6 +10,9 @@ import { useCloudAccentStore } from "@/stores/cloudAccentStore";
 
 import type { AppLocale } from "@/i18n/config";
 import { buildBillingSection } from "@/i18n/systemCatalog";
+import type { CreditPackId } from "@/lib/creditPacks";
+import { getCreditPack } from "@/lib/creditPacks";
+import type { BillingInterval } from "@/lib/billingInterval";
 export type PaidPlan = PaidPlanId;
 export type PlanTier = PlanId;
 
@@ -42,6 +45,19 @@ export function buildPricingUrl(plan?: PaidPlan, autoCheckout = false): string {
 
 export function buildAuthNextUrl(plan: PaidPlan): string {
   return buildAuthUrl({ next: buildPricingUrl(plan, true) });
+}
+
+/** Lit `?next=/pricing?plan=pro&checkout=1` après redirection auth. */
+export function parseCheckoutIntentFromNext(next: string | null | undefined): PaidPlan | null {
+  if (!next?.trim()) return null;
+  const raw = next.trim();
+  const qIndex = raw.indexOf("?");
+  if (qIndex === -1) return null;
+  const params = new URLSearchParams(raw.slice(qIndex + 1));
+  if (params.get("checkout") !== "1") return null;
+  const plan = params.get("plan");
+  if (plan === "pro" || plan === "studio" || plan === "plus") return plan;
+  return null;
 }
 
 export function extractInvokeError(err: unknown): { status?: number; message: string } {
@@ -116,6 +132,7 @@ type CheckoutOptions = {
   successUrl?: string;
   cancelUrl?: string;
   locale?: AppLocale;
+  billingInterval?: BillingInterval;
 };
 
 export async function startCheckout({
@@ -124,9 +141,10 @@ export async function startCheckout({
   successUrl = `${window.location.origin}/dashboard?upgraded=true`,
   cancelUrl = `${window.location.origin}/pricing?checkout=cancelled&plan=${plan}`,
   locale = "en",
+  billingInterval = "month",
 }: CheckoutOptions): Promise<boolean> {
   const b = buildBillingSection(locale);
-  trackClientEvent("checkout_start", { plan, location, ui_mode: "embedded" });
+  trackClientEvent("checkout_start", { plan, location, ui_mode: "embedded", billing_interval: billingInterval });
 
   const visualTheme = useVisualThemeStore.getState().theme;
   const cloudAccent = useCloudAccentStore.getState().accent;
@@ -140,6 +158,7 @@ export async function startCheckout({
       visualTheme,
       cloudAccent,
       locale,
+      billingInterval,
       checkoutRecovery: location === "checkout_recovery",
     },
   });
@@ -188,14 +207,16 @@ export async function runCheckoutWithAuth({
   plan,
   location,
   locale = "en",
+  billingInterval = "month",
 }: {
   plan: PaidPlan;
   location: string;
   locale?: AppLocale;
+  billingInterval?: BillingInterval;
 }): Promise<void> {
   const b = buildBillingSection(locale);
   try {
-    await startCheckout({ plan, location, locale });
+    await startCheckout({ plan, location, locale, billingInterval });
   } catch (err) {
     const { status, message } = extractInvokeError(err);
     const lower = message.toLowerCase();
@@ -211,6 +232,119 @@ export async function runCheckoutWithAuth({
     }
     toast.error(message || b.checkoutStartFailed);
   }
+}
+
+type CreditPackCheckoutOptions = {
+  product: CreditPackId;
+  location: string;
+  successUrl?: string;
+  cancelUrl?: string;
+  locale?: AppLocale;
+};
+
+export async function startCreditPackCheckout({
+  product,
+  location,
+  successUrl = `${window.location.origin}/dashboard?credits_purchased=1`,
+  cancelUrl = `${window.location.origin}/pricing?checkout=cancelled&product=${product}`,
+  locale = "en",
+}: CreditPackCheckoutOptions): Promise<boolean> {
+  const b = buildBillingSection(locale);
+  const pack = getCreditPack(product);
+  trackClientEvent("credit_pack_checkout_start", { product, location, credits: pack.credits });
+
+  const visualTheme = useVisualThemeStore.getState().theme;
+  const cloudAccent = useCloudAccentStore.getState().accent;
+
+  const { data, error } = await supabase.functions.invoke("create-checkout", {
+    body: {
+      product,
+      successUrl,
+      cancelUrl,
+      uiMode: "embedded",
+      visualTheme,
+      cloudAccent,
+      locale,
+    },
+  });
+
+  const payload = await readCheckoutPayload(data, error);
+
+  if (payload.error) {
+    throw new Error(payload.error);
+  }
+  if (error && !payload.clientSecret && !payload.url && !payload.mock) {
+    throw error;
+  }
+  if (payload.mock) {
+    toast(payload.message || b.stripeComingSoon);
+    return false;
+  }
+
+  const clientSecret = payload.clientSecret;
+  if (clientSecret) {
+    if (!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY) {
+      throw new Error(b.missingPublishableKey);
+    }
+    useStripeCheckoutStore.getState().openCheckout({
+      clientSecret,
+      returnUrl: successUrl,
+      kind: "credit_pack",
+      product,
+    });
+    return true;
+  }
+
+  const url = payload.url;
+  if (url) {
+    if (payload.fallback) toast(b.checkoutFallback);
+    window.location.href = url;
+    return true;
+  }
+
+  throw new Error("Missing checkout session");
+}
+
+export async function runCreditPackCheckout({
+  product,
+  location,
+  locale = "en",
+}: {
+  product: CreditPackId;
+  location: string;
+  locale?: AppLocale;
+}): Promise<void> {
+  const b = buildBillingSection(locale);
+  try {
+    await startCreditPackCheckout({ product, location, locale });
+  } catch (err) {
+    const { status, message } = extractInvokeError(err);
+    const lower = message.toLowerCase();
+    if (status === 401 || lower.includes("not authenticated") || lower.includes("jwt") || lower.includes("auth")) {
+      toast(b.signInToUpgrade);
+      window.location.href = buildAuthUrl({ next: `/pricing?pack=${product}` });
+      return;
+    }
+    toast.error(message || b.checkoutStartFailed);
+  }
+}
+
+/** Poll profile until purchased_bonus increases after credit pack payment. */
+export async function waitForCreditPackActivation(
+  refreshProfile: () => Promise<{ purchased_bonus?: number | null } | null>,
+  previousPurchasedBonus: number,
+  maxAttempts = 12,
+  delayMs = 1000,
+): Promise<number | null> {
+  for (let i = 0; i < maxAttempts; i += 1) {
+    const profile = await refreshProfile().catch(() => null);
+    const purchased = profile?.purchased_bonus ?? 0;
+    if (purchased > previousPurchasedBonus) return purchased;
+    if (i < maxAttempts - 1) {
+      await new Promise((r) => window.setTimeout(r, delayMs));
+    }
+  }
+  return null;
 }
 
 export async function openBillingPortal(returnUrl: string, locale: AppLocale = "en"): Promise<void> {

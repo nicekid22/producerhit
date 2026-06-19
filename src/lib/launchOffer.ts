@@ -46,6 +46,23 @@ const LAUNCH_BADGE = L({
   th: "ราคาเปิดตัว",
 });
 
+const LAUNCH_CTA_BUTTON = L({
+  en: "Get Pro — $8/mo",
+  fr: "Passer Pro — 8 $/mois",
+  es: "Pro — 8 $/mes",
+  de: "Pro — 8 $/Monat",
+  pt: "Pro — 8 $/mês",
+  it: "Pro — 8 $/mese",
+  nl: "Pro — $8/maand",
+  ar: "Pro — 8$/شهر",
+  ja: "Pro — $8/月",
+  ko: "Pro — $8/월",
+  tr: "Pro — 8$/ay",
+  hi: "Pro — $8/माह",
+  zh: "Pro — $8/月",
+  th: "Pro — $8/เดือน",
+});
+
 const LAUNCH_CTA_HINT = L({
   en: "Cancel anytime · Secure Stripe checkout",
   fr: "Annulable à tout moment · Stripe sécurisé",
@@ -269,6 +286,20 @@ function launchUrgencyLine(locale: AppLocale, days: number): string {
   return i(tpl, { days });
 }
 
+export function getLaunchOfferCtaButton(locale: AppLocale): string {
+  return pickL(LAUNCH_CTA_BUTTON, locale);
+}
+
+/** Sticky mobile CTA for logged-in free users during launch window. */
+export function getLaunchOfferStickyCta(locale: AppLocale): { title: string; sub: string; button: string } {
+  const copy = getLaunchOfferCopy(locale);
+  return {
+    title: copy.headline,
+    sub: copy.bonusLine,
+    button: getLaunchOfferCtaButton(locale),
+  };
+}
+
 export function getLaunchOfferCopy(locale: AppLocale): LaunchOfferCopy {
   const proNow = PLAN_MONTHLY_USD.pro;
   const proFuture = LAUNCH_ANCHOR_USD.pro;
@@ -390,6 +421,57 @@ const CHECKOUT_RECOVERY_DISMISS = L({
   th: "ตกลง — กลับไปสร้าง",
 });
 
+const CHECKOUT_RECOVERY_EMAIL_HINT = L({
+  en: "Get a reminder + launch bonus by email",
+  fr: "Reçois un rappel + bonus lancement par email",
+  es: "Recibe un recordatorio y bonus por email",
+  de: "Erinnerung + Launch-Bonus per E-Mail",
+  pt: "Recebe lembrete + bónus por email",
+  it: "Promemoria + bonus lancio via email",
+  nl: "Herinnering + launch bonus per e-mail",
+  ar: "تذكير + مكافأة عبر البريد",
+  ja: "メールでリマインド＋ボーナス",
+  ko: "이메일로 알림 + 보너스",
+  tr: "E-posta ile hatırlatma + bonus",
+  hi: "ईमेल पर रिमाइंड + बोनस",
+  zh: "邮件提醒 + 启动奖励",
+  th: "รับเตือนทางอีเมล + โบนัส",
+});
+
+const CHECKOUT_RECOVERY_EMAIL_PLACEHOLDER = L({
+  en: "you@email.com",
+  fr: "ton@email.com",
+  es: "tu@email.com",
+  de: "du@email.de",
+  pt: "tu@email.com",
+  it: "tu@email.com",
+  nl: "jij@email.nl",
+  ar: "you@email.com",
+  ja: "you@email.com",
+  ko: "you@email.com",
+  tr: "you@email.com",
+  hi: "you@email.com",
+  zh: "you@email.com",
+  th: "you@email.com",
+});
+
+const CHECKOUT_RECOVERY_EMAIL_SUBMIT = L({
+  en: "Remind me",
+  fr: "Me rappeler",
+  es: "Recordarme",
+  de: "Erinnern",
+  pt: "Lembrar",
+  it: "Ricordami",
+  nl: "Herinner mij",
+  ar: "ذكّرني",
+  ja: "リマインド",
+  ko: "알림 받기",
+  tr: "Hatırlat",
+  hi: "याद दिलाएँ",
+  zh: "提醒我",
+  th: "เตือนฉัน",
+});
+
 const CHECKOUT_RECOVERY_LOADING = L({
   en: "Loading…",
   fr: "Chargement…",
@@ -414,6 +496,9 @@ export type CheckoutRecoveryCopy = {
   later: string;
   dismissToast: string;
   loading: string;
+  emailHint: string;
+  emailPlaceholder: string;
+  emailSubmit: string;
 };
 
 export function getCheckoutRecoveryCopy(locale: AppLocale): CheckoutRecoveryCopy {
@@ -424,5 +509,8 @@ export function getCheckoutRecoveryCopy(locale: AppLocale): CheckoutRecoveryCopy
     later: pickL(CHECKOUT_RECOVERY_LATER, locale),
     dismissToast: pickL(CHECKOUT_RECOVERY_DISMISS, locale),
     loading: pickL(CHECKOUT_RECOVERY_LOADING, locale),
+    emailHint: pickL(CHECKOUT_RECOVERY_EMAIL_HINT, locale),
+    emailPlaceholder: pickL(CHECKOUT_RECOVERY_EMAIL_PLACEHOLDER, locale),
+    emailSubmit: pickL(CHECKOUT_RECOVERY_EMAIL_SUBMIT, locale),
   };
 }

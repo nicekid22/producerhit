@@ -253,9 +253,9 @@ export function DashboardPromoBillboard({
         id: "upgrade",
         accent: "emerald",
         tag: isFr ? "Upgrade" : "Upgrade",
-        headline: isFr ? "Passe Plus" : "Go Plus",
-        subline: isFr ? "Plus de gen, mastering, priorité." : "More gens, mastering, priority.",
-        cta: isFr ? "Tarifs" : "Pricing",
+        headline: isFr ? "Pro lancement 8 $" : "Launch Pro $8",
+        subline: isFr ? "Plus de gen · WAV · droits commerciaux." : "More gens · WAV · commercial rights.",
+        cta: isFr ? "Passer Pro" : "Go Pro",
         icon: Sparkles,
         onClick: onPricing,
       });

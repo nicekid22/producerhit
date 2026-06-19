@@ -1,6 +1,10 @@
 import { Sparkles } from "lucide-react";
 import type { AppLocale } from "@/i18n/config";
-import { getLaunchOfferCopy, isLaunchOfferActive } from "@/lib/launchOffer";
+import {
+  getLaunchOfferCopy,
+  getLaunchOfferCtaButton,
+  isLaunchOfferActive,
+} from "@/lib/launchOffer";
 import { LaunchOfferChips } from "@/components/marketing/LaunchOfferChips";
 import { LaunchPriceDisplay } from "@/components/marketing/LaunchPriceDisplay";
 import { cn } from "@/lib/utils";
@@ -9,12 +13,24 @@ type Props = {
   locale: AppLocale;
   variant?: "banner" | "inline";
   className?: string;
+  /** Primary CTA — e.g. direct Pro checkout */
+  showCta?: boolean;
+  ctaLoading?: boolean;
+  onCtaClick?: () => void;
 };
 
-export function LaunchOfferBanner({ locale, variant = "banner", className }: Props) {
+export function LaunchOfferBanner({
+  locale,
+  variant = "banner",
+  className,
+  showCta = false,
+  ctaLoading = false,
+  onCtaClick,
+}: Props) {
   if (!isLaunchOfferActive()) return null;
 
   const copy = getLaunchOfferCopy(locale);
+  const ctaLabel = getLaunchOfferCtaButton(locale);
 
   if (variant === "inline") {
     return (
@@ -35,6 +51,19 @@ export function LaunchOfferBanner({ locale, variant = "banner", className }: Pro
           </span>
           <h2 className="pk-launch-offer__headline">{copy.headline}</h2>
           <LaunchOfferChips locale={locale} className="mt-2.5 text-left sm:max-w-xl" compact />
+          {showCta && onCtaClick ? (
+            <div className="mt-4 flex flex-col items-center gap-1.5 sm:items-start">
+              <button
+                type="button"
+                disabled={ctaLoading}
+                onClick={onCtaClick}
+                className="pk-launch-offer__cta inline-flex items-center justify-center rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-900/30 transition hover:brightness-110 disabled:opacity-60"
+              >
+                {ctaLoading ? "…" : ctaLabel}
+              </button>
+              <p className="text-[11px] text-white/45">{copy.ctaHint}</p>
+            </div>
+          ) : null}
         </div>
         <LaunchPriceDisplay
           tier="pro"

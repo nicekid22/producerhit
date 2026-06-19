@@ -12,13 +12,17 @@ import {
   normalizePlan,
   pricingCtaMeta,
   runCheckoutWithAuth,
+  runCreditPackCheckout,
   type PaidPlan,
   type PlanTier,
 } from "@/lib/billing";
+import type { CreditPackId } from "@/lib/creditPacks";
 import { PricingPlanButton } from "@/components/pricing/PricingPlanButton";
 import { discordCommunityUrl } from "@/lib/discordConfig";
 import { trackClientEvent } from "@/lib/supabaseClient";
-import { readCheckoutAbandoned, clearCheckoutAbandoned } from "@/lib/checkoutRecovery";
+import { markCheckoutAbandoned, syncCheckoutAbandonNurture } from "@/lib/checkoutRecovery";
+import { CheckoutRecoveryBanner } from "@/components/billing/CheckoutRecoveryBanner";
+import { FreeUpgradeStrip } from "@/components/billing/FreeUpgradeStrip";
 import { EmailCaptureSection } from "@/components/growth/EmailCaptureSection";
 import { PLAN_BILLING_CURRENCY } from "@/lib/planPricing";
 import {
@@ -30,7 +34,15 @@ import {
 import { croPricingHero } from "@/lib/croTrustCopy";
 import { buildPricingPageSection, pricingTrustPoints } from "@/i18n/pricingCatalog";
 import { LaunchOfferBanner } from "@/components/marketing/LaunchOfferBanner";
+import { CreditPackSection } from "@/components/pricing/CreditPackSection";
+import { BillingIntervalToggle } from "@/components/pricing/BillingIntervalToggle";
 import { LaunchPriceDisplay } from "@/components/marketing/LaunchPriceDisplay";
+import {
+  annualMonthlyEquivalentUsd,
+  billingIntervalCopy,
+  planDisplayPrice,
+  type BillingInterval,
+} from "@/lib/billingInterval";
 import { MusicMoneyPlaybookSection } from "@/components/marketing/MusicMoneyPlaybookSection";
 import { cn } from "@/lib/utils";
 
@@ -63,6 +75,8 @@ export default function Pricing() {
   const [open, setOpen] = useState<number | null>(0);
   const [loading, setLoading] = useState<PaidPlan | null>(null);
   const [autoStarted, setAutoStarted] = useState(false);
+  const [packAutoStarted, setPackAutoStarted] = useState(false);
+  const [billingInterval, setBillingInterval] = useState<BillingInterval>("month");
   const didRefreshProfileRef = useRef(false);
   const userId = user?.id;
 
@@ -85,12 +99,12 @@ export default function Pricing() {
       const paid = tier as PaidPlan;
       setLoading(paid);
       try {
-        await runCheckoutWithAuth({ plan: paid, location: "pricing", locale });
+        await runCheckoutWithAuth({ plan: paid, location: "pricing", locale, billingInterval });
       } finally {
         setLoading(null);
       }
     },
-    [currentPlan, locale, user],
+    [billingInterval, currentPlan, locale, user],
   );
 
   useEffect(() => {
@@ -116,6 +130,17 @@ export default function Pricing() {
   }, [autoStarted, handlePlanAction, loading, searchParams, setSearchParams, userId]);
 
   useEffect(() => {
+    if (packAutoStarted) return;
+    if (!user) return;
+    if (loading !== null) return;
+    const pack = searchParams.get("pack");
+    if (pack !== "credit_pack_50") return;
+    setPackAutoStarted(true);
+    setSearchParams({}, { replace: true });
+    void runCreditPackCheckout({ product: pack as CreditPackId, location: "pricing_auto_pack", locale });
+  }, [locale, packAutoStarted, searchParams, setSearchParams, user, userId]);
+
+  useEffect(() => {
     if (didRefreshProfileRef.current || !userId) return;
     didRefreshProfileRef.current = true;
     if (!profile) void refreshProfile();
@@ -123,26 +148,19 @@ export default function Pricing() {
 
   const trustPoints = useMemo(() => pricingTrustPoints(locale), [locale]);
   const pricingHero = useMemo(() => croPricingHero(locale), [locale]);
-  const abandonedCheckout = useMemo(() => readCheckoutAbandoned(), []);
+  const intervalCopy = useMemo(() => billingIntervalCopy(locale), [locale]);
 
   useEffect(() => {
     if (searchParams.get("checkout") !== "cancelled") return;
     const planHint = searchParams.get("plan");
     if (planHint === "pro" || planHint === "studio" || planHint === "plus") {
+      markCheckoutAbandoned(planHint, "stripe_cancel_url");
+      syncCheckoutAbandonNurture(planHint, locale, "stripe_cancel_url");
       trackClientEvent("checkout_abandoned", { plan: planHint, source: "stripe_cancel_url" });
     }
-  }, [searchParams]);
-
-  const resumeAbandonedCheckout = useCallback(async () => {
-    const abandoned = readCheckoutAbandoned();
-    const tier = (abandoned?.plan ?? searchParams.get("plan")) as PaidPlan | null;
-    if (tier !== "pro" && tier !== "studio" && tier !== "plus") return;
-    trackClientEvent("checkout_resume_click", { plan: tier });
-    setLoading(tier);
-    try {
-      await runCheckoutWithAuth({ plan: tier, location: "checkout_recovery", locale });
-    } finally {
-      setLoading(null);
+    const productHint = searchParams.get("product");
+    if (productHint === "credit_pack_50") {
+      markCheckoutAbandoned(productHint, "stripe_cancel_url");
     }
   }, [locale, searchParams]);
 
@@ -195,37 +213,22 @@ export default function Pricing() {
 
         <LaunchOfferBanner locale={locale} className="mt-6" />
 
-        {abandonedCheckout &&
-        (abandonedCheckout.plan === "pro" ||
-          abandonedCheckout.plan === "studio" ||
-          abandonedCheckout.plan === "plus") ? (
-          <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-violet-400/30 bg-violet-500/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-semibold text-white">
-                {px.abandonedTitle}{" "}
-                {abandonedCheckout.plan.charAt(0).toUpperCase() + abandonedCheckout.plan.slice(1)}
-              </p>
-              <p className="mt-1 text-xs text-white/60">
-                {px.abandonedLead}
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => void resumeAbandonedCheckout()}
-                className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500"
-              >
-                {px.resume}
-              </button>
-              <button
-                type="button"
-                onClick={() => clearCheckoutAbandoned()}
-                className="rounded-xl border border-white/15 px-4 py-2 text-sm text-white/70 hover:bg-white/5"
-              >
-                {px.dismiss}
-              </button>
-            </div>
-          </div>
+        <BillingIntervalToggle
+          locale={locale}
+          value={billingInterval}
+          onChange={setBillingInterval}
+          className="mt-6"
+        />
+
+        <CheckoutRecoveryBanner
+          locale={locale}
+          location="pricing_abandoned"
+          currentPlan={currentPlan}
+          className="mt-6"
+        />
+
+        {user && currentPlan === "free" ? (
+          <FreeUpgradeStrip locale={locale} location="pricing_strip" plan={currentPlan} className="mt-4" />
         ) : null}
 
         {/* Plan cards */}
@@ -268,18 +271,29 @@ export default function Pricing() {
                 </div>
 
                 <div className="mt-5">
-                  {isPro ? (
+                  {isPro && billingInterval === "month" ? (
                     <LaunchPriceDisplay tier="pro" locale={locale} size="lg" variant="card" />
+                  ) : p.tier !== "free" ? (
+                    <div>
+                      <div className="flex items-end gap-1.5">
+                        <span className="pk-pricing-tier__price text-[2rem] font-bold leading-none tracking-tight text-white sm:text-[2.15rem]">
+                          {planDisplayPrice(p.tier, billingInterval)}
+                        </span>
+                        <span className="pb-1 text-xs font-medium text-white/40">
+                          /{billingInterval === "year" ? intervalCopy.perYear : intervalCopy.perMonth} · {PLAN_BILLING_CURRENCY}
+                        </span>
+                      </div>
+                      {billingInterval === "year" ? (
+                        <p className="mt-1.5 text-[11px] text-white/45">
+                          ≈ {annualMonthlyEquivalentUsd(p.tier)}/{intervalCopy.perMonth} · {intervalCopy.billedAnnually}
+                        </p>
+                      ) : null}
+                    </div>
                   ) : (
                     <div className="flex items-end gap-1.5">
                       <span className="pk-pricing-tier__price text-[2rem] font-bold leading-none tracking-tight text-white sm:text-[2.15rem]">
                         {p.price}
                       </span>
-                      {p.tier !== "free" ? (
-                        <span className="pb-1 text-xs font-medium text-white/40">
-                          /{px.perMonth} · {PLAN_BILLING_CURRENCY}
-                        </span>
-                      ) : null}
                     </div>
                   )}
                 </div>
@@ -387,6 +401,10 @@ export default function Pricing() {
               );
             })}
           </div>
+        </section>
+
+        <section className="mt-12">
+          <CreditPackSection locale={locale} location="pricing_page" />
         </section>
 
         <section className="mt-12">

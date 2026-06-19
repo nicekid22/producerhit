@@ -23,11 +23,26 @@ import { buildLibraryCollections, loopsForCollection } from "@/lib/libraryCurati
 import { buildLibrarySection, libraryCollectionTitle } from "@/i18n/libraryCatalog";
 import { buildCommonSection } from "@/i18n/systemCatalog";
 import { markActivationStepLocal } from "@/components/onboarding/OnboardingChecklist";
+import { useAuthStore } from "@/stores/authStore";
+import { normalizePlan } from "@/lib/billing";
+import { CheckoutRecoveryBanner } from "@/components/billing/CheckoutRecoveryBanner";
+import { FreeUpgradeStrip } from "@/components/billing/FreeUpgradeStrip";
+import { readProfileCache } from "@/lib/profileBootstrap";
 
 type Filter = "all" | "genre" | "key" | "bpm";
 
 export default function Library() {
   const locale = useLocaleStore((s) => s.locale);
+  const user = useAuthStore((s) => s.user);
+  const profile = useAuthStore((s) => s.profile);
+  const userPlan = useMemo(() => {
+    if (profile?.plan) return normalizePlan(profile.plan);
+    if (user?.id) {
+      const cached = readProfileCache(user.id);
+      if (cached?.plan) return normalizePlan(cached.plan);
+    }
+    return "free";
+  }, [profile?.plan, user]);
   const lb = buildLibrarySection(locale);
   const common = buildCommonSection(locale);
   const loops = useLoopsStore((s) => s.loops);
@@ -130,6 +145,10 @@ export default function Library() {
   return (
     <AppShell theme="prism" variant="single">
       <div className="pk-library-page h-full space-y-4 px-4 pb-6 pt-4 md:pb-24 md:pt-6">
+        <CheckoutRecoveryBanner locale={locale} location="library" currentPlan={user ? userPlan : undefined} />
+        {user && userPlan === "free" ? (
+          <FreeUpgradeStrip locale={locale} location="library_strip" plan={userPlan} />
+        ) : null}
         <LibraryVaultHero
           locale={locale}
           totalCount={libraryTotalCount}

@@ -22,6 +22,9 @@ function corsHeadersForRequest(req: Request): Record<string, string> {
 
 const PLAN_NAMES = { pro: "Pro", studio: "Studio", plus: "Plus" } as const;
 const PAID_PLANS = new Set(["pro", "studio", "plus"]);
+const CREDIT_PACKS = {
+  credit_pack_50: { credits: 50, label: "50 generations" },
+} as const;
 
 function planRank(plan: string): number {
   if (plan === "plus") return 3;
@@ -117,10 +120,18 @@ async function syncProfilePlan(
   if (error) throw error;
 }
 
-function planFromEnvPriceId(priceId: string, pricePro: string, priceStudio: string, pricePlus: string): string {
-  if (priceId && priceId === pricePro) return "pro";
-  if (priceId && priceId === priceStudio) return "studio";
-  if (priceId && priceId === pricePlus) return "plus";
+function planFromEnvPriceId(
+  priceId: string,
+  pricePro: string,
+  priceStudio: string,
+  pricePlus: string,
+  priceProAnnual = "",
+  priceStudioAnnual = "",
+  pricePlusAnnual = "",
+): string {
+  if (priceId && (priceId === pricePro || priceId === priceProAnnual)) return "pro";
+  if (priceId && (priceId === priceStudio || priceId === priceStudioAnnual)) return "studio";
+  if (priceId && (priceId === pricePlus || priceId === pricePlusAnnual)) return "plus";
   return "free";
 }
 
@@ -149,10 +160,20 @@ async function clearStaleBilling(
     .eq("id", userId);
 }
 
-function priceIdForPlan(plan: string, pricePro: string, priceStudio: string, pricePlus: string): string {
-  if (plan === "pro") return pricePro;
-  if (plan === "studio") return priceStudio;
-  if (plan === "plus") return pricePlus;
+function priceIdForPlan(
+  plan: string,
+  interval: string,
+  pricePro: string,
+  priceStudio: string,
+  pricePlus: string,
+  priceProAnnual: string,
+  priceStudioAnnual: string,
+  pricePlusAnnual: string,
+): string {
+  const annual = interval === "year";
+  if (plan === "pro") return (annual && priceProAnnual) ? priceProAnnual : pricePro;
+  if (plan === "studio") return (annual && priceStudioAnnual) ? priceStudioAnnual : priceStudio;
+  if (plan === "plus") return (annual && pricePlusAnnual) ? pricePlusAnnual : pricePlus;
   return "";
 }
 
@@ -242,6 +263,38 @@ function stripCheckoutBranding(params: URLSearchParams): URLSearchParams {
     if (key.startsWith("branding_settings")) next.delete(key);
   }
   return next;
+}
+
+function buildCreditPackCheckoutParams(
+  priceId: string,
+  product: string,
+  credits: number,
+  userId: string,
+  customerId: string,
+  customerEmail: string,
+  visualTheme: string,
+  cloudAccent: string,
+  locale: string,
+): URLSearchParams {
+  const params = new URLSearchParams({
+    mode: "payment",
+    "line_items[0][price]": priceId,
+    "line_items[0][quantity]": "1",
+    allow_promotion_codes: "true",
+    client_reference_id: userId,
+    "metadata[credit_pack]": product,
+    "metadata[credits]": String(credits),
+    "metadata[supabase_user_id]": userId,
+    "metadata[price_id]": priceId,
+  });
+  if (customerId) params.set("customer", customerId);
+  else if (customerEmail) params.set("customer_email", customerEmail);
+  params.set("locale", locale === "fr" ? "fr" : "auto");
+  if (locale === "fr") {
+    params.set("custom_text[submit][message]", "Confirmer l'achat");
+  }
+  applyCheckoutBranding(params, "pro", visualTheme, cloudAccent);
+  return params;
 }
 
 function buildBaseCheckoutParams(
@@ -381,6 +434,7 @@ serve(async (req) => {
   try {
     const body = (await req.json().catch(() => ({}))) as {
       plan?: unknown;
+      product?: unknown;
       successUrl?: unknown;
       cancelUrl?: unknown;
       uiMode?: unknown;
@@ -388,8 +442,10 @@ serve(async (req) => {
       cloudAccent?: unknown;
       locale?: unknown;
       checkoutRecovery?: unknown;
+      billingInterval?: unknown;
     };
     const plan = String(body.plan ?? "");
+    const product = String(body.product ?? "");
     const successUrl = String(body.successUrl ?? "");
     const cancelUrl = String(body.cancelUrl ?? "");
     const uiMode = String(body.uiMode ?? "embedded");
@@ -397,26 +453,18 @@ serve(async (req) => {
     const cloudAccent = String(body.cloudAccent ?? "transparent");
     const checkoutLocale = String(body.locale ?? "auto");
     const checkoutRecovery = body.checkoutRecovery === true || body.checkoutRecovery === "true";
+    const billingIntervalRaw = String(body.billingInterval ?? "month");
+    const billingInterval = billingIntervalRaw === "year" ? "year" : "month";
     const embedded = uiMode === "embedded";
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     const pricePro = Deno.env.get("STRIPE_PRICE_ID_PRO") ?? "";
     const priceStudio = Deno.env.get("STRIPE_PRICE_ID_STUDIO") ?? "";
     const pricePlus = Deno.env.get("STRIPE_PRICE_ID_PLUS") ?? "";
-    if (!stripeKey || !pricePro || !priceStudio || !pricePlus) {
-      return new Response(
-        JSON.stringify({
-          mock: true,
-          message: "Stripe not configured yet",
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    const planName = PLAN_NAMES[plan as keyof typeof PLAN_NAMES];
-    if (!planName) throw new Error("Invalid plan: " + plan);
-    const priceId = priceIdForPlan(plan, pricePro, priceStudio, pricePlus);
-    if (!priceId) throw new Error("Invalid plan: " + plan);
+    const priceProAnnual = Deno.env.get("STRIPE_PRICE_ID_PRO_ANNUAL") ?? "";
+    const priceStudioAnnual = Deno.env.get("STRIPE_PRICE_ID_STUDIO_ANNUAL") ?? "";
+    const pricePlusAnnual = Deno.env.get("STRIPE_PRICE_ID_PLUS_ANNUAL") ?? "";
+    const priceCreditPack50 = Deno.env.get("STRIPE_PRICE_ID_CREDIT_PACK_50") ?? "";
 
     const authHeader = req.headers.get("Authorization") ?? req.headers.get("authorization");
     const token = authHeader?.startsWith("Bearer ") ? authHeader.replace("Bearer ", "").trim() : "";
@@ -460,6 +508,93 @@ serve(async (req) => {
       .eq("id", user.id)
       .maybeSingle();
     const customerId = typeof profile?.stripe_customer_id === "string" ? profile.stripe_customer_id : "";
+
+    if (product === "credit_pack_50") {
+      if (!stripeKey || !priceCreditPack50) {
+        return new Response(
+          JSON.stringify({
+            mock: true,
+            message: "Credit packs not configured yet — add STRIPE_PRICE_ID_CREDIT_PACK_50",
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      const pack = CREDIT_PACKS.credit_pack_50;
+      const baseParams = buildCreditPackCheckoutParams(
+        priceCreditPack50,
+        product,
+        pack.credits,
+        user.id,
+        customerId,
+        user.email ?? "",
+        visualTheme,
+        cloudAccent,
+        checkoutLocale,
+      );
+
+      if (embedded) {
+        const embeddedResult = await createEmbeddedCheckoutSession(stripeKey, baseParams, successUrl);
+        if ("clientSecret" in embeddedResult) {
+          return new Response(JSON.stringify({ clientSecret: embeddedResult.clientSecret, uiMode: "embedded", product }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const hostedResult = await createHostedCheckoutSession(stripeKey, baseParams, successUrl, cancelUrl);
+        if ("url" in hostedResult) {
+          return new Response(
+            JSON.stringify({ url: hostedResult.url, uiMode: "hosted", fallback: true, product }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+        return new Response(
+          JSON.stringify({ error: hostedResult.error, code: hostedResult.code ?? null }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      const hostedResult = await createHostedCheckoutSession(stripeKey, baseParams, successUrl, cancelUrl);
+      if ("url" in hostedResult) {
+        return new Response(JSON.stringify({ url: hostedResult.url, uiMode: "hosted", product }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(
+        JSON.stringify({ error: hostedResult.error, code: hostedResult.code ?? null }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    if (!stripeKey || !pricePro || !priceStudio || !pricePlus) {
+      return new Response(
+        JSON.stringify({
+          mock: true,
+          message: "Stripe not configured yet",
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    const planName = PLAN_NAMES[plan as keyof typeof PLAN_NAMES];
+    if (!planName) throw new Error("Invalid plan: " + plan);
+    const priceId = priceIdForPlan(
+      plan,
+      billingInterval,
+      pricePro,
+      priceStudio,
+      pricePlus,
+      priceProAnnual,
+      priceStudioAnnual,
+      pricePlusAnnual,
+    );
+    if (!priceId) throw new Error("Invalid plan: " + plan);
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("stripe_customer_id, stripe_subscription_id, plan")
+      .eq("id", user.id)
+      .maybeSingle();
+    const customerId = typeof profile?.stripe_customer_id === "string" ? profile.stripe_customer_id : "";
     let subscriptionId = typeof profile?.stripe_subscription_id === "string" ? profile.stripe_subscription_id : "";
     let currentPlan = typeof profile?.plan === "string" ? profile.plan : "free";
 
@@ -480,7 +615,15 @@ serve(async (req) => {
         currentPlan = "free";
       } else if (subRecord && !PAID_PLANS.has(currentPlan)) {
         const subPriceId = subscriptionPriceId(subRecord);
-        const healedPlan = planFromEnvPriceId(subPriceId, pricePro, priceStudio, pricePlus);
+        const healedPlan = planFromEnvPriceId(
+          subPriceId,
+          pricePro,
+          priceStudio,
+          pricePlus,
+          priceProAnnual,
+          priceStudioAnnual,
+          pricePlusAnnual,
+        );
         if (PAID_PLANS.has(healedPlan)) {
           const healedCustomerId = asString(subRecord.customer) || customerId;
           const currentPeriodEnd = typeof subRecord.current_period_end === "number" ? subRecord.current_period_end : null;

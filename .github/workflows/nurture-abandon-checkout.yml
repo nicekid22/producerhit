@@ -1,0 +1,18 @@
+name: Nurture abandoned checkout
+
+on:
+  schedule:
+    - cron: "0 9 * * *"
+  workflow_dispatch:
+
+jobs:
+  nurture:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger nurture edge function
+        run: |
+          curl -sf -X POST \
+            -H "Content-Type: application/json" \
+            -H "x-cron-secret: ${{ secrets.NURTURE_CRON_SECRET }}" \
+            "https://pmfnzenqemnonpglmjqx.supabase.co/functions/v1/nurture-abandoned-checkout" \
+            -d '{}'

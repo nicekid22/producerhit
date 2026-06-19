@@ -14,6 +14,7 @@ export type GenerationBonusCredits = {
   referralBonus?: number;
   levelBonus?: number;
   dailyBonusMonth?: number;
+  purchasedBonus?: number;
 };
 
 import { hasFullMastering, isPaidPlan } from "@/lib/planEntitlements";
@@ -27,7 +28,8 @@ export function getTotalGenerationLimit(plan: string, bonus: GenerationBonusCred
   const extra =
     Math.max(0, bonus.referralBonus ?? 0) +
     Math.max(0, bonus.levelBonus ?? 0) +
-    Math.max(0, bonus.dailyBonusMonth ?? 0);
+    Math.max(0, bonus.dailyBonusMonth ?? 0) +
+    Math.max(0, bonus.purchasedBonus ?? 0);
   return base + extra;
 }
 
@@ -37,8 +39,9 @@ export function getRemainingBeats(
   referralBonus = 0,
   levelBonus = 0,
   dailyBonusMonth = 0,
+  purchasedBonus = 0,
 ): number {
-  const limit = getTotalGenerationLimit(plan, { referralBonus, levelBonus, dailyBonusMonth });
+  const limit = getTotalGenerationLimit(plan, { referralBonus, levelBonus, dailyBonusMonth, purchasedBonus });
   return Math.max(0, limit - usedThisMonth);
 }
 
@@ -48,8 +51,9 @@ export function canGenerate(
   referralBonus = 0,
   levelBonus = 0,
   dailyBonusMonth = 0,
+  purchasedBonus = 0,
 ): boolean {
-  return getRemainingBeats(plan, usedThisMonth, referralBonus, levelBonus, dailyBonusMonth) > 0;
+  return getRemainingBeats(plan, usedThisMonth, referralBonus, levelBonus, dailyBonusMonth, purchasedBonus) > 0;
 }
 
 export function canExportMastering(plan: string): boolean {

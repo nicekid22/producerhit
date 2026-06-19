@@ -80,7 +80,7 @@ export function shouldShowPlanUpsell(
 const LOW_CREDITS_SESSION_KEY = "producerhit_low_credits_prompt_v1";
 const EXHAUSTED_CREDITS_SESSION_KEY = "producerhit_exhausted_upsell_v2";
 const POST_GEN_COOLDOWN_KEY = "producerhit_upgrade_prompt_ts";
-const POST_GEN_COOLDOWN_MS = 6 * 60 * 60 * 1000;
+const POST_GEN_COOLDOWN_MS = 3 * 60 * 60 * 1000;
 
 export function recommendedUpgradePlan(plan: string | null | undefined): PaidPlanId | null {
   const cur = normalizePlanId(plan);

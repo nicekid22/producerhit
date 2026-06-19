@@ -13,6 +13,8 @@ import { markJustAuthenticated, sanitizePostAuthPath } from "@/lib/postAuthRedir
 import { ConversionTrustBar } from "@/components/marketing/ConversionTrustBar";
 import { croAuthHeadline } from "@/lib/croTrustCopy";
 import { resolveAuthModeFromSearch, resolvePostAuthRedirect, type AuthMode } from "@/lib/authRoutes";
+import { parseCheckoutIntentFromNext } from "@/lib/billing";
+import { AuthCheckoutIntentBanner } from "@/components/billing/AuthCheckoutIntentBanner";
 import { pendingGenerationSummary, readPendingGeneration } from "@/lib/pendingGeneration";
 
 export default function Auth() {
@@ -61,6 +63,8 @@ export default function Auth() {
     const next = new URLSearchParams(location.search).get("next");
     return sanitizePostAuthPath(next || state?.from || "/dashboard");
   }, [location.search, location.state]);
+
+  const checkoutIntentPlan = useMemo(() => parseCheckoutIntentFromNext(redirectTo), [redirectTo]);
 
   const getPostAuthRedirect = useCallback(() => resolvePostAuthRedirect(redirectTo), [redirectTo]);
 
@@ -241,6 +245,10 @@ export default function Auth() {
               {croAuthHeadline(locale, mode === "login" ? "login" : "signup")}
             </p>
           </div>
+
+          {checkoutIntentPlan ? (
+            <AuthCheckoutIntentBanner locale={locale} plan={checkoutIntentPlan} />
+          ) : null}
 
           <div className="pk-auth-tabs mt-6 flex gap-1 rounded-full border border-pk-border bg-white/5 p-1 text-xs">
             <button

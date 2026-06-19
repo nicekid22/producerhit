@@ -83,6 +83,7 @@ import { DailyBonusBannerButton } from "@/components/growth/DailyBonusBannerButt
 import { DashboardPromoBillboard } from "@/components/growth/DashboardPromoBillboard";
 import { AudioRetentionBanner } from "@/components/growth/AudioRetentionBanner";
 import { CheckoutRecoveryBanner } from "@/components/billing/CheckoutRecoveryBanner";
+import { FreeUpgradeStrip } from "@/components/billing/FreeUpgradeStrip";
 import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
 import { pickLoopForSharePrompt, shouldShowSharePromptAfterGeneration } from "@/lib/sharePrompt";
 import { trackFreeGenerationMilestones } from "@/lib/conversionMetrics";
@@ -110,6 +111,8 @@ import { useT } from "@/i18n";
 import { pickFrEn } from "@/i18n/localized";
 import { getRemainingBeats, PLAN_LIMITS, FREE_MASTERING_UPSELL_AT, getTotalGenerationLimit } from "@/lib/planLimits";
 import { planPriceLabel } from "@/lib/planPricing";
+import { runCheckoutWithAuth, runCreditPackCheckout } from "@/lib/billing";
+import { getCreditPackCtaLabel } from "@/lib/creditPacks";
 import { canDualGeneration, canExportWav } from "@/lib/planEntitlements";
 import { hasLegalHolderName } from "@/lib/commercialLicenseDocument";
 import {
@@ -418,6 +421,7 @@ export default function Dashboard() {
   const [voiceCloneStrength, setVoiceCloneStrength] = useState(0.72);
   const voiceCloneConfigRef = useRef<{ profileId: string | null; strength: number }>({ profileId: null, strength: 0.72 });
   const [referralBonus, setReferralBonus] = useState(0);
+  const [purchasedBonus, setPurchasedBonus] = useState(0);
   const [levelBonus, setLevelBonus] = useState(0);
   const [dailyBonusMonth, setDailyBonusMonth] = useState(0);
   const [profileLoading, setProfileLoading] = useState(false);
@@ -549,11 +553,13 @@ export default function Dashboard() {
     setVoiceToSongUsed(data.voice_to_song_used_this_month ?? 0);
     setVoiceCloneUsed(data.voice_clone_used_this_month ?? 0);
     setReferralBonus(data.referral_bonus);
+    setPurchasedBonus(data.purchased_bonus ?? 0);
     setLevelBonus(data.level_bonus);
     setDailyBonusMonth(data.daily_bonus_month);
     if (user?.id) {
       syncProfileCache(data.plan, data.loops_used_this_month, user.id, {
         referral_bonus: data.referral_bonus,
+        purchased_bonus: data.purchased_bonus ?? 0,
         level_bonus: data.level_bonus,
         daily_bonus_month: data.daily_bonus_month,
       });
@@ -654,9 +660,13 @@ export default function Dashboard() {
   }, [navigate]);
 
   const openBillboardPricing = useCallback(() => {
-    navigate("/pricing?plan=plus");
     trackClientEvent("dashboard_billboard_pricing", { source: "spotlight" });
-  }, [navigate]);
+    if (planRef.current === "free") {
+      void runCheckoutWithAuth({ plan: "pro", location: "dashboard_billboard", locale });
+      return;
+    }
+    navigate("/pricing");
+  }, [locale, navigate]);
 
   const openBillboardProfile = useCallback(() => {
     navigate("/settings");
@@ -700,6 +710,7 @@ export default function Dashboard() {
     setPlan(cached.plan);
     setUsedThisMonth(cached.usedThisMonth);
     setReferralBonus(cached.referralBonus);
+    setPurchasedBonus(cached.purchasedBonus);
     setLevelBonus(cached.levelBonus);
     setDailyBonusMonth(cached.dailyBonusMonth);
   }, [user?.id]);
@@ -787,6 +798,19 @@ export default function Dashboard() {
       })();
     }
   }, [locale, refreshAuthProfile, refreshProfile, user?.id]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("credits_purchased") !== "1") return;
+    trackClientEvent("credit_pack_purchased", { source: "stripe_return" });
+    toast.success(
+      locale === "fr"
+        ? "Paiement reçu — tes crédits arrivent dans quelques secondes."
+        : "Payment received — your credits will appear in a few seconds.",
+    );
+    window.history.replaceState({}, "", "/dashboard");
+    void refreshProfile({ silent: true });
+  }, [locale, refreshProfile]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -959,9 +983,9 @@ export default function Dashboard() {
 
   const genreReady = true;
 
-  const remaining = getRemainingBeats(plan, usedThisMonth, referralBonus, levelBonus, dailyBonusMonth);
-  const totalLimit = getTotalGenerationLimit(plan, { referralBonus, levelBonus, dailyBonusMonth });
-  const bonusCreditsTotal = referralBonus + levelBonus + dailyBonusMonth;
+  const remaining = getRemainingBeats(plan, usedThisMonth, referralBonus, levelBonus, dailyBonusMonth, purchasedBonus);
+  const totalLimit = getTotalGenerationLimit(plan, { referralBonus, levelBonus, dailyBonusMonth, purchasedBonus });
+  const bonusCreditsTotal = referralBonus + levelBonus + dailyBonusMonth + purchasedBonus;
   const reserveBonusMetaRow =
     bonusCreditsTotal > 0 ||
     Boolean(
@@ -2387,7 +2411,7 @@ export default function Dashboard() {
         const anyErr = err as { limitReached?: boolean };
         if (anyErr?.limitReached) {
           toast.error(d.monthlyLimitReached);
-          navigate("/pricing?plan=pro&checkout=1");
+          promptPlanUpsell("limit_reached");
         } else if (err instanceof AceRemixUnavailableError) {
           toast.error(pickFrEn(locale, ACE_REMIX_UNAVAILABLE_COPY.fr, ACE_REMIX_UNAVAILABLE_COPY.en), {
             duration: 10_000,
@@ -2419,8 +2443,8 @@ export default function Dashboard() {
       goResults,
       locale,
       mobileV2,
-      navigate,
       plan,
+      promptPlanUpsell,
       refreshProfile,
       remaining,
       query,
@@ -2623,7 +2647,7 @@ export default function Dashboard() {
         const anyErr = err as { limitReached?: boolean };
         if (anyErr?.limitReached) {
           toast.error(d.monthlyLimitReached);
-          navigate("/pricing?plan=pro&checkout=1");
+          promptPlanUpsell("limit_reached");
         } else {
           toast.error(err instanceof Error ? err.message : d.remixFailed);
         }
@@ -2644,9 +2668,9 @@ export default function Dashboard() {
       locale,
       migrateAudioCache,
       mobileV2,
-      navigate,
       plan,
       primeAudioCache,
+      promptPlanUpsell,
       refreshProfile,
       remaining,
       removeLoop,
@@ -2805,7 +2829,7 @@ export default function Dashboard() {
         const anyErr = err as { limitReached?: boolean };
         if (anyErr?.limitReached) {
           toast.error(d.monthlyLimitReached);
-          navigate("/pricing?plan=pro&checkout=1");
+          promptPlanUpsell("limit_reached");
         } else {
           toast.error(err instanceof Error ? err.message : d.coverFailed);
         }
@@ -2830,9 +2854,9 @@ export default function Dashboard() {
       locale,
       migrateAudioCache,
       mobileV2,
-      navigate,
       plan,
       primeAudioCache,
+      promptPlanUpsell,
       refreshProfile,
       remaining,
       removeLoop,
@@ -3129,6 +3153,14 @@ export default function Dashboard() {
               currentPlan={plan}
               className={mobileV2 ? "mb-2" : "mb-3"}
             />
+            {plan === "free" && remaining > 2 ? (
+              <FreeUpgradeStrip
+                locale={locale}
+                location="dashboard_strip"
+                plan={plan}
+                className={mobileV2 ? "mb-2" : "mb-3"}
+              />
+            ) : null}
             <div className={cn("flex items-center gap-2", mobileV2 ? "w-full" : "justify-between")}>
               <div
                 data-coach="mode-rail"
@@ -4278,9 +4310,13 @@ export default function Dashboard() {
                     ? d.upsellRemainingSingular
                     : `${d.upsellRemainingPluralPrefix}${remaining}${d.upsellRemainingPluralMid}`}
                 </span>
-                <Link to="/pricing" className="font-semibold text-amber-200 hover:text-white">
+                <button
+                  type="button"
+                  className="text-left font-semibold text-amber-200 hover:text-white"
+                  onClick={() => void runCheckoutWithAuth({ plan: "pro", location: "dashboard_mobile_upsell", locale })}
+                >
                   {`${d.seeProPrefix}${planPriceLabel("pro", locale, { suffix: true })}`}
-                </Link>
+                </button>
               </div>
             ) : null}
             {remaining === 0 ? (
@@ -4297,6 +4333,13 @@ export default function Dashboard() {
                     {recommendedUpgradePlan(plan)
                       ? `${d.upgradeTo}${recommendedUpgradePlan(plan) === "plus" ? "Plus" : recommendedUpgradePlan(plan) === "studio" ? "Studio" : "Pro"}`
                       : d.seeOptions}
+                  </button>
+                  <button
+                    type="button"
+                    className="font-semibold text-cyan-300/90 hover:text-cyan-200"
+                    onClick={() => void runCreditPackCheckout({ product: "credit_pack_50", location: "dashboard_mobile_exhausted", locale })}
+                  >
+                    {getCreditPackCtaLabel(locale)}
                   </button>
                   <Link to="/pricing" className="text-white/45 hover:text-white/70">
                     {d.comparePlans}

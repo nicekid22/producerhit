@@ -9,6 +9,14 @@ const robotsFile = path.join(publicDir, "robots.txt");
 
 const ORIGIN = "https://www.producerhit.com";
 
+const TIER1_TRAFFIC_PATHS = [
+  "/ai-beat-generator",
+  "/type-beat-generator-ai",
+  "/generate-beats-online-free",
+  "/commercial-license",
+  "/blog/ai-music-generator-for-beginners-2026",
+];
+
 const GENRE_SEO_PATHS = [
   "/ai-trap-beat-generator",
   "/ai-drill-beat-generator",
@@ -94,7 +102,7 @@ async function fetchPublicLoopIds() {
 
 async function ensureGenreUrlsInMainSitemap() {
   let src = await fs.readFile(sitemapMain, "utf8");
-  const paths = [...GENRE_SEO_PATHS, ...COMPARISON_SEO_PATHS];
+  const paths = [...TIER1_TRAFFIC_PATHS, ...GENRE_SEO_PATHS, ...COMPARISON_SEO_PATHS];
   for (const p of paths) {
     const loc = `${ORIGIN}${p}`;
     if (src.includes(loc)) continue;
@@ -173,6 +181,7 @@ async function submitIndexNow(urls) {
 
 async function collectIndexNowUrls(loopRows) {
   const urls = [`${ORIGIN}/`, `${ORIGIN}/community`, `${ORIGIN}/trending`, `${ORIGIN}/blog`, `${ORIGIN}/pricing`];
+  for (const p of TIER1_TRAFFIC_PATHS) urls.push(`${ORIGIN}${p}`);
   for (const vibe of ["bedroom", "night-drive", "club", "hiphop", "lofi", "cinematic"]) {
     urls.push(`${ORIGIN}/community/vibe/${vibe}`);
   }

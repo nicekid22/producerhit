@@ -270,6 +270,12 @@ export function LandingFooter({ locale, user }: Props) {
 
             </Link>
 
+            <a href="/rss.xml" className="pk-landing-footer-v2__legal-link">
+
+              RSS
+
+            </a>
+
           </div>
 
         </div>

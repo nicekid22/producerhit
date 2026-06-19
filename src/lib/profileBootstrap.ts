@@ -15,6 +15,7 @@ export type UserProfileRow = {
   plan: string;
   loops_used_this_month: number;
   referral_bonus: number;
+  purchased_bonus: number;
   referral_code: string | null;
   level_bonus: number;
   daily_bonus_month: number;
@@ -36,7 +37,7 @@ export type ProfileBootstrapResult = {
 };
 
 const PROFILE_SELECT_FULL =
-  "username, legal_first_name, legal_last_name, plan, loops_used_this_month, voice_to_song_used_this_month, voice_clone_used_this_month, referral_bonus, referral_code, level_bonus, daily_bonus_month, avatar_id, bio, creator_type, social, hosted_audio_expires_at";
+  "username, legal_first_name, legal_last_name, plan, loops_used_this_month, voice_to_song_used_this_month, voice_clone_used_this_month, referral_bonus, purchased_bonus, referral_code, level_bonus, daily_bonus_month, avatar_id, bio, creator_type, social, hosted_audio_expires_at";
 
 const PROFILE_SELECT_CREATOR =
   "username, legal_first_name, legal_last_name, plan, loops_used_this_month, level_bonus, daily_bonus_month, avatar_id, bio, creator_type, social";
@@ -59,12 +60,14 @@ export type ProfileCacheSnapshot = {
   plan: string;
   usedThisMonth: number;
   referralBonus: number;
+  purchasedBonus: number;
   levelBonus: number;
   dailyBonusMonth: number;
 };
 
 const PROFILE_CACHE_USER_KEY = "producerhit_profile_cache_user";
 const PROFILE_CACHE_REFERRAL_KEY = "producerhit_referral_bonus";
+const PROFILE_CACHE_PURCHASED_KEY = "producerhit_purchased_bonus";
 const PROFILE_CACHE_LEVEL_KEY = "producerhit_level_bonus";
 const PROFILE_CACHE_DAILY_KEY = "producerhit_daily_bonus_month";
 
@@ -91,6 +94,7 @@ export function readProfileCache(userId: string): ProfileCacheSnapshot | null {
       plan,
       usedThisMonth,
       referralBonus: readCachedNumber(PROFILE_CACHE_REFERRAL_KEY),
+      purchasedBonus: readCachedNumber(PROFILE_CACHE_PURCHASED_KEY),
       levelBonus: readCachedNumber(PROFILE_CACHE_LEVEL_KEY),
       dailyBonusMonth: readCachedNumber(PROFILE_CACHE_DAILY_KEY),
     };
@@ -125,6 +129,7 @@ function normalizeProfileRow(data: Record<string, unknown> | null): UserProfileR
     voice_clone_used_this_month:
       typeof data.voice_clone_used_this_month === "number" ? data.voice_clone_used_this_month : 0,
     referral_bonus: typeof data.referral_bonus === "number" ? data.referral_bonus : 0,
+    purchased_bonus: typeof data.purchased_bonus === "number" ? data.purchased_bonus : 0,
     referral_code: typeof data.referral_code === "string" ? data.referral_code : null,
     level_bonus: typeof data.level_bonus === "number" ? data.level_bonus : 0,
     daily_bonus_month: typeof data.daily_bonus_month === "number" ? data.daily_bonus_month : 0,
@@ -339,7 +344,9 @@ export function syncProfileCache(
   plan: string,
   usedThisMonth: number,
   userId?: string,
-  extras?: Pick<UserProfileRow, "referral_bonus" | "level_bonus" | "daily_bonus_month">,
+  extras?: Pick<UserProfileRow, "referral_bonus" | "level_bonus" | "daily_bonus_month"> & {
+    purchased_bonus?: number;
+  },
 ): void {
   try {
     window.localStorage.setItem("producerhit_plan", plan);
@@ -347,6 +354,7 @@ export function syncProfileCache(
     if (userId) window.localStorage.setItem(PROFILE_CACHE_USER_KEY, userId);
     if (extras) {
       window.localStorage.setItem(PROFILE_CACHE_REFERRAL_KEY, String(extras.referral_bonus ?? 0));
+      window.localStorage.setItem(PROFILE_CACHE_PURCHASED_KEY, String(extras.purchased_bonus ?? 0));
       window.localStorage.setItem(PROFILE_CACHE_LEVEL_KEY, String(extras.level_bonus ?? 0));
       window.localStorage.setItem(PROFILE_CACHE_DAILY_KEY, String(extras.daily_bonus_month ?? 0));
     }

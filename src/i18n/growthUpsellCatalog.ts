@@ -6,6 +6,7 @@ import { normalizePlanId, planDisplayName, type PaidPlanId } from "@/lib/planEnt
 import { PLAN_LIMITS, getPlanBaseLimit } from "@/lib/planLimits";
 import { LOOP_AUDIO_RETENTION_DAYS_PRO } from "@/lib/loopAudioRetention";
 import { commercialRightsFaq, planPriceLabel, planPriceUpsellLabel } from "@/lib/planPricing";
+import { getCreditPackCtaLabel } from "@/lib/creditPacks";
 
 function i(template: string, vars: Record<string, string | number>): string {
   return template.replace(/\{\{(\w+)\}\}/g, (_, key: string) => String(vars[key] ?? ""));
@@ -2052,6 +2053,21 @@ export function buildUpsellCopy(
   }
 
   if (cur !== "free" && !target) {
+    const isQuotaExhausted = reason === "credits_exhausted" || reason === "limit_reached";
+    if (isQuotaExhausted) {
+      return {
+        title: t(R.exhausted.title, locale),
+        description: t(R.quotaMax.description, locale),
+        bullets: [
+          t(R.quotaMax.bulletBonusesTomorrow, locale),
+          t(R.quotaMax.bulletReferrals, locale),
+          t(R.quotaMax.bulletLibraryKept, locale),
+        ],
+        primaryLabel: getCreditPackCtaLabel(locale),
+        secondaryLabel: t(C.close, locale),
+        targetPlan: null,
+      };
+    }
     return {
       title: t(R.quotaMax.title, locale),
       description: t(R.quotaMax.description, locale),
