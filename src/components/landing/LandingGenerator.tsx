@@ -37,6 +37,7 @@ type Props = {
   setMode: (mode: CreateMode) => void;
   prompt: string;
   setPrompt: (value: string) => void;
+  onPickAce?: (acePrompt: string) => void;
   placeholders: string[];
   placeholderIndex: number;
   inputRef: RefObject<HTMLTextAreaElement | null>;
@@ -203,6 +204,7 @@ export function LandingGenerator({
   setMode,
   prompt,
   setPrompt,
+  onPickAce,
   placeholders,
   placeholderIndex,
   inputRef,
@@ -230,6 +232,16 @@ export function LandingGenerator({
   const promptLocale = useMemo(
     () => resolveRandomPromptLocale({ surface: "landing", uiLocale: locale }),
     [locale],
+  );
+  const diceToolbar = (
+    <RandomPromptDiceButton
+      locale={locale}
+      promptLocale={promptLocale}
+      mode={mode}
+      onPick={setPrompt}
+      onPickAce={onPickAce}
+      variant="landing"
+    />
   );
   const landing = getMessages(locale).landing;
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -309,15 +321,6 @@ export function LandingGenerator({
                   )}
                 >
                   <div className="pk-landing-gen__prompt-zone px-3 py-3.5 sm:px-4">
-                    <div className="pk-landing-gen__prompt-head mb-2 flex items-center justify-end">
-                      <RandomPromptDiceButton
-                        locale={locale}
-                        promptLocale={promptLocale}
-                        mode={mode}
-                        onPick={setPrompt}
-                        variant="landing"
-                      />
-                    </div>
                     <SpeechDictationField
                       multiline
                       locale={locale}
@@ -336,6 +339,7 @@ export function LandingGenerator({
                       placeholder={placeholders[placeholderIndex]}
                       rows={4}
                       wrapperClassName="mt-0"
+                      toolbarExtra={diceToolbar}
                     />
                   </div>
 
@@ -525,15 +529,6 @@ export function LandingGenerator({
                 </div>
 
                 <div className="pk-landing-gen__prompt-zone px-3 py-1 sm:px-4 sm:py-1.5">
-                  <div className="pk-landing-gen__prompt-head mb-2 flex items-center justify-end">
-                    <RandomPromptDiceButton
-                      locale={locale}
-                      promptLocale={promptLocale}
-                      mode={mode}
-                      onPick={setPrompt}
-                      variant="landing"
-                    />
-                  </div>
                   <SpeechDictationField
                     multiline
                     locale={locale}
@@ -552,6 +547,7 @@ export function LandingGenerator({
                     placeholder={placeholders[placeholderIndex]}
                     rows={3}
                     wrapperClassName="mt-0"
+                    toolbarExtra={diceToolbar}
                   />
                 </div>
 

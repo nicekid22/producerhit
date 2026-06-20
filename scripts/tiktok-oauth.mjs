@@ -96,7 +96,7 @@ function printChecklist(redirectUri, scopes) {
   console.log("2. Products > Login Kit > Web > Redirect URI EXACTE (avec slash final) :");
   console.log(`   ${redirectUri}`);
   console.log("3. App details > Web URL : https://www.producerhit.com");
-  console.log("4. Sandbox settings > Target users > ajouter @hypectrl (login TikTok requis)");
+  console.log("4. Sandbox settings > Target users > ajouter @producerhit.com (login TikTok requis)");
   console.log("5. Apply changes puis attendre 5 min");
   console.log("6. Vercel : TIKTOK_CLIENT_KEY, TIKTOK_CLIENT_SECRET, TIKTOK_REDIRECT_URI (meme URI)");
   console.log(`7. Scopes URL : ${scopes}`);
@@ -144,7 +144,8 @@ async function main() {
   printChecklist(REDIRECT_URI, scopes);
 
   const url = authUrl.toString();
-  console.log("Ouvre cette URL avec le compte sandbox @hypectrl :\n");
+  console.log("Ouvre cette URL avec le compte sandbox @producerhit.com :\n");
+  console.log("  https://www.tiktok.com/@producerhit.com\n");
   console.log(url);
   console.log("\nPas de PKCE. Redirect URI avec slash final.\n");
 

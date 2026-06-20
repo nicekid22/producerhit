@@ -1,27 +1,42 @@
 # Reddit growth — ProducerHit
 
-## r/makinghiphop — Rule 3
+## Strategie : discussion d'abord, subs varies (beats + chanson)
 
-**Interdit :** posts de singles, beats, music videos.
+**Posts auto** = sujets fondateur / questions — jamais [FREE] beat link en cron.
 
-**Autorisé :** commentaires utiles (workflow FL, comparaison Suno, tips prod) **sans** lien beat en promo.
+### Subs scoutes (rotation 5-6 par run)
 
-## Workflow quotidien (15 min)
+| Categorie | Subs |
+|-----------|------|
+| **AI** | r/aiMusic, r/SunoAI |
+| **Beats** | r/makinghiphop, r/trapproduction, r/futurebeatmakers |
+| **Songwriting** | r/Songwriting, r/singing, r/composer, r/musicians |
+| **Production** | r/WeAreTheMusicMakers, r/musicproduction, r/audioengineering, r/MusicInTheMaking, r/edmproduction |
+| **DAW** | r/FL_Studio, r/Ableton, r/Logic_Studio |
 
-1. `npm run reddit:agent -- --open`
-2. **Onglet 1** → poster beat sur **r/Typebeats** ([FREE] dans le titre)
-3. **Onglet 2** → recherche r/makinghiphop → commenter une question prod (pas de lien loop)
-4. Max 3–5 interactions/jour
+### Calendrier posts auto (--post, UTC)
 
-## Subs
+| Jour | Contenu |
+|------|---------|
+| Lundi | r/aiMusic — **loops + mode chanson** |
+| Mercredi | Rotation : SideProject / **r/Songwriting** / WATMM |
+| Vendredi | Rotation : alphaandbetausers / **r/musicproduction** / r/composer |
 
-| Sub | Post beat | Commenter |
-|-----|-----------|-----------|
-| r/Typebeats | ✅ | ✅ |
-| r/makinghiphop | ❌ Rule 3 | ✅ |
-| r/WeAreTheMusicMakers | feedback thread only | ✅ |
-| r/trapproduction | feedback / questions | ✅ |
+### Modes ProducerHit a mentionner
 
-## OAuth optionnel
+- **Type beat / loop** — BPM + key lock, sketch DAW
+- **Mode chanson** — melody/structure/lyrics unblock, pas vocal final
 
-`REDDIT_POST_SUBREDDIT=Typebeats` (défaut)
+### Commandes
+
+```bash
+npm run reddit:agent -- --open
+npm run reddit:agent -- post r/Songwriting
+npm run reddit:cron -- --run
+npm run reddit:cron:status
+REDDIT_POST_SUBREDDIT=Songwriting npm run reddit:agent -- --open
+```
+
+### Quotas
+
+`REDDIT_MAX_COMMENTS_PER_DAY=3` · `REDDIT_MAX_POSTS_PER_WEEK=3`

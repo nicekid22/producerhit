@@ -6,6 +6,7 @@ import { getGenreCatalogPrompt } from "@/lib/promptBuilder";
 import { ACE_DICE_CAPTION_MAX } from "@/lib/randomPromptIdeas/aceDiceCaption";
 import type { PromptMode } from "@/lib/randomPromptIdeas";
 import type { PromptCategory } from "@/lib/randomPromptIdeas/categories/types";
+import { buildGenreDiceDisplayPrompt } from "@/lib/randomPromptIdeas/genreDiceDisplay";
 import {
   pickGenreDiceNarrative,
   pickGenreDiceProduction,
@@ -13,7 +14,7 @@ import {
   resolveThemeGroup,
 } from "@/lib/randomPromptIdeas/genreDiceThemes";
 
-type GenreDiceItem = { genre: string; prompt: string };
+export type GenreDiceItem = { genre: string; acePrompt: string; displayPrompt: string };
 
 /** Variants per catalog genre — more variety on dice rolls. */
 const VARIANTS_PER_GENRE = 3;
@@ -50,15 +51,15 @@ function trimAceCaption(parts: readonly string[]): string {
   return result;
 }
 
-function buildDetailedPrompt(
+function buildAcePrompt(
   locale: AppLocale,
   genre: string,
   entry: { aceTags: string },
   mode: PromptMode,
   variant: number,
+  themeGroup: ReturnType<typeof resolveThemeGroup>,
 ): string {
   const base = entry.aceTags.trim() || genre.toLowerCase();
-  const themeGroup = resolveThemeGroup(GENRE_GROUP.get(genre));
   const narrative = pickGenreDiceNarrative(locale, themeGroup, mode, variant);
   const production = pickGenreDiceProduction(locale, mode, variant);
 
@@ -76,9 +77,11 @@ function buildGenreDicePool(mode: PromptMode, locale: AppLocale): readonly Genre
     const entry = GENRE_LOOKUP.get(opt.value);
     if (!entry) continue;
     for (let variant = 0; variant < VARIANTS_PER_GENRE; variant += 1) {
+      const themeGroup = resolveThemeGroup(GENRE_GROUP.get(opt.value));
       out.push({
         genre: opt.value,
-        prompt: buildDetailedPrompt(locale, opt.value, entry, mode, variant),
+        acePrompt: buildAcePrompt(locale, opt.value, entry, mode, variant, themeGroup),
+        displayPrompt: buildGenreDiceDisplayPrompt(locale, opt.value, mode, themeGroup, variant),
       });
     }
   }
@@ -110,7 +113,7 @@ export function buildGenreMenuCategory(mode: PromptMode, label: string, locale: 
     id: "genre_menu",
     label,
     mode,
-    prompts: pool.map((item) => item.prompt),
+    prompts: pool.map((item) => item.acePrompt),
   };
 }
 
@@ -119,15 +122,44 @@ export function pickRandomGenreMenuDice(mode: PromptMode, locale: AppLocale = "e
   if (pool.length === 0) {
     const fallbackNarrative = pickGenreDiceNarrative(locale, "trap", mode, 0);
     const fallbackProduction = pickGenreDiceProduction(locale, mode, 0);
+    const acePrompt = trimAceCaption([
+      "melodic trap, emotional minor piano, airy pads, crisp hats, punchy 808 glides",
+      fallbackNarrative,
+      ...(mode === "song" ? [pickGenreDiceVocal(locale, "trap", 0)] : []),
+      fallbackProduction,
+    ]);
     return {
       genre: "Melodic Trap",
-      prompt: trimAceCaption([
-        "melodic trap, emotional minor piano, airy pads, crisp hats, punchy 808 glides",
-        fallbackNarrative,
-        ...(mode === "song" ? [pickGenreDiceVocal(locale, "trap", 0)] : []),
-        fallbackProduction,
-      ]),
+      acePrompt,
+      displayPrompt: buildGenreDiceDisplayPrompt(locale, "Melodic Trap", mode, "trap", 0),
     };
   }
   return pool[Math.floor(Math.random() * pool.length)] ?? pool[0]!;
+}
+
+/** Phrases lisibles pour landing / hero — une par genre en priorité. */
+export function getGenreDiceDisplayPromptPool(mode: PromptMode, locale: AppLocale = "en"): readonly string[] {
+  const pool = getGenreDicePool(mode, locale);
+  if (pool.length === 0) return [];
+
+  const byGenre = new Map<string, string[]>();
+  for (const item of pool) {
+    const list = byGenre.get(item.genre) ?? [];
+    if (!list.includes(item.displayPrompt)) list.push(item.displayPrompt);
+    byGenre.set(item.genre, list);
+  }
+
+  const genres = [...byGenre.keys()];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (let round = 0; round < 4 && out.length < 32; round += 1) {
+    for (const genre of genres) {
+      const prompts = byGenre.get(genre) ?? [];
+      const pick = prompts[round % prompts.length];
+      if (!pick || seen.has(pick)) continue;
+      seen.add(pick);
+      out.push(pick);
+    }
+  }
+  return out;
 }

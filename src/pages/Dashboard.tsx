@@ -133,6 +133,7 @@ import { coverResultTitle, prepareCoverGeneration } from "@/lib/coverGeneration"
 import { generateBeat, generateBeatDualBatch, remixLoopAce } from "@/lib/audioApi";
 import { ACE_REMIX_UNAVAILABLE_COPY, AceRemixUnavailableError } from "@/lib/aceRemix";
 import { buildAceCaption, type GenerateParams } from "@/lib/promptBuilder";
+import { resolveCaptionOverrideForGeneration } from "@/lib/promptEnhancer";
 import { buildCoverPromptSnapshot, cn } from "@/lib/utils";
 import { DashboardStudioBrand } from "@/components/dashboard/DashboardStudioBrand";
 import { DASHBOARD_VOICE_SECTIONS_ENABLED, MOBILE_DASHBOARD_V2 } from "@/lib/featureFlags";
@@ -521,6 +522,8 @@ export default function Dashboard() {
       }),
     [locale, songVocalLanguageMode, manualVocalLanguage],
   );
+  const beatAceOverrideRef = useRef<string | null>(null);
+  const songAceOverrideRef = useRef<string | null>(null);
   const [songDurationSec, setSongDurationSec] = useState(30);
   const [songTimeSignature, setSongTimeSignature] = useState<(typeof timeSignatureOptions)[number]>("4/4");
   const [beatInstrumental] = useState(true);
@@ -532,6 +535,7 @@ export default function Dashboard() {
   const [landingAutoGenQueued, setLandingAutoGenQueued] = useState(false);
   type LandingGenerateSnapshot = {
     prompt: string;
+    acePrompt?: string;
     mode: "beat" | "song";
     genre: string;
     genreStrategy: "from_idea" | "random";
@@ -1529,6 +1533,10 @@ export default function Dashboard() {
     const releaseGenerationUi = () => {
       if (generationUiReleased || !isSyncGenerationSessionActive(sessionId)) return;
       generationUiReleased = true;
+      if (didGenerate) {
+        beatAceOverrideRef.current = null;
+        songAceOverrideRef.current = null;
+      }
       setGenerating(false);
       let nextSlots: GenerationSlot[] | null = null;
       setGenerationSlots((prev) => {
@@ -1560,7 +1568,15 @@ export default function Dashboard() {
           "[generate] 1 seule clé VITE ACE — ajoute VITE_ACE_STEP_API_KEYS (comme ACE_STEP_API_KEYS) pour v1/v2 en parallèle sans 429.",
         );
       }
-      const prompt = runAsSong ? runUiPrompt : (runFormPrompt?.trim() ?? "");
+      const prompt = runAsSong ? runSongDescription.trim() || runUiPrompt : (runFormPrompt?.trim() ?? "");
+
+      const captionOverride = resolveCaptionOverrideForGeneration({
+        diceAceOverride: runAsSong ? songAceOverrideRef.current : beatAceOverrideRef.current,
+        landingAceOverride: landingSnap?.acePrompt ?? null,
+        displayIdea: prompt,
+        formGenre: normalizedGenreForPrompt,
+        mode: runAsSong ? "song" : "beat",
+      });
 
       const inputParams = {
         genre: normalizedGenreForPrompt,
@@ -1605,7 +1621,9 @@ export default function Dashboard() {
               audioFormat: effectiveAudioFormat,
               seed,
             };
-        return aceKeyPreferIndex !== undefined ? { ...base, aceKeyPreferIndex } : base;
+        return aceKeyPreferIndex !== undefined
+          ? { ...base, aceKeyPreferIndex, ...(captionOverride ? { captionOverride } : {}) }
+          : { ...base, ...(captionOverride ? { captionOverride } : {}) };
       };
 
       const cloneCfg = voiceCloneConfigRef.current;
@@ -2878,11 +2896,12 @@ export default function Dashboard() {
     if (!pendingLandingRequest || landingFormAppliedRef.current) return;
 
     landingFormAppliedRef.current = true;
-    const { prompt, mode: landingMode, genreStrategy } = pendingLandingRequest;
+    const { prompt, mode: landingMode, genreStrategy, acePrompt } = pendingLandingRequest;
     const handoffGenre = landingGenreForHandoff(prompt, genreStrategy);
 
     landingGenerateSnapshotRef.current = {
       prompt,
+      acePrompt: acePrompt?.trim() || undefined,
       mode: landingMode,
       genre: handoffGenre,
       genreStrategy: genreStrategy ?? landingGenreStrategyFromPrompt(prompt),
@@ -2897,8 +2916,10 @@ export default function Dashboard() {
       setLyricsMode("ai");
       setSongDescription(prompt);
       setField("prompt", prompt);
+      songAceOverrideRef.current = acePrompt?.trim() || null;
     } else {
       setField("prompt", prompt);
+      beatAceOverrideRef.current = acePrompt?.trim() || null;
       if (!prompt.trim()) setSongDescription("");
     }
 
@@ -3356,7 +3377,13 @@ export default function Dashboard() {
                   promptLocale={beatPromptLocale}
                   mode="beat"
                   value={form.prompt}
-                  onChange={(v) => setField("prompt", v)}
+                  onChange={(v) => {
+                    beatAceOverrideRef.current = null;
+                    setField("prompt", v);
+                  }}
+                  onPickAce={(ace) => {
+                    beatAceOverrideRef.current = ace;
+                  }}
                   onPickGenre={(v) => setField("genre", v)}
                   collapsible={mobileV2}
                   defaultOpen={mobileV2 ? mobileSectionDefaultOpen : true}
@@ -3722,7 +3749,13 @@ export default function Dashboard() {
                   promptLocale={songPromptLocale}
                   mode="song"
                   value={songDescription}
-                  onChange={setSongDescription}
+                  onChange={(v) => {
+                    songAceOverrideRef.current = null;
+                    setSongDescription(v);
+                  }}
+                  onPickAce={(ace) => {
+                    songAceOverrideRef.current = ace;
+                  }}
                   onPickGenre={(v) => setField("genre", v)}
                   collapsible={mobileV2}
                   defaultOpen={mobileV2 ? mobileSectionDefaultOpen : true}

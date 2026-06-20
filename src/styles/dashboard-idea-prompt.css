@@ -1,4 +1,4 @@
-/* Dashboard — champs texte idée + paroles (alignés, mic intégré) */
+/* Dashboard — champs texte idée + paroles (alignés, mic + dé intégrés) */
 
 .pk-dashboard-text-field-wrap,
 .pk-dashboard-text-field-wrap .pk-speech-field,
@@ -12,61 +12,81 @@
   position: relative;
 }
 
-.pk-idea-prompt-tools {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  z-index: 2;
-  pointer-events: auto;
-}
-
 .pk-dashboard-text-field .pk-speech-field__shell--mic-inside,
-.pk-idea-prompt-field .pk-speech-field__shell--mic-inside {
+.pk-idea-prompt-field .pk-speech-field__shell--mic-inside,
+.pk-cover-lyrics-field .pk-speech-field__shell--mic-inside {
   position: relative;
   display: block;
   gap: 0;
   overflow: visible;
 }
 
-.pk-dashboard-text-field__control,
-.pk-idea-prompt-control {
-  min-height: 5.5rem !important;
-  padding: 0.7rem 3rem 2.65rem 0.85rem !important;
-  resize: none;
-  line-height: 1.5 !important;
-}
-
-.pk-dashboard-text-field .pk-speech-field__mic--inside,
-.pk-idea-prompt-field .pk-speech-field__mic--inside {
+.pk-speech-field__inside-toolbar {
   position: absolute;
   right: 0.55rem;
   bottom: 0.55rem;
-  width: 2rem;
-  height: 2rem;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  pointer-events: none;
+}
+
+.pk-speech-field__inside-toolbar > * {
+  pointer-events: auto;
+}
+
+.pk-speech-field__side-tools {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+  align-self: flex-end;
+}
+
+.pk-dashboard-text-field__control,
+.pk-idea-prompt-control {
+  min-height: 5.5rem !important;
+  padding: 0.7rem 0.85rem 2.75rem 0.85rem !important;
+  resize: none;
+  line-height: 1.5 !important;
+  scrollbar-gutter: stable;
+}
+
+.pk-speech-field__shell--mic-inside .pk-dashboard-text-field__control {
+  padding-right: 3.35rem !important;
+}
+
+.pk-speech-field__shell--mic-inside.pk-speech-field__shell--has-toolbar .pk-dashboard-text-field__control {
+  padding-right: 5.45rem !important;
+}
+
+.pk-speech-field__inside-toolbar .pk-speech-field__mic--inside {
+  position: static;
+  right: auto;
+  bottom: auto;
+  width: var(--pk-prompt-tool-size, 2.5rem);
+  height: var(--pk-prompt-tool-size, 2.5rem);
   margin: 0;
   border-color: color-mix(in srgb, var(--pk-accent, #9d7cff) 32%, rgba(255, 255, 255, 0.14));
   background: color-mix(in srgb, var(--pk-accent, #9d7cff) 12%, rgba(255, 255, 255, 0.07));
   color: color-mix(in srgb, var(--pk-accent, #9d7cff) 58%, rgba(255, 255, 255, 0.88));
 }
 
-.pk-dashboard-text-field .pk-speech-field__mic--inside:hover:not(:disabled),
-.pk-idea-prompt-field .pk-speech-field__mic--inside:hover:not(:disabled) {
+.pk-speech-field__inside-toolbar .pk-speech-field__mic--inside:hover:not(:disabled) {
   border-color: color-mix(in srgb, var(--pk-accent, #9d7cff) 48%, transparent);
   background: color-mix(in srgb, var(--pk-accent, #9d7cff) 20%, rgba(255, 255, 255, 0.08));
   color: #fff;
 }
 
-html.pk-warm-glass-active .pk-dashboard-text-field .pk-speech-field__mic--inside,
-html.pk-warm-glass-active .pk-idea-prompt-field .pk-speech-field__mic--inside {
+html.pk-warm-glass-active .pk-speech-field__inside-toolbar .pk-speech-field__mic--inside {
   border-color: color-mix(in srgb, #ff9a5c 38%, rgba(255, 255, 255, 0.12));
   background: color-mix(in srgb, #ff9a5c 14%, rgba(255, 255, 255, 0.06));
   color: color-mix(in srgb, #ffb380 72%, rgba(255, 255, 255, 0.9));
 }
 
-html.pk-cloud-active .pk-cloud-stage .pk-dashboard-text-field .pk-speech-field__mic--inside,
-html.pk-cloud-active .pk-cloud-stage .pk-idea-prompt-field .pk-speech-field__mic--inside,
-html.pk-cloud-active .pk-dashboard-text-field .pk-speech-field__mic--inside,
-html.pk-cloud-active .pk-idea-prompt-field .pk-speech-field__mic--inside {
+html.pk-cloud-active .pk-speech-field__inside-toolbar .pk-speech-field__mic--inside {
   border-color: color-mix(in srgb, var(--cloud-accent) 40%, rgba(0, 0, 0, 0.1));
   background: color-mix(in srgb, var(--cloud-accent) 14%, rgba(255, 255, 255, 0.55));
   color: color-mix(in srgb, var(--cloud-accent) 75%, #2d3a2d);
@@ -80,10 +100,14 @@ html.pk-cloud-active .pk-idea-prompt-field .pk-speech-field__mic--inside {
   }
 }
 
-/* Cover — zone paroles plus haute, micro intégré sans chevauchement */
+/* Cover — zone paroles plus haute */
 .pk-cover-lyrics-field .pk-dashboard-text-field__control {
   min-height: 10.5rem !important;
-  padding: 0.75rem 3.1rem 2.75rem 0.9rem !important;
+  padding: 0.75rem 0.9rem 2.85rem 0.9rem !important;
+}
+
+.pk-cover-lyrics-field .pk-speech-field__shell--mic-inside .pk-dashboard-text-field__control {
+  padding-right: 3.45rem !important;
 }
 
 @media (min-width: 768px) {

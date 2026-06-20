@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CATEGORIZED_EN, CATEGORIZED_FR, flattenCategories } from "./index";
 import { getGenreMenuPromptCount, pickRandomGenreMenuDice } from "@/lib/randomPromptIdeas/genreMenuPrompts";
-import { pickRandomGenreMenuDiceRoll } from "@/lib/randomPromptIdeas";
+import { pickRandomGenreMenuDiceRoll, getLandingDisplayPromptPool } from "@/lib/randomPromptIdeas";
 import { GENRE_COUNT } from "@/lib/genres";
 describe("random prompt pools", () => {
   it("FR/EN song pools have hundreds of unique prompts", () => {
@@ -21,10 +21,17 @@ describe("random prompt pools", () => {
     expect(new Set(frBeat).size).toBe(frBeat.length);
   });
 
-  it("genre_menu FR prompts mix French mood with English ACE tags", () => {
-    const sample = pickRandomGenreMenuDice("song", "fr").prompt;
-    expect(sample).toMatch(/\b(voix|nuit|heartbreak|mix|chorus|808|rhodes|trap)\b/i);
+  it("genre_menu FR ace prompts mix French mood with English ACE tags", () => {
+    const sample = pickRandomGenreMenuDice("song", "fr").acePrompt;
+    expect(sample).toMatch(/\b(voix|vocal|nuit|été|heartbreak|mix|chorus|808|rhodes|trap|groove|hooks)\b/i);
     expect(/^(fais|une chanson|make me|song about)/i.test(sample)).toBe(false);
+  });
+
+  it("dice roll shows simple display prompt to users", () => {
+    const fr = pickRandomGenreMenuDiceRoll("fr", "song");
+    expect(fr.displayPrompt).toMatch(/^Une chanson /i);
+    expect(fr.acePrompt.length).toBeGreaterThan(fr.displayPrompt.length);
+    expect(fr.acePrompt).not.toBe(fr.displayPrompt);
   });
 
   it("dice roll respects prompt locale for song", () => {
@@ -32,7 +39,7 @@ describe("random prompt pools", () => {
     const en = pickRandomGenreMenuDiceRoll("en", "song");
     expect(fr.genre).toBeTruthy();
     expect(en.genre).toBeTruthy();
-    expect(fr.prompt).not.toEqual(en.prompt);
+    expect(fr.displayPrompt).not.toEqual(en.displayPrompt);
   });
 
   it("genre_menu prompts use ACE tag format (no conversational prose)", () => {
@@ -55,6 +62,16 @@ describe("random prompt pools", () => {
     expect(getGenreMenuPromptCount("song")).toBeGreaterThanOrEqual(GENRE_COUNT);
     expect(getGenreMenuPromptCount("beat")).toBeGreaterThanOrEqual(GENRE_COUNT);
     expect(genreMenuSong?.prompts[0]?.length ?? 0).toBeGreaterThan(80);
+  });
+
+  it("landing display pool uses readable phrases not ACE tags", () => {
+    const frSong = getLandingDisplayPromptPool("fr", "song");
+    const frBeat = getLandingDisplayPromptPool("fr", "beat");
+    expect(frSong.length).toBeGreaterThanOrEqual(8);
+    expect(frBeat.length).toBeGreaterThanOrEqual(8);
+    expect(frSong[0]).toMatch(/^Une chanson /i);
+    expect(frBeat[0]).toMatch(/^Un beat /i);
+    expect(frSong.some((p) => p.includes("808"))).toBe(false);
   });
 
   it("natural category includes conversational French", () => {

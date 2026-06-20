@@ -3,6 +3,8 @@ export type LandingGenreStrategy = "from_idea" | "random";
 export type LandingPendingGeneration = {
   prompt: string;
   mode: "beat" | "song";
+  /** Prompt ACE technique (dé landing) — invisible pour l'utilisateur. */
+  acePrompt?: string;
   /** Déduit du prompt si absent : rempli → depuis l'idée, vide → aléatoire. */
   genreStrategy?: LandingGenreStrategy;
 };
@@ -18,12 +20,13 @@ export function normalizeLandingPendingGeneration(
 ): LandingPendingGeneration | null {
   if (!raw) return null;
   const prompt = typeof raw.prompt === "string" ? raw.prompt.trim() : "";
+  const acePrompt = typeof raw.acePrompt === "string" ? raw.acePrompt.trim() : "";
   const mode = raw.mode === "beat" ? "beat" : "song";
   const genreStrategy = raw.genreStrategy === "random" || raw.genreStrategy === "from_idea"
     ? raw.genreStrategy
     : landingGenreStrategyFromPrompt(prompt);
   if (!prompt && genreStrategy !== "random") return null;
-  return { prompt, mode, genreStrategy };
+  return { prompt, mode, genreStrategy, ...(acePrompt ? { acePrompt } : {}) };
 }
 
 export function saveLandingPendingGeneration(payload: LandingPendingGeneration) {

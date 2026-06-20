@@ -67,3 +67,22 @@ export function estimateGenerationDurationMs(
   }
   return 95_000;
 }
+
+/**
+ * Timeout poll ACE (navigateur / release_task).
+ * `null` = pas de limite — attendre status 1 ou 2 (comme prod async sans plafond client).
+ * Rollback : VITE_ACE_POLL_TIMEOUT_MS=150000
+ */
+export function acePollTimeoutMs(input: {
+  instrumental: boolean;
+  isSong?: boolean;
+  lyrics?: string;
+}): number | null {
+  const raw = import.meta.env.VITE_ACE_POLL_TIMEOUT_MS as string | undefined;
+  if (raw === "0" || raw?.toLowerCase() === "off") return null;
+  if (raw !== "" && raw != null) {
+    const n = Number(raw);
+    if (Number.isFinite(n) && n > 0) return Math.min(n, 3_600_000);
+  }
+  return null;
+}

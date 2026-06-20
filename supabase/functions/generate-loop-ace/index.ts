@@ -5,9 +5,11 @@ import {
   aceAsyncTryReleaseTask,
   createAceReleaseTask,
   createServiceSupabase,
+  decodeDataUrl,
   internalJobSecret,
   jobResponsePayload,
   loadGenerationJob,
+  LOOP_AUDIO_BUCKET,
   persistInlineJobAudioUrl,
   pollAceTaskOnce,
   resolveAceStemsZipUrl,
@@ -37,15 +39,17 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/** Chanson avec paroles manuelles — ACE met plus longtemps ; évite abort à ~150s (barre ~95%). */
+/** Chanson avec paroles — ACE peut être lent ; pas de plafond court en async (poll côté client). */
 function aceRequestTimeoutMs(input: { instrumental: boolean; isSong?: boolean; lyrics?: string }): number {
+  const off = Deno.env.get("ACE_REQUEST_TIMEOUT_MS");
+  if (off === "0" || off?.toLowerCase() === "off") return 1_800_000;
   const base = 150_000;
   if (input.instrumental) return base;
   const lyrics = (input.lyrics ?? "").trim();
   if (!lyrics || lyrics === "[Instrumental]") return base;
   if (input.isSong !== true) return base;
-  const extra = Math.min(120_000, lyrics.length * 30);
-  return Math.min(300_000, base + extra);
+  const extra = Math.min(180_000, lyrics.length * 30);
+  return Math.min(1_800_000, base + extra);
 }
 
 function estimateSongDurationFromLyrics(lyrics: string): number {
@@ -1223,21 +1227,6 @@ function getAceTargets(
   return [...targets.slice(start), ...targets.slice(0, start)];
 }
 
-function decodeDataUrl(dataUrl: string): { bytes: Uint8Array; mime: string } | null {
-  const raw = dataUrl.trim();
-  const m = raw.match(/^data:([^;,]+)?(?:;[^,]*)?;base64,(.+)$/i);
-  if (!m) return null;
-  try {
-    const mime = m[1] || "audio/mpeg";
-    const bin = atob(m[2]!);
-    const bytes = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    return { bytes, mime };
-  } catch {
-    return null;
-  }
-}
-
 function isStreamPublicAudioUrl(url: string): boolean {
   const s = url.trim();
   if (!s) return false;
@@ -1333,7 +1322,7 @@ async function handleStreamPublic(reqUrl: URL, corsHeaders: Record<string, strin
       ? (inlineRow as { provider_audio_inline: string }).provider_audio_inline.trim()
       : "";
   if (inline) {
-    const decoded = decodeDataUrl(inline);
+    const decoded = await decodeDataUrl(inline);
     if (decoded?.bytes.byteLength) {
       return new Response(decoded.bytes, {
         headers: {
@@ -1649,8 +1638,13 @@ serve(async (req) => {
         if (audioUrl.startsWith("data:")) {
           const persisted = await persistInlineJobAudioUrl(svc, job.user_id, jobId, audioUrl);
           audioUrl = persisted.audioUrl;
-          if (persisted.providerDataUrl) {
-            meta = { ...(meta ?? {}), providerDataUrl: persisted.providerDataUrl, sessionOnly: false };
+          if (persisted.providerDataUrl || audioUrl.startsWith("http")) {
+            meta = {
+              ...(meta ?? {}),
+              ...(persisted.providerDataUrl ? { providerDataUrl: persisted.providerDataUrl } : {}),
+              ...(audioUrl.startsWith("http") ? { httpAudioUrl: audioUrl } : {}),
+              sessionOnly: false,
+            };
           }
         }
         await updateGenerationJob(svc, jobId, {
@@ -1865,6 +1859,13 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      const meta =
+        job.meta && typeof job.meta === "object" ? (job.meta as Record<string, unknown>) : null;
+      const httpFromMeta = typeof meta?.httpAudioUrl === "string" ? meta.httpAudioUrl.trim() : "";
+      if (httpFromMeta.startsWith("http://") || httpFromMeta.startsWith("https://")) {
+        return Response.redirect(httpFromMeta, 302);
+      }
+
       const raw = typeof job.audio_url === "string" ? job.audio_url.trim() : "";
       if (!raw) {
         return new Response(JSON.stringify({ error: "No audio" }), {
@@ -1875,7 +1876,25 @@ serve(async (req) => {
       if (raw.startsWith("http://") || raw.startsWith("https://")) {
         return Response.redirect(raw, 302);
       }
-      const decoded = decodeDataUrl(raw);
+
+      const svc = createServiceSupabase();
+      if (svc) {
+        for (const ext of ["mp3", "wav"] as const) {
+          const path = `${job.user_id}/job-${jobId}.${ext}`;
+          const { data: blob, error: dlErr } = await svc.storage.from(LOOP_AUDIO_BUCKET).download(path);
+          if (!dlErr && blob && blob.size > 0) {
+            return new Response(blob, {
+              headers: {
+                ...corsHeaders,
+                "Content-Type": ext === "wav" ? "audio/wav" : "audio/mpeg",
+                "Cache-Control": "private, max-age=3600",
+              },
+            });
+          }
+        }
+      }
+
+      const decoded = await decodeDataUrl(raw);
       if (!decoded) {
         return new Response(JSON.stringify({ error: "Invalid audio" }), {
           status: 500,
@@ -1943,8 +1962,13 @@ serve(async (req) => {
             if (svc && finalAudioUrl?.startsWith("data:")) {
               const persisted = await persistInlineJobAudioUrl(svc, job.user_id, jobId, finalAudioUrl);
               finalAudioUrl = persisted.audioUrl;
-              if (persisted.providerDataUrl) {
-                pollMeta = { ...(pollMeta ?? {}), providerDataUrl: persisted.providerDataUrl, sessionOnly: false };
+              if (persisted.providerDataUrl || finalAudioUrl.startsWith("http")) {
+                pollMeta = {
+                  ...(pollMeta ?? {}),
+                  ...(persisted.providerDataUrl ? { providerDataUrl: persisted.providerDataUrl } : {}),
+                  ...(finalAudioUrl.startsWith("http") ? { httpAudioUrl: finalAudioUrl } : {}),
+                  sessionOnly: false,
+                };
               }
             }
             await updateGenerationJob(db, jobId, {

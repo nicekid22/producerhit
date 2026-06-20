@@ -364,11 +364,11 @@ export async function updateGenerationJob(
   if (error) console.error("updateGenerationJob", error.message);
 }
 
-const LOOP_AUDIO_BUCKET = "loop-audio";
+export const LOOP_AUDIO_BUCKET = "loop-audio";
 /** Évite de renvoyer 4+ Mo de base64 dans les réponses JSON poll_job. */
 const INLINE_AUDIO_MAX_JSON_CHARS = 400_000;
 
-function decodeDataUrl(dataUrl: string): { bytes: Uint8Array; mime: string } | null {
+function decodeDataUrlSync(dataUrl: string): { bytes: Uint8Array; mime: string } | null {
   const raw = dataUrl.trim();
   const m = raw.match(/^data:([^;,]+)?(?:;[^,]*)?;base64,(.+)$/i);
   if (!m) return null;
@@ -383,6 +383,27 @@ function decodeDataUrl(dataUrl: string): { bytes: Uint8Array; mime: string } | n
   }
 }
 
+/** data: URLs ACE (~4 Mo) — fetch natif Deno, plus fiable que atob sur gros payloads edge. */
+export async function decodeDataUrl(dataUrl: string): Promise<{ bytes: Uint8Array; mime: string } | null> {
+  const raw = dataUrl.trim();
+  if (!raw.startsWith("data:")) return null;
+  const mimeMatch = raw.match(/^data:([^;,]+)/i);
+  const fallbackMime = mimeMatch?.[1] || "audio/mpeg";
+  try {
+    const res = await fetch(raw);
+    if (!res.ok) return decodeDataUrlSync(raw);
+    const buf = await res.arrayBuffer();
+    if (!buf.byteLength) return null;
+    const headerMime = res.headers.get("content-type")?.split(";")[0]?.trim();
+    return {
+      bytes: new Uint8Array(buf),
+      mime: headerMime || fallbackMime,
+    };
+  } catch {
+    return decodeDataUrlSync(raw);
+  }
+}
+
 /** Upload data:audio vers loop-audio pour lecture HTTP immédiate (prod async jobs). */
 export async function persistInlineJobAudioUrl(
   svc: SupabaseClient,
@@ -392,7 +413,7 @@ export async function persistInlineJobAudioUrl(
 ): Promise<{ audioUrl: string; providerDataUrl?: string }> {
   const raw = audioUrl.trim();
   if (!raw.startsWith("data:")) return { audioUrl: raw };
-  const decoded = decodeDataUrl(raw);
+  const decoded = await decodeDataUrl(raw);
   if (!decoded?.bytes.byteLength) return { audioUrl: raw };
   const ext = decoded.mime.includes("wav") ? "wav" : "mp3";
   const path = `${userId}/job-${jobId}.${ext}`;

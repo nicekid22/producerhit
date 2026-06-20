@@ -23,62 +23,49 @@ import {
   searchSubreddit,
 } from "./lib/redditClient.mjs";
 import {
+  draftSubtleComment,
   mhhCommentVariants,
+  pickAgentDiscussionPost,
   pickEngagementLoop,
   typebeatsPost,
 } from "./lib/redditHumanCopy.mjs";
+import { SCOUT_SUBS, getScoutSubsForRun, scoreRedditThread } from "./lib/redditScout.mjs";
+import { fetchPublicLoops } from "./lib/fetchPublicLoops.mjs";
 
 const SITE = "https://www.producerhit.com";
 const repoRoot = process.cwd();
 const reportsDir = path.join(repoRoot, "reports", "automation");
 const stateFile = path.join(reportsDir, "reddit-agent-state.json");
 
-/** Où poster un beat (lien) — PAS r/makinghiphop (Rule 3). */
-const BEAT_POST_SUBREDDITS = [
-  {
-    name: "Typebeats",
-    label: "r/Typebeats",
-    note: "Sub dédié type beats — préfixe [FREE] ou [Original Beats]",
-  },
-  {
-    name: "MusicInTheMaking",
-    label: "r/MusicInTheMaking",
-    note: "WIP / collab — contexte production requis dans le post",
-  },
-];
+/** Subs commentaires — importe la liste complete (prod, songwriting, AI, DAW). */
+const COMMENT_SUBREDDITS = SCOUT_SUBS.map((s) => ({
+  name: s.name,
+  label: `r/${s.name}`,
+  ruleNote:
+    s.category === "song"
+      ? "Songwriting / voix — mode chanson, pas type beat"
+      : s.category === "beats"
+        ? "Beats — commentaires only si Rule 3"
+        : "Discussion workflow — reponses subtiles",
+  noBeatLinks: s.noBeatLinks,
+}));
 
-/** Où commenter (conseils, outils) — jamais poster un beat en thread principal. */
-const COMMENT_SUBREDDITS = [
-  {
-    name: "makinghiphop",
-    label: "r/makinghiphop",
-    ruleNote: "Rule 3: No singles, beats or music videos — commentaires uniquement",
-    noBeatLinks: true,
-  },
-  { name: "WeAreTheMusicMakers", label: "r/WeAreTheMusicMakers", ruleNote: "Pas de promo solo — feedback weekly threads" },
-  { name: "trapproduction", label: "r/trapproduction", ruleNote: "Préférer threads feedback / questions prod" },
-  { name: "FL_Studio", label: "r/FL_Studio", ruleNote: "Questions workflow FL — pas de lien beat non sollicité" },
-  { name: "edmproduction", label: "r/edmproduction", ruleNote: "Conseils prod — liens outils si on demande" },
-];
-
-const SUBREDDITS = COMMENT_SUBREDDITS.map(({ name, label }) => ({ name, label }));
+const SUBREDDITS = COMMENT_SUBREDDITS;
 
 const SEARCH_QUERIES = [
-  "type beat generator",
+  "make money",
+  "monetize",
+  "ai song",
+  "song mode",
+  "lyrics",
+  "melody",
+  "writer's block",
+  "type beat",
   "ai beat",
-  "suno alternative",
-  "beatstars alternative",
-  "free type beat",
-  "how to make beats faster",
-  "fl studio workflow",
-];
-
-const KEYWORD_SCORES = [
-  { re: /type beat|beatstars|free beat|need beats/i, intent: "type_beat" },
-  { re: /suno|udio|ai music|ai beat|ai song/i, intent: "ai_compare" },
-  { re: /fl studio|ableton|logic pro|workflow|producer/i, intent: "workflow" },
-  { re: /drill|trap|boom bap|lofi|genre/i, intent: "genre" },
-  { re: /stuck|writer.?s block|ideas|motivation/i, intent: "help" },
+  "suno",
+  "workflow",
+  "vocals",
+  "home studio",
 ];
 
 function loadDotEnv() {
@@ -103,12 +90,18 @@ loadDotEnv();
 
 function loadState() {
   if (!existsSync(stateFile)) {
-    return { repliedIds: [], postedDays: [], lastRun: null };
+    return { repliedIds: [], postedDays: [], lastRun: null, scoutBatchIndex: 0 };
   }
   try {
-    return JSON.parse(readFileSync(stateFile, "utf8"));
+    const raw = JSON.parse(readFileSync(stateFile, "utf8"));
+    return {
+      repliedIds: raw.repliedIds ?? [],
+      postedDays: raw.postedDays ?? [],
+      lastRun: raw.lastRun ?? null,
+      scoutBatchIndex: raw.scoutBatchIndex ?? 0,
+    };
   } catch {
-    return { repliedIds: [], postedDays: [], lastRun: null };
+    return { repliedIds: [], postedDays: [], lastRun: null, scoutBatchIndex: 0 };
   }
 }
 
@@ -125,86 +118,17 @@ function utm(pathname, campaign) {
   return u.toString();
 }
 
-async function fetchPublicLoops(limit = 8) {
-  const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-  const key = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
-  if (!url || !key) return [];
-  const endpoint = `${url.replace(/\/$/, "")}/rest/v1/loops?select=id,name,genre,bpm&is_public=eq.true&audio_url=not.is.null&order=created_at.desc&limit=${limit}`;
-  const res = await fetch(endpoint, {
-    headers: { apikey: key, Authorization: `Bearer ${key}` },
-  });
-  if (!res.ok) return [];
-  return (await res.json()).filter((r) => typeof r.id === "string");
-}
 
 function loopUrl(loop) {
   return `${SITE}/loop/${encodeURIComponent(loop.id)}?utm_source=reddit&utm_medium=social&utm_campaign=agent_reply`;
 }
 
 function scorePost(post) {
-  const hay = `${post.title} ${post.selftext}`.toLowerCase();
-  let score = 0;
-  let intent = "generic";
-  for (const { re, intent: i } of KEYWORD_SCORES) {
-    if (re.test(hay)) {
-      score += 3;
-      intent = i;
-    }
-  }
-  if (post.numComments < 40) score += 1;
-  if (post.score >= 0 && post.score < 200) score += 1;
-  if (/promo|buy my|check out my store/i.test(hay)) score -= 2;
-  return { score, intent };
+  return scoreRedditThread(post);
 }
 
-function isNoBeatLinkSub(subreddit) {
-  const sr = (subreddit ?? "").toLowerCase();
-  return COMMENT_SUBREDDITS.some((s) => s.name.toLowerCase() === sr && s.noBeatLinks);
-}
-
-function draftReply(post, loop, intent) {
-  if (isNoBeatLinkSub(post.subreddit)) {
-    return draftCommentNoBeat(post, intent);
-  }
-
-  const beat = loopUrl(loop);
-  const genre = loop.genre ?? "trap";
-
-  const templates = {
-    type_beat: `For type-beat workflow I've been using seed-based generation (same vibe, new variations) instead of scrolling BeatStars for hours.
-
-Example ${genre} loop I made this way: ${beat}
-
-Not saying it's a replacement for real producers — more like a quick sketch pad before you lay drums/mix in your DAW. Happy to share the prompt/settings if useful.`,
-
-    ai_compare: `If you're comparing Suno/Udio vs beatmaker tools: Suno is great for full songs; for **type beats / loops / stems workflow** I use ProducerHit (680+ genres, BPM/key, seed variations).
-
-Side-by-side writeup: ${utm("/suno-alternatives", "agent_compare")}
-
-Demo loop: ${beat}`,
-
-    workflow: `Something that helped my FL workflow: generate a loop with fixed BPM/key, export MP3, chop in Edison / drop into playlist, then replace elements with your own drums & 808.
-
-Free tier is enough to test: ${utm("/type-beat-generator-ai", "agent_workflow")}
-
-Recent ${genre} sketch: ${beat}`,
-
-    genre: `For ${genre} specifically, locking BPM + key before generating saves a lot of time. Here's a public loop you can remix: ${beat}
-
-Community remixes: ${utm("/community", "agent_genre")}`,
-
-    help: `When I'm stuck I generate 3–4 short loops with different seeds (same genre/BPM) and pick one to develop — beats overthinking.
-
-Example: ${beat}
-
-No affiliation, just what worked for me this week.`,
-
-    generic: `Producer tip that helped me: treat AI loops as **reference sketches**, not final beats — re-do drums, mix, and arrangement yourself.
-
-Public ${genre} example: ${beat}`,
-  };
-
-  return templates[intent] ?? templates.generic;
+function draftReply(post, _loop, intent) {
+  return draftSubtleComment({ ...post, intent: intent ?? post.intent });
 }
 
 /** r/makinghiphop etc. — pas de lien beat (Rule 3 + anti-spam). */
@@ -225,25 +149,14 @@ function pickLoopForReddit(loops) {
   return pickEngagementLoop(loops);
 }
 
-function defaultPostSubreddit() {
-  const fromEnv = (process.env.REDDIT_POST_SUBREDDIT ?? "Typebeats").replace(/^r\//i, "");
-  return BEAT_POST_SUBREDDITS.find((s) => s.name.toLowerCase() === fromEnv.toLowerCase()) ?? BEAT_POST_SUBREDDITS[0];
-}
-
 function buildOwnPost(loop) {
-  const human = typebeatsPost(loop);
-  const target = defaultPostSubreddit();
+  const discussion = pickAgentDiscussionPost(loop);
   return {
-    subreddit: target.name,
-    subLabel: target.label,
-    subNote: target.note,
-    title: human.title,
-    url: human.url,
-    selftext: "",
-    body: human.firstComment,
-    firstComment: human.firstComment,
-    timing: human.timing,
-    forbiddenSubs: ["makinghiphop"],
+    ...discussion,
+    url: null,
+    body: discussion.selftext,
+    forbiddenSubs: ["makinghiphop", "Typebeats"],
+    beatPostOptional: typebeatsPost(loop),
   };
 }
 
@@ -264,8 +177,11 @@ async function scoutThreads(state) {
   const hasOAuth = hasRedditCredentials();
 
   if (hasOAuth) {
-    for (const sr of SUBREDDITS.slice(0, 3)) {
-      for (const q of SEARCH_QUERIES.slice(0, 4)) {
+    const subs = getScoutSubsForRun(state.scoutBatchIndex ?? 0, 6);
+    state.scoutBatchIndex = ((state.scoutBatchIndex ?? 0) + 1) % SCOUT_SUBS.length;
+
+    for (const sr of subs) {
+      for (const q of sr.queries.slice(0, 3)) {
         try {
           const posts = await searchSubreddit(sr.name, q, { limit: 8 });
           for (const p of posts) {
@@ -299,9 +215,19 @@ async function scoutThreads(state) {
 }
 
 function manualScoutLinks() {
-  return SUBREDDITS.flatMap((sr) =>
-    SEARCH_QUERIES.slice(0, 4).map((q) => ({
-      subreddit: sr.label,
+  const byCategory = { song: [], beats: [], production: [], ai: [] };
+  for (const sr of SCOUT_SUBS) {
+    const cat = sr.category in byCategory ? sr.category : "production";
+    if (byCategory[cat].length < 6) byCategory[cat].push(sr);
+  }
+  const picked = [...byCategory.ai, ...byCategory.song, ...byCategory.beats, ...byCategory.production].slice(
+    0,
+    12,
+  );
+  return picked.flatMap((sr) =>
+    sr.queries.slice(0, 2).map((q) => ({
+      subreddit: `r/${sr.name}`,
+      category: sr.category,
       query: q,
       url: redditSearchUrl(sr.name, q),
     })),
@@ -358,6 +284,10 @@ Utilise ce sub pour **commenter** (conseils workflow, comparaison Suno, FL tips)
 | r/Typebeats | ✅ [FREE] type beat | ✅ |
 | r/WeAreTheMusicMakers | ❌ sauf feedback thread | ✅ |
 
+## Subs actifs (rotation)
+
+${SCOUT_SUBS.map((s) => `- r/${s.name} (${s.category})`).join("\n")}
+
 ---
 
 ## Mode aujourd'hui
@@ -370,35 +300,46 @@ Utilise ce sub pour **commenter** (conseils workflow, comparaison Suno, FL tips)
 
 ---
 
-## 1. Poster ton beat → ${ownPost.subLabel} (pas mhh)
+## 1. Post discussion → ${ownPost.subLabel}
 
 **${ownPost.subNote}**
 
-**Titre (hook humain):**
+**Titre:**
 \`\`\`
 ${ownPost.title}
 \`\`\`
 
-**URL:** ${ownPost.url}
-
-**Ouvrir compose:** ${redditSubmitUrl({ subreddit: ownPost.subreddit, title: ownPost.title, url: ownPost.url })}
-
-**⚡ Commentaire #1 — poste immédiatement après publish:**
+**Corps (self-post — pas de lien beat):**
 \`\`\`
-${ownPost.firstComment ?? ownPost.body}
+${ownPost.selftext}
+\`\`\`
+
+**Ouvrir compose:** ${redditSubmitUrl({ subreddit: ownPost.subreddit, title: ownPost.title, selftext: ownPost.selftext })}
+
+**Commentaire #1 — apres publish (lien seulement si on demande):**
+\`\`\`
+${ownPost.firstComment ?? "repondre aux questions en commentaire — pas de spam lien"}
 \`\`\`
 
 _${ownPost.timing ?? ""}_
 
-💡 Launch pack complet (SideProject + mhh + X): \`npm run reddit:launch -- --open\`
+_Option manuelle beat (hors auto): r/Typebeats — \`${ownPost.beatPostOptional?.title ?? "voir typebeatsPost"}\`_
+
+💡 Launch pack complet: \`npm run reddit:launch -- --open\`
 
 ---
 
-## 2. r/makinghiphop — commenter seulement (5 min)
+## 2. r/aiMusic + r/makinghiphop — commenter (discussions monétisation, workflow)
 
-Cherche un thread **question** (AI beat, FL workflow, Suno…) : [recherche](${mhhSearch})
+**Exemple thread prioritaire** — [Does anyone actually make money from AI generated...](https://www.reddit.com/r/aiMusic/comments/1u9y2i0/does_anyone_actually_make_money_from_ai_generated/)
 
-Réponses **sans lien beat** (Rule 3) — exemple :
+Reponse **subtile** (copier-coller, pas de lien) :
+
+\`\`\`
+${draftSubtleComment({ intent: "monetization", subreddit: "aiMusic", title: "Does anyone actually make money from ai generated" })}
+\`\`\`
+
+r/makinghiphop — [recherche](${mhhSearch}) — meme ton, pas de beat link :
 
 \`\`\`
 ${draftCommentNoBeat({ subreddit: "makinghiphop" }, "ai_compare")}
@@ -429,25 +370,26 @@ ${reply}
     md += `Pas de threads via API (OAuth absent ou quota). Ouvre ces recherches et réponds **à la main** (max 3–5/jour) :
 
 `;
-    for (const link of manualLinks.slice(0, 8)) {
-      md += `- [${link.subreddit} — "${link.query}"](${link.url})\n`;
+    for (const link of manualLinks.slice(0, 14)) {
+      md += `- [${link.subreddit} · ${link.category} · "${link.query}"](${link.url})\n`;
     }
     md += "\n";
   }
 
   md += `---
 
-## 4. Règles anti-ban Reddit
+## 4. Regles anti-ban Reddit
 
-1. **r/makinghiphop** : jamais de post beat (Rule 3) — commentaires conseil only
-2. **Max 3–5 interactions/jour** sur des subs différents
-3. Ratio ~90 % participation / 10 % promo
-4. Beats → r/Typebeats ; outils/blog → commentaires si pertinent
-5. Upvote des posts sans lien (karma)
+1. **Posts auto** = discussion / questions — jamais [FREE] beat en cron
+2. **r/makinghiphop** : jamais de post beat (Rule 3) — commentaires conseil only
+3. **Max 3–5 interactions/jour** sur des subs differents
+4. Ratio ~90 % participation / 10 % promo
+5. r/Typebeats beat → **manuel uniquement** si tu veux du trafic producer
+6. Upvote des posts sans lien (karma)
 
 ---
 
-## 5. Beats publics (pour r/Typebeats)
+## 5. Beats publics (option manuelle r/Typebeats seulement)
 
 ${loops
   .slice(0, 6)
@@ -489,16 +431,18 @@ async function main() {
   const ownPost = buildOwnPost(redditLoop ?? { id: "demo", name: "Type Beat", genre: "Trap" });
 
   if (modePost && subArg) {
-    const forbidden = ["makinghiphop"];
+    const forbidden = ["makinghiphop", "typebeats"];
     if (forbidden.includes(subArg.toLowerCase())) {
-      console.error(`❌ r/${subArg} interdit les posts beat (Rule 3). Utilise : r/Typebeats`);
-      console.error(`   npm run reddit:agent -- post r/Typebeats`);
+      console.error(`❌ r/${subArg} : pas de post beat auto. Utilise une discussion :`);
+      console.error(`   npm run reddit:agent -- post r/SideProject`);
+      console.error(`   npm run reddit:agent -- post r/aiMusic`);
       process.exit(1);
     }
+    const post = pickAgentDiscussionPost(redditLoop ?? { id: "demo", name: "Type Beat", genre: "Trap" }, subArg);
     const url = redditSubmitUrl({
-      subreddit: subArg,
-      title: ownPost.title,
-      url: ownPost.url,
+      subreddit: post.subreddit,
+      title: post.title,
+      selftext: post.selftext,
     });
     console.log(url);
     if (shouldOpen) openUrls([url]);
@@ -530,12 +474,12 @@ async function main() {
 
   if (shouldOpen) {
     const urls = [
-      redditSubmitUrl({ subreddit: ownPost.subreddit, title: ownPost.title, url: ownPost.url }),
+      redditSubmitUrl({ subreddit: ownPost.subreddit, title: ownPost.title, selftext: ownPost.selftext }),
       redditSearchUrl("makinghiphop", "ai beat generator"),
     ];
     if (opportunities[0]?.permalink) urls.push(opportunities[0].permalink);
     openUrls(urls);
-    console.log(`→ Post beat: ${ownPost.subLabel} · Commentaires: r/makinghiphop (pas de post beat)`);
+    console.log(`→ Post discussion: ${ownPost.subLabel} · Commentaires: r/makinghiphop (pas de beat)`);
   }
 }
 

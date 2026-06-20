@@ -93,6 +93,58 @@ async function grantCreditPackCredits(
   if (error) throw error;
 }
 
+async function logBillingRevenueEvent(
+  supabase: ReturnType<typeof createClient>,
+  opts: {
+    stripeEventId: string;
+    userId?: string | null;
+    stripeSubscriptionId?: string | null;
+    stripeInvoiceId?: string | null;
+    eventType: string;
+    plan?: string | null;
+    amountCents?: number | null;
+    currency?: string;
+    status?: string | null;
+    metadata?: Record<string, unknown>;
+  },
+): Promise<void> {
+  const {
+    stripeEventId,
+    userId,
+    stripeSubscriptionId,
+    stripeInvoiceId,
+    eventType,
+    plan,
+    amountCents,
+    currency,
+    status,
+    metadata,
+  } = opts;
+  if (!stripeEventId || !eventType) return;
+
+  const { error } = await supabase.from("billing_revenue_events").upsert(
+    {
+      stripe_event_id: stripeEventId,
+      user_id: userId || null,
+      stripe_subscription_id: stripeSubscriptionId || null,
+      stripe_invoice_id: stripeInvoiceId || null,
+      event_type: eventType,
+      plan: plan || null,
+      amount_cents: typeof amountCents === "number" ? amountCents : null,
+      currency: currency || "usd",
+      status: status || null,
+      metadata: metadata ?? {},
+    },
+    { onConflict: "stripe_event_id", ignoreDuplicates: true },
+  );
+  if (error) console.error("billing_revenue_events insert:", error.message);
+}
+
+function priceAmountCents(price: Record<string, unknown> | null): number | null {
+  const unit = price?.unit_amount;
+  return typeof unit === "number" ? unit : null;
+}
+
 async function applyLaunchOfferBonuses(
   supabase: ReturnType<typeof createClient>,
   opts: {
@@ -238,6 +290,15 @@ serve(async (req) => {
             packId: creditPack,
             credits,
           });
+          await logBillingRevenueEvent(supabase, {
+            stripeEventId: `${stripeEventId}:credit_pack`,
+            userId,
+            eventType: "credit_pack_purchased",
+            amountCents: Number.parseInt(asString(dataObj.amount_total), 10) || null,
+            currency: asString(dataObj.currency) || "usd",
+            status: "paid",
+            metadata: { credit_pack: creditPack, credits },
+          });
         }
         return new Response("ok");
       }
@@ -285,6 +346,17 @@ serve(async (req) => {
           hadSubscription,
           metadata,
         });
+        await logBillingRevenueEvent(supabase, {
+          stripeEventId: `${stripeEventId}:subscription_activated`,
+          userId,
+          stripeSubscriptionId: subscriptionId,
+          eventType: "subscription_activated",
+          plan,
+          amountCents: priceAmountCents(price),
+          currency: asString(price?.currency) || "usd",
+          status: "active",
+          metadata: { checkout_mode: mode },
+        });
       }
 
       return new Response("ok");
@@ -325,6 +397,21 @@ serve(async (req) => {
         })
         .eq("id", userId);
       if (subscriptionUpdateError) throw subscriptionUpdateError;
+
+      if (stripeEventId) {
+        const canceled = type === "customer.subscription.deleted" || !active;
+        await logBillingRevenueEvent(supabase, {
+          stripeEventId: `${stripeEventId}:${canceled ? "canceled" : "updated"}`,
+          userId,
+          stripeSubscriptionId: subscriptionId,
+          eventType: canceled ? "subscription_canceled" : "subscription_updated",
+          plan: active ? plan : prevPlan,
+          amountCents: priceAmountCents(price),
+          currency: asString(price?.currency) || "usd",
+          status,
+          metadata: { stripe_type: type },
+        });
+      }
 
       return new Response("ok");
     }

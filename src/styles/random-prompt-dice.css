@@ -10,7 +10,7 @@
   }
   45% {
     transform: rotate(180deg) scale(1.06);
-    filter: drop-shadow(0 0 10px color-mix(in srgb, var(--pk-accent, #7c3aed) 55%, transparent));
+    filter: drop-shadow(0 0 10px color-mix(in srgb, var(--dice-accent-a, var(--pk-accent, #7c3aed)) 55%, transparent));
   }
   70% {
     transform: rotate(288deg) scale(1.14);
@@ -34,40 +34,110 @@
   }
 }
 
+@keyframes pkDiceInvite {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow:
+      0 1px 0 color-mix(in srgb, #fff 14%, transparent) inset,
+      0 0 0 1px color-mix(in srgb, var(--dice-accent-a, var(--pk-accent, #7c3aed)) 14%, transparent),
+      0 0 0 color-mix(in srgb, var(--dice-accent-a, var(--pk-accent, #7c3aed)) 0%, transparent);
+  }
+  50% {
+    transform: scale(1.045);
+    box-shadow:
+      0 1px 0 color-mix(in srgb, #fff 18%, transparent) inset,
+      0 0 0 1px color-mix(in srgb, var(--dice-accent-a, var(--pk-accent, #7c3aed)) 28%, transparent),
+      0 0 14px color-mix(in srgb, var(--dice-accent-b, var(--dice-accent-a, var(--pk-accent, #7c3aed))) 38%, transparent);
+  }
+}
+
+@keyframes pkDiceInviteLanding {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.16) inset,
+      0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    transform: scale(1.045);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.22) inset,
+      0 0 0 1px rgba(255, 255, 255, 0.2),
+      0 0 16px rgba(255, 255, 255, 0.24);
+  }
+}
+
 .pk-random-prompt-dice {
+  --dice-accent-a: var(--pk-accent, #9d7cff);
+  --dice-accent-b: color-mix(in srgb, var(--dice-accent-a) 52%, #67c3ff);
+  --pk-prompt-tool-size: 2.5rem;
+  position: relative;
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  width: var(--pk-prompt-tool-size);
+  height: var(--pk-prompt-tool-size);
   border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.78);
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  border: 1px solid color-mix(in srgb, var(--dice-accent-a) 38%, rgba(255, 255, 255, 0.14));
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--dice-accent-a) 34%, rgba(255, 255, 255, 0.1)) 0%,
+    color-mix(in srgb, var(--dice-accent-b) 24%, rgba(255, 255, 255, 0.04)) 100%
+  );
+  color: color-mix(in srgb, var(--dice-accent-a) 72%, #fff);
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    border-color 220ms ease,
+    background 220ms ease,
+    color 220ms ease,
+    box-shadow 220ms ease;
+  animation: pkDiceInvite 3.4s ease-in-out infinite;
 }
 
 .pk-random-prompt-dice__icon {
-  width: 1rem;
-  height: 1rem;
+  width: 1.05rem;
+  height: 1.05rem;
 }
 
 .pk-random-prompt-dice:hover:not(:disabled) {
-  border-color: color-mix(in srgb, var(--pk-accent, #7c3aed) 40%, transparent);
-  background: color-mix(in srgb, var(--pk-accent, #7c3aed) 14%, rgba(255, 255, 255, 0.05));
+  animation: none;
+  transform: scale(1.06);
+  border-color: color-mix(in srgb, var(--dice-accent-a) 55%, rgba(255, 255, 255, 0.2));
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--dice-accent-a) 48%, rgba(255, 255, 255, 0.12)) 0%,
+    color-mix(in srgb, var(--dice-accent-b) 36%, rgba(255, 255, 255, 0.06)) 100%
+  );
   color: #fff;
+  box-shadow:
+    0 1px 0 color-mix(in srgb, #fff 16%, transparent) inset,
+    0 0 18px color-mix(in srgb, var(--dice-accent-a) 32%, transparent);
+}
+
+.pk-random-prompt-dice:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--dice-accent-a) 45%, transparent),
+    0 0 16px color-mix(in srgb, var(--dice-accent-a) 28%, transparent);
 }
 
 .pk-random-prompt-dice--rolling {
   pointer-events: none;
-  border-color: color-mix(in srgb, var(--pk-accent, #7c3aed) 55%, rgba(255, 255, 255, 0.2));
-  background: color-mix(in srgb, var(--pk-accent, #7c3aed) 22%, rgba(255, 255, 255, 0.06));
-  color: color-mix(in srgb, var(--pk-accent, #7c3aed) 85%, #fff);
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--pk-accent, #7c3aed) 28%, transparent),
-    0 0 16px color-mix(in srgb, var(--pk-accent, #7c3aed) 35%, transparent);
   animation: pkDiceRoll 0.58s cubic-bezier(0.34, 1.35, 0.64, 1) both;
+  border-color: color-mix(in srgb, var(--dice-accent-a) 58%, rgba(255, 255, 255, 0.2));
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--dice-accent-a) 42%, rgba(255, 255, 255, 0.1)) 0%,
+    color-mix(in srgb, var(--dice-accent-b) 30%, rgba(255, 255, 255, 0.05)) 100%
+  );
+  color: #fff;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--dice-accent-a) 32%, transparent),
+    0 0 16px color-mix(in srgb, var(--dice-accent-a) 38%, transparent);
 }
 
 .pk-random-prompt-dice--rolling .pk-random-prompt-dice__icon {
@@ -75,56 +145,131 @@
 }
 
 .pk-random-prompt-dice--landing {
-  border-color: rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.8);
+  --dice-glow-a: var(--prism-cyan, #67c3ff);
+  --dice-glow-b: var(--prism-violet, #9d7cff);
+  --pk-prompt-tool-size: 2.65rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.06) 100%);
+  color: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: pkDiceInviteLanding 3.4s ease-in-out infinite;
 }
 
-.pk-landing-gen__prompt-head {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  min-height: 2rem;
-  margin-bottom: 0.15rem;
+.pk-random-prompt-dice--landing .pk-random-prompt-dice__icon {
+  width: 1.12rem;
+  height: 1.12rem;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.28));
 }
 
-html.pk-warm-glass-active .pk-random-prompt-dice {
-  border-color: rgba(255, 160, 80, 0.22) !important;
-  color: rgba(255, 220, 180, 0.88) !important;
+.pk-random-prompt-dice--landing:hover:not(:disabled) {
+  animation: none;
+  border-color: rgba(255, 255, 255, 0.42);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0.1) 100%);
+  color: #fff;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.24) inset,
+    0 0 20px color-mix(in srgb, var(--dice-glow-a) 22%, rgba(255, 255, 255, 0.15));
 }
 
-html.pk-warm-glass-active .pk-random-prompt-dice:hover:not(:disabled) {
-  background: rgba(255, 120, 60, 0.16) !important;
+.pk-random-prompt-dice--landing:focus-visible {
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.35),
+    0 0 16px rgba(255, 255, 255, 0.18);
+}
+
+.pk-random-prompt-dice--landing.pk-random-prompt-dice--rolling {
+  border-color: rgba(255, 255, 255, 0.45);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.12) 100%);
+  color: #fff;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.22),
+    0 0 18px color-mix(in srgb, var(--dice-glow-a) 28%, rgba(255, 255, 255, 0.2));
+}
+
+/* Warm glass — dashboard dice only (landing garde le blanc) */
+html.pk-warm-glass-active .pk-random-prompt-dice:not(.pk-random-prompt-dice--landing) {
+  --dice-accent-a: var(--warm-accent-honey, #f0c848);
+  --dice-accent-b: #ff9a5c;
+  border-color: color-mix(in srgb, var(--dice-accent-a) 42%, rgba(255, 255, 255, 0.12)) !important;
+  color: color-mix(in srgb, #ffb380 78%, rgba(255, 255, 255, 0.92)) !important;
+}
+
+html.pk-warm-glass-active .pk-random-prompt-dice:not(.pk-random-prompt-dice--landing):hover:not(:disabled) {
   color: #fff !important;
 }
 
-html.pk-warm-glass-active .pk-random-prompt-dice--rolling {
-  border-color: rgba(255, 180, 90, 0.55) !important;
-  background: rgba(255, 120, 60, 0.22) !important;
+html.pk-warm-glass-active .pk-random-prompt-dice:not(.pk-random-prompt-dice--landing).pk-random-prompt-dice--rolling {
   color: var(--warm-accent-honey, #f0c848) !important;
-  box-shadow:
-    0 0 0 1px rgba(255, 160, 80, 0.35),
-    0 0 18px rgba(255, 140, 80, 0.35);
 }
 
-html.pk-cloud-active .pk-random-prompt-dice,
-.pk-cloud-stage .pk-random-prompt-dice {
-  border-color: var(--cloud-field-border, rgba(255, 255, 255, 0.35)) !important;
-  background: color-mix(in srgb, var(--cloud-field-bg) 70%, transparent) !important;
-  color: var(--cloud-text, rgba(32, 28, 40, 0.82)) !important;
+html.pk-warm-glass-active .pk-random-prompt-dice--landing {
+  border-color: rgba(255, 235, 210, 0.3) !important;
+  background: linear-gradient(
+    145deg,
+    rgba(255, 252, 245, 0.16) 0%,
+    rgba(255, 255, 255, 0.07) 100%
+  ) !important;
+  color: rgba(255, 252, 245, 0.96) !important;
 }
 
-html.pk-cloud-active .pk-random-prompt-dice--rolling,
-.pk-cloud-stage .pk-random-prompt-dice--rolling {
-  border-color: color-mix(in srgb, var(--cloud-accent) 50%, transparent) !important;
-  background: color-mix(in srgb, var(--cloud-accent) 18%, transparent) !important;
+html.pk-warm-glass-active .pk-random-prompt-dice--landing:hover:not(:disabled),
+html.pk-warm-glass-active .pk-random-prompt-dice--landing.pk-random-prompt-dice--rolling {
+  color: #fff !important;
+}
+
+/* Cloud — dashboard dice only (landing garde le blanc) */
+html.pk-cloud-active .pk-random-prompt-dice:not(.pk-random-prompt-dice--landing),
+.pk-cloud-stage .pk-random-prompt-dice:not(.pk-random-prompt-dice--landing) {
+  --dice-accent-a: var(--cloud-accent, #6b9fff);
+  --dice-accent-b: color-mix(in srgb, var(--cloud-accent) 45%, #b8ffe6);
+  border-color: color-mix(in srgb, var(--cloud-accent) 36%, var(--cloud-field-border, rgba(255, 255, 255, 0.35))) !important;
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--cloud-accent) 22%, var(--cloud-field-bg, rgba(255, 255, 255, 0.55))) 0%,
+    color-mix(in srgb, var(--cloud-accent) 10%, transparent) 100%
+  ) !important;
+  color: color-mix(in srgb, var(--cloud-accent) 78%, var(--cloud-text, #2d3a2d)) !important;
+}
+
+html.pk-cloud-active .pk-random-prompt-dice:not(.pk-random-prompt-dice--landing).pk-random-prompt-dice--rolling,
+.pk-cloud-stage .pk-random-prompt-dice:not(.pk-random-prompt-dice--landing).pk-random-prompt-dice--rolling {
   color: var(--cloud-accent) !important;
   box-shadow:
     0 0 0 1px color-mix(in srgb, var(--cloud-accent) 30%, transparent),
     0 0 16px var(--cloud-accent-glow, rgba(100, 180, 255, 0.35));
 }
 
+html.pk-cloud-active .pk-random-prompt-dice--landing,
+.pk-cloud-stage .pk-random-prompt-dice--landing {
+  border-color: rgba(255, 255, 255, 0.32) !important;
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.2) 0%,
+    rgba(255, 255, 255, 0.08) 100%
+  ) !important;
+  color: rgba(255, 255, 255, 0.96) !important;
+}
+
+html.pk-cloud-active .pk-random-prompt-dice--landing:hover:not(:disabled),
+html.pk-cloud-active .pk-random-prompt-dice--landing.pk-random-prompt-dice--rolling,
+.pk-cloud-stage .pk-random-prompt-dice--landing:hover:not(:disabled),
+.pk-cloud-stage .pk-random-prompt-dice--landing.pk-random-prompt-dice--rolling {
+  color: #fff !important;
+}
+
+/* Landing — dé empilé au-dessus du micro, même colonne */
+.pk-landing-gen__prompt-zone .pk-speech-field__side-tools {
+  gap: 0.5rem;
+  padding-bottom: 0.1rem;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .pk-random-prompt-dice,
+  .pk-random-prompt-dice--landing {
+    animation: none !important;
+  }
+
   .pk-random-prompt-dice--rolling,
   .pk-random-prompt-dice--rolling .pk-random-prompt-dice__icon {
     animation: none !important;

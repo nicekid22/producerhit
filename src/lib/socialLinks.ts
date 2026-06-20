@@ -18,8 +18,8 @@ export const PRODUCERHIT_SOCIALS: SocialProfile[] = [
   },
   {
     platform: "tiktok",
-    handle: "@producerhit",
-    href: "https://www.tiktok.com/@producerhit",
+    handle: "@producerhit.com",
+    href: "https://www.tiktok.com/@producerhit.com",
     labelEn: "TikTok",
     labelFr: "TikTok",
   },

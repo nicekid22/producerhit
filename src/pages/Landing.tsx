@@ -59,7 +59,7 @@ import { useVisualThemeStore, isCloudTheme, isWarmGlassTheme } from "@/stores/vi
 import { useCloudAccentStore } from "@/stores/cloudAccentStore";
 import { landingCopy, landingFlowSectionClass, landingSectionClass } from "@/lib/landingContent";
 import { landingHeroDreamCopy } from "@/lib/landingHeroDreamCopy";
-import { getHeroPromptPool, getRandomPromptPool } from "@/lib/randomPromptIdeas";
+import { getLandingDisplayPromptPool } from "@/lib/randomPromptIdeas";
 import { resolveRandomPromptLocale } from "@/lib/resolveRandomPromptLocale";
 import { croLandingFaqs } from "@/lib/croTrustCopy";
 import { ConversionTrustBar } from "@/components/marketing/ConversionTrustBar";
@@ -221,6 +221,7 @@ export default function Landing() {
 
   const [mode, setMode] = useState<CreateMode>("song");
   const [prompt, setPrompt] = useState("");
+  const acePromptOverrideRef = useRef<string | null>(null);
   const [focused, setFocused] = useState(false);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
@@ -303,13 +304,7 @@ export default function Landing() {
 
   const placeholders = useMemo(() => {
     const promptLocale = resolveRandomPromptLocale({ surface: "landing", uiLocale: locale });
-    const pool =
-      mode === "beat" ? getRandomPromptPool(promptLocale, "beat") : getHeroPromptPool(promptLocale);
-    const picked = pool.slice(0, 4);
-    if (picked.length > 0) return [...picked];
-    return mode === "beat"
-      ? ["Melodic trap, sliding 808, crisp hi-hats, minor piano, airy pads"]
-      : ["A pop song about starting over…"];
+    return [...getLandingDisplayPromptPool(promptLocale, mode)];
   }, [locale, mode]);
 
   const [generatorSideCards, setGeneratorSideCards] = useState<GeneratorSideCard[]>([]);
@@ -498,7 +493,12 @@ export default function Landing() {
       return;
     }
 
-    saveLandingPendingGeneration({ prompt: promptValue, mode, genreStrategy: "from_idea" });
+    saveLandingPendingGeneration({
+      prompt: promptValue,
+      mode,
+      genreStrategy: "from_idea",
+      acePrompt: acePromptOverrideRef.current ?? undefined,
+    });
     const dashboardNext = `/dashboard?prompt=${encodeURIComponent(promptValue)}&mode=${mode}`;
     if (!user) {
       trackClientEvent("landing_generate_click", { mode, auth_required: true });
@@ -1300,7 +1300,13 @@ export default function Landing() {
               mode={mode}
               setMode={setMode}
               prompt={prompt}
-              setPrompt={setPrompt}
+              setPrompt={(v) => {
+                acePromptOverrideRef.current = null;
+                setPrompt(v);
+              }}
+              onPickAce={(ace) => {
+                acePromptOverrideRef.current = ace;
+              }}
               placeholders={placeholders}
               placeholderIndex={placeholderIndex}
               inputRef={inputRef}

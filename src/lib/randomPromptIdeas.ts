@@ -4,7 +4,7 @@ import type { AppLocale } from "@/i18n/config";
 import { CATEGORIZED_EN, CATEGORIZED_FR } from "@/lib/randomPromptIdeas/categories";
 import type { CategorizedLocalePools, PromptCategory, PromptCategoryId } from "@/lib/randomPromptIdeas/categories";
 import { pickFromCategory } from "@/lib/randomPromptIdeas/categories";
-import { pickRandomGenreMenuDice } from "@/lib/randomPromptIdeas/genreMenuPrompts";
+import { getGenreDiceDisplayPromptPool, pickRandomGenreMenuDice } from "@/lib/randomPromptIdeas/genreMenuPrompts";
 import { POOLS_EN } from "@/lib/randomPromptIdeas/localePools/en";
 import { POOLS_FR } from "@/lib/randomPromptIdeas/localePools/fr";
 import { resolvePromptPools } from "@/lib/randomPromptIdeas/localePools";
@@ -14,8 +14,13 @@ export type { PromptCategory, PromptCategoryId, CategorizedLocalePools };
 export type PromptMode = "beat" | "song";
 
 export type GenreMenuDicePick = {
-  prompt: string;
+  /** Phrase simple affichée dans le champ idée. */
+  displayPrompt: string;
+  /** Prompt ACE complet envoyé à l'API à la génération. */
+  acePrompt: string;
   genre: string;
+  /** @deprecated Utiliser displayPrompt */
+  prompt: string;
 };
 
 /**
@@ -32,12 +37,56 @@ export type GenreMenuDicePick = {
  * Genre-menu dice prompts are longer (testing / catalog coverage).
  */
 
-/** Hero landing typewriter — phrases courtes lisibles (marketing), pas le format dice ACE. */
+/** Hero landing typewriter — phrases courtes lisibles (alignées sur le dé). */
 export const LANDING_HERO_PROMPTS_EN = POOLS_EN.hero;
 export const LANDING_HERO_PROMPTS_FR = POOLS_FR.hero;
 
+const LANDING_DISPLAY_FALLBACK_EN: Record<PromptMode, readonly string[]> = {
+  song: [
+    "A pop song about starting over",
+    "An R&B song about a heartbreak night",
+    "A melodic trap song about a rainy late-night drive",
+    "An afrobeats song about a festival sunset",
+  ],
+  beat: [
+    "A melodic trap beat about a rainy late-night drive",
+    "An R&B beat about a heartbreak night",
+    "A drill beat about street confidence",
+    "A house beat about a summer terrace",
+  ],
+};
+
+const LANDING_DISPLAY_FALLBACK_FR: Record<PromptMode, readonly string[]> = {
+  song: [
+    "Une chanson pop sur un nouveau départ",
+    "Une chanson R&B sur un cœur brisé nocturne",
+    "Une chanson melodic trap sur une nuit pluvieuse",
+    "Une chanson afrobeats sur un sunset en festival",
+  ],
+  beat: [
+    "Un beat trap sur une nuit pluvieuse",
+    "Un beat R&B sur un cœur brisé nocturne",
+    "Un beat drill sur la confiance en rue",
+    "Un beat house sur une vibe terrace d'été",
+  ],
+};
+
+function landingDisplayFallback(locale: AppLocale, mode: PromptMode): readonly string[] {
+  if (locale === "fr") return LANDING_DISPLAY_FALLBACK_FR[mode];
+  return LANDING_DISPLAY_FALLBACK_EN[mode];
+}
+
+/** Placeholders landing + hero — phrases simples (pas tags ACE). */
+export function getLandingDisplayPromptPool(locale: AppLocale, mode: PromptMode): readonly string[] {
+  const fromDice = getGenreDiceDisplayPromptPool(mode, locale);
+  if (fromDice.length >= 8) return fromDice;
+  const hero = resolvePromptPools(locale).hero;
+  if (mode === "song" && hero.length > 0) return hero;
+  return landingDisplayFallback(locale, mode);
+}
+
 export function getHeroPromptPool(locale: AppLocale): readonly string[] {
-  return resolvePromptPools(locale).hero;
+  return getLandingDisplayPromptPool(locale, "song");
 }
 
 export function getRandomPromptPool(locale: AppLocale, mode: PromptMode): readonly string[] {
@@ -86,13 +135,14 @@ export function formatDicePrompt(raw: string, mode: PromptMode): string {
 }
 
 export function pickRandomPrompt(locale: AppLocale, mode: PromptMode): string {
-  return pickRandomGenreMenuDiceRoll(locale, mode).prompt;
+  return pickRandomGenreMenuDiceRoll(locale, mode).displayPrompt;
 }
 
-/** Dice roll from full genre catalog — sets matching genre + detailed ACE prompt. */
+/** Dice roll from full genre catalog — sets matching genre + display + ACE prompt. */
 export function pickRandomGenreMenuDiceRoll(locale: AppLocale, mode: PromptMode): GenreMenuDicePick {
-  const { genre, prompt } = pickRandomGenreMenuDice(mode, locale);
-  return { genre, prompt: formatDicePrompt(prompt, mode) };
+  const { genre, acePrompt, displayPrompt } = pickRandomGenreMenuDice(mode, locale);
+  const ace = formatDicePrompt(acePrompt, mode);
+  return { genre, displayPrompt, acePrompt: ace, prompt: displayPrompt };
 }
 
 export function pickNextHeroPromptIndex(pool: readonly string[], current: number): number {

@@ -108,7 +108,7 @@ export function LandingSocialFeed({ locale }: Props) {
             className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white/80 transition-colors hover:border-cyan-400/30 hover:text-white"
           >
             <TikTokIcon className="h-4 w-4" />
-            @producerhit
+            @producerhit.com
           </a>
         </div>
       </div>

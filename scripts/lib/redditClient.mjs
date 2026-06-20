@@ -146,6 +146,38 @@ export async function submitLink(subreddit, title, url, env = process.env) {
   return { url: post };
 }
 
+export async function submitSelf(subreddit, title, selftext, env = process.env) {
+  const sr = subreddit.replace(/^r\//i, "");
+  const body = new URLSearchParams({
+    api_type: "json",
+    kind: "self",
+    sr,
+    title: title.slice(0, 300),
+    text: selftext,
+    resubmit: "true",
+  });
+  const json = await redditApi("/api/submit", { method: "POST", body: body.toString(), env });
+  const errors = json.json?.errors;
+  if (errors?.length) {
+    const err = new Error("reddit_submit_rejected");
+    err.errors = errors;
+    throw err;
+  }
+  return { url: json.json?.data?.url };
+}
+
+/** Trouve un megathread récent (self-promo) pour y commenter. */
+export async function findMegathread(subreddit, env = process.env) {
+  const queries = ["megathread self promotion", "self promo megathread", "weekly promotion"];
+  for (const q of queries) {
+    const posts = await searchSubreddit(subreddit, q, { sort: "new", limit: 5, env });
+    const hit = posts.find((p) => /mega|self.?promo|promotion|share your/i.test(p.title));
+    if (hit) return hit;
+  }
+  const recent = await listSubredditNew(subreddit, { limit: 25, env });
+  return recent.find((p) => /mega|self.?promo|promotion/i.test(p.title)) ?? null;
+}
+
 export function redditSubmitUrl({ subreddit, title, url, selftext }) {
   const u = new URL("https://www.reddit.com/submit");
   if (subreddit) u.searchParams.set("sr", subreddit.replace(/^r\//i, ""));

@@ -23,6 +23,27 @@ export default async function handler(
     status: (code: number) => { send: (body: string) => void };
   },
 ) {
+  try {
+    return await handleTikTokOAuthCallback(req, res);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return res.status(500).send(
+      oauthPage(
+        "TikTok OAuth — erreur serveur",
+        `<h1>Erreur callback</h1><p><code>${escapeHtml(msg)}</code></p>
+<p>Vérifie les logs Vercel et <code>npm run vercel:sync-tiktok-env</code>.</p>`,
+      ),
+    );
+  }
+}
+
+async function handleTikTokOAuthCallback(
+  req: { query?: Record<string, string | string[] | undefined>; method?: string },
+  res: {
+    setHeader: (key: string, value: string) => void;
+    status: (code: number) => { send: (body: string) => void };
+  },
+) {
   res.setHeader("Cache-Control", "no-store");
   res.setHeader("X-Frame-Options", "DENY");
   res.setHeader("X-Content-Type-Options", "nosniff");
@@ -43,7 +64,7 @@ export default async function handler(
   if (error) {
     const hint =
       error === "access_denied"
-        ? "<p>Ajoute le compte TikTok en target user Sandbox + autorise Login Kit.</p>"
+        ? "<p>Ajoute <strong>@producerhit.com</strong> en target user Sandbox (https://www.tiktok.com/@producerhit.com) + autorise Login Kit.</p>"
         : "<p>Redirect URI Login Kit doit matcher exactement (toggle SANDBOX, pas Production). Voir login-kit-web doc.</p>";
     return res.status(400).send(
       oauthPage(

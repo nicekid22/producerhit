@@ -13,6 +13,8 @@
 |----------|-----|--------|--------|
 | `VITE_ACE_ASYNC_JOBS` | Client | `0` (mettre `1` après deploy SQL+Edge) | Jobs async + Realtime |
 | `VITE_ACE_JOB_POLL_MS` | Client | `3000` | Intervalle poll |
+| `VITE_ACE_JOB_TIMEOUT_MS` | Client | *(off)* | Plafond attente job — défaut **aucun** (comme local) |
+| `VITE_ACE_POLL_TIMEOUT_MS` | Client | *(off)* | Plafond poll ACE navigateur — défaut **aucun** |
 | `ACE_ASYNC_JOBS` | Edge secret | `1` | `start_job` / `poll_job` |
 | `ACE_ASYNC_TRY_RELEASE_TASK` | Edge | `1` | `release_task` + poll (pas de mur 150s visible) |
 | `ACE_INTERNAL_JOB_SECRET` | Edge | *(requis)* | Sécurise `run_job` |

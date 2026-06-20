@@ -6,7 +6,7 @@ import { buildAceCaption, buildRichPrompt, buildSonautoTags, type GenerateParams
 import { appendAceQualityToParamObj, ACE_RELEASE_MODEL, ACE_QUALITY_DEFAULTS, isAceReleaseTaskEnabled, resolveAceQualityFlags } from "@/lib/aceQuality";
 import { parseAceChatCompletionsResponse, parseAllAceChatCompletionsAudios } from "@/lib/aceChatCompletions";
 import type { AceDualBatchResponse } from "@/lib/aceDualBatch";
-import { computeAceRequestedDurationSec } from "@/lib/aceDuration";
+import { computeAceRequestedDurationSec, acePollTimeoutMs } from "@/lib/aceDuration";
 import { resolveAceAudioUrl } from "@/lib/publicLoops";
 
 export type AceMeta = {
@@ -569,10 +569,11 @@ async function generateLoopAceDirect(
   if (!taskId) throw new Error("ACE API did not return a task_id");
 
   const startedAt = Date.now();
-  const timeoutMs = 150_000;
+  const pollTimeoutMs = acePollTimeoutMs({ instrumental, isSong, lyrics: effectiveLyrics });
   let audioUrl = "";
   let meta: AceMeta | null = null;
-  while (Date.now() - startedAt < timeoutMs) {
+  for (;;) {
+    if (pollTimeoutMs != null && Date.now() - startedAt >= pollTimeoutMs) break;
     const pollParams = new URLSearchParams();
     pollParams.append("ai_token", aceApiKey);
     pollParams.append("task_id_list", JSON.stringify([taskId]));

@@ -12,6 +12,8 @@ type Props = {
   promptLocale?: AppLocale;
   mode: PromptMode;
   onPick: (prompt: string) => void;
+  /** Prompt ACE technique — utilisé à la génération, invisible pour l'utilisateur. */
+  onPickAce?: (acePrompt: string) => void;
   /** When set, dice also selects the matching catalog genre (genre-menu prompts). */
   onPickGenre?: (genre: string) => void;
   className?: string;
@@ -23,6 +25,7 @@ export function RandomPromptDiceButton({
   promptLocale,
   mode,
   onPick,
+  onPickAce,
   onPickGenre,
   className,
   variant = "dashboard",
@@ -34,8 +37,9 @@ export function RandomPromptDiceButton({
   const roll = () => {
     if (rolling) return;
     setRolling(true);
-    const { prompt, genre } = pickRandomGenreMenuDiceRoll(diceLocale, mode);
-    onPick(prompt);
+    const { displayPrompt, acePrompt, genre } = pickRandomGenreMenuDiceRoll(diceLocale, mode);
+    onPick(displayPrompt);
+    onPickAce?.(acePrompt);
     onPickGenre?.(genre);
     window.setTimeout(() => setRolling(false), 580);
   };

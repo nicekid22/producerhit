@@ -9,9 +9,10 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { redditSearchUrl, redditSubmitUrl } from "./lib/redditClient.mjs";
 import {
+  aiMusicPosts,
+  alphaBetaPost,
   launchPlaybook,
   mhhCommentVariants,
-  musicInMakingPost,
   pickEngagementLoop,
   sideProjectPost,
   trapProductionComment,
@@ -67,9 +68,10 @@ function openUrls(urls) {
 }
 
 function buildReport(loop, playbook) {
+  const aim = aiMusicPosts(loop);
+  const ab = alphaBetaPost(loop);
   const tb = typebeatsPost(loop);
   const sp = sideProjectPost(loop);
-  const mim = musicInMakingPost(loop);
   const mhh = mhhCommentVariants();
   const trap = trapProductionComment(loop);
   const x = twitterHotTake(loop);
@@ -78,7 +80,7 @@ function buildReport(loop, playbook) {
 
   let md = `# 🚀 Reddit launch — ${today} ${time}
 
-> Posts rédigés style **humain** — hooks, questions, pas de copy marketing.
+> Posts **fondateur perso** — priorité r/aiMusic + early adopters.
 > ${playbook.window} (≈ ${playbook.estHour}h EST)
 
 ## Ordre d'exécution (prochaines 2h)
@@ -87,64 +89,78 @@ ${playbook.order.map((s) => `- ${s}`).join("\n")}
 
 ---
 
-## POST #1 — r/Typebeats ⭐ (fais celui-ci en premier)
+## POST #1 — r/aiMusic ⭐ (discussion feed — SANS lien)
 
-**Titre (copier exact):**
+_${aim.rulesNote}_
+
+**Titre:**
 \`\`\`
-${tb.title}
+${aim.discussion.title}
 \`\`\`
+
+**Compose:** ${redditSubmitUrl({ subreddit: aim.subreddit, title: aim.discussion.title, selftext: aim.discussion.selftext })}
+
+**Corps:**
+\`\`\`
+${aim.discussion.selftext}
+\`\`\`
+
+**Commentaire #1:**
+\`\`\`
+${aim.discussion.firstComment}
+\`\`\`
+
+---
+
+## POST #1b — r/aiMusic megathread (lien OK)
+
+Megathread : [recherche](${aim.megathreadUrl})
+
+\`\`\`
+${aim.megathreadComment}
+\`\`\`
+
+---
+
+## POST #2 — r/alphaandbetausers
+
+**Titre:** ${ab.title}
+
+**Compose:** ${redditSubmitUrl({ subreddit: ab.subreddit, title: ab.title, selftext: ab.selftext })}
+
+\`\`\`
+${ab.selftext}
+\`\`\`
+
+---
+
+## POST #3 — r/Typebeats (optionnel)
+
+**Titre:** ${tb.title}
 
 **URL:** ${tb.url}
 
 **Compose:** ${redditSubmitUrl({ subreddit: tb.subreddit, title: tb.title, url: tb.url })}
 
-**→ Dès que publié, commente sur ton propre post (immédiat):**
 \`\`\`
 ${tb.firstComment}
 \`\`\`
 
-_${tb.timing}_
-
 ---
 
-## POST #2 — r/SideProject (curiosité → visiteurs site)
+## POST #4 — r/SideProject
 
-**Titre:**
-\`\`\`
-${sp.title}
-\`\`\`
+**Titre:** ${sp.title}
 
-**Compose (self):** ${redditSubmitUrl({ subreddit: sp.subreddit, title: sp.title, selftext: sp.selftext })}
+**Compose:** ${redditSubmitUrl({ subreddit: sp.subreddit, title: sp.title, selftext: sp.selftext })}
 
-**Corps:**
 \`\`\`
 ${sp.selftext}
 \`\`\`
 
-**Commentaire #1 optionnel:**
-\`\`\`
-${sp.firstComment}
-\`\`\`
-
-_${sp.timing}_
-
 ---
 
-## POST #3 — r/MusicInTheMaking (optionnel si tu as 10 min)
-
-**Titre:** ${mim.title}
-
-**Compose:** ${redditSubmitUrl({ subreddit: mim.subreddit, title: mim.title, selftext: mim.selftext })}
-
-\`\`\`
-${mim.selftext}
-\`\`\`
-
----
-
-## COMMENTAIRES — r/makinghiphop (Rule 3: pas de post beat)
-
-Choisis **1 thread récent (<6h)** avec des réponses actives. Colle **une** variante :
+## COMMENTAIRES — r/makinghiphop (Rule 3)
 
 `;
 
@@ -199,7 +215,7 @@ ${playbook.rules.map((r) => `- ${r}`).join("\n")}
 - 1 upvote commentaire = signal algo → réponds même aux trolls poliment
 `;
 
-  return { md, tb, sp, mhh, trap };
+  return { md, aim, ab, tb, sp, mhh, trap };
 }
 
 async function main() {
@@ -208,7 +224,7 @@ async function main() {
   const loops = await fetchPublicLoops(20);
   const loop = pickEngagementLoop(loops.length ? loops : [{ id: "c2125d9a-52eb-4718-bf9d-d92269cb581f", name: "Miami Sunset Soul #01", genre: "Miami Sunset Soul", bpm: 94 }]);
   const playbook = launchPlaybook();
-  const { md, tb, sp, mhh } = buildReport(loop, playbook);
+  const { md, aim, ab, mhh } = buildReport(loop, playbook);
 
   const outFile = path.join(reportsDir, `reddit-launch-${new Date().toISOString().slice(0, 10)}.md`);
   writeFileSync(outFile, md, "utf8");
@@ -218,11 +234,15 @@ async function main() {
 
   if (shouldOpen) {
     openUrls([
-      redditSubmitUrl({ subreddit: tb.subreddit, title: tb.title, url: tb.url }),
-      redditSubmitUrl({ subreddit: sp.subreddit, title: sp.title, selftext: sp.selftext }),
-      redditSearchUrl("makinghiphop", mhh[0].searchQuery),
+      redditSubmitUrl({
+        subreddit: aim.subreddit,
+        title: aim.discussion.title,
+        selftext: aim.discussion.selftext,
+      }),
+      aim.megathreadUrl,
+      redditSubmitUrl({ subreddit: ab.subreddit, title: ab.title, selftext: ab.selftext }),
     ]);
-    console.log("→ 3 onglets: Typebeats | SideProject | mhh (commenter)");
+    console.log("→ 3 onglets: r/aiMusic discussion | megathread | alphaandbetausers");
   }
 }
 

@@ -16,7 +16,16 @@ export type GenerationJobResult = {
 };
 
 const POLL_MS_DEFAULT = 3_000;
-const JOB_TIMEOUT_MS = 600_000;
+
+/** Pas de plafond par défaut — attendre la fin du job ACE (comme en local). Optionnel : VITE_ACE_JOB_TIMEOUT_MS */
+function jobTimeoutMs(): number | null {
+  const raw = import.meta.env.VITE_ACE_JOB_TIMEOUT_MS as string | undefined;
+  if (raw === "" || raw == null) return null;
+  if (raw === "0" || raw.toLowerCase() === "off") return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return Math.min(n, 3_600_000);
+}
 /** Aligné sur jobResponsePayload côté Edge — au-delà, fetch binaire get_job_audio. */
 const INLINE_AUDIO_MAX_CHARS = 400_000;
 
@@ -133,7 +142,13 @@ export async function pollGenerationJob(jobId: string): Promise<{
     error?: string;
   }>({ action: "poll_job", jobId });
   let audioUrl = res.audioUrl;
-  if (res.status === "completed" && (!audioUrl || res.audioInline)) {
+  const httpFromMeta =
+    res.meta && typeof res.meta === "object" && typeof (res.meta as { httpAudioUrl?: unknown }).httpAudioUrl === "string"
+      ? String((res.meta as { httpAudioUrl: string }).httpAudioUrl).trim()
+      : "";
+  if (httpFromMeta.startsWith("http://") || httpFromMeta.startsWith("https://")) {
+    audioUrl = httpFromMeta;
+  } else if (res.status === "completed" && (!audioUrl || res.audioInline)) {
     audioUrl = await fetchGenerationJobAudioBlobUrl(jobId).catch(() => audioUrl);
   } else if (audioUrl) {
     audioUrl = await resolveJobAudioUrl(jobId, audioUrl);
@@ -237,9 +252,13 @@ export async function waitForGenerationJob(
     .subscribe();
 
   try {
-    while (!settled && Date.now() - startedAt < JOB_TIMEOUT_MS) {
+    while (!settled) {
       if (options?.signal?.aborted) {
         fail("Generation cancelled");
+      }
+      const deadline = jobTimeoutMs();
+      if (deadline != null && Date.now() - startedAt >= deadline) {
+        fail("Generation timed out — réessaie dans un instant");
       }
       const polled = await pollGenerationJob(jobId);
       lastStatus = polled.status;
@@ -258,7 +277,9 @@ export async function waitForGenerationJob(
       }
       await new Promise((r) => setTimeout(r, pollMs));
     }
-    fail("Generation timed out — réessaie dans un instant");
+    if (!settled) {
+      fail("Generation timed out — réessaie dans un instant");
+    }
   } finally {
     void supabase.removeChannel(channel);
   }

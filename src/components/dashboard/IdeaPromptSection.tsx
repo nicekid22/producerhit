@@ -16,6 +16,8 @@ type Props = {
   onChange: (value: string) => void;
   /** Sync genre dropdown when dice picks a catalog genre prompt. */
   onPickGenre?: (genre: string) => void;
+  /** Prompt ACE caché quand le dé est utilisé. */
+  onPickAce?: (acePrompt: string) => void;
   collapsible?: boolean;
   defaultOpen?: boolean;
 };
@@ -27,6 +29,7 @@ export function IdeaPromptSection({
   value,
   onChange,
   onPickGenre,
+  onPickAce,
   collapsible = false,
   defaultOpen = true,
 }: Props) {
@@ -36,13 +39,13 @@ export function IdeaPromptSection({
       mode === "song"
         ? legacyEnFr(
             locale,
-            "e.g. contemporary R&B, breathy female vocal, rhodes piano, heartbreak mood, warm mix",
-            "ex: contemporary R&B, breathy female vocal, rhodes piano, heartbreak mood, warm mix",
+            "e.g. a pop song about a summer night at the beach",
+            "ex : une chanson hip-hop sur des vacances au bord de la mer",
           )
         : legacyEnFr(
             locale,
-            "e.g. melodic trap, sliding 808, crisp hi-hats, minor piano, airy pads, polished mix",
-            "ex: melodic trap, sliding 808, crisp hi-hats, minor piano, airy pads, polished mix",
+            "e.g. a melodic trap beat about a rainy late-night drive",
+            "ex : un beat trap sur une nuit pluvieuse en ville",
           ),
   };
 
@@ -55,15 +58,6 @@ export function IdeaPromptSection({
     >
       <div className="pk-idea-prompt-field">
         <div className="pk-dashboard-text-field" data-coach="prompt-field">
-          <div className="pk-idea-prompt-tools">
-            <RandomPromptDiceButton
-              locale={locale}
-              promptLocale={promptLocale}
-              mode={mode}
-              onPick={onChange}
-              onPickGenre={onPickGenre}
-            />
-          </div>
           <SpeechDictationField
             multiline
             locale={locale}
@@ -71,6 +65,16 @@ export function IdeaPromptSection({
             onChange={onChange}
             rows={DASHBOARD_PROMPT_ROWS}
             micPlacement="inside"
+            toolbarExtra={
+              <RandomPromptDiceButton
+                locale={locale}
+                promptLocale={promptLocale}
+                mode={mode}
+                onPick={onChange}
+                onPickAce={onPickAce}
+                onPickGenre={onPickGenre}
+              />
+            }
             wrapperClassName="pk-dashboard-text-field-wrap"
             className="pk-dashboard-text-field__control bg-pk-input border border-pk-border text-sm text-pk-text placeholder:text-pk-muted focus:border-pk-accent"
             placeholder={copy.placeholder}
