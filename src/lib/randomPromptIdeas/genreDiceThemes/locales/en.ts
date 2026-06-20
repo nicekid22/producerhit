@@ -1,4 +1,4 @@
-import type { LocaleThemeLayers } from "./types";
+import type { LocaleThemeLayers } from "../types";
 
 /** English layers — genre/instrument tags stay US technical; mood in English. */
 export const EN_THEME_LAYERS: LocaleThemeLayers = {
