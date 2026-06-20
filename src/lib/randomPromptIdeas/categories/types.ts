@@ -10,7 +10,8 @@ export type PromptCategoryId =
   | "world"
   | "rock"
   | "electronic"
-  | "impressive";
+  | "impressive"
+  | "genre_menu";
 
 export type PromptCategory = {
   id: PromptCategoryId;

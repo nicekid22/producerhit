@@ -3357,6 +3357,7 @@ export default function Dashboard() {
                   mode="beat"
                   value={form.prompt}
                   onChange={(v) => setField("prompt", v)}
+                  onPickGenre={(v) => setField("genre", v)}
                   collapsible={mobileV2}
                   defaultOpen={mobileV2 ? mobileSectionDefaultOpen : true}
                 />
@@ -3722,6 +3723,7 @@ export default function Dashboard() {
                   mode="song"
                   value={songDescription}
                   onChange={setSongDescription}
+                  onPickGenre={(v) => setField("genre", v)}
                   collapsible={mobileV2}
                   defaultOpen={mobileV2 ? mobileSectionDefaultOpen : true}
                 />

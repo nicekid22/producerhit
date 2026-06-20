@@ -167,6 +167,11 @@ const genreMap: Record<string, string> = {
   ...extendedGenrePromptMap(),
 };
 
+/** Full ACE catalog prompt for a menu genre (core + extended). */
+export function getGenreCatalogPrompt(genre: string): string {
+  return genreMap[genre] ?? "";
+}
+
 const energyMap: Record<string, string> = {
   Chill: "relaxed laid-back vibe, smooth easy flow, no rush",
   Happy: "uplifting joyful energy, bright melodic feel, positive vibes",
@@ -437,7 +442,7 @@ export function buildAceCaption(
 
   const extraRaw = (params.prompt || "").trim();
   const { style: vocalStyle, rest: extraRest } = extractVocalStyle(extraRaw);
-  const extra = limitChars(extraRest, 140);
+  const extra = limitChars(extraRest, 220);
 
   const tags = uniqTags(
     [

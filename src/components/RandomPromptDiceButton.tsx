@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Dices } from "lucide-react";
 import type { AppLocale } from "@/i18n/config";
 import { dicePromptLabel } from "@/lib/randomPromptIdeas/diceLabels";
-import { pickRandomPrompt, type PromptMode } from "@/lib/randomPromptIdeas";
+import { pickRandomGenreMenuDiceRoll, type PromptMode } from "@/lib/randomPromptIdeas";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -12,6 +12,8 @@ type Props = {
   promptLocale?: AppLocale;
   mode: PromptMode;
   onPick: (prompt: string) => void;
+  /** When set, dice also selects the matching catalog genre (genre-menu prompts). */
+  onPickGenre?: (genre: string) => void;
   className?: string;
   variant?: "dashboard" | "landing";
 };
@@ -21,6 +23,7 @@ export function RandomPromptDiceButton({
   promptLocale,
   mode,
   onPick,
+  onPickGenre,
   className,
   variant = "dashboard",
 }: Props) {
@@ -31,7 +34,9 @@ export function RandomPromptDiceButton({
   const roll = () => {
     if (rolling) return;
     setRolling(true);
-    onPick(pickRandomPrompt(diceLocale, mode));
+    const { prompt, genre } = pickRandomGenreMenuDiceRoll(diceLocale, mode);
+    onPick(prompt);
+    onPickGenre?.(genre);
     window.setTimeout(() => setRolling(false), 580);
   };
 

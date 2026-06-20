@@ -14,6 +14,8 @@ type Props = {
   mode: "beat" | "song";
   value: string;
   onChange: (value: string) => void;
+  /** Sync genre dropdown when dice picks a catalog genre prompt. */
+  onPickGenre?: (genre: string) => void;
   collapsible?: boolean;
   defaultOpen?: boolean;
 };
@@ -24,6 +26,7 @@ export function IdeaPromptSection({
   mode,
   value,
   onChange,
+  onPickGenre,
   collapsible = false,
   defaultOpen = true,
 }: Props) {
@@ -53,7 +56,13 @@ export function IdeaPromptSection({
       <div className="pk-idea-prompt-field">
         <div className="pk-dashboard-text-field" data-coach="prompt-field">
           <div className="pk-idea-prompt-tools">
-            <RandomPromptDiceButton locale={locale} promptLocale={promptLocale} mode={mode} onPick={onChange} />
+            <RandomPromptDiceButton
+              locale={locale}
+              promptLocale={promptLocale}
+              mode={mode}
+              onPick={onChange}
+              onPickGenre={onPickGenre}
+            />
           </div>
           <SpeechDictationField
             multiline

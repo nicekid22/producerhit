@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CATEGORIZED_EN, CATEGORIZED_FR, flattenCategories } from "./index";
+import { getGenreMenuPromptCount } from "@/lib/randomPromptIdeas/genreMenuPrompts";
+import { GENRE_COUNT } from "@/lib/genres";
 
 describe("random prompt pools", () => {
   it("FR/EN song pools have hundreds of unique prompts", () => {
@@ -17,6 +19,28 @@ describe("random prompt pools", () => {
     expect(frBeat.length).toBeGreaterThanOrEqual(110);
     expect(enBeat.length).toBeGreaterThanOrEqual(110);
     expect(new Set(frBeat).size).toBe(frBeat.length);
+  });
+
+  it("genre_menu prompts use ACE tag format (no conversational prose)", () => {
+    const genreMenuSong = CATEGORIZED_FR.song.find((c) => c.id === "genre_menu");
+    const badProse =
+      /^(fais|une chanson|un son|tu peux|peux-tu|j'ai besoin|chanson sur|make me|can you|i need|song about|a song)/i;
+    const weakTheme = /\bth[eè]me\s*:/i;
+    for (const p of genreMenuSong?.prompts ?? []) {
+      expect(badProse.test(p)).toBe(false);
+      expect(weakTheme.test(p)).toBe(false);
+      expect(p.includes(",")).toBe(true);
+    }
+  });
+
+  it("genre_menu covers every catalog genre with detailed prompts", () => {
+    const genreMenuSong = CATEGORIZED_FR.song.find((c) => c.id === "genre_menu");
+    const genreMenuBeat = CATEGORIZED_FR.beat.find((c) => c.id === "genre_menu");
+    expect(genreMenuSong).toBeDefined();
+    expect(genreMenuBeat).toBeDefined();
+    expect(getGenreMenuPromptCount("song")).toBeGreaterThanOrEqual(GENRE_COUNT);
+    expect(getGenreMenuPromptCount("beat")).toBeGreaterThanOrEqual(GENRE_COUNT);
+    expect(genreMenuSong?.prompts[0]?.length ?? 0).toBeGreaterThan(80);
   });
 
   it("natural category includes conversational French", () => {
