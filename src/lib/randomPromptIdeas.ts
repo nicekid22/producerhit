@@ -6,6 +6,10 @@ import { CATEGORIZED_EN, CATEGORIZED_FR } from "@/lib/randomPromptIdeas/categori
 import type { CategorizedLocalePools, PromptCategory, PromptCategoryId } from "@/lib/randomPromptIdeas/categories";
 import { pickFromCategory } from "@/lib/randomPromptIdeas/categories";
 import { getGenreDiceDisplayPromptPool, pickRandomGenreMenuDice } from "@/lib/randomPromptIdeas/genreMenuPrompts";
+import {
+  getCuratedDisplayPromptPool,
+  mergeUniqueDisplayPrompts,
+} from "@/lib/randomPromptIdeas/curatedDisplayPrompts";
 import { POOLS_EN } from "@/lib/randomPromptIdeas/localePools/en";
 import { POOLS_FR } from "@/lib/randomPromptIdeas/localePools/fr";
 import { resolvePromptPools } from "@/lib/randomPromptIdeas/localePools";
@@ -77,13 +81,18 @@ function landingDisplayFallback(locale: AppLocale, mode: PromptMode): readonly s
   return LANDING_DISPLAY_FALLBACK_EN[mode];
 }
 
-/** Placeholders landing + hero — phrases simples (pas tags ACE). */
+/** Placeholders landing + hero — curated unique + phrases genre-dé. */
 export function getLandingDisplayPromptPool(locale: AppLocale, mode: PromptMode): readonly string[] {
+  const curated = getCuratedDisplayPromptPool(locale, mode);
   const fromDice = getGenreDiceDisplayPromptPool(mode, locale);
-  if (fromDice.length >= 8) return fromDice;
+  const merged = mergeUniqueDisplayPrompts(curated, fromDice);
+  if (merged.length >= 8) return merged;
+
   const hero = resolvePromptPools(locale).hero;
-  if (mode === "song" && hero.length > 0) return hero;
-  return landingDisplayFallback(locale, mode);
+  if (mode === "song" && hero.length > 0) {
+    return mergeUniqueDisplayPrompts(curated, hero, fromDice);
+  }
+  return mergeUniqueDisplayPrompts(curated, landingDisplayFallback(locale, mode), fromDice);
 }
 
 export function getHeroPromptPool(locale: AppLocale): readonly string[] {

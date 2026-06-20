@@ -4,18 +4,18 @@ import type { PromptMode } from "@/lib/randomPromptIdeas";
 import type { ThemeGroup } from "@/lib/randomPromptIdeas/genreDiceThemes/types";
 
 const FR_BEAT_THEMES: Record<ThemeGroup, readonly string[]> = {
-  trap: ["sur une nuit pluvieuse", "sur la confiance en rue", "sur une montée de tension", "sur une session studio tardive"],
-  rnb: ["sur un cœur brisé nocturne", "sur une slow-jam sensuelle", "sur une vibe neo-soul", "sur une confession après minuit"],
-  afro_latin: ["sur un sunset en festival", "sur une nuit reggaeton", "sur une énergie afro-urban", "sur une fête caribéenne"],
-  electronic_pop: ["sur un hook radio accrocheur", "sur une vibe TikTok", "sur une nuit néon rétro", "sur une prod bedroom pop"],
-  rock: ["sur une répétition garage", "sur un anthem de stade", "sur une vibe indie basement", "sur une tension post-punk"],
-  jazz_classical: ["sur un set jazz tardif", "sur un drame de chambre", "sur un lounge moderne", "sur une tension classique"],
-  world: ["sur une caravane dans le désert", "sur une nuit à Tokyo", "sur les montagnes andines", "sur un mariage balkan"],
-  cinematic: ["sur une montée de trailer", "sur une allée noir", "sur un dernier stand héroïque", "sur un slow-burn suspense"],
-  dnb: ["sur un roller liquid", "sur un rush jungle", "sur une tension neurofunk", "sur un drift atmosphérique"],
-  electronic_club: ["sur une after warehouse", "sur un drop festival", "sur une groove tech-house", "sur un peak techno"],
-  lab: ["sur un clash futuriste", "sur une expérience AI-pop", "sur une fusion glitch", "sur une vibe sci-fi"],
-  default: ["sur une vibe nocturne", "sur une énergie montante", "sur un mood introspectif", "sur une atmosphère ciné"],
+  trap: ["sur une nuit pluvieuse", "sur la confiance en rue", "pour célébrer une victoire à la Coupe du monde", "sur une session studio à 3h du mat", "pour un edit TikTok qui doit percer"],
+  rnb: ["sur un cœur brisé nocturne", "pour une slow-jam sensuelle", "sur un ghosting après trois dates parfaites", "sur une confession après minuit au téléphone"],
+  afro_latin: ["sur un sunset en festival", "pour un after mariage qui part en danse", "sur une nuit reggaeton à Barcelone", "sur une énergie afro-urban estivale"],
+  electronic_pop: ["pour un hook radio accrocheur", "sur une vibe TikTok virale", "pour une pub sneakers Gen Z", "sur une prod bedroom pop ironique"],
+  rock: ["sur une répétition garage", "pour un anthem de stade", "sur un burnout qui finit en cri libérateur", "sur une tension post-punk nocturne"],
+  jazz_classical: ["sur un set jazz tardif fumé", "pour une bande-annonce indie", "sur un lounge moderne parisien", "sur une tension classique ciné"],
+  world: ["sur une caravane dans le désert", "sur une nuit à Tokyo", "pour un mariage balkan qui dure trois jours", "sur les montagnes andines au lever du soleil"],
+  cinematic: ["pour une montée de trailer IMAX", "sur une allée film noir", "pour un dernier stand héroïque", "sur un slow-burn suspense"],
+  dnb: ["sur un roller liquid en warehouse", "pour un rush jungle underground", "sur une tension neurofunk", "sur un drift atmosphérique"],
+  electronic_club: ["pour une after warehouse", "sur un drop festival mainstage", "pour une groove tech-house sunrise", "sur un peak techno Berlin"],
+  lab: ["sur un clash futuriste glitch", "pour une expérience AI-pop", "sur une fusion sci-fi", "pour un reel producteur insomniaque"],
+  default: ["pour entendre ton morceau en public pour la première fois", "sur une vibe nocturne créative", "pour un moment de vérité émotionnelle", "sur une atmosphère ciné sans cliché"],
 };
 
 const FR_SONG_THEMES: Record<ThemeGroup, readonly string[]> = {
@@ -34,18 +34,18 @@ const FR_SONG_THEMES: Record<ThemeGroup, readonly string[]> = {
 };
 
 const EN_BEAT_THEMES: Record<ThemeGroup, readonly string[]> = {
-  trap: ["about a rainy late-night drive", "about street confidence", "about rising cinematic tension", "about a late studio session"],
-  rnb: ["about a heartbreak night", "about a sensual slow jam", "about a neo-soul pocket", "about a midnight confession"],
-  afro_latin: ["about a festival sunset", "about a reggaeton night", "about afro-urban crossover energy", "about a Caribbean block party"],
-  electronic_pop: ["about a radio-ready hook", "about a TikTok earworm", "about a retro neon night", "about a bedroom producer vibe"],
-  rock: ["about a garage rehearsal", "about an arena anthem", "about basement indie grit", "about post-punk tension"],
-  jazz_classical: ["about a late jazz set", "about chamber drama", "about modern lounge jazz", "about minimal classical tension"],
-  world: ["about a desert caravan", "about a Tokyo night market", "about Andean mountains", "about a Balkan wedding"],
-  cinematic: ["about a trailer rise", "about a noir alley", "about a heroic last stand", "about slow-burn suspense"],
-  dnb: ["about a liquid roller", "about a jungle warehouse rush", "about neurofunk tension", "about atmospheric drift"],
-  electronic_club: ["about an afterhours warehouse", "about a festival mainstage drop", "about a tech-house groove", "about hard techno peak time"],
-  lab: ["about a futuristic clash", "about an AI-pop experiment", "about a glitch fusion", "about sci-fi orbit"],
-  default: ["about a nocturnal vibe", "about rising energy", "about an introspective mood", "about a cinematic atmosphere"],
+  trap: ["about a rainy late-night drive", "about street confidence", "to celebrate a World Cup win", "about a 3am studio session", "for a TikTok edit that needs to pop"],
+  rnb: ["about a heartbreak night", "for a sensual slow jam", "about getting ghosted after three perfect dates", "about a midnight phone confession"],
+  afro_latin: ["about a festival sunset", "for a wedding after-party dance riot", "about a reggaeton night in Barcelona", "about summer afro-urban crossover energy"],
+  electronic_pop: ["for a radio-ready hook", "about a viral TikTok moment", "for a Gen Z sneakers ad", "about ironic bedroom pop"],
+  rock: ["about a garage rehearsal", "for a stadium anthem", "about burnout turning into a liberating scream", "about late-night post-punk tension"],
+  jazz_classical: ["about a smoky late jazz set", "for an indie trailer", "about a modern Paris lounge", "about cinematic classical tension"],
+  world: ["about a desert caravan", "about a Tokyo night market", "for a three-day Balkan wedding", "about Andean sunrise mountains"],
+  cinematic: ["for an IMAX trailer rise", "about a film-noir alley", "for a heroic last stand", "about slow-burn suspense"],
+  dnb: ["about a liquid warehouse roller", "for an underground jungle rush", "about neurofunk tension", "about atmospheric drift"],
+  electronic_club: ["for a warehouse afterhours", "about a festival mainstage drop", "for a sunrise tech-house groove", "about Berlin peak techno"],
+  lab: ["about a glitch futuristic clash", "for an AI-pop experiment", "about sci-fi fusion", "for an insomniac producer reel"],
+  default: ["about hearing your track in public for the first time", "about a creative nocturnal vibe", "for a raw emotional truth moment", "about cinematic atmosphere without cliché"],
 };
 
 const EN_SONG_THEMES: Record<ThemeGroup, readonly string[]> = {

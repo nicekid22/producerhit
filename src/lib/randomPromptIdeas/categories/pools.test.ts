@@ -67,11 +67,12 @@ describe("random prompt pools", () => {
   it("landing display pool uses readable phrases not ACE tags", () => {
     const frSong = getLandingDisplayPromptPool("fr", "song");
     const frBeat = getLandingDisplayPromptPool("fr", "beat");
-    expect(frSong.length).toBeGreaterThanOrEqual(8);
-    expect(frBeat.length).toBeGreaterThanOrEqual(8);
-    expect(frSong[0]).toMatch(/^Une chanson /i);
-    expect(frBeat[0]).toMatch(/^Un beat /i);
+    expect(frSong.length).toBeGreaterThanOrEqual(40);
+    expect(frBeat.length).toBeGreaterThanOrEqual(40);
+    expect(frSong.some((p) => /Coupe du monde|World Cup/i.test(p))).toBe(true);
     expect(frSong.some((p) => p.includes("808"))).toBe(false);
+    expect(frSong.some((p) => /^Une chanson /i.test(p))).toBe(true);
+    expect(frBeat.some((p) => /^Un beat /i.test(p))).toBe(true);
   });
 
   it("prepareRotatingPromptPlaceholders shuffles pool and random start", () => {
