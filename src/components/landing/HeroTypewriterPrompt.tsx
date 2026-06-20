@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { AppLocale } from "@/i18n/config";
-import { getHeroPromptPool, pickNextHeroPromptIndex } from "@/lib/randomPromptIdeas";
+import { pickNextHeroPromptIndex, prepareRotatingPromptPlaceholders } from "@/lib/randomPromptIdeas";
 import { resolveRandomPromptLocale } from "@/lib/resolveRandomPromptLocale";
 import { cn } from "@/lib/utils";
 
@@ -14,16 +14,20 @@ const CYCLE_MS = 5400;
 
 export function HeroTypewriterPrompt({ locale, reduceMotion = false, className }: Props) {
   const promptLocale = resolveRandomPromptLocale({ surface: "landing", uiLocale: locale });
-  const pool = useMemo(() => [...getHeroPromptPool(promptLocale)], [promptLocale]);
-  const [current, setCurrent] = useState(0);
+  const prepared = useMemo(
+    () => prepareRotatingPromptPlaceholders(promptLocale, "song"),
+    [promptLocale],
+  );
+  const pool = prepared.pool;
+  const [current, setCurrent] = useState(prepared.startIndex);
   const [previous, setPrevious] = useState<number | null>(null);
   const [introDone, setIntroDone] = useState(false);
 
   useEffect(() => {
-    setCurrent(0);
+    setCurrent(prepared.startIndex);
     setPrevious(null);
     setIntroDone(false);
-  }, [promptLocale]);
+  }, [prepared.pool, prepared.startIndex]);
 
   useEffect(() => {
     if (reduceMotion) {

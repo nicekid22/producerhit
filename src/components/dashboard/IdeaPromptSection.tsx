@@ -1,8 +1,10 @@
+import { useMemo, useState } from "react";
 import type { AppLocale } from "@/i18n/config";
 import { legacyEnFr } from "@/i18n/config";
 import { GeneratorSection } from "@/components/dashboard/GeneratorSection";
 import { RandomPromptDiceButton } from "@/components/RandomPromptDiceButton";
 import { SpeechDictationField } from "@/components/SpeechDictationField";
+import { useRotatingPromptPlaceholder } from "@/hooks/useRotatingPromptPlaceholder";
 
 /** Même hauteur visuelle — idée + paroles */
 export const DASHBOARD_PROMPT_ROWS = 4;
@@ -33,9 +35,10 @@ export function IdeaPromptSection({
   collapsible = false,
   defaultOpen = true,
 }: Props) {
-  const copy = {
-    title: legacyEnFr(locale, "The Idea", "L’idée"),
-    placeholder:
+  const [focused, setFocused] = useState(false);
+
+  const fallbackPlaceholder = useMemo(
+    () =>
       mode === "song"
         ? legacyEnFr(
             locale,
@@ -47,6 +50,20 @@ export function IdeaPromptSection({
             "e.g. a melodic trap beat about a rainy late-night drive",
             "ex : un beat trap sur une nuit pluvieuse en ville",
           ),
+    [locale, mode],
+  );
+
+  const rotatingPlaceholder = useRotatingPromptPlaceholder({
+    uiLocale: locale,
+    promptLocale,
+    mode,
+    value,
+    paused: focused,
+    fallback: fallbackPlaceholder,
+  });
+
+  const copy = {
+    title: legacyEnFr(locale, "The Idea", "L’idée"),
   };
 
   return (
@@ -65,6 +82,8 @@ export function IdeaPromptSection({
             onChange={onChange}
             rows={DASHBOARD_PROMPT_ROWS}
             micPlacement="inside"
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
             toolbarExtra={
               <RandomPromptDiceButton
                 locale={locale}
@@ -77,7 +96,7 @@ export function IdeaPromptSection({
             }
             wrapperClassName="pk-dashboard-text-field-wrap"
             className="pk-dashboard-text-field__control bg-pk-input border border-pk-border text-sm text-pk-text placeholder:text-pk-muted focus:border-pk-accent"
-            placeholder={copy.placeholder}
+            placeholder={rotatingPlaceholder}
             showStatus={false}
           />
         </div>

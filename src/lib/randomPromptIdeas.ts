@@ -1,6 +1,7 @@
 import { formatAceDiceCaption } from "@/lib/randomPromptIdeas/aceDiceCaption";
 export { ACE_DICE_CAPTION_MAX, formatAceDiceCaption } from "@/lib/randomPromptIdeas/aceDiceCaption";
 import type { AppLocale } from "@/i18n/config";
+import { shuffleArray } from "@/lib/utils";
 import { CATEGORIZED_EN, CATEGORIZED_FR } from "@/lib/randomPromptIdeas/categories";
 import type { CategorizedLocalePools, PromptCategory, PromptCategoryId } from "@/lib/randomPromptIdeas/categories";
 import { pickFromCategory } from "@/lib/randomPromptIdeas/categories";
@@ -87,6 +88,18 @@ export function getLandingDisplayPromptPool(locale: AppLocale, mode: PromptMode)
 
 export function getHeroPromptPool(locale: AppLocale): readonly string[] {
   return getLandingDisplayPromptPool(locale, "song");
+}
+
+/** Pool mélangé + index de départ aléatoire — une séquence différente à chaque visite. */
+export function prepareRotatingPromptPlaceholders(
+  locale: AppLocale,
+  mode: PromptMode,
+): { pool: string[]; startIndex: number } {
+  const pool = shuffleArray(getLandingDisplayPromptPool(locale, mode));
+  return {
+    pool,
+    startIndex: pool.length <= 1 ? 0 : Math.floor(Math.random() * pool.length),
+  };
 }
 
 export function getRandomPromptPool(locale: AppLocale, mode: PromptMode): readonly string[] {

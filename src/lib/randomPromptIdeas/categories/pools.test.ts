@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CATEGORIZED_EN, CATEGORIZED_FR, flattenCategories } from "./index";
 import { getGenreMenuPromptCount, pickRandomGenreMenuDice } from "@/lib/randomPromptIdeas/genreMenuPrompts";
-import { pickRandomGenreMenuDiceRoll, getLandingDisplayPromptPool } from "@/lib/randomPromptIdeas";
+import { pickRandomGenreMenuDiceRoll, getLandingDisplayPromptPool, prepareRotatingPromptPlaceholders } from "@/lib/randomPromptIdeas";
 import { GENRE_COUNT } from "@/lib/genres";
 describe("random prompt pools", () => {
   it("FR/EN song pools have hundreds of unique prompts", () => {
@@ -72,6 +72,16 @@ describe("random prompt pools", () => {
     expect(frSong[0]).toMatch(/^Une chanson /i);
     expect(frBeat[0]).toMatch(/^Un beat /i);
     expect(frSong.some((p) => p.includes("808"))).toBe(false);
+  });
+
+  it("prepareRotatingPromptPlaceholders shuffles pool and random start", () => {
+    const base = [...getLandingDisplayPromptPool("fr", "song")];
+    const runs = Array.from({ length: 12 }, () => prepareRotatingPromptPlaceholders("fr", "song"));
+    expect(runs.every((r) => r.pool.length === base.length)).toBe(true);
+    expect(runs.every((r) => r.pool.every((p) => base.includes(p)))).toBe(true);
+    const distinctOrders = new Set(runs.map((r) => r.pool.slice(0, 5).join("|")));
+    expect(distinctOrders.size).toBeGreaterThan(1);
+    expect(new Set(runs.map((r) => r.startIndex)).size).toBeGreaterThan(1);
   });
 
   it("natural category includes conversational French", () => {

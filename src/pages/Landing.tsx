@@ -59,7 +59,7 @@ import { useVisualThemeStore, isCloudTheme, isWarmGlassTheme } from "@/stores/vi
 import { useCloudAccentStore } from "@/stores/cloudAccentStore";
 import { landingCopy, landingFlowSectionClass, landingSectionClass } from "@/lib/landingContent";
 import { landingHeroDreamCopy } from "@/lib/landingHeroDreamCopy";
-import { getLandingDisplayPromptPool } from "@/lib/randomPromptIdeas";
+import { useRotatingPromptPlaceholder } from "@/hooks/useRotatingPromptPlaceholder";
 import { resolveRandomPromptLocale } from "@/lib/resolveRandomPromptLocale";
 import { croLandingFaqs } from "@/lib/croTrustCopy";
 import { ConversionTrustBar } from "@/components/marketing/ConversionTrustBar";
@@ -223,7 +223,18 @@ export default function Landing() {
   const [prompt, setPrompt] = useState("");
   const acePromptOverrideRef = useRef<string | null>(null);
   const [focused, setFocused] = useState(false);
-  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+
+  const landingPromptLocale = useMemo(
+    () => resolveRandomPromptLocale({ surface: "landing", uiLocale: locale }),
+    [locale],
+  );
+  const rotatingPlaceholder = useRotatingPromptPlaceholder({
+    uiLocale: locale,
+    promptLocale: landingPromptLocale,
+    mode,
+    value: prompt,
+    paused: focused,
+  });
 
   const [beatArtist, setBeatArtist] = useState("");
   const [beatBpm, setBeatBpm] = useState(130);
@@ -301,11 +312,6 @@ export default function Landing() {
       },
     } as const;
   };
-
-  const placeholders = useMemo(() => {
-    const promptLocale = resolveRandomPromptLocale({ surface: "landing", uiLocale: locale });
-    return [...getLandingDisplayPromptPool(promptLocale, mode)];
-  }, [locale, mode]);
 
   const [generatorSideCards, setGeneratorSideCards] = useState<GeneratorSideCard[]>([]);
   const sideCardPoolRef = useRef<GeneratorSideCard[]>([]);
@@ -421,15 +427,6 @@ export default function Landing() {
     const t = window.setTimeout(() => inputRef.current?.focus(), 180);
     return () => window.clearTimeout(t);
   }, []);
-
-  useEffect(() => {
-    if (focused) return;
-    if (prompt.trim().length > 0) return;
-    const t = window.setInterval(() => {
-      setPlaceholderIndex((i) => (i + 1) % placeholders.length);
-    }, 2300);
-    return () => window.clearInterval(t);
-  }, [focused, placeholders.length, prompt]);
 
   const toggleGenre = (g: string) => {
     setBeatGenres((prev) => (prev.includes(g) ? prev.filter((x) => x !== g) : [g, ...prev].slice(0, 3)));
@@ -1307,8 +1304,7 @@ export default function Landing() {
               onPickAce={(ace) => {
                 acePromptOverrideRef.current = ace;
               }}
-              placeholders={placeholders}
-              placeholderIndex={placeholderIndex}
+              placeholder={rotatingPlaceholder}
               inputRef={inputRef}
               focused={focused}
               setFocused={setFocused}

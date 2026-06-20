@@ -38,8 +38,7 @@ type Props = {
   prompt: string;
   setPrompt: (value: string) => void;
   onPickAce?: (acePrompt: string) => void;
-  placeholders: string[];
-  placeholderIndex: number;
+  placeholder: string;
   inputRef: RefObject<HTMLTextAreaElement | null>;
   focused: boolean;
   setFocused: (value: boolean) => void;
@@ -205,8 +204,7 @@ export function LandingGenerator({
   prompt,
   setPrompt,
   onPickAce,
-  placeholders,
-  placeholderIndex,
+  placeholder,
   inputRef,
   focused,
   setFocused,
@@ -336,7 +334,7 @@ export function LandingGenerator({
                           void onGenerate();
                         }
                       }}
-                      placeholder={placeholders[placeholderIndex]}
+                      placeholder={placeholder}
                       rows={4}
                       wrapperClassName="mt-0"
                       toolbarExtra={diceToolbar}
@@ -544,7 +542,7 @@ export function LandingGenerator({
                         void onGenerate();
                       }
                     }}
-                    placeholder={placeholders[placeholderIndex]}
+                    placeholder={placeholder}
                     rows={3}
                     wrapperClassName="mt-0"
                     toolbarExtra={diceToolbar}
