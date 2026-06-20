@@ -796,7 +796,7 @@ export default function Dashboard() {
             toast.success(`${d.planActivatedPrefix}${nextPlan}`);
             if (user?.id) useWavFormatCoachStore.getState().scheduleProTip(user.id, 6_000);
             if (!hasLegalHolderName(fromStore)) {
-              toast(d.addLegalName, { icon: "📄", duration: 6000 });
+              toast(d.addLegalName, { icon: "📄", duration: 5000 });
             }
             return;
           }

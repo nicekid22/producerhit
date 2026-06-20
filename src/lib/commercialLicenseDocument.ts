@@ -2,6 +2,8 @@ import type { AppLocale } from "@/i18n/config";
 import type { UserProfileRow } from "@/lib/profileBootstrap";
 import { normalizePlanId, planDisplayName, type PlanId } from "@/lib/planEntitlements";
 
+export type LicenseHolderSource = "legal" | "username" | "email" | "member";
+
 export type TrackLicenseInput = {
   loopId: string;
   trackTitle: string;
@@ -10,11 +12,14 @@ export type TrackLicenseInput = {
   profile: Pick<UserProfileRow, "legal_first_name" | "legal_last_name" | "username"> | null;
   locale: AppLocale;
   exportKind?: "beat" | "stems";
+  userId?: string | null;
+  email?: string | null;
 };
 
 export type TrackLicenseDocument = {
   licenseId: string;
   holderName: string;
+  holderSource: LicenseHolderSource;
   trackTitle: string;
   planLabel: string;
   planId: PlanId;
@@ -51,13 +56,45 @@ export function hasLegalHolderName(
   return Boolean(first && first.length >= 2 && last && last.length >= 2);
 }
 
-export function formatLicenseHolderName(
-  profile: Pick<UserProfileRow, "legal_first_name" | "legal_last_name" | "username"> | null | undefined,
+export function formatLegalHolderName(
+  profile: Pick<UserProfileRow, "legal_first_name" | "legal_last_name"> | null | undefined,
 ): string | null {
   const first = profile?.legal_first_name?.trim();
   const last = profile?.legal_last_name?.trim();
-  if (first && last) return `${first} ${last}`;
+  if (first && first.length >= 2 && last && last.length >= 2) return `${first} ${last}`;
   return null;
+}
+
+/** @deprecated Use resolveLicenseHolder instead */
+export function formatLicenseHolderName(
+  profile: Pick<UserProfileRow, "legal_first_name" | "legal_last_name" | "username"> | null | undefined,
+): string | null {
+  return formatLegalHolderName(profile);
+}
+
+export function resolveLicenseHolder(
+  profile: Pick<UserProfileRow, "legal_first_name" | "legal_last_name" | "username"> | null | undefined,
+  opts?: { userId?: string | null; email?: string | null },
+): { name: string; source: LicenseHolderSource } {
+  const legal = formatLegalHolderName(profile);
+  if (legal) return { name: legal, source: "legal" };
+
+  const username = profile?.username?.trim();
+  if (username && username.length >= 2) return { name: username, source: "username" };
+
+  const email = opts?.email?.trim();
+  if (email?.includes("@")) {
+    const local = email.split("@")[0]?.replace(/[.+_-]+/g, " ").trim();
+    if (local && local.length >= 2) return { name: local, source: "email" };
+  }
+
+  const userId = opts?.userId?.trim();
+  if (userId) {
+    const short = userId.replace(/-/g, "").slice(0, 8).toUpperCase();
+    return { name: `ProducerHit Member ${short}`, source: "member" };
+  }
+
+  return { name: "ProducerHit Member", source: "member" };
 }
 
 function resolveIssueDate(createdAt: string | null | undefined, locale: AppLocale): { label: string; iso: string } {
@@ -74,11 +111,13 @@ function resolveIssueDate(createdAt: string | null | undefined, locale: AppLocal
 }
 
 export function buildTrackLicenseDocument(input: TrackLicenseInput): TrackLicenseDocument | null {
-  const holderName = formatLicenseHolderName(input.profile);
-  if (!holderName) return null;
-
   const planId = normalizePlanId(input.plan);
   if (planId === "free") return null;
+
+  const { name: holderName, source: holderSource } = resolveLicenseHolder(input.profile, {
+    userId: input.userId,
+    email: input.email,
+  });
 
   const isFr = input.locale === "fr";
   const { label: issueDateLabel, iso: issueDateIso } = resolveIssueDate(input.createdAt, input.locale);
@@ -111,6 +150,7 @@ export function buildTrackLicenseDocument(input: TrackLicenseInput): TrackLicens
   return {
     licenseId: buildTrackLicenseId(input.loopId, planId),
     holderName,
+    holderSource,
     trackTitle,
     planLabel: planDisplayName(planId),
     planId,
@@ -141,19 +181,20 @@ export function buildExampleTrackLicenseDocument(locale: AppLocale): TrackLicens
     ? [
         `Exemple n° ${licenseId} — non valable juridiquement`,
         "Les vraies licences : 1 numéro unique par génération / titre",
-        "Délivrées au téléchargement beat ou stems (Pro, Studio, Plus)",
-        "Nom légal du titulaire requis — génération 100 % navigateur",
+        "Disponibles depuis le menu ⋯ de chaque titre (Pro, Studio, Plus)",
+        "Nom d'artiste par défaut — nom légal optionnel dans Réglages",
       ]
     : [
         `Sample no. ${licenseId} — not legally binding`,
         "Real licenses: 1 unique ID per generation / track",
-        "Issued on beat or stems download (Pro, Studio, Plus)",
-        "Holder legal name required — generated fully in-browser",
+        "Available from each track ⋯ menu (Pro, Studio, Plus)",
+        "Artist name by default — optional legal name in Settings",
       ];
 
   return {
     licenseId,
     holderName,
+    holderSource: "legal",
     trackTitle,
     planLabel: planDisplayName(planId),
     planId,

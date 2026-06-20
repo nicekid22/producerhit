@@ -27,8 +27,8 @@ export default function CommercialLicensePage() {
           </h1>
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-white/55">
             {isFr
-              ? "Chaque export Pro+ génère un certificat unique — numéro, titre et ton nom légal. Rien n'est stocké côté serveur : tout se fait dans ton navigateur."
-              : "Every Pro+ export generates a unique certificate — ID, track title, and your legal name. Nothing is stored server-side: it's all in your browser."}
+              ? "Chaque titre Pro+ a un certificat unique — numéro, titre et ton pseudo artiste. Rien n'est stocké côté serveur : tout se fait dans ton navigateur."
+              : "Every Pro+ track has a unique certificate — ID, track title, and your artist username. Nothing is stored server-side: it's all in your browser."}
           </p>
         </header>
 
@@ -45,15 +45,15 @@ export default function CommercialLicensePage() {
                 {(isFr
                   ? [
                       "Abonne-toi Pro, Studio ou Plus",
-                      "Renseigne ton prénom et nom dans Réglages (privé)",
-                      "Télécharge un beat ou des stems — la popup licence s'ouvre",
-                      "Imprime ou enregistre en PDF pour un client, curator ou synchro",
+                      "Télécharge un beat depuis la bibliothèque — sans popup",
+                      "Certificat disponible dans le menu ⋯ → « Certificat de licence »",
+                      "Nom légal optionnel dans Réglages pour un PDF contractuel",
                     ]
                   : [
                       "Subscribe to Pro, Studio, or Plus",
-                      "Enter your legal first and last name in Settings (private)",
-                      "Download a beat or stems — the license popup opens",
-                      "Print or save as PDF for a client, curator, or sync deal",
+                      "Download a beat from your library — no popup",
+                      "Certificate available in ⋯ menu → « License certificate »",
+                      "Optional legal name in Settings for contract-ready PDFs",
                     ]
                 ).map((line) => (
                   <li key={line}>{line}</li>
@@ -86,7 +86,7 @@ export default function CommercialLicensePage() {
             className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.05] px-5 py-2.5 text-sm font-bold text-white hover:bg-white/10"
           >
             <Printer className="h-4 w-4" aria-hidden />
-            {isFr ? "Nom légal (réglages)" : "Legal name (settings)"}
+            {isFr ? "Nom légal (optionnel)" : "Legal name (optional)"}
           </Link>
         </div>
 

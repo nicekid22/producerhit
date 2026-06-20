@@ -1,40 +1,21 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Download, Printer, ShieldCheck, X } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { CommercialLicenseCertificate } from "@/components/license/CommercialLicenseCertificate";
-import {
-  buildTrackLicenseDocument,
-  hasLegalHolderName,
-} from "@/lib/commercialLicenseDocument";
-import { saveLegalName, validateLegalName } from "@/lib/saveLegalName";
+import { buildTrackLicenseDocument } from "@/lib/commercialLicenseDocument";
 import { useAuthStore } from "@/stores/authStore";
 import { useCommercialLicenseStore } from "@/stores/commercialLicenseStore";
 import { useLocaleStore } from "@/stores/localeStore";
-import toast from "react-hot-toast";
 import { buildCommercialLicenseModalCopy } from "@/i18n/commercialLicenseModalCatalog";
 
 export function CommercialLicenseModal() {
   const locale = useLocaleStore((s) => s.locale);
   const profile = useAuthStore((s) => s.profile);
-  const refreshProfile = useAuthStore((s) => s.refreshProfile);
+  const user = useAuthStore((s) => s.user);
   const { open, ctx, closeLicense } = useCommercialLicenseStore();
   const copy = useMemo(() => buildCommercialLicenseModalCopy(locale), [locale]);
-
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [localProfile, setLocalProfile] = useState(profile);
-
-  useEffect(() => {
-    setLocalProfile(profile);
-  }, [profile]);
-
-  useEffect(() => {
-    if (!open) return;
-    setFirstName(profile?.legal_first_name?.trim() ?? "");
-    setLastName(profile?.legal_last_name?.trim() ?? "");
-  }, [open, profile?.legal_first_name, profile?.legal_last_name]);
 
   useEffect(() => {
     if (!open) return;
@@ -45,49 +26,24 @@ export function CommercialLicenseModal() {
     };
   }, [open]);
 
-  const needsLegalName = !hasLegalHolderName(localProfile);
-
   const doc = useMemo(() => {
-    if (!ctx || needsLegalName) return null;
+    if (!ctx) return null;
     return buildTrackLicenseDocument({
       loopId: ctx.loopId,
       trackTitle: ctx.trackTitle,
       createdAt: ctx.createdAt,
-      plan: localProfile?.plan,
-      profile: localProfile,
+      plan: profile?.plan,
+      profile,
       locale,
       exportKind: ctx.exportKind,
+      userId: user?.id,
+      email: user?.email,
     });
-  }, [ctx, needsLegalName, localProfile, locale]);
+  }, [ctx, profile, locale, user?.id, user?.email]);
 
   const printCert = useCallback(() => {
     window.print();
   }, []);
-
-  const handleSaveLegalName = async () => {
-    const firstErr = validateLegalName(firstName, locale);
-    const lastErr = validateLegalName(lastName, locale);
-    if (firstErr || lastErr) {
-      toast.error(firstErr ?? lastErr ?? copy.invalidName);
-      return;
-    }
-    setSaving(true);
-    try {
-      const result = await saveLegalName(firstName, lastName);
-      if (result.ok === false) {
-        const errCode = result.error;
-        toast.error(
-          errCode === "legal_name_invalid" ? copy.invalidFirstLast : copy.saveFailed,
-        );
-        return;
-      }
-      const refreshed = await refreshProfile();
-      setLocalProfile(refreshed);
-      toast.success(copy.nameSaved);
-    } finally {
-      setSaving(false);
-    }
-  };
 
   if (!open || !ctx || typeof document === "undefined") return null;
 
@@ -128,42 +84,25 @@ export function CommercialLicenseModal() {
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-5">
-          {needsLegalName ? (
-            <div className="mx-auto max-w-md">
-              <p className="text-sm leading-relaxed text-white/65">{copy.legalNameIntro}</p>
-              <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                <label className="block">
-                  <span className="text-xs font-semibold text-white/45">{copy.firstName}</span>
-                  <input
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    className="mt-2 w-full rounded-xl border border-white/12 bg-white/[0.04] px-3 py-2.5 text-sm text-white outline-none focus:border-violet-500/50"
-                    autoComplete="given-name"
-                  />
-                </label>
-                <label className="block">
-                  <span className="text-xs font-semibold text-white/45">{copy.lastName}</span>
-                  <input
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    className="mt-2 w-full rounded-xl border border-white/12 bg-white/[0.04] px-3 py-2.5 text-sm text-white outline-none focus:border-violet-500/50"
-                    autoComplete="family-name"
-                  />
-                </label>
-              </div>
-              <Button variant="primary" className="mt-5 w-full" disabled={saving} onClick={() => void handleSaveLegalName()}>
-                {saving ? copy.saving : copy.continueToLicense}
-              </Button>
-            </div>
-          ) : doc ? (
+          {doc ? (
             <>
-              <p className="mb-4 text-center text-xs text-white/45">{copy.downloadHint}</p>
+              <p className="mb-4 text-center text-xs text-white/45">{copy.certificateHint}</p>
               <CommercialLicenseCertificate doc={doc} printTarget />
+              {doc.holderSource !== "legal" ? (
+                <p className="mt-4 text-center text-[11px] leading-relaxed text-white/40">
+                  {copy.optionalLegalName}{" "}
+                  <Link to="/settings#pk-settings-profile" className="text-violet-300 hover:underline" onClick={closeLicense}>
+                    {copy.settingsLink}
+                  </Link>
+                </p>
+              ) : null}
             </>
-          ) : null}
+          ) : (
+            <p className="mx-auto max-w-md text-center text-sm text-white/60">{copy.upgradeRequired}</p>
+          )}
         </div>
 
-        {!needsLegalName && doc ? (
+        {doc ? (
           <footer className="flex shrink-0 flex-wrap gap-2 border-t border-white/8 px-5 py-4">
             <Button variant="primary" className="flex-1 sm:flex-none" onClick={printCert}>
               <Printer className="h-4 w-4" />

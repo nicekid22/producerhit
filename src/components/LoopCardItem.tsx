@@ -30,9 +30,9 @@ import { prepareLoopVariantGeneration, variantResultTitle } from "@/lib/loopVari
 import { extractLoopVocalLanguage, formatVocalLanguageLabel, isSongLoop } from "@/lib/vocalLanguages";
 import { resolveLoopVoiceCloneInfo } from "@/lib/voiceCloneMeta";
 import { resolveStemsDownloadUrl } from "@/lib/stemsDownload";
-import { canDownloadStems } from "@/lib/planEntitlements";
+import { canDownloadStems, hasCommercialUseRights } from "@/lib/planEntitlements";
 import { runCheckoutWithAuth } from "@/lib/billing";
-import { downloadCommercialBeat, triggerStemsLicenseModal } from "@/lib/commercialBeatDownload";
+import { downloadCommercialBeat, openTrackLicenseModal } from "@/lib/commercialBeatDownload";
 import { useGrowthUpsellStore } from "@/stores/growthUpsellStore";
 import { GenerationCreditAmount } from "@/components/GenerationCreditIcon";
 import { rerollLoopCover, LOOP_COVER_REROLL_CREDIT_COST } from "@/lib/loopCoverReroll";
@@ -52,6 +52,7 @@ import {
   Play,
   RefreshCcw,
   Share2,
+  ShieldCheck,
   Sparkles,
   Trash2,
   X,
@@ -509,6 +510,20 @@ export const LoopCardItem = memo(function LoopCardItem({
         {isDownloading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
         {lc.download}
       </button>
+      {hasCommercialUseRights(plan) ? (
+        <button
+          type="button"
+          className="pk-library-card__menu-item"
+          onClick={(e) => {
+            e.stopPropagation();
+            setMenuOpen(false);
+            openTrackLicenseModal(loop, "loop_card_license");
+          }}
+        >
+          <ShieldCheck className="h-3.5 w-3.5" />
+          {lc.licenseCert}
+        </button>
+      ) : null}
       {stemsDownloadUrl ? (
         <button
           type="button"
@@ -528,7 +543,6 @@ export const LoopCardItem = memo(function LoopCardItem({
               a.target = "_blank";
               a.rel = "noopener noreferrer";
               a.click();
-              triggerStemsLicenseModal(loop, "loop_card_stems");
             } finally {
               setIsDownloadingStems(false);
             }
@@ -1330,7 +1344,6 @@ export const LoopCardItem = memo(function LoopCardItem({
                 a.target = "_blank";
                 a.rel = "noopener noreferrer";
                 a.click();
-                triggerStemsLicenseModal(loop, "loop_card_stems");
               } finally {
                 setIsDownloadingStems(false);
               }

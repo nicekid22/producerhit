@@ -83,8 +83,8 @@ const DASHBOARD = {
     th: "เปิดใช้แพ็กเกจ: ",
   }),
   addLegalName: L({
-    en: "Add your legal name in Settings for per-track licenses.",
-    fr: "Ajoute ton prénom et nom dans Réglages pour tes licences par titre.",
+    en: "Optional: add a legal name in Settings for contract-ready license PDFs.",
+    fr: "Optionnel : ajoute un nom légal dans Réglages pour des PDF de licence prêts pour contrat.",
     es: "Añade tu nombre legal en Ajustes para licencias por pista.",
     pt: "Adicione seu nome legal em Configurações para licenças por faixa.",
     de: "Trage deinen Namen in den Einstellungen ein für Track-Lizenzen.",
