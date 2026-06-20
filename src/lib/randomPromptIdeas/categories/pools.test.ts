@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { CATEGORIZED_EN, CATEGORIZED_FR, flattenCategories } from "./index";
-import { getGenreMenuPromptCount } from "@/lib/randomPromptIdeas/genreMenuPrompts";
+import { getGenreMenuPromptCount, pickRandomGenreMenuDice } from "@/lib/randomPromptIdeas/genreMenuPrompts";
+import { pickRandomGenreMenuDiceRoll } from "@/lib/randomPromptIdeas";
 import { GENRE_COUNT } from "@/lib/genres";
-
 describe("random prompt pools", () => {
   it("FR/EN song pools have hundreds of unique prompts", () => {
     const frSong = flattenCategories(CATEGORIZED_FR.song);
@@ -19,6 +19,20 @@ describe("random prompt pools", () => {
     expect(frBeat.length).toBeGreaterThanOrEqual(110);
     expect(enBeat.length).toBeGreaterThanOrEqual(110);
     expect(new Set(frBeat).size).toBe(frBeat.length);
+  });
+
+  it("genre_menu FR prompts mix French mood with English ACE tags", () => {
+    const sample = pickRandomGenreMenuDice("song", "fr").prompt;
+    expect(sample).toMatch(/\b(voix|nuit|heartbreak|mix|chorus|808|rhodes|trap)\b/i);
+    expect(/^(fais|une chanson|make me|song about)/i.test(sample)).toBe(false);
+  });
+
+  it("dice roll respects prompt locale for song", () => {
+    const fr = pickRandomGenreMenuDiceRoll("fr", "song");
+    const en = pickRandomGenreMenuDiceRoll("en", "song");
+    expect(fr.genre).toBeTruthy();
+    expect(en.genre).toBeTruthy();
+    expect(fr.prompt).not.toEqual(en.prompt);
   });
 
   it("genre_menu prompts use ACE tag format (no conversational prose)", () => {

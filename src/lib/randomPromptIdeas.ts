@@ -90,8 +90,8 @@ export function pickRandomPrompt(locale: AppLocale, mode: PromptMode): string {
 }
 
 /** Dice roll from full genre catalog — sets matching genre + detailed ACE prompt. */
-export function pickRandomGenreMenuDiceRoll(_locale: AppLocale, mode: PromptMode): GenreMenuDicePick {
-  const { genre, prompt } = pickRandomGenreMenuDice(mode);
+export function pickRandomGenreMenuDiceRoll(locale: AppLocale, mode: PromptMode): GenreMenuDicePick {
+  const { genre, prompt } = pickRandomGenreMenuDice(mode, locale);
   return { genre, prompt: formatDicePrompt(prompt, mode) };
 }
 

@@ -522,7 +522,7 @@ export const CATEGORIZED_FR: CategorizedLocalePools = {
     SONG_ROCK,
     SONG_ELECTRONIC,
     SONG_IMPRESSIVE,
-    buildGenreMenuCategory("song", "Tous les genres du menu"),
+    buildGenreMenuCategory("song", "Tous les genres du menu", "fr"),
   ],
   beat: [
     BEAT_URBAN,
@@ -533,7 +533,7 @@ export const CATEGORIZED_FR: CategorizedLocalePools = {
     BEAT_POP_RNB,
     BEAT_ROCK,
     BEAT_IMPRESSIVE,
-    buildGenreMenuCategory("beat", "Tous les genres du menu"),
+    buildGenreMenuCategory("beat", "Tous les genres du menu", "fr"),
   ],
   hero: HERO,
 };
