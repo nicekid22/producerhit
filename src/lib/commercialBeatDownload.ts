@@ -3,8 +3,17 @@ import { buildCommonSection } from "@/i18n/systemCatalog";
 import toast from "react-hot-toast";
 import type { Loop } from "@/types/loop";
 import { hasCommercialUseRights } from "@/lib/planEntitlements";
+import { withSupabaseFunctionAuth, isPublicAceStreamUrl } from "@/lib/publicAcePlayback";
+import { fetchAudioAsBlobUrl } from "@/lib/playableAudio";
+import {
+  LOOP_AUDIO_BUCKET,
+  loopAudioStorageObjectPaths,
+  parseLoopAudioStoragePath,
+} from "@/lib/storageAudio";
+import { supabase } from "@/lib/supabaseClient";
 import { useCommercialLicenseStore } from "@/stores/commercialLicenseStore";
 import { useGrowthUpsellStore } from "@/stores/growthUpsellStore";
+import { fetchCachedLoopAudioBlob } from "@/stores/loopsStore";
 
 function resolveAudioExtension(loop: Loop, blobType: string): string {
   const formatHint = (loop.details?.audioFormat || "").toLowerCase();
@@ -32,33 +41,93 @@ async function saveBlobDownload(blob: Blob, filename: string): Promise<void> {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => URL.revokeObjectURL(url), 2_000);
 }
 
-async function triggerAudioDownload(audioUrl: string, filename: string): Promise<void> {
-  if (audioUrl.startsWith("data:") || audioUrl.startsWith("blob:")) {
-    const response = await fetch(audioUrl);
-    if (!response.ok) throw new Error("fetch_failed");
+async function fetchHttpAudioBlob(sourceUrl: string): Promise<Blob | null> {
+  const trimmed = sourceUrl.trim();
+  if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) return null;
+  const fetchUrl = isPublicAceStreamUrl(trimmed) ? withSupabaseFunctionAuth(trimmed) : trimmed;
+  try {
+    const response = await fetch(fetchUrl, { mode: "cors", credentials: "omit", referrerPolicy: "no-referrer" });
+    if (!response.ok) return null;
     const blob = await response.blob();
-    await saveBlobDownload(blob, filename);
-    return;
+    return blob.size > 0 ? blob : null;
+  } catch {
+    return null;
+  }
+}
+
+async function downloadFromLoopAudioStorage(audioUrl: string): Promise<Blob | null> {
+  const storagePath = parseLoopAudioStoragePath(audioUrl);
+  if (!storagePath) return null;
+
+  const tryDownload = async (path: string): Promise<Blob | null> => {
+    const { data, error } = await supabase.storage.from(LOOP_AUDIO_BUCKET).download(path);
+    if (error || !data?.size) return null;
+    return data;
+  };
+
+  const direct = await tryDownload(storagePath);
+  if (direct) return direct;
+
+  const parts = storagePath.split("/");
+  if (parts.length >= 2) {
+    const userId = parts[0] ?? "";
+    const filePart = parts.slice(1).join("/");
+    const loopId = filePart.replace(/\.[^/.]+$/, "");
+    if (userId && loopId) {
+      for (const candidate of loopAudioStorageObjectPaths(userId, loopId)) {
+        const blob = await tryDownload(candidate);
+        if (blob) return blob;
+      }
+    }
   }
 
-  try {
-    const response = await fetch(audioUrl);
+  return null;
+}
+
+/** Résout le blob audio pour téléchargement — cache local, Storage auth, CORS, flux Edge. */
+export async function resolveLoopDownloadBlob(loop: Loop): Promise<Blob> {
+  const raw = typeof loop.audioUrl === "string" ? loop.audioUrl.trim() : "";
+  if (!raw) throw new Error("missing_audio");
+
+  if (loop.id && !loop.id.startsWith("local-")) {
+    const cached = await fetchCachedLoopAudioBlob(loop.id).catch(() => null);
+    if (cached?.size) return cached;
+  }
+
+  if (raw.startsWith("blob:") || raw.startsWith("data:")) {
+    const response = await fetch(raw);
     if (!response.ok) throw new Error("fetch_failed");
     const blob = await response.blob();
-    await saveBlobDownload(blob, filename);
-  } catch {
-    const a = document.createElement("a");
-    a.href = audioUrl;
-    a.download = filename;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    if (!blob.size) throw new Error("empty_blob");
+    return blob;
   }
+
+  const storageBlob = await downloadFromLoopAudioStorage(raw);
+  if (storageBlob) return storageBlob;
+
+  const httpBlob = await fetchHttpAudioBlob(raw);
+  if (httpBlob) return httpBlob;
+
+  if (loop.id) {
+    try {
+      const blobUrl = await fetchAudioAsBlobUrl(
+        isPublicAceStreamUrl(raw) ? withSupabaseFunctionAuth(raw) : raw,
+        loop.id,
+      );
+      const response = await fetch(blobUrl);
+      if (response.ok) {
+        const blob = await response.blob();
+        if (blob.size) return blob;
+      }
+    } catch {
+      // continue
+    }
+  }
+
+  throw new Error("fetch_failed");
 }
 
 export type CommercialBeatDownloadOptions = {
@@ -85,27 +154,10 @@ export async function downloadCommercialBeat({
   }
 
   try {
-    let ext = resolveAudioExtension(loop, "");
+    const blob = await resolveLoopDownloadBlob(loop);
+    const ext = resolveAudioExtension(loop, blob.type || "");
     const baseName = cleanDownloadFilename(loop.name);
-
-    if (loop.audioUrl.startsWith("data:") || loop.audioUrl.startsWith("blob:")) {
-      const response = await fetch(loop.audioUrl);
-      if (!response.ok) throw new Error("fetch_failed");
-      const blob = await response.blob();
-      ext = resolveAudioExtension(loop, blob.type || "");
-      await saveBlobDownload(blob, `${baseName}-producerhit.${ext}`);
-    } else {
-      try {
-        const response = await fetch(loop.audioUrl);
-        if (!response.ok) throw new Error("fetch_failed");
-        const blob = await response.blob();
-        ext = resolveAudioExtension(loop, blob.type || "");
-        await saveBlobDownload(blob, `${baseName}-producerhit.${ext}`);
-      } catch {
-        await triggerAudioDownload(loop.audioUrl, `${baseName}-producerhit.${ext}`);
-      }
-    }
-
+    await saveBlobDownload(blob, `${baseName}-producerhit.${ext}`);
     toast.success(buildCommonSection(locale).beatDownloaded);
     return true;
   } catch {

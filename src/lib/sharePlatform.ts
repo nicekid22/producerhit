@@ -1,5 +1,15 @@
 import type { Loop } from "@/types/loop";
-import { buildLoopShareUrl, buildSignupUrl, type GrowthChannel } from "@/lib/growthLinks";
+import {
+  buildLoopShareUrl,
+  buildSignupUrl,
+  facebookShareUrl,
+  linkedInShareUrl,
+  redditSubmitUrl,
+  telegramShareUrl,
+  twitterShareIntent,
+  whatsAppShareUrl,
+  type GrowthChannel,
+} from "@/lib/growthLinks";
 import { buildSocialKitText, buildTikTokCaption, buildTikTokHashtags } from "@/lib/tiktokPack";
 import type { VisualizerLayout } from "@/lib/visualizer/types";
 
@@ -7,6 +17,33 @@ import type { AppLocale } from "@/i18n/config";
 export type SharePlatform = "tiktok" | "instagram" | "youtube";
 
 export const SHARE_PLATFORMS: SharePlatform[] = ["tiktok", "instagram", "youtube"];
+
+/** Réseaux où l’on poste la vidéo exportée (Shorts / Reels / TikTok). */
+export const VIDEO_SHARE_PLATFORMS: SharePlatform[] = ["tiktok", "instagram", "youtube"];
+
+/** Réseaux où l’on partage le lien d’écoute + caption (intent / clipboard). */
+export const LINK_SHARE_CHANNELS = [
+  "twitter",
+  "whatsapp",
+  "facebook",
+  "telegram",
+  "reddit",
+  "linkedin",
+] as const satisfies readonly GrowthChannel[];
+
+export type LinkShareChannel = (typeof LINK_SHARE_CHANNELS)[number];
+
+export function linkShareChannelLabel(channel: LinkShareChannel, locale: AppLocale): string {
+  const labels: Record<LinkShareChannel, { fr: string; en: string }> = {
+    twitter: { fr: "X", en: "X" },
+    whatsapp: { fr: "WhatsApp", en: "WhatsApp" },
+    facebook: { fr: "Facebook", en: "Facebook" },
+    telegram: { fr: "Telegram", en: "Telegram" },
+    reddit: { fr: "Reddit", en: "Reddit" },
+    linkedin: { fr: "LinkedIn", en: "LinkedIn" },
+  };
+  return locale === "fr" ? labels[channel].fr : labels[channel].en;
+}
 
 export function sharePlatformLabel(platform: SharePlatform, _locale: AppLocale): string {
   if (platform === "tiktok") return "TikTok";
@@ -41,6 +78,10 @@ export function buildPlatformCaption(loop: Loop, platform: SharePlatform, locale
 
 export function resolvePlatformShareUrl(loop: Loop, platform: SharePlatform): string {
   const channel = sharePlatformChannel(platform);
+  return loop.isPublic ? buildLoopShareUrl(loop.id, channel) : buildSignupUrl(channel);
+}
+
+export function resolveLinkShareUrl(loop: Loop, channel: LinkShareChannel): string {
   return loop.isPublic ? buildLoopShareUrl(loop.id, channel) : buildSignupUrl(channel);
 }
 
@@ -111,4 +152,88 @@ export function sharePlatformFallbackHint(platform: SharePlatform, locale: AppLo
   return locale === "fr"
     ? `Vidéo téléchargée · caption copiée — importe dans ${label}.`
     : `Video saved · caption copied — import in ${label}.`;
+}
+
+export function canNativeShareLink(): boolean {
+  return typeof navigator !== "undefined" && typeof navigator.share === "function";
+}
+
+export function openPlatformUploadPage(platform: SharePlatform): void {
+  const urls: Record<SharePlatform, string> = {
+    tiktok: "https://www.tiktok.com/upload",
+    instagram: "https://www.instagram.com/",
+    youtube: "https://www.youtube.com/upload",
+  };
+  window.open(urls[platform], "_blank", "noopener,noreferrer");
+}
+
+export function buildLinkShareIntentUrl(channel: LinkShareChannel, caption: string, shareUrl: string): string {
+  const title = caption.split("\n")[0]?.trim() || "ProducerHit";
+  switch (channel) {
+    case "twitter":
+      return twitterShareIntent(caption, shareUrl);
+    case "whatsapp":
+      return whatsAppShareUrl(caption, shareUrl);
+    case "facebook":
+      return facebookShareUrl(shareUrl);
+    case "telegram":
+      return telegramShareUrl(caption, shareUrl);
+    case "reddit":
+      return redditSubmitUrl({ title, url: shareUrl });
+    case "linkedin":
+      return linkedInShareUrl(shareUrl);
+    default:
+      return shareUrl;
+  }
+}
+
+export type LinkShareResult = "opened" | "copied";
+
+/** Partage lien + caption via intent URL (X, WhatsApp, etc.). */
+export function shareLinkToChannel(channel: LinkShareChannel, caption: string, shareUrl: string): LinkShareResult {
+  const url = buildLinkShareIntentUrl(channel, caption, shareUrl);
+  window.open(url, "_blank", "noopener,noreferrer,width=640,height=520");
+  return "opened";
+}
+
+export async function copyLinkShareKit(caption: string, shareUrl: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(buildSocialKitText(caption, shareUrl));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function shareLinkViaNativeSheet(caption: string, shareUrl: string, title: string): Promise<"shared" | "cancelled" | "unavailable"> {
+  if (!canNativeShareLink()) return "unavailable";
+  try {
+    await navigator.share({ title, text: caption, url: shareUrl });
+    return "shared";
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") return "cancelled";
+    return "unavailable";
+  }
+}
+
+export function shareSectionHint(locale: AppLocale, canShareVideo: boolean): string {
+  if (canShareVideo) {
+    return locale === "fr"
+      ? "Choisis l’app dans la liste — vidéo + caption incluses."
+      : "Pick an app from the list — video + caption included.";
+  }
+  return locale === "fr"
+    ? "Sur ordinateur : la vidéo se télécharge et la caption se copie — importe dans l’app."
+    : "On desktop: video downloads and caption copies — import in the app.";
+}
+
+export function linkShareHint(locale: AppLocale, isPublic: boolean): string {
+  if (isPublic) {
+    return locale === "fr"
+      ? "Partage le lien d’écoute avec caption."
+      : "Share the listen link with caption.";
+  }
+  return locale === "fr"
+    ? "Lien vers ProducerHit — rends public pour le lien direct du morceau."
+    : "Link to ProducerHit — go public for a direct track link.";
 }
