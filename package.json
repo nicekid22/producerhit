@@ -39,6 +39,7 @@
     "stripe:sync-prices": "node --use-system-ca scripts/sync-stripe-prices.mjs",
     "reddit:oauth": "node scripts/reddit-oauth.mjs",
     "reddit:oauth:check": "node scripts/reddit-oauth.mjs --check",
+    "reddit:manual": "node --use-system-ca scripts/reddit-engagement-agent.mjs --open",
     "ai-visibility:test": "node scripts/ai-visibility-test.mjs",
     "genre-stats:sync": "node scripts/sync-genre-stats.mjs",
     "growth:social": "node scripts/auto-social.mjs",

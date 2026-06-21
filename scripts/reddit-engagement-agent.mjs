@@ -31,6 +31,11 @@ import {
 } from "./lib/redditHumanCopy.mjs";
 import { SCOUT_SUBS, getScoutSubsForRun, scoreRedditThread } from "./lib/redditScout.mjs";
 import { fetchPublicLoops } from "./lib/fetchPublicLoops.mjs";
+import {
+  manualScoutLinks,
+  openManualPlaybook,
+  openRedditUrls,
+} from "./lib/redditManualMode.mjs";
 
 const SITE = "https://www.producerhit.com";
 const repoRoot = process.cwd();
@@ -214,24 +219,8 @@ async function scoutThreads(state) {
   return [...byId.values()].sort((a, b) => b.score - a.score).slice(0, 8);
 }
 
-function manualScoutLinks() {
-  const byCategory = { song: [], beats: [], production: [], ai: [] };
-  for (const sr of SCOUT_SUBS) {
-    const cat = sr.category in byCategory ? sr.category : "production";
-    if (byCategory[cat].length < 6) byCategory[cat].push(sr);
-  }
-  const picked = [...byCategory.ai, ...byCategory.song, ...byCategory.beats, ...byCategory.production].slice(
-    0,
-    12,
-  );
-  return picked.flatMap((sr) =>
-    sr.queries.slice(0, 2).map((q) => ({
-      subreddit: `r/${sr.name}`,
-      category: sr.category,
-      query: q,
-      url: redditSearchUrl(sr.name, q),
-    })),
-  );
+function manualScoutLinksLocal() {
+  return manualScoutLinks(12);
 }
 
 async function postCommentsOpportunities(opportunities, loops, state) {
@@ -461,7 +450,7 @@ async function main() {
     saveState(state);
   }
 
-  const manualLinks = manualScoutLinks();
+  const manualLinks = manualScoutLinksLocal();
   const report = buildReport({ loops, opportunities, ownPost, manualLinks, autoResults });
   const outFile = path.join(reportsDir, `reddit-agent-${new Date().toISOString().slice(0, 10)}.md`);
   writeFileSync(outFile, report, "utf8");
@@ -473,12 +462,8 @@ async function main() {
   console.log(`  ${opportunities.length} threads · OAuth: ${hasRedditCredentials() ? "oui" : "non (mode manuel)"}`);
 
   if (shouldOpen) {
-    const urls = [
-      redditSubmitUrl({ subreddit: ownPost.subreddit, title: ownPost.title, selftext: ownPost.selftext }),
-      redditSearchUrl("makinghiphop", "ai beat generator"),
-    ];
-    if (opportunities[0]?.permalink) urls.push(opportunities[0].permalink);
-    openUrls(urls);
+    openManualPlaybook(redditLoop ?? { id: "demo", name: "Type Beat", genre: "Trap" });
+    if (opportunities[0]?.permalink) openRedditUrls([opportunities[0].permalink]);
     console.log(`→ Post discussion: ${ownPost.subLabel} · Commentaires: r/makinghiphop (pas de beat)`);
   }
 }
