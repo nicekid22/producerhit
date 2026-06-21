@@ -15,6 +15,7 @@ import {
   COMPARISON_PAGE_PATH_SET,
   SEO_PAGE_PATH_SET,
 } from "@/generated/marketingRoutePaths";
+import { buildForAiJsonLd } from "@/lib/marketing/phase1PagesSeo";
 
 function setMeta(nameOrProp: string, value: string, kind: "name" | "property") {
   const selector = kind === "name" ? `meta[name="${nameOrProp}"]` : `meta[property="${nameOrProp}"]`;
@@ -80,6 +81,8 @@ function slugKeyFromPath(pathname: string): string {
   if (pathname === "/ai-music-generator") return "ai-music-generator";
   if (pathname === "/type-beat-generator-ai") return "type-beat-generator-ai";
   if (pathname === "/generate-beats-online-free") return "generate-beats-online-free";
+  if (pathname === "/for-ai") return "for-ai";
+  if (pathname === "/ai-beat-name-generator") return "beat-name-generator";
   if (COMPARISON_PAGE_PATH_SET.has(pathname)) return "comparison";
   if (SEO_PAGE_PATH_SET.has(pathname)) return "seo-landing";
   return "other";
@@ -466,6 +469,40 @@ export function SeoBootstrap() {
               highPrice: String(PLAN_MONTHLY_USD.plus),
               offerCount: 3,
             },
+          },
+        ]);
+        return;
+      }
+
+      if (slugKey === "for-ai") {
+        setJsonLd([
+          ...baseJsonLd,
+          buildForAiJsonLd(locale),
+          {
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            name: pageSeo.title,
+            description: pageSeo.description,
+            url: `${origin}/for-ai`,
+            inLanguage: locale,
+            isPartOf: { "@type": "WebSite", name: "ProducerHit", url: origin },
+          },
+        ]);
+        return;
+      }
+
+      if (slugKey === "beat-name-generator") {
+        setJsonLd([
+          ...baseJsonLd,
+          {
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            name: pageSeo.title,
+            applicationCategory: "UtilitiesApplication",
+            operatingSystem: "Web",
+            url: `${origin}/ai-beat-name-generator`,
+            description: pageSeo.description,
+            offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
           },
         ]);
         return;

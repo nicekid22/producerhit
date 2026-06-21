@@ -38,6 +38,8 @@ const GenerationActivityPill = lazy(() =>
 const LandingPage = lazy(() => import("@/pages/Landing"));
 const HomePage = lazy(() => import("@/pages/Home"));
 const ComparePage = lazy(() => import("@/pages/ComparePage"));
+const ForAiPage = lazy(() => import("@/pages/ForAiPage"));
+const BeatNameGeneratorPage = lazy(() => import("@/pages/BeatNameGeneratorPage"));
 const BlogPage = lazy(() => import("@/pages/Blog"));
 const ExplorePage = lazy(() => import("@/pages/Explore"));
 const CommunityTrendingPage = lazy(() => import("@/pages/CommunityTrending"));
@@ -97,6 +99,8 @@ export default function App() {
                   {COMPARISON_PAGE_PATHS.map((path) => (
                     <Route key={path} path={path} element={<ComparePage />} />
                   ))}
+                  <Route path="/for-ai" element={<ForAiPage />} />
+                  <Route path="/ai-beat-name-generator" element={<BeatNameGeneratorPage />} />
                   <Route path="/auth" element={<AuthPage />} />
                   <Route path="/auth/callback" element={<AuthCallbackPage />} />
                   <Route path="/pricing" element={<PricingPage />} />

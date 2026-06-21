@@ -86,6 +86,10 @@ export function LandingFooter({ locale, user }: Props) {
 
     { to: "/voice-studio", label: f.voiceStudio },
 
+    { to: "/ai-beat-name-generator", label: locale === "fr" ? "Noms de beats IA" : "Beat Name Generator" },
+
+    { to: "/for-ai", label: locale === "fr" ? "Fiche produit IA" : "For AI assistants" },
+
   ];
 
 

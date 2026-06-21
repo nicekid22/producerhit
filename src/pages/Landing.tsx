@@ -39,6 +39,7 @@ import { LandingFooter } from "@/components/landing/LandingFooter";
 import { TestimonialsStrip } from "@/components/landing/TestimonialsStrip";
 import { LandingCommunityRail } from "@/components/landing/LandingCommunityRail";
 import { LandingTrafficStrip } from "@/components/landing/LandingTrafficStrip";
+import { DailySpotlightSection } from "@/components/marketing/DailySpotlightSection";
 import { LandingBenefits } from "@/components/landing/LandingBenefits";
 import { LandingPricingTeaser } from "@/components/landing/LandingPricingTeaser";
 import { ProducerLegendsSection } from "@/components/marketing/ProducerLegendsSection";
@@ -1358,6 +1359,7 @@ export default function Landing() {
         ) : null}
 
         <RevealSection className={`${landingSectionClass()} pk-landing-below-fold${mobileLandingFocus ? " hidden lg:block" : ""}`}>
+          <DailySpotlightSection locale={locale} className="mb-8" />
           <LandingTrafficStrip locale={locale} className="mb-6" />
           <LandingCommunityRail
             locale={locale}
