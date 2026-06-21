@@ -91,6 +91,10 @@ export default function GenreStatsPage() {
             <li>{isFr ? "Regénération : `npm run genre-stats:sync`" : "Regenerate: `npm run genre-stats:sync`"}</li>
           </ul>
           <p className="mt-4 text-sm">
+            <Link to="/free-beat-generators" className="text-violet-300 hover:underline">
+              {isFr ? "Générateurs beats gratuits par genre →" : "Free beat generators by genre →"}
+            </Link>
+            {" · "}
             <Link to="/for-ai" className="text-violet-300 hover:underline">
               /for-ai
             </Link>

@@ -2,6 +2,7 @@ import { EXTRA_BEAT_PAGES, INTENT_MUSIC_PAGES, MUSIC_AI_PAGES } from "@/lib/seoP
 import { LATIN_SEO_PAGES } from "@/lib/seoPagesLatin";
 import { ASIA_SEO_PAGES } from "@/lib/seoPagesAsia";
 import { PILLAR_SEO_PAGES } from "@/lib/seoPagesPillar";
+import { FREE_BEAT_HUB_PAGE, FREE_BEAT_PAGES } from "@/lib/seoPagesPhase3Free";
 
 import type { AppLocale } from "@/i18n/config";
 export type SeoPageCategory = "core" | "genre" | "music-ai" | "intent" | "beat" | "latin" | "country" | "song" | "hub" | "asia" | "middle-east";
@@ -234,6 +235,8 @@ export const SEO_PAGES: SeoPageConfig[] = [
   ...LATIN_SEO_PAGES,
   ...ASIA_SEO_PAGES,
   ...EXTRA_BEAT_PAGES,
+  ...FREE_BEAT_PAGES,
+  FREE_BEAT_HUB_PAGE,
 ];
 
 export const SEO_PAGE_PATHS = SEO_PAGES.flatMap((p) => [p.path, p.pathFr]);
@@ -257,6 +260,8 @@ export function getSeoPageBySlugKey(slugKey: string): SeoPageConfig | null {
 }
 
 const GENRE_SEO_HINTS: Array<{ match: RegExp; slugKey: string }> = [
+  { match: /uk garage|2.?step|speed garage/i, slugKey: "free-uk-garage-beat-generator" },
+  { match: /cloud rap/i, slugKey: "free-trap-beat-generator" },
   { match: /trap/i, slugKey: "ai-trap-beat-generator" },
   { match: /drill/i, slugKey: "ai-drill-beat-generator" },
   { match: /r&b|rnb|trapsoul|neo-?soul/i, slugKey: "ai-rnb-beat-generator" },

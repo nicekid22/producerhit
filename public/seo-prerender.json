@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-19T10:53:26.421Z",
+  "generatedAt": "2026-06-21T17:07:36.209Z",
   "pages": {
     "/suno-alternatives": {
       "kind": "comparison",
@@ -8998,6 +8998,744 @@
         {
           "q": "Comment avoir un 808 phonk plus hard ?",
           "a": "Mentionne 808 disto, mélodie cowbell et mélodie minimale dans ton prompt."
+        }
+      ]
+    },
+    "/free-trap-beat-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-trap-beat-gratuit",
+      "slugKey": "free-trap-beat-generator",
+      "title": "Free Trap Beat Generator — No Signup | ProducerHit",
+      "description": "Free trap beat generator online. Melodic trap type beats from text — MP3 export, 10 free gens/month. No credit card.",
+      "h1": "Free Trap Beat Generator",
+      "lead": "Generate trap type beats for free — lock genre, BPM and key, export MP3. Built from real ProducerHit usage data (Melodic trap is a top community genre).",
+      "bullets": [
+        "Free tier — no credit card",
+        "Two versions per generation",
+        "Seed variations to refine",
+        "Upgrade for WAV + commercial"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "free trap beat generator",
+        "free trap type beat",
+        "trap beat maker online free",
+        "AI beat generator free"
+      ],
+      "faq": [
+        {
+          "q": "Is this trap beat generator really free?",
+          "a": "Yes — the free plan includes monthly generations and MP3 download. No signup required to try the landing prompt."
+        },
+        {
+          "q": "Can I use beats commercially?",
+          "a": "Free MP3 is for personal use. Pro plans include commercial licensing — see Pricing."
+        }
+      ]
+    },
+    "/generateur-trap-beat-gratuit": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/free-trap-beat-generator",
+      "slugKey": "free-trap-beat-generator",
+      "title": "Générateur beat Trap gratuit — sans inscription | ProducerHit",
+      "description": "Générateur beat trap gratuit en ligne. Type beats Melodic trap — export MP3, ~10 gens/mois gratuites.",
+      "h1": "Générateur beat Trap gratuit",
+      "lead": "Génère des type beats trap gratuitement — genre, BPM et tonalité verrouillés, export MP3. Basé sur les stats réelles ProducerHit.",
+      "bullets": [
+        "Offre gratuite — sans carte",
+        "Deux versions par génération",
+        "Variations seed pour affiner",
+        "Upgrade WAV + commercial"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "free trap beat generator",
+        "free trap type beat",
+        "trap beat maker online free",
+        "AI beat generator free"
+      ],
+      "faq": [
+        {
+          "q": "Ce générateur trap est vraiment gratuit ?",
+          "a": "Oui — le plan gratuit inclut des générations mensuelles et le MP3. Essai sans carte bancaire."
+        },
+        {
+          "q": "Usage commercial ?",
+          "a": "MP3 gratuit = usage perso. Les plans Pro incluent la licence commerciale."
+        }
+      ]
+    },
+    "/free-drill-beat-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-drill-beat-gratuit",
+      "slugKey": "free-drill-beat-generator",
+      "title": "Free Drill Beat Generator — No Signup | ProducerHit",
+      "description": "Free drill beat generator online. Drill type beats from text — MP3 export, 10 free gens/month. No credit card.",
+      "h1": "Free Drill Beat Generator",
+      "lead": "Generate drill type beats for free — lock genre, BPM and key, export MP3. Built from real ProducerHit usage data (Drill is a top community genre).",
+      "bullets": [
+        "Free tier — no credit card",
+        "Two versions per generation",
+        "Seed variations to refine",
+        "Upgrade for WAV + commercial"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "free drill beat generator",
+        "free drill type beat",
+        "drill beat maker online free",
+        "AI beat generator free"
+      ],
+      "faq": [
+        {
+          "q": "Is this drill beat generator really free?",
+          "a": "Yes — the free plan includes monthly generations and MP3 download. No signup required to try the landing prompt."
+        },
+        {
+          "q": "Can I use beats commercially?",
+          "a": "Free MP3 is for personal use. Pro plans include commercial licensing — see Pricing."
+        }
+      ]
+    },
+    "/generateur-drill-beat-gratuit": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/free-drill-beat-generator",
+      "slugKey": "free-drill-beat-generator",
+      "title": "Générateur beat Drill gratuit — sans inscription | ProducerHit",
+      "description": "Générateur beat drill gratuit en ligne. Type beats Drill — export MP3, ~10 gens/mois gratuites.",
+      "h1": "Générateur beat Drill gratuit",
+      "lead": "Génère des type beats drill gratuitement — genre, BPM et tonalité verrouillés, export MP3. Basé sur les stats réelles ProducerHit.",
+      "bullets": [
+        "Offre gratuite — sans carte",
+        "Deux versions par génération",
+        "Variations seed pour affiner",
+        "Upgrade WAV + commercial"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "free drill beat generator",
+        "free drill type beat",
+        "drill beat maker online free",
+        "AI beat generator free"
+      ],
+      "faq": [
+        {
+          "q": "Ce générateur drill est vraiment gratuit ?",
+          "a": "Oui — le plan gratuit inclut des générations mensuelles et le MP3. Essai sans carte bancaire."
+        },
+        {
+          "q": "Usage commercial ?",
+          "a": "MP3 gratuit = usage perso. Les plans Pro incluent la licence commerciale."
+        }
+      ]
+    },
+    "/free-rnb-beat-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-rnb-beat-gratuit",
+      "slugKey": "free-rnb-beat-generator",
+      "title": "Free R&B / Trapsoul Beat Generator — No Signup | ProducerHit",
+      "description": "Free r&b / trapsoul beat generator online. 90s R&B type beats from text — MP3 export, 10 free gens/month. No credit card.",
+      "h1": "Free R&B / Trapsoul Beat Generator",
+      "lead": "Generate r&b / trapsoul type beats for free — lock genre, BPM and key, export MP3. Built from real ProducerHit usage data (90s R&B is a top community genre).",
+      "bullets": [
+        "Free tier — no credit card",
+        "Two versions per generation",
+        "Seed variations to refine",
+        "Upgrade for WAV + commercial"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "free rnb beat generator",
+        "free r&b / trapsoul type beat",
+        "rnb beat maker online free",
+        "AI beat generator free"
+      ],
+      "faq": [
+        {
+          "q": "Is this r&b / trapsoul beat generator really free?",
+          "a": "Yes — the free plan includes monthly generations and MP3 download. No signup required to try the landing prompt."
+        },
+        {
+          "q": "Can I use beats commercially?",
+          "a": "Free MP3 is for personal use. Pro plans include commercial licensing — see Pricing."
+        }
+      ]
+    },
+    "/generateur-rnb-beat-gratuit": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/free-rnb-beat-generator",
+      "slugKey": "free-rnb-beat-generator",
+      "title": "Générateur beat R&B / Trapsoul gratuit — sans inscription | ProducerHit",
+      "description": "Générateur beat r&b / trapsoul gratuit en ligne. Type beats 90s R&B — export MP3, ~10 gens/mois gratuites.",
+      "h1": "Générateur beat R&B / Trapsoul gratuit",
+      "lead": "Génère des type beats r&b / trapsoul gratuitement — genre, BPM et tonalité verrouillés, export MP3. Basé sur les stats réelles ProducerHit.",
+      "bullets": [
+        "Offre gratuite — sans carte",
+        "Deux versions par génération",
+        "Variations seed pour affiner",
+        "Upgrade WAV + commercial"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "free rnb beat generator",
+        "free r&b / trapsoul type beat",
+        "rnb beat maker online free",
+        "AI beat generator free"
+      ],
+      "faq": [
+        {
+          "q": "Ce générateur r&b / trapsoul est vraiment gratuit ?",
+          "a": "Oui — le plan gratuit inclut des générations mensuelles et le MP3. Essai sans carte bancaire."
+        },
+        {
+          "q": "Usage commercial ?",
+          "a": "MP3 gratuit = usage perso. Les plans Pro incluent la licence commerciale."
+        }
+      ]
+    },
+    "/free-lofi-beat-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-lofi-beat-gratuit",
+      "slugKey": "free-lofi-beat-generator",
+      "title": "Free Lo-Fi Beat Generator — No Signup | ProducerHit",
+      "description": "Free lo-fi beat generator online. Lo-fi hip-hop type beats from text — MP3 export, 10 free gens/month. No credit card.",
+      "h1": "Free Lo-Fi Beat Generator",
+      "lead": "Generate lo-fi type beats for free — lock genre, BPM and key, export MP3. Built from real ProducerHit usage data (Lo-fi hip-hop is a top community genre).",
+      "bullets": [
+        "Free tier — no credit card",
+        "Two versions per generation",
+        "Seed variations to refine",
+        "Upgrade for WAV + commercial"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "free lofi beat generator",
+        "free lo-fi type beat",
+        "lofi beat maker online free",
+        "AI beat generator free"
+      ],
+      "faq": [
+        {
+          "q": "Is this lo-fi beat generator really free?",
+          "a": "Yes — the free plan includes monthly generations and MP3 download. No signup required to try the landing prompt."
+        },
+        {
+          "q": "Can I use beats commercially?",
+          "a": "Free MP3 is for personal use. Pro plans include commercial licensing — see Pricing."
+        }
+      ]
+    },
+    "/generateur-lofi-beat-gratuit": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/free-lofi-beat-generator",
+      "slugKey": "free-lofi-beat-generator",
+      "title": "Générateur beat Lo-Fi gratuit — sans inscription | ProducerHit",
+      "description": "Générateur beat lo-fi gratuit en ligne. Type beats Lo-fi hip-hop — export MP3, ~10 gens/mois gratuites.",
+      "h1": "Générateur beat Lo-Fi gratuit",
+      "lead": "Génère des type beats lo-fi gratuitement — genre, BPM et tonalité verrouillés, export MP3. Basé sur les stats réelles ProducerHit.",
+      "bullets": [
+        "Offre gratuite — sans carte",
+        "Deux versions par génération",
+        "Variations seed pour affiner",
+        "Upgrade WAV + commercial"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "free lofi beat generator",
+        "free lo-fi type beat",
+        "lofi beat maker online free",
+        "AI beat generator free"
+      ],
+      "faq": [
+        {
+          "q": "Ce générateur lo-fi est vraiment gratuit ?",
+          "a": "Oui — le plan gratuit inclut des générations mensuelles et le MP3. Essai sans carte bancaire."
+        },
+        {
+          "q": "Usage commercial ?",
+          "a": "MP3 gratuit = usage perso. Les plans Pro incluent la licence commerciale."
+        }
+      ]
+    },
+    "/free-hip-hop-beat-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-hip-hop-beat-gratuit",
+      "slugKey": "free-hip-hop-beat-generator",
+      "title": "Free Hip Hop Beat Generator — No Signup | ProducerHit",
+      "description": "Free hip hop beat generator online. Old school hip-hop type beats from text — MP3 export, 10 free gens/month. No credit card.",
+      "h1": "Free Hip Hop Beat Generator",
+      "lead": "Generate hip hop type beats for free — lock genre, BPM and key, export MP3. Built from real ProducerHit usage data (Old school hip-hop is a top community genre).",
+      "bullets": [
+        "Free tier — no credit card",
+        "Two versions per generation",
+        "Seed variations to refine",
+        "Upgrade for WAV + commercial"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "free hip-hop beat generator",
+        "free hip hop type beat",
+        "hip-hop beat maker online free",
+        "AI beat generator free"
+      ],
+      "faq": [
+        {
+          "q": "Is this hip hop beat generator really free?",
+          "a": "Yes — the free plan includes monthly generations and MP3 download. No signup required to try the landing prompt."
+        },
+        {
+          "q": "Can I use beats commercially?",
+          "a": "Free MP3 is for personal use. Pro plans include commercial licensing — see Pricing."
+        }
+      ]
+    },
+    "/generateur-hip-hop-beat-gratuit": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/free-hip-hop-beat-generator",
+      "slugKey": "free-hip-hop-beat-generator",
+      "title": "Générateur beat Hip Hop gratuit — sans inscription | ProducerHit",
+      "description": "Générateur beat hip hop gratuit en ligne. Type beats Old school hip-hop — export MP3, ~10 gens/mois gratuites.",
+      "h1": "Générateur beat Hip Hop gratuit",
+      "lead": "Génère des type beats hip hop gratuitement — genre, BPM et tonalité verrouillés, export MP3. Basé sur les stats réelles ProducerHit.",
+      "bullets": [
+        "Offre gratuite — sans carte",
+        "Deux versions par génération",
+        "Variations seed pour affiner",
+        "Upgrade WAV + commercial"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "free hip-hop beat generator",
+        "free hip hop type beat",
+        "hip-hop beat maker online free",
+        "AI beat generator free"
+      ],
+      "faq": [
+        {
+          "q": "Ce générateur hip hop est vraiment gratuit ?",
+          "a": "Oui — le plan gratuit inclut des générations mensuelles et le MP3. Essai sans carte bancaire."
+        },
+        {
+          "q": "Usage commercial ?",
+          "a": "MP3 gratuit = usage perso. Les plans Pro incluent la licence commerciale."
+        }
+      ]
+    },
+    "/free-dark-trap-beat-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-dark-trap-beat-gratuit",
+      "slugKey": "free-dark-trap-beat-generator",
+      "title": "Free Dark Trap Beat Generator — No Signup | ProducerHit",
+      "description": "Free dark trap beat generator online. Dark trap type beats from text — MP3 export, 10 free gens/month. No credit card.",
+      "h1": "Free Dark Trap Beat Generator",
+      "lead": "Generate dark trap type beats for free — lock genre, BPM and key, export MP3. Built from real ProducerHit usage data (Dark trap is a top community genre).",
+      "bullets": [
+        "Free tier — no credit card",
+        "Two versions per generation",
+        "Seed variations to refine",
+        "Upgrade for WAV + commercial"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "free dark-trap beat generator",
+        "free dark trap type beat",
+        "dark-trap beat maker online free",
+        "AI beat generator free"
+      ],
+      "faq": [
+        {
+          "q": "Is this dark trap beat generator really free?",
+          "a": "Yes — the free plan includes monthly generations and MP3 download. No signup required to try the landing prompt."
+        },
+        {
+          "q": "Can I use beats commercially?",
+          "a": "Free MP3 is for personal use. Pro plans include commercial licensing — see Pricing."
+        }
+      ]
+    },
+    "/generateur-dark-trap-beat-gratuit": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/free-dark-trap-beat-generator",
+      "slugKey": "free-dark-trap-beat-generator",
+      "title": "Générateur beat Dark Trap gratuit — sans inscription | ProducerHit",
+      "description": "Générateur beat dark trap gratuit en ligne. Type beats Dark trap — export MP3, ~10 gens/mois gratuites.",
+      "h1": "Générateur beat Dark Trap gratuit",
+      "lead": "Génère des type beats dark trap gratuitement — genre, BPM et tonalité verrouillés, export MP3. Basé sur les stats réelles ProducerHit.",
+      "bullets": [
+        "Offre gratuite — sans carte",
+        "Deux versions par génération",
+        "Variations seed pour affiner",
+        "Upgrade WAV + commercial"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "free dark-trap beat generator",
+        "free dark trap type beat",
+        "dark-trap beat maker online free",
+        "AI beat generator free"
+      ],
+      "faq": [
+        {
+          "q": "Ce générateur dark trap est vraiment gratuit ?",
+          "a": "Oui — le plan gratuit inclut des générations mensuelles et le MP3. Essai sans carte bancaire."
+        },
+        {
+          "q": "Usage commercial ?",
+          "a": "MP3 gratuit = usage perso. Les plans Pro incluent la licence commerciale."
+        }
+      ]
+    },
+    "/free-uk-garage-beat-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-uk-garage-beat-gratuit",
+      "slugKey": "free-uk-garage-beat-generator",
+      "title": "Free UK Garage Beat Generator — No Signup | ProducerHit",
+      "description": "Free uk garage beat generator online. UK garage type beats from text — MP3 export, 10 free gens/month. No credit card.",
+      "h1": "Free UK Garage Beat Generator",
+      "lead": "Generate uk garage type beats for free — lock genre, BPM and key, export MP3. Built from real ProducerHit usage data (UK garage is a top community genre).",
+      "bullets": [
+        "Free tier — no credit card",
+        "Two versions per generation",
+        "Seed variations to refine",
+        "Upgrade for WAV + commercial"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "free uk-garage beat generator",
+        "free uk garage type beat",
+        "uk-garage beat maker online free",
+        "AI beat generator free"
+      ],
+      "faq": [
+        {
+          "q": "Is this uk garage beat generator really free?",
+          "a": "Yes — the free plan includes monthly generations and MP3 download. No signup required to try the landing prompt."
+        },
+        {
+          "q": "Can I use beats commercially?",
+          "a": "Free MP3 is for personal use. Pro plans include commercial licensing — see Pricing."
+        }
+      ]
+    },
+    "/generateur-uk-garage-beat-gratuit": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/free-uk-garage-beat-generator",
+      "slugKey": "free-uk-garage-beat-generator",
+      "title": "Générateur beat UK Garage gratuit — sans inscription | ProducerHit",
+      "description": "Générateur beat uk garage gratuit en ligne. Type beats UK garage — export MP3, ~10 gens/mois gratuites.",
+      "h1": "Générateur beat UK Garage gratuit",
+      "lead": "Génère des type beats uk garage gratuitement — genre, BPM et tonalité verrouillés, export MP3. Basé sur les stats réelles ProducerHit.",
+      "bullets": [
+        "Offre gratuite — sans carte",
+        "Deux versions par génération",
+        "Variations seed pour affiner",
+        "Upgrade WAV + commercial"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "free uk-garage beat generator",
+        "free uk garage type beat",
+        "uk-garage beat maker online free",
+        "AI beat generator free"
+      ],
+      "faq": [
+        {
+          "q": "Ce générateur uk garage est vraiment gratuit ?",
+          "a": "Oui — le plan gratuit inclut des générations mensuelles et le MP3. Essai sans carte bancaire."
+        },
+        {
+          "q": "Usage commercial ?",
+          "a": "MP3 gratuit = usage perso. Les plans Pro incluent la licence commerciale."
+        }
+      ]
+    },
+    "/free-rap-beat-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-rap-beat-gratuit",
+      "slugKey": "free-rap-beat-generator",
+      "title": "Free Rap Beat Generator — No Signup | ProducerHit",
+      "description": "Free rap beat generator online. Contemporary rap type beats from text — MP3 export, 10 free gens/month. No credit card.",
+      "h1": "Free Rap Beat Generator",
+      "lead": "Generate rap type beats for free — lock genre, BPM and key, export MP3. Built from real ProducerHit usage data (Contemporary rap is a top community genre).",
+      "bullets": [
+        "Free tier — no credit card",
+        "Two versions per generation",
+        "Seed variations to refine",
+        "Upgrade for WAV + commercial"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "free rap beat generator",
+        "free rap type beat",
+        "rap beat maker online free",
+        "AI beat generator free"
+      ],
+      "faq": [
+        {
+          "q": "Is this rap beat generator really free?",
+          "a": "Yes — the free plan includes monthly generations and MP3 download. No signup required to try the landing prompt."
+        },
+        {
+          "q": "Can I use beats commercially?",
+          "a": "Free MP3 is for personal use. Pro plans include commercial licensing — see Pricing."
+        }
+      ]
+    },
+    "/generateur-rap-beat-gratuit": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/free-rap-beat-generator",
+      "slugKey": "free-rap-beat-generator",
+      "title": "Générateur beat Rap gratuit — sans inscription | ProducerHit",
+      "description": "Générateur beat rap gratuit en ligne. Type beats Contemporary rap — export MP3, ~10 gens/mois gratuites.",
+      "h1": "Générateur beat Rap gratuit",
+      "lead": "Génère des type beats rap gratuitement — genre, BPM et tonalité verrouillés, export MP3. Basé sur les stats réelles ProducerHit.",
+      "bullets": [
+        "Offre gratuite — sans carte",
+        "Deux versions par génération",
+        "Variations seed pour affiner",
+        "Upgrade WAV + commercial"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "free rap beat generator",
+        "free rap type beat",
+        "rap beat maker online free",
+        "AI beat generator free"
+      ],
+      "faq": [
+        {
+          "q": "Ce générateur rap est vraiment gratuit ?",
+          "a": "Oui — le plan gratuit inclut des générations mensuelles et le MP3. Essai sans carte bancaire."
+        },
+        {
+          "q": "Usage commercial ?",
+          "a": "MP3 gratuit = usage perso. Les plans Pro incluent la licence commerciale."
+        }
+      ]
+    },
+    "/free-reggaeton-beat-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-reggaeton-beat-gratuit",
+      "slugKey": "free-reggaeton-beat-generator",
+      "title": "Free Reggaeton Beat Generator — No Signup | ProducerHit",
+      "description": "Free reggaeton beat generator online. Reggaeton type beats from text — MP3 export, 10 free gens/month. No credit card.",
+      "h1": "Free Reggaeton Beat Generator",
+      "lead": "Generate reggaeton type beats for free — lock genre, BPM and key, export MP3. Built from real ProducerHit usage data (Reggaeton is a top community genre).",
+      "bullets": [
+        "Free tier — no credit card",
+        "Two versions per generation",
+        "Seed variations to refine",
+        "Upgrade for WAV + commercial"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "free reggaeton beat generator",
+        "free reggaeton type beat",
+        "reggaeton beat maker online free",
+        "AI beat generator free"
+      ],
+      "faq": [
+        {
+          "q": "Is this reggaeton beat generator really free?",
+          "a": "Yes — the free plan includes monthly generations and MP3 download. No signup required to try the landing prompt."
+        },
+        {
+          "q": "Can I use beats commercially?",
+          "a": "Free MP3 is for personal use. Pro plans include commercial licensing — see Pricing."
+        }
+      ]
+    },
+    "/generateur-reggaeton-beat-gratuit": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/free-reggaeton-beat-generator",
+      "slugKey": "free-reggaeton-beat-generator",
+      "title": "Générateur beat Reggaeton gratuit — sans inscription | ProducerHit",
+      "description": "Générateur beat reggaeton gratuit en ligne. Type beats Reggaeton — export MP3, ~10 gens/mois gratuites.",
+      "h1": "Générateur beat Reggaeton gratuit",
+      "lead": "Génère des type beats reggaeton gratuitement — genre, BPM et tonalité verrouillés, export MP3. Basé sur les stats réelles ProducerHit.",
+      "bullets": [
+        "Offre gratuite — sans carte",
+        "Deux versions par génération",
+        "Variations seed pour affiner",
+        "Upgrade WAV + commercial"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "free reggaeton beat generator",
+        "free reggaeton type beat",
+        "reggaeton beat maker online free",
+        "AI beat generator free"
+      ],
+      "faq": [
+        {
+          "q": "Ce générateur reggaeton est vraiment gratuit ?",
+          "a": "Oui — le plan gratuit inclut des générations mensuelles et le MP3. Essai sans carte bancaire."
+        },
+        {
+          "q": "Usage commercial ?",
+          "a": "MP3 gratuit = usage perso. Les plans Pro incluent la licence commerciale."
+        }
+      ]
+    },
+    "/free-amapiano-beat-generator": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateur-amapiano-beat-gratuit",
+      "slugKey": "free-amapiano-beat-generator",
+      "title": "Free Amapiano Beat Generator — No Signup | ProducerHit",
+      "description": "Free amapiano beat generator online. Amapiano type beats from text — MP3 export, 10 free gens/month. No credit card.",
+      "h1": "Free Amapiano Beat Generator",
+      "lead": "Generate amapiano type beats for free — lock genre, BPM and key, export MP3. Built from real ProducerHit usage data (Amapiano is a top community genre).",
+      "bullets": [
+        "Free tier — no credit card",
+        "Two versions per generation",
+        "Seed variations to refine",
+        "Upgrade for WAV + commercial"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "free amapiano beat generator",
+        "free amapiano type beat",
+        "amapiano beat maker online free",
+        "AI beat generator free"
+      ],
+      "faq": [
+        {
+          "q": "Is this amapiano beat generator really free?",
+          "a": "Yes — the free plan includes monthly generations and MP3 download. No signup required to try the landing prompt."
+        },
+        {
+          "q": "Can I use beats commercially?",
+          "a": "Free MP3 is for personal use. Pro plans include commercial licensing — see Pricing."
+        }
+      ]
+    },
+    "/generateur-amapiano-beat-gratuit": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/free-amapiano-beat-generator",
+      "slugKey": "free-amapiano-beat-generator",
+      "title": "Générateur beat Amapiano gratuit — sans inscription | ProducerHit",
+      "description": "Générateur beat amapiano gratuit en ligne. Type beats Amapiano — export MP3, ~10 gens/mois gratuites.",
+      "h1": "Générateur beat Amapiano gratuit",
+      "lead": "Génère des type beats amapiano gratuitement — genre, BPM et tonalité verrouillés, export MP3. Basé sur les stats réelles ProducerHit.",
+      "bullets": [
+        "Offre gratuite — sans carte",
+        "Deux versions par génération",
+        "Variations seed pour affiner",
+        "Upgrade WAV + commercial"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "free amapiano beat generator",
+        "free amapiano type beat",
+        "amapiano beat maker online free",
+        "AI beat generator free"
+      ],
+      "faq": [
+        {
+          "q": "Ce générateur amapiano est vraiment gratuit ?",
+          "a": "Oui — le plan gratuit inclut des générations mensuelles et le MP3. Essai sans carte bancaire."
+        },
+        {
+          "q": "Usage commercial ?",
+          "a": "MP3 gratuit = usage perso. Les plans Pro incluent la licence commerciale."
+        }
+      ]
+    },
+    "/free-beat-generators": {
+      "kind": "landing",
+      "locale": "en",
+      "pair": "/generateurs-beats-gratuits",
+      "slugKey": "free-beat-generators-hub",
+      "title": "Free AI Beat Generators by Genre — Trap, Drill, Lo-Fi & More | ProducerHit",
+      "description": "10 free AI beat generators by genre — trap, drill, R&B, lo-fi, UK garage and more. No signup to start. MP3 export on free tier.",
+      "h1": "Free AI Beat Generators by Genre",
+      "lead": "Long-tail landing pages for the genres producers generate most on ProducerHit — based on 3,400+ real tracks. Pick a genre, generate free, export MP3.",
+      "bullets": [
+        "Free Trap beat generator",
+        "Free Drill beat generator",
+        "Free R&B / Trapsoul beat generator",
+        "Free Lo-Fi beat generator",
+        "Free Hip Hop beat generator",
+        "Free Dark Trap beat generator",
+        "Free UK Garage beat generator",
+        "Free Rap beat generator",
+        "Free Reggaeton beat generator",
+        "Free Amapiano beat generator"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "free beat generator",
+        "free type beat generator",
+        "AI beat maker free",
+        "free trap beat generator"
+      ],
+      "faq": [
+        {
+          "q": "Why separate pages per genre?",
+          "a": "Each page matches how people search — “free trap beat generator” vs generic “AI music”. Same studio, genre-locked prompts."
+        },
+        {
+          "q": "Where is the data from?",
+          "a": "Top genres from our public stats page — updated from production database."
+        }
+      ]
+    },
+    "/generateurs-beats-gratuits": {
+      "kind": "landing",
+      "locale": "fr",
+      "pair": "/free-beat-generators",
+      "slugKey": "free-beat-generators-hub",
+      "title": "Générateurs de beats IA gratuits par genre — Trap, Drill, Lo-Fi | ProducerHit",
+      "description": "10 générateurs de beats IA gratuits par genre — trap, drill, R&B, lo-fi, UK garage. Sans inscription pour commencer.",
+      "h1": "Générateurs de beats IA gratuits par genre",
+      "lead": "Pages ciblées sur les genres les plus générés sur ProducerHit — stats de 3 400+ morceaux. Choisis un genre, génère gratuit, exporte MP3.",
+      "bullets": [
+        "Beat Trap gratuit",
+        "Beat Drill gratuit",
+        "Beat R&B / Trapsoul gratuit",
+        "Beat Lo-Fi gratuit",
+        "Beat Hip Hop gratuit",
+        "Beat Dark Trap gratuit",
+        "Beat UK Garage gratuit",
+        "Beat Rap gratuit",
+        "Beat Reggaeton gratuit",
+        "Beat Amapiano gratuit"
+      ],
+      "updatedAt": "2026-05-27",
+      "keywords": [
+        "free beat generator",
+        "free type beat generator",
+        "AI beat maker free",
+        "free trap beat generator"
+      ],
+      "faq": [
+        {
+          "q": "Pourquoi une page par genre ?",
+          "a": "Chaque page match une recherche longue — « générateur beat trap gratuit ». Même studio, prompts verrouillés genre."
+        },
+        {
+          "q": "D'où viennent les stats ?",
+          "a": "Top genres de notre page stats — base de données production."
         }
       ]
     }

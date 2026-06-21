@@ -92,6 +92,8 @@ export function LandingFooter({ locale, user }: Props) {
 
     { to: "/ai-music-genre-stats-2026", label: locale === "fr" ? "Stats genres IA" : "AI genre stats" },
 
+    { to: "/free-beat-generators", label: locale === "fr" ? "Beats gratuits par genre" : "Free beats by genre" },
+
   ];
 
 

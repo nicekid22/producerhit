@@ -138,7 +138,29 @@ export const SEO_PAGE_PATHS = [
   "/ai-lofi-beat-generator",
   "/generateur-lofi-ia",
   "/ai-phonk-beat-generator",
-  "/generateur-phonk-ia"
+  "/generateur-phonk-ia",
+  "/free-trap-beat-generator",
+  "/generateur-trap-beat-gratuit",
+  "/free-drill-beat-generator",
+  "/generateur-drill-beat-gratuit",
+  "/free-rnb-beat-generator",
+  "/generateur-rnb-beat-gratuit",
+  "/free-lofi-beat-generator",
+  "/generateur-lofi-beat-gratuit",
+  "/free-hip-hop-beat-generator",
+  "/generateur-hip-hop-beat-gratuit",
+  "/free-dark-trap-beat-generator",
+  "/generateur-dark-trap-beat-gratuit",
+  "/free-uk-garage-beat-generator",
+  "/generateur-uk-garage-beat-gratuit",
+  "/free-rap-beat-generator",
+  "/generateur-rap-beat-gratuit",
+  "/free-reggaeton-beat-generator",
+  "/generateur-reggaeton-beat-gratuit",
+  "/free-amapiano-beat-generator",
+  "/generateur-amapiano-beat-gratuit",
+  "/free-beat-generators",
+  "/generateurs-beats-gratuits"
 ] as const;
 
 export const COMPARISON_PAGE_PATHS = [
