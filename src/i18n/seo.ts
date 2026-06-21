@@ -1,6 +1,7 @@
 import type { AppLocale } from "./config";
 import { getMessages } from "./locales";
 import { getBeatNameGeneratorSeo, getForAiPageSeo } from "@/lib/marketing/phase1PagesSeo";
+import { getGenreStatsPageSeo } from "@/lib/marketing/phase2PagesSeo";
 
 export type SeoSlugKey =
   | "home"
@@ -22,6 +23,7 @@ export type SeoSlugKey =
   | "generate-beats-online-free"
   | "for-ai"
   | "beat-name-generator"
+  | "genre-stats"
   | "legal"
   | "other";
 
@@ -68,6 +70,10 @@ export function getPageSeo(locale: AppLocale, slugKey: SeoSlugKey): { title: str
     }
     case "beat-name-generator": {
       const page = getBeatNameGeneratorSeo(locale);
+      return { title: page.title, description: page.description };
+    }
+    case "genre-stats": {
+      const page = getGenreStatsPageSeo(locale);
       return { title: page.title, description: page.description };
     }
     case "legal":

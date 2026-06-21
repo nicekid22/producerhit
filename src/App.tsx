@@ -40,6 +40,7 @@ const HomePage = lazy(() => import("@/pages/Home"));
 const ComparePage = lazy(() => import("@/pages/ComparePage"));
 const ForAiPage = lazy(() => import("@/pages/ForAiPage"));
 const BeatNameGeneratorPage = lazy(() => import("@/pages/BeatNameGeneratorPage"));
+const GenreStatsPage = lazy(() => import("@/pages/GenreStatsPage"));
 const BlogPage = lazy(() => import("@/pages/Blog"));
 const ExplorePage = lazy(() => import("@/pages/Explore"));
 const CommunityTrendingPage = lazy(() => import("@/pages/CommunityTrending"));
@@ -101,6 +102,10 @@ export default function App() {
                   ))}
                   <Route path="/for-ai" element={<ForAiPage />} />
                   <Route path="/ai-beat-name-generator" element={<BeatNameGeneratorPage />} />
+                  <Route path="/ai-music-genre-stats-2026" element={<GenreStatsPage />} />
+                  <Route path="/suno-alternative" element={<Navigate to="/suno-alternatives" replace />} />
+                  <Route path="/udio-alternative" element={<Navigate to="/udio-alternatives" replace />} />
+                  <Route path="/best-ai-music-generator" element={<Navigate to="/ai-music-generator" replace />} />
                   <Route path="/auth" element={<AuthPage />} />
                   <Route path="/auth/callback" element={<AuthCallbackPage />} />
                   <Route path="/pricing" element={<PricingPage />} />

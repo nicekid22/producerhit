@@ -46,3 +46,13 @@ export function buildSocialKitText(caption: string, shareUrl: string): string {
 export function buildShareMomentTitle(locale: AppLocale): string {
   return locale === "fr" ? "Partager" : "Share";
 }
+
+/** Caption défi viral — « fait en ~60 s, fais mieux » */
+export function buildViralChallengeCaption(loop: Loop, locale: AppLocale): string {
+  const name = (loop.name || (locale === "fr" ? "ce beat" : "this beat")).trim();
+  const tags = buildTikTokHashtags(loop).slice(0, 4).join(" ");
+  if (locale === "fr") {
+    return `J'ai fait « ${name} » en ~60 s avec l'IA 🔥\nEssaye de faire mieux 👇\nProducerHit\n${tags}`;
+  }
+  return `I made "${name}" in ~60 sec with AI 🔥\nTry to beat this 👇\nProducerHit\n${tags}`;
+}

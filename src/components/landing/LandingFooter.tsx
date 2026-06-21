@@ -90,6 +90,8 @@ export function LandingFooter({ locale, user }: Props) {
 
     { to: "/for-ai", label: locale === "fr" ? "Fiche produit IA" : "For AI assistants" },
 
+    { to: "/ai-music-genre-stats-2026", label: locale === "fr" ? "Stats genres IA" : "AI genre stats" },
+
   ];
 
 

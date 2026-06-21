@@ -16,6 +16,7 @@ import {
   SEO_PAGE_PATH_SET,
 } from "@/generated/marketingRoutePaths";
 import { buildForAiJsonLd } from "@/lib/marketing/phase1PagesSeo";
+import { buildGenreStatsJsonLd } from "@/lib/marketing/phase2PagesSeo";
 
 function setMeta(nameOrProp: string, value: string, kind: "name" | "property") {
   const selector = kind === "name" ? `meta[name="${nameOrProp}"]` : `meta[property="${nameOrProp}"]`;
@@ -83,6 +84,7 @@ function slugKeyFromPath(pathname: string): string {
   if (pathname === "/generate-beats-online-free") return "generate-beats-online-free";
   if (pathname === "/for-ai") return "for-ai";
   if (pathname === "/ai-beat-name-generator") return "beat-name-generator";
+  if (pathname === "/ai-music-genre-stats-2026") return "genre-stats";
   if (COMPARISON_PAGE_PATH_SET.has(pathname)) return "comparison";
   if (SEO_PAGE_PATH_SET.has(pathname)) return "seo-landing";
   return "other";
@@ -503,6 +505,23 @@ export function SeoBootstrap() {
             url: `${origin}/ai-beat-name-generator`,
             description: pageSeo.description,
             offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+          },
+        ]);
+        return;
+      }
+
+      if (slugKey === "genre-stats") {
+        setJsonLd([
+          ...baseJsonLd,
+          buildGenreStatsJsonLd(locale),
+          {
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            name: pageSeo.title,
+            description: pageSeo.description,
+            url: `${origin}/ai-music-genre-stats-2026`,
+            inLanguage: locale,
+            isPartOf: { "@type": "WebSite", name: "ProducerHit", url: origin },
           },
         ]);
         return;

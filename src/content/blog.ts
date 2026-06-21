@@ -5,6 +5,7 @@ import { COUNTRY_MARKETS_2026_POSTS } from "./blog/posts/country-markets-2026";
 import { COUNTRY_MARKETS_WAVE2_2026_POSTS } from "./blog/posts/country-markets-wave2-2026";
 import { MONETIZATION_ACADEMY_2026_POSTS } from "./blog/posts/monetization-academy-2026";
 import { MONETIZATION_ACADEMY_WAVE2_2026_POSTS } from "./blog/posts/monetization-academy-wave2-2026";
+import { CITATION_BAIT_2026_POSTS } from "./blog/posts/citation-bait-2026";
 
 const LEGACY_BLOG_POSTS: BlogPost[] = [
   {
@@ -1211,6 +1212,7 @@ export const BLOG_POSTS: BlogPost[] = [
   ...COUNTRY_MARKETS_WAVE2_2026_POSTS,
   ...MONETIZATION_ACADEMY_2026_POSTS,
   ...MONETIZATION_ACADEMY_WAVE2_2026_POSTS,
+  ...CITATION_BAIT_2026_POSTS,
 ];
 
 export function getBlogPostBySlug(slug: string): BlogPost | null {
