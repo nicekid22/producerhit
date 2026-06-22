@@ -10,6 +10,7 @@ import {
   getCuratedDisplayPromptPool,
   mergeUniqueDisplayPrompts,
 } from "@/lib/randomPromptIdeas/curatedDisplayPrompts";
+import { getLocaleDisplayPromptPool } from "@/lib/randomPromptIdeas/localeDisplayPool";
 import { POOLS_EN } from "@/lib/randomPromptIdeas/localePools/en";
 import { POOLS_FR } from "@/lib/randomPromptIdeas/localePools/fr";
 import { resolvePromptPools } from "@/lib/randomPromptIdeas/localePools";
@@ -83,6 +84,10 @@ function landingDisplayFallback(locale: AppLocale, mode: PromptMode): readonly s
 
 /** Placeholders landing + hero — curated unique + phrases genre-dé. */
 export function getLandingDisplayPromptPool(locale: AppLocale, mode: PromptMode): readonly string[] {
+  if (locale !== "en" && locale !== "fr") {
+    return getLocaleDisplayPromptPool(locale, mode);
+  }
+
   const curated = getCuratedDisplayPromptPool(locale, mode);
   const fromDice = getGenreDiceDisplayPromptPool(mode, locale);
   const merged = mergeUniqueDisplayPrompts(curated, fromDice);
@@ -162,9 +167,16 @@ export function pickRandomPrompt(locale: AppLocale, mode: PromptMode): string {
 
 /** Dice roll from full genre catalog — sets matching genre + display + ACE prompt. */
 export function pickRandomGenreMenuDiceRoll(locale: AppLocale, mode: PromptMode): GenreMenuDicePick {
-  const { genre, acePrompt, displayPrompt } = pickRandomGenreMenuDice(mode, locale);
+  const { genre, acePrompt, displayPrompt: diceDisplay } = pickRandomGenreMenuDice(mode, locale);
   const ace = formatDicePrompt(acePrompt, mode);
-  return { genre, displayPrompt, acePrompt: ace, prompt: displayPrompt };
+
+  if (locale !== "en" && locale !== "fr") {
+    const pool = getLandingDisplayPromptPool(locale, mode);
+    const displayPrompt = pool[Math.floor(Math.random() * pool.length)] ?? pool[0] ?? diceDisplay;
+    return { genre, displayPrompt, acePrompt: ace, prompt: displayPrompt };
+  }
+
+  return { genre, displayPrompt: diceDisplay, acePrompt: ace, prompt: diceDisplay };
 }
 
 export function pickNextHeroPromptIndex(pool: readonly string[], current: number): number {

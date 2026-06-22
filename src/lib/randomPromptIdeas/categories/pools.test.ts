@@ -85,6 +85,22 @@ describe("random prompt pools", () => {
     expect(new Set(runs.map((r) => r.startIndex)).size).toBeGreaterThan(1);
   });
 
+  it("ES landing display pool uses Spanish hero phrases not English templates", () => {
+    const esSong = getLandingDisplayPromptPool("es", "song");
+    expect(esSong.length).toBeGreaterThanOrEqual(12);
+    expect(esSong.some((p) => /^A [a-z]+ song /i.test(p))).toBe(false);
+    expect(esSong.some((p) => /^Una canción /i.test(p))).toBe(true);
+    expect(esSong.some((p) => /renunciar|ghosting|melancólico|verano/i.test(p))).toBe(true);
+  });
+
+  it("ES dice roll shows Spanish display prompt", () => {
+    const es = pickRandomGenreMenuDiceRoll("es", "song");
+    expect(es.displayPrompt).not.toMatch(/^A [a-z]+ song /i);
+    expect(es.displayPrompt).toMatch(/^Una canción /i);
+    expect(es.acePrompt.length).toBeGreaterThan(0);
+    expect(es.genre).toBeTruthy();
+  });
+
   it("natural category includes conversational French", () => {
     const natural = CATEGORIZED_FR.song.find((c) => c.id === "natural");
     expect(natural?.prompts.some((p) => p.includes("vacances d'été en Italie"))).toBe(true);

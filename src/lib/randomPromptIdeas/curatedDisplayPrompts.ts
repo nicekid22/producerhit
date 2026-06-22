@@ -1,4 +1,5 @@
 import type { AppLocale } from "@/i18n/config";
+import { resolvePromptPools } from "@/lib/randomPromptIdeas/localePools";
 
 type DisplayPromptMode = "beat" | "song";
 
@@ -214,26 +215,16 @@ const EN_BEAT: readonly string[] = [
   "Type beat 3am studio session cold coffee",
 ];
 
-const POOLS: Record<AppLocale, Record<DisplayPromptMode, readonly string[]>> = {
+const POOLS: Record<"en" | "fr", Record<DisplayPromptMode, readonly string[]>> = {
   fr: { song: FR_SONG, beat: FR_BEAT },
   en: { song: EN_SONG, beat: EN_BEAT },
-  es: { song: EN_SONG, beat: EN_BEAT },
-  pt: { song: EN_SONG, beat: EN_BEAT },
-  de: { song: EN_SONG, beat: EN_BEAT },
-  it: { song: EN_SONG, beat: EN_BEAT },
-  nl: { song: EN_SONG, beat: EN_BEAT },
-  ar: { song: EN_SONG, beat: EN_BEAT },
-  ja: { song: EN_SONG, beat: EN_BEAT },
-  ko: { song: EN_SONG, beat: EN_BEAT },
-  tr: { song: EN_SONG, beat: EN_BEAT },
-  hi: { song: EN_SONG, beat: EN_BEAT },
-  zh: { song: EN_SONG, beat: EN_BEAT },
-  th: { song: EN_SONG, beat: EN_BEAT },
 };
 
 export function getCuratedDisplayPromptPool(locale: AppLocale, mode: DisplayPromptMode): readonly string[] {
-  const bucket = POOLS[locale] ?? POOLS.en;
-  return bucket[mode];
+  if (locale === "en" || locale === "fr") {
+    return POOLS[locale][mode];
+  }
+  return resolvePromptPools(locale).hero;
 }
 
 export function mergeUniqueDisplayPrompts(...pools: readonly (readonly string[])[]): string[] {

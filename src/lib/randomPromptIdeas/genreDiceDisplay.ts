@@ -1,6 +1,7 @@
 import type { AppLocale } from "@/i18n/config";
 import { ALL_GENRE_OPTIONS } from "@/lib/genres";
 import type { PromptMode } from "@/lib/randomPromptIdeas";
+import { LOCALE_DICE_CONFIG } from "@/lib/randomPromptIdeas/genreDiceDisplayLocales";
 import type { ThemeGroup } from "@/lib/randomPromptIdeas/genreDiceThemes/types";
 
 const FR_BEAT_THEMES: Record<ThemeGroup, readonly string[]> = {
@@ -79,6 +80,13 @@ const FR_GENRE_LABELS: Partial<Record<string, string>> = {
 };
 
 function pickTheme(locale: AppLocale, group: ThemeGroup, mode: PromptMode, variant: number): string {
+  const localized = LOCALE_DICE_CONFIG[locale];
+  if (localized) {
+    const pools = mode === "song" ? localized.songThemes : localized.beatThemes;
+    const pool = pools[group] ?? pools.default;
+    return pool[variant % pool.length] ?? pool[0] ?? "";
+  }
+
   const pools =
     locale === "fr"
       ? mode === "song"
@@ -92,6 +100,8 @@ function pickTheme(locale: AppLocale, group: ThemeGroup, mode: PromptMode, varia
 }
 
 export function getGenreDisplayLabel(genre: string, locale: AppLocale): string {
+  const localized = LOCALE_DICE_CONFIG[locale]?.genreLabels;
+  if (localized?.[genre]) return localized[genre]!;
   if (locale === "fr" && FR_GENRE_LABELS[genre]) return FR_GENRE_LABELS[genre]!;
   const opt = ALL_GENRE_OPTIONS.find((o) => o.value === genre);
   return (opt?.label ?? genre).toLowerCase();
@@ -106,6 +116,10 @@ export function buildGenreDiceDisplayPrompt(
 ): string {
   const genreLabel = getGenreDisplayLabel(genre, locale);
   const theme = pickTheme(locale, themeGroup, mode, variant);
+  const localized = LOCALE_DICE_CONFIG[locale];
+  if (localized) {
+    return mode === "song" ? localized.song(genreLabel, theme) : localized.beat(genreLabel, theme);
+  }
   if (locale === "fr") {
     return mode === "song" ? `Une chanson ${genreLabel} ${theme}` : `Un beat ${genreLabel} ${theme}`;
   }

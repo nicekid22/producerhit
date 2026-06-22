@@ -5,6 +5,7 @@ import { GeneratorSection } from "@/components/dashboard/GeneratorSection";
 import { RandomPromptDiceButton } from "@/components/RandomPromptDiceButton";
 import { SpeechDictationField } from "@/components/SpeechDictationField";
 import { useRotatingPromptPlaceholder } from "@/hooks/useRotatingPromptPlaceholder";
+import { getLocaleIdeaFallback } from "@/lib/randomPromptIdeas/localeIdeaFallback";
 
 /** Même hauteur visuelle — idée + paroles */
 export const DASHBOARD_PROMPT_ROWS = 4;
@@ -38,18 +39,7 @@ export function IdeaPromptSection({
   const [focused, setFocused] = useState(false);
 
   const fallbackPlaceholder = useMemo(
-    () =>
-      mode === "song"
-        ? legacyEnFr(
-            locale,
-            "e.g. a pop song about a summer night at the beach",
-            "ex : une chanson hip-hop sur des vacances au bord de la mer",
-          )
-        : legacyEnFr(
-            locale,
-            "e.g. a melodic trap beat about a rainy late-night drive",
-            "ex : un beat trap sur une nuit pluvieuse en ville",
-          ),
+    () => getLocaleIdeaFallback(locale, mode),
     [locale, mode],
   );
 

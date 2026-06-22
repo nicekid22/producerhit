@@ -1,0 +1,51 @@
+{
+  "expo": {
+    "name": "ProducerHit",
+    "slug": "producerhit",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "producerhit",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#07080f"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.producerhit.app",
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "audio"
+        ],
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#07080f"
+      },
+      "package": "com.producerhit.app"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "react-native-iap",
+      "expo-apple-authentication"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "4b9b8bfc-2b0e-44b3-a165-d54168a0dbab"
+      }
+    },
+    "owner": "hype22"
+  }
+}

@@ -30,12 +30,19 @@ describe("resolveRandomPromptLocale", () => {
     ).toBe("ja");
   });
 
-  it("dashboard song auto uses browser locale", () => {
-    vi.stubGlobal("navigator", { language: "fr-FR" });
+  it("dashboard song auto follows UI locale", () => {
     expect(
       resolveRandomPromptLocale({
         surface: "dashboard-song",
         uiLocale: "en",
+        vocalLanguageMode: "auto",
+        manualVocalLanguage: "en",
+      }),
+    ).toBe("en");
+    expect(
+      resolveRandomPromptLocale({
+        surface: "dashboard-song",
+        uiLocale: "fr",
         vocalLanguageMode: "auto",
         manualVocalLanguage: "en",
       }),

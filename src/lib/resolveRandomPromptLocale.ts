@@ -29,7 +29,7 @@ export function vocalCodeToPromptLocale(code: string): AppLocale {
  * Locale des pools aléatoires (dé, hero typewriter).
  * - Landing : langue visiteur (UI = query / storage / navigateur).
  * - Dashboard beat : langue UI de l'app.
- * - Dashboard song auto : navigateur.
+ * - Dashboard song auto : langue UI (déjà initialisée depuis le navigateur à la 1re visite).
  * - Dashboard song manuel : langue choisie dans le menu génération.
  */
 export function resolveRandomPromptLocale(ctx: RandomPromptLocaleContext): AppLocale {
@@ -45,5 +45,5 @@ export function resolveRandomPromptLocale(ctx: RandomPromptLocaleContext): AppLo
     return vocalCodeToPromptLocale(ctx.manualVocalLanguage);
   }
 
-  return getBrowserAppLocale();
+  return ctx.uiLocale;
 }
