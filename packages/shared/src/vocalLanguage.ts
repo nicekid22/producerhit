@@ -16,6 +16,15 @@ export const VOCAL_LANGUAGES: { value: string; en: string; fr: string }[] = [
   { value: "ru", en: "Russian", fr: "Russe" },
 ];
 
+const ACE_VOCAL_CODE_SET = new Set(VOCAL_LANGUAGES.map((l) => l.value));
+
+/** Langue vocale ACE supportée — mappe les locales UI sans voix dédiée (nl, tr, hi, th). */
+export function uiLocaleToAceVocalLanguage(uiLocale: AppLocale): string {
+  const mapped = vocalCodeToPromptLocale(uiLocale);
+  if (ACE_VOCAL_CODE_SET.has(mapped)) return mapped;
+  return "en";
+}
+
 export function vocalLanguageLabel(code: string, uiLocale: AppLocale): string {
   const c = code.trim().toLowerCase();
   if (!c || c === "auto") return uiLocale === "fr" ? "Auto" : "Auto";
@@ -86,7 +95,7 @@ export function resolveSongVocalLanguage(args: {
   const detected = detectVocalLanguageFromText(source);
 
   if (args.mode === "auto" && args.uiLocale) {
-    const uiCode = vocalCodeToPromptLocale(args.uiLocale);
+    const uiCode = uiLocaleToAceVocalLanguage(args.uiLocale);
     if (uiCode !== "en" && detected === "en") return uiCode;
     if (uiCode === "it" && (detected === "es" || detected === "fr")) return "it";
   }

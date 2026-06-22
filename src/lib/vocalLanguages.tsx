@@ -2,7 +2,7 @@ import { Globe, Languages } from "lucide-react";
 import type { DropdownOption } from "@/components/ui/Dropdown";
 
 import type { AppLocale } from "@/i18n/config";
-import { vocalCodeToPromptLocale } from "@/lib/resolveRandomPromptLocale";
+import { uiLocaleToAceVocalLanguage } from "@producerhit/shared";
 
 const LANGUAGES: { value: string; en: string; fr: string }[] = [
   { value: "en", en: "English", fr: "Anglais" },
@@ -80,7 +80,7 @@ export function resolveSongVocalLanguage(args: {
   const detected = detectVocalLanguageFromText(source);
 
   if (args.mode === "auto" && args.uiLocale) {
-    const uiCode = vocalCodeToPromptLocale(args.uiLocale);
+    const uiCode = uiLocaleToAceVocalLanguage(args.uiLocale);
     if (uiCode !== "en" && detected === "en") return uiCode;
     if (uiCode === "it" && (detected === "es" || detected === "fr")) return "it";
   }

@@ -149,4 +149,4 @@ export {
   vocalCodeToPromptLocale,
   type AppLocale,
 } from "./i18n/locales";
-export { VOCAL_LANGUAGES, vocalLanguageLabel } from "./vocalLanguage";
+export { VOCAL_LANGUAGES, vocalLanguageLabel, uiLocaleToAceVocalLanguage } from "./vocalLanguage";
