@@ -3,6 +3,7 @@ import { CATEGORIZED_EN, CATEGORIZED_FR, flattenCategories } from "./index";
 import { getGenreMenuPromptCount, pickRandomGenreMenuDice } from "@/lib/randomPromptIdeas/genreMenuPrompts";
 import { pickRandomGenreMenuDiceRoll, getLandingDisplayPromptPool, prepareRotatingPromptPlaceholders } from "@/lib/randomPromptIdeas";
 import { GENRE_COUNT } from "@/lib/genres";
+import { looksLikeAceTechnicalPrompt } from "@/lib/promptEnhancer";
 describe("random prompt pools", () => {
   it("FR/EN song pools have hundreds of unique prompts", () => {
     const frSong = flattenCategories(CATEGORIZED_FR.song);
@@ -11,6 +12,13 @@ describe("random prompt pools", () => {
     expect(enSong.length).toBeGreaterThanOrEqual(180);
     expect(new Set(frSong).size).toBe(frSong.length);
     expect(new Set(enSong).size).toBe(enSong.length);
+  });
+
+  it("landing display pool v1+v2 exceeds 100 prompts per locale", () => {
+    const enSong = getLandingDisplayPromptPool("en", "song");
+    const frSong = getLandingDisplayPromptPool("fr", "song");
+    expect(enSong.length).toBeGreaterThanOrEqual(100);
+    expect(frSong.length).toBeGreaterThanOrEqual(100);
   });
 
   it("FR/EN beat pools are large and unique", () => {
@@ -27,11 +35,13 @@ describe("random prompt pools", () => {
     expect(/^(fais|une chanson|make me|song about)/i.test(sample)).toBe(false);
   });
 
-  it("dice roll shows simple display prompt to users", () => {
+  it("dice roll can show curated French or genre shell", () => {
     const fr = pickRandomGenreMenuDiceRoll("fr", "song");
-    expect(fr.displayPrompt).toMatch(/^Une chanson /i);
-    expect(fr.acePrompt.length).toBeGreaterThan(fr.displayPrompt.length);
-    expect(fr.acePrompt).not.toBe(fr.displayPrompt);
+    expect(fr.displayPrompt.trim().length).toBeGreaterThan(12);
+    expect(fr.genre).toBeTruthy();
+    if (fr.acePrompt.trim()) {
+      expect(fr.acePrompt.length).toBeGreaterThan(fr.displayPrompt.length);
+    }
   });
 
   it("dice roll respects prompt locale for song", () => {
@@ -67,10 +77,10 @@ describe("random prompt pools", () => {
   it("landing display pool uses readable curated phrases not ACE tags", () => {
     const frSong = getLandingDisplayPromptPool("fr", "song");
     const frBeat = getLandingDisplayPromptPool("fr", "beat");
-    expect(frSong.length).toBeGreaterThanOrEqual(40);
-    expect(frBeat.length).toBeGreaterThanOrEqual(40);
+    expect(frSong.length).toBeGreaterThanOrEqual(100);
+    expect(frBeat.length).toBeGreaterThanOrEqual(80);
     expect(frSong.some((p) => /Coupe du monde|World Cup/i.test(p))).toBe(true);
-    expect(frSong.some((p) => p.includes("808"))).toBe(false);
+    expect(frSong.some((p) => looksLikeAceTechnicalPrompt(p))).toBe(false);
     expect(frSong.some((p) => /^Chanson /i.test(p))).toBe(true);
     expect(frBeat.some((p) => /^Type beat|^Beat /i.test(p))).toBe(true);
   });
@@ -85,31 +95,29 @@ describe("random prompt pools", () => {
     expect(new Set(runs.map((r) => r.startIndex)).size).toBeGreaterThan(1);
   });
 
-  it("IT landing display pool uses English curated prompts", () => {
+  it("IT landing includes Italian translated curated", () => {
     const itSong = getLandingDisplayPromptPool("it", "song");
     expect(itSong.length).toBeGreaterThanOrEqual(40);
-    expect(itSong.some((p) => /World Cup|TikTok|Funny song|BeatStars/i.test(p))).toBe(true);
-    expect(itSong.some((p) => /^Una canzone /i.test(p))).toBe(false);
+    expect(itSong.some((p) => /Mondiale|TikTok|divertente|BeatStars/i.test(p))).toBe(true);
+    expect(itSong.some((p) => /^A [a-z].* song /i.test(p))).toBe(true);
   });
 
-  it("IT dice roll uses English shell with localized theme", () => {
+  it("IT dice can pick Italian curated or genre shell", () => {
     const it = pickRandomGenreMenuDiceRoll("it", "song");
-    expect(it.displayPrompt).toMatch(/^A [a-z].* song /i);
-    expect(it.acePrompt.length).toBeGreaterThan(0);
+    expect(it.displayPrompt.trim().length).toBeGreaterThan(12);
     expect(it.genre).toBeTruthy();
   });
 
-  it("ES landing display pool uses English curated prompts", () => {
+  it("ES landing includes Spanish translated curated", () => {
     const esSong = getLandingDisplayPromptPool("es", "song");
     expect(esSong.length).toBeGreaterThanOrEqual(40);
-    expect(esSong.some((p) => /World Cup|TikTok|Funny song/i.test(p))).toBe(true);
-    expect(esSong.some((p) => /^Una canción /i.test(p))).toBe(false);
+    expect(esSong.some((p) => /Mundial|TikTok|graciosa/i.test(p))).toBe(true);
+    expect(esSong.some((p) => /^A [a-z].* song /i.test(p))).toBe(true);
   });
 
-  it("ES dice roll uses English shell with localized theme", () => {
+  it("ES dice can pick Spanish curated or genre shell", () => {
     const es = pickRandomGenreMenuDiceRoll("es", "song");
-    expect(es.displayPrompt).toMatch(/^A [a-z].* song /i);
-    expect(es.acePrompt.length).toBeGreaterThan(0);
+    expect(es.displayPrompt.trim().length).toBeGreaterThan(12);
     expect(es.genre).toBeTruthy();
   });
 

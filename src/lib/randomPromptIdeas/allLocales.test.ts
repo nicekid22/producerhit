@@ -6,10 +6,11 @@ import {
   pickRandomGenreMenuDiceRoll,
   prepareRotatingPromptPlaceholders,
 } from "@/lib/randomPromptIdeas";
-import { resolveGenerationCaptionContext } from "@/lib/promptEnhancer";
+import { getUnifiedUserPromptPool } from "@/lib/randomPromptIdeas/unifiedDisplayPool";
+import { looksLikeAceTechnicalPrompt, resolveGenerationCaptionContext } from "@/lib/promptEnhancer";
 import { resolveRandomPromptLocale } from "@/lib/resolveRandomPromptLocale";
 import { resolveSongVocalLanguage } from "@/lib/vocalLanguages";
-import { getDisplayPromptPool } from "@producerhit/shared";
+import { getCuratedDisplayPromptPool, getDisplayPromptPool, resolveCuratedPromptLocale } from "@producerhit/shared";
 import { uiLocaleToAceVocalLanguage } from "@producerhit/shared";
 
 const NON_EN_FR = UI_LOCALES.filter((l) => l !== "en" && l !== "fr");
@@ -19,23 +20,55 @@ const CURATED_EN_SAMPLE = "Funny song about a collaborator who uses the same hi-
 describe("all 14 UI locales — prompts", () => {
   it.each(UI_LOCALES)("landing song pool for %s is large and readable", (locale) => {
     const pool = getLandingDisplayPromptPool(locale, "song");
-    expect(pool.length).toBeGreaterThanOrEqual(40);
+    expect(pool.length).toBeGreaterThanOrEqual(80);
     expect(pool.every((p) => p.trim().length > 10)).toBe(true);
-    expect(pool.some((p) => (p.match(/,/g) || []).length >= 3)).toBe(false);
+    expect(pool.some((p) => looksLikeAceTechnicalPrompt(p))).toBe(false);
   });
 
   it.each(UI_LOCALES)("rotating placeholder prepares for %s", (locale) => {
     const { pool, startIndex } = prepareRotatingPromptPlaceholders(locale, "song");
-    expect(pool.length).toBeGreaterThanOrEqual(40);
+    expect(pool.length).toBeGreaterThanOrEqual(80);
     expect(startIndex).toBeGreaterThanOrEqual(0);
     expect(startIndex).toBeLessThan(pool.length);
   });
 
-  it.each(NON_EN_FR)("%s uses English curated pool (not full foreign sentences)", (locale) => {
+  it("en v2 pool includes rich cinematic and retro prompts", () => {
+    const pool = getLandingDisplayPromptPool("en", "song");
+    expect(pool.some((p) => /synthwave|film noir|anime opening|80s/i.test(p))).toBe(true);
+    expect(pool.some((p) => p.length >= 100)).toBe(true);
+  });
+
+  it("fr v2 pool includes rich cinematic and retro prompts", () => {
+    const pool = getLandingDisplayPromptPool("fr", "song");
+    expect(pool.some((p) => /synthwave|film noir|anime|80s/i.test(p))).toBe(true);
+    expect(pool.some((p) => p.length >= 100)).toBe(true);
+  });
+
+  it.each(["es", "it", "de", "pt"] as const)("%s landing uses translated curated (not English shell)", (locale) => {
+    const pool = getLandingDisplayPromptPool(locale, "song");
+    const curated = getCuratedDisplayPromptPool(resolveCuratedPromptLocale(locale), "song");
+    expect(pool.some((p) => curated.includes(p))).toBe(true);
+    if (locale === "es") {
+      expect(pool.some((p) => /graciosa|colaborador|hi-hat/i.test(p))).toBe(true);
+    }
+    if (locale === "it") {
+      expect(pool.some((p) => /divertente|collega|hi-hat/i.test(p))).toBe(true);
+    }
+  });
+
+  it.each(["nl", "tr", "hi", "th"] as const)("%s uses English curated (no ACE voice)", (locale) => {
     const pool = getLandingDisplayPromptPool(locale, "song");
     expect(pool.some((p) => /World Cup|TikTok|Funny song|BeatStars/i.test(p))).toBe(true);
-    expect(pool.some((p) => /^Una canción |^Uma música |^Ein .*-Song /i.test(p))).toBe(false);
   });
+
+  it.each(NON_EN_FR.filter((l) => !["nl", "tr", "hi", "th"].includes(l)))(
+    "%s pool includes funny curated and genre dice options",
+    (locale) => {
+      const pool = getLandingDisplayPromptPool(locale, "song");
+      expect(pool.some((p) => /TikTok|BeatStars|hi-hat|Coupe du monde|World Cup|Mundial/i.test(p))).toBe(true);
+      expect(pool.some((p) => /^A [a-z0-9].* song /i.test(p))).toBe(true);
+    },
+  );
 
   it("fr uses French curated pool", () => {
     const pool = getLandingDisplayPromptPool("fr", "song");
@@ -59,12 +92,22 @@ describe("all 14 UI locales — dice", () => {
     const roll = pickRandomGenreMenuDiceRoll(locale, "song");
     expect(roll.genre).toBeTruthy();
     expect(roll.displayPrompt.trim().length).toBeGreaterThan(12);
-    expect(roll.acePrompt.includes(",")).toBe(true);
-    expect(roll.acePrompt.length).toBeGreaterThan(roll.displayPrompt.length);
-    if (locale === "fr") {
-      expect(roll.displayPrompt).toMatch(/^Une chanson /i);
-    } else {
-      expect(roll.displayPrompt).toMatch(/^A [a-z0-9]/i);
+    if (roll.acePrompt.trim()) {
+      expect(roll.acePrompt.includes(",")).toBe(true);
+      expect(roll.acePrompt.length).toBeGreaterThan(roll.displayPrompt.length);
+    }
+  });
+
+  it("dice pool includes translated curated funny prompts (same as placeholder)", () => {
+    const pool = getUnifiedUserPromptPool("es", "song");
+    const funny = pool.find((p) => /graciosa|colaborador|hi-hat/i.test(p));
+    expect(funny).toBeTruthy();
+    const curated = getCuratedDisplayPromptPool(resolveCuratedPromptLocale("es"), "song");
+    expect(curated).toContain(funny);
+    const roll = pickRandomGenreMenuDiceRoll("es", "song");
+    expect(roll.displayPrompt.trim().length).toBeGreaterThan(12);
+    if (/graciosa|colaborador|hi-hat/i.test(roll.displayPrompt)) {
+      expect(roll.acePrompt).toBe("");
     }
   });
 
@@ -172,7 +215,11 @@ describe("all 14 UI locales — generation caption", () => {
   });
 
   it.each(UI_LOCALES)("dice override enables melodyComposition for %s", (locale) => {
-    const roll = pickRandomGenreMenuDiceRoll(locale, "song");
+    let roll = pickRandomGenreMenuDiceRoll(locale, "song");
+    for (let i = 0; i < 60 && !roll.acePrompt.trim(); i += 1) {
+      roll = pickRandomGenreMenuDiceRoll(locale, "song");
+    }
+    expect(roll.acePrompt.trim().length).toBeGreaterThan(0);
     const ctx = resolveGenerationCaptionContext({
       diceAceOverride: roll.acePrompt,
       displayIdea: roll.displayPrompt,

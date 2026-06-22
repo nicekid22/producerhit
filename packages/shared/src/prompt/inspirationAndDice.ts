@@ -2,6 +2,8 @@ import { buildAceCaption } from "../generation/promptAce";
 import type { GenerateParams } from "../generation/types";
 import type { AppLocale } from "../i18n/locales";
 import { vocalCodeToPromptLocale } from "../i18n/locales";
+import { uiLocaleToAceVocalLanguage } from "../vocalLanguage";
+import { getCuratedDisplayPromptPool, mergeUniqueDisplayPrompts, resolveCuratedPromptLocale } from "./curated/index";
 import { resolvePromptPools } from "./localePools";
 
 export type PromptLocale = AppLocale;
@@ -113,14 +115,21 @@ export function toggleInspirationChip(current: string, chip: string): string {
   return trimmed ? `${trimmed}, ${chip}` : chip;
 }
 
-const FULL_DISPLAY_LOCALES = new Set<PromptLocale>(["en", "fr"]);
+const FULL_DISPLAY_LOCALES = new Set<PromptLocale>(["en", "fr", "es", "pt", "de", "it", "ja", "ko", "zh", "ar"]);
 
-/** Phrases lisibles dans le champ idée (pas les tags ACE techniques). */
+/** Phrases lisibles — curated traduit (langue ACE) ; nl/tr/hi/th → en. */
 export function getDisplayPromptPool(locale: PromptLocale, mode: PromptMode): readonly string[] {
+  const curatedLocale = resolveCuratedPromptLocale(locale);
+  return getCuratedDisplayPromptPool(curatedLocale, mode);
+}
+
+export function getUnifiedMobileDisplayPool(locale: PromptLocale, mode: PromptMode): readonly string[] {
+  const curatedLocale = resolveCuratedPromptLocale(locale);
+  const curated = getCuratedDisplayPromptPool(curatedLocale, mode);
   if (FULL_DISPLAY_LOCALES.has(locale)) {
-    return resolvePromptPools(locale)[mode];
+    return curated;
   }
-  return resolvePromptPools("en")[mode];
+  return mergeUniqueDisplayPrompts(curated, resolvePromptPools("en").hero);
 }
 
 export function pickRandomDisplayPrompt(locale: PromptLocale, mode: PromptMode): string {
@@ -154,14 +163,11 @@ export function pickMobileDiceRoll(
   currentGenre: string,
   genreOptions: readonly { value: string; label: string }[],
 ): MobileDiceRoll {
-  const displayPrompt = pickRandomDisplayPrompt(locale, mode);
+  const curatedLocale = resolveCuratedPromptLocale(locale);
+  const curated = getCuratedDisplayPromptPool(curatedLocale, mode);
+  const displayPrompt = curated[Math.floor(Math.random() * curated.length)] ?? pickRandomDisplayPrompt(locale, mode);
   const matchedGenre = matchGenreFromText(displayPrompt, genreOptions) ?? currentGenre;
-  const vocalLanguage = locale === "fr" ? "fr" : locale === "en" ? "en" : vocalCodeToPromptLocale(locale);
-
-  if (locale !== "en" && locale !== "fr") {
-    const acePrompt = pickRandomAcePrompt(locale, mode) || displayPrompt;
-    return { displayPrompt, acePrompt, genre: matchedGenre !== currentGenre ? matchedGenre : undefined };
-  }
+  const vocalLanguage = uiLocaleToAceVocalLanguage(locale);
 
   const params: GenerateParams = {
     genre: matchedGenre,

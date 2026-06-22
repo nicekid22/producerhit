@@ -140,6 +140,15 @@ export * from "./generation/index";
 export { resolveStemsDownloadUrl } from "./stemsDownload";
 export * from "./prompt/inspirationAndDice";
 export {
+  getCuratedDisplayPromptPool,
+  mergeUniqueDisplayPrompts,
+} from "./prompt/curated/index";
+export {
+  resolveCuratedPromptLocale,
+  ACE_CURATED_PROMPT_LOCALES,
+  type AceCuratedPromptLocale,
+} from "./prompt/curatedPromptLocale";
+export {
   UI_LOCALES,
   LOCALE_LABELS,
   LOCALE_SHORT,

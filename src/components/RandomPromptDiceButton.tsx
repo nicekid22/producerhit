@@ -39,7 +39,8 @@ export function RandomPromptDiceButton({
     setRolling(true);
     const { displayPrompt, acePrompt, genre } = pickRandomGenreMenuDiceRoll(diceLocale, mode);
     onPick(displayPrompt);
-    onPickAce?.(acePrompt);
+    if (acePrompt.trim()) onPickAce?.(acePrompt);
+    else onPickAce?.("");
     onPickGenre?.(genre);
     window.setTimeout(() => setRolling(false), 580);
   };

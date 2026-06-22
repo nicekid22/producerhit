@@ -5,7 +5,7 @@ import { shuffleArray } from "@/lib/utils";
 import { CATEGORIZED_EN, CATEGORIZED_FR } from "@/lib/randomPromptIdeas/categories";
 import type { CategorizedLocalePools, PromptCategory, PromptCategoryId } from "@/lib/randomPromptIdeas/categories";
 import { pickFromCategory } from "@/lib/randomPromptIdeas/categories";
-import { pickRandomGenreMenuDice } from "@/lib/randomPromptIdeas/genreMenuPrompts";
+import { pickRandomUnifiedDiceRoll } from "@/lib/randomPromptIdeas/unifiedDisplayPool";
 import { mergeUniqueDisplayPrompts } from "@/lib/randomPromptIdeas/curatedDisplayPrompts";
 import { getLocaleDisplayPromptPool } from "@/lib/randomPromptIdeas/localeDisplayPool";
 import { POOLS_EN } from "@/lib/randomPromptIdeas/localePools/en";
@@ -151,11 +151,15 @@ export function pickRandomPrompt(locale: AppLocale, mode: PromptMode): string {
   return pickRandomGenreMenuDiceRoll(locale, mode).displayPrompt;
 }
 
-/** Dice roll from full genre catalog — sets matching genre + display + ACE prompt. */
+/** Dice roll — pool unifié curated traduit + genre display (même set que placeholder). */
 export function pickRandomGenreMenuDiceRoll(locale: AppLocale, mode: PromptMode): GenreMenuDicePick {
-  const { genre, acePrompt, displayPrompt: diceDisplay } = pickRandomGenreMenuDice(mode, locale);
-  const ace = formatDicePrompt(acePrompt, mode);
-  return { genre, displayPrompt: diceDisplay, acePrompt: ace, prompt: diceDisplay };
+  const roll = pickRandomUnifiedDiceRoll(locale, mode);
+  return {
+    genre: roll.genre,
+    displayPrompt: roll.displayPrompt,
+    acePrompt: roll.acePrompt,
+    prompt: roll.displayPrompt,
+  };
 }
 
 export function pickNextHeroPromptIndex(pool: readonly string[], current: number): number {

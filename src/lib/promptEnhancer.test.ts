@@ -35,6 +35,20 @@ describe("promptEnhancer", () => {
     expect(ctx.melodyComposition).toBe(false);
   });
 
+  it("v2 rich display prompt is curated not ACE tags", () => {
+    const v2 =
+      "80s synthwave song — analog Juno pads, gated reverb snare, neon highway at night. Stranger Things meets Miami Vice: emotional, cinematic, not cheesy.";
+    expect(looksLikeAceTechnicalPrompt(v2)).toBe(false);
+    expect(looksLikeCuratedDisplayPrompt(v2)).toBe(true);
+    const ctx = resolveGenerationCaptionContext({
+      displayIdea: v2,
+      formGenre: "Synthwave",
+      mode: "song",
+      uiLocale: "en",
+    });
+    expect(ctx.melodyComposition).toBe(false);
+  });
+
   it("legacy IT dice shell is curated not natural enhancement", () => {
     const legacy = "Una canzone deep focus su una storia notturna";
     expect(looksLikeCuratedDisplayPrompt(legacy)).toBe(true);
@@ -49,7 +63,11 @@ describe("promptEnhancer", () => {
   });
 
   it("rebuilds dice ACE when override missing but display matches pool", () => {
-    const roll = pickRandomGenreMenuDiceRoll("it", "song");
+    let roll = pickRandomGenreMenuDiceRoll("it", "song");
+    for (let i = 0; i < 40 && !roll.acePrompt.trim(); i += 1) {
+      roll = pickRandomGenreMenuDiceRoll("it", "song");
+    }
+    expect(roll.acePrompt.trim().length).toBeGreaterThan(0);
     const ctx = resolveGenerationCaptionContext({
       displayIdea: roll.displayPrompt,
       formGenre: roll.genre,
@@ -61,7 +79,11 @@ describe("promptEnhancer", () => {
   });
 
   it("dice override enables melody composition", () => {
-    const dice = pickRandomGenreMenuDiceRoll("fr", "song");
+    let dice = pickRandomGenreMenuDiceRoll("fr", "song");
+    for (let i = 0; i < 40 && !dice.acePrompt.trim(); i += 1) {
+      dice = pickRandomGenreMenuDiceRoll("fr", "song");
+    }
+    expect(dice.acePrompt.trim().length).toBeGreaterThan(0);
     const ctx = resolveGenerationCaptionContext({
       diceAceOverride: dice.acePrompt,
       displayIdea: dice.displayPrompt,
@@ -84,7 +106,11 @@ describe("promptEnhancer", () => {
   });
 
   it("prefers dice ace override over natural enhancement", () => {
-    const dice = pickRandomGenreMenuDiceRoll("fr", "song");
+    let dice = pickRandomGenreMenuDiceRoll("fr", "song");
+    for (let i = 0; i < 40 && !dice.acePrompt.trim(); i += 1) {
+      dice = pickRandomGenreMenuDiceRoll("fr", "song");
+    }
+    expect(dice.acePrompt.trim().length).toBeGreaterThan(0);
     const caption = resolveCaptionOverrideForGeneration({
       diceAceOverride: dice.acePrompt,
       displayIdea: dice.displayPrompt,

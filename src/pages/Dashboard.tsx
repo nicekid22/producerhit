@@ -3417,7 +3417,7 @@ export default function Dashboard() {
                     setField("prompt", v);
                   }}
                   onPickAce={(ace) => {
-                    beatAceOverrideRef.current = ace;
+                    beatAceOverrideRef.current = ace?.trim() || null;
                   }}
                   onRotatingPlaceholder={(text) => {
                     beatRotatingPlaceholderRef.current = text;
@@ -3792,7 +3792,7 @@ export default function Dashboard() {
                     setSongDescription(v);
                   }}
                   onPickAce={(ace) => {
-                    songAceOverrideRef.current = ace;
+                    songAceOverrideRef.current = ace?.trim() || null;
                   }}
                   onRotatingPlaceholder={(text) => {
                     songRotatingPlaceholderRef.current = text;

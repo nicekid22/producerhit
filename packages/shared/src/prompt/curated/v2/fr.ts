@@ -1,0 +1,118 @@
+import type { LocalePromptPools } from "../../localePools/types";
+
+/** V2 FR — prompts enrichis : genre + ambiance + usage. */
+const SONG: readonly string[] = [
+  "Chanson synthwave 80s — pads Juno analogiques, caisse claire en gated reverb, autoroute néon la nuit. Stranger Things rencontre Miami Vice : émotionnel, ciné, pas cucul.",
+  "Chanson hip-hop boom bap 90s — samples dusty, drums crisp, énergie storytelling. Toit NYC en été, nostalgia boombox avec un mix moderne.",
+  "Chanson pop-R&B glossy Y2K — synthés brillants, chops vocaux serrés, confiance era barrettes papillon. Reel mode ou TikTok throwback.",
+  "Chanson disco-funk revival — basse live, stabs de cordes, joie four-on-the-floor. Énergie Studio 54 pour un mariage d'été.",
+  "Chanson alt-rock grunge 90s — dynamique loud-quiet, guitares crues, angst honnête. Pluie sur pare-brise, flanelle et catharsis.",
+  "Chanson soul vintage — orgue Hammond, section cuivres, swing Motown. Refrain feel-good pour pub marque ou montage famille.",
+
+  "Chanson horreur cinématique — cordes dissonantes, pulses sub, chœur chuchoté qui monte. Trailer thriller psychologique, tension lente.",
+  "Chanson sci-fi épique — grosses caisses, orchestre hybride, cuivres et pads larges. Trailer space odyssey : émerveillement et danger.",
+  "Chanson jazz film noir — bar enfumé, contrebasse, drums brossés, trompette sourdine. Lent, séduisant, détective noir et blanc.",
+  "Chanson opening anime — refrain J-rock explosif, guitares clean, drums anthemiques. Énergie shonen : espoir après le combat.",
+  "Chanson western ciné — acoustique poussiéreuse, harmonica, cordes ciné. Outlaw golden hour — générique série Netflix.",
+  "Chanson comédie romantique — pop acoustique, claps, optimisme ensoleillé. Rencontre dans une librairie, léger sans être enfantin.",
+  "Chanson blockbuster action — percussions agressives, cuivres, ostinato de cordes. Scène de poursuite avec un hook héroïque.",
+  "Chanson drame indie A24 — piano sparse, voix intime, cordes subtiles. Rupture silencieuse en cuisine à 2h du mat.",
+  "Chanson docu — neutre mais émotionnelle, piano et pulses doux. Histoires humaines, archives, dignité.",
+  "Chanson trailer super-héros — orchestre hybride, montée de chœur, impacts. Héros sombre de retour — frissons sans parodie.",
+
+  "Chanson neo-soul — Rhodes chaud, basse ronde, groove posé. Honnêteté nocturne, chaleur vinyle, confession douce.",
+  "Chanson flamenco fusion — palmas, guitare nylon, hi-hats trap en dessous. Passion, feu, rooftop Barcelone minuit.",
+  "Chanson bossa nova — guitare nylon, shakers doux, mélodie légère. Coucher de soleil Ipanema, romance café.",
+  "Chanson metalcore — versets screamés, refrain mélodique, double pédale. Montage gym ou hype esport — agression maîtrisée.",
+  "Chanson bluegrass — banjo, fiddle, énergie stomp-clap. Road trip Appalachia, storytelling et vitesse.",
+  "Chanson reggae roots — one-drop, basse chaude, énergie consciente. Soleil, résistance, communauté — esprit Marley modernisé.",
+  "Chanson opéra-pop — lignes soprano dramatiques sur prod moderne. Épique, luxueux, finale télé-crochet.",
+  "Chanson blues Chicago — bends guitare, shuffle, grit de bar. Pluie dehors, whisky dedans.",
+  "Chanson ska-punk — guitares upstroke, basse walking, cuivres. Énergie skate video, rapide et fun.",
+  "Chanson afro-jazz — percussions complexes, piano électrique, liberté impro. Vernissage galerie, cosmopolite et vivant.",
+
+  "Chanson montage gaming épique — hybride orchestral, montée-drop, fanfare victoire. Clutch ranked — hype sans chaos meme.",
+  "Chanson village RPG lo-fi — cloches douces, harpe, pad chaud. Point de sauvegarde — cozy game pour étudier.",
+  "Chanson club cyberpunk — basse distordue, voix glitch, anxiété néon. Ville nuit, chrome et pluie — mood Edgerunners.",
+  "Chanson chiptune arcade rétro — lead 8-bit, sidechain moderne, mélodie playful. Nostalgie high score pour trailer jeu indie.",
+
+  "Chanson première danse mariage — slow R&B, piano intime, cordes au refrain. Amour vrai, pas clichés mariage générique.",
+  "Hymne remise des diplômes — pop-rock uplifting, gang vocals au hook. Toques en l'air, parents en larmes.",
+  "Chanson rupture puis reconstruction — piano triste, refrain pop empoweré. Photos supprimées, nouvelle coupe, on avance.",
+  "Hymne road-trip — fenêtres ouvertes, acoustique vers grosses caisses. Panneaux autoroute, café station-service.",
+  "Chanson hommage funéraire — respectueuse, piano et chœur, pas de mélodrame. Célébrer une vie avec grâce.",
+  "Berceuse nouveau-né — boîte à musique et guitare douce. Veilleuse chambre, parents qui fredonnent.",
+
+  "Chanson session studio — 3h du mat, café froid, magie quand le beat clique enfin. Meta mais relatable producteurs.",
+  "Chanson challenge viral — earworm 15 secondes, syllabes accrocheuses, TikTok-ready. Conçue pour boucler.",
+  "Chanson sync licensing — humeur neutre, lyrics safe, arc commercial. Vidéo marque : hopeful, moderne, universel.",
+  "Chanson gagnante beat battle — swagger rap, switch beat minimal, énergie foule. Un round, un KO.",
+  "Chanson sample flip — chop soul vintage, drums modernes, versets narratifs. Fouille crates, honorer le passé.",
+
+  "Chanson mélancolie automne — acoustique, feuilles qui tombent, cordes douces. Sweater weather, hoodie d'ex, tristesse douce.",
+  "Chanson festival été — house-pop, refrain crowd singalong. Main stage sunset, paillettes, euphorie collective.",
+  "Chanson cabane hiver — texture feu de cheminée, harmonies folk. Neige dehors, chocolat chaud dedans.",
+  "Chanson renouveau printemps — indie pop lumineuse, samples oiseaux, fresh start. Grand ménage, nouvelle playlist.",
+  "Chanson city pop minuit — accords city pop japonais, basse funky, reflets néon. Autoroute Tokyo, 1982 meets 2026.",
+
+  "Chanson drill orchestrale — cordes et slides 808, contraste et puissance. Fusion inattendue mais intentionnelle.",
+  "Chanson gospel trap — hooks chœur, stabs orgue, 808 hard. Banc d'église au club — adrénaline spirituelle.",
+  "Chanson country trap — banjo et basse 808, storytelling rural-urbain. Pick-up, rêves de ville.",
+  "Chanson méditation ambient — pas de drums, pads évolutifs, rythme respiration. Yoga, sommeil, focus calme.",
+  "Chanson latin jazz — congas, montuno piano, cuivres. Club La Havane, danseurs, chaleur sophistiquée.",
+  "Ballade K-pop — couplet émotionnel, refrain explosif, prod polie. Scène pluie K-drama, parapluie partagé.",
+  "Chanson drill symphonique — orchestre sur 808 glissants. After fashion week Paris — luxe et danger.",
+  "Chanson piano rap — boucle piano solo, rap intime. Tiny desk energy, lyrics bruts.",
+  "Chanson hyperpop amour — douceur glitchée, voix pitchées, romance chaotique. Crush ère digitale.",
+  "Chanson afro-house lever de soleil — log drums, accords chauds, montée progressive. Plage après la meilleure nuit.",
+];
+
+const BEAT: readonly string[] = [
+  "Type beat synthwave 80s — basse analogique, Juno arpégé, snare rétro. Montage night drive ou titre VHS horreur.",
+  "Type beat boom bap East Coast 90s — sample flip dusty, drums hard, groove head-nod. Cypher freestyle ou lyric video.",
+  "Instrumental R&B Y2K — keys glossy, drums 2-step, espace vocal. Slow jam throwback ou lookbook mode.",
+  "Loop disco house — basse live, stabs cordes, four-on-the-floor. Roller revival ou pub été.",
+  "Instrumental alt-rock grunge — couches guitare loud-quiet, énergie drums live. Edit skate ou trailer jeu indie.",
+
+  "Beat underscore horreur ciné — cordes atonales, drones sub. Tension trailer thriller sans stingers cheap.",
+  "Beat trailer hybride épique — braams, montées percussives, hits orchestral. Teaser blockbuster ou package sport.",
+  "Loop jazz film noir — contrebasse, kit brossé, samples trompette enfumée. Monologue détective ou scène bar.",
+  "Instrumental battle anime — drums rapides, guitares disto, mélodie héroïque. AMV ou menu fighting game.",
+  "Loop western ciné — guitare acoustique, harmonica, percussions sparse. Standoff désert ou doc voyage.",
+
+  "Instrumental neo-soul — accords Rhodes, basse ronde, pocket posé. Intro podcast ou playlist café.",
+  "Beat flamenco trap — guitare nylon, palmas, 808 moderne. Reel fusion latine ou dance challenge.",
+  "Beat bossa lo-fi — guitare douce, texture vinyl, swing léger. Study stream ou lobby hôtel boutique.",
+  "Instrumental metalcore — double kick, riff breakdown, pont mélodique. PR gym ou highlight esport.",
+  "Beat reggae dub — delay lourd, one-drop, basse mélodique. Chill plage ou bed spoken-word.",
+  "Beat blues Chicago jam — shuffle, room guitare, stabs orgue. Énergie bar band instrumental.",
+  "Loop afro-jazz fusion — percussions live, piano électrique, espace impro. Vernissage ou doc culture.",
+
+  "Beat montage gaming épique — montée, drop, motif victoire. Clutch plays et récaps tournoi.",
+  "Beat hyperpop chiptune — lead 8-bit, sidechain, chaos playful. Devlog jeu rétro ou edit meme.",
+  "Beat club cyberpunk — basse distordue, hats industriels, mood néon. B-roll ville nuit ou marque tech.",
+
+  "Instrumental pop sync-friendly — upbeat, pas d'angles sombres, arc 60–90s. Vidéo corporate ou onboarding app.",
+  "Thème podcast — motif 8 mesures mémorable, mix clean. True crime ou culture show intro.",
+  "Beat workout trap — 808 agressif, mélodie minimale, énergie relentless. HIIT ou running playlist.",
+  "Beat study lo-fi — texture pluie, accords mellow, 85 BPM. Loop focus 3 heures.",
+  "Beat marque luxe — minimal, son cher, cordes subtiles. Défilé mode ou reveal voiture.",
+
+  "Type beat drill orchestrale — cordes staccato sur 808 glissants. Campagne streetwear haute couture.",
+  "Instrumental gospel trap — stabs chœur, orgue, drums hard. Énergie dimanche meets club.",
+  "Beat country trap — hook banjo, sub 808, clash rural-urbain. Storytelling TikTok ou pub truck.",
+  "Loop ambient ciné — textures évolutives, pas de drums. App méditation ou doc nature.",
+  "Beat latin jazz house — congas, stabs piano, groove club. Rooftop party ou menu cocktail.",
+  "Beat drill symphonique — hits orchestre, mélodie sombre, slides 808. Edge marque luxe européenne.",
+  "Fusion phonk western — cowbell, guitare désert, drums memphis phonk. Edit cowboy drift ou meme ironique.",
+  "Beat UK garage 2-step — drums shufflés, soul chopped, bounce. Montage nuit londonienne.",
+  "Beat funk mandelão brésilien — kick lourd, groove tamborzão, énergie baile. Dance challenge ou clip soirée.",
+  "Beat afro-house log drum — accords chauds, couches percussives, build sunrise. Set festival matin ou vlog voyage.",
+  "Beat jersey club mélodique — bed squeak, patterns kick, lead émotionnel. Dance TikTok ou edit émotionnel.",
+  "Beat experimental producteur IA — textures glitch, drops inattendus. Démo tech ou humour créateur.",
+  "Beat techno peak-time — kick driving, ligne acide, after warehouse. Footage club ou nostalgie rave.",
+  "Hybride acoustic trap — loop guitare fingerpick, drums trap, espace émotionnel. Singer-songwriter meets R&B.",
+  "Beat afro trap ciné — percussions afro, hats trap, cuivres trailer. Doc sport ou manifesto marque.",
+];
+
+export const CURATED_V2_FR: LocalePromptPools = { song: SONG, beat: BEAT, hero: [] };

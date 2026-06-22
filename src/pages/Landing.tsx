@@ -223,6 +223,7 @@ export default function Landing() {
   const [mode, setMode] = useState<CreateMode>("song");
   const [prompt, setPrompt] = useState("");
   const acePromptOverrideRef = useRef<string | null>(null);
+  const rotatingPlaceholderRef = useRef("");
   const [focused, setFocused] = useState(false);
 
   const landingPromptLocale = useMemo(
@@ -235,6 +236,9 @@ export default function Landing() {
     mode,
     value: prompt,
     paused: focused,
+    onActivePlaceholder: (text) => {
+      rotatingPlaceholderRef.current = text;
+    },
   });
 
   const [beatArtist, setBeatArtist] = useState("");
@@ -465,21 +469,13 @@ export default function Landing() {
   const onGenerate = () => {
     if (generating) return;
 
-    const userPrompt = prompt.trim();
+    const trimmedInput = prompt.trim();
+    const placeholderText = rotatingPlaceholderRef.current.trim();
+    const promptValue =
+      trimmedInput ||
+      placeholderText ||
+      (mode === "beat" ? inferBeatPrompt() : "");
 
-    if (mode === "song" && !userPrompt) {
-      trackClientEvent("landing_create_empty", { mode: "song" });
-      saveLandingPendingGeneration({ prompt: "", mode: "song", genreStrategy: "random" });
-      const dashboardNext = "/dashboard?mode=song";
-      if (!user) {
-        navigate(buildAuthUrl({ next: dashboardNext }));
-        return;
-      }
-      navigate(dashboardNext);
-      return;
-    }
-
-    const promptValue = mode === "beat" ? userPrompt || inferBeatPrompt() : userPrompt;
     if (!promptValue.trim()) {
       saveLandingPendingGeneration({ prompt: "", mode, genreStrategy: "random" });
       const dashboardNext = `/dashboard?mode=${mode}`;
@@ -491,11 +487,14 @@ export default function Landing() {
       return;
     }
 
+    const usedPlaceholder = !trimmedInput && Boolean(placeholderText);
+    const aceFromDice = acePromptOverrideRef.current?.trim() || undefined;
+
     saveLandingPendingGeneration({
       prompt: promptValue,
       mode,
       genreStrategy: "from_idea",
-      acePrompt: acePromptOverrideRef.current ?? undefined,
+      acePrompt: usedPlaceholder ? undefined : aceFromDice,
     });
     const dashboardNext = `/dashboard?prompt=${encodeURIComponent(promptValue)}&mode=${mode}`;
     if (!user) {

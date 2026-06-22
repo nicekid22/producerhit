@@ -24,9 +24,11 @@ function trimAceCaption(parts: readonly string[]): string {
 export function looksLikeAceTechnicalPrompt(text: string): boolean {
   const t = text.trim();
   if (!t) return false;
+  // Prompts display v2 : phrases naturelles (tirets, points) — pas des listes ACE
+  if (/[.!?]/.test(t) || t.includes("—") || t.includes(" – ")) return false;
   const commas = (t.match(/,/g) || []).length;
   if (commas >= 3 && t.length >= 60) return true;
-  if (commas < 1 || t.length < 40) return false;
+  if (commas < 2 || t.length < 40) return false;
   return /\b(808|hi-hat|rhodes|sidechain|supersaw|log drum|mix 2026|four-on-floor|reese bass)\b/i.test(t);
 }
 
@@ -50,6 +52,13 @@ export function looksLikeCuratedDisplayPrompt(text: string): boolean {
   if (/^Une chanson /i.test(t) && !looksLikeFrenchConversationalSongRequest(t)) return true;
   if (/^Un beat /i.test(t) && !/^un beat sur\b/i.test(t)) return true;
   if (/^(Chanson |Hymne |Ballade |Son pour |Type beat )/i.test(t)) return true;
+  if (/^(Canción |Himno |Balada |Tema para |Canción graciosa )/i.test(t)) return true;
+  if (/^(Canzone |Inno |Ballata )/i.test(t)) return true;
+  if (/^(Ein |Eine |Lustiger |Melodischer )/i.test(t) && /\b(Song|Beat|Lied)\b/i.test(t)) return true;
+  if (/^(Uma |Um |Canção |Música )/i.test(t)) return true;
+  if (/^[\d]{2}s\s/i.test(t)) return true;
+  if (/^(Synthwave|Cyberpunk|Chiptune|Hyperpop|Metalcore|Bluegrass|Bossa|Flamenco|Neo-soul|Afro-jazz|Afro-house|Orchestral drill|Gospel trap|Country trap|Latin jazz|K-pop|J-pop|City pop|Y2K|Grunge|Disco-funk|Vintage soul|Epic gaming|Lo-fi RPG|Ambient meditation|Piano rap|Drill symphonique|Film-noir|Anime opening|Western cinematic|Rom-com|Action blockbuster|Indie A24|Documentary score|Superhero trailer|Wedding first-dance|Graduation anthem|Breakup recovery|Road-trip anthem|Funeral tribute|New baby|Studio session|Viral hook|Sync licensing|Beat battle|Sample flip|Autumn melancholy|Summer festival|Winter cabin|Spring renewal|Midnight city pop)\b/i.test(t)) return true;
+  if (/^(Canción |Himno |Balada |Tema |Chanson |Son |Canzone |Inno |Ballata |Lied |Song |Track |Beat |Type beat |Instrumental |Loop |Thème |Beat underscore|Fusion phonk)\b/i.test(t)) return true;
   return /^(A |An |The |Funny |Feel-good |Glossy |Epic |Slow |Playful |Euphoric |Cinematic |Ironic |Respectful |Acoustic |Modern |Piano |Phonk |Gospel|Track for |Type beat |Song about |Road-trip |Hymn for |Beat where |Loop for |Melodic |World Cup |Back-to-work |Long-distance |Chanson |Beat |Instrumental |Dusty |Dark |Peak-time |Organic |Experimental |Romantic |Orchestral )/i.test(
     t,
   );
