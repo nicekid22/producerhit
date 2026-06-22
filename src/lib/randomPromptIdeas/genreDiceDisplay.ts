@@ -100,8 +100,6 @@ function pickTheme(locale: AppLocale, group: ThemeGroup, mode: PromptMode, varia
 }
 
 export function getGenreDisplayLabel(genre: string, locale: AppLocale): string {
-  const localized = LOCALE_DICE_CONFIG[locale]?.genreLabels;
-  if (localized?.[genre]) return localized[genre]!;
   if (locale === "fr" && FR_GENRE_LABELS[genre]) return FR_GENRE_LABELS[genre]!;
   const opt = ALL_GENRE_OPTIONS.find((o) => o.value === genre);
   return (opt?.label ?? genre).toLowerCase();
@@ -116,12 +114,9 @@ export function buildGenreDiceDisplayPrompt(
 ): string {
   const genreLabel = getGenreDisplayLabel(genre, locale);
   const theme = pickTheme(locale, themeGroup, mode, variant);
-  const localized = LOCALE_DICE_CONFIG[locale];
-  if (localized) {
-    return mode === "song" ? localized.song(genreLabel, theme) : localized.beat(genreLabel, theme);
-  }
   if (locale === "fr") {
     return mode === "song" ? `Une chanson ${genreLabel} ${theme}` : `Un beat ${genreLabel} ${theme}`;
   }
+  // EN shell + thème localisé (IT/ES/DE…) — pas de phrase entièrement traduite
   return mode === "song" ? `A ${genreLabel} song ${theme}` : `A ${genreLabel} beat ${theme}`;
 }

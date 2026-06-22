@@ -1289,6 +1289,7 @@ export default function Dashboard() {
         lyricsMode,
         lyrics,
         songDescription,
+        uiLocale: locale,
       })
     : "en";
   const songLyrics = isSong ? (lyricsMode === "manual" ? lyrics.trim() : "") : "";
@@ -1375,6 +1376,7 @@ export default function Dashboard() {
           lyricsMode: effectiveLyricsMode,
           lyrics: effectiveSongLyrics,
           songDescription: runSongDescription,
+          uiLocale: locale,
         })
       : "en";
     const sessionId = ++generateSessionRef.current;

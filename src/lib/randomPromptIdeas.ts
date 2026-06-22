@@ -92,11 +92,6 @@ export function getLandingDisplayPromptPool(locale: AppLocale, mode: PromptMode)
   const fromDice = getGenreDiceDisplayPromptPool(mode, locale);
   const merged = mergeUniqueDisplayPrompts(curated, fromDice);
   if (merged.length >= 8) return merged;
-
-  const hero = resolvePromptPools(locale).hero;
-  if (mode === "song" && hero.length > 0) {
-    return mergeUniqueDisplayPrompts(curated, hero, fromDice);
-  }
   return mergeUniqueDisplayPrompts(curated, landingDisplayFallback(locale, mode), fromDice);
 }
 
@@ -169,13 +164,6 @@ export function pickRandomPrompt(locale: AppLocale, mode: PromptMode): string {
 export function pickRandomGenreMenuDiceRoll(locale: AppLocale, mode: PromptMode): GenreMenuDicePick {
   const { genre, acePrompt, displayPrompt: diceDisplay } = pickRandomGenreMenuDice(mode, locale);
   const ace = formatDicePrompt(acePrompt, mode);
-
-  if (locale !== "en" && locale !== "fr") {
-    const pool = getLandingDisplayPromptPool(locale, mode);
-    const displayPrompt = pool[Math.floor(Math.random() * pool.length)] ?? pool[0] ?? diceDisplay;
-    return { genre, displayPrompt, acePrompt: ace, prompt: displayPrompt };
-  }
-
   return { genre, displayPrompt: diceDisplay, acePrompt: ace, prompt: diceDisplay };
 }
 

@@ -16,7 +16,7 @@ import {
   type GenerationJobStatus,
   type LoopVariantKind,
 } from "@producerhit/shared";
-import type { GenerateBeatInput, Loop, LoopLength, UserProfile } from "@producerhit/shared";
+import type { AppLocale, GenerateBeatInput, Loop, LoopLength, UserProfile } from "@producerhit/shared";
 import { normalizePlanId, planMonthlyLimit } from "@producerhit/shared";
 import { mobileJobsClient } from "./generationClient";
 import { assignLoopCoverWithTimeout } from "./pinterestCover";
@@ -311,6 +311,7 @@ export type GenerateSongInput = {
   captionOverride?: string | null;
   vocalLanguageMode?: "auto" | "manual";
   manualVocalLanguage?: string;
+  uiLocale?: AppLocale;
 };
 
 export async function generateSong(input: GenerateSongInput, options?: GenerateJobOptions): Promise<Loop> {
@@ -332,6 +333,7 @@ export async function generateSong(input: GenerateSongInput, options?: GenerateJ
     lyricsMode: effectiveLyricsMode,
     lyrics: effectiveLyrics,
     songDescription: description,
+    uiLocale: input.uiLocale,
   });
 
   const params: GenerateParams = toSongGenerateParams({

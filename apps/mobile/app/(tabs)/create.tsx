@@ -181,6 +181,7 @@ export default function CreateScreen() {
               captionOverride: songCaptionOverride,
               vocalLanguageMode,
               manualVocalLanguage,
+              uiLocale: locale,
             },
             jobOpts,
           )

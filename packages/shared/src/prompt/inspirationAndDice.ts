@@ -117,12 +117,10 @@ const FULL_DISPLAY_LOCALES = new Set<PromptLocale>(["en", "fr"]);
 
 /** Phrases lisibles dans le champ idée (pas les tags ACE techniques). */
 export function getDisplayPromptPool(locale: PromptLocale, mode: PromptMode): readonly string[] {
-  const pools = resolvePromptPools(locale);
   if (FULL_DISPLAY_LOCALES.has(locale)) {
-    return pools[mode];
+    return resolvePromptPools(locale)[mode];
   }
-  if (pools.hero.length > 0) return pools.hero;
-  return pools[mode];
+  return resolvePromptPools("en")[mode];
 }
 
 export function pickRandomDisplayPrompt(locale: PromptLocale, mode: PromptMode): string {

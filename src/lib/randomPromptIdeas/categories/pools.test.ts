@@ -85,18 +85,32 @@ describe("random prompt pools", () => {
     expect(new Set(runs.map((r) => r.startIndex)).size).toBeGreaterThan(1);
   });
 
-  it("ES landing display pool uses Spanish hero phrases not English templates", () => {
-    const esSong = getLandingDisplayPromptPool("es", "song");
-    expect(esSong.length).toBeGreaterThanOrEqual(12);
-    expect(esSong.some((p) => /^A [a-z]+ song /i.test(p))).toBe(false);
-    expect(esSong.some((p) => /^Una canción /i.test(p))).toBe(true);
-    expect(esSong.some((p) => /renunciar|ghosting|melancólico|verano/i.test(p))).toBe(true);
+  it("IT landing display pool keeps English curated prompts with localized dice themes", () => {
+    const itSong = getLandingDisplayPromptPool("it", "song");
+    expect(itSong.length).toBeGreaterThanOrEqual(40);
+    expect(itSong.some((p) => /World Cup|TikTok|Funny song|BeatStars/i.test(p))).toBe(true);
+    expect(itSong.some((p) => /^A [a-z].* song /i.test(p))).toBe(true);
+    expect(itSong.some((p) => /^Una canzone /i.test(p))).toBe(false);
   });
 
-  it("ES dice roll shows Spanish display prompt", () => {
+  it("IT dice roll uses English shell with localized theme", () => {
+    const it = pickRandomGenreMenuDiceRoll("it", "song");
+    expect(it.displayPrompt).toMatch(/^A [a-z].* song /i);
+    expect(it.acePrompt.length).toBeGreaterThan(0);
+    expect(it.genre).toBeTruthy();
+  });
+
+  it("ES landing display pool uses English curated + localized theme dice", () => {
+    const esSong = getLandingDisplayPromptPool("es", "song");
+    expect(esSong.length).toBeGreaterThanOrEqual(40);
+    expect(esSong.some((p) => /World Cup|TikTok|Funny song/i.test(p))).toBe(true);
+    expect(esSong.some((p) => /^A [a-z].* song /i.test(p))).toBe(true);
+    expect(esSong.some((p) => /^Una canción /i.test(p))).toBe(false);
+  });
+
+  it("ES dice roll uses English shell with localized theme", () => {
     const es = pickRandomGenreMenuDiceRoll("es", "song");
-    expect(es.displayPrompt).not.toMatch(/^A [a-z]+ song /i);
-    expect(es.displayPrompt).toMatch(/^Una canción /i);
+    expect(es.displayPrompt).toMatch(/^A [a-z].* song /i);
     expect(es.acePrompt.length).toBeGreaterThan(0);
     expect(es.genre).toBeTruthy();
   });
