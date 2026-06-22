@@ -524,6 +524,8 @@ export default function Dashboard() {
   );
   const beatAceOverrideRef = useRef<string | null>(null);
   const songAceOverrideRef = useRef<string | null>(null);
+  const songRotatingPlaceholderRef = useRef("");
+  const beatRotatingPlaceholderRef = useRef("");
   const [songDurationSec, setSongDurationSec] = useState(30);
   const [songTimeSignature, setSongTimeSignature] = useState<(typeof timeSignatureOptions)[number]>("4/4");
   const [beatInstrumental] = useState(true);
@@ -1351,6 +1353,20 @@ export default function Dashboard() {
     let runSongDescription = landingSnap && runAsSong ? landingSnap.prompt : songDescription;
     let runFormPrompt = landingSnap && !runAsSong ? landingSnap.prompt : form.prompt;
 
+    if (runAsSong && !runSongDescription.trim()) {
+      const placeholder = songRotatingPlaceholderRef.current.trim();
+      if (placeholder) {
+        runSongDescription = placeholder;
+        songAceOverrideRef.current = null;
+      }
+    } else if (!runAsSong && !(runFormPrompt?.trim() ?? "")) {
+      const placeholder = beatRotatingPlaceholderRef.current.trim();
+      if (placeholder) {
+        runFormPrompt = placeholder;
+        beatAceOverrideRef.current = null;
+      }
+    }
+
     const ideaTextForGenre = runAsSong ? runSongDescription.trim() : (runFormPrompt?.trim() ?? "");
 
     const runUiPrompt =
@@ -1578,7 +1594,18 @@ export default function Dashboard() {
         displayIdea: prompt,
         formGenre: normalizedGenreForPrompt,
         mode: runAsSong ? "song" : "beat",
+        uiLocale: locale,
       });
+
+      const effectiveRunUiPrompt = runAsSong
+        ? [
+            isCatalogGenreSelection(normalizedGenreForPrompt) ? normalizedGenreForPrompt : "",
+            runSongDescription.trim(),
+            songVocalStyle ? `vocal style: ${songVocalStyle}` : "",
+          ]
+            .filter(Boolean)
+            .join(", ")
+        : (runFormPrompt?.trim() ?? "");
 
       const inputParams = {
         genre: normalizedGenreForPrompt,
@@ -1591,7 +1618,7 @@ export default function Dashboard() {
         mood: runAsSong ? "" : form.mood,
         energyLevel: runAsSong ? "" : form.energyLevel,
         reverb: form.reverb,
-        prompt: runUiPrompt,
+        prompt: effectiveRunUiPrompt || runUiPrompt,
       };
 
       const buildOptions = (seed?: number, slotIdx?: 1 | 2) => {
@@ -3392,6 +3419,9 @@ export default function Dashboard() {
                   onPickAce={(ace) => {
                     beatAceOverrideRef.current = ace;
                   }}
+                  onRotatingPlaceholder={(text) => {
+                    beatRotatingPlaceholderRef.current = text;
+                  }}
                   onPickGenre={(v) => setField("genre", v)}
                   collapsible={mobileV2}
                   defaultOpen={mobileV2 ? mobileSectionDefaultOpen : true}
@@ -3763,6 +3793,9 @@ export default function Dashboard() {
                   }}
                   onPickAce={(ace) => {
                     songAceOverrideRef.current = ace;
+                  }}
+                  onRotatingPlaceholder={(text) => {
+                    songRotatingPlaceholderRef.current = text;
                   }}
                   onPickGenre={(v) => setField("genre", v)}
                   collapsible={mobileV2}

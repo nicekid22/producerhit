@@ -117,6 +117,18 @@ export function buildGenreMenuCategory(mode: PromptMode, label: string, locale: 
   };
 }
 
+/** Retrouve le prompt ACE du dé quand le champ contient le display sans override (refresh, paste). */
+export function findGenreDiceItemByDisplay(
+  displayPrompt: string,
+  mode: PromptMode,
+  locale: AppLocale,
+): GenreDiceItem | null {
+  const needle = displayPrompt.trim().toLowerCase();
+  if (!needle) return null;
+  const pool = getGenreDicePool(mode, locale);
+  return pool.find((item) => item.displayPrompt.trim().toLowerCase() === needle) ?? null;
+}
+
 export function pickRandomGenreMenuDice(mode: PromptMode, locale: AppLocale = "en"): GenreDiceItem {
   const pool = getGenreDicePool(mode, locale);
   if (pool.length === 0) {

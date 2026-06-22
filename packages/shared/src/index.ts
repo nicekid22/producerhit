@@ -150,3 +150,4 @@ export {
   type AppLocale,
 } from "./i18n/locales";
 export { VOCAL_LANGUAGES, vocalLanguageLabel, uiLocaleToAceVocalLanguage } from "./vocalLanguage";
+export { looksLikeStructuredDisplayIdea } from "./displayPromptPatterns";

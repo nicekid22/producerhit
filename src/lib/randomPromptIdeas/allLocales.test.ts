@@ -127,6 +127,32 @@ describe("all 14 UI locales — vocal language", () => {
       ).toBe(uiLocaleToAceVocalLanguage(locale));
     },
   );
+
+  it("legacy IT dice shell + UI it → Italian vocals not French", () => {
+    expect(
+      resolveSongVocalLanguage({
+        mode: "auto",
+        manualCode: "en",
+        lyricsMode: "ai",
+        lyrics: "",
+        songDescription: "Una canzone deep focus su una storia notturna",
+        uiLocale: "it",
+      }),
+    ).toBe("it");
+  });
+
+  it("EN dice shell + UI th → English vocals", () => {
+    expect(
+      resolveSongVocalLanguage({
+        mode: "auto",
+        manualCode: "en",
+        lyricsMode: "ai",
+        lyrics: "",
+        songDescription: "A digicore song about a viral pop moment",
+        uiLocale: "th",
+      }),
+    ).toBe("en");
+  });
 });
 
 describe("all 14 UI locales — generation caption", () => {
@@ -139,6 +165,7 @@ describe("all 14 UI locales — generation caption", () => {
       displayIdea: sample,
       formGenre: "Pop",
       mode: "song",
+      uiLocale: locale,
     });
     expect(ctx.melodyComposition).toBe(false);
     expect(ctx.captionOverride).toBeUndefined();

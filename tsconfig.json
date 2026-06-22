@@ -26,6 +26,9 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@producerhit/shared": [
+        "./packages/shared/src/index.ts"
       ]
     }
   },

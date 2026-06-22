@@ -17,6 +17,10 @@ type Props = {
   mode: "beat" | "song";
   value: string;
   onChange: (value: string) => void;
+  /** Prompt ACE caché quand le dé est utilisé. */
+  onPickAce?: (acePrompt: string) => void;
+  /** Placeholder rotatif visible — utilisé si l’utilisateur génère sans saisir d’idée. */
+  onRotatingPlaceholder?: (text: string) => void;
   /** Sync genre dropdown when dice picks a catalog genre prompt. */
   onPickGenre?: (genre: string) => void;
   /** Prompt ACE caché quand le dé est utilisé. */
@@ -33,6 +37,7 @@ export function IdeaPromptSection({
   onChange,
   onPickGenre,
   onPickAce,
+  onRotatingPlaceholder,
   collapsible = false,
   defaultOpen = true,
 }: Props) {
@@ -50,6 +55,7 @@ export function IdeaPromptSection({
     value,
     paused: focused,
     fallback: fallbackPlaceholder,
+    onActivePlaceholder: onRotatingPlaceholder,
   });
 
   const copy = {

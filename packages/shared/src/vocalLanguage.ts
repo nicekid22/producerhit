@@ -1,5 +1,6 @@
 import type { AppLocale } from "./i18n/locales";
 import { vocalCodeToPromptLocale } from "./i18n/locales";
+import { looksLikeStructuredDisplayIdea } from "./displayPromptPatterns";
 
 /** Langues vocales ACE (génération chanson). */
 export const VOCAL_LANGUAGES: { value: string; en: string; fr: string }[] = [
@@ -96,6 +97,7 @@ export function resolveSongVocalLanguage(args: {
 
   if (args.mode === "auto" && args.uiLocale) {
     const uiCode = uiLocaleToAceVocalLanguage(args.uiLocale);
+    if (looksLikeStructuredDisplayIdea(ideaText)) return uiCode;
     if (uiCode !== "en" && detected === "en") return uiCode;
     if (uiCode === "it" && (detected === "es" || detected === "fr")) return "it";
   }

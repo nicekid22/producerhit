@@ -40,6 +40,20 @@ import "./styles/landing-header-cta.css";
 import "./styles/landing-apple-below-fold.css";
 import "./styles/workspace-header-layout.css";
 import { preloadCloudThemeIfNeeded, preloadWarmGlassThemeIfNeeded } from "@/lib/themeStyles";
+import { registerGenerationCatalogExtensions } from "@producerhit/shared";
+import { buildBeatAmbianceMoodMap } from "@/lib/beatAmbiance";
+import { buildBeatInfluenceMap } from "@/lib/beatInfluence";
+import {
+  extendedGenreAceTagMap,
+  extendedGenreBpmMap,
+} from "@/lib/genres/extendedCatalog";
+
+registerGenerationCatalogExtensions({
+  aceTags: extendedGenreAceTagMap(),
+  bpm: extendedGenreBpmMap(),
+  moodMap: buildBeatAmbianceMoodMap(),
+  influenceMap: buildBeatInfluenceMap(),
+});
 
 import App from "./App";
 

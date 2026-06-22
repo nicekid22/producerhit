@@ -5,19 +5,19 @@
 
 import { usesDirectAceFromBrowser } from "@/lib/aceBrowserKeys";
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
-import type { AceMeta } from "@/lib/audioApi";
+import {
+  createGenerationJobsClient,
+  INLINE_AUDIO_MAX_CHARS,
+  type AceMeta,
+  type GenerationJobResult,
+  type GenerationJobStatus,
+  type WaitForJobOptions,
+} from "@producerhit/shared";
 
-export type GenerationJobStatus = "pending" | "running" | "completed" | "failed";
-
-export type GenerationJobResult = {
-  audioUrl: string;
-  meta?: AceMeta | null;
-  jobId: string;
-};
+export type { GenerationJobResult, GenerationJobStatus };
 
 const POLL_MS_DEFAULT = 3_000;
 
-/** Pas de plafond par défaut — attendre la fin du job ACE (comme en local). Optionnel : VITE_ACE_JOB_TIMEOUT_MS */
 function jobTimeoutMs(): number | null {
   const raw = import.meta.env.VITE_ACE_JOB_TIMEOUT_MS as string | undefined;
   if (raw === "" || raw == null) return null;
@@ -26,8 +26,6 @@ function jobTimeoutMs(): number | null {
   if (!Number.isFinite(n) || n <= 0) return null;
   return Math.min(n, 3_600_000);
 }
-/** Aligné sur jobResponsePayload côté Edge — au-delà, fetch binaire get_job_audio. */
-const INLINE_AUDIO_MAX_CHARS = 400_000;
 
 async function fetchGenerationJobAudioBlobUrl(jobId: string): Promise<string> {
   const {
@@ -70,11 +68,6 @@ async function resolveJobAudioUrl(jobId: string, audioUrl: string): Promise<stri
   return raw;
 }
 
-/**
- * Jobs async (start_job + poll) — évite le mur 150s Supabase Edge en prod.
- * Local avec VITE_ACE_* : appel direct navigateur → sync OK.
- * Prod sans clés VITE : auto async sauf VITE_ACE_ASYNC_JOBS=0 explicite.
- */
 export function asyncGenerationJobsEnabled(): boolean {
   const raw = import.meta.env.VITE_ACE_ASYNC_JOBS as string | undefined;
   if (raw === "1") return true;
@@ -114,17 +107,60 @@ async function invokeJobAction<T>(body: Record<string, unknown>): Promise<T> {
   return data as T;
 }
 
+const jobsClient = createGenerationJobsClient({
+  getAccessToken: async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    return session?.access_token ?? null;
+  },
+  invokeAce: invokeJobAction,
+  subscribeJob: (jobId, onUpdate) => {
+    const channel = supabase
+      .channel(`generation-job-${jobId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "generation_jobs",
+          filter: `id=eq.${jobId}`,
+        },
+        (payload) => {
+          onUpdate(
+            payload.new as {
+              status?: string;
+              audio_url?: string | null;
+              meta?: unknown;
+              error?: string | null;
+            },
+          );
+        },
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  },
+  resolveAudioUrl: resolveJobAudioUrl,
+  fetchJobAudio: fetchGenerationJobAudioBlobUrl,
+  onJobStarted: (jobId, mode) => {
+    trackClientEvent("generate_job_started", { job_id: jobId, mode });
+  },
+  onJobCompleted: (jobId, elapsedMs) => {
+    trackClientEvent("generate_job_completed", { job_id: jobId, elapsed_ms: elapsedMs, async: true });
+  },
+  onJobFailed: (jobId, error) => {
+    trackClientEvent("generate_job_failed", { job_id: jobId, error });
+  },
+  config: {
+    getPollMs: pollIntervalMs,
+    getJobTimeoutMs: jobTimeoutMs,
+  },
+});
+
 export async function startGenerationJob(body: Record<string, unknown>): Promise<{ jobId: string }> {
-  const res = await invokeJobAction<{ jobId: string; status: string }>({
-    action: "start_job",
-    ...body,
-  });
-  if (!res?.jobId) throw new Error("No jobId returned");
-  trackClientEvent("generate_job_started", {
-    job_id: res.jobId,
-    mode: body.isSong ? "song" : "beat",
-  });
-  return { jobId: res.jobId };
+  return jobsClient.startGenerationJob(body);
 }
 
 export async function pollGenerationJob(jobId: string): Promise<{
@@ -133,156 +169,14 @@ export async function pollGenerationJob(jobId: string): Promise<{
   meta?: AceMeta | null;
   error?: string;
 }> {
-  const res = await invokeJobAction<{
-    jobId: string;
-    status: GenerationJobStatus;
-    audioUrl?: string;
-    audioInline?: boolean;
-    meta?: AceMeta | null;
-    error?: string;
-  }>({ action: "poll_job", jobId });
-  let audioUrl = res.audioUrl;
-  const httpFromMeta =
-    res.meta && typeof res.meta === "object" && typeof (res.meta as { httpAudioUrl?: unknown }).httpAudioUrl === "string"
-      ? String((res.meta as { httpAudioUrl: string }).httpAudioUrl).trim()
-      : "";
-  if (httpFromMeta.startsWith("http://") || httpFromMeta.startsWith("https://")) {
-    audioUrl = httpFromMeta;
-  } else if (res.status === "completed" && (!audioUrl || res.audioInline)) {
-    audioUrl = await fetchGenerationJobAudioBlobUrl(jobId).catch(() => audioUrl);
-  } else if (audioUrl) {
-    audioUrl = await resolveJobAudioUrl(jobId, audioUrl);
-  }
-  return {
-    status: res.status,
-    audioUrl,
-    meta: res.meta ?? null,
-    error: res.error,
-  };
+  return jobsClient.pollGenerationJob(jobId);
 }
 
-export type WaitForJobOptions = {
-  pollMs?: number;
-  onStatus?: (status: GenerationJobStatus) => void;
-  signal?: AbortSignal;
-};
-
-/**
- * Attend la fin du job (Realtime + poll de secours toutes les 3s).
- */
 export async function waitForGenerationJob(
   jobId: string,
   options?: WaitForJobOptions,
 ): Promise<GenerationJobResult> {
-  const pollMs = options?.pollMs ?? pollIntervalMs();
-  const startedAt = Date.now();
-  let settled = false;
-  let lastStatus: GenerationJobStatus = "pending";
-
-  const finish = (result: GenerationJobResult): GenerationJobResult => {
-    settled = true;
-    trackClientEvent("generate_job_completed", {
-      job_id: jobId,
-      elapsed_ms: Date.now() - startedAt,
-      async: true,
-    });
-    return result;
-  };
-
-  const fail = (message: string): never => {
-    settled = true;
-    trackClientEvent("generate_job_failed", { job_id: jobId, error: message.slice(0, 200) });
-    throw new Error(message);
-  };
-
-  const handleRow = (row: {
-    status?: string;
-    audio_url?: string | null;
-    meta?: unknown;
-    error?: string | null;
-  }) => {
-    const status = (row.status ?? "pending") as GenerationJobStatus;
-    if (status !== lastStatus) {
-      lastStatus = status;
-      options?.onStatus?.(status);
-    }
-    if (status === "completed" && row.audio_url) {
-      void resolveJobAudioUrl(jobId, row.audio_url)
-        .then((audioUrl) => {
-          if (!settled && audioUrl) {
-            finish({
-              jobId,
-              audioUrl,
-              meta: (row.meta as AceMeta | null) ?? null,
-            });
-          }
-        })
-        .catch(() => {
-          /* poll de secours */
-        });
-      return null;
-    }
-    if (status === "failed") {
-      fail(row.error ?? "Generation job failed");
-    }
-    return null;
-  };
-
-  const channel = supabase
-    .channel(`generation-job-${jobId}`)
-    .on(
-      "postgres_changes",
-      {
-        event: "UPDATE",
-        schema: "public",
-        table: "generation_jobs",
-        filter: `id=eq.${jobId}`,
-      },
-      (payload) => {
-        if (settled) return;
-        const row = payload.new as {
-          status?: string;
-          audio_url?: string | null;
-          meta?: unknown;
-          error?: string | null;
-        };
-        handleRow(row);
-      },
-    )
-    .subscribe();
-
-  try {
-    while (!settled) {
-      if (options?.signal?.aborted) {
-        fail("Generation cancelled");
-      }
-      const deadline = jobTimeoutMs();
-      if (deadline != null && Date.now() - startedAt >= deadline) {
-        fail("Generation timed out — réessaie dans un instant");
-      }
-      const polled = await pollGenerationJob(jobId);
-      lastStatus = polled.status;
-      options?.onStatus?.(polled.status);
-      if (polled.status === "completed" && polled.audioUrl) {
-        return finish({ jobId, audioUrl: polled.audioUrl, meta: polled.meta ?? null });
-      }
-      if (polled.status === "completed" && !polled.audioUrl) {
-        const blobUrl = await fetchGenerationJobAudioBlobUrl(jobId).catch(() => "");
-        if (blobUrl) {
-          return finish({ jobId, audioUrl: blobUrl, meta: polled.meta ?? null });
-        }
-      }
-      if (polled.status === "failed") {
-        fail(polled.error ?? "Generation job failed");
-      }
-      await new Promise((r) => setTimeout(r, pollMs));
-    }
-    if (!settled) {
-      fail("Generation timed out — réessaie dans un instant");
-    }
-  } finally {
-    void supabase.removeChannel(channel);
-  }
-
-  throw new Error("Unreachable");
+  return jobsClient.waitForGenerationJob(jobId, options);
 }
+
+export type { WaitForJobOptions };

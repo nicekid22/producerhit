@@ -35,6 +35,31 @@ describe("promptEnhancer", () => {
     expect(ctx.melodyComposition).toBe(false);
   });
 
+  it("legacy IT dice shell is curated not natural enhancement", () => {
+    const legacy = "Una canzone deep focus su una storia notturna";
+    expect(looksLikeCuratedDisplayPrompt(legacy)).toBe(true);
+    expect(looksLikeNaturalUserIdea(legacy)).toBe(false);
+    const ctx = resolveGenerationCaptionContext({
+      displayIdea: legacy,
+      formGenre: "Deep Focus",
+      mode: "song",
+      uiLocale: "it",
+    });
+    expect(ctx.melodyComposition).toBe(false);
+  });
+
+  it("rebuilds dice ACE when override missing but display matches pool", () => {
+    const roll = pickRandomGenreMenuDiceRoll("it", "song");
+    const ctx = resolveGenerationCaptionContext({
+      displayIdea: roll.displayPrompt,
+      formGenre: roll.genre,
+      mode: "song",
+      uiLocale: "it",
+    });
+    expect(ctx.melodyComposition).toBe(true);
+    expect(ctx.captionOverride).toBe(roll.acePrompt);
+  });
+
   it("dice override enables melody composition", () => {
     const dice = pickRandomGenreMenuDiceRoll("fr", "song");
     const ctx = resolveGenerationCaptionContext({

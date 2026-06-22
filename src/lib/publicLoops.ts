@@ -13,6 +13,13 @@ import { isLoopAudioPlayableByAge } from "@/lib/loopAudioRetention";
 import { isSupabaseLoopAudioUrl, SUPABASE_LOOP_AUDIO_UPLOAD, uploadPublicLoopAudio } from "@/lib/storageAudio";
 import { fetchLoopStemsAndCover, coverUrlFromStemsRow } from "@/lib/loopStemsSelect";
 import { supabase } from "@/lib/supabaseClient";
+import {
+  buildStemsUrlForDb as buildStemsUrlForDbShared,
+  extractAceTaskId,
+  isHttpAudioUrl,
+} from "@producerhit/shared";
+
+export { extractAceTaskId, isHttpAudioUrl };
 
 export type PublicLoopRow = {
   id: string;
@@ -59,24 +66,6 @@ export function parseStemsUrl(stemsUrl: unknown): Record<string, unknown> | null
     }
   }
   return null;
-}
-
-export function extractAceTaskId(stemsUrl: unknown): string {
-  const obj = parseStemsUrl(stemsUrl);
-  if (!obj) return "";
-
-  const rootTaskId = obj.taskId ?? obj.task_id ?? obj.ace_task_id;
-  if (typeof rootTaskId === "string" && rootTaskId.trim()) return rootTaskId.trim();
-
-  const ace = obj.ace;
-  if (!ace || typeof ace !== "object") return "";
-  const taskId = (ace as Record<string, unknown>).taskId ?? (ace as Record<string, unknown>).task_id;
-  return typeof taskId === "string" ? taskId.trim() : "";
-}
-
-export function isHttpAudioUrl(url: unknown): url is string {
-  const s = typeof url === "string" ? url.trim() : "";
-  return !!s && (s.startsWith("https://") || s.startsWith("http://"));
 }
 
 export function isPlayablePublicLoop(
@@ -318,42 +307,9 @@ export { uploadPublicLoopAudio } from "@/lib/storageAudio";
 
 export function buildStemsUrlForDb(
   inputStemsUrl: unknown,
-  details: {
-    caption?: string;
-    lyrics?: string;
-    bpm?: number | null;
-    duration?: number | null;
-    keyScale?: string;
-    timeSignature?: string;
-    audioFormat?: string | null;
-    coverPrompt?: string;
-    coverUrl?: string;
-    httpAudioUrl?: string;
-  } | null,
+  details: Parameters<typeof buildStemsUrlForDbShared>[1],
 ): Record<string, unknown> | null {
-  const taskIdFromInput = extractAceTaskId(inputStemsUrl);
-  const base = inputStemsUrl && typeof inputStemsUrl === "object" ? (inputStemsUrl as Record<string, unknown>) : {};
-  const existingAce =
-    base.ace && typeof base.ace === "object" && base.ace !== null ? (base.ace as Record<string, unknown>) : {};
-
-  if (!details && !taskIdFromInput && !Object.keys(existingAce).length) {
-    return Object.keys(base).length ? base : null;
-  }
-
-  const ace: Record<string, unknown> = { ...existingAce, ...(details ?? {}) };
-  const httpFromDetails = typeof details?.httpAudioUrl === "string" ? details.httpAudioUrl.trim() : "";
-  if (isHttpAudioUrl(httpFromDetails)) ace.httpAudioUrl = httpFromDetails;
-  delete ace.providerDataUrl;
-  const taskId =
-    (typeof existingAce.taskId === "string" && existingAce.taskId.trim()) ||
-    (typeof existingAce.task_id === "string" && existingAce.task_id.trim()) ||
-    taskIdFromInput;
-  if (taskId) {
-    ace.taskId = taskId;
-    delete ace.task_id;
-  }
-
-  return { ...base, ace };
+  return buildStemsUrlForDbShared(inputStemsUrl, details);
 }
 
 /** Écrit l’URL HTTP ACE déjà connue + métadonnées stems — sans re-résolution ACE. */

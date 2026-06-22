@@ -1,8 +1,11 @@
+import type { AppLocale } from "@/i18n/config";
 import { isCatalogGenreSelection } from "@/lib/genres/genrePickMode";
 import { matchGenreFromPrompt } from "@/lib/genres/matchGenreFromPrompt";
 import { getGenreCatalogPrompt } from "@/lib/promptBuilder";
 import { ACE_DICE_CAPTION_MAX } from "@/lib/randomPromptIdeas/aceDiceCaption";
 import type { PromptMode } from "@/lib/randomPromptIdeas";
+import { formatDicePrompt } from "@/lib/randomPromptIdeas";
+import { findGenreDiceItemByDisplay } from "@/lib/randomPromptIdeas/genreMenuPrompts";
 
 function trimAceCaption(parts: readonly string[]): string {
   const layers = parts.map((p) => p.trim()).filter(Boolean);
@@ -27,15 +30,34 @@ export function looksLikeAceTechnicalPrompt(text: string): boolean {
   return /\b(808|hi-hat|rhodes|sidechain|supersaw|log drum|mix 2026|four-on-floor|reese bass)\b/i.test(t);
 }
 
+/** Shells dé legacy (IT/ES/DE/NL/PT) — pas les formules FR courantes. */
+const LEGACY_DICE_DISPLAY_RE =
+  /^(Una canzone |Una canción |Uma música |Ein [\w\s.'-]+-Song |Ein [\w\s.'-]+-Beat |Een [\w\s.'-]+-song |Een [\w\s.'-]+-beat )/i;
+
+function looksLikeFrenchConversationalSongRequest(text: string): boolean {
+  const t = text.trim();
+  if (!/^une chanson\s+/i.test(t)) return false;
+  if (/\b(hip hop|hip-hop|fais|crée|génère|vacances|bord de la mer|plage)\b/i.test(t)) return true;
+  return t.split(/\s+/).length >= 10;
+}
+
 /** Prompts curated / dé display — laisser buildAceCaption (genre + idée + langue vocale). */
 export function looksLikeCuratedDisplayPrompt(text: string): boolean {
   const t = text.trim();
   if (!t || looksLikeAceTechnicalPrompt(t)) return false;
   if (/^A [a-z0-9][\w\s\-'&]* song /i.test(t) || /^A [a-z0-9][\w\s\-'&]* beat /i.test(t)) return true;
+  if (LEGACY_DICE_DISPLAY_RE.test(t)) return true;
+  if (/^Une chanson /i.test(t) && !looksLikeFrenchConversationalSongRequest(t)) return true;
+  if (/^Un beat /i.test(t) && !/^un beat sur\b/i.test(t)) return true;
   if (/^(Chanson |Hymne |Ballade |Son pour |Type beat )/i.test(t)) return true;
   return /^(A |An |The |Funny |Feel-good |Glossy |Epic |Slow |Playful |Euphoric |Cinematic |Ironic |Respectful |Acoustic |Modern |Piano |Phonk |Gospel|Track for |Type beat |Song about |Road-trip |Hymn for |Beat where |Loop for |Melodic |World Cup |Back-to-work |Long-distance |Chanson |Beat |Instrumental |Dusty |Dark |Peak-time |Organic |Experimental |Romantic |Orchestral )/i.test(
     t,
   );
+}
+
+/** Idée structurée (curated ou dé) — la langue vocale suit la locale UI en mode auto. */
+export function looksLikeStructuredDisplayIdea(text: string): boolean {
+  return looksLikeCuratedDisplayPrompt(text.trim());
 }
 
 /** Idée tapée en langage naturel (pas des tags ACE ni curated). */
@@ -140,11 +162,22 @@ export function resolveGenerationCaptionContext(args: {
   displayIdea: string;
   formGenre: string;
   mode: PromptMode;
+  /** Locale UI — permet de reconstruire l’ACE du dé si l’override a été perdu. */
+  uiLocale?: AppLocale;
 }): GenerationCaptionContext {
   const dice = args.diceAceOverride?.trim();
   if (dice) return { captionOverride: dice, melodyComposition: true };
   const landing = args.landingAceOverride?.trim();
   if (landing) return { captionOverride: landing, melodyComposition: true };
+
+  if (args.uiLocale) {
+    const matched = findGenreDiceItemByDisplay(args.displayIdea, args.mode, args.uiLocale);
+    if (matched) {
+      const ace = formatDicePrompt(matched.acePrompt, args.mode);
+      if (ace.trim()) return { captionOverride: ace, melodyComposition: true };
+    }
+  }
+
   const enhanced = resolveIdeaForAceGeneration({
     displayIdea: args.displayIdea,
     formGenre: args.formGenre,

@@ -17,6 +17,8 @@ type Options = {
   paused?: boolean;
   cycleMs?: number;
   fallback?: string;
+  /** Texte actuellement affiché comme placeholder (génération si champ vide). */
+  onActivePlaceholder?: (text: string) => void;
 };
 
 function resolvePlaceholderLocale(uiLocale: AppLocale, mode: PromptMode, promptLocale?: AppLocale): AppLocale {
@@ -40,6 +42,7 @@ export function useRotatingPromptPlaceholder({
   paused = false,
   cycleMs = DEFAULT_CYCLE_MS,
   fallback = "",
+  onActivePlaceholder,
 }: Options): string {
   const resolvedLocale = resolvePlaceholderLocale(uiLocale, mode, promptLocale);
 
@@ -66,5 +69,11 @@ export function useRotatingPromptPlaceholder({
     return () => window.clearInterval(timer);
   }, [paused, value, prepared.pool, cycleMs]);
 
-  return prepared.pool[index] ?? prepared.pool[0] ?? fallback;
+  const active = prepared.pool[index] ?? prepared.pool[0] ?? fallback;
+
+  useEffect(() => {
+    onActivePlaceholder?.(active);
+  }, [active, onActivePlaceholder]);
+
+  return active;
 }
