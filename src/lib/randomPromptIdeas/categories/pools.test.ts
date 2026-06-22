@@ -64,15 +64,15 @@ describe("random prompt pools", () => {
     expect(genreMenuSong?.prompts[0]?.length ?? 0).toBeGreaterThan(80);
   });
 
-  it("landing display pool uses readable phrases not ACE tags", () => {
+  it("landing display pool uses readable curated phrases not ACE tags", () => {
     const frSong = getLandingDisplayPromptPool("fr", "song");
     const frBeat = getLandingDisplayPromptPool("fr", "beat");
     expect(frSong.length).toBeGreaterThanOrEqual(40);
     expect(frBeat.length).toBeGreaterThanOrEqual(40);
     expect(frSong.some((p) => /Coupe du monde|World Cup/i.test(p))).toBe(true);
     expect(frSong.some((p) => p.includes("808"))).toBe(false);
-    expect(frSong.some((p) => /^Une chanson /i.test(p))).toBe(true);
-    expect(frBeat.some((p) => /^Un beat /i.test(p))).toBe(true);
+    expect(frSong.some((p) => /^Chanson /i.test(p))).toBe(true);
+    expect(frBeat.some((p) => /^Type beat|^Beat /i.test(p))).toBe(true);
   });
 
   it("prepareRotatingPromptPlaceholders shuffles pool and random start", () => {
@@ -85,11 +85,10 @@ describe("random prompt pools", () => {
     expect(new Set(runs.map((r) => r.startIndex)).size).toBeGreaterThan(1);
   });
 
-  it("IT landing display pool keeps English curated prompts with localized dice themes", () => {
+  it("IT landing display pool uses English curated prompts", () => {
     const itSong = getLandingDisplayPromptPool("it", "song");
     expect(itSong.length).toBeGreaterThanOrEqual(40);
     expect(itSong.some((p) => /World Cup|TikTok|Funny song|BeatStars/i.test(p))).toBe(true);
-    expect(itSong.some((p) => /^A [a-z].* song /i.test(p))).toBe(true);
     expect(itSong.some((p) => /^Una canzone /i.test(p))).toBe(false);
   });
 
@@ -100,11 +99,10 @@ describe("random prompt pools", () => {
     expect(it.genre).toBeTruthy();
   });
 
-  it("ES landing display pool uses English curated + localized theme dice", () => {
+  it("ES landing display pool uses English curated prompts", () => {
     const esSong = getLandingDisplayPromptPool("es", "song");
     expect(esSong.length).toBeGreaterThanOrEqual(40);
     expect(esSong.some((p) => /World Cup|TikTok|Funny song/i.test(p))).toBe(true);
-    expect(esSong.some((p) => /^A [a-z].* song /i.test(p))).toBe(true);
     expect(esSong.some((p) => /^Una canción /i.test(p))).toBe(false);
   });
 

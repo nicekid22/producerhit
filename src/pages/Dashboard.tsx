@@ -133,7 +133,7 @@ import { coverResultTitle, prepareCoverGeneration } from "@/lib/coverGeneration"
 import { generateBeat, generateBeatDualBatch, remixLoopAce } from "@/lib/audioApi";
 import { ACE_REMIX_UNAVAILABLE_COPY, AceRemixUnavailableError } from "@/lib/aceRemix";
 import { buildAceCaption, type GenerateParams } from "@/lib/promptBuilder";
-import { resolveCaptionOverrideForGeneration } from "@/lib/promptEnhancer";
+import { resolveGenerationCaptionContext } from "@/lib/promptEnhancer";
 import { buildCoverPromptSnapshot, cn } from "@/lib/utils";
 import { DashboardStudioBrand } from "@/components/dashboard/DashboardStudioBrand";
 import { DASHBOARD_VOICE_SECTIONS_ENABLED, MOBILE_DASHBOARD_V2 } from "@/lib/featureFlags";
@@ -1572,7 +1572,7 @@ export default function Dashboard() {
       }
       const prompt = runAsSong ? runSongDescription.trim() || runUiPrompt : (runFormPrompt?.trim() ?? "");
 
-      const captionOverride = resolveCaptionOverrideForGeneration({
+      const captionCtx = resolveGenerationCaptionContext({
         diceAceOverride: runAsSong ? songAceOverrideRef.current : beatAceOverrideRef.current,
         landingAceOverride: landingSnap?.acePrompt ?? null,
         displayIdea: prompt,
@@ -1623,9 +1623,15 @@ export default function Dashboard() {
               audioFormat: effectiveAudioFormat,
               seed,
             };
+        const captionOpts = captionCtx.captionOverride
+          ? {
+              captionOverride: captionCtx.captionOverride,
+              melodyComposition: captionCtx.melodyComposition,
+            }
+          : {};
         return aceKeyPreferIndex !== undefined
-          ? { ...base, aceKeyPreferIndex, ...(captionOverride ? { captionOverride } : {}) }
-          : { ...base, ...(captionOverride ? { captionOverride } : {}) };
+          ? { ...base, aceKeyPreferIndex, ...captionOpts }
+          : { ...base, ...captionOpts };
       };
 
       const cloneCfg = voiceCloneConfigRef.current;

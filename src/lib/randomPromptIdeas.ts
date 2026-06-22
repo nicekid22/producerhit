@@ -5,11 +5,8 @@ import { shuffleArray } from "@/lib/utils";
 import { CATEGORIZED_EN, CATEGORIZED_FR } from "@/lib/randomPromptIdeas/categories";
 import type { CategorizedLocalePools, PromptCategory, PromptCategoryId } from "@/lib/randomPromptIdeas/categories";
 import { pickFromCategory } from "@/lib/randomPromptIdeas/categories";
-import { getGenreDiceDisplayPromptPool, pickRandomGenreMenuDice } from "@/lib/randomPromptIdeas/genreMenuPrompts";
-import {
-  getCuratedDisplayPromptPool,
-  mergeUniqueDisplayPrompts,
-} from "@/lib/randomPromptIdeas/curatedDisplayPrompts";
+import { pickRandomGenreMenuDice } from "@/lib/randomPromptIdeas/genreMenuPrompts";
+import { mergeUniqueDisplayPrompts } from "@/lib/randomPromptIdeas/curatedDisplayPrompts";
 import { getLocaleDisplayPromptPool } from "@/lib/randomPromptIdeas/localeDisplayPool";
 import { POOLS_EN } from "@/lib/randomPromptIdeas/localePools/en";
 import { POOLS_FR } from "@/lib/randomPromptIdeas/localePools/fr";
@@ -82,17 +79,11 @@ function landingDisplayFallback(locale: AppLocale, mode: PromptMode): readonly s
   return LANDING_DISPLAY_FALLBACK_EN[mode];
 }
 
-/** Placeholders landing + hero — curated unique + phrases genre-dé. */
+/** Placeholders landing + hero — curated (léger ; le dé charge son pool ACE au clic). */
 export function getLandingDisplayPromptPool(locale: AppLocale, mode: PromptMode): readonly string[] {
-  if (locale !== "en" && locale !== "fr") {
-    return getLocaleDisplayPromptPool(locale, mode);
-  }
-
-  const curated = getCuratedDisplayPromptPool(locale, mode);
-  const fromDice = getGenreDiceDisplayPromptPool(mode, locale);
-  const merged = mergeUniqueDisplayPrompts(curated, fromDice);
-  if (merged.length >= 8) return merged;
-  return mergeUniqueDisplayPrompts(curated, landingDisplayFallback(locale, mode), fromDice);
+  const curated = getLocaleDisplayPromptPool(locale, mode);
+  if (curated.length >= 8) return curated;
+  return mergeUniqueDisplayPrompts(curated, landingDisplayFallback(locale === "fr" ? "fr" : "en", mode));
 }
 
 export function getHeroPromptPool(locale: AppLocale): readonly string[] {

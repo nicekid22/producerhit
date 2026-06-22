@@ -360,6 +360,7 @@ export async function generateSong(input: GenerateSongInput, options?: GenerateJ
     generationKey,
     requirePersistableUrl: true,
     captionOverride: input.captionOverride ?? undefined,
+    melodyComposition: Boolean(input.captionOverride?.trim()),
     onJobStatus: options?.onJobStatus,
   });
 
@@ -497,6 +498,7 @@ export async function generateTypeBeat(
     requirePersistableUrl: true,
     autoMeta: false,
     captionOverride: options?.captionOverride ?? undefined,
+    melodyComposition: Boolean(options?.captionOverride?.trim()),
     onJobStatus: options?.onJobStatus,
   });
 

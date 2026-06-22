@@ -1,21 +1,24 @@
 import type { AppLocale } from "@/i18n/config";
-import { mergeUniqueDisplayPrompts, getCuratedDisplayPromptPool } from "@/lib/randomPromptIdeas/curatedDisplayPrompts";
-import { getGenreDiceDisplayPromptPool } from "@/lib/randomPromptIdeas/genreMenuPrompts";
+import { getCuratedDisplayPromptPool } from "@/lib/randomPromptIdeas/curatedDisplayPrompts";
 import type { PromptMode } from "@/lib/randomPromptIdeas";
 
 const FULL_CURATED_LOCALES = new Set<AppLocale>(["en", "fr"]);
 
+const rotatingPoolCache = new Map<string, readonly string[]>();
+
 /**
- * Pools affichés (placeholder + dé) :
- * - EN/FR : curated complet + genre-dé
- * - Autres langues UI : curated EN (drôle, actu, etc.) + genre-dé EN avec thème localisé
+ * Pools pour placeholder rotatif — curated uniquement (pas de build genre-dé à l'ouverture).
+ * Le dé construit son pool ACE à la demande au clic.
  */
 export function getLocaleDisplayPromptPool(locale: AppLocale, mode: PromptMode): readonly string[] {
-  if (FULL_CURATED_LOCALES.has(locale)) {
-    return getCuratedDisplayPromptPool(locale, mode);
-  }
+  const cacheKey = `${locale}:${mode}`;
+  const cached = rotatingPoolCache.get(cacheKey);
+  if (cached) return cached;
 
-  const curatedEn = getCuratedDisplayPromptPool("en", mode);
-  const fromDice = getGenreDiceDisplayPromptPool(mode, locale);
-  return mergeUniqueDisplayPrompts(curatedEn, fromDice);
+  const pool = FULL_CURATED_LOCALES.has(locale)
+    ? getCuratedDisplayPromptPool(locale, mode)
+    : getCuratedDisplayPromptPool("en", mode);
+
+  rotatingPoolCache.set(cacheKey, pool);
+  return pool;
 }

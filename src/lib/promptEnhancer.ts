@@ -23,22 +23,35 @@ export function looksLikeAceTechnicalPrompt(text: string): boolean {
   if (!t) return false;
   const commas = (t.match(/,/g) || []).length;
   if (commas >= 3 && t.length >= 60) return true;
+  if (commas < 1 || t.length < 40) return false;
   return /\b(808|hi-hat|rhodes|sidechain|supersaw|log drum|mix 2026|four-on-floor|reese bass)\b/i.test(t);
 }
 
-/** Idée tapée en langage naturel (pas des tags ACE). */
-export function looksLikeNaturalUserIdea(text: string): boolean {
+/** Prompts curated / dé display — laisser buildAceCaption (genre + idée + langue vocale). */
+export function looksLikeCuratedDisplayPrompt(text: string): boolean {
   const t = text.trim();
   if (!t || looksLikeAceTechnicalPrompt(t)) return false;
+  if (/^A [a-z0-9][\w\s\-'&]* song /i.test(t) || /^A [a-z0-9][\w\s\-'&]* beat /i.test(t)) return true;
+  if (/^(Chanson |Hymne |Ballade |Son pour |Type beat )/i.test(t)) return true;
+  return /^(A |An |The |Funny |Feel-good |Glossy |Epic |Slow |Playful |Euphoric |Cinematic |Ironic |Respectful |Acoustic |Modern |Piano |Phonk |Gospel|Track for |Type beat |Song about |Road-trip |Hymn for |Beat where |Loop for |Melodic |World Cup |Back-to-work |Long-distance |Chanson |Beat |Instrumental |Dusty |Dark |Peak-time |Organic |Experimental |Romantic |Orchestral )/i.test(
+    t,
+  );
+}
+
+/** Idée tapée en langage naturel (pas des tags ACE ni curated). */
+export function looksLikeNaturalUserIdea(text: string): boolean {
+  const t = text.trim();
+  if (!t || looksLikeAceTechnicalPrompt(t) || looksLikeCuratedDisplayPrompt(t)) return false;
   if (
-    /^(fais|crée|génère|une chanson|un beat|un son|chanson sur|beat sur|make me|create|generate|a song|song about|beat about|about|sur)\b/i.test(
-      t,
-    )
+    /^(fais|crée|génère|make me|create|generate)\b/i.test(t) ||
+    /^(chanson sur|beat sur|song about|beat about)\b/i.test(t) ||
+    /^une chanson\s+/i.test(t) ||
+    /^un beat\s+/i.test(t)
   ) {
     return true;
   }
   const commas = (t.match(/,/g) || []).length;
-  return commas <= 1 && t.split(/\s+/).length >= 4;
+  return commas <= 1 && t.split(/\s+/).length >= 6;
 }
 
 const THEME_PHRASE_MAP: Array<[RegExp, string]> = [
@@ -114,7 +127,36 @@ export function resolveIdeaForAceGeneration(args: {
   return { aceCaption, useCaptionOverride: Boolean(aceCaption.trim()) };
 }
 
-/** Priorité : override dé / landing, sinon enhancement naturel. */
+export type GenerationCaptionContext = {
+  captionOverride?: string;
+  /** Réservé aux prompts ACE du dé / landing — évite le mode lent melodyComposition sur les idées curated. */
+  melodyComposition: boolean;
+};
+
+/** Priorité : override dé / landing, sinon enhancement naturel léger. */
+export function resolveGenerationCaptionContext(args: {
+  diceAceOverride?: string | null;
+  landingAceOverride?: string | null;
+  displayIdea: string;
+  formGenre: string;
+  mode: PromptMode;
+}): GenerationCaptionContext {
+  const dice = args.diceAceOverride?.trim();
+  if (dice) return { captionOverride: dice, melodyComposition: true };
+  const landing = args.landingAceOverride?.trim();
+  if (landing) return { captionOverride: landing, melodyComposition: true };
+  const enhanced = resolveIdeaForAceGeneration({
+    displayIdea: args.displayIdea,
+    formGenre: args.formGenre,
+    mode: args.mode,
+  });
+  if (enhanced.useCaptionOverride && enhanced.aceCaption.trim()) {
+    return { captionOverride: enhanced.aceCaption.trim(), melodyComposition: false };
+  }
+  return { melodyComposition: false };
+}
+
+/** @deprecated Préférer resolveGenerationCaptionContext */
 export function resolveCaptionOverrideForGeneration(args: {
   diceAceOverride?: string | null;
   landingAceOverride?: string | null;
@@ -122,14 +164,5 @@ export function resolveCaptionOverrideForGeneration(args: {
   formGenre: string;
   mode: PromptMode;
 }): string | undefined {
-  const dice = args.diceAceOverride?.trim();
-  if (dice) return dice;
-  const landing = args.landingAceOverride?.trim();
-  if (landing) return landing;
-  const enhanced = resolveIdeaForAceGeneration({
-    displayIdea: args.displayIdea,
-    formGenre: args.formGenre,
-    mode: args.mode,
-  });
-  return enhanced.useCaptionOverride ? enhanced.aceCaption.trim() : undefined;
+  return resolveGenerationCaptionContext(args).captionOverride;
 }

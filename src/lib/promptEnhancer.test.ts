@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   enhanceNaturalIdeaToAce,
   looksLikeAceTechnicalPrompt,
+  looksLikeCuratedDisplayPrompt,
   looksLikeNaturalUserIdea,
   resolveCaptionOverrideForGeneration,
+  resolveGenerationCaptionContext,
 } from "@/lib/promptEnhancer";
 import { pickRandomGenreMenuDiceRoll } from "@/lib/randomPromptIdeas";
 import { pickRandomGenreMenuDice } from "@/lib/randomPromptIdeas/genreMenuPrompts";
@@ -18,6 +20,31 @@ describe("promptEnhancer", () => {
 
   it("detects natural French ideas", () => {
     expect(looksLikeNaturalUserIdea("une chanson hip hop sur des vacances au bord de la mer")).toBe(true);
+  });
+
+  it("skips enhancement for curated display prompts", () => {
+    const curated = "Funny song about a collaborator who uses the same hi-hat on everything";
+    expect(looksLikeCuratedDisplayPrompt(curated)).toBe(true);
+    expect(looksLikeNaturalUserIdea(curated)).toBe(false);
+    const ctx = resolveGenerationCaptionContext({
+      displayIdea: curated,
+      formGenre: "Orchestral Drill",
+      mode: "song",
+    });
+    expect(ctx.captionOverride).toBeUndefined();
+    expect(ctx.melodyComposition).toBe(false);
+  });
+
+  it("dice override enables melody composition", () => {
+    const dice = pickRandomGenreMenuDiceRoll("fr", "song");
+    const ctx = resolveGenerationCaptionContext({
+      diceAceOverride: dice.acePrompt,
+      displayIdea: dice.displayPrompt,
+      formGenre: dice.genre,
+      mode: "song",
+    });
+    expect(ctx.captionOverride).toBe(dice.acePrompt);
+    expect(ctx.melodyComposition).toBe(true);
   });
 
   it("enhances natural ideas to ACE tags", () => {

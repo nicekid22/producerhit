@@ -81,7 +81,7 @@ export function buildAceRequestBody(
     body.aceKeyPreferIndex = Math.abs(Math.floor(options.aceKeyPreferIndex));
   }
   if (options?.requirePersistableUrl) body.requirePersistableUrl = true;
-  if (options?.melodyComposition === true || captionOverride) {
+  if (options?.melodyComposition === true) {
     body.melodyComposition = true;
   }
   if (typeof options?.voiceProfileId === "string" && options.voiceProfileId.trim()) {
