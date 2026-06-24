@@ -14,9 +14,9 @@ import {
 
   optimizeAceProsePrompt,
 
-  sanitizeBeatAceCaption,
-
 } from "./aceProse";
+
+import { normalizeAceCaption, normalizeAceLyrics } from "./acePromptContract";
 
 
 
@@ -42,7 +42,13 @@ export type GenerationCaptionContext = {
 
 function captionFromOverride(override: string, mode: PromptMode): GenerationCaptionContext {
 
-  const caption = mode === "beat" ? sanitizeBeatAceCaption(override) : override;
+  const { caption } = normalizeAceCaption(override, {
+
+    mode: mode === "beat" ? "beat" : "song",
+
+    instrumental: mode === "beat",
+
+  });
 
   return { captionOverride: caption, melodyComposition: mode === "song" };
 
@@ -92,13 +98,21 @@ export function resolveGenerationCaptionContext(args: {
 
     if (bank) {
 
+      const lyricsNorm = normalizeAceLyrics(bank.lyricsStructure, { instrumental: false });
+
       return {
 
-        captionOverride: bank.aceCaption,
+        captionOverride: normalizeAceCaption(bank.aceCaption, {
+
+          mode: "song",
+
+          instrumental: false,
+
+        }).caption,
 
         melodyComposition: true,
 
-        lyricsStructure: bank.lyricsStructure,
+        lyricsStructure: lyricsNorm.lyrics,
 
       };
 

@@ -1,5 +1,6 @@
 import { computeAceRequestedDurationSec } from "./aceDuration";
 import { resolveAceQualityFlags } from "./aceQuality";
+import { normalizeAceGenerationPayload } from "../prompt/acePromptContract";
 import { buildAceCaption } from "./promptAce";
 import type { GenerateLoopAceOptions, GenerateParams } from "./types";
 
@@ -14,7 +15,24 @@ export function buildAceRequestBody(
   const lyricsTrimmed = lyricsRaw.trim();
   const vocalLanguage = options?.vocalLanguage ?? "en";
   const captionOverride = options?.captionOverride?.trim() ?? "";
-  const baseCaption = captionOverride || buildAceCaption(promptParams, { isSong, instrumental, autoMeta: Boolean(options?.autoMeta), vocalLanguage });
+  const rawCaption =
+    captionOverride || buildAceCaption(promptParams, { isSong, instrumental, autoMeta: Boolean(options?.autoMeta), vocalLanguage });
+  const melodyComposition = options?.melodyComposition === true;
+  const aceMode = melodyComposition ? "melody" : instrumental ? "beat" : "song";
+  const contractBpm =
+    options?.autoMeta || !Number.isFinite(params.bpm) || params.bpm <= 0 ? null : Math.round(params.bpm);
+  const normalized = normalizeAceGenerationPayload({
+    mode: aceMode,
+    caption: rawCaption,
+    lyrics: lyricsTrimmed,
+    instrumental,
+    bpm: contractBpm,
+    key: params.key,
+    scale: params.scale,
+    vocalLanguage,
+    source: captionOverride ? "manual" : "catalog",
+  });
+  const baseCaption = normalized.caption;
   const sampleQuery = options?.sampleQuery?.trim() || "";
   const audioFormatRaw = (options?.audioFormat || "").trim().toLowerCase();
   const audioFormat =
@@ -30,7 +48,7 @@ export function buildAceRequestBody(
   const isAiLyrics = !instrumental && lyricsTrimmed === "";
   const effectiveSampleMode = Boolean(!captionOverride && (options?.sampleMode || isAiLyrics));
   const caption = effectiveSampleMode ? "" : baseCaption;
-  const lyrics = instrumental ? "[Instrumental]" : lyricsTrimmed;
+  const lyrics = normalized.lyrics || (instrumental ? "[Instrumental]" : lyricsTrimmed);
   const effectiveSampleQuery = effectiveSampleMode ? sampleQuery || baseCaption : sampleQuery;
 
   const clampNumber = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
@@ -81,7 +99,7 @@ export function buildAceRequestBody(
     body.aceKeyPreferIndex = Math.abs(Math.floor(options.aceKeyPreferIndex));
   }
   if (options?.requirePersistableUrl) body.requirePersistableUrl = true;
-  if (options?.melodyComposition === true) {
+  if (melodyComposition) {
     body.melodyComposition = true;
   }
   if (typeof options?.voiceProfileId === "string" && options.voiceProfileId.trim()) {

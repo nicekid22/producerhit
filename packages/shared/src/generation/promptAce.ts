@@ -1,6 +1,7 @@
 import type { GenerateParams } from './types';
 import { BASE_INFLUENCE_MAP, BASE_MOOD_MAP, ENERGY_MAP, REVERB_MAP } from './catalogMaps';
 import { getExtendedAceTagMap, getExtendedBpmMap, getInfluenceMap, getMoodMap } from './extendedRegistry';
+import { normalizeAceCaption } from '../prompt/acePromptContract';
 
 function resolveMoodMap(): Record<string, string> {
   return { ...BASE_MOOD_MAP, ...getMoodMap() };
@@ -284,6 +285,17 @@ export function buildAceCaption(
     ].filter(Boolean) as string[],
   );
 
-  return limitChars(tags.join(", "), 512);
+  const rawCaption = tags.join(", ");
+  const effectiveBpm =
+    Number.isFinite(params.bpm) && params.bpm > 0 ? Math.round(params.bpm) : bpmHint > 0 ? bpmHint : null;
+
+  return normalizeAceCaption(rawCaption, {
+    mode: instrumental ? "beat" : "song",
+    instrumental,
+    bpm: effectiveBpm,
+    key: autoMeta ? undefined : params.key,
+    scale: autoMeta ? undefined : params.scale,
+    vocalLanguage,
+  }).caption;
 }
 

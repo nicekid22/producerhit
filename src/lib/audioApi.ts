@@ -3,7 +3,7 @@ import { nextAceKeyPreferIndex } from "@/lib/aceKeyRotation";
 import { supabase } from "@/lib/supabaseClient";
 import { aceMelodyCompositionAceFields } from "@/lib/aceMelodyComposition";
 import { buildAceCaption, buildRichPrompt, buildSonautoTags, type GenerateParams } from "@/lib/promptBuilder";
-import { buildAceRequestBody } from "@producerhit/shared";
+import { buildAceRequestBody, normalizeAceGenerationPayload } from "@producerhit/shared";
 import { appendAceQualityToParamObj, ACE_RELEASE_MODEL, ACE_QUALITY_DEFAULTS, isAceReleaseTaskEnabled, resolveAceQualityFlags } from "@/lib/aceQuality";
 import { parseAceChatCompletionsResponse, parseAllAceChatCompletionsAudios } from "@/lib/aceChatCompletions";
 import type { AceDualBatchResponse } from "@/lib/aceDualBatch";
@@ -325,11 +325,29 @@ async function generateLoopAceDirect(
   const instrumental = options?.instrumental ?? true;
   const vocalLanguage = options?.vocalLanguage ?? "en";
   const captionOverride = options?.captionOverride?.trim() ?? "";
-  const baseCaption = captionOverride || buildAceCaption(promptParams, { isSong, instrumental, autoMeta: Boolean(options?.autoMeta), vocalLanguage });
+  const lyricsRaw = options?.lyrics ?? "";
+  const melodyComposition = options?.melodyComposition === true;
+  const aceMode = melodyComposition ? "melody" : instrumental ? "beat" : "song";
+  const contractBpm =
+    options?.autoMeta || !Number.isFinite(params.bpm) || params.bpm <= 0 ? null : Math.round(params.bpm);
+  const normalized = normalizeAceGenerationPayload({
+    mode: aceMode,
+    caption:
+      captionOverride ||
+      buildAceCaption(promptParams, { isSong, instrumental, autoMeta: Boolean(options?.autoMeta), vocalLanguage }),
+    lyrics: lyricsRaw.trim(),
+    instrumental,
+    bpm: contractBpm,
+    key: params.key,
+    scale: params.scale,
+    vocalLanguage,
+    source: captionOverride ? "manual" : "catalog",
+  });
+  const baseCaption = normalized.caption;
 
-  const lyrics = options?.lyrics ?? "";
-  const effectiveLyrics = instrumental ? "[Instrumental]" : lyrics.trim();
-  const isAiLyrics = !instrumental && effectiveLyrics === "";
+  const lyrics = normalized.lyrics || (instrumental ? "[Instrumental]" : lyricsRaw.trim());
+  const effectiveLyrics = lyrics;
+  const isAiLyrics = !instrumental && lyrics.trim() === "";
   const effectiveSampleMode = Boolean(!captionOverride && (options?.sampleMode || isAiLyrics));
   const releasePrompt = effectiveSampleMode ? (options?.sampleQuery?.trim() || baseCaption) : baseCaption;
   const quality = resolveAceQualityFlags({
@@ -381,8 +399,6 @@ async function generateLoopAceDirect(
       timeSignature: timeSignature || undefined,
     };
   };
-
-  const melodyComposition = Boolean(options?.melodyComposition);
 
   const generateViaChatCompletions = async (): Promise<{ audioUrl: string; meta: AceMeta | null }> => {
     const parts: string[] = [];
@@ -914,14 +930,31 @@ export async function generateLoopAceDualBatch(
     const promptParams = options?.autoMeta ? { ...params, bpm: 0, key: "", scale: "" } : params;
     const instrumental = options?.instrumental ?? true;
     const vocalLanguage = options?.vocalLanguage ?? "en";
-    const baseCaption = buildAceCaption(promptParams, {
-      isSong,
+    const captionOverride = options?.captionOverride?.trim() ?? "";
+    const lyricsRaw = options?.lyrics ?? "";
+    const melodyComposition = options?.melodyComposition === true;
+    const contractBpm =
+      options?.autoMeta || !Number.isFinite(params.bpm) || params.bpm <= 0 ? null : Math.round(params.bpm);
+    const normalized = normalizeAceGenerationPayload({
+      mode: melodyComposition ? "melody" : instrumental ? "beat" : "song",
+      caption:
+        captionOverride ||
+        buildAceCaption(promptParams, {
+          isSong,
+          instrumental,
+          autoMeta: Boolean(options?.autoMeta),
+          vocalLanguage,
+        }),
+      lyrics: lyricsRaw.trim(),
       instrumental,
-      autoMeta: Boolean(options?.autoMeta),
+      bpm: contractBpm,
+      key: params.key,
+      scale: params.scale,
       vocalLanguage,
+      source: captionOverride ? "manual" : "catalog",
     });
-    const lyrics = options?.lyrics ?? "";
-    const effectiveLyrics = instrumental ? "[Instrumental]" : lyrics.trim();
+    const baseCaption = normalized.caption;
+    const effectiveLyrics = normalized.lyrics || (instrumental ? "[Instrumental]" : lyricsRaw.trim());
     const quality = resolveAceQualityFlags({
       thinking: options?.thinking,
       useFormat: options?.useFormat,
@@ -1029,22 +1062,23 @@ export async function generateLoopAceDualBatch(
     data: { session },
   } = await supabase.auth.getSession();
 
-  const isSong = options?.isSong ?? !options?.instrumental;
-  const promptParams = options?.autoMeta ? { ...params, bpm: 0, key: "", scale: "" } : params;
   const instrumental = options?.instrumental ?? true;
   const lyricsRaw = options?.lyrics ?? "";
   const vocalLanguage = options?.vocalLanguage ?? "en";
-  const baseCaption = buildAceCaption(promptParams, {
+  const isSong = options?.isSong ?? !instrumental;
+  const aceBody = buildAceRequestBody(params, {
+    ...options,
     isSong,
     instrumental,
-    autoMeta: Boolean(options?.autoMeta),
+    lyrics: lyricsRaw,
     vocalLanguage,
   });
-  const isAiLyrics = !instrumental && lyricsRaw.trim() === "";
-  const effectiveSampleMode = Boolean(options?.sampleMode || isAiLyrics);
-  const caption = effectiveSampleMode ? "" : baseCaption;
-  const lyrics = instrumental ? "[Instrumental]" : lyricsRaw;
-  const effectiveSampleQuery = effectiveSampleMode ? (options?.sampleQuery?.trim() || baseCaption) : options?.sampleQuery?.trim() || "";
+  const effectiveSampleMode = Boolean(aceBody.sampleMode);
+  const caption = effectiveSampleMode ? "" : String(aceBody.caption ?? "");
+  const lyrics = String(aceBody.lyrics ?? (instrumental ? "[Instrumental]" : lyricsRaw));
+  const effectiveSampleQuery = effectiveSampleMode
+    ? (options?.sampleQuery?.trim() || String(aceBody.caption ?? ""))
+    : options?.sampleQuery?.trim() || "";
   const audioFormatRaw = (options?.audioFormat || "").trim().toLowerCase();
   const audioFormat =
     audioFormatRaw === "wav" ||

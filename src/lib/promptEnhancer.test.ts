@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { looksLikeAceProsePrompt, pickUnifiedDiceRoll, resolveGenerationCaptionContext } from "@producerhit/shared";
+import { looksLikeAceProsePrompt, normalizeAceCaption, pickUnifiedDiceRoll, resolveGenerationCaptionContext } from "@producerhit/shared";
 import {
   enhanceNaturalIdeaToAce,
   looksLikeAceTechnicalPrompt,
@@ -11,6 +11,10 @@ import {
 import { pickRandomGenreMenuDiceRoll } from "@/lib/randomPromptIdeas";
 import { pickRandomGenreMenuDice } from "@/lib/randomPromptIdeas/genreMenuPrompts";
 import { pickRandomUnifiedDiceRoll } from "@/lib/randomPromptIdeas/unifiedDisplayPool";
+
+function normalizedSongCaption(caption: string): string {
+  return normalizeAceCaption(caption, { mode: "song", instrumental: false }).caption;
+}
 
 describe("promptEnhancer", () => {
   it("detects ACE technical prompts", () => {
@@ -48,7 +52,9 @@ describe("promptEnhancer", () => {
       mode: "song",
       uiLocale: "en",
     });
-    expect(ctx.melodyComposition).toBe(false);
+    expect(ctx.melodyComposition).toBe(true);
+    expect(ctx.captionOverride).toBeDefined();
+    expect(ctx.captionOverride).toContain(",");
   });
 
   it("legacy IT dice shell is curated not natural enhancement", () => {
@@ -61,7 +67,8 @@ describe("promptEnhancer", () => {
       mode: "song",
       uiLocale: "it",
     });
-    expect(ctx.melodyComposition).toBe(false);
+    expect(ctx.melodyComposition).toBe(true);
+    expect(ctx.captionOverride).toBeDefined();
   });
 
   it("rebuilds dice ACE when override missing but display matches pool", () => {
@@ -77,7 +84,8 @@ describe("promptEnhancer", () => {
       uiLocale: "it",
     });
     expect(ctx.melodyComposition).toBe(true);
-    expect(ctx.captionOverride).toBe(roll.acePrompt);
+    expect(ctx.captionOverride).toBeDefined();
+    expect(ctx.captionOverride).toContain("clean studio vocal");
   });
 
   it("dice override enables melody composition", () => {
@@ -92,7 +100,7 @@ describe("promptEnhancer", () => {
       formGenre: dice.genre,
       mode: "song",
     });
-    expect(ctx.captionOverride).toBe(dice.acePrompt);
+    expect(ctx.captionOverride).toBe(normalizedSongCaption(dice.acePrompt));
     expect(ctx.melodyComposition).toBe(true);
   });
 
@@ -150,7 +158,7 @@ describe("promptEnhancer", () => {
       formGenre: dice.genre,
       mode: "song",
     });
-    expect(caption).toBe(dice.acePrompt);
+    expect(caption).toBe(normalizedSongCaption(dice.acePrompt));
     if (!looksLikeAceProsePrompt(dice.displayPrompt)) {
       expect(caption).not.toBe(dice.displayPrompt);
     }

@@ -12,6 +12,18 @@ export { resolveAceQualityFlags, ACE_QUALITY_DEFAULTS } from "./aceQuality";
 export { buildAceCaption } from "./promptAce";
 export { buildAceRequestBody } from "./aceRequest";
 export {
+  normalizeAceCaption,
+  normalizeAceGenerationPayload,
+  normalizeAceLyrics,
+  ACE_CAPTION_MAX_CHARS,
+  ACE_SONG_VOCAL_STABILITY_TAGS,
+  ACE_BEAT_INSTRUMENTAL_TAGS,
+  type AceGenerationMode,
+  type AcePromptSource,
+  type NormalizedAcePayload,
+  type NormalizeAcePayloadInput,
+} from "../prompt/acePromptContract";
+export {
   buildStemsUrlForDb,
   buildAceStemsFromMeta,
   extractAceTaskId,
