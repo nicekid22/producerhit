@@ -1,5 +1,6 @@
 import type { CategorizedLocalePools, PromptCategory } from "./types";
 import { buildGenreMenuCategory } from "@/lib/randomPromptIdeas/genreMenuPrompts";
+import { getAceProseCuratedPool } from "@producerhit/shared";
 
 const SONG_NATURAL: PromptCategory = {
   id: "natural",
@@ -494,6 +495,20 @@ const BEAT_IMPRESSIVE: PromptCategory = {
   ],
 };
 
+const SONG_ACE_PROSE: PromptCategory = {
+  id: "ace_prose",
+  label: "ACE prose (optimized)",
+  mode: "song",
+  prompts: getAceProseCuratedPool("song", "en"),
+};
+
+const BEAT_ACE_PROSE: PromptCategory = {
+  id: "ace_prose",
+  label: "ACE prose (optimized)",
+  mode: "beat",
+  prompts: getAceProseCuratedPool("beat", "en"),
+};
+
 const HERO = [
   "Euphoric anthem to celebrate your country winning the 2026 World Cup",
   "Funny song about your Spotify algorithm not getting you anymore",
@@ -534,6 +549,7 @@ export const CATEGORIZED_EN: CategorizedLocalePools = {
     SONG_ROCK,
     SONG_ELECTRONIC,
     SONG_IMPRESSIVE,
+    SONG_ACE_PROSE,
     buildGenreMenuCategory("song", "Full genre catalog", "en"),
   ],
   beat: [
@@ -545,6 +561,7 @@ export const CATEGORIZED_EN: CategorizedLocalePools = {
     BEAT_POP_RNB,
     BEAT_ROCK,
     BEAT_IMPRESSIVE,
+    BEAT_ACE_PROSE,
     buildGenreMenuCategory("beat", "Full genre catalog", "en"),
   ],
   hero: HERO,

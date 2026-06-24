@@ -4,6 +4,21 @@ import type { ActivationStepId } from "./i18n/catalog";
 
 const STORAGE_KEY = "producerhit_mobile_activation_v1";
 
+type Listener = () => void;
+const listeners = new Set<Listener>();
+
+/** Notifie les écrans (checklist) quand une étape est complétée. */
+export function subscribeActivationProgress(listener: Listener): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+function notifyActivationProgress(): void {
+  for (const listener of listeners) listener();
+}
+
 export async function loadActivationSteps(): Promise<Set<ActivationStepId>> {
   try {
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
@@ -22,6 +37,7 @@ export async function completeActivationStep(stepId: ActivationStepId): Promise<
   steps.add(stepId);
   await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify([...steps]));
   void syncStepToServer(stepId);
+  notifyActivationProgress();
   return steps;
 }
 

@@ -1,5 +1,6 @@
 import type { CategorizedLocalePools, PromptCategory } from "./types";
 import { buildGenreMenuCategory } from "@/lib/randomPromptIdeas/genreMenuPrompts";
+import { getAceProseCuratedPool } from "@producerhit/shared";
 
 /** Formulations naturelles — comme un vrai utilisateur qui ne maîtrise pas les tags ACE. */
 const SONG_NATURAL: PromptCategory = {
@@ -518,6 +519,20 @@ const HERO = [
   "Chanson sur découvrir l'IA musicale à minuit",
 ] as const;
 
+const SONG_ACE_PROSE: PromptCategory = {
+  id: "ace_prose",
+  label: "ACE prose (optimisé)",
+  mode: "song",
+  prompts: getAceProseCuratedPool("song", "fr"),
+};
+
+const BEAT_ACE_PROSE: PromptCategory = {
+  id: "ace_prose",
+  label: "ACE prose (optimisé)",
+  mode: "beat",
+  prompts: getAceProseCuratedPool("beat", "fr"),
+};
+
 export const CATEGORIZED_FR: CategorizedLocalePools = {
   song: [
     SONG_NATURAL,
@@ -529,6 +544,7 @@ export const CATEGORIZED_FR: CategorizedLocalePools = {
     SONG_ROCK,
     SONG_ELECTRONIC,
     SONG_IMPRESSIVE,
+    SONG_ACE_PROSE,
     buildGenreMenuCategory("song", "Tous les genres du menu", "fr"),
   ],
   beat: [
@@ -540,6 +556,7 @@ export const CATEGORIZED_FR: CategorizedLocalePools = {
     BEAT_POP_RNB,
     BEAT_ROCK,
     BEAT_IMPRESSIVE,
+    BEAT_ACE_PROSE,
     buildGenreMenuCategory("beat", "Tous les genres du menu", "fr"),
   ],
   hero: HERO,

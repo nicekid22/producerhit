@@ -1,6 +1,6 @@
 import type { AppLocale } from "./config";
 import { getMessages } from "./locales";
-import { getBeatNameGeneratorSeo, getForAiPageSeo } from "@/lib/marketing/phase1PagesSeo";
+import { getBeatNameGeneratorSeo, getAlbumCoverGeneratorSeo, getForAiPageSeo } from "@/lib/marketing/phase1PagesSeo";
 import { getGenreStatsPageSeo } from "@/lib/marketing/phase2PagesSeo";
 
 export type SeoSlugKey =
@@ -23,8 +23,10 @@ export type SeoSlugKey =
   | "generate-beats-online-free"
   | "for-ai"
   | "beat-name-generator"
+  | "album-cover-generator"
   | "genre-stats"
   | "legal"
+  | "distribution-academy"
   | "other";
 
 export function getPageSeo(locale: AppLocale, slugKey: SeoSlugKey): { title: string; description: string } {
@@ -72,12 +74,28 @@ export function getPageSeo(locale: AppLocale, slugKey: SeoSlugKey): { title: str
       const page = getBeatNameGeneratorSeo(locale);
       return { title: page.title, description: page.description };
     }
+    case "album-cover-generator": {
+      const page = getAlbumCoverGeneratorSeo(locale);
+      return { title: page.title, description: page.description };
+    }
     case "genre-stats": {
       const page = getGenreStatsPageSeo(locale);
       return { title: page.title, description: page.description };
     }
     case "legal":
       return { title: s.legalTitle, description: s.defaultDescription };
+    case "distribution-academy":
+      return locale === "fr"
+        ? {
+            title: "Distribuer musique IA — Formation gratuite (module 1) | ProducerHit",
+            description:
+              "Formation complète pour sortir ta musique IA sur Spotify : droits, cover IA, pack ZIP et upload DistroKid. Module 1 gratuit — Academy incluse Studio & Plus (497 $).",
+          }
+        : {
+            title: "Distribute AI Music — Free Course (Module 1) | ProducerHit",
+            description:
+              "Complete course to release AI music on Spotify: rights, AI cover art, ZIP pack, DistroKid upload. Free module 1 — Academy included with Studio & Plus ($497 value).",
+          };
     default:
       return { title: s.defaultTitle, description: s.defaultDescription };
   }

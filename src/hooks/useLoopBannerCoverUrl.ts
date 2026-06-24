@@ -1,17 +1,12 @@
 import { useMemo } from "react";
-import { useWorkspacePinterestCover } from "@/hooks/useLazyPinterestCover";
 import {
   displayCoverUrl,
-  needsPinterestCover,
   resolveLoopDisplayCoverUrl,
 } from "@/lib/coverArt";
 import { useLoopsStore } from "@/stores/loopsStore";
 import type { Loop } from "@/types/loop";
 
-/**
- * URL d’affichage cover (Storage + fallback Pinterest workspace).
- * Même logique que les bannières LoopCard — fetch Pinterest immédiat (pas de lazy inView).
- */
+/** URL d’affichage cover (Storage Pollinations uniquement). */
 export function useLoopBannerCoverUrl(loop: Loop) {
   const loops = useLoopsStore((s) => s.loops);
   const live = useMemo(() => loops.find((l) => l.id === loop.id) ?? loop, [loop, loops]);
@@ -36,20 +31,7 @@ export function useLoopBannerCoverUrl(loop: Loop) {
     [coverUrlRaw, live.details?.coverRevision],
   );
 
-  const needsLazyCover = needsPinterestCover(live) || !coverUrl.startsWith("http");
-  const lazyCoverUrl = useWorkspacePinterestCover(
-    {
-      id: live.id,
-      genre: live.genre,
-      mood: live.mood,
-      name: live.name,
-      prompt: live.details?.coverPrompt,
-    },
-    needsLazyCover,
-  );
-
-  const bannerCoverUrl =
-    coverUrl.startsWith("http") ? coverUrl : lazyCoverUrl?.startsWith("http") ? lazyCoverUrl : "";
+  const bannerCoverUrl = coverUrl.startsWith("http") ? coverUrl : "";
 
   return { live, coverUrl, bannerCoverUrl };
 }

@@ -3,7 +3,7 @@ import { parseStemsUrl } from "@/lib/publicLoops";
 
 import type { CoverKind } from "@/lib/coverMedia";
 
-import { PINTEREST_PERSIST_COVERS } from "@/lib/featureFlags";
+import { USE_POLLINATIONS_CARD_COVERS } from "@/lib/featureFlags";
 import { coverUrlFromLoop, coverUrlFromLoopRow } from "@/lib/loopCoverUrl";
 import { buildCoverPromptSnapshot, hashString } from "@/lib/utils";
 
@@ -133,36 +133,27 @@ export function isPollinationsCoverUrl(url: string | null | undefined): boolean 
 
 
 
-/** Morceau sans cover Storage Pinterest (à backfill). */
-
-export function needsPinterestCover(loop: Loop): boolean {
-
-  if (!PINTEREST_PERSIST_COVERS) return false;
+/** Morceau sans cover Storage (à assigner). */
+export function needsLoopCardCover(loop: Loop): boolean {
+  if (!USE_POLLINATIONS_CARD_COVERS) return false;
 
   const stored = loop.details?.coverUrl?.trim() ?? "";
-
   if (!stored) return true;
-
-  if (isPollinationsCoverUrl(stored)) return true;
-
-  if (isDisplayablePinterestCoverUrl(stored)) return false;
-
+  if (isPersistedStorageCoverUrl(stored)) return false;
   return true;
+}
 
+/** @deprecated Utiliser needsLoopCardCover */
+export function needsPinterestCover(loop: Loop): boolean {
+  return needsLoopCardCover(loop);
 }
 
 
 
-/** Ancienne cover pinimg en DB — migration unique vers Storage (même visuel). */
-
+/** Ancienne cover pinimg en DB — à remplacer par Pollinations Storage. */
 export function needsPinimgStorageUpgrade(loop: Loop): boolean {
-
-  if (!PINTEREST_PERSIST_COVERS) return false;
-
   const stored = loop.details?.coverUrl?.trim() ?? "";
-
   return stored.includes("pinimg.com") && !isPersistedStorageCoverUrl(stored);
-
 }
 
 
@@ -179,12 +170,7 @@ export function resolveLoopDisplayCoverUrl(loop: Loop, _size = 512): string {
 
 export function resolveCoverImageUrl(loop: Loop, _size = 512): string {
   const stored = resolveStoredCoverUrl(loop);
-  if (
-    USE_PERSISTED_COVER_URL &&
-    stored &&
-    !isStoredVideoCover(loop, stored) &&
-    !(PINTEREST_PERSIST_COVERS && isPollinationsCoverUrl(stored))
-  ) {
+  if (USE_PERSISTED_COVER_URL && stored && !isStoredVideoCover(loop, stored)) {
     return stored;
   }
   return "";

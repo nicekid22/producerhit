@@ -103,6 +103,7 @@ import { MobileOnboardingSheet, hasSeenMobileOnboarding } from "@/components/das
 import { OnboardingCoach } from "@/components/onboarding/OnboardingCoach";
 import { WavFormatCoach } from "@/components/onboarding/WavFormatCoach";
 import { loadCoachProgress, shouldShowCoachTour } from "@/lib/onboarding/coachStorage";
+import { ensureGenerationCatalogExtensions } from "@/lib/generationCatalogBootstrap";
 import { useOnboardingCoachStore } from "@/stores/onboardingCoachStore";
 import { useWavFormatCoachStore } from "@/stores/wavFormatCoachStore";
 import { useAuthStore } from "@/stores/authStore";
@@ -367,6 +368,11 @@ export default function Dashboard() {
   };
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    ensureGenerationCatalogExtensions();
+  }, []);
+
   const form = useGeneratorStore((s) => s.form);
   const setField = useGeneratorStore((s) => s.setField);
   const setBpm = useGeneratorStore((s) => s.setBpm);
@@ -524,6 +530,11 @@ export default function Dashboard() {
   );
   const beatAceOverrideRef = useRef<string | null>(null);
   const songAceOverrideRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    beatAceOverrideRef.current = null;
+    songAceOverrideRef.current = null;
+  }, [locale]);
   const songRotatingPlaceholderRef = useRef("");
   const beatRotatingPlaceholderRef = useRef("");
   const [songDurationSec, setSongDurationSec] = useState(30);
@@ -1596,6 +1607,11 @@ export default function Dashboard() {
         mode: runAsSong ? "song" : "beat",
         uiLocale: locale,
       });
+
+      if (runAsSong && captionCtx.lyricsStructure?.trim()) {
+        effectiveSongLyrics = captionCtx.lyricsStructure.trim();
+        effectiveLyricsMode = "manual";
+      }
 
       const effectiveRunUiPrompt = runAsSong
         ? [

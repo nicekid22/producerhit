@@ -1,60 +1,40 @@
-import { LinearGradient } from "expo-linear-gradient";
-import { StyleSheet, View } from "react-native";
-import { useTheme } from "@/theme/ThemeProvider";
+import { memo, type ReactNode } from "react";
+import { StyleSheet, type StyleProp, type ViewStyle, View } from "react-native";
+
+import { AppBackground } from "@/components/AppBackground";
 
 type Props = {
-  children?: React.ReactNode;
-  showWaveform?: boolean;
+  children?: ReactNode;
+  layer?: boolean;
+  style?: StyleProp<ViewStyle>;
 };
 
-function StudioBackdrop() {
-  const { colors } = useTheme();
+/** Shared Dusty Cloud background — mount once in tabs layout when possible. */
+export const AtmosphereLayer = memo(function AtmosphereLayer({ style }: { style?: StyleProp<ViewStyle> }) {
   return (
-    <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg }]}>
-      <View style={[styles.studioLine, { backgroundColor: colors.surfaceBorder }]} />
+    <View style={[StyleSheet.absoluteFill, style]} pointerEvents="none">
+      <AppBackground />
     </View>
   );
-}
+});
 
-function PaperBackdrop() {
-  const { colors } = useTheme();
-  return (
-    <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg }]}>
-      <LinearGradient
-        colors={["rgba(196, 92, 38, 0.05)", "transparent", "rgba(180, 140, 90, 0.03)"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-    </View>
-  );
-}
-
-function FlatBackdrop() {
-  const { colors } = useTheme();
-  return <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg }]} />;
-}
-
-export function ThemeBackdrop({ children }: Props) {
-  const { material } = useTheme();
+export const ThemeBackdrop = memo(function ThemeBackdrop({ children, layer, style }: Props) {
+  if (layer) {
+    return (
+      <View style={[StyleSheet.absoluteFill, style]} pointerEvents="none">
+        <AppBackground />
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.root}>
-      {material === "studio" ? <StudioBackdrop /> : null}
-      {material === "paper" ? <PaperBackdrop /> : null}
-      {material === "flat" ? <FlatBackdrop /> : null}
+    <View style={[styles.root, style]}>
+      <AppBackground />
       {children}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  studioLine: {
-    position: "absolute",
-    left: 20,
-    right: 20,
-    top: "36%",
-    height: StyleSheet.hairlineWidth,
-  },
 });

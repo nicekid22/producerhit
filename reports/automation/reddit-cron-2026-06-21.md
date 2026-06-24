@@ -1,4 +1,4 @@
-# Reddit cron — 2026-06-21 (dry-run)
+# Reddit cron — 2026-06-21
 
 | | |
 |--|--|
@@ -36,75 +36,107 @@ Can post: yes
 ## Threads repérés
 
 
-## Mode manuel (OAuth indisponible)
+## Mode manuel — pourquoi les agents ne commentent pas seuls
 
-Reddit bloque souvent **Create app** sur [prefs/apps](https://www.reddit.com/prefs/apps) depuis fin 2025.
-**Devvit** (apps in-Reddit) ≠ credentials OAuth pour le cron.
+| Raison | Détail |
+|--------|--------|
+| **Pas d'OAuth** | Sans `REDDIT_CLIENT_ID` + secret + refresh token, le cron **ne peut pas** poster de commentaires via l'API |
+| **Hermes PH Reddit** | Cron jamais exécuté (status: never) |
+| **Mode manuel** | Ouvre le navigateur — **tu** dois coller le commentaire (3–5/jour max) |
 
-Tu es déjà connecté dans ton navigateur → copie-colle les brouillons ci-dessous (max 3–5/jour).
+### ⚠️ Fenêtres Reddit « post non finalisé »
 
-### Post discussion du jour (pré-rempli)
+Les URLs `/submit?title=...` **ne peuvent pas** :
+- choisir le **flair** (obligatoire sur r/aiMusic — étoile rouge)
+- remplir le corps sur le **nouveau Reddit** (souvent vide)
 
-- **Sub:** r/aiMusic
-- **[Ouvrir le formulaire Reddit](https://www.reddit.com/submit?sr=aiMusic&title=Solo+dev+%E2%80%94+AI+for+beat+loops+AND+song+sketches+%28not+another+Suno+clone%29.+Am+I+solving+a+real+problem%3F&selftext=hey+r%2FaiMusic+%E2%80%94+solo+dev%2Fproducer%2C+not+a+label.+tired+of+the+gap+between+%22full+AI+songs%22+and+actually+making+music.%0A%0A**two+workflows+i+kept+mixing+up%3A**%0A-+**Type+beat+%2F+loop+mode**+%E2%80%94+8-bar+sketch+in+fixed+BPM+%2B+key+%E2%86%92+DAW+%E2%86%92+redo+drums%2F808%2Fmix%0A-+**Song+mode**+%E2%80%94+melody+%2B+structure+%2B+vocal-ish+sketch+to+unblock+lyrics%2Farrangement+%28i+still+rewrite+everything%29%0A%0A**what+broke+for+me+with+Suno%2FUdio+alone%3A**%0A-+amazing+for+*finished+songs*%2C+awkward+when+i+need+a+loop+in+one+key+for+beat+work%0A-+song+output+is+a+demo%2C+not+my+final+vocal%2Flyrics%0A-+BeatStars+%E2%86%92+hours+of+scrolling%0A%0A**what+i+built+%28ProducerHit%29%3A**%0A-+pick+genre+%2B+BPM+%2B+key+*before*+generating%0A-+switch+**loop**+vs+**song**+intent+%28not+the+same+use+case%29%0A-+seed+variations+%E2%86%92+same+mood%2C+new+idea%0A-+export+%E2%86%92+human+finishing+required%0A%0A**honest+questions%3A**%0A1.+do+you+use+AI+for+loops%2C+full+songs%2C+or+both%3F%0A2.+anyone+actually+using+AI+for+*songwriting+sketches*+vs+releasable+vocals%3F%0A3.+what+would+make+you+trust+a+tool+vs+%22AI+slop%22%3F%0A%0Ano+links+in+the+feed+%E2%80%94+happy+to+discuss+in+comments.)**
+→ **Ne pas publier** ces brouillons aiMusic. **Commenter** les threads existants ci-dessous.
 
-```
-hey r/aiMusic — solo dev/producer, not a label. tired of the gap between "full AI songs" and actually making music.
+---
 
-**two workflows i kept mixing up:**
-- **Type beat / loop mode** — 8-bar sketch in fixed BPM + key → DAW → redo drums/808/mix
-- **Song mode** — melody + structure + vocal-ish sketch to unblock lyrics/arrangement (i still rewrite everything)
+## 1. Commentaires prioritaires (copier-coller)
 
-**what broke for me with Suno/Udio alone:**
-- amazing for *finished songs*, awkward when i need a loop in one key for beat work
-- song output is a demo, not my final vocal/lyrics
-- BeatStars → hours of scrolling
-
-**what i built (ProducerHit):**
-- pick genre + BPM + key *before* generating
-- switch **loop** vs **song** intent (not the same use case)
-- seed variations → same mood, new idea
-- export → human finishing required
-
-**honest questions:**
-1. do you use AI for loops, full songs, or both?
-2. anyone actually using AI for *songwriting sketches* vs releasable vocals?
-3. what would make you trust a tool vs "AI slop"?
-
-no links in the feed — happy to discuss in comments.
-```
-
-### Exemple de commentaire (adapter au thread)
+### 1. [r/aiMusic — make money from AI music](https://www.reddit.com/r/aiMusic/comments/1u9y2i0/does_anyone_actually_make_money_from_ai_generated/)
 
 ```
-workflow that's been working: lock bpm/key → 3–4 ugly sketches → pick one → replace 100% of drums/808 in daw.
+honest take, not trying to sell you anything:
 
-ai = reference, not the final beat. anyone else doing this or is it a crutch?
+most "make money from ai music" threads are really 3 different games — streaming finished tracks (brutal margins + noise), leasing beats (still needs real mixing + branding), or selling workflow/tools to other creators (unsexy but real).
+
+raw generator dumps rarely last. the people i still see doing *something* treat ai as sketch/reference, finish in a daw, or they build for producers instead of competing on spotify.
+
+what lane are you actually aiming for? streaming, beats, or services? the answer matters more than which model you use.
 ```
 
-### Recherches à ouvrir (threads récents)
+### 2. [r/aiMusic — Suno / alternatives (recherche)](https://www.reddit.com/r/aiMusic/search/?q=suno+alternative&restrict_sr=1&sort=new&t=week)
 
-- [r/aiMusic · ai · "make money"](https://www.reddit.com/r/aiMusic/search/?q=make+money&restrict_sr=1&sort=new&t=week)
-- [r/aiMusic · ai · "suno"](https://www.reddit.com/r/aiMusic/search/?q=suno&restrict_sr=1&sort=new&t=week)
-- [r/SunoAI · ai · "alternative"](https://www.reddit.com/r/SunoAI/search/?q=alternative&restrict_sr=1&sort=new&t=week)
-- [r/SunoAI · ai · "song"](https://www.reddit.com/r/SunoAI/search/?q=song&restrict_sr=1&sort=new&t=week)
-- [r/Songwriting · song · "writer's block"](https://www.reddit.com/r/Songwriting/search/?q=writer%27s+block&restrict_sr=1&sort=new&t=week)
-- [r/Songwriting · song · "ai"](https://www.reddit.com/r/Songwriting/search/?q=ai&restrict_sr=1&sort=new&t=week)
-- [r/singing · song · "ai vocal"](https://www.reddit.com/r/singing/search/?q=ai+vocal&restrict_sr=1&sort=new&t=week)
-- [r/singing · song · "demo"](https://www.reddit.com/r/singing/search/?q=demo&restrict_sr=1&sort=new&t=week)
-- [r/composer · song · "ai"](https://www.reddit.com/r/composer/search/?q=ai&restrict_sr=1&sort=new&t=week)
-- [r/composer · song · "melody"](https://www.reddit.com/r/composer/search/?q=melody&restrict_sr=1&sort=new&t=week)
-- [r/musicians · song · "ai music"](https://www.reddit.com/r/musicians/search/?q=ai+music&restrict_sr=1&sort=new&t=week)
-- [r/musicians · song · "songwriting"](https://www.reddit.com/r/musicians/search/?q=songwriting&restrict_sr=1&sort=new&t=week)
-- [r/makinghiphop · beats · "suno"](https://www.reddit.com/r/makinghiphop/search/?q=suno&restrict_sr=1&sort=new&t=week)
-- [r/makinghiphop · beats · "ai beat"](https://www.reddit.com/r/makinghiphop/search/?q=ai+beat&restrict_sr=1&sort=new&t=week)
-- [r/trapproduction · beats · "type beat"](https://www.reddit.com/r/trapproduction/search/?q=type+beat&restrict_sr=1&sort=new&t=week)
-- [r/trapproduction · beats · "ai"](https://www.reddit.com/r/trapproduction/search/?q=ai&restrict_sr=1&sort=new&t=week)
+```
+suno/udio excel at full songs. when i need an 8-bar loop in a fixed bpm/key for beat work, i ended up in a totally different workflow (sketch → daw → redo drums).
 
-### Raccourcis
+do you use ai for finished releases or mostly ideation?
+```
+
+### 3. [r/makinghiphop — Suno / AI beats](https://www.reddit.com/r/makinghiphop/search/?q=suno&restrict_sr=1&sort=new&t=week)
+
+```
+suno wins for songs; for beat workflow i lock bpm/key first then treat output as reference only. still redo drums every time.
+
+what's your split — full tracks or loops/sketches?
+```
+
+---
+
+## 2. Nouveau post (optionnel) — r/SideProject
+
+Pas de flair obligatoire. **Coller le corps à la main** si le formulaire est vide.
+
+- **[Ouvrir formulaire](https://www.reddit.com/submit?sr=SideProject&title=BeatStars+scrolling+was+killing+my+sessions+so+I+built+a+seed-based+loop+sketch+tool+%28probably+overbuilt+it%29&selftext=Not+another+%22AI+will+replace+artists%22+pitch+%E2%80%94+I+built+this+because+I+kept+losing+**hours**+before+I+even+opened+FL.%0A%0A**The+annoying+gap%3A**%0A-+Suno%2FUdio+%E2%86%92+great+for+*finished+songs*%2C+useless+when+I+need+an+8-bar+loop+in+**one+BPM+%2B+key**%0A-+BeatStars+%E2%86%92+infinite+scroll%2C+wrong+vibe%2C+wrong+key%0A-+Blank+project+%E2%86%92+writer%27s+block%0A%0A**What+I+shipped+%28ProducerHit%29%3A**%0A-+lock+genre+%2F+BPM+%2F+key+*before*+generation%0A-+seed+variations+%E2%86%92+same+mood%2C+new+melody+%28like+rerolling+an+idea+without+starting+over%29%0A-+export+mp3+%E2%86%92+I+redo+drums%2C+808%2C+mix+manually.+AI+%3D+sketch+pad+only.%0A%0ASolo+dev.+Free+tier+%7E10+gens%2Fmonth.%0A%0A**Would+love+brutal+feedback%3A**%0A1.+Is+this+a+fake+problem+or+do+you+hit+the+same+wall%3F%0A2.+Landing+page+%E2%80%94+clear+or+too+%22AI+slop%22%3F%0A3.+What+would+make+you+actually+try+it+once%3F%0A%0ANot+asking+for+upvotes+%E2%80%94+genuinely+trying+to+figure+out+if+I%27m+building+for+myself+or+for+others.+Link+in+comments+if+mods+prefer.)**
+
+**Titre:** BeatStars scrolling was killing my sessions so I built a seed-based loop sketch tool (probably overbuilt it)
+
+**Corps:**
+
+```
+Not another "AI will replace artists" pitch — I built this because I kept losing **hours** before I even opened FL.
+
+**The annoying gap:**
+- Suno/Udio → great for *finished songs*, useless when I need an 8-bar loop in **one BPM + key**
+- BeatStars → infinite scroll, wrong vibe, wrong key
+- Blank project → writer's block
+
+**What I shipped (ProducerHit):**
+- lock genre / BPM / key *before* generation
+- seed variations → same mood, new melody (like rerolling an idea without starting over)
+- export mp3 → I redo drums, 808, mix manually. AI = sketch pad only.
+
+Solo dev. Free tier ~10 gens/month.
+
+**Would love brutal feedback:**
+1. Is this a fake problem or do you hit the same wall?
+2. Landing page — clear or too "AI slop"?
+3. What would make you actually try it once?
+
+Not asking for upvotes — genuinely trying to figure out if I'm building for myself or for others. Link in comments if mods prefer.
+```
+
+---
+
+## 3. Recherches threads récents
+
+- [r/aiMusic · "make money"](https://www.reddit.com/r/aiMusic/search/?q=make+money&restrict_sr=1&sort=new&t=week)
+- [r/aiMusic · "suno"](https://www.reddit.com/r/aiMusic/search/?q=suno&restrict_sr=1&sort=new&t=week)
+- [r/SunoAI · "alternative"](https://www.reddit.com/r/SunoAI/search/?q=alternative&restrict_sr=1&sort=new&t=week)
+- [r/SunoAI · "song"](https://www.reddit.com/r/SunoAI/search/?q=song&restrict_sr=1&sort=new&t=week)
+- [r/Songwriting · "writer's block"](https://www.reddit.com/r/Songwriting/search/?q=writer%27s+block&restrict_sr=1&sort=new&t=week)
+- [r/Songwriting · "ai"](https://www.reddit.com/r/Songwriting/search/?q=ai&restrict_sr=1&sort=new&t=week)
+- [r/singing · "ai vocal"](https://www.reddit.com/r/singing/search/?q=ai+vocal&restrict_sr=1&sort=new&t=week)
+- [r/singing · "demo"](https://www.reddit.com/r/singing/search/?q=demo&restrict_sr=1&sort=new&t=week)
+- [r/composer · "ai"](https://www.reddit.com/r/composer/search/?q=ai&restrict_sr=1&sort=new&t=week)
+- [r/composer · "melody"](https://www.reddit.com/r/composer/search/?q=melody&restrict_sr=1&sort=new&t=week)
+- [r/musicians · "ai music"](https://www.reddit.com/r/musicians/search/?q=ai+music&restrict_sr=1&sort=new&t=week)
+- [r/musicians · "songwriting"](https://www.reddit.com/r/musicians/search/?q=songwriting&restrict_sr=1&sort=new&t=week)
 
 ```bash
-npm run reddit:manual          # rapport + ouvre Reddit
-npm run reddit:launch -- --open  # playbook launch 2–6h
+npm run reddit:manual   # ouvre les threads prioritaires + SideProject
 ```
 

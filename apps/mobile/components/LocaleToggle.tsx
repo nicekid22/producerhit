@@ -1,25 +1,49 @@
-import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
+import { memo } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import * as Haptics from "expo-haptics";
 import { LOCALE_SHORT, UI_LOCALES, type AppLocale } from "@producerhit/shared";
+import { getDeviceAppLocale } from "@/lib/deviceLocale";
 import { useLocaleStore } from "@/stores/localeStore";
 import { useTheme } from "@/theme/ThemeProvider";
+import { spacing } from "@/theme/tokens";
 
 const OPTIONS = UI_LOCALES.map((id) => ({ id, label: LOCALE_SHORT[id] }));
 
-export function LocaleToggle() {
+export const LocaleToggle = memo(function LocaleToggle() {
   const locale = useLocaleStore((s) => s.locale);
+  const userOverride = useLocaleStore((s) => s.userOverride);
   const setLocale = useLocaleStore((s) => s.setLocale);
-  const { colors, typography, radius } = useTheme();
+  const syncDeviceLocale = useLocaleStore((s) => s.syncDeviceLocale);
+  const { colors, typography } = useTheme();
+  const deviceLocale = getDeviceAppLocale();
+  const autoActive = !userOverride;
 
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.row}
-      keyboardShouldPersistTaps="handled"
-    >
+    <View style={styles.wrap}>
+      <Pressable
+        onPress={() => {
+          if (autoActive) return;
+          void Haptics.selectionAsync();
+          syncDeviceLocale();
+        }}
+        style={[
+          styles.pill,
+          autoActive
+            ? { backgroundColor: colors.pillActiveBg, borderColor: colors.pillActiveText }
+            : { backgroundColor: colors.bgGlass, borderColor: colors.surfaceBorder },
+        ]}
+      >
+        <Text
+          style={[
+            typography.caption,
+            { fontWeight: "600", color: autoActive ? colors.pillActiveText : colors.textMuted },
+          ]}
+        >
+          {LOCALE_SHORT[deviceLocale]} ✦
+        </Text>
+      </Pressable>
       {OPTIONS.map((opt) => {
-        const active = locale === opt.id;
+        const active = userOverride && locale === opt.id;
         return (
           <Pressable
             key={opt.id}
@@ -30,19 +54,15 @@ export function LocaleToggle() {
             }}
             style={[
               styles.pill,
-              {
-                borderRadius: radius.pill,
-                borderColor: colors.surfaceBorder,
-                backgroundColor: colors.surface,
-              },
-              active && { borderColor: colors.accent, backgroundColor: colors.pillActiveBg },
+              active
+                ? { backgroundColor: colors.pillActiveBg, borderColor: colors.pillActiveText }
+                : { backgroundColor: colors.bgGlass, borderColor: colors.surfaceBorder },
             ]}
           >
             <Text
               style={[
                 typography.caption,
-                { color: colors.textMuted, fontWeight: "600" },
-                active && { color: colors.text },
+                { fontWeight: "600", color: active ? colors.pillActiveText : colors.textMuted },
               ]}
             >
               {opt.label}
@@ -50,15 +70,16 @@ export function LocaleToggle() {
           </Pressable>
         );
       })}
-    </ScrollView>
+    </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
-  row: { flexDirection: "row", gap: 8, paddingRight: 4 },
+  wrap: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
   pill: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 100,
+    borderWidth: StyleSheet.hairlineWidth,
   },
 });

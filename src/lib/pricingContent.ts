@@ -80,6 +80,9 @@ export function getPricingPlans(locale: AppLocale): PricingPlanContent[] {
         hostedAudioRetentionDaysLabel(locale, "studio"),
         s.verticalVideo,
         s.releasesClients,
+        locale === "fr"
+          ? "Pack distribution + Academy (valeur 497 $)"
+          : "Distribution pack + Academy ($497 value)",
       ],
     },
     {
@@ -93,6 +96,9 @@ export function getPricingPlans(locale: AppLocale): PricingPlanContent[] {
         s.priorityQueue,
         s.stemsZip,
         s.allStudio,
+        locale === "fr"
+          ? "Pack distribution + Academy (valeur 497 $)"
+          : "Distribution pack + Academy ($497 value)",
       ],
     },
   ];
@@ -125,6 +131,13 @@ export function getPricingCompareRows(locale: AppLocale): PricingCompareRow[] {
       plus: yes,
     },
     { label: s.compareStems, free: no, pro: no, studio: no, plus: yes },
+    {
+      label: locale === "fr" ? "Pack distribution + Academy" : "Distribution pack + Academy",
+      free: no,
+      pro: no,
+      studio: "2/mo",
+      plus: "5/mo",
+    },
     {
       label: s.comparePriority,
       free: no,

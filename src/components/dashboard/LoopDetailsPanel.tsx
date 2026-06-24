@@ -4,6 +4,8 @@ import { buildDashboardSection } from "@/i18n/dashboardCatalog";
 import { useMemo } from "react";
 import { Clock, Copy, Gauge, Info, KeyRound, Loader2, Sigma } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { DistributionDistributeButton } from "@/components/distribution/DistributionWizard";
+import { useAuthStore } from "@/stores/authStore";
 import { Badge } from "@/components/ui/Badge";
 import { CoverMedia } from "@/components/CoverMedia";
 import { isCoverVideo } from "@/lib/coverMedia";
@@ -29,6 +31,7 @@ export function LoopDetailsPanel({
   className,
   isPlayingCover = false,
   compact = false,
+  onOpenDistribution,
 }: {
   loop: Loop;
   locale: AppLocale;
@@ -42,8 +45,10 @@ export function LoopDetailsPanel({
   isPlayingCover?: boolean;
   /** Mobile bottom sheet — tighter spacing, taller lyrics area */
   compact?: boolean;
+  onOpenDistribution?: (loop: Loop) => void;
 }) {
   const d = buildDashboardSection(locale);
+  const profile = useAuthStore((s) => s.profile);
   const dur = (loop.details?.duration ?? durationSec) as number | null | undefined;
   const durationLabel =
     typeof dur === "number" && isFinite(dur) && dur > 0 ? formatTime(dur) : "—";
@@ -92,6 +97,16 @@ export function LoopDetailsPanel({
           <p className="mt-2 text-xs text-pk-muted">
             {durationLabel} · {loop.details?.keyScale || "—"} · {loop.details?.timeSignature || "—"}
           </p>
+        </div>
+
+        <div className="rounded-xl border border-violet-400/25 bg-violet-500/10 p-3">
+          <DistributionDistributeButton
+            loop={loop}
+            profile={profile}
+            className="w-full"
+            prominent
+            onOpenWizard={onOpenDistribution}
+          />
         </div>
 
         <div className="border-t border-pk-border pt-3">
@@ -152,6 +167,16 @@ export function LoopDetailsPanel({
             <CoverMedia loop={loop} coverUrl={coverUrl} coverKey={coverKey} imageClassName="object-contain" />
           )}
         </div>
+      </div>
+
+      <div className="mt-4 rounded-xl border border-violet-400/25 bg-violet-500/10 p-3">
+        <DistributionDistributeButton
+          loop={loop}
+          profile={profile}
+          className="w-full"
+          prominent
+          onOpenWizard={onOpenDistribution}
+        />
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-2 text-xs">

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { AppShell } from "@/components/AppShell";
 import { LoopDetailsPanel } from "@/components/dashboard/LoopDetailsPanel";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { useLoopsStore } from "@/stores/loopsStore";
 import { LoopCardItem } from "@/components/LoopCardItem";
+import { VirtualizedGrid } from "@/components/perf/VirtualizedGrid";
 import { useLocaleStore } from "@/stores/localeStore";
 import { useMobileUiV2 } from "@/hooks/useMobileUiV2";
 import { Disc3, ListMusic, Music2, Search, X } from "lucide-react";
@@ -27,11 +28,15 @@ import { useAuthStore } from "@/stores/authStore";
 import { normalizePlan } from "@/lib/billing";
 import { CheckoutRecoveryBanner } from "@/components/billing/CheckoutRecoveryBanner";
 import { FreeUpgradeStrip } from "@/components/billing/FreeUpgradeStrip";
+import { LibraryDistributionBanner } from "@/components/distribution/LibraryDistributionBanner";
+import { DistributionWizard } from "@/components/distribution/DistributionWizard";
 import { readProfileCache } from "@/lib/profileBootstrap";
+import type { Loop } from "@/types/loop";
 
 type Filter = "all" | "genre" | "key" | "bpm";
 
 export default function Library() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const locale = useLocaleStore((s) => s.locale);
   const user = useAuthStore((s) => s.user);
   const profile = useAuthStore((s) => s.profile);
@@ -61,6 +66,12 @@ export default function Library() {
   const [bpmMax, setBpmMax] = useState(160);
   const [genreFilter, setGenreFilter] = useState<string | null>(null);
   const [collectionId, setCollectionId] = useState<string | null>(null);
+  const [distributionLoop, setDistributionLoop] = useState<Loop | null>(null);
+
+  const openDistribution = useCallback((loop: Loop) => {
+    setDetailsId(loop.id);
+    setDistributionLoop(loop);
+  }, []);
 
   const libraryLoops = useMemo(() => dedupeLoopsById(loops), [loops]);
   const collections = useMemo(() => buildLibraryCollections(libraryLoops), [libraryLoops]);
@@ -79,6 +90,18 @@ export default function Library() {
   useEffect(() => {
     markActivationStepLocal("library_visit");
   }, []);
+
+  useEffect(() => {
+    const distributeId = searchParams.get("distribute");
+    if (!distributeId || !loopsHydrated || libraryLoops.length === 0) return;
+    const target = libraryLoops.find((l) => l.id === distributeId);
+    if (!target) return;
+    setDetailsId(target.id);
+    setDistributionLoop(target);
+    const next = new URLSearchParams(searchParams);
+    next.delete("distribute");
+    setSearchParams(next, { replace: true });
+  }, [libraryLoops, loopsHydrated, searchParams, setSearchParams]);
 
   const filtered = useMemo(() => {
     const base = genreFilter ? scopedLoops.filter((l) => l.genre === genreFilter) : scopedLoops;
@@ -142,12 +165,51 @@ export default function Library() {
       }
     })();
   }, [detailsLoop, detailsTitle, locale, renameLoopRemote, common.error, common.titleUpdated]);
+
+  const renderLibraryCard = useCallback(
+    (l: Loop) => (
+      <LoopCardItem
+        loop={l}
+        cardVariant="library"
+        compact={mobileUiV2}
+        queueLoops={filtered}
+        queueSource="library"
+        onDelete={() => setConfirmId(l.id)}
+        onOpenDetails={(loop) =>
+          detailsLoop && !mobileUiV2
+            ? setDetailsId((prev) => (prev === loop.id ? null : loop.id))
+            : setDetailsId(loop.id)
+        }
+        onDistribute={openDistribution}
+      />
+    ),
+    [detailsLoop, filtered, mobileUiV2, openDistribution],
+  );
+
+  const libraryGrid = (
+    <VirtualizedGrid
+      items={filtered}
+      getKey={(l) => l.id}
+      renderItem={(l) => renderLibraryCard(l)}
+      estimateRowHeight={mobileUiV2 ? 280 : 360}
+      className="pk-library-grid"
+    />
+  );
+
   return (
     <AppShell theme="prism" variant="single">
       <div className="pk-library-page h-full space-y-4 px-4 pb-6 pt-4 md:pb-24 md:pt-6">
         <CheckoutRecoveryBanner locale={locale} location="library" currentPlan={user ? userPlan : undefined} />
         {user && userPlan === "free" ? (
           <FreeUpgradeStrip locale={locale} location="library_strip" plan={userPlan} />
+        ) : null}
+        {user ? (
+          <LibraryDistributionBanner
+            locale={locale}
+            plan={userPlan}
+            selectedLoop={detailsLoop}
+            onDistribute={openDistribution}
+          />
         ) : null}
         <LibraryVaultHero
           locale={locale}
@@ -341,20 +403,7 @@ export default function Library() {
             />
           ) : detailsLoop && !mobileUiV2 ? (
             <div className="md:grid md:grid-cols-[minmax(0,1fr)_400px] md:gap-4">
-              <div className="pk-library-grid">
-                {filtered.map((l) => (
-                  <LoopCardItem
-                    key={l.id}
-                    loop={l}
-                    cardVariant="library"
-                    compact={mobileUiV2}
-                    queueLoops={filtered}
-                    queueSource="library"
-                    onDelete={() => setConfirmId(l.id)}
-                    onOpenDetails={(loop) => setDetailsId((prev) => (prev === loop.id ? null : loop.id))}
-                  />
-                ))}
-              </div>
+              <div>{libraryGrid}</div>
 
               <div className="hidden md:block">
                 <div className="sticky top-6 max-h-[calc(100vh-32px)] overflow-y-auto">
@@ -374,25 +423,14 @@ export default function Library() {
                       savingDetailsTitle={savingDetailsTitle}
                       onSaveTitle={saveDetailsTitle}
                       durationSec={durationsSecById[detailsLoop.id]}
+                      onOpenDistribution={openDistribution}
                     />
                   </div>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="pk-library-grid">
-              {filtered.map((l) => (
-                <LoopCardItem
-                  key={l.id}
-                  loop={l}
-                  cardVariant="library"
-                  compact={mobileUiV2}
-                  queueLoops={filtered}
-                  onDelete={() => setConfirmId(l.id)}
-                  onOpenDetails={(loop) => setDetailsId(loop.id)}
-                />
-              ))}
-            </div>
+            libraryGrid
           )}
         </div>
       </div>
@@ -414,9 +452,17 @@ export default function Library() {
             onSaveTitle={saveDetailsTitle}
             durationSec={durationsSecById[detailsLoop.id]}
             compact
+            onOpenDistribution={openDistribution}
           />
         </LoopDetailsSheet>
       ) : null}
+
+      <DistributionWizard
+        open={Boolean(distributionLoop)}
+        loop={distributionLoop}
+        profile={profile}
+        onClose={() => setDistributionLoop(null)}
+      />
 
       <Modal
         open={!!confirmId}

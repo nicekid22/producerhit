@@ -6,7 +6,9 @@ import { burstConfetti } from "@/lib/delight/confetti";
 import { playLootOpen, playLootSpinTick, playLootTeaser, playLootWin } from "@/lib/delight/lootSfx";
 import { useLootRevealStore } from "@/stores/lootRevealStore";
 import { useLocaleStore } from "@/stores/localeStore";
+import { useVisualThemeStore } from "@/stores/visualThemeStore";
 import { cn } from "@/lib/utils";
+import "@/styles/paywall-modal.css";
 
 import type { AppLocale } from "@/i18n/config";
 const ITEM_W = 96;
@@ -66,6 +68,7 @@ export function LootRevealModal() {
   const payload = useLootRevealStore((s) => s.payload);
   const closeLoot = useLootRevealStore((s) => s.closeLoot);
   const locale = useLocaleStore((s) => s.locale);
+  const visualTheme = useVisualThemeStore((s) => s.theme);
   const isFr = locale === "fr";
 
   const [phase, setPhase] = useState<Phase>("teaser");
@@ -236,7 +239,7 @@ export function LootRevealModal() {
 
   return createPortal(
     <div
-      className="pk-loot-overlay fixed inset-0 z-[300] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md"
+      className="pk-growth-modal-backdrop pk-loot-overlay fixed inset-0 z-[300] flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
       aria-label={title}
@@ -244,15 +247,19 @@ export function LootRevealModal() {
         if (e.target === e.currentTarget && phase === "won") closeLoot();
       }}
     >
-      <div className="pk-loot-modal w-full max-w-lg overflow-hidden rounded-[1.75rem] border border-white/12 bg-[#07070f] shadow-[0_0_120px_rgba(124,58,237,0.35),0_24px_80px_rgba(0,0,0,0.65)] sm:max-w-xl">
-        <div className="relative border-b border-white/10 bg-gradient-to-r from-violet-600/25 via-[#0c0c18] to-cyan-500/20 px-6 py-4 text-center">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(167,139,250,0.18),transparent_55%)]" />
-          <div className="relative text-[10px] font-bold uppercase tracking-[0.24em] text-cyan-300/85">ProducerHit rewards</div>
-          <h2 className="relative mt-1 text-xl font-bold tracking-tight text-white sm:text-2xl">{title}</h2>
+      <div
+        className={cn(
+          "pk-growth-modal pk-veil-modal-panel pk-loot-modal w-full max-w-lg overflow-hidden rounded-[1.75rem] sm:max-w-xl",
+          `pk-growth-modal--theme-${visualTheme}`,
+        )}
+      >
+        <div className="pk-growth-modal__header relative px-6 py-4 text-center">
+          <div className="pk-growth-modal__eyebrow relative text-[10px] font-bold uppercase tracking-[0.24em]">ProducerHit rewards</div>
+          <h2 className="pk-growth-modal__title relative mt-1 text-xl font-bold tracking-tight sm:text-2xl">{title}</h2>
           {phase === "teaser" ? (
-            <p className="relative mt-2 text-sm text-white/50">{teaserLine}</p>
+            <p className="pk-growth-modal__subtitle relative mt-2 text-sm">{teaserLine}</p>
           ) : phase === "won" ? null : (
-            <p className="relative mt-2 text-xs text-white/45">
+            <p className="pk-growth-modal__subtitle relative mt-2 text-xs">
               {phase === "stopping"
                 ? isFr
                   ? "Verrouillage…"
@@ -333,7 +340,7 @@ export function LootRevealModal() {
           )}
         </div>
 
-        <div className="border-t border-white/10 bg-black/20 p-4">
+        <div className="pk-growth-modal__footer p-4">
           <button
             type="button"
             onClick={onPrimary}

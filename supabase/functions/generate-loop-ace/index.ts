@@ -1991,6 +1991,15 @@ serve(async (req) => {
         scheduleRunJob(jobId);
       }
 
+      if (job.status === "running" && !job.ace_task_id) {
+        const updatedAt = job.updated_at ? Date.parse(job.updated_at) : 0;
+        const staleMs = updatedAt > 0 ? Date.now() - updatedAt : Number.POSITIVE_INFINITY;
+        if (staleMs > 3 * 60 * 1000) {
+          console.warn("poll_job: orphaned running job, re-scheduling", jobId);
+          scheduleRunJob(jobId);
+        }
+      }
+
       return new Response(JSON.stringify(jobResponsePayload(job)), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

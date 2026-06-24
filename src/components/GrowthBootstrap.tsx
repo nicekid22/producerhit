@@ -4,6 +4,7 @@ import { captureAttributionFromUrl } from "@/lib/attribution";
 import { GA_MEASUREMENT_ID, isGa4ScriptPresent } from "@/lib/googleAnalytics";
 import { scheduleThirdPartyAnalytics } from "@/lib/deferredAnalytics";
 import { deferUntilIdle } from "@/lib/perf/defer";
+import { initWebVitalsReporting } from "@/lib/perf/webVitals";
 import { flushEventQueue, trackClientEvent } from "@/lib/supabaseClient";
 import { trackLandingView } from "@/lib/growthFunnelEvents";
 
@@ -59,6 +60,7 @@ export function GrowthBootstrap() {
       scheduleThirdPartyAnalytics();
       if (!GA_MEASUREMENT_ID) return;
       loadGa4(GA_MEASUREMENT_ID);
+      initWebVitalsReporting();
     });
   }, []);
 

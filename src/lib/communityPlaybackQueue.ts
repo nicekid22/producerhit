@@ -1,4 +1,5 @@
 import { publicRowToCoverLoop } from "@/lib/coverArt";
+import { unlockAudioPlaybackFromGesture } from "@/lib/audioPlaybackUnlock";
 import { resolvePlayableCommunityAudio, type PublicLoopRow } from "@/lib/publicLoops";
 import { usePlayerStore } from "@/stores/playerStore";
 import type { Loop } from "@/types/loop";
@@ -104,6 +105,7 @@ export async function playPublicRowsInQueue(
   startIndex: number,
   options?: PlayCommunityQueueOptions,
 ): Promise<boolean> {
+  unlockAudioPlaybackFromGesture();
   const source = options?.source ?? COMMUNITY_QUEUE_SOURCE;
   const { loops, startIndex: idx } = await resolvePublicRowsToLoops(rows, startIndex, options);
   if (!loops.length) return false;

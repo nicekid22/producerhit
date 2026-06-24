@@ -1,31 +1,26 @@
 /**
  * Shared layout tokens. Prefer `useTheme()` for colors, typography, radius per theme.
  */
-import { prismTheme } from "./palettes/prism";
+import { DUSTY_SPACING } from "./dustyCloud";
+import { buildDustyTheme } from "./buildDustyTheme";
 
-export const colors = prismTheme.colors;
+const defaultTheme = buildDustyTheme("bloom");
+export const colors = defaultTheme.colors;
 
-export const spacing = {
-  xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 24,
-  xxl: 32,
-  section: 40,
-  screen: 20,
-} as const;
+export const spacing = DUSTY_SPACING;
 
 /** @deprecated use theme.radius from useTheme() */
-export const radius = prismTheme.radius;
+export const radius = defaultTheme.radius;
 
 /** @deprecated use theme.typography from useTheme() */
-export const typography = prismTheme.typography;
+export const typography = defaultTheme.typography;
 
 /** @deprecated use theme.motion from useTheme() */
-export const motion = prismTheme.motion;
+export const motion = defaultTheme.motion;
 
 /** @deprecated use theme.elevation from useTheme() */
 export const shadows = {
-  card: prismTheme.elevation.card,
+  card: defaultTheme.elevation.card,
+  low: defaultTheme.elevation.low,
+  high: defaultTheme.elevation.high,
 };

@@ -4,8 +4,7 @@ import { matchGenreFromPrompt } from "@/lib/genres/matchGenreFromPrompt";
 import { getGenreCatalogPrompt } from "@/lib/promptBuilder";
 import { ACE_DICE_CAPTION_MAX } from "@/lib/randomPromptIdeas/aceDiceCaption";
 import type { PromptMode } from "@/lib/randomPromptIdeas";
-import { formatDicePrompt } from "@/lib/randomPromptIdeas";
-import { findGenreDiceItemByDisplay } from "@/lib/randomPromptIdeas/genreMenuPrompts";
+import { looksLikeAceProsePrompt, optimizeAceProsePrompt, resolveGenerationCaptionContext as resolveSharedCaptionContext, sanitizeBeatAceCaption, type GenerationCaptionContext as SharedGenerationCaptionContext } from "@producerhit/shared";
 
 function trimAceCaption(parts: readonly string[]): string {
   const layers = parts.map((p) => p.trim()).filter(Boolean);
@@ -158,33 +157,26 @@ export function resolveIdeaForAceGeneration(args: {
   return { aceCaption, useCaptionOverride: Boolean(aceCaption.trim()) };
 }
 
-export type GenerationCaptionContext = {
-  captionOverride?: string;
-  /** Réservé aux prompts ACE du dé / landing — évite le mode lent melodyComposition sur les idées curated. */
-  melodyComposition: boolean;
-};
+export type GenerationCaptionContext = SharedGenerationCaptionContext;
 
-/** Priorité : override dé / landing, sinon enhancement naturel léger. */
+/** Priorité : override dé / landing / banque 2000, sinon enhancement naturel léger. */
 export function resolveGenerationCaptionContext(args: {
   diceAceOverride?: string | null;
   landingAceOverride?: string | null;
   displayIdea: string;
   formGenre: string;
   mode: PromptMode;
-  /** Locale UI — permet de reconstruire l’ACE du dé si l’override a été perdu. */
   uiLocale?: AppLocale;
 }): GenerationCaptionContext {
-  const dice = args.diceAceOverride?.trim();
-  if (dice) return { captionOverride: dice, melodyComposition: true };
-  const landing = args.landingAceOverride?.trim();
-  if (landing) return { captionOverride: landing, melodyComposition: true };
+  const shared = resolveSharedCaptionContext(args);
+  if (shared.captionOverride?.trim() || shared.lyricsStructure?.trim()) return shared;
 
-  if (args.uiLocale) {
-    const matched = findGenreDiceItemByDisplay(args.displayIdea, args.mode, args.uiLocale);
-    if (matched) {
-      const ace = formatDicePrompt(matched.acePrompt, args.mode);
-      if (ace.trim()) return { captionOverride: ace, melodyComposition: true };
-    }
+  const idea = args.displayIdea.trim();
+  if (looksLikeAceProsePrompt(idea)) {
+    return {
+      captionOverride: optimizeAceProsePrompt(idea, { mode: args.mode }),
+      melodyComposition: args.mode === "song",
+    };
   }
 
   const enhanced = resolveIdeaForAceGeneration({

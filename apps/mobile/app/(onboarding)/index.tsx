@@ -1,9 +1,21 @@
-import { useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useCallback, useRef, useState } from "react";
+import {
+  FlatList,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { BrandLogo } from "@/components/BrandLogo";
-import { WaveformStrip } from "@/components/WaveformStrip";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as Haptics from "expo-haptics";
+import type { StudioMode } from "@/components/StudioModeToggle";
+import { OnboardingProgressBar } from "@/components/OnboardingProgressBar";
+import { OnboardingSlideVisual, type OnboardingSlideId } from "@/components/OnboardingSlideVisual";
 import { ThemeBackdrop } from "@/components/ThemeBackdrop";
 import { useTheme } from "@/theme/ThemeProvider";
 import { PhButton } from "@/components/PhButton";
@@ -11,21 +23,47 @@ import { PhDisplay } from "@/components/PhDisplay";
 import { onboardingSlides } from "@/lib/i18n/catalog";
 import { completeActivationStep } from "@/lib/onboardingProgress";
 import { useAuthStore } from "@/stores/authStore";
+import { useGenerationPrefsStore } from "@/stores/generationPrefsStore";
 import { useI18n } from "@/stores/localeStore";
 import { spacing } from "@/theme/tokens";
 
 const ONBOARDING_KEY = "producerhit_mobile_onboarding_v1";
+const DEFAULT_PERSONALIZE_GENRE = "Melodic Trap";
+
+type SlideItem = {
+  id: OnboardingSlideId;
+  title: string;
+  body: string;
+};
 
 export default function OnboardingScreen() {
   const [step, setStep] = useState(0);
+  const [personalizeMode, setPersonalizeMode] = useState<StudioMode>("song");
+  const [personalizeGenre, setPersonalizeGenre] = useState(DEFAULT_PERSONALIZE_GENRE);
+  const pagerRef = useRef<FlatList<SlideItem>>(null);
+  const { width: pageWidth } = useWindowDimensions();
   const router = useRouter();
-  const { locale, t } = useI18n();
+  const insets = useSafeAreaInsets();
+  const { locale, t, tf } = useI18n();
   const setOnboardingDone = useAuthStore((s) => s.setOnboardingDone);
+  const setOnboardingPrefs = useGenerationPrefsStore((s) => s.setOnboardingPrefs);
   const slides = onboardingSlides(locale);
-  const slide = slides[step];
   const { colors, typography } = useTheme();
+  const isLast = step >= slides.length - 1;
+
+  const scrollTo = useCallback(
+    (index: number) => {
+      pagerRef.current?.scrollToIndex({ index, animated: true });
+      setStep(index);
+    },
+    [],
+  );
 
   const finish = async () => {
+    await setOnboardingPrefs({
+      creationMode: personalizeMode,
+      genre: personalizeGenre,
+    });
     await AsyncStorage.setItem(ONBOARDING_KEY, "1");
     await completeActivationStep("tour_done");
     setOnboardingDone(true);
@@ -33,55 +71,95 @@ export default function OnboardingScreen() {
   };
 
   const next = () => {
-    if (step >= slides.length - 1) void finish();
-    else setStep((s) => s + 1);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (isLast) void finish();
+    else scrollTo(step + 1);
   };
+
+  const onMomentumEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const index = Math.round(e.nativeEvent.contentOffset.x / pageWidth);
+    if (index !== step && index >= 0 && index < slides.length) {
+      setStep(index);
+    }
+  };
+
+  const renderSlide = ({ item, index }: { item: SlideItem; index: number }) => (
+    <View style={[styles.page, { width: pageWidth }]}>
+      <OnboardingSlideVisual
+        slideId={item.id}
+        personalizeMode={personalizeMode}
+        personalizeGenre={personalizeGenre}
+        onPersonalizeMode={setPersonalizeMode}
+        onPersonalizeGenre={setPersonalizeGenre}
+        previewActive={step === 0}
+      />
+      <View style={styles.copy}>
+        <PhDisplay variant="display">{item.title}</PhDisplay>
+        <Text style={[typography.body, styles.body, { color: colors.textMuted }]}>{item.body}</Text>
+      </View>
+      {index === step ? (
+        <Text style={[typography.micro, { color: colors.textSubtle, marginTop: spacing.sm }]}>
+          {tf("onbStepCounter", { current: index + 1, total: slides.length })}
+        </Text>
+      ) : null}
+    </View>
+  );
 
   return (
     <ThemeBackdrop>
-      <ScrollView contentContainerStyle={styles.content}>
-        <BrandLogo />
-        <View style={styles.visual}>
-          <WaveformStrip height={48} bars={28} opacity={0.65} />
+      <View style={[styles.screen, { paddingTop: insets.top + spacing.md }]}>
+        <View style={styles.header}>
+          <OnboardingProgressBar total={slides.length} active={step} />
+          <Pressable
+            onPress={() => void finish()}
+            hitSlop={12}
+            style={({ pressed }) => [styles.skipBtn, pressed && { opacity: 0.7 }]}
+          >
+            <Text style={[typography.caption, { color: colors.textMuted, fontWeight: "600" }]}>{t("skip")}</Text>
+          </Pressable>
         </View>
-        <PhDisplay variant="display">{slide.title}</PhDisplay>
-        <Text style={[typography.body, { color: colors.textMuted, lineHeight: 24 }]}>{slide.body}</Text>
-        <View style={styles.dots}>
-          {slides.map((_, i) => (
-            <View
-              key={i}
-              style={[
-                styles.dot,
-                { backgroundColor: colors.surfaceBorder },
-                i === step && [styles.dotActive, { backgroundColor: colors.accent }],
-              ]}
-            />
-          ))}
-        </View>
-      </ScrollView>
-      <View style={styles.footer}>
-        <PhButton
-          label={step === slides.length - 1 ? t("getStarted") : t("continue")}
-          onPress={next}
+
+        <FlatList
+          ref={pagerRef}
+          data={slides}
+          keyExtractor={(item) => item.id}
+          renderItem={renderSlide}
+          horizontal
+          pagingEnabled
+          bounces={false}
+          showsHorizontalScrollIndicator={false}
+          onMomentumScrollEnd={onMomentumEnd}
+          getItemLayout={(_, index) => ({ length: pageWidth, offset: pageWidth * index, index })}
+          style={styles.pager}
+          extraData={{ step, personalizeMode, personalizeGenre }}
         />
-        {step < slides.length - 1 ? (
-          <PhButton label={t("skip")} variant="ghost" onPress={() => void finish()} haptic={false} />
-        ) : null}
+
+        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}>
+          <PhButton
+            label={isLast ? t("onbFinish") : t("continue")}
+            onPress={next}
+          />
+        </View>
       </View>
     </ThemeBackdrop>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
-    flexGrow: 1,
+  screen: { flex: 1 },
+  header: {
     paddingHorizontal: spacing.screen,
-    paddingTop: 100,
     gap: spacing.md,
+    marginBottom: spacing.md,
   },
-  visual: { marginVertical: spacing.lg },
-  dots: { flexDirection: "row", gap: 8, marginTop: spacing.xxl },
-  dot: { width: 8, height: 8, borderRadius: 4 },
-  dotActive: { width: 28 },
-  footer: { padding: spacing.screen, gap: spacing.md, paddingBottom: 48 },
+  skipBtn: { alignSelf: "flex-end" },
+  pager: { flex: 1 },
+  page: {
+    paddingHorizontal: spacing.screen,
+    paddingBottom: spacing.md,
+    gap: spacing.lg,
+  },
+  copy: { gap: spacing.sm },
+  body: { lineHeight: 24 },
+  footer: { paddingHorizontal: spacing.screen, paddingTop: spacing.md },
 });

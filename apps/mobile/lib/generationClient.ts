@@ -5,6 +5,7 @@ import {
   type GenerationJobStatus,
 } from "@producerhit/shared";
 import { invokeSupabaseFunction } from "./edgeInvoke";
+import { generationPollIntervalMs } from "./generationPolling";
 import { supabase } from "./supabase";
 
 function supabaseBaseUrl(): string {
@@ -50,7 +51,7 @@ async function fetchGenerationJobAudioHttp(jobId: string): Promise<string> {
     throw new Error("No HTTP audio URL in job response");
   }
 
-  throw new Error("Expected HTTP audio URL from ACE job");
+  throw new Error("Expected HTTP audio URL from generation job");
 }
 
 async function resolveJobAudioUrl(jobId: string, audioUrl: string): Promise<string> {
@@ -95,6 +96,11 @@ async function invokeAce<T>(body: Record<string, unknown>): Promise<T> {
 }
 
 export const mobileJobsClient = createGenerationJobsClient({
+  config: {
+    getPollMs: () => generationPollIntervalMs(),
+    // 20 min — évite un spinner infini si le job serveur est orphelin.
+    getJobTimeoutMs: () => 20 * 60 * 1000,
+  },
   getAccessToken: async () => {
     const {
       data: { session },

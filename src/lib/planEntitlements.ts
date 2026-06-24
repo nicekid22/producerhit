@@ -66,6 +66,22 @@ export function canShareWithoutWatermark(plan: string | null | undefined): boole
   return isPaidPlan(plan);
 }
 
+/** Distribution pack (upload manuel plateformes streaming) — Studio 2/mo, Plus 5/mo. */
+export function canDistribute(plan: string | null | undefined): boolean {
+  return PLAN_RANK[normalizePlanId(plan)] >= PLAN_RANK.studio;
+}
+
+export function distributionMonthlyQuota(plan: string | null | undefined): number {
+  const id = normalizePlanId(plan);
+  if (id === "plus") return 5;
+  if (id === "studio") return 2;
+  return 0;
+}
+
+export function canViewDistributionRoyalties(plan: string | null | undefined): boolean {
+  return normalizePlanId(plan) === "plus";
+}
+
 export function planDisplayName(plan: string | null | undefined): string {
   const id = normalizePlanId(plan);
   if (id === "plus") return "Plus";

@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text } from "react-native";
 import { Link, useRouter } from "expo-router";
+import { StyleSheet, Text } from "react-native";
+import { AuthScreenShell } from "@/components/AuthScreenShell";
 import { PhButton } from "@/components/PhButton";
 import { PhTextField } from "@/components/PhTextField";
-import { ThemeBackdrop } from "@/components/ThemeBackdrop";
 import { signUpWithEmail } from "@/lib/auth";
 import { useI18n } from "@/stores/localeStore";
 import { useTheme } from "@/theme/ThemeProvider";
@@ -28,32 +28,29 @@ export default function SignupScreen() {
       if (session) router.replace("/(tabs)/create");
       else setMessage(t("signupConfirm"));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Signup failed");
+      setError(e instanceof Error ? e.message : t("signupFailed"));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ThemeBackdrop>
-      <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <Text style={[typography.display, { color: colors.text }]}>{t("signupTitle")}</Text>
-          <PhTextField label={t("email")} value={email} onChangeText={setEmail} keyboardType="email-address" />
-          <PhTextField label={t("passwordHint")} value={password} onChangeText={setPassword} secureTextEntry />
-          {error ? <Text style={[typography.caption, { color: colors.danger }]}>{error}</Text> : null}
-          {message ? <Text style={[typography.caption, { color: colors.success }]}>{message}</Text> : null}
-          <PhButton label={t("signUp")} onPress={() => void submit()} loading={loading} />
-          <Link href="/(auth)/login" style={[typography.caption, { color: colors.accent, marginTop: spacing.md }]}>
-            {t("hasAccount")}
-          </Link>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </ThemeBackdrop>
+    <AuthScreenShell title={t("signupTitle")} subtitle={t("loginSub")}>
+      <PhTextField label={t("email")} value={email} onChangeText={setEmail} keyboardType="email-address" error={error} />
+      <PhTextField
+        label={t("passwordHint")}
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        autoComplete="new-password"
+      />
+      {message ? <Text style={[typography.caption, { color: colors.success }]}>{message}</Text> : null}
+      <PhButton label={t("signUp")} onPress={() => void submit()} loading={loading} />
+      <Link href="/(auth)/login" style={[typography.caption, { color: colors.accentPrimary, marginTop: spacing.sm }]}>
+        {t("hasAccount")}
+      </Link>
+    </AuthScreenShell>
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "transparent" },
-  content: { padding: spacing.screen, paddingTop: 80, gap: spacing.lg },
-});
+const styles = StyleSheet.create({});

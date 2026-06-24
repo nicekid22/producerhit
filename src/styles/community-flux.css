@@ -1,5 +1,7 @@
 /* Le Flux — sheet détail + actions cartes + thèmes */
 
+@import "./public-loop-theme-harmony.css";
+
 :root {
   --pk-community-accent: #67e8f9;
 }

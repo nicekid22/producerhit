@@ -1,104 +1,220 @@
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useMemo, useRef } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import Svg, { Circle } from "react-native-svg";
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import type { GenerationJobStatus } from "@producerhit/shared";
+import { AudioReactiveOrb } from "@/components/AudioOrb";
+import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
+import { PhCard } from "@/components/PhCard";
 import { useI18n } from "@/stores/localeStore";
 import { useTheme } from "@/theme/ThemeProvider";
+import { spacing } from "@/theme/tokens";
 
 type Props = {
   progress: number;
   label?: string;
   done?: boolean;
+  finishing?: boolean;
   status?: GenerationJobStatus;
+  /** Pause orb when Create tab is not focused. */
+  screenFocused?: boolean;
 };
 
-const SIZE = 88;
-const STROKE = 4;
-const R = (SIZE - STROKE) / 2;
-const CIRC = 2 * Math.PI * R;
+const ORB_SIZE = 200;
 
-export function GenerationProgress({ progress, label, done, status }: Props) {
+type PhaseId = "queue" | "compose" | "mix" | "ready";
+
+export const GenerationProgress = memo(function GenerationProgress({
+  progress,
+  label,
+  done,
+  finishing,
+  status,
+  screenFocused = true,
+}: Props) {
   const { t } = useI18n();
   const { colors, typography } = useTheme();
   const hapticFired = useRef(false);
-  const pct = Math.max(0, Math.min(100, Math.round(progress)));
-  const offset = CIRC - (CIRC * pct) / 100;
+  const display = useSharedValue(0);
+  const displayPct = Math.max(0, Math.min(100, Math.round(progress)));
 
   useEffect(() => {
-    if (done && !hapticFired.current) {
+    display.value = withTiming(progress, {
+      duration: 160,
+      easing: Easing.out(Easing.quad),
+    });
+  }, [display, progress]);
+
+  const barStyle = useAnimatedStyle(() => ({
+    width: `${Math.max(0, Math.min(100, display.value))}%`,
+  }));
+
+  const phases = useMemo(
+    (): { id: PhaseId; label: string }[] => [
+      { id: "queue", label: t("genInQueue") },
+      { id: "compose", label: t("genAiCompose") },
+      { id: "mix", label: t("composing") },
+      { id: "ready", label: t("statusReady") },
+    ],
+    [t],
+  );
+
+  const activePhase: PhaseId = done && !finishing
+    ? "ready"
+    : status === "pending"
+      ? "queue"
+      : status === "running" || finishing
+        ? progress < 55
+          ? "compose"
+          : "mix"
+        : status === "failed"
+          ? "compose"
+          : "mix";
+
+  useEffect(() => {
+    if (done && !finishing && !hapticFired.current) {
       hapticFired.current = true;
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
-  }, [done]);
+  }, [done, finishing]);
 
-  const displayLabel = done ? t("statusReady") : (label ?? t("generating"));
-  const statusHint =
-    status === "pending"
-      ? t("genInQueue")
-      : status === "running"
-        ? t("genAceStep")
-        : status === "failed"
-          ? t("genError")
-          : null;
+  const displayLabel = done && !finishing ? t("statusReady") : (label ?? t("generating"));
 
   return (
-    <View style={styles.wrap}>
-      <View style={styles.ringOuter}>
-        <Svg width={SIZE} height={SIZE} style={styles.svg}>
-          <Circle
-            cx={SIZE / 2}
-            cy={SIZE / 2}
-            r={R}
-            stroke={colors.seekTrack}
-            strokeWidth={STROKE}
-            fill={colors.pillActiveBg}
-          />
-          {!done ? (
-            <Circle
-              cx={SIZE / 2}
-              cy={SIZE / 2}
-              r={R}
-              stroke={colors.accent}
-              strokeWidth={STROKE}
-              fill="transparent"
-              strokeDasharray={`${CIRC} ${CIRC}`}
-              strokeDashoffset={offset}
-              strokeLinecap="round"
-              rotation={-90}
-              origin={`${SIZE / 2}, ${SIZE / 2}`}
-            />
-          ) : null}
-        </Svg>
-        <View style={styles.center}>
-          {done ? (
-            <Text style={[typography.title, { color: colors.success, fontWeight: "700" }]}>✓</Text>
-          ) : (
-            <Text style={[typography.subtitle, { color: colors.text, fontWeight: "600" }]}>{pct}%</Text>
-          )}
-        </View>
+    <PhCard elevated={false} style={styles.wrap}>
+      <View style={styles.orbWrap}>
+        <SectionErrorBoundary
+          label="generation-orb"
+          fallbackTitle={t("sectionErrorOrbTitle")}
+          fallbackBody={t("sectionErrorOrbBody")}
+          retryLabel={t("retry")}
+        >
+          <AudioReactiveOrb
+            size={ORB_SIZE}
+            active={screenFocused}
+            energy={done && !finishing ? "idle" : "active"}
+            enabled={(!done || finishing) && screenFocused}
+            glPriority={screenFocused ? "critical" : "low"}
+          >
+            <View style={styles.orbCenter} pointerEvents="none">
+              {done && !finishing ? (
+                <Text style={[typography.title, { color: colors.success, fontWeight: "700", fontSize: 32 }]}>✓</Text>
+              ) : (
+                <Text style={[typography.title, { color: colors.text, fontWeight: "700", fontSize: 22 }]}>
+                  {displayPct}%
+                </Text>
+              )}
+            </View>
+          </AudioReactiveOrb>
+        </SectionErrorBoundary>
       </View>
-      <Text style={[typography.subtitle, { color: colors.text }]}>{displayLabel}</Text>
-      {statusHint && !done ? (
-        <Text style={[typography.caption, { color: colors.textMuted }]}>{statusHint}</Text>
+
+      <View style={[styles.track, { backgroundColor: colors.seekTrack }]}>
+        <Animated.View style={[styles.fill, { backgroundColor: colors.accentPrimary }, barStyle]} />
+      </View>
+
+      <Text style={[typography.subtitle, { color: colors.text, fontWeight: "600", textAlign: "center" }]}>
+        {displayLabel}
+      </Text>
+
+      <View style={styles.phaseRow}>
+        {phases.map((phase, i) => {
+          const idx = phases.findIndex((p) => p.id === activePhase);
+          const state = done ? "done" : i < idx ? "done" : i === idx ? "active" : "idle";
+          return (
+            <View key={phase.id} style={styles.phaseItem}>
+              <View
+                style={[
+                  styles.phaseDot,
+                  {
+                    backgroundColor:
+                      state === "done"
+                        ? colors.success
+                        : state === "active"
+                          ? colors.accentPrimary
+                          : colors.seekTrack,
+                  },
+                ]}
+              />
+              <Text
+                style={[
+                  typography.micro,
+                  {
+                    color: state === "idle" ? colors.textSubtle : colors.textMuted,
+                    fontWeight: state === "active" ? "600" : "400",
+                  },
+                ]}
+                numberOfLines={1}
+              >
+                {phase.label}
+              </Text>
+              {i < phases.length - 1 ? (
+                <View style={[styles.phaseLine, { backgroundColor: i < idx ? colors.success : colors.seekTrack }]} />
+              ) : null}
+            </View>
+          );
+        })}
+      </View>
+
+      {status === "failed" && !done ? (
+        <Text style={[typography.caption, { color: colors.danger }]}>{t("genError")}</Text>
       ) : null}
-    </View>
+    </PhCard>
   );
-}
+});
 
 const styles = StyleSheet.create({
-  wrap: { alignItems: "center", gap: 8, paddingVertical: 24 },
-  ringOuter: {
-    width: SIZE,
-    height: SIZE,
+  wrap: {
+    alignItems: "center",
+    alignSelf: "center",
+    width: "100%",
+    gap: spacing.md,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.md,
+  },
+  orbWrap: {
+    width: ORB_SIZE + 40,
+    height: ORB_SIZE + 40,
+    alignSelf: "center",
     alignItems: "center",
     justifyContent: "center",
   },
-  svg: { position: "absolute" },
-  center: {
-    width: SIZE,
-    height: SIZE,
+  orbCenter: {
+    ...StyleSheet.absoluteFillObject,
     alignItems: "center",
     justifyContent: "center",
+  },
+  track: {
+    width: "100%",
+    height: 3,
+    borderRadius: 2,
+    overflow: "hidden",
+  },
+  fill: {
+    height: "100%",
+    borderRadius: 2,
+  },
+  phaseRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "center",
+    width: "100%",
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.xs,
+  },
+  phaseItem: {
+    flex: 1,
+    alignItems: "center",
+    gap: 4,
+    position: "relative",
+  },
+  phaseDot: { width: 8, height: 8, borderRadius: 4 },
+  phaseLine: {
+    position: "absolute",
+    top: 3,
+    left: "55%",
+    width: "90%",
+    height: 2,
+    borderRadius: 1,
   },
 });

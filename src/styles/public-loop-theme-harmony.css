@@ -1,0 +1,107 @@
+/* Pages /loop/:id — tokens sémantiques + harmonisation Prism / Warm Glass / Cloud */
+
+.pk-public-loop {
+  --pk-loop-title: var(--pk-apple-text, #f4f4f5);
+  --pk-loop-body: color-mix(in srgb, var(--pk-loop-title) 92%, transparent);
+  --pk-loop-muted: color-mix(in srgb, var(--pk-loop-title) 68%, transparent);
+  --pk-loop-faint: color-mix(in srgb, var(--pk-loop-title) 52%, transparent);
+  --pk-loop-accent: var(--pk-apple-accent-from, #a78bfa);
+  --pk-loop-surface: color-mix(in srgb, var(--pk-loop-title) 6%, transparent);
+  --pk-loop-border: color-mix(in srgb, var(--pk-loop-title) 14%, transparent);
+}
+
+.pk-public-loop .text-pk-text {
+  color: var(--pk-loop-body) !important;
+}
+
+.pk-public-loop .text-pk-muted {
+  color: var(--pk-loop-muted) !important;
+}
+
+.pk-public-loop .text-pk-accent {
+  color: var(--pk-loop-accent) !important;
+}
+
+.pk-public-loop .border-pk-border {
+  border-color: var(--pk-loop-border) !important;
+}
+
+.pk-public-loop .bg-pk-panel\/40,
+.pk-public-loop .bg-pk-panel\/50,
+.pk-public-loop .bg-pk-panel\/60 {
+  background: var(--pk-loop-surface) !important;
+}
+
+.pk-public-loop__about,
+.pk-public-loop__specs,
+.pk-public-loop__lyrics,
+.pk-public-loop__share {
+  border-radius: 1rem;
+  border: 1px solid var(--pk-loop-border);
+  background: var(--pk-loop-surface);
+  padding: 1.25rem 1.35rem;
+}
+
+.pk-public-loop__specs-grid {
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  margin-top: 0.85rem;
+}
+
+.pk-public-loop__spec dt {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--pk-loop-faint);
+}
+
+.pk-public-loop__spec dd {
+  margin-top: 0.2rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--pk-loop-body);
+}
+
+.pk-public-loop__lyrics pre {
+  margin-top: 0.75rem;
+  white-space: pre-wrap;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--pk-loop-body);
+}
+
+html.pk-cloud-active .pk-public-loop,
+.pk-cloud-stage .pk-public-loop {
+  --pk-loop-title: var(--cloud-text, #0f0f12);
+  --pk-loop-accent: var(--cloud-accent, #059669);
+}
+
+html.pk-cloud-active .pk-public-loop article h1,
+.pk-cloud-stage .pk-public-loop article h1,
+html.pk-cloud-active .pk-public-loop .text-white,
+.pk-cloud-stage .pk-public-loop .text-white {
+  color: #fff !important;
+}
+
+html.pk-cloud-active .pk-public-loop .pk-public-loop__cta h2,
+.pk-cloud-stage .pk-public-loop .pk-public-loop__cta h2 {
+  color: var(--pk-loop-title) !important;
+}
+
+html.pk-warm-glass-active .pk-public-loop,
+.pk-warm-glass-stage .pk-public-loop {
+  --pk-loop-accent: var(--pk-warm-accent, #f59e0b);
+}
+
+.pk-public-loop__share-bar button {
+  border-color: var(--pk-loop-border) !important;
+  background: color-mix(in srgb, var(--pk-loop-title) 8%, transparent) !important;
+  color: var(--pk-loop-body) !important;
+}
+
+.pk-public-loop__share-bar button:hover {
+  background: color-mix(in srgb, var(--pk-loop-title) 12%, transparent) !important;
+}

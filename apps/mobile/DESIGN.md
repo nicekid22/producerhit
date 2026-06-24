@@ -1,94 +1,53 @@
-# ProducerHit Mobile — Design system v3
+# ProducerHit Mobile — Design system
 
-Refonte anti-template (skills: frontend-design, design-taste-frontend, emil-design-eng, ui-ux-pro-max, high-end-visual-design, redesign-existing-projects).
+> **Direction active** : [design-system/DUSTY-CLOUD.md](./design-system/DUSTY-CLOUD.md) · Exécution : [EXECUTION-IOS.md](./design-system/EXECUTION-IOS.md)
 
-## Design Read
+La doc « iris / Prism mesh » ci-dessous est **legacy** — ne pas étendre sans migration dusty.
 
-**Produit :** app mobile pour producteurs musicaux — génération ACE Step, bibliothèque, communauté, IAP.
+## Design Read (legacy iris — en migration)
 
-**Direction :** hybride à 3 skins réellement distincts (matériaux différents, pas un simple swap hex).
+**Produit :** génération musicale IA, bibliothèque, communauté, IAP.
+
+**Direction :** dark studio iris (Prism) + variantes Warm/Air avec accents iris cohérents.
 
 | Dial | Valeur |
 |------|--------|
 | DESIGN_VARIANCE | 7 |
-| MOTION_INTENSITY | 5 |
+| MOTION_INTENSITY | 6 |
 | VISUAL_DENSITY | 4 |
 
-## Les 3 thèmes
+## Tokens (`theme/types.ts`)
 
-| Thème | ID | Matériau | Identité |
-|-------|-----|----------|----------|
-| Prism | `prism` | `studio` | Studio night / DAW — fond `#0a0a0c`, accent cyan unique `#3db8e8`, waveform strip |
-| Warm | `warm` | `paper` | Editorial vinyl — papier `#f7f2ea`, serif Georgia display, grain statique |
-| Air | `air` | `flat` | Minimal Apple — `#f5f5f7`, hairlines, zéro blur décoratif |
+- `background` — base, gradient, cardDeep
+- `iris` — rose, sky, lavender, cream, gradient
+- `glass` — surface, border, blur (≤0.10 opacity)
+- `glow` — iris, accent shadows
+- `colors.accentPrimary` — CTA / sélection UI
 
-Source : `theme/palettes/{prism,warm,air}.ts` · store `stores/visualThemeStore.ts` · `useTheme()` via `ThemeProvider`.
+Palettes : `theme/palettes/{prism,warm,air}.ts` · `useTheme()`.
 
-## Architecture tokens
-
-`ThemeTokens` inclut : `colors`, `typography`, `radius`, `elevation`, `motion`, `material`, `glass` (nullable — glass réservé aux sheets Prism).
-
-Motion : `theme/motion.ts` — `pressScale: 0.97`, durées 120/220 ms, ease-out `[0.23, 1, 0.32, 1]`.
-
-Legacy : `theme/tokens.ts` — spacing uniquement ; préférer `useTheme()` pour couleurs/typo.
-
-## Composants fondation
+## Composants signature
 
 | Composant | Rôle |
 |-----------|------|
-| `ThemeBackdrop` | Fond par matériau (studio line / paper radial / flat) — **pas d’orbes animés** |
-| `PhSurface` | Surfaces `studio` / `paper` / `flat` ; `GlassSurface` = alias |
-| `PhDisplay` / `PhLabel` | Hiérarchie typo token-driven |
-| `PhButton` | Press scale + haptics ; `gradient` **uniquement** CTA Create |
-| `WaveformStrip` | Signature Prism (décor produit) |
-| `BrandLogo` | Wordmark web `producer` + `hit` accent |
-| `PhEyebrow` | Usage rare (max 1 / 3 sections) |
-| `SeekBar` | Ligne simple + thumb |
-| `ThemePicker` | 3 mini-mockups visuels distincts |
+| `AIOrb` | Orbe iris Skia (+ fallback) — génération, tab bar, StudioHero |
+| `GlassCard` | Surface glass variant default/elevated/active |
+| `StudioTabBar` | Tab bar flottante blur + orbe central Create |
+| `AppBackground` / `ThemeBackdrop` | Void `#1A1220` + grain seul (Dusty Cloud) |
+| `GenerationProgress` | AIOrb 160px + phases |
+| `PhButton` | CTA rose plat `#C4687A` + shadow dusty |
 
-## Shell
+## Stack animation
 
-- Tab bar **intégrée** iOS (`animation: "none"` sur tabs)
-- `MiniPlayer` cover-first 52px, seek simple
-- `FullPlayerSheet` fond thème, Ionicons
-
-## Motion & accessibilité
-
-- `lib/useReducedMotion.ts` — désactive les transforms press si Reduce Motion activé
-- Pas d’animation sur : tab switch, chip tap, toggle mode
-- Haptics : boutons, play, succès génération, daily bonus, IAP
-
-## Écrans signature
-
-Chaque écran a une famille de layout distincte (pas 3 cards glass identiques) :
-
-- **Create** — titre display + waveform ; seul gradient = CTA Générer
-- **Library** — covers-first, empty state waveform
-- **Community** — rack beats (cover + metadata)
-- **Account** — sections hairline, ThemePicker visuel
-- **Paywall** — une offre mise en avant, copy factuelle
-- **Onboarding / Auth** — wordmark, zéro emoji structurel, ThemeBackdrop
+- `react-native-reanimated` + `react-native-gesture-handler` + `react-native-worklets`
+- `@shopify/react-native-skia` (dev build EAS requis)
+- `lib/reanimated/usePressScale.tsx`, `useOrbMotion.ts`
 
 ## Anti-patterns bannis
 
-- Gradients violet + cyan décoratifs
-- Orbes / mesh animés en boucle
-- `PhEyebrow` sur chaque header
-- Emojis comme icônes UI (onboarding, bonus)
-- Tab bar flottante blur générique
-- Copy AI (« Elevate », « Seamless », em-dash marketing)
-- `accentSecondary` / `pillActiveGradient` multi-couleurs
+- Cyan legacy `#3db8e8` comme accent principal
+- Glass partout
+- Glow néon
+- Orbe figée
 
-## Pre-flight checklist (RN)
-
-- [ ] 3 thèmes = matériaux différents
-- [ ] 1 accent par thème, verrouillé écran entier
-- [ ] Touch targets ≥ 44 pt
-- [ ] `useReducedMotion` sur press transforms
-- [ ] `npm run mobile:lint` vert
-- [ ] Test Expo sur iPhone (LAN)
-
-## Docs complémentaires
-
-- `design-system/MASTER.md` — source de vérité refonte
-- `design-system/pages/create.md`, `pages/paywall.md` — overrides écran
+Voir `design-system/MASTER.md` pour détail complet.

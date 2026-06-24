@@ -1,7 +1,9 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View, ViewStyle } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View, ViewStyle } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import * as Haptics from "expo-haptics";
-import { useReducedMotion } from "@/lib/useReducedMotion";
+
+import { PressableScale } from "@/lib/reanimated/usePressScale";
+
+import { irisGradientColors } from "@/theme/gradient";
 import { useTheme } from "@/theme/ThemeProvider";
 
 type Props = {
@@ -10,7 +12,7 @@ type Props = {
   disabled?: boolean;
   loading?: boolean;
   variant?: "primary" | "ghost" | "secondary";
-  /** Gradient CTA — use sparingly (Create generate only) */
+  /** @deprecated Dusty Cloud uses flat rose primary — ignored */
   gradient?: boolean;
   haptic?: boolean;
   style?: ViewStyle;
@@ -22,76 +24,67 @@ export function PhButton({
   disabled,
   loading,
   variant = "primary",
-  gradient = false,
   haptic = true,
   style,
 }: Props) {
-  const { colors, radius, typography, motion } = useTheme();
-  const reducedMotion = useReducedMotion();
-  const isDisabled = disabled || loading;
+  const { colors, radius, typography, elevation, theme } = useTheme();
 
-  const handlePress = () => {
-    if (haptic) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    onPress();
-  };
+  const isDisabled = disabled || loading;
 
   if (variant === "ghost" || variant === "secondary") {
     return (
-      <Pressable
-        onPress={handlePress}
+      <PressableScale
+        onPress={onPress}
         disabled={isDisabled}
-        style={({ pressed }) => [
+        haptic={haptic}
+        style={[
           styles.ghost,
           {
             borderColor: colors.surfaceBorder,
-            borderRadius: radius.pill,
-            backgroundColor: variant === "secondary" ? colors.surface : "transparent",
+            borderRadius: radius.md,
+            backgroundColor: variant === "secondary" ? colors.bgElevated : "transparent",
           },
-          pressed && !reducedMotion && { transform: [{ scale: motion.pressScale }], opacity: 0.9 },
           isDisabled && styles.disabled,
           style,
         ]}
       >
         {loading ? (
-          <ActivityIndicator color={colors.accent} />
+          <ActivityIndicator color={colors.pillActiveText} />
         ) : (
-          <Text style={[typography.subtitle, { color: colors.accent, fontWeight: "600" }]}>{label}</Text>
+          <Text style={[typography.subtitle, { color: colors.pillActiveText, fontWeight: "600" }]}>{label}</Text>
         )}
-      </Pressable>
+      </PressableScale>
     );
   }
 
-  const inner = loading ? (
-    <ActivityIndicator color="#fff" />
+  const primaryShell = [
+    styles.primary,
+    { borderRadius: radius.md },
+    theme === "spectrum" ? null : { backgroundColor: colors.accentPrimary },
+    elevation.high,
+  ];
+
+  const primaryContent = loading ? (
+    <ActivityIndicator color={colors.accentOnPrimary} />
   ) : (
-    <Text style={[typography.subtitle, styles.primaryText]}>{label}</Text>
+    <Text style={[typography.subtitle, styles.primaryText, { color: colors.accentOnPrimary }]}>{label}</Text>
   );
 
   return (
-    <Pressable
-      onPress={handlePress}
-      disabled={isDisabled}
-      style={({ pressed }) => [
-        pressed && !reducedMotion && { transform: [{ scale: motion.pressScale }] },
-        isDisabled && styles.disabled,
-        style,
-      ]}
-    >
-      {gradient ? (
+    <PressableScale onPress={onPress} disabled={isDisabled} haptic={haptic} style={[isDisabled && styles.disabled, style]}>
+      {theme === "spectrum" ? (
         <LinearGradient
-          colors={[...colors.accentGradient]}
-          start={{ x: 0, y: 0.5 }}
-          end={{ x: 1, y: 0.5 }}
-          style={[styles.primary, { borderRadius: radius.pill }]}
+          colors={irisGradientColors(colors.accentGradient)}
+          style={primaryShell}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
         >
-          {inner}
+          {primaryContent}
         </LinearGradient>
       ) : (
-        <View style={[styles.primary, { borderRadius: radius.pill, backgroundColor: colors.accentSolid }]}>
-          {inner}
-        </View>
+        <View style={primaryShell}>{primaryContent}</View>
       )}
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -103,7 +96,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     minHeight: 52,
   },
-  primaryText: { color: "#fff", fontWeight: "700" },
+  primaryText: { fontWeight: "700" },
   ghost: {
     paddingVertical: 14,
     paddingHorizontal: 20,

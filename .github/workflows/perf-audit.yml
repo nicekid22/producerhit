@@ -1,0 +1,53 @@
+name: Perf audit
+
+on:
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  perf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: https://example.supabase.co
+          VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder
+
+      - name: Install Playwright
+        run: npx playwright install chromium --with-deps
+
+      - name: E2E public audit
+        run: npm run test:e2e:public
+
+      - name: Start preview
+        run: npx vite preview --port 4173 --host 127.0.0.1 &
+        env:
+          NODE_OPTIONS: --use-system-ca
+
+      - name: Wait for preview
+        run: npx wait-on http://127.0.0.1:4173 --timeout 60000
+
+      - name: Lighthouse (landing + library)
+        run: PERF_MIN_SCORE=80 PERF_BASE_URL=http://127.0.0.1:4173 node scripts/perf-lighthouse.mjs
+        env:
+          NODE_OPTIONS: --use-system-ca
+
+      - name: Upload perf reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-reports
+          path: reports/perf/

@@ -15,6 +15,7 @@ export type GenerationJobRow = {
   meta: Record<string, unknown> | null;
   error: string | null;
   payload: Record<string, unknown>;
+  updated_at?: string | null;
 };
 
 export function aceAsyncJobsEnabled(): boolean {
@@ -347,7 +348,7 @@ export async function loadGenerationJob(
   const { data, error } = await client
     .from("generation_jobs")
     .select(
-      "id, user_id, generation_key, status, mode, ace_task_id, ace_base_url, ace_key_index, audio_url, meta, error, payload",
+      "id, user_id, generation_key, status, mode, ace_task_id, ace_base_url, ace_key_index, audio_url, meta, error, payload, updated_at",
     )
     .eq("id", jobId)
     .maybeSingle();

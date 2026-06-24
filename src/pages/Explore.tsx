@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Flame, Compass, Sparkles, Trophy, Waves } from "lucide-react";
 import toast from "react-hot-toast";
@@ -9,6 +9,7 @@ import { CommunityHubHero } from "@/components/community/CommunityHubHero";
 import { CommunityRail } from "@/components/community/CommunityRail";
 import { CommunityTrackSheet } from "@/components/community/CommunityTrackSheet";
 import { CommunityTrackCard } from "@/components/community/CommunityTrackCard";
+import { VirtualizedGrid } from "@/components/perf/VirtualizedGrid";
 import { CommunityVibeNav } from "@/components/community/CommunityVibeNav";
 import {
   buildCategoryRailPlans,
@@ -543,6 +544,38 @@ export default function Explore() {
     onOpenDetail: openTrackSheet,
   };
 
+  const renderExploreCard = useCallback(
+    (r: PublicLoopRow, idx: number) => (
+      <CommunityTrackCard
+        row={r}
+        locale={locale}
+        isActive={current?.id === r.id}
+        isPlaying={isPlaying}
+        resolving={resolvingId === r.id}
+        rating={ratingsById[r.id]}
+        commentCount={commentsById[r.id] ?? 0}
+        isNew={r.created_at ? isNew(r.created_at) : false}
+        isMine={isMineRow(r)}
+        onPlay={() => void togglePlayFromFiltered(r)}
+        onRemix={() => remixFrom(r)}
+        onRate={(stars) => setRating(r.id, stars)}
+        onOpenDetail={(focusComments) => openTrackSheet(r, focusComments)}
+        slotIndex={idx}
+      />
+    ),
+    [
+      commentsById,
+      current?.id,
+      isPlaying,
+      locale,
+      ratingsById,
+      resolvingId,
+      remixFrom,
+      setRating,
+      togglePlayFromFiltered,
+    ],
+  );
+
   return (
     <AppShell theme="prism" variant="single">
       <div className="pk-community pk-hub mx-auto w-full max-w-[1320px] space-y-6 px-4 pb-4 pt-4 md:px-6 md:pb-10 md:pt-5">
@@ -696,41 +729,27 @@ export default function Explore() {
             </div>
           ) : null}
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 xl:gap-4">
-            {loading ? (
-              <>
-                <div className="col-span-full flex justify-center py-8">
-                  <PkIconLoader icon="community" size="md" label={hubCopy.loading} />
+          {loading ? (
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4 xl:gap-4">
+              <div className="col-span-full flex justify-center py-8">
+                <PkIconLoader icon="community" size="md" label={hubCopy.loading} />
+              </div>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="rounded-2xl pk-prism-card-soft p-3 animate-pulse">
+                  <div className="aspect-square rounded-2xl bg-white/5" />
+                  <div className="mt-3 h-4 w-2/3 rounded bg-white/5" />
                 </div>
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="rounded-2xl pk-prism-card-soft p-3 animate-pulse">
-                    <div className="aspect-square rounded-2xl bg-white/5" />
-                    <div className="mt-3 h-4 w-2/3 rounded bg-white/5" />
-                  </div>
-                ))}
-              </>
-            ) : (
-              filtered.map((r, idx) => (
-                <CommunityTrackCard
-                  key={r.id}
-                  row={r}
-                  locale={locale}
-                  isActive={current?.id === r.id}
-                  isPlaying={isPlaying}
-                  resolving={resolvingId === r.id}
-                  rating={ratingsById[r.id]}
-                  commentCount={commentsById[r.id] ?? 0}
-                  isNew={r.created_at ? isNew(r.created_at) : false}
-                  isMine={isMineRow(r)}
-                  onPlay={() => void togglePlayFromFiltered(r)}
-                  onRemix={() => remixFrom(r)}
-                  onRate={(stars) => setRating(r.id, stars)}
-                  onOpenDetail={(focusComments) => openTrackSheet(r, focusComments)}
-                  slotIndex={idx}
-                />
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <VirtualizedGrid
+              items={filtered}
+              getKey={(r) => r.id}
+              renderItem={(r, idx) => renderExploreCard(r, idx)}
+              estimateRowHeight={320}
+              virtualizeThreshold={20}
+            />
+          )}
         </section>
 
         <CommunitySeoFooter

@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text } from "react-native";
 import { Link } from "expo-router";
+import { StyleSheet, Text, View } from "react-native";
+import { AuthScreenShell } from "@/components/AuthScreenShell";
+import { GlassErrorBanner } from "@/components/GlassErrorBanner";
 import { PhButton } from "@/components/PhButton";
 import { PhTextField } from "@/components/PhTextField";
-import { ThemeBackdrop } from "@/components/ThemeBackdrop";
 import { resetPassword } from "@/lib/auth";
 import { useI18n } from "@/stores/localeStore";
 import { useTheme } from "@/theme/ThemeProvider";
@@ -20,35 +21,38 @@ export default function ForgotPasswordScreen() {
   const submit = async () => {
     setLoading(true);
     setError(null);
+    setMessage(null);
     try {
       await resetPassword(email);
       setMessage(t("resetSent"));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not send reset email");
+      setError(e instanceof Error ? e.message : t("resetEmailFailed"));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ThemeBackdrop>
-    <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={[typography.display, { color: colors.text }]}>{t("resetTitle")}</Text>
-        <PhTextField label={t("email")} value={email} onChangeText={setEmail} keyboardType="email-address" />
-        {error ? <Text style={[typography.caption, { color: colors.danger }]}>{error}</Text> : null}
-        {message ? <Text style={[typography.caption, { color: colors.success }]}>{message}</Text> : null}
-        <PhButton label={t("sendReset")} onPress={() => void submit()} loading={loading} />
-        <Link href="/(auth)/login" style={[typography.caption, { color: colors.accent }]}>
+    <AuthScreenShell title={t("resetTitle")} subtitle={t("loginSub")}>
+      <PhTextField
+        label={t("email")}
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoComplete="email"
+      />
+      {error ? <GlassErrorBanner message={error} /> : null}
+      {message ? <GlassErrorBanner message={message} tone="success" /> : null}
+      <PhButton label={t("sendReset")} onPress={() => void submit()} loading={loading} />
+      <View style={styles.links}>
+        <Link href="/(auth)/login" style={[typography.caption, { color: colors.accentPrimary }]}>
           {t("backSignIn")}
         </Link>
-      </ScrollView>
-    </KeyboardAvoidingView>
-    </ThemeBackdrop>
+      </View>
+    </AuthScreenShell>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "transparent" },
-  content: { padding: spacing.screen, paddingTop: 80, gap: spacing.lg },
+  links: { marginTop: spacing.sm },
 });

@@ -26,6 +26,7 @@ export function LoopCard({ loop, queue, onLongPress, onOpenDetails }: Props) {
   const isPlaying = usePlayerStore((s) => s.isPlaying);
   const setCurrent = usePlayerStore((s) => s.setCurrent);
   const active = current?.id === loop.id;
+  const positionMs = usePlayerStore((s) => (active ? s.positionMs : 0));
   const playing = active && isPlaying;
   const kind = loopKindLabel(loop, locale);
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -45,7 +46,7 @@ export function LoopCard({ loop, queue, onLongPress, onOpenDetails }: Props) {
         active && styles.active,
       ]}
     >
-      <LoopCover loop={loop} size={72} rounded={radius.lg} playing={playing} />
+      <LoopCover loop={loop} size={72} rounded={radius.lg} playing={playing} positionMs={positionMs} />
       <View style={styles.body}>
         <View style={styles.row}>
           <Text style={styles.name} numberOfLines={1}>

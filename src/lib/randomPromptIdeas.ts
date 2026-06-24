@@ -17,13 +17,12 @@ export type { PromptCategory, PromptCategoryId, CategorizedLocalePools };
 export type PromptMode = "beat" | "song";
 
 export type GenreMenuDicePick = {
-  /** Phrase simple affichée dans le champ idée. */
   displayPrompt: string;
-  /** Prompt ACE complet envoyé à l'API à la génération. */
   acePrompt: string;
   genre: string;
-  /** @deprecated Utiliser displayPrompt */
   prompt: string;
+  lyricsStructure?: string;
+  promptBankId?: number;
 };
 
 /**
@@ -159,6 +158,8 @@ export function pickRandomGenreMenuDiceRoll(locale: AppLocale, mode: PromptMode)
     displayPrompt: roll.displayPrompt,
     acePrompt: roll.acePrompt,
     prompt: roll.displayPrompt,
+    lyricsStructure: roll.lyricsStructure,
+    promptBankId: roll.promptBankId,
   };
 }
 

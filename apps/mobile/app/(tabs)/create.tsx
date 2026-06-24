@@ -1,43 +1,66 @@
-import { useMemo, useRef, useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import { useRouter } from "expo-router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Animated, InteractionManager, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useIsFocused } from "@react-navigation/native";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import {
   DEFAULT_GENERATOR,
   DEFAULT_SONG,
+  FROM_IDEA_GENRE_VALUE,
   MOBILE_BEAT_MOODS,
-  MOBILE_GENRES,
   MOBILE_LOOP_LENGTHS,
   MOBILE_MUSICAL_KEYS,
   MOBILE_SCALES,
-  MOBILE_SONG_GENRES,
   MOBILE_VOCAL_STYLES,
-  VOCAL_LANGUAGES,
+  RANDOM_GENRE_VALUE,
+  genreSelectionHint,
+  isCatalogGenreSelection,
+  isFromIdeaGenreSelection,
+  isRandomGenreSelection,
+  pickRandomGenreValue,
+  resolveGenreForGeneration,
+  shouldPickRandomGenreAtGenerate,
   getInspirationChipsForGenre,
+  resolveGenerationCaptionContext,
   type GenerationJobStatus,
   type LoopLength,
   type MobileVocalStyle,
 } from "@producerhit/shared";
 import { ActivationChecklist, markActivationStep } from "@/components/ActivationChecklist";
-import { ThemeBackdrop } from "@/components/ThemeBackdrop";
-import { PhDisplay } from "@/components/PhDisplay";
-import { WaveformStrip } from "@/components/WaveformStrip";
+import { SoftUpgradeSheet, type SoftUpgradeKind } from "@/components/SoftUpgradeSheet";
+import { PromptConsole } from "@/components/PromptConsole";
+import { StudioCoachBubble } from "@/components/StudioCoachBubble";
+import { StudioHero } from "@/components/StudioHero";
+import { GenerationQuotaBadge } from "@/components/GenerationQuotaBadge";
+import { useCoachMarks } from "@/lib/useCoachMarks";
 import { useResponsiveLayout } from "@/lib/useResponsiveLayout";
+import { useTabScreenBottomPadding } from "@/lib/useTabScreenBottomPadding";
 import { InspirationChipRow } from "@/components/InspirationChipRow";
 import { PromptDiceButton } from "@/components/PromptDiceButton";
 import { useRotatingPlaceholder } from "@/lib/useRotatingPlaceholder";
+import { useStaggerEntrance } from "@/lib/useStaggerEntrance";
 import { PhButton } from "@/components/PhButton";
 import { PhCard } from "@/components/PhCard";
-import { DailyBonusCard } from "@/components/DailyBonusCard";
+import { PhTextField } from "@/components/PhTextField";
 import { GenerationProgress } from "@/components/GenerationProgress";
+import { GlassErrorBanner } from "@/components/GlassErrorBanner";
+import { GenrePicker } from "@/components/GenrePicker";
 import { GenreChips } from "@/components/GenreChips";
-import { PhPill } from "@/components/PhPill";
+import { VocalLanguagePicker } from "@/components/VocalLanguagePicker";
 import { SegmentPills } from "@/components/SegmentPills";
+import { StudioAdvancedSection } from "@/components/StudioAdvancedSection";
 import { StudioModeToggle, type StudioMode } from "@/components/StudioModeToggle";
 import { jobStatusLabelI18n } from "@/lib/i18n/catalog";
 import { useGenerationProgress } from "@/lib/useGenerationProgress";
-import { defaultBeatName, defaultSongName, generateSong, generateTypeBeat, usageSummary } from "@/lib/loopsApi";
+import { boostGenerationPolling } from "@/lib/generationPolling";
+import { defaultBeatName, generateSong, generateTypeBeat, usageSummary } from "@/lib/loopsApi";
+import { paywallHref, type IapPaidPlan } from "@/lib/iapCatalog";
+import { loadActivationSteps } from "@/lib/onboardingProgress";
+import { consumeFirstBeatPaywallPrompt, shouldShowSoftQuotaPaywall } from "@/lib/paywallFunnel";
+import { SubscriptionService } from "@/lib/subscriptionService";
+import { isPaidPlan } from "@/lib/planEntitlements";
+import { resolveGenerationPlaybackQueue } from "@/lib/playbackQueue";
 import { formatGenerationError } from "@/lib/generationErrors";
 import { useGenerationPrefsStore } from "@/stores/generationPrefsStore";
 import { resolveMobilePromptLocale } from "@/lib/resolvePromptLocale";
@@ -45,20 +68,35 @@ import { useAuthStore } from "@/stores/authStore";
 import { useI18n } from "@/stores/localeStore";
 import { usePlayerStore } from "@/stores/playerStore";
 import { useTheme } from "@/theme/ThemeProvider";
-import { radius, spacing } from "@/theme/tokens";
+import { spacing } from "@/theme/tokens";
 
 export default function CreateScreen() {
   const router = useRouter();
+  const screenFocused = useIsFocused();
   const insets = useSafeAreaInsets();
   const profile = useAuthStore((s) => s.profile);
-  const refreshProfile = useAuthStore((s) => s.refreshProfile);
+  const session = useAuthStore((s) => s.session);
+  const refreshProfileAfterGeneration = useAuthStore((s) => s.refreshProfileAfterGeneration);
   const setCurrent = usePlayerStore((s) => s.setCurrent);
+  const setExpanded = usePlayerStore((s) => s.setExpanded);
+  const isLoading = usePlayerStore((s) => s.isLoading);
+  const playbackError = usePlayerStore((s) => s.playbackError);
+  const setPlaybackError = usePlayerStore((s) => s.setPlaybackError);
+  const isPlaying = usePlayerStore((s) => s.isPlaying);
+  const durationMs = usePlayerStore((s) => s.durationMs);
   const { t, tf, locale } = useI18n();
   const vocalLanguageMode = useGenerationPrefsStore((s) => s.vocalLanguageMode);
   const manualVocalLanguage = useGenerationPrefsStore((s) => s.manualVocalLanguage);
   const setVocalLanguage = useGenerationPrefsStore((s) => s.setVocalLanguage);
-  const { colors, typography, radius: themeRadius } = useTheme();
+  const studioAdvancedOpen = useGenerationPrefsStore((s) => s.studioAdvancedOpen);
+  const setStudioAdvancedOpen = useGenerationPrefsStore((s) => s.setStudioAdvancedOpen);
+  const prefsHydrated = useGenerationPrefsStore((s) => s.hydrated);
+  const onboardingCreationMode = useGenerationPrefsStore((s) => s.onboardingCreationMode);
+  const onboardingGenre = useGenerationPrefsStore((s) => s.onboardingGenre);
+  const { colors, typography } = useTheme();
   const { contentMaxWidth, isTablet } = useResponsiveLayout();
+  const scrollBottomPadding = useTabScreenBottomPadding(spacing.lg);
+  const coach = useCoachMarks();
 
   const [mode, setMode] = useState<StudioMode>("song");
   const [genre, setGenre] = useState(DEFAULT_SONG.genre);
@@ -74,20 +112,62 @@ export default function CreateScreen() {
   const [lyricsMode, setLyricsMode] = useState<"ai" | "manual">("ai");
   const [lyrics, setLyrics] = useState("");
   const [generating, setGenerating] = useState(false);
+  const [awaitingPlayback, setAwaitingPlayback] = useState(false);
   const [jobStatus, setJobStatus] = useState<GenerationJobStatus | null>(null);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [songFieldFocused, setSongFieldFocused] = useState(false);
   const [beatFieldFocused, setBeatFieldFocused] = useState(false);
+  const [lastRandomGenre, setLastRandomGenre] = useState<string | undefined>();
+  const [softUpgradeVisible, setSoftUpgradeVisible] = useState(false);
+  const [softUpgradeKind, setSoftUpgradeKind] = useState<SoftUpgradeKind>("low_quota");
+  const [softUpgradePlan, setSoftUpgradePlan] = useState<IapPaidPlan>("pro");
+  const [progressSession, setProgressSession] = useState(0);
+  const generateInFlightRef = useRef(false);
+  const scrollRef = useRef<ScrollView>(null);
+  const lastScrollSessionRef = useRef(-1);
 
   const songAceOverrideRef = useRef<string | null>(null);
+  const songLyricsOverrideRef = useRef<string | null>(null);
   const beatAceOverrideRef = useRef<string | null>(null);
 
+  useEffect(() => {
+    songAceOverrideRef.current = null;
+    songLyricsOverrideRef.current = null;
+    beatAceOverrideRef.current = null;
+  }, [locale]);
+  const onboardingPrefsAppliedRef = useRef(false);
+  const pendingPlaybackLoopIdRef = useRef<string | null>(null);
+
   const usage = useMemo(() => usageSummary(profile), [profile]);
+
+  useEffect(() => {
+    if (!screenFocused || isPaidPlan(profile?.plan)) return;
+    if (usage.remaining <= 0 || usage.remaining > 2) return;
+    void shouldShowSoftQuotaPaywall().then((show) => {
+      if (!show) return;
+      setSoftUpgradeKind("low_quota");
+      setSoftUpgradePlan("pro");
+      setSoftUpgradeVisible(true);
+    });
+  }, [screenFocused, profile?.plan, usage.remaining]);
+
+  /** Preload StoreKit prices before user hits quota / paywall (avoids "Prix App Store" flash). */
+  useEffect(() => {
+    if (isPaidPlan(profile?.plan)) return;
+    if (usage.remaining > 2) return;
+    void SubscriptionService.init().then(() => SubscriptionService.refreshProducts());
+  }, [profile?.plan, usage.remaining]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (generating || awaitingPlayback) boostGenerationPolling(120_000);
+    }, [generating, awaitingPlayback]),
+  );
   const isSong = mode === "song";
-  const genres = isSong ? MOBILE_SONG_GENRES : MOBILE_GENRES;
-  const activeGenre = isSong ? genre : beatGenre;
-  const setActiveGenre = isSong ? setGenre : setBeatGenre;
+  const activeFormGenre = isSong ? genre : beatGenre;
+  const setActiveFormGenre = isSong ? setGenre : setBeatGenre;
+  const ideaText = isSong ? songDescription.trim() : beatPrompt.trim();
   const promptLocale = useMemo(
     () =>
       resolveMobilePromptLocale({
@@ -98,17 +178,6 @@ export default function CreateScreen() {
       }),
     [locale, isSong, vocalLanguageMode, manualVocalLanguage],
   );
-  const vocalLangOptions = useMemo(() => {
-    const isFr = locale === "fr";
-    return [
-      { value: "auto", label: t("genLangAuto") },
-      ...VOCAL_LANGUAGES.map((l) => ({
-        value: l.value,
-        label: isFr ? l.fr : l.en,
-      })),
-    ];
-  }, [locale, t]);
-  const inspirationChips = useMemo(() => getInspirationChipsForGenre(activeGenre), [activeGenre]);
   const songRotatingPlaceholder = useRotatingPlaceholder({
     uiLocale: locale,
     mode: "song",
@@ -122,12 +191,99 @@ export default function CreateScreen() {
     paused: beatFieldFocused || beatPrompt.trim().length > 0,
   });
 
+  const effectiveSongDescription =
+    songDescription.trim() || (songFieldFocused ? "" : songRotatingPlaceholder.trim());
+
+  const effectiveBeatPrompt =
+    beatPrompt.trim() || (beatFieldFocused ? "" : beatRotatingPlaceholder.trim());
+
+  const chipsGenre = useMemo(() => {
+    if (isCatalogGenreSelection(activeFormGenre)) return activeFormGenre;
+    if (lastRandomGenre) return lastRandomGenre;
+    return "Melodic Trap";
+  }, [activeFormGenre, lastRandomGenre]);
+
+  const genreHint = useMemo(
+    () => genreSelectionHint(activeFormGenre, locale, ideaText.length > 0, lastRandomGenre),
+    [activeFormGenre, locale, ideaText, lastRandomGenre],
+  );
+
+  const inspirationChips = useMemo(() => getInspirationChipsForGenre(chipsGenre), [chipsGenre]);
+
+  useEffect(() => {
+    if (!prefsHydrated || onboardingPrefsAppliedRef.current) return;
+    if (!onboardingCreationMode && !onboardingGenre) return;
+    onboardingPrefsAppliedRef.current = true;
+    if (onboardingCreationMode) setMode(onboardingCreationMode);
+    if (onboardingGenre) {
+      if (onboardingCreationMode === "beat") setBeatGenre(onboardingGenre);
+      else setGenre(onboardingGenre);
+    }
+  }, [prefsHydrated, onboardingCreationMode, onboardingGenre]);
+
+  useEffect(() => {
+    if (ideaText) {
+      if (isFromIdeaGenreSelection(activeFormGenre) || isRandomGenreSelection(activeFormGenre)) {
+        if (activeFormGenre !== FROM_IDEA_GENRE_VALUE) setActiveFormGenre(FROM_IDEA_GENRE_VALUE);
+      }
+      return;
+    }
+    if (activeFormGenre === FROM_IDEA_GENRE_VALUE) {
+      setActiveFormGenre(RANDOM_GENRE_VALUE);
+    }
+  }, [ideaText, activeFormGenre, setActiveFormGenre]);
+
+  useEffect(() => {
+    if (!coach.ready) return;
+    if (ideaText.length > 2 && coach.isVisible("create_prompt")) {
+      void coach.dismiss("create_prompt");
+    }
+  }, [coach, ideaText]);
+
+  useEffect(() => {
+    if (generating && coach.isVisible("create_generate")) {
+      void coach.dismiss("create_generate");
+    }
+  }, [coach, generating]);
+
+  const activeCoachId = !coach.ready
+    ? null
+    : coach.isVisible("create_prompt")
+      ? "create_prompt"
+      : coach.isVisible("create_genre")
+        ? "create_genre"
+        : coach.isVisible("create_generate")
+          ? "create_generate"
+          : null;
+
+  const coachCopy =
+    activeCoachId === "create_prompt"
+      ? { title: t("coachPromptTitle"), body: t("coachPromptBody") }
+      : activeCoachId === "create_genre"
+        ? { title: t("coachGenreTitle"), body: t("coachGenreBody") }
+        : activeCoachId === "create_generate"
+          ? { title: t("coachGenerateTitle"), body: t("coachGenerateBody") }
+          : null;
+
+  const handleFormGenreChange = (next: string) => {
+    setActiveFormGenre(next);
+    if (coach.isVisible("create_genre")) void coach.dismiss("create_genre");
+  };
+
+  const songReady =
+    effectiveSongDescription.length > 0 || (lyricsMode === "manual" && lyrics.trim().length > 0);
+
   const progress = useGenerationProgress({
-    active: generating,
+    active: generating || awaitingPlayback,
+    sessionId: progressSession,
     mode: isSong ? "song" : "beat",
     jobStatus,
     done,
-    lyricsText: isSong ? (lyricsMode === "manual" ? lyrics : songDescription) : undefined,
+    lyricsText: isSong
+      ? lyricsMode === "manual"
+        ? lyrics.trim() || undefined
+        : songDescription.trim() || undefined
+      : undefined,
     manualLyrics: isSong && lyricsMode === "manual",
   });
   const progressLabel = jobStatus
@@ -137,15 +293,73 @@ export default function CreateScreen() {
       : t("generatingBeat");
 
   const onModeChange = (next: StudioMode) => {
+    if (generating || awaitingPlayback || generateInFlightRef.current) return;
     setMode(next);
     setError(null);
     setDone(false);
+    setAwaitingPlayback(false);
+    setGenerating(false);
   };
 
-  const modeSubtitle = isSong ? t("songModeSub") : t("beatModeSub");
+  const advancedSummary = useMemo(() => {
+    if (isSong) {
+      const style = MOBILE_VOCAL_STYLES.find((s) => s.value === vocalStyle)?.label ?? vocalStyle;
+      return ideaText.trim() ? `${style} · ${t("contextChips")}` : style;
+    }
+    const bpmNum = Math.max(60, Math.min(200, Number(bpm) || DEFAULT_GENERATOR.bpm));
+    return [`${bpmNum} BPM`, beatMood, loopLength.replace(" bars", ""), `${beatKey} ${beatScale}`].join(" · ");
+  }, [isSong, ideaText, vocalStyle, bpm, beatMood, loopLength, beatKey, beatScale, t]);
 
-  const songReady =
-    songDescription.trim().length > 0 || (lyricsMode === "manual" && lyrics.trim().length > 0);
+  const heroEntrance = useStaggerEntrance(0, { screenKey: "create" });
+  const modeEntrance = useStaggerEntrance(80, { screenKey: "create" });
+  const cardEntrance = useStaggerEntrance(140, { screenKey: "create" });
+
+  useEffect(() => {
+    if (!awaitingPlayback) return;
+
+    if (playbackError) {
+      setError(playbackError);
+      setAwaitingPlayback(false);
+      setGenerating(false);
+      setDone(false);
+      setPlaybackError(null);
+      return;
+    }
+
+    const finish = () => {
+      setAwaitingPlayback(false);
+      setGenerating(false);
+      pendingPlaybackLoopIdRef.current = null;
+      setTimeout(() => setDone(false), 500);
+    };
+
+    const maxWait = setTimeout(finish, 8_000);
+
+    const audioReady = !isLoading && (isPlaying || durationMs > 0);
+
+    if (audioReady) {
+      const openPlayer = setTimeout(() => {
+        setExpanded(true);
+        finish();
+      }, 200);
+      return () => {
+        clearTimeout(maxWait);
+        clearTimeout(openPlayer);
+      };
+    }
+
+    const softOpen = setTimeout(() => {
+      if (!isLoading && pendingPlaybackLoopIdRef.current) {
+        setExpanded(true);
+        finish();
+      }
+    }, 3_500);
+
+    return () => {
+      clearTimeout(maxWait);
+      clearTimeout(softOpen);
+    };
+  }, [awaitingPlayback, isLoading, isPlaying, durationMs, playbackError, setExpanded, setPlaybackError]);
 
   const generate = async () => {
     if (isSong && !songReady) {
@@ -156,29 +370,65 @@ export default function CreateScreen() {
 
     if (usage.remaining <= 0) {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      router.push("/paywall");
+      router.push(paywallHref("studio"));
       return;
     }
 
+    if (generateInFlightRef.current) return;
+
+    generateInFlightRef.current = true;
+    setProgressSession((s) => s + 1);
+    boostGenerationPolling(120_000);
     setGenerating(true);
+    setAwaitingPlayback(false);
     setDone(false);
     setError(null);
+    setPlaybackError(null);
     setJobStatus("pending");
 
     try {
-      const jobOpts = { onJobStatus: (status: GenerationJobStatus) => setJobStatus(status) };
-      const songCaptionOverride = songAceOverrideRef.current?.trim() || undefined;
-      const beatCaptionOverride = beatAceOverrideRef.current?.trim() || undefined;
+      const jobOpts = {
+        onJobStatus: (status: GenerationJobStatus) => setJobStatus(status),
+      };
+      const runFormGenre = isSong ? genre : beatGenre;
+      const runIdeaText = isSong ? songDescription.trim() : beatPrompt.trim();
+      const randomGenre = shouldPickRandomGenreAtGenerate(runFormGenre, runIdeaText)
+        ? pickRandomGenreValue()
+        : undefined;
+      if (randomGenre) setLastRandomGenre(randomGenre);
+      const { promptGenre } = resolveGenreForGeneration(runFormGenre, runIdeaText, randomGenre);
+      const activeGenreResolved = promptGenre;
+      const beatNameGenre = activeGenreResolved || randomGenre || chipsGenre;
+
+      const songCaptionCtx = resolveGenerationCaptionContext({
+        diceAceOverride: songAceOverrideRef.current,
+        displayIdea: effectiveSongDescription,
+        formGenre: runFormGenre,
+        mode: "song",
+        uiLocale: promptLocale,
+      });
+      const bankLyrics =
+        songCaptionCtx.lyricsStructure?.trim() || songLyricsOverrideRef.current?.trim() || "";
+      const runLyricsMode = bankLyrics ? ("manual" as const) : lyricsMode;
+      const runLyrics = bankLyrics || (lyricsMode === "manual" ? lyrics : "");
+      const beatCaptionCtx = resolveGenerationCaptionContext({
+        diceAceOverride: beatAceOverrideRef.current,
+        displayIdea: effectiveBeatPrompt,
+        formGenre: runFormGenre,
+        mode: "beat",
+        uiLocale: promptLocale,
+      });
 
       const loop = isSong
         ? await generateSong(
             {
-              genre: activeGenre,
-              description: songDescription,
-              lyrics,
-              lyricsMode,
+              genre: activeGenreResolved,
+              description: effectiveSongDescription,
+              lyrics: runLyrics,
+              lyricsMode: runLyricsMode,
               vocalStyle,
-              captionOverride: songCaptionOverride,
+              captionOverride: songCaptionCtx.captionOverride,
+              melodyComposition: songCaptionCtx.melodyComposition,
               vocalLanguageMode,
               manualVocalLanguage,
               uiLocale: locale,
@@ -189,50 +439,92 @@ export default function CreateScreen() {
             const bpmNum = Math.max(60, Math.min(200, Number(bpm) || DEFAULT_GENERATOR.bpm));
             return generateTypeBeat(
               {
-                genre: activeGenre,
+                genre: activeGenreResolved,
                 bpm: bpmNum,
-                prompt: beatPrompt,
+                prompt: effectiveBeatPrompt,
                 mood: beatMood,
                 loopLength,
               },
               {
-                name: defaultBeatName(activeGenre, bpmNum),
+                name: defaultBeatName(beatNameGenre, bpmNum),
                 mood: beatMood,
                 influence: DEFAULT_GENERATOR.influence,
                 key: beatKey,
                 scale: beatScale,
                 loopLength,
               },
-              { ...jobOpts, captionOverride: beatCaptionOverride },
+              { ...jobOpts, captionOverride: beatCaptionCtx.captionOverride, melodyComposition: beatCaptionCtx.melodyComposition },
             );
           })();
 
       setJobStatus("completed");
       setDone(true);
-      setCurrent(loop);
-      await refreshProfile();
+      setGenerating(false);
+
+      pendingPlaybackLoopIdRef.current = loop.id;
+      setCurrent(loop, [loop]);
+      setAwaitingPlayback(true);
+
+      const userId = session?.user?.id;
+      if (userId) {
+        const loopId = loop.id;
+        void resolveGenerationPlaybackQueue(userId, loop).then((playback) => {
+          const state = usePlayerStore.getState();
+          if (state.current?.id === loopId) {
+            setCurrent(playback.start, playback.queue);
+          }
+        });
+      }
+
+      void refreshProfileAfterGeneration();
+      const stepsBefore = await loadActivationSteps();
+      const isFirstBeat = !stepsBefore.has("first_beat");
       void markActivationStep("first_beat");
+      if (isFirstBeat && !isPaidPlan(profile?.plan)) {
+        const showFirstBeat = await consumeFirstBeatPaywallPrompt();
+        if (showFirstBeat) {
+          setSoftUpgradeKind("first_beat");
+          setSoftUpgradePlan("studio");
+          setSoftUpgradeVisible(true);
+        }
+      }
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (e) {
       const err = e as Error & { limitReached?: boolean };
       setJobStatus("failed");
-      if (err.limitReached) router.push("/paywall");
+      setAwaitingPlayback(false);
+      setGenerating(false);
+      if (err.limitReached) router.push(paywallHref("studio"));
       setError(formatGenerationError(err.message ?? "Generation failed", locale));
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
-      setGenerating(false);
+      generateInFlightRef.current = false;
     }
   };
 
-  const inputStyle = {
-    borderWidth: 1,
-    borderColor: colors.surfaceBorder,
-    borderRadius: themeRadius.md,
-    padding: 14,
-    color: colors.text,
-    backgroundColor: colors.bgElevated,
-    ...typography.body,
-  };
+  const showProgress = generating || done || awaitingPlayback;
+  const progressFinishing = done && awaitingPlayback;
+
+  const scrollToGenerationProgress = useCallback(() => {
+    Keyboard.dismiss();
+    InteractionManager.runAfterInteractions(() => {
+      requestAnimationFrame(() => {
+        scrollRef.current?.scrollToEnd({ animated: true });
+      });
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!generating || lastScrollSessionRef.current === progressSession) return;
+    lastScrollSessionRef.current = progressSession;
+    scrollToGenerationProgress();
+    const t1 = setTimeout(scrollToGenerationProgress, 180);
+    const t2 = setTimeout(scrollToGenerationProgress, 450);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [generating, progressSession, scrollToGenerationProgress]);
 
   const ctaLabel = generating
     ? isSong
@@ -243,281 +535,317 @@ export default function CreateScreen() {
       : t("generateBeat");
 
   return (
-    <ThemeBackdrop>
     <KeyboardAvoidingView
       style={[styles.screen, { backgroundColor: "transparent" }]}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={insets.top}
     >
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={[
           styles.content,
           {
             paddingTop: insets.top + spacing.lg,
+            paddingBottom: scrollBottomPadding,
             maxWidth: contentMaxWidth,
             alignSelf: isTablet ? "center" : undefined,
             width: isTablet ? "100%" : undefined,
           },
         ]}
         showsVerticalScrollIndicator={false}
+        removeClippedSubviews
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.headerBlock}>
-          <PhDisplay variant="display">{t("studio")}</PhDisplay>
-          <Text style={[typography.caption, { color: colors.textMuted, marginTop: 6 }]}>
-            {tf("quotaMonth", { used: usage.used, limit: usage.limit, plan: profile?.plan ?? "free" })}
-          </Text>
-          <View style={styles.waveform}>
-            <WaveformStrip height={36} bars={32} opacity={0.55} />
-          </View>
-        </View>
+        <Animated.View style={heroEntrance.style}>
+          <StudioHero
+            title={t("studio")}
+            modeLabel={isSong ? t("song") : t("typeBeat")}
+            generating={generating}
+          />
+        </Animated.View>
 
-        <DailyBonusCard />
         <ActivationChecklist />
 
-        <StudioModeToggle value={mode} onChange={onModeChange} />
-        <Text style={[typography.caption, { color: colors.textSubtle, lineHeight: 18, marginTop: -spacing.sm }]}>
-          {modeSubtitle}
-        </Text>
+        <Animated.View style={modeEntrance.style}>
+          <StudioModeToggle value={mode} onChange={onModeChange} disabled={generating || awaitingPlayback} />
+        </Animated.View>
 
+        <Animated.View style={cardEntrance.style}>
         <PhCard style={styles.card}>
-          <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.sm }]}>{t("genre")}</Text>
-          <GenreChips genres={genres} value={activeGenre} onChange={setActiveGenre} />
+          {activeCoachId === "create_genre" && coachCopy ? (
+            <StudioCoachBubble
+              title={coachCopy.title}
+              body={coachCopy.body}
+              onDismiss={() => void coach.dismiss("create_genre")}
+            />
+          ) : null}
+          <GenrePicker value={activeFormGenre} onChange={handleFormGenreChange} hint={genreHint} />
 
           {isSong ? (
-            <>
-              <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.sm }, styles.fieldGap]}>
-                {t("language")}
-              </Text>
-              <Text style={[typography.micro, { color: colors.textSubtle, marginTop: -4, marginBottom: spacing.sm, lineHeight: 16 }]}>
-                {t("languageHint")}
-              </Text>
-              <PhPill
-                value={vocalLanguageMode === "auto" ? "auto" : manualVocalLanguage}
-                onChange={(v) => {
-                  if (v === "auto") void setVocalLanguage("auto");
-                  else void setVocalLanguage("manual", v);
-                }}
-                options={vocalLangOptions}
-              />
-
-              <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.sm }, styles.fieldGap]}>
-                {t("songIdea")} <Text style={{ color: colors.accent }}>*</Text>
-              </Text>
-              <Text style={[typography.micro, { color: colors.textSubtle, marginTop: -4, marginBottom: spacing.sm, lineHeight: 16 }]}>
-                {t("songIdeaHint")}
-              </Text>
-              <View style={styles.promptRow}>
-                <TextInput
-                  value={songDescription}
-                  onChangeText={(text) => {
-                    songAceOverrideRef.current = null;
-                    setSongDescription(text);
-                    if (error) setError(null);
-                  }}
-                  onFocus={() => setSongFieldFocused(true)}
-                  onBlur={() => setSongFieldFocused(false)}
-                  style={[
-                    inputStyle,
-                    styles.prompt,
-                    styles.promptFlex,
-                    isSong && !songReady && { borderColor: colors.accent },
-                  ]}
-                  placeholder={songRotatingPlaceholder || t("songPlaceholder")}
-                  placeholderTextColor={colors.textSubtle}
-                  multiline
-                  textAlignVertical="top"
-                />
-                <PromptDiceButton
-                  locale={promptLocale}
-                  mode="song"
-                  genre={activeGenre}
-                  genres={genres}
-                  accessibilityLabel={t("diceAria")}
-                  onPick={(display) => {
-                    setSongDescription(display);
-                    if (error) setError(null);
-                  }}
-                  onPickAce={(ace) => {
-                    songAceOverrideRef.current = ace;
-                  }}
-                  onPickGenre={setActiveGenre}
-                />
-              </View>
-              <InspirationChipRow
-                chips={inspirationChips}
-                value={songDescription}
-                onChange={(next) => {
-                  songAceOverrideRef.current = null;
-                  setSongDescription(next);
-                  if (error) setError(null);
-                }}
-                title={t("contextChips")}
-              />
-
-              <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.sm }, styles.fieldGap]}>{t("vocalStyle")}</Text>
-              <SegmentPills
-                value={vocalStyle}
-                onChange={(v) => setVocalStyle(v as MobileVocalStyle)}
-                options={MOBILE_VOCAL_STYLES.map((s) => ({ value: s.value, label: s.label }))}
-              />
-
-              <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.sm }, styles.fieldGap]}>{t("lyrics")}</Text>
-              <SegmentPills
-                value={lyricsMode}
-                onChange={setLyricsMode}
-                options={[
-                  { value: "ai", label: t("lyricsAi") },
-                  { value: "manual", label: t("lyricsManual") },
-                ]}
-              />
-              {lyricsMode === "manual" ? (
-                <TextInput
-                  value={lyrics}
-                  onChangeText={setLyrics}
-                  style={[inputStyle, styles.lyrics, { marginTop: spacing.md }]}
-                  placeholder={t("lyricsPlaceholder")}
-                  placeholderTextColor={colors.textSubtle}
-                  multiline
-                  textAlignVertical="top"
-                />
-              ) : (
-                <Text style={[typography.caption, { color: colors.textSubtle, marginTop: spacing.md, lineHeight: 18 }]}>
-                  {t("lyricsHelper")}
-                </Text>
-              )}
-            </>
-          ) : (
-            <>
-              <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.sm }, styles.fieldGap]}>{t("bpm")}</Text>
-              <TextInput
-                value={bpm}
-                onChangeText={setBpm}
-                keyboardType="number-pad"
-                style={inputStyle}
-                placeholderTextColor={colors.textSubtle}
-              />
-
-              <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.sm }, styles.fieldGap]}>{t("mood")}</Text>
-              <SegmentPills
-                value={beatMood}
-                onChange={setBeatMood}
-                options={MOBILE_BEAT_MOODS.map((m) => ({ value: m, label: m }))}
-              />
-
-              <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.sm }, styles.fieldGap]}>{t("length")}</Text>
-              <SegmentPills
-                value={loopLength}
-                onChange={(v) => setLoopLength(v as LoopLength)}
-                options={MOBILE_LOOP_LENGTHS.map((l) => ({ value: l, label: l.replace(" bars", "") }))}
-              />
-
-              <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.sm }, styles.fieldGap]}>{t("musicalKey")}</Text>
-              <GenreChips
-                genres={MOBILE_MUSICAL_KEYS.map((k) => ({ group: "Key", value: k, label: k }))}
-                value={beatKey}
-                onChange={setBeatKey}
-              />
-
-              <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.sm }, styles.fieldGap]}>{t("scale")}</Text>
-              <SegmentPills
-                value={beatScale}
-                onChange={setBeatScale}
-                options={MOBILE_SCALES.map((s) => ({ value: s, label: s }))}
-              />
-
-              <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.sm }, styles.fieldGap]}>{t("promptOptional")}</Text>
-              <View style={styles.promptRow}>
-                <TextInput
-                  value={beatPrompt}
-                  onChangeText={(text) => {
-                    beatAceOverrideRef.current = null;
-                    setBeatPrompt(text);
-                  }}
-                  onFocus={() => setBeatFieldFocused(true)}
-                  onBlur={() => setBeatFieldFocused(false)}
-                  style={[inputStyle, styles.prompt, styles.promptFlex]}
-                  placeholder={beatRotatingPlaceholder || t("beatPromptPlaceholder")}
-                  placeholderTextColor={colors.textSubtle}
-                  multiline
-                  textAlignVertical="top"
-                />
-                <PromptDiceButton
-                  locale={promptLocale}
-                  mode="beat"
-                  genre={activeGenre}
-                  genres={genres}
-                  accessibilityLabel={t("diceAria")}
-                  onPick={setBeatPrompt}
-                  onPickAce={(ace) => {
-                    beatAceOverrideRef.current = ace;
-                  }}
-                  onPickGenre={setActiveGenre}
-                />
-              </View>
-              <InspirationChipRow
-                chips={inspirationChips}
-                value={beatPrompt}
-                onChange={(next) => {
-                  beatAceOverrideRef.current = null;
-                  setBeatPrompt(next);
-                }}
-                title={t("contextChips")}
-              />
-            </>
-          )}
-
-          {generating || done ? (
-            <GenerationProgress
-              progress={progress}
-              label={progressLabel}
-              done={done}
-              status={jobStatus ?? undefined}
+            <VocalLanguagePicker
+              style={styles.songLangPicker}
+              value={vocalLanguageMode === "auto" ? "auto" : manualVocalLanguage}
+              onChange={(v) => {
+                if (v === "auto") void setVocalLanguage("auto");
+                else void setVocalLanguage("manual", v);
+              }}
             />
           ) : null}
 
-          {error ? (
-            <Text style={[typography.caption, { color: colors.danger, marginTop: spacing.md }]}>{error}</Text>
-          ) : null}
+          {isSong ? (
+            <View style={styles.fieldGap}>
+              {activeCoachId === "create_prompt" && coachCopy ? (
+                <StudioCoachBubble
+                  title={coachCopy.title}
+                  body={coachCopy.body}
+                  onDismiss={() => void coach.dismiss("create_prompt")}
+                />
+              ) : null}
+              <PromptConsole
+                label={t("songIdea")}
+                hint={t("songIdeaHint")}
+                required
+                focused={songFieldFocused}
+                onFocus={() => setSongFieldFocused(true)}
+                onBlur={() => setSongFieldFocused(false)}
+                toolbar={
+                  <PromptDiceButton
+                    locale={promptLocale}
+                    mode="song"
+                    accessibilityLabel={t("diceAria")}
+                    onPick={(display) => {
+                      setSongDescription(display);
+                      if (error) setError(null);
+                    }}
+                    onPickAce={(ace) => {
+                      songAceOverrideRef.current = ace || null;
+                    }}
+                    onPickLyrics={(structure) => {
+                      songLyricsOverrideRef.current = structure || null;
+                    }}
+                    onPickGenre={setActiveFormGenre}
+                  />
+                }
+                inputProps={{
+                  value: songDescription,
+                  onChangeText: (text) => {
+                    songAceOverrideRef.current = null;
+                    songLyricsOverrideRef.current = null;
+                    setSongDescription(text);
+                    if (error) setError(null);
+                  },
+                  placeholder: songRotatingPlaceholder || t("songPlaceholder"),
+                }}
+              />
 
+              <View style={styles.songLyrics}>
+                {lyricsMode === "ai" ? (
+                  <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.xs }]}>
+                    {t("lyrics")}
+                  </Text>
+                ) : null}
+                <SegmentPills
+                  value={lyricsMode}
+                  onChange={setLyricsMode}
+                  options={[
+                    { value: "ai", label: t("lyricsAi") },
+                    { value: "manual", label: t("lyricsManual") },
+                  ]}
+                />
+                {lyricsMode === "manual" ? (
+                  <PhTextField
+                    label={t("lyrics")}
+                    value={lyrics}
+                    onChangeText={setLyrics}
+                    multiline
+                    placeholder={t("lyricsPlaceholder")}
+                    style={{ minHeight: 88, textAlignVertical: "top", marginTop: spacing.xs }}
+                  />
+                ) : null}
+              </View>
+            </View>
+          ) : (
+            <View style={styles.fieldGap}>
+              {activeCoachId === "create_prompt" && coachCopy ? (
+                <StudioCoachBubble
+                  title={coachCopy.title}
+                  body={coachCopy.body}
+                  onDismiss={() => void coach.dismiss("create_prompt")}
+                />
+              ) : null}
+              <PromptConsole
+                label={t("beatVibe")}
+                hint={t("beatVibeHint")}
+                focused={beatFieldFocused}
+                onFocus={() => setBeatFieldFocused(true)}
+                onBlur={() => setBeatFieldFocused(false)}
+                toolbar={
+                  <PromptDiceButton
+                    locale={promptLocale}
+                    mode="beat"
+                    accessibilityLabel={t("diceAria")}
+                    onPick={setBeatPrompt}
+                    onPickAce={(ace) => {
+                      beatAceOverrideRef.current = ace || null;
+                    }}
+                    onPickGenre={setActiveFormGenre}
+                  />
+                }
+                inputProps={{
+                  value: beatPrompt,
+                  onChangeText: (text) => {
+                    beatAceOverrideRef.current = null;
+                    setBeatPrompt(text);
+                  },
+                  placeholder: beatRotatingPlaceholder || t("beatPromptPlaceholder"),
+                }}
+              />
+            </View>
+          )}
+
+          <StudioAdvancedSection
+            open={studioAdvancedOpen}
+            onToggle={() => void setStudioAdvancedOpen(!studioAdvancedOpen)}
+            summary={advancedSummary}
+          >
+            {isSong ? (
+              <>
+                <View>
+                  <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.sm }]}>
+                    {t("vocalStyle")}
+                  </Text>
+                  <SegmentPills
+                    value={vocalStyle}
+                    onChange={(v) => setVocalStyle(v as MobileVocalStyle)}
+                    options={MOBILE_VOCAL_STYLES.map((s) => ({ value: s.value, label: s.label }))}
+                  />
+                </View>
+                <InspirationChipRow
+                  chips={inspirationChips}
+                  value={songDescription}
+                  onChange={(next) => {
+                    songAceOverrideRef.current = null;
+                    setSongDescription(next);
+                    if (error) setError(null);
+                  }}
+                  title={t("contextChips")}
+                />
+              </>
+            ) : (
+              <>
+                <PhTextField
+                  label={t("bpm")}
+                  value={bpm}
+                  onChangeText={setBpm}
+                  keyboardType="number-pad"
+                />
+
+                <View>
+                  <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.sm }]}>{t("mood")}</Text>
+                  <SegmentPills
+                    value={beatMood}
+                    onChange={setBeatMood}
+                    options={MOBILE_BEAT_MOODS.map((m) => ({ value: m, label: m }))}
+                  />
+                </View>
+
+                <View>
+                  <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.sm }]}>{t("length")}</Text>
+                  <SegmentPills
+                    value={loopLength}
+                    onChange={(v) => setLoopLength(v as LoopLength)}
+                    options={MOBILE_LOOP_LENGTHS.map((l) => ({ value: l, label: l.replace(" bars", "") }))}
+                  />
+                </View>
+
+                <View>
+                  <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.sm }]}>{t("musicalKey")}</Text>
+                  <GenreChips
+                    genres={MOBILE_MUSICAL_KEYS.map((k) => ({ group: "Key", value: k, label: k }))}
+                    value={beatKey}
+                    onChange={setBeatKey}
+                  />
+                </View>
+
+                <View>
+                  <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.sm }]}>{t("scale")}</Text>
+                  <SegmentPills
+                    value={beatScale}
+                    onChange={setBeatScale}
+                    options={MOBILE_SCALES.map((s) => ({ value: s, label: s }))}
+                  />
+                </View>
+
+                <InspirationChipRow
+                  chips={inspirationChips}
+                  value={beatPrompt}
+                  onChange={(next) => {
+                    beatAceOverrideRef.current = null;
+                    setBeatPrompt(next);
+                  }}
+                  title={t("contextChips")}
+                />
+              </>
+            )}
+          </StudioAdvancedSection>
+
+          <View collapsable={false} style={styles.progressSlot}>
+            {showProgress ? (
+              <GenerationProgress
+                progress={progress}
+                label={progressFinishing ? t("genPlayback") : progressLabel}
+                done={done && !awaitingPlayback}
+                finishing={progressFinishing}
+                status={jobStatus ?? undefined}
+                screenFocused={screenFocused}
+              />
+            ) : null}
+          </View>
+
+          {error ? <GlassErrorBanner message={error} /> : null}
+
+          {activeCoachId === "create_generate" && coachCopy ? (
+            <StudioCoachBubble
+              title={coachCopy.title}
+              body={coachCopy.body}
+              onDismiss={() => void coach.dismiss("create_generate")}
+            />
+          ) : null}
           <PhButton
             label={ctaLabel}
             onPress={() => void generate()}
-            disabled={generating}
+            disabled={generating || (isSong && !songReady)}
             loading={generating}
-            gradient
-            style={{ marginTop: spacing.lg }}
+            style={{ marginTop: spacing.md }}
           />
-
-          {isSong && !songReady && !generating ? (
-            <Text style={[typography.caption, { color: colors.warning, textAlign: "center", marginTop: spacing.sm, lineHeight: 18 }]}>
-              {t("songIdeaRequired")}
-            </Text>
-          ) : null}
-
-          <Text style={[typography.micro, { color: colors.textSubtle, textAlign: "center", marginTop: spacing.md }]}>
-            {isSong
-              ? tf("previewBeat", { name: defaultSongName(activeGenre) })
-              : tf("previewBeat", {
-                  name: defaultBeatName(activeGenre, Number(bpm) || DEFAULT_GENERATOR.bpm),
-                })}
-          </Text>
+          <GenerationQuotaBadge
+            line={tf("quotaMonth", { used: usage.used, limit: usage.limit, plan: profile?.plan ?? "free" })}
+            remaining={usage.remaining}
+          />
         </PhCard>
+        </Animated.View>
       </ScrollView>
+      <SoftUpgradeSheet
+        visible={softUpgradeVisible}
+        kind={softUpgradeKind}
+        plan={softUpgradePlan}
+        remaining={usage.remaining}
+        onClose={() => setSoftUpgradeVisible(false)}
+      />
     </KeyboardAvoidingView>
-    </ThemeBackdrop>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { padding: spacing.lg, paddingBottom: 200, gap: spacing.lg },
-  headerBlock: { gap: 4 },
-  waveform: { marginTop: spacing.md, marginBottom: spacing.xs },
-  card: { marginTop: spacing.sm },
-  fieldGap: { marginTop: spacing.lg },
-  prompt: { minHeight: 96, textAlignVertical: "top" },
-  promptRow: { flexDirection: "row", alignItems: "flex-start", gap: spacing.sm },
-  promptFlex: { flex: 1 },
-  lyrics: { minHeight: 140 },
+  content: { padding: spacing.lg, gap: spacing.md },
+  card: { marginTop: spacing.xs },
+  fieldGap: { marginTop: spacing.md },
+  songLangPicker: { marginTop: spacing.sm },
+  songLyrics: { marginTop: spacing.sm },
+  progressSlot: {
+    width: "100%",
+    alignItems: "center",
+    marginTop: spacing.md,
+  },
 });

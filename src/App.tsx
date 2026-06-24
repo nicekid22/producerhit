@@ -17,7 +17,14 @@ import { GrowthBootstrap } from "@/components/GrowthBootstrap";
 import { GrowthPlatformBootstrap } from "@/components/growth/GrowthPlatformBootstrap";
 import { GrowthAdsBootstrap } from "@/components/growth/GrowthAdsBootstrap";
 import { PlayerDockBootstrap } from "@/components/PlayerDockBootstrap";
-import { AudioPlayer } from "@/components/AudioPlayer";
+import { ShellPerfBootstrap } from "@/components/ShellPerfBootstrap";
+
+const AudioPlayer = lazy(() =>
+  import("@/components/AudioPlayer").then((m) => ({ default: m.AudioPlayer })),
+);
+const SpeedInsights = lazy(() =>
+  import("@vercel/speed-insights/react").then((m) => ({ default: m.SpeedInsights })),
+);
 
 const LootRevealModal = lazy(() =>
   import("@/components/growth/LootRevealModal").then((m) => ({ default: m.LootRevealModal })),
@@ -40,6 +47,7 @@ const HomePage = lazy(() => import("@/pages/Home"));
 const ComparePage = lazy(() => import("@/pages/ComparePage"));
 const ForAiPage = lazy(() => import("@/pages/ForAiPage"));
 const BeatNameGeneratorPage = lazy(() => import("@/pages/BeatNameGeneratorPage"));
+const AlbumCoverGeneratorPage = lazy(() => import("@/pages/AlbumCoverGeneratorPage"));
 const GenreStatsPage = lazy(() => import("@/pages/GenreStatsPage"));
 const BlogPage = lazy(() => import("@/pages/Blog"));
 const ExplorePage = lazy(() => import("@/pages/Explore"));
@@ -57,6 +65,9 @@ const DashboardPage = lazy(() => import("@/pages/Dashboard"));
 const LibraryPage = lazy(() => import("@/pages/Library"));
 const SettingsPage = lazy(() => import("@/pages/Settings"));
 const GrowthAdminPage = lazy(() => import("@/pages/GrowthAdmin"));
+const DistributionPage = lazy(() => import("@/pages/Distribution"));
+const DistributionAcademyLandingPage = lazy(() => import("@/pages/DistributionAcademyLanding"));
+const DistributionAcademyPage = lazy(() => import("@/pages/DistributionAcademy"));
 const SampleLabPage = lazy(() => import("@/pages/SampleLab"));
 const VoiceStudioPage = lazy(() => import("@/pages/VoiceStudio"));
 const CloudThemePreviewPage = lazy(() => import("@/pages/CloudThemePreview"));
@@ -78,6 +89,7 @@ export default function App() {
             <GrowthPlatformBootstrap />
             <GrowthAdsBootstrap />
             <RouteStylesBootstrap />
+            <ShellPerfBootstrap />
             <PlayerDockBootstrap />
             <RouteFade>
               <Suspense fallback={<PageLoader />}>
@@ -102,6 +114,8 @@ export default function App() {
                   ))}
                   <Route path="/for-ai" element={<ForAiPage />} />
                   <Route path="/ai-beat-name-generator" element={<BeatNameGeneratorPage />} />
+                  <Route path="/ai-album-cover-generator" element={<AlbumCoverGeneratorPage />} />
+                  <Route path="/fr/generateur-pochette-album-ia" element={<AlbumCoverGeneratorPage />} />
                   <Route path="/ai-music-genre-stats-2026" element={<GenreStatsPage />} />
                   <Route path="/suno-alternative" element={<Navigate to="/suno-alternatives" replace />} />
                   <Route path="/udio-alternative" element={<Navigate to="/udio-alternatives" replace />} />
@@ -109,6 +123,8 @@ export default function App() {
                   <Route path="/auth" element={<AuthPage />} />
                   <Route path="/auth/callback" element={<AuthCallbackPage />} />
                   <Route path="/pricing" element={<PricingPage />} />
+                  <Route path="/learn/distribute-ai-music" element={<DistributionAcademyLandingPage />} />
+                  <Route path="/fr/apprendre/distribuer-musique-ia" element={<DistributionAcademyLandingPage />} />
                   <Route path="/legal" element={<LegalPage />} />
                   <Route path="/commercial-license" element={<CommercialLicensePage />} />
                   <Route path="/commercial-license/example" element={<CommercialLicenseExamplePage />} />
@@ -120,6 +136,8 @@ export default function App() {
                     {isSampleLabEnabled() ? <Route path="/sample-lab" element={<SampleLabPage />} /> : null}
                     <Route path="/voice-studio" element={<VoiceStudioPage />} />
                     <Route path="/settings" element={<SettingsPage />} />
+                    <Route path="/distribution" element={<DistributionPage />} />
+                    <Route path="/academy/distribution" element={<DistributionAcademyPage />} />
                     <Route path="/admin/growth" element={<GrowthAdminPage />} />
                   </Route>
 
@@ -127,7 +145,12 @@ export default function App() {
                 </Routes>
               </Suspense>
             </RouteFade>
-            <AudioPlayer />
+            <Suspense fallback={null}>
+              <AudioPlayer />
+            </Suspense>
+            <Suspense fallback={null}>
+              <SpeedInsights />
+            </Suspense>
             <Suspense fallback={null}>
               <GenerationActivityPill />
             </Suspense>

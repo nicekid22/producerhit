@@ -28,10 +28,70 @@ export function uiLocaleToAceVocalLanguage(uiLocale: AppLocale): string {
 
 export function vocalLanguageLabel(code: string, uiLocale: AppLocale): string {
   const c = code.trim().toLowerCase();
-  if (!c || c === "auto") return uiLocale === "fr" ? "Auto" : "Auto";
+  if (!c || c === "auto") {
+    return uiLocale === "fr" ? "Auto" : uiLocale === "es" ? "Auto" : uiLocale === "de" ? "Auto" : "Auto";
+  }
   const hit = VOCAL_LANGUAGES.find((l) => l.value === c);
-  if (hit) return uiLocale === "fr" ? hit.fr : hit.en;
-  return c.toUpperCase();
+  if (!hit) return c.toUpperCase();
+
+  const localizedNames: Partial<Record<AppLocale, Record<string, string>>> = {
+    fr: {
+      en: "Anglais", fr: "Français", es: "Espagnol", pt: "Portugais", it: "Italien",
+      de: "Allemand", ja: "Japonais", zh: "Chinois", ko: "Coréen", ar: "Arabe", ru: "Russe",
+    },
+    es: {
+      en: "Inglés", fr: "Francés", es: "Español", pt: "Portugués", it: "Italiano",
+      de: "Alemán", ja: "Japonés", zh: "Chino", ko: "Coreano", ar: "Árabe", ru: "Ruso",
+    },
+    pt: {
+      en: "Inglês", fr: "Francês", es: "Espanhol", pt: "Português", it: "Italiano",
+      de: "Alemão", ja: "Japonês", zh: "Chinês", ko: "Coreano", ar: "Árabe", ru: "Russo",
+    },
+    de: {
+      en: "Englisch", fr: "Französisch", es: "Spanisch", pt: "Portugiesisch", it: "Italienisch",
+      de: "Deutsch", ja: "Japanisch", zh: "Chinesisch", ko: "Koreanisch", ar: "Arabisch", ru: "Russisch",
+    },
+    it: {
+      en: "Inglese", fr: "Francese", es: "Spagnolo", pt: "Portoghese", it: "Italiano",
+      de: "Tedesco", ja: "Giapponese", zh: "Cinese", ko: "Coreano", ar: "Arabo", ru: "Russo",
+    },
+    nl: {
+      en: "Engels", fr: "Frans", es: "Spaans", pt: "Portugees", it: "Italiaans",
+      de: "Duits", ja: "Japans", zh: "Chinees", ko: "Koreaans", ar: "Arabisch", ru: "Russisch",
+    },
+    ja: {
+      en: "英語", fr: "フランス語", es: "スペイン語", pt: "ポルトガル語", it: "イタリア語",
+      de: "ドイツ語", ja: "日本語", zh: "中国語", ko: "韓国語", ar: "アラビア語", ru: "ロシア語",
+    },
+    ko: {
+      en: "영어", fr: "프랑스어", es: "스페인어", pt: "포르투갈어", it: "이탈리아어",
+      de: "독일어", ja: "일본어", zh: "중국어", ko: "한국어", ar: "아랍어", ru: "러시아어",
+    },
+    zh: {
+      en: "英语", fr: "法语", es: "西班牙语", pt: "葡萄牙语", it: "意大利语",
+      de: "德语", ja: "日语", zh: "中文", ko: "韩语", ar: "阿拉伯语", ru: "俄语",
+    },
+    ar: {
+      en: "الإنجليزية", fr: "الفرنسية", es: "الإسبانية", pt: "البرتغالية", it: "الإيطالية",
+      de: "الألمانية", ja: "اليابانية", zh: "الصينية", ko: "الكورية", ar: "العربية", ru: "الروسية",
+    },
+    tr: {
+      en: "İngilizce", fr: "Fransızca", es: "İspanyolca", pt: "Portekizce", it: "İtalyanca",
+      de: "Almanca", ja: "Japonca", zh: "Çince", ko: "Korece", ar: "Arapça", ru: "Rusça",
+    },
+    hi: {
+      en: "अंग्रेज़ी", fr: "फ़्रेंच", es: "स्पेनिश", pt: "पुर्तगाली", it: "इतालवी",
+      de: "जर्मन", ja: "जापानी", zh: "चीनी", ko: "कोरियाई", ar: "अरबी", ru: "रूसी",
+    },
+    th: {
+      en: "อังกฤษ", fr: "ฝรั่งเศส", es: "สเปน", pt: "โปรตุเกส", it: "อิตาลี",
+      de: "เยอรมัน", ja: "ญี่ปุ่น", zh: "จีน", ko: "เกาหลี", ar: "อาหรับ", ru: "รัสเซีย",
+    },
+  };
+
+  const table = localizedNames[uiLocale];
+  if (table?.[c]) return table[c]!;
+  return uiLocale === "fr" ? hit.fr : hit.en;
 }
 
 const IT_PATTERN =
@@ -90,16 +150,22 @@ export function resolveSongVocalLanguage(args: {
   uiLocale?: AppLocale;
 }): string {
   if (args.mode === "manual") return args.manualCode.trim().toLowerCase() || "en";
+
   const lyricsText = args.lyrics.trim();
   const ideaText = args.songDescription.trim();
-  const source = args.lyricsMode === "manual" && lyricsText.length > 0 ? lyricsText : ideaText;
-  const detected = detectVocalLanguageFromText(source);
 
-  if (args.mode === "auto" && args.uiLocale) {
+  if (args.lyricsMode === "manual" && lyricsText.length > 0) {
+    return detectVocalLanguageFromText(lyricsText);
+  }
+
+  const detected = detectVocalLanguageFromText(ideaText);
+
+  if (args.uiLocale) {
     const uiCode = uiLocaleToAceVocalLanguage(args.uiLocale);
     if (looksLikeStructuredDisplayIdea(ideaText)) return uiCode;
-    if (uiCode !== "en" && detected === "en") return uiCode;
-    if (uiCode === "it" && (detected === "es" || detected === "fr")) return "it";
+    if (ideaText.length < 3) return uiCode;
+    // Site non anglais : la langue UI prime (évite italien/espagnol résiduel après changement de langue).
+    if (uiCode !== "en") return uiCode;
   }
 
   return detected;

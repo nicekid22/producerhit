@@ -11,6 +11,8 @@ import {
 import { buildReferralInviteUrl } from "@/lib/referral";
 import { trackClientEvent } from "@/lib/supabaseClient";
 import { ViralShareBar } from "@/components/growth/ViralShareBar";
+import { useVisualThemeStore } from "@/stores/visualThemeStore";
+import "@/styles/paywall-modal.css";
 
 type Props = {
   open: boolean;
@@ -21,6 +23,7 @@ type Props = {
 
 export function ReferralInviteModal({ open, onClose, locale, referralCode }: Props) {
   const isFr = locale === "fr";
+  const visualTheme = useVisualThemeStore((s) => s.theme);
   const link = useMemo(() => (referralCode ? buildReferralInviteUrl(referralCode) : ""), [referralCode]);
 
   if (!open || typeof document === "undefined") return null;
@@ -38,34 +41,34 @@ export function ReferralInviteModal({ open, onClose, locale, referralCode }: Pro
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[250] flex items-center justify-center bg-black/75 p-4 backdrop-blur-md"
+      className="pk-growth-modal-backdrop fixed inset-0 z-[250] flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="relative w-full max-w-md overflow-hidden rounded-[1.75rem] border border-violet-400/25 bg-[#07070f] shadow-[0_0_100px_rgba(124,58,237,0.28)]">
+      <div className={`pk-growth-modal pk-veil-modal-panel relative w-full max-w-md overflow-hidden rounded-[1.75rem] pk-growth-modal--theme-${visualTheme}`}>
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70 hover:text-white"
+          className="pk-paywall__close absolute right-4 top-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full transition"
           aria-label={isFr ? "Fermer" : "Close"}
         >
           <X className="h-4 w-4" />
         </button>
 
-        <div className="border-b border-white/10 bg-gradient-to-br from-violet-600/25 via-[#0c0c18] to-cyan-500/15 px-6 pb-5 pt-6 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-violet-400/30 bg-violet-500/15">
-            <Gift className="h-7 w-7 text-violet-200" />
+        <div className="pk-growth-modal__header px-6 pb-5 pt-6 text-center">
+          <div className="pk-paywall__icon mx-auto flex h-14 w-14 items-center justify-center rounded-2xl">
+            <Gift className="h-7 w-7" />
           </div>
-          <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.22em] text-cyan-300/80">
+          <p className="pk-growth-modal__eyebrow mt-4 text-[10px] font-bold uppercase tracking-[0.22em]">
             {isFr ? "Offre parrainage" : "Referral offer"}
           </p>
-          <h2 className="mt-2 text-balance text-xl font-bold tracking-tight text-white sm:text-2xl">
+          <h2 className="pk-growth-modal__title mt-2 text-balance text-xl font-bold tracking-tight sm:text-2xl">
             {isFr ? "Double le free plan de tes potes" : "Double your friends' free plan"}
           </h2>
-          <p className="mt-2 text-sm leading-relaxed text-white/55">
+          <p className="pk-growth-modal__subtitle mt-2 text-sm leading-relaxed">
             {isFr
               ? `Inratable : ils démarrent avec ${REFERRAL_REFEREE_START_TOTAL} générations. Tu gagnes +${REFERRAL_REFERRER_SIGNUP_BONUS} dès qu'ils s'inscrivent via ton lien.`
               : `Unbeatable: they start with ${REFERRAL_REFEREE_START_TOTAL} generations. You earn +${REFERRAL_REFERRER_SIGNUP_BONUS} as soon as they sign up with your link.`}
@@ -73,31 +76,31 @@ export function ReferralInviteModal({ open, onClose, locale, referralCode }: Pro
         </div>
 
         <div className="space-y-3 px-6 py-5">
-          <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3.5">
-            <Users className="mt-0.5 h-4 w-4 shrink-0 text-cyan-300" />
-            <div className="text-sm text-white/80">
-              <span className="font-semibold text-white">{isFr ? "Pour eux" : "For them"}</span>
-              <div className="mt-1 text-white/60">
+          <div className="pk-growth-modal__card flex items-start gap-3 rounded-2xl p-3.5">
+            <Users className="pk-audio-retention-banner__icon mt-0.5 h-4 w-4 shrink-0" />
+            <div className="text-sm">
+              <span className="font-semibold">{isFr ? "Pour eux" : "For them"}</span>
+              <div className="pk-growth-modal__card-muted mt-1">
                 {isFr
                   ? `${REFERRAL_REFEREE_START_TOTAL} gen dès l'inscription (${REFERRAL_REFEREE_START_TOTAL - REFERRAL_REFEREE_BONUS} free + ${REFERRAL_REFEREE_BONUS} bonus lien)`
                   : `${REFERRAL_REFEREE_START_TOTAL} gens on signup (${REFERRAL_REFEREE_START_TOTAL - REFERRAL_REFEREE_BONUS} free + ${REFERRAL_REFEREE_BONUS} link bonus)`}
               </div>
             </div>
           </div>
-          <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3.5">
-            <Zap className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" />
-            <div className="text-sm text-white/80">
-              <span className="font-semibold text-white">{isFr ? "Pour toi" : "For you"}</span>
-              <div className="mt-1 text-white/60">
+          <div className="pk-growth-modal__card flex items-start gap-3 rounded-2xl p-3.5">
+            <Zap className="pk-audio-retention-banner__icon mt-0.5 h-4 w-4 shrink-0" />
+            <div className="text-sm">
+              <span className="font-semibold">{isFr ? "Pour toi" : "For you"}</span>
+              <div className="pk-growth-modal__card-muted mt-1">
                 {isFr
                   ? `+${REFERRAL_REFERRER_SIGNUP_BONUS} générations dès qu'un filleul s'inscrit via ton lien`
                   : `+${REFERRAL_REFERRER_SIGNUP_BONUS} generations when someone signs up with your link`}
               </div>
             </div>
           </div>
-          <div className="flex items-start gap-3 rounded-2xl border border-emerald-400/15 bg-emerald-500/[0.06] p-3.5">
-            <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" />
-            <div className="text-sm text-white/75">
+          <div className="pk-growth-modal__card flex items-start gap-3 rounded-2xl p-3.5">
+            <Sparkles className="pk-audio-retention-banner__icon mt-0.5 h-4 w-4 shrink-0" />
+            <div className="pk-growth-modal__card-muted text-sm">
               {isFr
                 ? "Ensuite : loot daily, niveaux, streaks — la machine à bonus continue."
                 : "Then: daily loot, levels, streaks — the bonus machine keeps rolling."}
@@ -105,7 +108,7 @@ export function ReferralInviteModal({ open, onClose, locale, referralCode }: Pro
           </div>
         </div>
 
-        <div className="border-t border-white/10 bg-black/25 p-4">
+        <div className="pk-growth-modal__footer p-4">
           <button
             type="button"
             onClick={() => void copyLink()}
@@ -132,7 +135,7 @@ export function ReferralInviteModal({ open, onClose, locale, referralCode }: Pro
           <button
             type="button"
             onClick={onClose}
-            className="mt-2 w-full py-2 text-xs font-semibold text-white/45 hover:text-white/70"
+            className="pk-growth-modal__dismiss mt-2 w-full py-2 text-xs font-semibold transition"
           >
             {isFr ? "Plus tard" : "Maybe later"}
           </button>

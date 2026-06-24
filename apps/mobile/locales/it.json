@@ -1,0 +1,8 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "ProducerHit"
+  },
+  "android": {
+    "app_name": "ProducerHit"
+  }
+}

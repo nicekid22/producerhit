@@ -1,0 +1,115 @@
+/* Distribution Studio — harmonie Prism / Warm Glass / Cloud */
+
+html.pk-cloud-active .pk-distribution-studio,
+.pk-cloud-stage .pk-distribution-studio {
+  --pk-dist-title: var(--cloud-text, #0f0f12);
+  --pk-dist-body: color-mix(in srgb, var(--cloud-text, #0f0f12) 88%, #64748b);
+  --pk-dist-muted: color-mix(in srgb, var(--cloud-text, #0f0f12) 58%, #94a3b8);
+  --pk-dist-faint: color-mix(in srgb, var(--cloud-text, #0f0f12) 42%, #94a3b8);
+  --pk-dist-accent: var(--cloud-accent, #059669);
+  --pk-dist-accent-soft: color-mix(in srgb, var(--cloud-accent, #059669) 14%, transparent);
+  --pk-dist-border: color-mix(in srgb, var(--cloud-text, #0f0f12) 12%, transparent);
+  --pk-dist-surface: color-mix(in srgb, var(--cloud-bg, #f8faf9) 96%, #e2e8f0);
+  --pk-dist-surface-elevated: #ffffff;
+  --pk-dist-input-bg: color-mix(in srgb, var(--cloud-text, #0f0f12) 4%, #fff);
+  --pk-dist-preview-bg: #eef2f6;
+  --pk-dist-success: #059669;
+  --pk-dist-success-text: #047857;
+  --pk-dist-shadow: 0 32px 80px rgba(15, 23, 42, 0.14);
+}
+
+html.pk-cloud-active .pk-cover-studio__prompt-editor,
+.pk-cloud-stage .pk-cover-studio__prompt-editor {
+  background: #fff;
+  color: var(--cloud-text, #0f0f12);
+}
+
+html.pk-cloud-active .pk-cover-studio__prompt-shell,
+.pk-cloud-stage .pk-cover-studio__prompt-shell {
+  background: linear-gradient(165deg, #fff, #f8fafc);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
+}
+
+html.pk-cloud-active .pk-cover-studio__surprise-card,
+.pk-cloud-stage .pk-cover-studio__surprise-card {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--cloud-accent, #059669) 12%, #fff),
+    #f8fafc
+  );
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+html.pk-cloud-active .pk-cover-studio__surprise-title,
+.pk-cloud-stage .pk-cover-studio__surprise-title {
+  color: var(--cloud-text, #0f0f12);
+}
+
+html.pk-cloud-active .pk-cover-studio__surprise-cta,
+.pk-cloud-stage .pk-cover-studio__surprise-cta {
+  background: #fff;
+  color: var(--cloud-text, #0f0f12);
+}
+
+html.pk-cloud-active .pk-cover-studio__dock,
+.pk-cloud-stage .pk-cover-studio__dock {
+  background: color-mix(in srgb, #ffffff 92%, var(--cloud-bg, #f8faf9));
+  box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.08);
+}
+
+html.pk-cloud-active .pk-cover-studio__dock-btn--primary,
+.pk-cloud-stage .pk-cover-studio__dock-btn--primary {
+  color: #fff;
+}
+
+html.pk-cloud-active .pk-cover-studio__preview-pane .pk-cover-studio__section-label,
+.pk-cloud-stage .pk-cover-studio__preview-pane .pk-cover-studio__section-label {
+  color: color-mix(in srgb, var(--cloud-text, #0f0f12) 52%, #64748b);
+}
+
+html.pk-cloud-active .pk-cover-studio__preview-stage,
+.pk-cloud-stage .pk-cover-studio__preview-stage {
+  background: #e2e8f0;
+}
+
+html.pk-cloud-active .pk-cover-studio__dock-btn--ghost,
+.pk-cloud-stage .pk-cover-studio__dock-btn--ghost {
+  color: var(--cloud-text, #0f0f12);
+}
+
+html.pk-cloud-active .pk-cover-studio__dock-btn--secondary,
+.pk-cloud-stage .pk-cover-studio__dock-btn--secondary {
+  color: var(--cloud-text, #0f0f12);
+  background: #fff;
+}
+
+html.pk-warm-glass-active .pk-distribution-studio,
+.pk-warm-glass-stage .pk-distribution-studio {
+  --pk-dist-accent: var(--warm-accent-gold, #f5dc78);
+  --pk-dist-accent-soft: color-mix(in srgb, var(--warm-accent-gold, #f5dc78) 18%, transparent);
+  --pk-dist-surface-elevated: color-mix(in srgb, #1c0e0a 92%, transparent);
+  --pk-dist-success-text: #86efac;
+}
+
+.pk-warm-glass-stage .pk-distribution-studio {
+  border-color: var(--warm-glass-border, rgba(255, 200, 140, 0.2));
+  box-shadow:
+    inset 0 1px 0 var(--warm-glass-highlight, rgba(255, 220, 180, 0.15)),
+    0 40px 100px rgba(40, 16, 8, 0.35);
+}
+
+.pk-prism-dashboard .pk-distribution-studio__footer-btn--primary,
+.pk-prism-dashboard .pk-cover-studio__dock-btn--primary {
+  background: var(--pk-prism-btn-bg, linear-gradient(128deg, #7c3aed, #ec4899));
+}
+
+/* Neutralise glass-btn hérités si utilisés dans le studio */
+.pk-distribution-studio .pk-glass-btn--ghost {
+  color: var(--pk-dist-title) !important;
+  background: var(--pk-dist-input-bg) !important;
+  border: 1px solid var(--pk-dist-border) !important;
+}
+
+.pk-distribution-studio .pk-glass-btn--primary {
+  color: #fff !important;
+}

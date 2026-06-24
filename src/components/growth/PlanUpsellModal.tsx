@@ -13,6 +13,8 @@ import { trackClientEvent } from "@/lib/supabaseClient";
 import { useAuthStore } from "@/stores/authStore";
 import type { PaidPlanId } from "@/lib/planEntitlements";
 import { cn } from "@/lib/utils";
+import { useVisualThemeStore } from "@/stores/visualThemeStore";
+import "@/styles/paywall-modal.css";
 
 import type { AppLocale } from "@/i18n/config";
 import { buildPlanUpsellModalCopy } from "@/i18n/planUpsellModalCatalog";
@@ -40,6 +42,7 @@ export function PlanUpsellModal({
   onClose,
 }: Props) {
   const user = useAuthStore((s) => s.user);
+  const visualTheme = useVisualThemeStore((s) => s.theme);
   const [busy, setBusy] = useState(false);
   const ctx = { source, plan, remaining, totalLimit, usedThisMonth };
   const visible = reason ? shouldShowPlanUpsell(plan, reason, ctx) : false;
@@ -131,7 +134,7 @@ export function PlanUpsellModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[210] flex items-end justify-center bg-black/72 p-0 backdrop-blur-md sm:items-center sm:p-4"
+      className="pk-paywall-backdrop fixed inset-0 z-[210] flex items-end justify-center p-0 sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="pk-paywall-title"
@@ -139,19 +142,17 @@ export function PlanUpsellModal({
     >
       <div
         className={cn(
-          "pk-paywall relative w-full max-w-md overflow-hidden rounded-t-[1.5rem] border border-white/10 bg-[#0a0812] shadow-[0_32px_100px_rgba(0,0,0,0.72)] sm:rounded-[1.5rem]",
+          "pk-paywall pk-veil-modal-panel relative w-full max-w-md overflow-hidden rounded-t-[1.5rem] sm:rounded-[1.5rem]",
+          `pk-paywall--theme-${visualTheme}`,
           showLaunch && "pk-paywall--launch",
         )}
         onClick={(e) => e.stopPropagation()}
       >
-        <div
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_60%_at_50%_-10%,rgba(157,124,255,0.22),transparent_58%),radial-gradient(ellipse_70%_50%_at_100%_100%,rgba(103,195,255,0.12),transparent_55%)]"
-          aria-hidden
-        />
+        <div className="pk-paywall__glow" aria-hidden />
 
         <button
           type="button"
-          className="absolute right-4 top-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white/60 transition hover:text-white"
+          className="pk-paywall__close absolute right-4 top-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full transition"
           aria-label={ui.close}
           onClick={trackDismiss}
         >
@@ -162,22 +163,20 @@ export function PlanUpsellModal({
           <div className="flex items-center gap-3">
             <div
               className={cn(
-                "flex h-12 w-12 items-center justify-center rounded-2xl border",
-                urgent
-                  ? "border-amber-400/30 bg-amber-500/15 text-amber-200"
-                  : "border-violet-400/30 bg-violet-500/15 text-violet-200",
+                "pk-paywall__icon flex h-12 w-12 items-center justify-center rounded-2xl",
+                urgent && "pk-paywall__icon--urgent",
               )}
             >
               {urgent ? <Zap className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
             </div>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/42">
+              <p className="pk-paywall__eyebrow text-[11px] font-semibold uppercase tracking-[0.16em]">
                 {ui.eyebrow(urgent)}
               </p>
               {!showLaunch && targetPlan ? (
-                <p className="mt-0.5 text-sm font-bold tabular-nums text-white">
+                <p className="pk-paywall__price mt-0.5 text-sm font-bold tabular-nums">
                   {planPriceLabel(targetPlan, locale, { suffix: true })}
-                  <span className="ml-1 text-xs font-medium text-white/45">
+                  <span className="pk-paywall__price-note ml-1 text-xs font-medium">
                     {ui.cancelAnytime}
                   </span>
                 </p>
@@ -185,7 +184,7 @@ export function PlanUpsellModal({
             </div>
           </div>
 
-          <h2 id="pk-paywall-title" className="mt-5 text-balance text-xl font-bold leading-snug tracking-tight text-white sm:text-[1.35rem]">
+          <h2 id="pk-paywall-title" className="pk-paywall__title mt-5 text-balance text-xl font-bold leading-snug tracking-tight sm:text-[1.35rem]">
             {copy.title}
           </h2>
 
@@ -195,21 +194,21 @@ export function PlanUpsellModal({
               <LaunchOfferChips locale={locale} className="text-center" compact />
             </div>
           ) : (
-            <p className="mt-2 text-sm leading-relaxed text-white/58">{copy.description}</p>
+            <p className="pk-paywall__desc mt-2 text-sm leading-relaxed">{copy.description}</p>
           )}
 
           {showLaunch ? (
-            <p className="mt-3 text-center text-sm leading-relaxed text-white/52">{copy.description}</p>
+            <p className="pk-paywall__desc mt-3 text-center text-sm leading-relaxed">{copy.description}</p>
           ) : null}
 
           {showLaunch && whisper ? (
-            <p className="pk-paywall__legend-foot">&ldquo;{whisper.quote}&rdquo; — {whisper.who}</p>
+            <p className="pk-paywall__legend-foot">{`"${whisper.quote}" — ${whisper.who}`}</p>
           ) : null}
 
           <ul className="mt-5 space-y-2.5">
             {copy.bullets.slice(0, showLaunch ? 3 : 4).map((line) => (
-              <li key={line} className="flex items-start gap-2.5 text-sm text-white/78">
-                <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-400/12 text-emerald-300">
+              <li key={line} className="pk-paywall__bullet flex items-start gap-2.5 text-sm">
+                <span className="pk-paywall__check mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full">
                   <Check className="h-3 w-3" strokeWidth={2.5} aria-hidden />
                 </span>
                 <span>{line}</span>
@@ -240,7 +239,7 @@ export function PlanUpsellModal({
             ) : null}
             <button
               type="button"
-              className="w-full py-2 text-center text-xs font-semibold text-white/42 transition hover:text-white/70"
+              className="pk-paywall__secondary w-full py-2 text-center text-xs font-semibold transition"
               disabled={busy}
               onClick={trackDismiss}
             >
@@ -248,7 +247,7 @@ export function PlanUpsellModal({
             </button>
           </div>
 
-          <p className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-white/38">
+          <p className="pk-paywall__footer mt-4 flex items-center justify-center gap-1.5 text-[11px]">
             <Lock className="h-3 w-3 shrink-0" aria-hidden />
             {ui.stripeFooter}
           </p>

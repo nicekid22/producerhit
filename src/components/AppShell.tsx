@@ -183,12 +183,13 @@ export function AppShell({
                   hideChildrenOnMobile && "hidden md:flex md:flex-col",
                 )}
               >
-                <div
-                  className={cn(
-                    "pk-studio-workspace-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain",
-                    mobileLayoutV2 ? dockPb : dockPbScrollOnly,
-                  )}
-                >
+              <div
+                className={cn(
+                  "pk-studio-workspace-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain",
+                  mobileLayoutV2 ? dockPb : dockPbScrollOnly,
+                )}
+                id="pk-main-scroll"
+              >
                   {children}
                 </div>
               </div>
@@ -203,7 +204,7 @@ export function AppShell({
                 mobileLayoutV2 && "min-h-0",
               )}
             >
-              <div className={cn("pk-studio-workspace-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain", dockPb)}>
+              <div className={cn("pk-studio-workspace-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain", dockPb)} id="pk-main-scroll">
                 {children}
               </div>
             </div>

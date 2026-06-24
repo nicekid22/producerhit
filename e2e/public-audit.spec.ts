@@ -55,4 +55,27 @@ test.describe("Audit public ProducerHit", () => {
     const serious = results.violations.filter((v) => v.impact === "critical" || v.impact === "serious");
     expect(serious.map((v) => v.id)).toEqual([]);
   });
+
+  test("Community — scroll catalogue sans erreur console", async ({ page }) => {
+    const errors: string[] = [];
+    page.on("pageerror", (err) => errors.push(err.message));
+
+    await page.goto("/community", { waitUntil: "domcontentloaded" });
+    await page.waitForTimeout(1200);
+
+    const scrollRoot = page.locator("#pk-main-scroll");
+    if (await scrollRoot.count()) {
+      await scrollRoot.evaluate((el) => {
+        el.scrollTop = Math.min(el.scrollHeight, 2400);
+      });
+    } else {
+      await page.mouse.wheel(0, 2400);
+    }
+    await page.waitForTimeout(800);
+
+    const critical = errors.filter(
+      (e) => !e.includes("ObjectMultiplex") && !e.includes("TronLink") && !e.includes("Provider initialised"),
+    );
+    expect(critical).toEqual([]);
+  });
 });

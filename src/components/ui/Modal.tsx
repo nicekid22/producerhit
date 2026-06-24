@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/Button";
+import "@/styles/paywall-modal.css";
 
 export function Modal({
   open,
@@ -36,7 +37,7 @@ export function Modal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-sm"
+      className="pk-modal-backdrop fixed inset-0 z-[200] flex items-center justify-center overflow-y-auto p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="pk-modal-title"

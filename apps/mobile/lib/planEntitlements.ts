@@ -35,3 +35,14 @@ export function planDisplayName(plan: string | null | undefined): string {
 export function hasPriorityGeneration(plan: string | null | undefined): boolean {
   return PLAN_RANK[normalizePlanId(plan)] >= PLAN_RANK.pro;
 }
+
+export function canDistribute(plan: string | null | undefined): boolean {
+  return PLAN_RANK[normalizePlanId(plan)] >= PLAN_RANK.studio;
+}
+
+export function distributionMonthlyQuota(plan: string | null | undefined): number {
+  const id = normalizePlanId(plan);
+  if (id === "plus") return 5;
+  if (id === "studio") return 2;
+  return 0;
+}

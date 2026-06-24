@@ -1,21 +1,21 @@
 import { ReactNode } from "react";
 import { StyleProp, StyleSheet, ViewStyle } from "react-native";
-import { PhSurface } from "@/components/PhSurface";
+import { GlassCard, type GlassCardVariant } from "@/components/GlassCard";
 import { spacing } from "@/theme/tokens";
-import { useTheme } from "@/theme/ThemeProvider";
 
 type Props = {
   children: ReactNode;
   style?: StyleProp<ViewStyle>;
   elevated?: boolean;
+  variant?: GlassCardVariant;
 };
 
-export function PhCard({ children, style, elevated = true }: Props) {
-  const { elevation } = useTheme();
+export function PhCard({ children, style, elevated = true, variant }: Props) {
+  const resolved = variant ?? (elevated ? "elevated" : "default");
   return (
-    <PhSurface style={[styles.card, elevated ? (elevation.card as ViewStyle) : null, style]} elevated={elevated}>
+    <GlassCard variant={resolved} style={[styles.card, style]}>
       {children}
-    </PhSurface>
+    </GlassCard>
   );
 }
 

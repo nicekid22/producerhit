@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect, useRouter } from "expo-router";
+import { PhCard } from "@/components/PhCard";
 import {
   ACTIVATION_STEP_IDS,
   ACTIVATION_STEP_KEYS,
@@ -10,30 +12,44 @@ import {
   completeActivationStep,
   loadActivationSteps,
   mergeServerActivationSteps,
+  subscribeActivationProgress,
 } from "@/lib/onboardingProgress";
 import { useI18n } from "@/stores/localeStore";
-import { colors, radius, spacing, typography } from "@/theme/tokens";
+import { useTheme } from "@/theme/ThemeProvider";
+import { spacing } from "@/theme/tokens";
 
-export function ActivationChecklist() {
+export const ActivationChecklist = memo(function ActivationChecklist() {
   const { t } = useI18n();
+  const { colors, typography, radius } = useTheme();
   const router = useRouter();
+  const [ready, setReady] = useState(false);
   const [done, setDone] = useState<Set<ActivationStepId>>(new Set());
-  const [collapsed, setCollapsed] = useState(false);
 
   const refresh = useCallback(async () => {
     const local = await loadActivationSteps();
     const merged = await mergeServerActivationSteps(local);
     setDone(merged);
-    if (merged.size >= ACTIVATION_STEP_IDS.length) setCollapsed(true);
+    setReady(true);
   }, []);
 
   useEffect(() => {
     void refresh();
+    return subscribeActivationProgress(() => {
+      void refresh();
+    });
   }, [refresh]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void refresh();
+    }, [refresh]),
+  );
 
   const total = ACTIVATION_STEP_IDS.length;
   const count = ACTIVATION_STEP_IDS.filter((id) => done.has(id)).length;
-  if (count >= total) return null;
+  const ratio = total > 0 ? count / total : 0;
+
+  if (!ready || count >= total) return null;
 
   const navigateForStep = (stepId: ActivationStepId) => {
     if (stepId === "library_visit") router.push("/(tabs)/library");
@@ -42,40 +58,59 @@ export function ActivationChecklist() {
   };
 
   return (
-    <Pressable style={styles.wrap} onPress={() => setCollapsed((c) => !c)}>
+    <PhCard elevated={false} style={styles.wrap}>
       <View style={styles.header}>
-        <Text style={styles.title}>{t("checklistTitle")}</Text>
-        <Text style={styles.progress}>
+        <Text style={[typography.subtitle, { color: colors.text, fontSize: 15 }]}>{t("checklistTitle")}</Text>
+        <Text style={[typography.caption, { color: colors.accentPrimary, fontWeight: "700" }]}>
           {count}/{total}
         </Text>
       </View>
-      {!collapsed ? (
-        <View style={styles.list}>
-          {ACTIVATION_STEP_IDS.map((stepId, i) => {
-            const complete = done.has(stepId);
-            const labelKey = ACTIVATION_STEP_KEYS[i];
-            return (
-              <Pressable
-                key={stepId}
-                style={styles.row}
-                onPress={() => {
-                  if (!complete) navigateForStep(stepId);
-                }}
+
+      <View style={[styles.barTrack, { backgroundColor: colors.seekTrack, borderRadius: radius.pill }]}>
+        <View
+          style={[
+            styles.barFill,
+            {
+              width: `${Math.max(ratio * 100, ratio > 0 ? 4 : 0)}%`,
+              borderRadius: radius.pill,
+              backgroundColor: colors.accentPrimary,
+            },
+          ]}
+        />
+      </View>
+
+      <View style={styles.list}>
+        {ACTIVATION_STEP_IDS.map((stepId, i) => {
+          const complete = done.has(stepId);
+          const labelKey = ACTIVATION_STEP_KEYS[i];
+          return (
+            <Pressable
+              key={stepId}
+              style={styles.row}
+              disabled={complete}
+              onPress={() => navigateForStep(stepId)}
+            >
+              <Ionicons
+                name={complete ? "checkmark-circle" : "ellipse-outline"}
+                size={18}
+                color={complete ? colors.success : colors.textSubtle}
+              />
+              <Text
+                style={[
+                  typography.caption,
+                  { color: complete ? colors.textSubtle : colors.textMuted },
+                  complete && styles.labelDone,
+                ]}
               >
-                <Text style={[styles.check, complete && styles.checkDone]}>{complete ? "✓" : "○"}</Text>
-                <Text style={[styles.label, complete && styles.labelDone]}>{t(labelKey)}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      ) : (
-        <View style={styles.barTrack}>
-          <View style={[styles.barFill, { width: `${(count / total) * 100}%` }]} />
-        </View>
-      )}
-    </Pressable>
+                {t(labelKey)}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </PhCard>
   );
-}
+});
 
 export async function markActivationStep(stepId: ActivationStepId): Promise<void> {
   await completeActivationStep(stepId);
@@ -83,28 +118,22 @@ export async function markActivationStep(stepId: ActivationStepId): Promise<void
 
 const styles = StyleSheet.create({
   wrap: {
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.surfaceBorder,
-    backgroundColor: "rgba(255,255,255,0.03)",
     padding: spacing.md,
     gap: spacing.sm,
   },
-  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  title: { ...typography.subtitle, color: colors.text, fontSize: 15 },
-  progress: { ...typography.caption, color: colors.accent },
-  list: { gap: 6, marginTop: 4 },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  list: { gap: 6, marginTop: 2 },
   row: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 4 },
-  check: { ...typography.caption, color: colors.textSubtle, width: 18 },
-  checkDone: { color: colors.success },
-  label: { ...typography.caption, color: colors.textMuted },
-  labelDone: { color: colors.textSubtle, textDecorationLine: "line-through" },
+  labelDone: { textDecorationLine: "line-through" },
   barTrack: {
     height: 4,
     borderRadius: 2,
-    backgroundColor: colors.surfaceBorder,
     overflow: "hidden",
-    marginTop: 4,
   },
-  barFill: { height: "100%", backgroundColor: colors.accent },
+  barFill: { height: "100%" },
 });

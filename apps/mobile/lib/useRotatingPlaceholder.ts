@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { PromptMode } from "@producerhit/shared";
-import { getDisplayPromptPool } from "@producerhit/shared";
+import { getUnifiedMobileDisplayPool, pickNextPoolIndex } from "@producerhit/shared";
 import type { AppLocale } from "@/lib/i18n/catalog";
 import { resolveMobilePromptLocale, type VocalLanguageMode } from "@/lib/resolvePromptLocale";
 
@@ -30,21 +30,23 @@ export function useRotatingPlaceholder({
     [uiLocale, mode, vocalLanguageMode, manualVocalLanguage],
   );
 
-  const pool = useMemo(() => getDisplayPromptPool(promptLocale, mode), [promptLocale, mode]);
+  const pool = useMemo(() => getUnifiedMobileDisplayPool(promptLocale, mode), [promptLocale, mode]);
+  const poolRef = useRef(pool);
+  poolRef.current = pool;
 
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
     setIndex(pool.length > 1 ? Math.floor(Math.random() * pool.length) : 0);
-  }, [promptLocale, mode, pool]);
+  }, [promptLocale, mode, pool.length]);
 
   useEffect(() => {
     if (paused || pool.length <= 1) return;
     const id = setInterval(() => {
-      setIndex((i) => (i + 1) % pool.length);
+      setIndex((i) => pickNextPoolIndex(poolRef.current, i));
     }, 6000);
     return () => clearInterval(id);
-  }, [paused, pool]);
+  }, [paused, pool.length, promptLocale, mode]);
 
   return pool[index] ?? pool[0] ?? "";
 }

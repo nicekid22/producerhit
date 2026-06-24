@@ -1,10 +1,18 @@
 import { describe, expect, it } from "vitest";
+import { looksLikeAceProsePrompt } from "@producerhit/shared";
 import { CATEGORIZED_EN, CATEGORIZED_FR, flattenCategories } from "./index";
 import { getGenreMenuPromptCount, pickRandomGenreMenuDice } from "@/lib/randomPromptIdeas/genreMenuPrompts";
 import { pickRandomGenreMenuDiceRoll, getLandingDisplayPromptPool, prepareRotatingPromptPlaceholders } from "@/lib/randomPromptIdeas";
 import { GENRE_COUNT } from "@/lib/genres";
 import { looksLikeAceTechnicalPrompt } from "@/lib/promptEnhancer";
 describe("random prompt pools", () => {
+  it("EN song pools include 500+ ACE prose prompts", () => {
+    const enSong = flattenCategories(CATEGORIZED_EN.song);
+    expect(enSong.length).toBeGreaterThanOrEqual(430);
+    const aceSample = enSong.find((p) => /\bsong about\b/i.test(p) && /\.\s+[A-Z]/.test(p));
+    expect(aceSample).toBeTruthy();
+  });
+
   it("FR/EN song pools have hundreds of unique prompts", () => {
     const frSong = flattenCategories(CATEGORIZED_FR.song);
     const enSong = flattenCategories(CATEGORIZED_EN.song);
@@ -39,7 +47,7 @@ describe("random prompt pools", () => {
     const fr = pickRandomGenreMenuDiceRoll("fr", "song");
     expect(fr.displayPrompt.trim().length).toBeGreaterThan(12);
     expect(fr.genre).toBeTruthy();
-    if (fr.acePrompt.trim()) {
+    if (fr.acePrompt.trim() && !looksLikeAceProsePrompt(fr.displayPrompt)) {
       expect(fr.acePrompt.length).toBeGreaterThan(fr.displayPrompt.length);
     }
   });

@@ -1,222 +1,670 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
 import {
-  ActivityIndicator,
+
+  Animated,
+
   FlatList,
+  InteractionManager,
   RefreshControl,
+
   StyleSheet,
-  Text,
-  TextInput,
+
   View,
+
+  type ListRenderItem,
+
+  type ViewToken,
+
 } from "react-native";
+import { useIsFocused } from "@react-navigation/native";
+import { isHttpAudioUrl } from "@producerhit/shared";
+
+import * as Haptics from "expo-haptics";
+
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 import { markActivationStep } from "@/components/ActivationChecklist";
-import { CommunityLoopCard } from "@/components/CommunityLoopCard";
+
+import { CommunityGridCard } from "@/components/CommunityGridCard";
+
+import { CommunityEmptyState } from "@/components/CommunityEmptyState";
+
+import { CommunityListHeader } from "@/components/CommunityListHeader";
+
+import { CommunityNoResultsState } from "@/components/CommunityNoResultsState";
+
+import { LibrarySkeletonGrid } from "@/components/LibrarySkeletonGrid";
+
 import { PublicLoopSheet } from "@/components/PublicLoopSheet";
-import { GenreChips } from "@/components/GenreChips";
-import { PhCard } from "@/components/PhCard";
+
+import { enqueueDisplayCover, scheduleDisplayCovers, setDisplayCoverQueuePaused } from "@/lib/displayCoverQueue";
+
 import {
+
+  fetchCommunityLoopById,
+
   fetchCommunityLoops,
+
   prepareCommunityLoopForPlayback,
+
   type CommunityLoop,
+
 } from "@/lib/publicLoopsApi";
+
+import { usePullRefresh } from "@/lib/usePullRefresh";
+
+import { readCommunityCache, writeCommunityCache } from "@/lib/offlineCache";
+
 import { supabase } from "@/lib/supabase";
+
 import { usePlayerStore } from "@/stores/playerStore";
+
 import { useI18n } from "@/stores/localeStore";
+
 import { useResponsiveLayout } from "@/lib/useResponsiveLayout";
-import { ThemeBackdrop } from "@/components/ThemeBackdrop";
-import { PhDisplay } from "@/components/PhDisplay";
-import { resolveLoopCoverUrl } from "@/lib/loopDisplay";
-import { fetchDisplayPinterestCover } from "@/lib/pinterestCover";
+
+import { useStaggerEntrance } from "@/lib/useStaggerEntrance";
+
 import { useTheme } from "@/theme/ThemeProvider";
+
+import { useDeepLinkStore } from "@/stores/deepLinkStore";
+
 import { spacing } from "@/theme/tokens";
+
+
 
 const ALL_VALUE = "__all__";
 
-export default function CommunityScreen() {
-  const { t } = useI18n();
-  const { colors, typography, radius } = useTheme();
-  const { columns, contentMaxWidth, gutter, gridItemWidth, isTablet } = useResponsiveLayout();
-  const insets = useSafeAreaInsets();
+const TRENDING_COUNT = 8;
 
-  useEffect(() => {
-    void markActivationStep("community_visit");
-  }, []);
-  const current = usePlayerStore((s) => s.current);
-  const isPlaying = usePlayerStore((s) => s.isPlaying);
-  const setCurrent = usePlayerStore((s) => s.setCurrent);
-  const [loops, setLoops] = useState<CommunityLoop[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [resolvingId, setResolvingId] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
-  const [genre, setGenre] = useState(ALL_VALUE);
-  const [detailLoop, setDetailLoop] = useState<CommunityLoop | null>(null);
-  const [coverOverrides, setCoverOverrides] = useState<Record<string, string>>({});
 
-  const load = useCallback(async () => {
-    const rows = await fetchCommunityLoops(48);
-    setLoops(rows);
-  }, []);
 
-  useEffect(() => {
-    void (async () => {
-      setLoading(true);
-      try {
-        await load();
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [load]);
+function buildPlaybackQueue(playable: CommunityLoop, list: CommunityLoop[]): CommunityLoop[] {
 
-  useEffect(() => {
-    const missing = loops.filter((l) => !resolveLoopCoverUrl(l)).slice(0, 12);
-    for (const loop of missing) {
-      void fetchDisplayPinterestCover(loop).then((url) => {
-        if (!url) return;
-        setCoverOverrides((prev) => (prev[loop.id] ? prev : { ...prev, [loop.id]: url }));
-      });
-    }
-  }, [loops]);
+  const withDirectUrl = list.filter((l) => l.audioUrl && isHttpAudioUrl(l.audioUrl));
 
-  const genreOptions = useMemo(() => {
-    const unique = [...new Set(loops.map((l) => l.genre).filter(Boolean))].sort();
-    return [
-      { group: "Filter", value: ALL_VALUE, label: t("allGenre") },
-      ...unique.map((g) => ({ group: "Genre", value: g, label: g })),
-    ];
-  }, [loops, t]);
+  if (withDirectUrl.some((l) => l.id === playable.id)) {
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return loops.filter((l) => {
-      if (genre !== ALL_VALUE && l.genre !== genre) return false;
-      if (!q) return true;
-      return (
-        l.name.toLowerCase().includes(q) ||
-        l.genre.toLowerCase().includes(q) ||
-        (l.authorUsername ?? "").toLowerCase().includes(q)
-      );
-    });
-  }, [loops, query, genre]);
+    return withDirectUrl.map((l) => (l.id === playable.id ? playable : l));
 
-  const playLoop = async (loop: CommunityLoop) => {
-    setResolvingId(loop.id);
-    try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const token = session?.access_token ?? "";
-      const playable = await prepareCommunityLoopForPlayback(loop, token);
-      if (!playable) return;
-      const queue = filtered
-        .map((l) => ({ ...l, audioUrl: l.audioUrl }))
-        .filter((l) => l.audioUrl || l.aceTaskId);
-      setCurrent(playable, queue.length ? queue : [playable]);
-    } finally {
-      setResolvingId(null);
-    }
-  };
+  }
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    try {
-      await load();
-    } finally {
-      setRefreshing(false);
-    }
-  };
+  return [playable, ...withDirectUrl];
 
-  return (
-    <ThemeBackdrop>
-      <FlatList
-        data={filtered}
-        key={columns}
-        numColumns={columns}
-        keyExtractor={(item) => item.id}
-        columnWrapperStyle={columns > 1 ? { gap: gutter } : undefined}
-        contentContainerStyle={[
-          styles.list,
-          {
-            paddingTop: insets.top + spacing.lg,
-            maxWidth: contentMaxWidth,
-            alignSelf: isTablet ? "center" : undefined,
-            width: isTablet ? "100%" : undefined,
-          },
-        ]}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => void onRefresh()} tintColor={colors.accent} />
-        }
-        ListHeaderComponent={
-          <View style={styles.header}>
-            <PhDisplay variant="display">{t("community")}</PhDisplay>
-            <Text style={[typography.caption, { color: colors.textMuted, marginTop: 6 }]}>
-              {loading ? t("loading") : `${filtered.length} ${t("exploreSub")}`}
-            </Text>
-            <TextInput
-              value={query}
-              onChangeText={setQuery}
-              placeholder={t("search")}
-              placeholderTextColor={colors.textSubtle}
-              style={[
-                styles.search,
-                {
-                  color: colors.text,
-                  backgroundColor: colors.bgElevated,
-                  borderColor: colors.surfaceBorder,
-                  borderRadius: radius.lg,
-                  ...typography.body,
-                },
-              ]}
-            />
-            {genreOptions.length > 1 ? (
-              <GenreChips genres={genreOptions} value={genre} onChange={setGenre} />
-            ) : null}
-          </View>
-        }
-        ListEmptyComponent={
-          !loading ? (
-            <PhCard>
-              <Text style={[typography.subtitle, { color: colors.text }]}>No public tracks yet</Text>
-              <Text style={[typography.body, { color: colors.textMuted, marginTop: 8 }]}>
-                Make a track public from your Library to appear here.
-              </Text>
-            </PhCard>
-          ) : (
-            <ActivityIndicator color={colors.accent} style={{ marginTop: 40 }} />
-          )
-        }
-        renderItem={({ item }) => {
-          const displayLoop = coverOverrides[item.id] ? { ...item, coverUrl: coverOverrides[item.id] } : item;
-          const active = current?.id === item.id;
-          const playing = active && isPlaying;
-          const busy = resolvingId === item.id;
-          return (
-            <View style={columns > 1 ? { width: gridItemWidth } : undefined}>
-              <CommunityLoopCard
-                loop={displayLoop}
-                active={active}
-                playing={playing && !busy}
-                onPress={() => void playLoop(item)}
-                onOpen={() => setDetailLoop(item)}
-              />
-            </View>
-          );
-        }}
-      />
-
-      <PublicLoopSheet loop={detailLoop} visible={detailLoop != null} onClose={() => setDetailLoop(null)} />
-    </ThemeBackdrop>
-  );
 }
 
+
+
+export default function CommunityScreen() {
+  const isFocused = useIsFocused();
+  const isFocusedRef = useRef(isFocused);
+  isFocusedRef.current = isFocused;
+
+  const { t } = useI18n();
+
+  const { colors } = useTheme();
+
+  const { contentMaxWidth, gutter, isTablet } = useResponsiveLayout();
+
+  const gridColumns = isTablet ? (contentMaxWidth >= 900 ? 3 : 2) : 2;
+
+  const listPad = spacing.screen * 2;
+
+  const cellWidth =
+
+    gridColumns > 1
+
+      ? (contentMaxWidth - listPad - gutter * (gridColumns - 1)) / gridColumns
+
+      : contentMaxWidth - listPad;
+
+  const insets = useSafeAreaInsets();
+
+  const headerEntrance = useStaggerEntrance(0, { screenKey: "community" });
+  const trendingEntrance = useStaggerEntrance(80, { screenKey: "community" });
+
+
+
+  useEffect(() => {
+    setDisplayCoverQueuePaused(!isFocused);
+  }, [isFocused]);
+
+  useEffect(() => {
+
+    void markActivationStep("community_visit");
+
+  }, []);
+
+
+
+  const isPlaying = usePlayerStore((s) => s.isPlaying);
+  const current = usePlayerStore((s) => s.current);
+  const positionMs = usePlayerStore((s) => s.positionMs);
+  const setCurrent = usePlayerStore((s) => s.setCurrent);
+
+  const [loops, setLoops] = useState<CommunityLoop[]>([]);
+
+  const [loading, setLoading] = useState(true);
+
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const [playError, setPlayError] = useState<string | null>(null);
+
+  const [showingCachedData, setShowingCachedData] = useState(false);
+
+  const [resolvingId, setResolvingId] = useState<string | null>(null);
+
+  const [query, setQuery] = useState("");
+
+  const [genre, setGenre] = useState(ALL_VALUE);
+
+  const [detailLoop, setDetailLoop] = useState<CommunityLoop | null>(null);
+
+  const [coverOverrides, setCoverOverrides] = useState<Record<string, string>>({});
+
+
+
+  const onCoverUrl = useCallback((loopId: string, url: string) => {
+
+    setCoverOverrides((prev) => (prev[loopId] ? prev : { ...prev, [loopId]: url }));
+
+  }, []);
+
+
+
+  const load = useCallback(async () => {
+
+    try {
+
+      setLoadError(null);
+
+      const rows = await fetchCommunityLoops(48);
+
+      setLoops(rows);
+
+      setShowingCachedData(false);
+
+      await writeCommunityCache(rows);
+
+    } catch (e) {
+
+      setLoadError(e instanceof Error ? e.message : t("networkErrorBody"));
+
+      setShowingCachedData(true);
+
+      throw e;
+
+    }
+
+  }, [t]);
+
+
+
+  useEffect(() => {
+    const task = InteractionManager.runAfterInteractions(() => {
+      void (async () => {
+        const cached = await readCommunityCache();
+        if (cached?.length) {
+          setLoops(cached);
+        }
+
+        setLoading(!cached?.length);
+        try {
+          await load();
+        } catch {
+          /* loadError set; cached rows kept if any */
+        } finally {
+          setLoading(false);
+        }
+      })();
+    });
+    return () => task.cancel();
+  }, [load]);
+
+
+
+  const pendingLoopId = useDeepLinkStore((s) => s.pendingLoopId);
+
+  const consumePendingLoopId = useDeepLinkStore((s) => s.consumePendingLoopId);
+
+
+
+  useEffect(() => {
+
+    if (!pendingLoopId) return;
+
+    const id = consumePendingLoopId();
+
+    if (!id) return;
+
+    void (async () => {
+
+      try {
+
+        const loop = await fetchCommunityLoopById(id);
+
+        if (loop) setDetailLoop(loop);
+
+      } catch {
+
+        setLoadError(t("networkErrorBody"));
+
+      }
+
+    })();
+
+  }, [pendingLoopId, consumePendingLoopId, t]);
+
+
+
+  const withCovers = useMemo(
+
+    () => loops.map((l) => (coverOverrides[l.id] ? { ...l, coverUrl: coverOverrides[l.id] } : l)),
+
+    [loops, coverOverrides],
+
+  );
+
+
+
+  const filtered = useMemo(() => {
+
+    const q = query.trim().toLowerCase();
+
+    return withCovers.filter((l) => {
+
+      if (genre !== ALL_VALUE && l.genre !== genre) return false;
+
+      if (!q) return true;
+
+      return (
+
+        l.name.toLowerCase().includes(q) ||
+
+        l.genre.toLowerCase().includes(q) ||
+
+        (l.authorUsername ?? "").toLowerCase().includes(q)
+
+      );
+
+    });
+
+  }, [withCovers, query, genre]);
+
+
+
+  const trending = useMemo(() => filtered.slice(0, TRENDING_COUNT), [filtered]);
+
+
+
+  useEffect(() => {
+    if (!isFocused || trending.length === 0) return;
+    scheduleDisplayCovers(trending, onCoverUrl);
+  }, [isFocused, trending, onCoverUrl]);
+
+
+
+  const playLoop = useCallback(
+
+    async (loop: CommunityLoop) => {
+
+      setPlayError(null);
+
+      setResolvingId(loop.id);
+
+      try {
+
+        const {
+
+          data: { session },
+
+        } = await supabase.auth.getSession();
+
+        const token = session?.access_token ?? "";
+
+        const needsAce = !loop.audioUrl && Boolean(loop.aceTaskId);
+
+
+
+        if (needsAce && !token) {
+
+          setPlayError(t("communityLoginRequired"));
+
+          void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+
+          return;
+
+        }
+
+
+
+        const playable = await prepareCommunityLoopForPlayback(loop, token);
+
+        if (!playable?.audioUrl) {
+
+          setPlayError(t("communityPlayFailed"));
+
+          void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+
+          return;
+
+        }
+
+
+
+        const queue = buildPlaybackQueue(playable, filtered);
+
+        setCurrent(playable, queue);
+
+      } catch (e) {
+
+        setPlayError(e instanceof Error ? e.message : t("communityPlayFailed"));
+
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+
+      } finally {
+
+        setResolvingId(null);
+
+      }
+
+    },
+
+    [filtered, setCurrent, t],
+
+  );
+
+
+
+  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken<CommunityLoop>[] }) => {
+    if (!isFocusedRef.current) return;
+
+    const visible = viewableItems
+
+      .map((v) => v.item)
+
+      .filter((item): item is CommunityLoop => item != null);
+
+    for (const loop of visible) {
+
+      enqueueDisplayCover(loop, onCoverUrl);
+
+    }
+
+  }).current;
+
+
+
+  const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 40, minimumViewTime: 200 }).current;
+
+
+
+  const { refreshing, tintColor, onRefresh } = usePullRefresh({
+
+    onRefresh: async () => {
+
+      await load();
+
+    },
+
+  });
+
+
+
+  const openDetail = useCallback((loop: CommunityLoop) => setDetailLoop(loop), []);
+
+
+
+  const renderItem: ListRenderItem<CommunityLoop> = useCallback(
+
+    ({ item }) => {
+
+      const active = current?.id === item.id;
+
+      const playing = active && isPlaying;
+
+      const busy = resolvingId === item.id;
+
+      return (
+
+        <View style={gridColumns > 1 ? { width: cellWidth } : { flex: 1 }}>
+
+          <CommunityGridCard
+
+            loop={item}
+
+            active={active}
+
+            playing={playing && !busy}
+
+            positionMs={playing && !busy ? positionMs : 0}
+
+            onPress={() => void playLoop(item)}
+
+            onOpen={() => openDetail(item)}
+
+            busy={busy}
+
+          />
+
+        </View>
+
+      );
+
+    },
+
+    [cellWidth, current?.id, gridColumns, isPlaying, openDetail, playLoop, positionMs, resolvingId],
+
+  );
+
+  const listExtraData = useMemo(
+    () => `${current?.id ?? ""}:${isPlaying}:${resolvingId ?? ""}`,
+    [current?.id, isPlaying, resolvingId],
+  );
+
+  const listHeader = useMemo(
+
+    () => (
+
+      <CommunityListHeader
+
+        loadError={loadError}
+
+        playError={playError}
+
+        onRetryLoad={() => {
+
+          void load();
+
+        }}
+
+        showingCachedData={showingCachedData}
+
+        headerEntranceStyle={headerEntrance.style}
+
+        trendingEntranceStyle={trendingEntrance.style}
+
+        title={t("community")}
+
+        subtitle={loading ? t("loading") : `${filtered.length} ${t("exploreSub")}`}
+
+        query={query}
+
+        onQueryChange={setQuery}
+
+        searchPlaceholder={t("search")}
+
+        genre={genre}
+
+        onGenreChange={setGenre}
+
+        trending={trending}
+
+        trendingLabel={t("communityTrending")}
+
+        allTracksLabel={t("communityAllTracks")}
+
+        showAllTracksLabel={filtered.length > 0}
+
+        currentId={current?.id}
+
+        isPlaying={isPlaying}
+
+        resolvingId={resolvingId}
+
+        onPlay={(loop) => void playLoop(loop)}
+
+        onOpen={openDetail}
+
+      />
+
+    ),
+
+    [
+
+      current?.id,
+
+      filtered.length,
+
+      genre,
+
+      headerEntrance.style,
+
+      isPlaying,
+
+      load,
+
+      loadError,
+
+      loading,
+
+      playError,
+
+      playLoop,
+
+      openDetail,
+
+      query,
+
+      resolvingId,
+
+      showingCachedData,
+
+      t,
+
+      trending,
+
+      trendingEntrance.style,
+
+    ],
+
+  );
+
+
+
+  return (
+
+    <>
+
+      <FlatList
+
+        data={filtered}
+
+        key={gridColumns}
+
+        numColumns={gridColumns}
+
+        keyExtractor={(item) => item.id}
+
+        removeClippedSubviews
+
+        initialNumToRender={8}
+
+        maxToRenderPerBatch={6}
+
+        windowSize={7}
+        updateCellsBatchingPeriod={50}
+
+        onViewableItemsChanged={onViewableItemsChanged}
+
+        viewabilityConfig={viewabilityConfig}
+
+        columnWrapperStyle={gridColumns > 1 ? { gap: gutter } : undefined}
+
+        contentContainerStyle={[
+
+          styles.list,
+
+          {
+
+            paddingTop: insets.top + spacing.lg,
+
+            maxWidth: contentMaxWidth,
+
+            alignSelf: isTablet ? "center" : undefined,
+
+            width: isTablet ? "100%" : undefined,
+
+          },
+
+        ]}
+
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={tintColor} />}
+
+        ListHeaderComponent={listHeader}
+
+        ListEmptyComponent={
+
+          loading && loops.length === 0 ? (
+
+            <LibrarySkeletonGrid columns={gridColumns} count={gridColumns * 2} />
+
+          ) : !loading && filtered.length === 0 && loops.length > 0 ? (
+
+            <CommunityNoResultsState />
+
+          ) : !loading && loops.length === 0 ? (
+
+            <CommunityEmptyState />
+
+          ) : null
+
+        }
+
+        renderItem={renderItem}
+        extraData={listExtraData}
+
+      />
+
+
+
+      <PublicLoopSheet
+
+        loop={detailLoop}
+
+        visible={detailLoop != null}
+
+        onClose={() => setDetailLoop(null)}
+
+        onPlay={detailLoop ? () => void playLoop(detailLoop) : undefined}
+
+        busy={detailLoop != null && resolvingId === detailLoop.id}
+
+      />
+
+    </>
+
+  );
+
+}
+
+
+
 const styles = StyleSheet.create({
+
   list: { padding: spacing.screen, paddingBottom: 200, gap: spacing.md },
-  header: { marginBottom: spacing.lg, gap: spacing.sm, width: "100%" },
-  search: {
-    marginTop: spacing.sm,
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
+
 });
+
+

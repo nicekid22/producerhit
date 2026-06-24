@@ -1,46 +1,72 @@
-import { useMemo } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { memo, useMemo } from "react";
+import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/theme/ThemeProvider";
 
 type Genre = { group: string; value: string; label: string };
 
 type Props = {
-  genres: Genre[];
+  genres: readonly Genre[];
   value: string;
   onChange: (genre: string) => void;
 };
 
-export function GenreChips({ genres, value, onChange }: Props) {
-  const { colors, typography, motion } = useTheme();
-  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
+type ChipProps = {
+  label: string;
+  active: boolean;
+  onPress: () => void;
+  styles: ReturnType<typeof createStyles>;
+};
+
+const GenreChip = memo(function GenreChip({ label, active, onPress, styles }: ChipProps) {
+  const { colors } = useTheme();
 
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-      {genres.map((g) => {
-        const active = value === g.value;
-        return (
-          <Pressable
-            key={g.value}
-            onPress={() => {
-              void Haptics.selectionAsync();
-              onChange(g.value);
-            }}
-            style={({ pressed }) => [
-              styles.chip,
-              active ? styles.chipActive : styles.chipIdle,
-              pressed && { transform: [{ scale: motion.pressScale }] },
-            ]}
-          >
-            <Text style={[styles.chipText, active ? styles.chipTextActive : styles.chipTextIdle]}>
-              {g.label}
-            </Text>
-          </Pressable>
-        );
-      })}
+    <Pressable
+      onPress={() => {
+        void Haptics.selectionAsync();
+        onPress();
+      }}
+      style={[
+        styles.chip,
+        active
+          ? { backgroundColor: colors.pillActiveBg, borderColor: colors.pillActiveText }
+          : { backgroundColor: colors.bgGlass, borderColor: colors.surfaceBorder },
+      ]}
+    >
+      <Text style={[styles.chipText, active ? styles.chipTextActive : styles.chipTextIdle]}>{label}</Text>
+    </Pressable>
+  );
+});
+
+export const GenreChips = memo(function GenreChips({ genres, value, onChange }: Props) {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
+
+  const displayGenres = useMemo(() => {
+    if (genres.some((g) => g.value === value)) return genres;
+    return [{ group: "Selected", value, label: value }, ...genres];
+  }, [genres, value]);
+
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.chips}
+      keyboardShouldPersistTaps="handled"
+    >
+      {displayGenres.map((g) => (
+        <GenreChip
+          key={g.value}
+          label={g.label}
+          active={value === g.value}
+          onPress={() => onChange(g.value)}
+          styles={styles}
+        />
+      ))}
     </ScrollView>
   );
-}
+});
 
 function createStyles(
   colors: ReturnType<typeof useTheme>["colors"],
@@ -51,15 +77,8 @@ function createStyles(
     chip: {
       paddingHorizontal: 16,
       paddingVertical: 10,
-      borderRadius: 999,
-    },
-    chipActive: {
-      backgroundColor: colors.pillActiveBg,
-    },
-    chipIdle: {
+      borderRadius: 100,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.surfaceBorder,
-      backgroundColor: colors.surface,
     },
     chipText: { ...typography.caption, fontWeight: "600" },
     chipTextActive: { color: colors.pillActiveText },

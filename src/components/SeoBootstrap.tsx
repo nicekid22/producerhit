@@ -15,7 +15,7 @@ import {
   COMPARISON_PAGE_PATH_SET,
   SEO_PAGE_PATH_SET,
 } from "@/generated/marketingRoutePaths";
-import { buildForAiJsonLd } from "@/lib/marketing/phase1PagesSeo";
+import { buildAlbumCoverGeneratorJsonLd, buildForAiJsonLd } from "@/lib/marketing/phase1PagesSeo";
 import { buildGenreStatsJsonLd } from "@/lib/marketing/phase2PagesSeo";
 
 function setMeta(nameOrProp: string, value: string, kind: "name" | "property") {
@@ -72,6 +72,9 @@ function slugKeyFromPath(pathname: string): string {
   if (pathname.startsWith("/loop/")) return "loop";
   if (pathname === "/pricing") return "pricing";
   if (pathname === "/legal") return "legal";
+  if (pathname === "/learn/distribute-ai-music" || pathname === "/fr/apprendre/distribuer-musique-ia") {
+    return "distribution-academy";
+  }
   if (pathname === "/auth") return "auth";
   if (pathname === "/dashboard") return "dashboard";
   if (pathname === "/library") return "library";
@@ -84,6 +87,9 @@ function slugKeyFromPath(pathname: string): string {
   if (pathname === "/generate-beats-online-free") return "generate-beats-online-free";
   if (pathname === "/for-ai") return "for-ai";
   if (pathname === "/ai-beat-name-generator") return "beat-name-generator";
+  if (pathname === "/ai-album-cover-generator" || pathname === "/fr/generateur-pochette-album-ia") {
+    return "album-cover-generator";
+  }
   if (pathname === "/ai-music-genre-stats-2026") return "genre-stats";
   if (COMPARISON_PAGE_PATH_SET.has(pathname)) return "comparison";
   if (SEO_PAGE_PATH_SET.has(pathname)) return "seo-landing";
@@ -507,6 +513,11 @@ export function SeoBootstrap() {
             offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
           },
         ]);
+        return;
+      }
+
+      if (slugKey === "album-cover-generator") {
+        setJsonLd([...baseJsonLd, buildAlbumCoverGeneratorJsonLd(locale)]);
         return;
       }
 

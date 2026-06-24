@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { looksLikeAceProsePrompt, pickUnifiedDiceRoll, resolveGenerationCaptionContext } from "@producerhit/shared";
 import {
   enhanceNaturalIdeaToAce,
   looksLikeAceTechnicalPrompt,
@@ -9,6 +10,7 @@ import {
 } from "@/lib/promptEnhancer";
 import { pickRandomGenreMenuDiceRoll } from "@/lib/randomPromptIdeas";
 import { pickRandomGenreMenuDice } from "@/lib/randomPromptIdeas/genreMenuPrompts";
+import { pickRandomUnifiedDiceRoll } from "@/lib/randomPromptIdeas/unifiedDisplayPool";
 
 describe("promptEnhancer", () => {
   it("detects ACE technical prompts", () => {
@@ -94,6 +96,37 @@ describe("promptEnhancer", () => {
     expect(ctx.melodyComposition).toBe(true);
   });
 
+  it("beat mode disables melody composition for dice ACE prose", () => {
+    let roll = pickRandomUnifiedDiceRoll("fr", "beat");
+    for (let i = 0; i < 60 && !looksLikeAceProsePrompt(roll.displayPrompt); i += 1) {
+      roll = pickRandomUnifiedDiceRoll("fr", "beat");
+    }
+    expect(looksLikeAceProsePrompt(roll.displayPrompt)).toBe(true);
+    expect(roll.acePrompt).not.toMatch(/\b(male|female) vocal\b/i);
+    const ctx = resolveGenerationCaptionContext({
+      diceAceOverride: roll.acePrompt,
+      displayIdea: roll.displayPrompt,
+      formGenre: roll.genre,
+      mode: "beat",
+    });
+    expect(ctx.melodyComposition).toBe(false);
+    expect(ctx.captionOverride).not.toMatch(/\b(male|female) vocal\b/i);
+  });
+
+  it("shared mobile beat dice roll stays instrumental", () => {
+    let roll = pickUnifiedDiceRoll("fr", "beat");
+    for (let i = 0; i < 60 && !looksLikeAceProsePrompt(roll.displayPrompt); i += 1) {
+      roll = pickUnifiedDiceRoll("fr", "beat");
+    }
+    const ctx = resolveGenerationCaptionContext({
+      diceAceOverride: roll.acePrompt,
+      displayIdea: roll.displayPrompt,
+      formGenre: roll.genre,
+      mode: "beat",
+    });
+    expect(ctx.melodyComposition).toBe(false);
+  });
+
   it("enhances natural ideas to ACE tags", () => {
     const ace = enhanceNaturalIdeaToAce(
       "une chanson hip hop sur des vacances au bord de la mer",
@@ -118,7 +151,9 @@ describe("promptEnhancer", () => {
       mode: "song",
     });
     expect(caption).toBe(dice.acePrompt);
-    expect(caption).not.toBe(dice.displayPrompt);
+    if (!looksLikeAceProsePrompt(dice.displayPrompt)) {
+      expect(caption).not.toBe(dice.displayPrompt);
+    }
   });
 });
 

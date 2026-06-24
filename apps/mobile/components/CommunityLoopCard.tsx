@@ -14,11 +14,12 @@ type Props = {
   loop: CommunityLoop;
   active?: boolean;
   playing?: boolean;
+  positionMs?: number;
   onPress: () => void;
   onOpen?: () => void;
 };
 
-export function CommunityLoopCard({ loop, active, playing, onPress, onOpen }: Props) {
+export function CommunityLoopCard({ loop, active, playing, positionMs = 0, onPress, onOpen }: Props) {
   const { locale, t } = useI18n();
   const { colors, motion } = useTheme();
   const reducedMotion = useReducedMotion();
@@ -38,7 +39,7 @@ export function CommunityLoopCard({ loop, active, playing, onPress, onOpen }: Pr
         active && styles.active,
       ]}
     >
-      <LoopCover loop={loop} size={72} rounded={radius.lg} playing={playing} />
+      <LoopCover loop={loop} size={72} rounded={radius.lg} playing={playing} positionMs={positionMs} />
       <View style={styles.body}>
         <Text style={styles.name} numberOfLines={1}>
           {loop.name}

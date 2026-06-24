@@ -12,16 +12,14 @@ import {
   uploadPublicLoopAudio,
 } from "@/lib/publicLoops";
 import { removeLoopAudioStorage, SUPABASE_LOOP_AUDIO_UPLOAD } from "@/lib/storageAudio";
-import { mergeCoverIntoStems, needsPinterestCover, preloadCoverImage } from "@/lib/coverArt";
+import { mergeCoverIntoStems, needsLoopCardCover, preloadCoverImage } from "@/lib/coverArt";
 import { coverDetailsPatch, coverUrlFromLoop, loopWithCoverFallback, persistLoopCover } from "@/lib/loopCoverUrl";
 import { readAceCoverFromStems } from "@/lib/stemsAceMerge";
 import { assignLoopCoverOnce } from "@/lib/assignLoopCover";
-import { rememberPinterestCoverUrl } from "@/lib/pinterestCoverDedup";
-import { previewPinterestDiscoveryIfEnabled } from "@/lib/pinterestDiscovery";
 import {
+  scheduleLoopCoverBackfill,
   scheduleMissingCoverRepair,
-  schedulePinterestCoverBackfill,
-} from "@/lib/pinterestCoverBackfill";
+} from "@/lib/loopCoverBackfill";
 import { buildCoverPromptSnapshot } from "@/lib/utils";
 import { dedupeLoopsById, dropStalePreviewDuplicates, isPreviewLoopId } from "@/lib/loopWorkspaceUtils";
 import { useAuthStore } from "@/stores/authStore";
@@ -604,7 +602,6 @@ export const useLoopsStore = create<LoopsState>((set, get) => ({
       }),
     }));
     preloadCoverImage(trimmed);
-    rememberPinterestCoverUrl(trimmed);
     if (userId) {
       const loop = get().loops.find((l) => l.id === loopId);
       persistMyLoopsCache(userId, get().loops);
@@ -885,7 +882,7 @@ export const useLoopsStore = create<LoopsState>((set, get) => ({
       void hydrateAudioFromCache(useLoopsStore.getState().loops);
       persistMyLoopsCache(userId, useLoopsStore.getState().loops, totalCount);
       scheduleMissingCoverRepair(useLoopsStore.getState().loops);
-      schedulePinterestCoverBackfill(useLoopsStore.getState().loops);
+      scheduleLoopCoverBackfill(useLoopsStore.getState().loops);
 
       void (async () => {
         if (epoch !== myLoopsLoadEpoch || useAuthStore.getState().user?.id !== userId) return;
@@ -1082,7 +1079,7 @@ export const useLoopsStore = create<LoopsState>((set, get) => ({
       !!pickInlineProviderAudioUrl(trimmedAudioUrl, stemsUrlForDb);
 
     const coverUrlHint = finalLoop.details?.coverUrl?.trim() ?? "";
-    const needsCoverAssign = needsPinterestCover(finalLoop) || coverUrlHint.includes("pinimg.com");
+    const needsCoverAssign = needsLoopCardCover(finalLoop) || coverUrlHint.includes("pinimg.com");
 
     const applyCoverToLoop = (coverUrl: string | null | undefined, coverKind?: "image" | "video") => {
       if (!coverUrl?.trim()) return;
@@ -1211,8 +1208,6 @@ export const useLoopsStore = create<LoopsState>((set, get) => ({
     });
     persistMyLoopsCache(user.id, useLoopsStore.getState().loops);
     void cacheLoopAudioFromSrc(row.id, finalLoop.audioUrl ?? trimmedAudioUrl);
-    previewPinterestDiscoveryIfEnabled(finalLoop);
-
     if (!LOOP_ACE_PERSIST && needsCoverAssign) {
       void assignLoopCoverOnce(row.id, { ...finalLoop, stemsUrl: stemsUrlForDb }, {
         stemsUrl: stemsUrlForDb,

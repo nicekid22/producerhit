@@ -3,7 +3,7 @@ import { getThemeTokens } from "./index";
 import type { ThemeTokens } from "./types";
 import { useVisualThemeStore } from "@/stores/visualThemeStore";
 
-const ThemeContext = createContext<ThemeTokens>(getThemeTokens("prism"));
+const ThemeContext = createContext<ThemeTokens>(getThemeTokens("dusty"));
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const theme = useVisualThemeStore((s) => s.theme);

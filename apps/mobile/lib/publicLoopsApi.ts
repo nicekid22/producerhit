@@ -1,6 +1,9 @@
 import { extractAceTaskId, isHttpAudioUrl, type Loop, type LoopLength } from "@producerhit/shared";
+import { isPlayableCommunityRow, parseStemsUrl, pickHttpAudioUrl } from "./communityPlaybackUtils";
 import { invokeSupabaseFunction } from "./edgeInvoke";
 import { supabase } from "./supabase";
+
+export { isPlayableCommunityRow } from "./communityPlaybackUtils";
 
 export type CommunityLoop = Loop & {
   authorUsername?: string | null;
@@ -27,36 +30,6 @@ type PublicRow = {
 
 const PUBLIC_SELECT =
   "id, user_id, name, genre, influence, mood, bpm, prompt, audio_url, stems_url, cover_url, created_at, key, scale, loop_length";
-
-function parseStemsUrl(stemsUrl: unknown): Record<string, unknown> | null {
-  if (!stemsUrl) return null;
-  if (typeof stemsUrl === "object") return stemsUrl as Record<string, unknown>;
-  if (typeof stemsUrl === "string") {
-    try {
-      const parsed = JSON.parse(stemsUrl) as unknown;
-      return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
-    } catch {
-      return null;
-    }
-  }
-  return null;
-}
-
-function pickHttpAudioUrl(audioUrl: unknown, stemsUrl: unknown): string | null {
-  const direct = typeof audioUrl === "string" ? audioUrl.trim() : "";
-  if (isHttpAudioUrl(direct) && !direct.startsWith("blob:")) return direct;
-
-  const stems = parseStemsUrl(stemsUrl);
-  const ace = stems?.ace && typeof stems.ace === "object" ? (stems.ace as Record<string, unknown>) : null;
-  const fromAce = typeof ace?.httpAudioUrl === "string" ? ace.httpAudioUrl.trim() : "";
-  if (isHttpAudioUrl(fromAce)) return fromAce;
-  return null;
-}
-
-export function isPlayableCommunityRow(row: PublicRow): boolean {
-  if (pickHttpAudioUrl(row.audio_url, row.stems_url)) return true;
-  return extractAceTaskId(row.stems_url).length > 0;
-}
 
 function mapPublicRow(row: PublicRow, authorUsername?: string | null): CommunityLoop {
   const httpAudio = pickHttpAudioUrl(row.audio_url, row.stems_url);
@@ -125,6 +98,24 @@ export async function fetchCommunityLoops(limit = 48): Promise<CommunityLoop[]> 
     .map((row) => mapPublicRow(row as PublicRow));
 
   return attachAuthors(playable);
+}
+
+export async function fetchCommunityLoopById(id: string): Promise<CommunityLoop | null> {
+  const trimmed = id.trim();
+  if (!trimmed) return null;
+
+  const { data, error } = await supabase
+    .from("loops")
+    .select(PUBLIC_SELECT)
+    .eq("id", trimmed)
+    .eq("is_public", true)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data || !isPlayableCommunityRow(data as PublicRow)) return null;
+
+  const rows = await attachAuthors([mapPublicRow(data as PublicRow)]);
+  return rows[0] ?? null;
 }
 
 export async function resolveCommunityPlaybackUrl(loop: CommunityLoop, accessToken: string): Promise<string | null> {

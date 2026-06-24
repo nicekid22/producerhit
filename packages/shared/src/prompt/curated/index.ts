@@ -47,3 +47,42 @@ export function mergeUniqueDisplayPrompts(...pools: readonly (readonly string[])
   }
   return out;
 }
+
+/** Round-robin merge — évite qu'un gros pool (ACE prose) noie curated + genre dice. */
+export function interleaveDisplayPrompts(...pools: readonly (readonly string[])[]): string[] {
+  const queues = pools.map((pool) =>
+    pool.map((raw) => raw.trim()).filter((p) => p.length > 0),
+  );
+  const seen = new Set<string>();
+  const out: string[] = [];
+  let added = true;
+  while (added) {
+    added = false;
+    for (const queue of queues) {
+      while (queue.length > 0) {
+        const p = queue.shift()!;
+        const key = p.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push(p);
+        added = true;
+        break;
+      }
+    }
+  }
+  return out;
+}
+
+const ACE_PROSE_DISPLAY_CAP = 64;
+
+/** Échantillonne le pool ACE sans tout charger dans le dé / placeholder. */
+export function sampleAceProseDisplayPool(pool: readonly string[], cap = ACE_PROSE_DISPLAY_CAP): readonly string[] {
+  if (pool.length <= cap) return pool;
+  const out: string[] = [];
+  const step = pool.length / cap;
+  for (let i = 0; i < cap; i += 1) {
+    const item = pool[Math.floor(i * step)];
+    if (item) out.push(item);
+  }
+  return out;
+}

@@ -6,6 +6,8 @@ import toast from "react-hot-toast";
 import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";
 import { Navbar } from "@/components/Navbar";
 import { isPlayablePublicLoop, fetchPublicLoops, resolvePlayableCommunityAudio, type PublicLoopRow } from "@/lib/publicLoops";
+import { unlockAudioPlaybackFromGesture } from "@/lib/audioPlaybackUnlock";
+import { buildPublicLoopEnrichment } from "@/lib/publicLoopEnrichment";
 import {
   findPublicRowIndex,
   playPublicRowsInQueue,
@@ -16,6 +18,7 @@ import { displayProducerInfluence } from "@/lib/beatInfluence";
 import { fetchPublicProfileCards, type PublicProfileCard } from "@/lib/creatorProfile";
 import { ProfileAuthorChip } from "@/components/profile/ProfileAuthorChip";
 import { LoopCommentsSection } from "@/components/community/LoopCommentsSection";
+import { ViralShareBar } from "@/components/growth/ViralShareBar";
 import { savePendingRemix } from "@/lib/pendingRemix";
 import { isRemixVibeRecreateEnabled } from "@/lib/remixVibeFallback";
 import { loopToRemixSource } from "@/lib/remixSourceLoop";
@@ -84,6 +87,7 @@ export default function PublicLoop() {
   const coverUrl = useMemo(() => (row ? resolvePublicRowCoverUrl(row, 1024) : ""), [row]);
   const genreSeo = useMemo(() => getGenreSeoLink(row?.genre, locale), [row?.genre, locale]);
   const producerInfluence = useMemo(() => displayProducerInfluence(row?.influence), [row?.influence]);
+  const enrichment = useMemo(() => (row ? buildPublicLoopEnrichment(row, locale) : null), [row, locale]);
   const avgRating = ratingCount > 0 ? ratingSum / ratingCount : null;
 
   const fromShorts = useMemo(() => {
@@ -117,8 +121,10 @@ export default function PublicLoop() {
       ratingValue: avgRating,
       ratingCount,
       locale,
+      seoDescription: enrichment?.aboutParagraph,
+      lyricsSnippet: enrichment?.lyrics ?? null,
     });
-  }, [author?.username, avgRating, coverUrl, id, locale, ratingCount, row]);
+  }, [author?.username, avgRating, coverUrl, enrichment?.aboutParagraph, enrichment?.lyrics, id, locale, ratingCount, row]);
 
   const toLoop = (r: LoopRow): Loop => {
     return {
@@ -175,6 +181,34 @@ export default function PublicLoop() {
       cancelled = true;
     };
   }, [id]);
+
+  useEffect(() => {
+    if (!row?.id) return;
+    let cancelled = false;
+    if (!isPlayablePublicLoop(row.audio_url, row.stems_url, row.created_at)) return;
+    void (async () => {
+      const publicRow: PublicLoopRow = {
+        id: row.id,
+        name: row.name,
+        genre: row.genre,
+        influence: row.influence,
+        mood: row.mood,
+        bpm: row.bpm,
+        prompt: row.prompt,
+        audio_url: row.audio_url,
+        stems_url: row.stems_url ?? null,
+        created_at: row.created_at,
+        seed: row.seed,
+      };
+      const url = await resolvePlayableCommunityAudio(publicRow).catch(() => "");
+      if (!cancelled && url) {
+        setRow((prev) => (prev ? { ...prev, audio_url: url } : prev));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [row?.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -281,6 +315,7 @@ export default function PublicLoop() {
 
   const togglePlay = () => {
     if (!row) return;
+    unlockAudioPlaybackFromGesture();
     if (current?.id === row.id) {
       setPlaying(!isPlaying);
       return;
@@ -333,6 +368,7 @@ export default function PublicLoop() {
 
   const remixThisVibe = () => {
     if (!row || !id) return;
+    unlockAudioPlaybackFromGesture();
     setRemixLoading(true);
     void (async () => {
       try {
@@ -404,7 +440,10 @@ export default function PublicLoop() {
       setSavingRating(false);
     })();
   };
-  const faqItems = copy.faqItems;
+  const faqItems = useMemo(
+    () => [...copy.faqItems, ...(enrichment?.extraFaq ?? [])],
+    [copy.faqItems, enrichment?.extraFaq],
+  );
 
 
   return (
@@ -570,6 +609,55 @@ export default function PublicLoop() {
               </div>
             </article>
 
+            {enrichment ? (
+              <div className="mt-8 grid gap-4 lg:grid-cols-2">
+                <section className="pk-public-loop__about" aria-labelledby="loop-about">
+                  <h2 id="loop-about" className="text-lg font-bold text-pk-text">
+                    {copy.aboutTrack}
+                  </h2>
+                  <p className="mt-3 text-sm leading-relaxed text-pk-muted">{enrichment.aboutParagraph}</p>
+                </section>
+
+                <section className="pk-public-loop__specs" aria-labelledby="loop-specs">
+                  <h2 id="loop-specs" className="text-lg font-bold text-pk-text">
+                    {copy.trackDetails}
+                  </h2>
+                  <dl className="pk-public-loop__specs-grid">
+                    {enrichment.specs.map((spec) => (
+                      <div key={spec.label} className="pk-public-loop__spec">
+                        <dt>{spec.label}</dt>
+                        <dd>{spec.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </section>
+              </div>
+            ) : null}
+
+            {enrichment?.lyrics ? (
+              <section className="pk-public-loop__lyrics mt-4" aria-labelledby="loop-lyrics">
+                <h2 id="loop-lyrics" className="text-lg font-bold text-pk-text">
+                  {copy.lyricsTitle}
+                </h2>
+                <pre>{enrichment.lyrics}</pre>
+              </section>
+            ) : null}
+
+            <section className="pk-public-loop__share mt-4" aria-labelledby="loop-share">
+              <h2 id="loop-share" className="text-lg font-bold text-pk-text">
+                {copy.sharePageTitle}
+              </h2>
+              <p className="mt-2 text-sm text-pk-muted">{enrichment?.shareText ?? row.name}</p>
+              <ViralShareBar
+                className="pk-public-loop__share-bar mt-4"
+                url={`/loop/${row.id}`}
+                shareText={enrichment?.shareText ?? row.name}
+                locale={locale}
+                loopId={row.id}
+                channel="twitter"
+              />
+            </section>
+
             <section className="mt-10 grid gap-4 sm:grid-cols-3" aria-label={copy.actions}>
               <Link
                 to={user ? "/dashboard" : "/auth"}
@@ -704,8 +792,13 @@ export default function PublicLoop() {
               </dl>
             </section>
 
-            {canPlay && row.audio_url ? (
-              <audio className="sr-only" preload="metadata" src={row.audio_url} aria-label={row.name}>
+            {canPlay ? (
+              <audio
+                className="sr-only"
+                preload="metadata"
+                src={row.audio_url ?? undefined}
+                aria-label={row.name}
+              >
                 <track kind="captions" />
               </audio>
             ) : null}

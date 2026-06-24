@@ -258,7 +258,8 @@ export async function attachAuthorsToPublicLoops(rows: PublicLoopRow[]): Promise
  * stream_public → lecture <audio> native (comme ACE), pas de fetch blob ~25 Mo.
  */
 export async function resolvePlayableCommunityAudio(row: PublicLoopRow): Promise<string> {
-  if (row.created_at && !isLoopAudioPlayableByAge(row.created_at, row.audio_url)) return "";
+  const hostedExpired =
+    Boolean(row.created_at) && !isLoopAudioPlayableByAge(row.created_at, row.audio_url);
 
   let playableRow = row;
   const existingEarly = typeof row.audio_url === "string" ? row.audio_url.trim() : "";
@@ -270,6 +271,13 @@ export async function resolvePlayableCommunityAudio(row: PublicLoopRow): Promise
   const cacheKey = `community:${playableRow.id}`;
   const stems = parseStemsUrl(playableRow.stems_url);
   const httpFromStems = pickHttpAudioUrlForDb(null, stems);
+  const aceTaskId = extractAceTaskId(stems);
+
+  if (hostedExpired) {
+    const aceStream =
+      existingEarly && isPublicAceStreamUrl(existingEarly) && isPublicAceStreamEnabled();
+    if (!aceTaskId && !httpFromStems && !aceStream) return "";
+  }
 
   const existing = typeof playableRow.audio_url === "string" ? playableRow.audio_url.trim() : "";
 
@@ -277,14 +285,13 @@ export async function resolvePlayableCommunityAudio(row: PublicLoopRow): Promise
     return withSupabaseFunctionAuth(existing);
   }
 
-  if (!existing) {
+  if (!existing || hostedExpired) {
     if (httpFromStems) return resolvePlayableAudioUrl(httpFromStems, cacheKey);
-    const taskId = extractAceTaskId(stems);
-    if (taskId) {
-      const resolved = await resolveAceAudioUrlWithRetry(taskId);
+    if (aceTaskId) {
+      const resolved = await resolveAceAudioUrlWithRetry(aceTaskId);
       if (resolved) return resolvePlayableAudioUrl(resolved, cacheKey);
     }
-    return "";
+    if (!existing) return "";
   }
 
   const playable = await resolvePlayableAudioUrl(existing, cacheKey);

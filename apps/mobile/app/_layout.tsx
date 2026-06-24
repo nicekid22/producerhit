@@ -1,24 +1,29 @@
+import "react-native-gesture-handler";
+import "react-native-url-polyfill/auto";
+import "@/lib/splashScreen";
 import { useEffect } from "react";
 
 import { Stack, useRouter, useSegments } from "expo-router";
 
 import { StatusBar } from "expo-status-bar";
 
-import { View, ActivityIndicator, StyleSheet } from "react-native";
-
+import { View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
 import * as Linking from "expo-linking";
+import { parseLoopIdFromUrl, parsePlayLoopIdFromUrl } from "@/lib/parseLoopDeepLink";
+import { BootSplash } from "@/components/BootSplash";
+import { hideSplashOnce } from "@/lib/splashScreen";
 
 import { onAuthStateChange, parseAuthCallbackUrl } from "@/lib/auth";
 
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 
 import { useAuthStore } from "@/stores/authStore";
+import { useDeepLinkStore } from "@/stores/deepLinkStore";
 
-import { useLocaleStore } from "@/stores/localeStore";
+import { useLocaleStore, attachLocaleAppStateListener } from "@/stores/localeStore";
+import { attachGenerationPollingAppState } from "@/lib/generationPolling";
 import { useGenerationPrefsStore } from "@/stores/generationPrefsStore";
 
 import { useVisualThemeStore } from "@/stores/visualThemeStore";
@@ -26,6 +31,9 @@ import { useVisualThemeStore } from "@/stores/visualThemeStore";
 import { ThemeProvider, useTheme } from "@/theme/ThemeProvider";
 
 import { SubscriptionService } from "@/lib/subscriptionService";
+import { prefetchLoopCovers } from "@/lib/coverImageCache";
+import { readLibraryCache } from "@/lib/offlineCache";
+import { devWarn } from "@/lib/devLog";
 
 
 
@@ -44,14 +52,18 @@ export default function RootLayout() {
   const loading = useAuthStore((s) => s.loading);
 
   const onboardingDone = useAuthStore((s) => s.onboardingDone);
+  const onboardingHydrated = useAuthStore((s) => s.onboardingHydrated);
 
   const setSession = useAuthStore((s) => s.setSession);
 
   const setLoading = useAuthStore((s) => s.setLoading);
 
+  const hydrateProfileCache = useAuthStore((s) => s.hydrateProfileCache);
+
   const refreshProfile = useAuthStore((s) => s.refreshProfile);
 
   const setOnboardingDone = useAuthStore((s) => s.setOnboardingDone);
+  const hydrateOnboarding = useAuthStore((s) => s.hydrateOnboarding);
 
   const hydrateLocale = useLocaleStore((s) => s.hydrate);
   const hydrateGenerationPrefs = useGenerationPrefsStore((s) => s.hydrate);
@@ -64,6 +76,8 @@ export default function RootLayout() {
     void hydrateLocale();
     void hydrateGenerationPrefs();
     void hydrateTheme();
+    attachLocaleAppStateListener();
+    attachGenerationPollingAppState();
 
   }, [hydrateLocale, hydrateGenerationPrefs, hydrateTheme]);
 
@@ -73,19 +87,19 @@ export default function RootLayout() {
     void SubscriptionService.init().catch(() => undefined);
   }, []);
 
+  useEffect(() => {
+    const userId = session?.user?.id;
+    if (!userId) return;
+    void readLibraryCache(userId).then((rows) => {
+      if (rows?.length) prefetchLoopCovers(rows);
+    });
+  }, [session?.user?.id]);
+
 
 
   useEffect(() => {
-
-    void AsyncStorage.getItem(ONBOARDING_KEY).then((v) => {
-
-      if (v === "1") setOnboardingDone(true);
-
-    });
-
-  }, [setOnboardingDone]);
-
-
+    void hydrateOnboarding();
+  }, [hydrateOnboarding]);
 
   useEffect(() => {
 
@@ -93,11 +107,15 @@ export default function RootLayout() {
 
 
 
-    void supabase.auth.getSession().then(({ data: { session: initial } }) => {
+    void supabase.auth.getSession().then(async ({ data: { session: initial } }) => {
 
       if (!mounted) return;
 
       setSession(initial);
+
+      if (initial?.user?.id) {
+        await hydrateProfileCache(initial.user.id);
+      }
 
       void refreshProfile();
 
@@ -111,18 +129,40 @@ export default function RootLayout() {
 
       setSession(next);
 
-      void refreshProfile();
+      if (!next) {
+        useAuthStore.setState({ profile: null, profileRefreshing: false });
+        return;
+      }
+
+      void hydrateProfileCache(next.user.id).then(() => refreshProfile());
 
     });
 
 
 
+    const handleDeepLink = (url: string) => {
+      if (url.includes("auth/callback")) {
+        void parseAuthCallbackUrl(url).catch(() => undefined);
+        return;
+      }
+      const playId = parsePlayLoopIdFromUrl(url);
+      if (playId) {
+        useDeepLinkStore.getState().setPendingPlayLoopId(playId);
+        router.push("/(tabs)/create");
+        return;
+      }
+      const loopId = parseLoopIdFromUrl(url);
+      if (!loopId) return;
+      useDeepLinkStore.getState().setPendingLoopId(loopId);
+      router.push("/(tabs)/community");
+    };
+
+    void Linking.getInitialURL().then((url) => {
+      if (url) handleDeepLink(url);
+    });
+
     const linkSub = Linking.addEventListener("url", ({ url }) => {
-
-      if (!url.includes("auth/callback")) return;
-
-      void parseAuthCallbackUrl(url).catch(() => undefined);
-
+      handleDeepLink(url);
     });
 
 
@@ -137,13 +177,13 @@ export default function RootLayout() {
 
     };
 
-  }, [setSession, setLoading, refreshProfile]);
+  }, [setSession, setLoading, hydrateProfileCache, refreshProfile, router]);
 
 
 
   useEffect(() => {
 
-    if (loading) return;
+    if (loading || !onboardingHydrated) return;
 
     const inAuth = segments[0] === "(auth)";
 
@@ -151,17 +191,18 @@ export default function RootLayout() {
 
     const inAuthCallback = segments[0] === "auth";
 
-
-
-    if (!onboardingDone && !inOnboarding) {
-
-      router.replace("/(onboarding)");
-
+    // Utilisateur déjà connecté : ne jamais réafficher l'onboarding (évite boucle replace).
+    if (session && !onboardingDone) {
+      void AsyncStorage.setItem(ONBOARDING_KEY, "1");
+      setOnboardingDone(true);
       return;
-
     }
 
-
+    // Nouveau visiteur : onboarding une fois, avant la connexion.
+    if (!onboardingDone && !session) {
+      if (!inOnboarding) router.replace("/(onboarding)");
+      return;
+    }
 
     if (!session && !inAuth && !inOnboarding && !inAuthCallback) {
 
@@ -171,19 +212,25 @@ export default function RootLayout() {
 
     }
 
-
-
     if (session && (inAuth || inOnboarding)) {
 
-      router.replace("/(tabs)/create");
+      const pendingLoop = useDeepLinkStore.getState().pendingLoopId;
+
+      router.replace(pendingLoop ? "/(tabs)/community" : "/(tabs)/create");
 
     }
 
-  }, [session, loading, segments, onboardingDone, router]);
+  }, [session, loading, onboardingHydrated, segments, onboardingDone, router, setOnboardingDone]);
 
 
 
-  if (loading) {
+  useEffect(() => {
+    if (!loading && onboardingHydrated) {
+      void hideSplashOnce();
+    }
+  }, [loading, onboardingHydrated]);
+
+  if (loading || !onboardingHydrated) {
 
     return (
 
@@ -191,7 +238,9 @@ export default function RootLayout() {
 
         <ThemeProvider>
 
-          <BootScreen />
+          <BootSplash />
+
+          <ThemedStatusBar />
 
         </ThemeProvider>
 
@@ -205,7 +254,7 @@ export default function RootLayout() {
 
   if (!isSupabaseConfigured()) {
 
-    console.warn("Configure EXPO_PUBLIC_SUPABASE_* in apps/mobile/.env");
+    devWarn("Configure EXPO_PUBLIC_SUPABASE_* in apps/mobile/.env");
 
   }
 
@@ -220,32 +269,12 @@ export default function RootLayout() {
         <ThemedStatusBar />
 
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "transparent" } }}>
-          <Stack.Screen name="paywall" options={{ presentation: "modal" }} />
+          <Stack.Screen name="paywall" options={{ presentation: "modal", gestureEnabled: true }} />
         </Stack>
 
       </ThemeProvider>
 
     </SafeAreaProvider>
-
-  );
-
-}
-
-
-
-function BootScreen() {
-
-  const { colors } = useTheme();
-
-  return (
-
-    <View style={[styles.boot, { backgroundColor: colors.bg }]}>
-
-      <ActivityIndicator color={colors.accent} size="large" />
-
-      <ThemedStatusBar />
-
-    </View>
 
   );
 
@@ -260,21 +289,5 @@ function ThemedStatusBar() {
   return <StatusBar style={colors.statusBar} />;
 
 }
-
-
-
-const styles = StyleSheet.create({
-
-  boot: {
-
-    flex: 1,
-
-    alignItems: "center",
-
-    justifyContent: "center",
-
-  },
-
-});
 
 

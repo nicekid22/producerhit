@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { AppLocale } from "@/i18n/config";
 import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
 import { Loader2, Play, Shuffle, Square } from "lucide-react";
+import { unlockAudioPlaybackFromGesture } from "@/lib/audioPlaybackUnlock";
 import { publicRowToCoverLoop, resolveLoopDisplayCoverUrl } from "@/lib/coverArt";
 import {
   BLOG_SAMPLER_QUEUE_SOURCE,
@@ -61,6 +63,13 @@ export function BlogListenSampler({ locale, genreMatchers, className }: Props) {
   }, [load]);
 
   const playRow = async (row: PublicLoopRow, playlist?: PublicLoopRow[]) => {
+    unlockAudioPlaybackFromGesture();
+    const loop = publicRowToCoverLoop(row);
+    if (current?.id === loop.id) {
+      setPlaying(!isPlaying);
+      return;
+    }
+
     const list = playlist ?? rows;
     const idx = findPublicRowIndex(list, row.id);
     const ok = await playPublicRowsInQueue(list, idx >= 0 ? idx : 0, {
@@ -68,11 +77,19 @@ export function BlogListenSampler({ locale, genreMatchers, className }: Props) {
       onResolveStart: (rowId) => setResolvingId(rowId),
       onResolveEnd: () => setResolvingId(null),
     });
-    if (!ok) setResolvingId(null);
+    if (!ok) {
+      setResolvingId(null);
+      toast.error(
+        isFr
+          ? "Lecture indisponible — essaie un autre morceau ou le bouton du lecteur en bas."
+          : "Playback unavailable — try another track or use the bottom player.",
+      );
+    }
   };
 
   const playRandom = () => {
     if (!rows.length) return;
+    unlockAudioPlaybackFromGesture();
     const pick = rows[Math.floor(Math.random() * rows.length)]!;
     void playRow(pick);
   };
@@ -146,6 +163,7 @@ export function BlogListenSampler({ locale, genreMatchers, className }: Props) {
             const loop = publicRowToCoverLoop(row);
             const cover = resolveLoopDisplayCoverUrl(loop, 96);
             const active = current?.id === loop.id;
+            const playingNow = active && isPlaying;
             const busy = resolvingId === row.id;
             return (
               <li key={row.id} className="rounded-xl border border-white/10 bg-black/25 p-2">
@@ -155,7 +173,7 @@ export function BlogListenSampler({ locale, genreMatchers, className }: Props) {
                   onClick={() => void playRow(row)}
                   className={cn(
                     "flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors",
-                    active ? "bg-cyan-500/[0.12]" : "hover:bg-white/[0.04]",
+                    playingNow ? "bg-cyan-500/[0.12]" : active ? "bg-white/[0.06]" : "hover:bg-white/[0.04]",
                   )}
                 >
                   <span
@@ -172,6 +190,8 @@ export function BlogListenSampler({ locale, genreMatchers, className }: Props) {
                     <span className="absolute inset-0 flex items-center justify-center bg-black/35">
                       {busy ? (
                         <Loader2 className="h-4 w-4 animate-spin text-white" />
+                      ) : playingNow ? (
+                        <Square className="h-3.5 w-3.5 text-white" fill="currentColor" />
                       ) : (
                         <Play className="h-4 w-4 text-white" fill="currentColor" />
                       )}

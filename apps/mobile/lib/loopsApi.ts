@@ -19,7 +19,7 @@ import {
 import type { AppLocale, GenerateBeatInput, Loop, LoopLength, UserProfile } from "@producerhit/shared";
 import { normalizePlanId, planMonthlyLimit } from "@producerhit/shared";
 import { mobileJobsClient } from "./generationClient";
-import { assignLoopCoverWithTimeout } from "./pinterestCover";
+import { assignLoopCoverOnce } from "./loopCover";
 import { invokeSupabaseFunction } from "./edgeInvoke";
 import { supabase } from "./supabase";
 
@@ -91,27 +91,34 @@ function parseKeyScale(keyScale?: string | null): { key: string; scale: string }
 }
 
 export async function fetchProfile(userId: string): Promise<UserProfile | null> {
-  const { data, error } = await supabase
+  const fetchTask = supabase
     .from("profiles")
     .select(
       "id, plan, loops_used_this_month, email, referral_bonus, level_bonus, daily_bonus_month, purchased_bonus, referral_code, username",
     )
     .eq("id", userId)
-    .maybeSingle();
+    .maybeSingle()
+    .then(({ data, error }) => {
+      if (error || !data) return null;
+      return {
+        id: data.id,
+        plan: normalizePlanId(data.plan),
+        loopsUsedThisMonth: data.loops_used_this_month ?? 0,
+        email: data.email,
+        referralBonus: data.referral_bonus ?? 0,
+        levelBonus: data.level_bonus ?? 0,
+        dailyBonusMonth: data.daily_bonus_month ?? 0,
+        purchasedBonus: data.purchased_bonus ?? 0,
+        referralCode: data.referral_code ?? null,
+        username: data.username ?? null,
+      } satisfies UserProfile;
+    });
 
-  if (error || !data) return null;
-  return {
-    id: data.id,
-    plan: normalizePlanId(data.plan),
-    loopsUsedThisMonth: data.loops_used_this_month ?? 0,
-    email: data.email,
-    referralBonus: data.referral_bonus ?? 0,
-    levelBonus: data.level_bonus ?? 0,
-    dailyBonusMonth: data.daily_bonus_month ?? 0,
-    purchasedBonus: data.purchased_bonus ?? 0,
-    referralCode: data.referral_code ?? null,
-    username: data.username ?? null,
-  };
+  const timeout = new Promise<null>((resolve) => {
+    setTimeout(() => resolve(null), 12_000);
+  });
+
+  return Promise.race([fetchTask, timeout]);
 }
 
 type DbLoopRow = {
@@ -195,6 +202,18 @@ export async function fetchUserLoops(userId: string, limit = 50): Promise<Loop[]
 
   if (error) throw error;
   return (data ?? []).map((row) => mapLoopRow(row as DbLoopRow));
+}
+
+export async function fetchUserLoopById(userId: string, loopId: string): Promise<Loop | null> {
+  const { data, error } = await supabase
+    .from("loops")
+    .select(LOOP_SELECT)
+    .eq("user_id", userId)
+    .eq("id", loopId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data ? mapLoopRow(data as DbLoopRow) : null;
 }
 
 export function subscribeUserLoops(userId: string, onChange: () => void) {
@@ -295,7 +314,8 @@ async function insertLoopRow(
 
   if (result.error) throw result.error;
   const loop = mapLoopRow(result.data as DbLoopRow);
-  return assignLoopCoverWithTimeout(loop, { timeoutMs: 14_000 });
+  void assignLoopCoverOnce(loop).catch(() => undefined);
+  return loop;
 }
 
 export type GenerateJobOptions = {
@@ -309,6 +329,7 @@ export type GenerateSongInput = {
   lyricsMode: "ai" | "manual";
   vocalStyle?: string;
   captionOverride?: string | null;
+  melodyComposition?: boolean;
   vocalLanguageMode?: "auto" | "manual";
   manualVocalLanguage?: string;
   uiLocale?: AppLocale;
@@ -360,7 +381,7 @@ export async function generateSong(input: GenerateSongInput, options?: GenerateJ
     generationKey,
     requirePersistableUrl: true,
     captionOverride: input.captionOverride ?? undefined,
-    melodyComposition: Boolean(input.captionOverride?.trim()),
+    melodyComposition: input.melodyComposition ?? Boolean(input.captionOverride?.trim()),
     onJobStatus: options?.onJobStatus,
   });
 
@@ -372,24 +393,21 @@ export async function generateSong(input: GenerateSongInput, options?: GenerateJ
   const keyScale = parseKeyScale(result.meta?.keyScale);
   const bpm = result.meta?.bpm && result.meta.bpm > 0 ? result.meta.bpm : 120;
 
-  return assignLoopCoverWithTimeout(
-    await insertLoopRow(
-      session.user.id,
-      input.genre,
-      {
-        name: defaultSongName(input.genre),
-        mood: "",
-        influence: "No Influence",
-        key: keyScale.key,
-        scale: keyScale.scale,
-        loopLength: "16 bars",
-        bpm,
-      },
-      playableUrl,
-      storedPrompt,
-      stemsUrl,
-    ),
-    { timeoutMs: 14_000 },
+  return await insertLoopRow(
+    session.user.id,
+    input.genre,
+    {
+      name: defaultSongName(input.genre),
+      mood: "",
+      influence: "No Influence",
+      key: keyScale.key,
+      scale: keyScale.scale,
+      loopLength: "16 bars",
+      bpm,
+    },
+    playableUrl,
+    storedPrompt,
+    stemsUrl,
   );
 }
 
@@ -463,16 +481,15 @@ export async function generateLoopVariant(
   }
 
   if (insertResult.error) throw insertResult.error;
-  return assignLoopCoverWithTimeout(
-    mapLoopRow(insertResult.data as DbLoopRow),
-    { timeoutMs: 14_000 },
-  );
+  const created = mapLoopRow(insertResult.data as DbLoopRow);
+  void assignLoopCoverOnce(created).catch(() => undefined);
+  return created;
 }
 
 export async function generateTypeBeat(
   input: GenerateBeatInput,
   meta: { name: string; mood: string; influence: string; key: string; scale: string; loopLength: LoopLength },
-  options?: GenerateJobOptions & { captionOverride?: string | null },
+  options?: GenerateJobOptions & { captionOverride?: string | null; melodyComposition?: boolean },
 ): Promise<Loop> {
   const generationKey = randomKey();
   const params: GenerateParams = toGenerateParams({
@@ -498,7 +515,7 @@ export async function generateTypeBeat(
     requirePersistableUrl: true,
     autoMeta: false,
     captionOverride: options?.captionOverride ?? undefined,
-    melodyComposition: Boolean(options?.captionOverride?.trim()),
+    melodyComposition: options?.melodyComposition ?? Boolean(options?.captionOverride?.trim()),
     onJobStatus: options?.onJobStatus,
   });
 
@@ -508,24 +525,21 @@ export async function generateTypeBeat(
   const stemsUrl = buildAceStemsFromMeta(result.meta, playableUrl);
   const storedPrompt = input.prompt?.trim() || params.prompt || "";
 
-  return assignLoopCoverWithTimeout(
-    await insertLoopRow(
-      session.user.id,
-      input.genre,
-      {
-        name: meta.name,
-        mood: meta.mood,
-        influence: meta.influence,
-        key: meta.key,
-        scale: meta.scale,
-        loopLength: meta.loopLength,
-        bpm: input.bpm,
-      },
-      playableUrl,
-      storedPrompt,
-      stemsUrl,
-    ),
-    { timeoutMs: 14_000 },
+  return await insertLoopRow(
+    session.user.id,
+    input.genre,
+    {
+      name: meta.name,
+      mood: meta.mood,
+      influence: meta.influence,
+      key: meta.key,
+      scale: meta.scale,
+      loopLength: meta.loopLength,
+      bpm: input.bpm,
+    },
+    playableUrl,
+    storedPrompt,
+    stemsUrl,
   );
 }
 

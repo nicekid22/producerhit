@@ -1,6 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
 import { useTheme } from "@/theme/ThemeProvider";
-import { typography } from "@/theme/tokens";
 
 type Props = {
   compact?: boolean;
@@ -8,7 +7,7 @@ type Props = {
 };
 
 export function BrandLogo({ compact = false, iconOnly = false }: Props) {
-  const { colors } = useTheme();
+  const { colors, typography } = useTheme();
 
   if (iconOnly) {
     return (
@@ -20,17 +19,21 @@ export function BrandLogo({ compact = false, iconOnly = false }: Props) {
 
   return (
     <View style={styles.row}>
-      <Text style={[styles.base, compact && styles.baseCompact, { color: colors.logoBase }]}>producer</Text>
-      <Text style={[styles.accent, compact && styles.accentCompact, { color: colors.logoAccent }]}>hit</Text>
+      <Text style={[styles.base, compact && styles.baseCompact, typography.title, { color: colors.logoBase, fontWeight: "600", letterSpacing: -0.5, textTransform: "lowercase" }]}>
+        producer
+      </Text>
+      <Text style={[styles.accent, compact && styles.accentCompact, typography.title, { color: colors.logoAccent, fontWeight: "700", letterSpacing: -0.5, textTransform: "lowercase" }]}>
+        hit
+      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "baseline" },
-  base: { ...typography.title, fontWeight: "600", letterSpacing: -0.5, textTransform: "lowercase" },
+  base: { fontSize: undefined },
   baseCompact: { fontSize: 18 },
-  accent: { ...typography.title, fontWeight: "700", letterSpacing: -0.5, textTransform: "lowercase" },
+  accent: { fontSize: undefined },
   accentCompact: { fontSize: 18 },
   mono: {
     width: 36,

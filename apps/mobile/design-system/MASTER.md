@@ -1,55 +1,47 @@
 # ProducerHit iOS — Design System (Master)
 
-> **Design Read:** app mobile producteur, 3 skins distincts (Prism studio / Warm editorial / Air minimal Apple).
-> **Dials:** VARIANCE 7 · MOTION 5 · DENSITY 4
+> **Direction active (2026)** : [**Dusty Cloud**](./DUSTY-CLOUD.md)  
+> **Exécution** : [**EXECUTION-IOS.md**](./EXECUTION-IOS.md) — ordre des phases, statut, inventaire fichiers.
+
+## En bref
+
+| | |
+|--|--|
+| **Univers** | Coucher de soleil through frosted glass · argentique grain · Notion/Fabric dark |
+| **Fond** | `#1A1220` void + grain seul — **pas** de blobs, mesh, aurora |
+| **CTA** | Rose poudré `#C4687A` (plat + shadow rose) |
+| **Brand / états** | Mauve `#8B6FA8` · lavande `#C4AEDE` |
+| **Règle** | Rose et mauve **jamais sur le même composant** |
 
 ## Anti-patterns (bannis)
 
-- Gradients cyan+violet décoratifs (Prism = 1 accent cyan)
-- Orbes animés en boucle sur chaque écran
-- Glass + blur partout
-- Eyebrows répétés (max 1 / 3 sections)
-- Emojis comme icônes structurelles
-- Copy « Elevate », « Seamless », em-dash
+Voir liste complète dans [DUSTY-CLOUD.md](./DUSTY-CLOUD.md). En résumé :
 
-## Prism — Studio Night
+- Mesh gradient / cercles flous / glass sur cartes scroll
+- Glow rings sur navigation
+- Gradients décoratifs sur cards entières
+- Emojis en titres de section
+- « AI slop » pitch-deck aesthetic
 
-| Token | Value |
-|-------|-------|
-| bg | `#0a0a0c` |
-| surface | `#141418` |
-| accent | `#3db8e8` |
-| text | `#f4f4f5` |
-| material | studio (matte, waveform) |
+## Ancienne direction Prism (archivée)
 
-## Warm — Editorial Vinyl
-
-| Token | Value |
-|-------|-------|
-| bg | `#f7f2ea` |
-| surface | `#fffdf8` |
-| accent | `#c45c26` |
-| text | `#1c1917` |
-| material | paper (grain, serif display) |
-
-## Air — Minimal Apple
-
-| Token | Value |
-|-------|-------|
-| bg | `#f5f5f7` |
-| surface | `#ffffff` |
-| accent | `#007aff` |
-| text | `#1d1d1f` |
-| material | flat (hairlines, zero blur) |
+La doc Prism mesh (`#0A0A0C`, gold/violet/magenta) reste dans l'historique git mais **n'est plus la cible**. Ne pas ajouter de nouveaux éléments Prism sans passer par la spec Dusty.
 
 ## Motion
 
-- Press: `scale(0.97)`, 120ms ease-out
-- Tab switch: no animation
-- Modal/paywall enter: 220ms ease-out
-- `prefers-reduced-motion`: opacity only
+- Press : `scale(0.97–0.99)`, 80–300ms, Reanimated
+- Orbe / loading : seuls loops autorisés
+- `prefers-reduced-motion` : respect obligatoire
 
-## Touch
+## Dev
 
-- Min target 44×44pt
-- Haptics: success/error on generation & IAP
+- `npm run start:lan` — Metro LAN iPhone
+- `npm run lint` — `tsc --noEmit`
+- Skia : dev build EAS pour orbe natif
+
+## Stack UI
+
+- Tokens : `theme/dustyCloud.ts` (cible) · `useTheme()`
+- Fond : `AppBackground` (cible) remplace `MeshAtmosphere`
+- Orbe : `AIOrb` Skia — palette Dusty Cloud
+- Navigation : `EXECUTION-IOS.md` Phase 7

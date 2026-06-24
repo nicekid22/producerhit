@@ -1,10 +1,9 @@
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import { Info, MessageCircle, Pause, Play, Sparkles, Star } from "lucide-react";
 import { ProfileAuthorChip } from "@/components/profile/ProfileAuthorChip";
 import { StoredLoopCover } from "@/components/cover/StoredLoopCover";
 import { resolveCommunityDisplayCoverUrl, resolvePublicRowCoverUrl } from "@/lib/coverArt";
 import { displayProducerInfluence } from "@/lib/beatInfluence";
-import { useLazyPinterestCover } from "@/hooks/useLazyPinterestCover";
 import { COVER_SURFACE_CLASS, cn } from "@/lib/utils";
 import type { PublicLoopRow } from "@/lib/publicLoops";
 import type { AppLocale } from "@/i18n/config";
@@ -127,7 +126,7 @@ function CardSocialFooter({
   );
 }
 
-export function CommunityTrackCard({
+export const CommunityTrackCard = memo(function CommunityTrackCard({
   row,
   locale,
   variant = "grid",
@@ -146,17 +145,9 @@ export function CommunityTrackCard({
 }: Props) {
   const hub = useMemo(() => buildCommunityHubUiCopy(locale), [locale]);
   const storedCover = resolvePublicRowCoverUrl(row);
-  const needsLazyPinterest = !storedCover.startsWith("http");
-  const { ref: coverRef, url: lazyCover } = useLazyPinterestCover(
-    { id: row.id, genre: row.genre, mood: row.mood, name: row.name, prompt: row.prompt },
-    slotIndex,
-    needsLazyPinterest,
-  );
   const coverUrl = storedCover.startsWith("http")
     ? storedCover
-    : lazyCover?.startsWith("http")
-      ? lazyCover
-      : resolveCommunityDisplayCoverUrl(row);
+    : resolveCommunityDisplayCoverUrl(row);
   const producerInfluence = displayProducerInfluence(row.influence);
   const playingNow = isActive && isPlaying;
   const compact = variant === "rail";
@@ -164,7 +155,6 @@ export function CommunityTrackCard({
 
   return (
     <article
-      ref={coverRef}
       className={cn(
         "pk-community-card group",
         compact ? "pk-community-card--rail" : "pk-community-card--grid",
@@ -266,4 +256,4 @@ export function CommunityTrackCard({
       </div>
     </article>
   );
-}
+});

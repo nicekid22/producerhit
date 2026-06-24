@@ -3,6 +3,7 @@
  */
 
 import { preloadCloudThemeIfNeeded, preloadWarmGlassThemeIfNeeded } from "@/lib/themeStyles";
+
 export function deferUntilIdle(fn: () => void, timeoutMs = 3500): void {
   if (typeof window === "undefined") return;
   const w = window as Window & {
@@ -59,12 +60,20 @@ export function loadRouteCss(key: string, loader: () => Promise<unknown>): Promi
 export function loadMarketingCss(): Promise<void> {
   return loadRouteCss("marketing", () =>
     Promise.all([
+      import("@/styles/launch-offer.css"),
       import("@/styles/landing-pricing-teaser.css"),
       import("@/styles/landing-cloud-moods.css"),
       import("@/styles/landing-hero-dream.css"),
       import("@/styles/landing-mood-wow.css"),
       import("@/styles/landing-footer-v2.css"),
       import("@/styles/cro-trust.css"),
+      import("@/styles/landing-free-shimmer.css"),
+      import("@/styles/landing-mobile-v2.css"),
+      import("@/styles/landing-apple-theme-tokens.css"),
+      import("@/styles/landing-mobile-audio-cards.css"),
+      import("@/styles/landing-mobile-apple-restore.css"),
+      import("@/styles/landing-header-cta.css"),
+      import("@/styles/landing-apple-below-fold.css"),
     ]).then(() => undefined),
   );
 }
@@ -75,16 +84,53 @@ export function loadDashboardCss(): Promise<void> {
       import("@/styles/dashboard-idea-prompt.css"),
       import("@/styles/random-prompt-dice.css"),
       import("@/styles/gen-loading-theme.css"),
+      import("@/styles/prism-dashboard-pills.css"),
     ]).then(() => undefined),
   );
 }
 
 export function loadLibraryCss(): Promise<void> {
-  return loadRouteCss("library", () => import("@/styles/library-cozy.css").then(() => undefined));
+  return loadRouteCss("library", () =>
+    Promise.all([
+      import("@/styles/library-cozy.css"),
+      import("@/styles/library-collection-art.css"),
+      import("@/styles/library-theme-harmony.css"),
+      import("@/styles/loop-details-sheet.css"),
+    ]).then(() => undefined),
+  );
 }
 
 export function loadCommunityCss(): Promise<void> {
   return loadRouteCss("community", () => import("@/styles/community-flux.css").then(() => undefined));
+}
+
+export function loadDistributionCss(): Promise<void> {
+  return loadRouteCss("distribution", () =>
+    Promise.all([
+      import("@/styles/distribution-studio.css"),
+      import("@/styles/distribution-studio-theme-harmony.css"),
+      import("@/styles/distribution-academy.css"),
+      import("@/styles/distribution-academy-theme-harmony.css"),
+    ]).then(() => undefined),
+  );
+}
+
+export function loadAppShellCss(): Promise<void> {
+  return loadRouteCss("app-shell", () =>
+    Promise.all([
+      import("@/styles/brand-logo.css"),
+      import("@/styles/page-loader-theme.css"),
+      import("@/styles/theme-skin-wow.css"),
+      import("@/styles/apple-theme-tokens.css"),
+      import("@/styles/apple-app-shell.css"),
+      import("@/styles/header-chrome.css"),
+      import("@/styles/sidebar-rail.css"),
+      import("@/styles/mobile-dock-harmony.css"),
+      import("@/styles/workspace-header-layout.css"),
+      import("@/styles/theme-roast-popup.css"),
+      import("@/styles/perf-mobile-gpu.css"),
+    ]).then(() => undefined),
+  );
 }
 
 export function loadSharedUiCss(): Promise<void> {
@@ -102,6 +148,7 @@ export function loadShellDeferredCss(): Promise<void> {
     Promise.all([
       import("@/styles/cover-surface.css"),
       import("@/styles/site-texture-veil.css"),
+      import("@/styles/paywall-modal.css"),
       import("@/styles/toast-theme.css"),
     ]).then(() => undefined),
   );

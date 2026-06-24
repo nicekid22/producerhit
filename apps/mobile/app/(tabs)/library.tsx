@@ -1,79 +1,151 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { FlatList, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
-import { MOBILE_GENRES, MOBILE_SONG_GENRES, type Loop } from "@producerhit/shared";
-import { LoopCard } from "@/components/LoopCard";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Animated, FlatList, InteractionManager, RefreshControl, StyleSheet, Text, View, type ListRenderItem } from "react-native";
+import { useIsFocused } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { type Loop } from "@producerhit/shared";
+import { GenrePicker } from "@/components/GenrePicker";
+import { LibraryEmptyState } from "@/components/LibraryEmptyState";
+import { LibraryNoResultsState } from "@/components/LibraryNoResultsState";
+import { LibrarySkeletonGrid } from "@/components/LibrarySkeletonGrid";
+import { NetworkErrorBanner } from "@/components/NetworkErrorBanner";
+import { OfflineDataBanner } from "@/components/OfflineDataBanner";
+import { LibraryFeaturedCard } from "@/components/LibraryFeaturedCard";
 import { LoopDetailSheet } from "@/components/LoopDetailSheet";
-import { PhCard } from "@/components/PhCard";
+import { LoopGridCard } from "@/components/LoopGridCard";
 import { PhDisplay } from "@/components/PhDisplay";
-import { WaveformStrip } from "@/components/WaveformStrip";
-import { GenreChips } from "@/components/GenreChips";
-import { ThemeBackdrop } from "@/components/ThemeBackdrop";
+import { SearchGlassField } from "@/components/SearchGlassField";
 import { markActivationStep } from "@/components/ActivationChecklist";
+import { t as translate } from "@/lib/i18n/catalog";
 import { fetchUserLoops, subscribeUserLoops } from "@/lib/loopsApi";
-import { backfillMissingLoopCovers } from "@/lib/pinterestCover";
+import { prefetchLoopCovers } from "@/lib/coverImageCache";
+import { peekLibraryMemory, readLibraryCache, writeLibraryCache } from "@/lib/offlineCache";
+import { backfillMissingLoopCovers, setLoopCoverBackfillPaused } from "@/lib/loopCover";
 import { useResponsiveLayout } from "@/lib/useResponsiveLayout";
+import { useStaggerEntrance } from "@/lib/useStaggerEntrance";
+import { usePullRefresh } from "@/lib/usePullRefresh";
 import { useAuthStore } from "@/stores/authStore";
 import { useI18n } from "@/stores/localeStore";
+import { usePlayerStore } from "@/stores/playerStore";
 import { useTheme } from "@/theme/ThemeProvider";
 import { spacing } from "@/theme/tokens";
 
 const ALL_GENRES = "__all__";
 
 export default function LibraryScreen() {
-  const { t } = useI18n();
+  const isFocused = useIsFocused();
+  const { t, locale } = useI18n();
+  const insets = useSafeAreaInsets();
   const { colors, typography, radius } = useTheme();
-  const { columns, contentMaxWidth, gutter, gridItemWidth, isTablet } = useResponsiveLayout();
+  const { contentMaxWidth, gutter, isTablet } = useResponsiveLayout();
+  const gridColumns = isTablet ? (contentMaxWidth >= 900 ? 3 : 2) : 2;
+  const listPad = spacing.screen * 2;
+  const cellWidth =
+    gridColumns > 1
+      ? (contentMaxWidth - listPad - gutter * (gridColumns - 1)) / gridColumns
+      : contentMaxWidth - listPad;
   const session = useAuthStore((s) => s.session);
-  const [loops, setLoops] = useState<Loop[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const userId = session?.user?.id;
+  const currentId = usePlayerStore((s) => s.current?.id);
+  const isPlaying = usePlayerStore((s) => s.isPlaying);
+  const positionMs = usePlayerStore((s) => s.positionMs);
+  const [loops, setLoops] = useState<Loop[]>(() => (userId ? peekLibraryMemory(userId) ?? [] : []));
+  const [loading, setLoading] = useState(() => {
+    if (!userId) return false;
+    return (peekLibraryMemory(userId)?.length ?? 0) === 0;
+  });
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [showingCachedData, setShowingCachedData] = useState(false);
   const [query, setQuery] = useState("");
   const [genreFilter, setGenreFilter] = useState(ALL_GENRES);
   const [detailLoop, setDetailLoop] = useState<Loop | null>(null);
 
-  const genreOptions = useMemo(() => {
-    const seen = new Set<string>();
-    const opts = [...MOBILE_SONG_GENRES, ...MOBILE_GENRES].filter((g) => {
-      if (seen.has(g.value)) return false;
-      seen.add(g.value);
-      return true;
-    });
-    return [{ group: "Filter", value: ALL_GENRES, label: t("filterAllGenres") }, ...opts];
-  }, [t]);
+  const headerEntrance = useStaggerEntrance(0, { screenKey: "library" });
 
   const load = useCallback(async () => {
-    const userId = session?.user?.id;
     if (!userId) return;
-    const rows = await fetchUserLoops(userId);
-    setLoops(rows);
-  }, [session?.user?.id]);
+    try {
+      setLoadError(null);
+      const rows = await fetchUserLoops(userId);
+      setLoops(rows);
+      setShowingCachedData(false);
+      await writeLibraryCache(userId, rows);
+      prefetchLoopCovers(rows);
+    } catch (e) {
+      setLoadError(e instanceof Error ? e.message : translate(locale, "networkErrorBody"));
+      setShowingCachedData(true);
+      throw e;
+    }
+  }, [userId, locale]);
+
+  const loadRef = useRef(load);
+  loadRef.current = load;
 
   useEffect(() => {
     void markActivationStep("library_visit");
   }, []);
 
   useEffect(() => {
+    if (!userId) {
+      setLoops([]);
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    const memory = peekLibraryMemory(userId);
+    if (memory?.length) {
+      setLoops(memory);
+      setLoading(false);
+      prefetchLoopCovers(memory);
+    }
+
     void (async () => {
-      setLoading(true);
-      try {
-        await load();
-      } finally {
+      const cached = await readLibraryCache(userId);
+      if (cancelled) return;
+      if (cached?.length) {
+        setLoops(cached);
         setLoading(false);
+        prefetchLoopCovers(cached);
+      }
+
+      if (!cached?.length && !memory?.length) setLoading(true);
+      try {
+        await loadRef.current();
+      } catch {
+        /* loadError set; cached rows kept if any */
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     })();
-  }, [load]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
 
   useEffect(() => {
-    const userId = session?.user?.id;
+    if (loops.length === 0) return;
+    prefetchLoopCovers(loops);
+  }, [loops]);
+
+  useEffect(() => {
     if (!userId) return;
     return subscribeUserLoops(userId, () => {
-      void load();
+      void loadRef.current();
     });
-  }, [session?.user?.id, load]);
+  }, [userId]);
 
   useEffect(() => {
-    if (loops.length > 0) backfillMissingLoopCovers(loops);
-  }, [loops]);
+    setLoopCoverBackfillPaused(!isFocused);
+  }, [isFocused]);
+
+  useEffect(() => {
+    if (loops.length === 0 || !isFocused) return;
+    const task = InteractionManager.runAfterInteractions(() => {
+      backfillMissingLoopCovers(loops);
+    });
+    return () => task.cancel();
+  }, [isFocused, loops]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -88,76 +160,126 @@ export default function LibraryScreen() {
     });
   }, [loops, query, genreFilter]);
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    try {
+  const featuredLoop = filtered.length > 0 ? filtered[0] : null;
+  const listData = filtered.length > 1 ? filtered.slice(1) : [];
+
+  const { refreshing, tintColor, onRefresh } = usePullRefresh({
+    onRefresh: async () => {
       await load();
-    } finally {
-      setRefreshing(false);
-    }
-  };
+    },
+  });
+
+  const openDetail = useCallback((loop: Loop) => setDetailLoop(loop), []);
+
+  const listExtraData = useMemo(
+    () => `${currentId ?? ""}:${isPlaying}`,
+    [currentId, isPlaying],
+  );
+
+  const renderItem: ListRenderItem<Loop> = useCallback(
+    ({ item }) => {
+      const active = currentId === item.id;
+      const playing = active && isPlaying;
+      return (
+        <View style={gridColumns > 1 ? { width: cellWidth } : { flex: 1 }}>
+          <LoopGridCard
+            loop={item}
+            queue={filtered}
+            active={active}
+            playing={playing}
+            positionMs={playing ? positionMs : 0}
+            onLongPress={() => openDetail(item)}
+            onOpenDetails={() => openDetail(item)}
+          />
+        </View>
+      );
+    },
+    [cellWidth, currentId, filtered, gridColumns, isPlaying, openDetail, positionMs],
+  );
 
   return (
-    <ThemeBackdrop>
-      <FlatList
-        data={filtered}
-        key={columns}
-        numColumns={columns}
+    <>
+    <FlatList
+        data={listData}
+        key={gridColumns}
+        numColumns={gridColumns}
         keyExtractor={(item) => item.id}
-        columnWrapperStyle={columns > 1 ? { gap: gutter } : undefined}
+        removeClippedSubviews
+        initialNumToRender={8}
+        maxToRenderPerBatch={6}
+        windowSize={7}
+        updateCellsBatchingPeriod={50}
+        columnWrapperStyle={gridColumns > 1 ? { gap: gutter } : undefined}
         contentContainerStyle={[
           styles.list,
-          { maxWidth: contentMaxWidth, alignSelf: isTablet ? "center" : undefined, width: isTablet ? "100%" : undefined },
+          {
+            paddingTop: insets.top + spacing.lg,
+            maxWidth: contentMaxWidth,
+            alignSelf: isTablet ? "center" : undefined,
+            width: isTablet ? "100%" : undefined,
+          },
         ]}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => void onRefresh()} tintColor={colors.accent} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={tintColor} />}
         ListHeaderComponent={
           <View style={styles.header}>
-            <PhDisplay variant="display">{t("library")}</PhDisplay>
-            <Text style={[typography.caption, { color: colors.textMuted, marginTop: 6 }]}>
-              {loading ? t("loading") : `${loops.length} ${t("tracks")} · ${t("libraryHint")}`}
-            </Text>
-            <TextInput
-              value={query}
-              onChangeText={setQuery}
-              placeholder={t("search")}
-              placeholderTextColor={colors.textSubtle}
-              style={[
-                styles.search,
-                {
-                  color: colors.text,
-                  borderColor: colors.surfaceBorder,
-                  backgroundColor: colors.bgElevated,
-                  borderRadius: radius.lg,
-                  ...typography.body,
-                },
-              ]}
+            <NetworkErrorBanner
+              message={loadError}
+              onRetry={() => {
+                void load();
+              }}
             />
-            <GenreChips genres={genreOptions} value={genreFilter} onChange={setGenreFilter} />
+            <OfflineDataBanner visible={showingCachedData && loadError != null} />
+            <Animated.View style={headerEntrance.style}>
+              <PhDisplay variant="display">{t("library")}</PhDisplay>
+              <Text style={[typography.caption, { color: colors.textMuted, marginTop: 6 }]}>
+                {loading ? t("loading") : `${loops.length} ${t("tracks")} · ${t("libraryHint")}`}
+              </Text>
+              <SearchGlassField
+                value={query}
+                onChangeText={setQuery}
+                placeholder={t("search")}
+              />
+              <GenrePicker
+                catalogOnly
+                value={genreFilter}
+                onChange={setGenreFilter}
+                filterAllValue={ALL_GENRES}
+                filterAllLabel={t("filterAllGenres")}
+                style={styles.genrePicker}
+              />
+            </Animated.View>
+
+            {featuredLoop ? (
+              <View style={styles.featured}>
+                <LibraryFeaturedCard
+                  loop={featuredLoop}
+                  queue={filtered}
+                  active={currentId === featuredLoop.id}
+                  playing={currentId === featuredLoop.id && isPlaying}
+                  screenFocused={isFocused}
+                  onOpenDetails={() => setDetailLoop(featuredLoop)}
+                />
+              </View>
+            ) : null}
+
+            {listData.length > 0 ? (
+              <Text style={[typography.caption, styles.sectionLabel, { color: colors.textMuted }]}>
+                {t("libraryRecent")}
+              </Text>
+            ) : null}
           </View>
         }
         ListEmptyComponent={
-          !loading ? (
-            <PhCard>
-              <WaveformStrip height={40} bars={24} opacity={0.4} />
-              <Text style={[typography.subtitle, { color: colors.text, marginTop: spacing.lg }]}>
-                {t("libraryEmptyTitle")}
-              </Text>
-              <Text style={[typography.body, { color: colors.textMuted, marginTop: 8 }]}>{t("libraryEmptyBody")}</Text>
-            </PhCard>
+          loading && loops.length === 0 ? (
+            <LibrarySkeletonGrid columns={gridColumns} count={gridColumns * 2} />
+          ) : !loading && filtered.length === 0 && loops.length > 0 ? (
+            <LibraryNoResultsState />
+          ) : !loading && loops.length === 0 ? (
+            <LibraryEmptyState />
           ) : null
         }
-        renderItem={({ item }) => (
-          <View style={columns > 1 ? { width: gridItemWidth } : undefined}>
-            <LoopCard
-              loop={item}
-              queue={filtered}
-              onLongPress={() => setDetailLoop(item)}
-              onOpenDetails={() => setDetailLoop(item)}
-            />
-          </View>
-        )}
+        renderItem={renderItem}
+        extraData={listExtraData}
       />
 
       <LoopDetailSheet
@@ -177,17 +299,14 @@ export default function LibraryScreen() {
           setDetailLoop(null);
         }}
       />
-    </ThemeBackdrop>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   list: { padding: spacing.screen, paddingBottom: 200, gap: spacing.md },
-  header: { marginBottom: spacing.lg, gap: spacing.sm, width: "100%" },
-  search: {
-    marginTop: spacing.sm,
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
+  header: { marginBottom: spacing.lg, gap: spacing.md, width: "100%" },
+  genrePicker: { marginTop: spacing.md },
+  featured: { marginTop: spacing.lg },
+  sectionLabel: { marginTop: spacing.xl, marginBottom: spacing.xs, fontWeight: "600", letterSpacing: 0.3 },
 });

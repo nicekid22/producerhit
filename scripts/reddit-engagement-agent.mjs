@@ -1,8 +1,8 @@
 /**
  * Agent Reddit ProducerHit — scout threads, brouillons de réponses, posts assistés.
  *
- * Mode manuel (sans API) : génère le rapport + ouvre Reddit dans ton navigateur (session connectée).
- * Mode auto (avec REDDIT_* OAuth) : scout + option --post-comments (max 3/jour, anti-spam).
+ * Mode scout Agent Reach (Exa + OpenCLI) — sans OAuth requis.
+ * Mode auto (avec REDDIT_* OAuth) : scout + option --post-comments (max 3/jour).
  *
  * Usage :
  *   npm run reddit:agent
@@ -36,6 +36,7 @@ import {
   openManualPlaybook,
   openRedditUrls,
 } from "./lib/redditManualMode.mjs";
+import { scoutWithAgentReach } from "./lib/agentReachReddit.mjs";
 
 const SITE = "https://www.producerhit.com";
 const repoRoot = process.cwd();
@@ -178,32 +179,43 @@ function openUrls(urls) {
 }
 
 async function scoutThreads(state) {
-  const opportunities = [];
-  const hasOAuth = hasRedditCredentials();
+  const batchIndex = state.scoutBatchIndex ?? 0;
+  const byId = new Map();
+  let reachMeta = null;
 
-  if (hasOAuth) {
-    const subs = getScoutSubsForRun(state.scoutBatchIndex ?? 0, 6);
-    state.scoutBatchIndex = ((state.scoutBatchIndex ?? 0) + 1) % SCOUT_SUBS.length;
+  const add = (opp) => {
+    if (state.repliedIds.includes(opp.id)) return;
+    const prev = byId.get(opp.id);
+    if (!prev || opp.score > prev.score) byId.set(opp.id, opp);
+  };
 
+  try {
+    const reach = await scoutWithAgentReach({ ...state, scoutBatchIndex: batchIndex }, scorePost);
+    reachMeta = reach;
+    for (const o of reach.opportunities) add(o);
+  } catch (e) {
+    console.warn("[agent-reach] scout:", e.message);
+  }
+
+  if (hasRedditCredentials()) {
+    const subs = getScoutSubsForRun(batchIndex, 6);
     for (const sr of subs) {
       for (const q of sr.queries.slice(0, 3)) {
         try {
           const posts = await searchSubreddit(sr.name, q, { limit: 8 });
           for (const p of posts) {
-            if (state.repliedIds.includes(p.id)) continue;
             const { score, intent } = scorePost(p);
-            if (score >= 3) opportunities.push({ ...p, score, intent, matchedQuery: q });
+            if (score >= 3) add({ ...p, score, intent, matchedQuery: q, source: "oauth" });
           }
         } catch (e) {
-          console.warn(`scout ${sr.name} "${q}":`, e.message);
+          console.warn(`scout oauth ${sr.name} "${q}":`, e.message);
         }
       }
       try {
         const recent = await listSubredditNew(sr.name, { limit: 12 });
         for (const p of recent) {
-          if (state.repliedIds.includes(p.id)) continue;
           const { score, intent } = scorePost(p);
-          if (score >= 4) opportunities.push({ ...p, score, intent, matchedQuery: "new" });
+          if (score >= 4) add({ ...p, score, intent, matchedQuery: "new", source: "oauth" });
         }
       } catch {
         // ignore
@@ -211,12 +223,9 @@ async function scoutThreads(state) {
     }
   }
 
-  const byId = new Map();
-  for (const o of opportunities) {
-    const prev = byId.get(o.id);
-    if (!prev || o.score > prev.score) byId.set(o.id, o);
-  }
-  return [...byId.values()].sort((a, b) => b.score - a.score).slice(0, 8);
+  const opportunities = [...byId.values()].sort((a, b) => b.score - a.score).slice(0, 12);
+  state.scoutBatchIndex = (batchIndex + 1) % SCOUT_SUBS.length;
+  return { opportunities, reachMeta };
 }
 
 function manualScoutLinksLocal() {
@@ -252,11 +261,14 @@ async function postCommentsOpportunities(opportunities, loops, state) {
   return results;
 }
 
-function buildReport({ loops, opportunities, ownPost, manualLinks, autoResults }) {
+function buildReport({ loops, opportunities, ownPost, manualLinks, autoResults, reachMeta }) {
   const today = new Date().toISOString().slice(0, 10);
   const loop = pickLoopForReddit(loops) ?? loops[0] ?? { id: "demo", name: "Type Beat", genre: "Trap" };
   const hasOAuth = hasRedditCredentials();
   const mhhSearch = redditSearchUrl("makinghiphop", "type beat generator");
+  const reachOpen = reachMeta?.status?.opencli?.ok ? "✅ Chrome + OpenCLI" : "❌ extension Chrome (voir ci-dessous)";
+  const reachExa = reachMeta?.status?.exa?.ok ? "✅ Exa/mcporter" : "❌ Exa indisponible";
+  const reachSubs = reachMeta?.subsScouted?.map((s) => `r/${s}`).join(", ") ?? "—";
 
   let md = `# Reddit agent — ${today}
 
@@ -283,9 +295,14 @@ ${SCOUT_SUBS.map((s) => `- r/${s.name} (${s.category})`).join("\n")}
 
 | Mode | Statut |
 |------|--------|
-| OAuth Reddit (auto comment/post) | ${hasOAuth ? "✅ configuré" : "❌ — \`npm run reddit:oauth -- --open\` ou posts manuels"} |
-| Threads repérés (API) | ${opportunities.length} |
+| Agent Reach — OpenCLI | ${reachOpen} |
+| Agent Reach — Exa scout | ${reachExa} |
+| Subs scoutés (rotation) | ${reachSubs} |
+| OAuth Reddit (auto comment/post) | ${hasOAuth ? "✅ configuré" : "❌ — posts manuels recommandés"} |
+| Threads repérés | ${opportunities.length} |
 | Commentaires auto postés | ${autoResults?.filter((r) => r.ok).length ?? 0} |
+
+${reachMeta?.status?.opencli?.ok === false ? `> **OpenCLI** : charge l'extension depuis \`%USERPROFILE%\\.agent-reach\\tools\\opencli-extension\` → chrome://extensions → Load unpacked. Puis login reddit.com dans Chrome.\n` : ""}
 
 ---
 
@@ -345,7 +362,7 @@ ${draftCommentNoBeat({ subreddit: "makinghiphop" }, "ai_compare")}
       const reply = draftReply(opp, loop, opp.intent);
       md += `### ${i + 1}. ${opp.title}
 
-- **Sub:** r/${opp.subreddit} · score ${opp.score} · intent \`${opp.intent}\`
+- **Sub:** r/${opp.subreddit} · score ${opp.score} · intent \`${opp.intent}\`${opp.source ? ` · source \`${opp.source}\`` : ""}
 - **Thread:** ${opp.permalink}
 - **Réponse (copier-coller):**
 
@@ -356,7 +373,7 @@ ${reply}
 `;
     }
   } else {
-    md += `Pas de threads via API (OAuth absent ou quota). Ouvre ces recherches et réponds **à la main** (max 3–5/jour) :
+    md += `Pas de threads repérés (Exa/OpenCLI/OAuth). Ouvre ces recherches et réponds **à la main** (max 3–5/jour) :
 
 `;
     for (const link of manualLinks.slice(0, 14)) {
@@ -438,12 +455,10 @@ async function main() {
     return;
   }
 
-  let opportunities = [];
+  const scout = await scoutThreads(state);
+  const opportunities = scout.opportunities;
+  const reachMeta = scout.reachMeta;
   let autoResults = [];
-
-  if (modeScout || hasRedditCredentials()) {
-    opportunities = await scoutThreads(state);
-  }
 
   if (postComments && hasRedditCredentials() && opportunities.length) {
     autoResults = await postCommentsOpportunities(opportunities, loops, state);
@@ -451,7 +466,7 @@ async function main() {
   }
 
   const manualLinks = manualScoutLinksLocal();
-  const report = buildReport({ loops, opportunities, ownPost, manualLinks, autoResults });
+  const report = buildReport({ loops, opportunities, ownPost, manualLinks, autoResults, reachMeta });
   const outFile = path.join(reportsDir, `reddit-agent-${new Date().toISOString().slice(0, 10)}.md`);
   writeFileSync(outFile, report, "utf8");
 
@@ -459,7 +474,7 @@ async function main() {
   saveState(state);
 
   console.log(`✓ Rapport: ${outFile}`);
-  console.log(`  ${opportunities.length} threads · OAuth: ${hasRedditCredentials() ? "oui" : "non (mode manuel)"}`);
+  console.log(`  ${opportunities.length} threads · Reach: Exa=${reachMeta?.status?.exa?.ok ? "oui" : "non"} OpenCLI=${reachMeta?.status?.opencli?.ok ? "oui" : "non"} · OAuth: ${hasRedditCredentials() ? "oui" : "non"}`);
 
   if (shouldOpen) {
     openManualPlaybook(redditLoop ?? { id: "demo", name: "Type Beat", genre: "Trap" });

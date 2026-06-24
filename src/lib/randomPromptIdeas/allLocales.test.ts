@@ -10,7 +10,7 @@ import { getUnifiedUserPromptPool } from "@/lib/randomPromptIdeas/unifiedDisplay
 import { looksLikeAceTechnicalPrompt, resolveGenerationCaptionContext } from "@/lib/promptEnhancer";
 import { resolveRandomPromptLocale } from "@/lib/resolveRandomPromptLocale";
 import { resolveSongVocalLanguage } from "@/lib/vocalLanguages";
-import { getCuratedDisplayPromptPool, getDisplayPromptPool, resolveCuratedPromptLocale } from "@producerhit/shared";
+import { getCuratedDisplayPromptPool, getDisplayPromptPool, looksLikeAceProsePrompt, resolveCuratedPromptLocale } from "@producerhit/shared";
 import { uiLocaleToAceVocalLanguage } from "@producerhit/shared";
 
 const NON_EN_FR = UI_LOCALES.filter((l) => l !== "en" && l !== "fr");
@@ -92,11 +92,20 @@ describe("all 14 UI locales — dice", () => {
     const roll = pickRandomGenreMenuDiceRoll(locale, "song");
     expect(roll.genre).toBeTruthy();
     expect(roll.displayPrompt.trim().length).toBeGreaterThan(12);
-    if (roll.acePrompt.trim()) {
+    if (roll.acePrompt.trim() && !looksLikeAceProsePrompt(roll.displayPrompt)) {
       expect(roll.acePrompt.includes(",")).toBe(true);
       expect(roll.acePrompt.length).toBeGreaterThan(roll.displayPrompt.length);
     }
   });
+
+  it.each(["es", "de", "it", "ja", "ko", "zh", "ar", "pt"] as const)(
+    "%s unified pool includes localized ACE prose",
+    (locale) => {
+      const pool = getUnifiedUserPromptPool(locale, "song");
+      const ace = pool.filter((p) => looksLikeAceProsePrompt(p));
+      expect(ace.length).toBeGreaterThanOrEqual(200);
+    },
+  );
 
   it("dice pool includes translated curated funny prompts (same as placeholder)", () => {
     const pool = getUnifiedUserPromptPool("es", "song");
@@ -170,6 +179,32 @@ describe("all 14 UI locales — vocal language", () => {
       ).toBe(uiLocaleToAceVocalLanguage(locale));
     },
   );
+
+  it("legacy IT dice shell + UI fr → French vocals after site locale switch", () => {
+    expect(
+      resolveSongVocalLanguage({
+        mode: "auto",
+        manualCode: "en",
+        lyricsMode: "ai",
+        lyrics: "",
+        songDescription: "Una canzone deep focus su una storia notturna",
+        uiLocale: "fr",
+      }),
+    ).toBe("fr");
+  });
+
+  it("non-structured Italian leftover + UI fr → French vocals", () => {
+    expect(
+      resolveSongVocalLanguage({
+        mode: "auto",
+        manualCode: "en",
+        lyricsMode: "ai",
+        lyrics: "",
+        songDescription: "Pop ironico sulle riunioni Zoom che potevano essere un'email",
+        uiLocale: "fr",
+      }),
+    ).toBe("fr");
+  });
 
   it("legacy IT dice shell + UI it → Italian vocals not French", () => {
     expect(

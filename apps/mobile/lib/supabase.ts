@@ -1,4 +1,5 @@
-import "react-native-url-polyfill/auto";
+import { devWarn } from "@/lib/devLog";
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient } from "@supabase/supabase-js";
 import Constants from "expo-constants";
@@ -16,7 +17,7 @@ const supabaseAnonKey =
   "";
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn(
+  devWarn(
     "[ProducerHit] Missing EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY — copy from web .env",
   );
 }

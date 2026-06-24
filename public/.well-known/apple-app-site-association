@@ -1,0 +1,21 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appIDs": [
+          "REPLACE_TEAM_ID.com.producerhit.app"
+        ],
+        "paths": [
+          "/loop/*",
+          "/play/*"
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "REPLACE_TEAM_ID.com.producerhit.app"
+    ]
+  }
+}

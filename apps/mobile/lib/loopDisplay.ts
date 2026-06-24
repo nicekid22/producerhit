@@ -2,7 +2,7 @@ import type { Loop } from "@producerhit/shared";
 import type { AppLocale } from "@/lib/i18n/catalog";
 import { t } from "@/lib/i18n/catalog";
 
-export function resolveLoopCoverUrl(loop: Loop): string | null {
+export function resolveLoopCoverUrl(loop: Pick<Loop, "coverUrl" | "stemsUrl">): string | null {
   const raw = loop.coverUrl?.trim() ?? "";
   if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
 

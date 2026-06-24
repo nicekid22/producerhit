@@ -105,10 +105,12 @@ export function createGenerationJobsClient(deps: GenerationJobsDeps) {
     const pollMs = options?.pollMs ?? pollIntervalMs(config);
     const startedAt = Date.now();
     let settled = false;
+    let completedResult: GenerationJobResult | null = null;
     let lastStatus: GenerationJobStatus = "pending";
 
     const finish = (result: GenerationJobResult): GenerationJobResult => {
       settled = true;
+      completedResult = result;
       deps.onJobCompleted?.(jobId, Date.now() - startedAt);
       return result;
     };
@@ -155,6 +157,23 @@ export function createGenerationJobsClient(deps: GenerationJobsDeps) {
     const unsubscribe = deps.subscribeJob(jobId, handleRow);
 
     try {
+      // Poll immédiat — ne pas attendre 3 s avant le premier statut.
+      const firstPoll = await pollGenerationJob(jobId);
+      lastStatus = firstPoll.status;
+      options?.onStatus?.(firstPoll.status);
+      if (firstPoll.status === "completed" && firstPoll.audioUrl) {
+        return finish({ jobId, audioUrl: firstPoll.audioUrl, meta: firstPoll.meta ?? null });
+      }
+      if (firstPoll.status === "completed" && !firstPoll.audioUrl) {
+        const fetched = await deps.fetchJobAudio(jobId).catch(() => "");
+        if (fetched) {
+          return finish({ jobId, audioUrl: fetched, meta: firstPoll.meta ?? null });
+        }
+      }
+      if (firstPoll.status === "failed") {
+        fail(firstPoll.error ?? "Generation job failed");
+      }
+
       while (!settled) {
         if (options?.signal?.aborted) {
           fail("Generation cancelled");
@@ -180,12 +199,12 @@ export function createGenerationJobsClient(deps: GenerationJobsDeps) {
         }
         await new Promise((r) => setTimeout(r, pollMs));
       }
-      fail("Generation timed out — réessaie dans un instant");
     } finally {
       unsubscribe();
     }
 
-    throw new Error("Unreachable");
+    if (completedResult) return completedResult;
+    return fail("Generation timed out — réessaie dans un instant");
   }
 
   return {

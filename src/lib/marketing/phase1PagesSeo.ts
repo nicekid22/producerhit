@@ -48,6 +48,43 @@ export function getBeatNameGeneratorSeo(locale: AppLocale): Phase1PageSeo {
   return BEAT_NAME[contentLocale(locale)];
 }
 
+const ALBUM_COVER: Record<"en" | "fr", Phase1PageSeo> = {
+  en: {
+    title: "Free AI Album Cover Generator — 1400×1400 Spotify-ready | ProducerHit",
+    description:
+      "Generate professional album cover art with AI — abstract, urban, cosmic & more. Surprise prompts, no text in image, 1400×1400 export for Spotify & DistroKid. Studio plan.",
+    h1: "AI Album Cover Generator",
+  },
+  fr: {
+    title: "Générateur de pochette album IA — 1400×1400 Spotify | ProducerHit",
+    description:
+      "Crée une cover d'album pro avec l'IA — abstrait, urbain, cosmique et plus. Prompts surprise, sans texte, export 1400×1400 pour Spotify et DistroKid. Plan Studio.",
+    h1: "Générateur de pochette album IA",
+  },
+};
+
+export function getAlbumCoverGeneratorSeo(locale: AppLocale): Phase1PageSeo {
+  return ALBUM_COVER[contentLocale(locale)];
+}
+
+export function buildAlbumCoverGeneratorJsonLd(locale: AppLocale): Record<string, unknown> {
+  const page = getAlbumCoverGeneratorSeo(locale);
+  const isFr = locale === "fr";
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: page.h1,
+    applicationCategory: "DesignApplication",
+    operatingSystem: "Web",
+    url: isFr ? "https://www.producerhit.com/fr/generateur-pochette-album-ia" : "https://www.producerhit.com/ai-album-cover-generator",
+    description: page.description,
+    offers: { "@type": "Offer", price: "0", priceCurrency: "USD", description: isFr ? "Aperçu prompt gratuit" : "Free prompt preview" },
+    featureList: isFr
+      ? ["Prompts surprise variés", "Export 1400×1400", "Sans texte dans l'image", "Pack distribution ZIP", "Compatible Spotify / DistroKid"]
+      : ["Varied surprise prompts", "1400×1400 export", "No text in image", "Distribution ZIP pack", "Spotify / DistroKid ready"],
+  };
+}
+
 export function buildForAiJsonLd(locale: AppLocale): Record<string, unknown> {
   const isFr = locale === "fr";
   return {

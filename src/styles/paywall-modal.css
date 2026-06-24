@@ -1,0 +1,329 @@
+/* Paywall / growth modals — Prism · Warm Glass · Cloud */
+
+.pk-paywall-backdrop,
+.pk-growth-modal-backdrop {
+  background: rgba(4, 3, 10, 0.76);
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+}
+
+html.pk-warm-glass-active .pk-paywall-backdrop,
+html.pk-warm-glass-active .pk-growth-modal-backdrop {
+  background: rgba(20, 8, 4, 0.78);
+}
+
+html.pk-cloud-active .pk-paywall-backdrop,
+html.pk-cloud-active .pk-growth-modal-backdrop {
+  background: rgba(12, 12, 16, 0.38);
+}
+
+.pk-paywall,
+.pk-growth-modal {
+  --pk-paywall-bg: #0a0812;
+  --pk-paywall-border: rgba(255, 255, 255, 0.1);
+  --pk-paywall-accent: var(--prism-violet, #9d7cff);
+  --pk-paywall-accent-soft: color-mix(in srgb, var(--pk-paywall-accent) 18%, transparent);
+  --pk-paywall-accent-icon: color-mix(in srgb, var(--pk-paywall-accent) 28%, transparent);
+  --pk-paywall-text: rgba(255, 255, 255, 0.92);
+  --pk-paywall-text-muted: rgba(255, 255, 255, 0.58);
+  --pk-paywall-text-faint: rgba(255, 255, 255, 0.42);
+  --pk-paywall-text-eyebrow: rgba(255, 255, 255, 0.42);
+  --pk-paywall-check-bg: rgba(52, 211, 153, 0.12);
+  --pk-paywall-check-fg: #6ee7b7;
+  --pk-paywall-urgent-border: rgba(251, 191, 36, 0.3);
+  --pk-paywall-urgent-bg: rgba(245, 158, 11, 0.15);
+  --pk-paywall-urgent-fg: #fde68a;
+  --pk-paywall-glow-a: color-mix(in srgb, var(--pk-paywall-accent) 22%, transparent);
+  --pk-paywall-glow-b: rgba(103, 195, 255, 0.12);
+  --pk-paywall-shadow: 0 32px 100px rgba(0, 0, 0, 0.72);
+  --pk-paywall-close-bg: rgba(255, 255, 255, 0.04);
+  --pk-paywall-header-from: color-mix(in srgb, var(--pk-paywall-accent) 25%, transparent);
+  --pk-paywall-header-to: rgba(103, 195, 255, 0.15);
+
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--pk-paywall-border);
+  background: var(--pk-paywall-bg);
+  color: var(--pk-paywall-text);
+  box-shadow: var(--pk-paywall-shadow);
+}
+
+html.pk-warm-glass-active .pk-paywall,
+html.pk-warm-glass-active .pk-growth-modal,
+.pk-paywall--theme-warm-glass,
+.pk-growth-modal--theme-warm-glass {
+  --pk-paywall-bg: #1a0c08;
+  --pk-paywall-border: rgba(255, 195, 150, 0.22);
+  --pk-paywall-accent: #e8956a;
+  --pk-paywall-text: rgba(255, 248, 240, 0.94);
+  --pk-paywall-text-muted: rgba(255, 220, 180, 0.62);
+  --pk-paywall-text-faint: rgba(255, 200, 160, 0.45);
+  --pk-paywall-text-eyebrow: rgba(255, 200, 160, 0.55);
+  --pk-paywall-check-bg: rgba(232, 149, 106, 0.18);
+  --pk-paywall-check-fg: #ffc9a8;
+  --pk-paywall-urgent-border: rgba(255, 180, 100, 0.35);
+  --pk-paywall-urgent-bg: rgba(255, 140, 60, 0.18);
+  --pk-paywall-urgent-fg: #ffd4a8;
+  --pk-paywall-glow-a: rgba(232, 149, 106, 0.22);
+  --pk-paywall-glow-b: rgba(255, 160, 100, 0.1);
+  --pk-paywall-shadow: 0 32px 100px rgba(0, 0, 0, 0.55), 0 0 60px rgba(232, 149, 106, 0.12);
+  --pk-paywall-close-bg: rgba(255, 200, 150, 0.08);
+  --pk-paywall-header-from: rgba(232, 149, 106, 0.28);
+  --pk-paywall-header-to: rgba(255, 160, 100, 0.12);
+}
+
+html.pk-cloud-active .pk-paywall,
+html.pk-cloud-active .pk-growth-modal,
+.pk-paywall--theme-cloud,
+.pk-growth-modal--theme-cloud {
+  --pk-paywall-bg: rgba(255, 255, 255, 0.94);
+  --pk-paywall-border: var(--cloud-glass-border, rgba(0, 0, 0, 0.08));
+  --pk-paywall-accent: var(--cloud-accent, #8a9cff);
+  --pk-paywall-text: var(--cloud-text, #1c1c20);
+  --pk-paywall-text-muted: var(--cloud-text-muted, rgba(28, 28, 32, 0.56));
+  --pk-paywall-text-faint: rgba(28, 28, 32, 0.4);
+  --pk-paywall-text-eyebrow: rgba(28, 28, 32, 0.45);
+  --pk-paywall-check-bg: color-mix(in srgb, var(--cloud-accent, #8a9cff) 14%, transparent);
+  --pk-paywall-check-fg: var(--cloud-accent, #6b7ee8);
+  --pk-paywall-urgent-border: rgba(230, 140, 60, 0.35);
+  --pk-paywall-urgent-bg: rgba(255, 180, 80, 0.14);
+  --pk-paywall-urgent-fg: #c45a20;
+  --pk-paywall-glow-a: color-mix(in srgb, var(--cloud-accent-soft, rgba(138, 156, 255, 0.2)) 80%, transparent);
+  --pk-paywall-glow-b: rgba(255, 255, 255, 0.5);
+  --pk-paywall-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.65) inset,
+    0 28px 80px rgba(0, 0, 0, 0.14);
+  --pk-paywall-close-bg: rgba(0, 0, 0, 0.04);
+  --pk-paywall-header-from: color-mix(in srgb, var(--cloud-accent, #8a9cff) 18%, transparent);
+  --pk-paywall-header-to: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(40px) saturate(1.25);
+  -webkit-backdrop-filter: blur(40px) saturate(1.25);
+}
+
+.pk-paywall__glow {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 90% 60% at 50% -10%, var(--pk-paywall-glow-a), transparent 58%),
+    radial-gradient(ellipse 70% 50% at 100% 100%, var(--pk-paywall-glow-b), transparent 55%);
+}
+
+.pk-paywall__close {
+  border: 1px solid var(--pk-paywall-border);
+  background: var(--pk-paywall-close-bg);
+  color: var(--pk-paywall-text-faint);
+}
+
+.pk-paywall__close:hover {
+  color: var(--pk-paywall-text);
+}
+
+.pk-paywall__eyebrow {
+  color: var(--pk-paywall-text-eyebrow);
+}
+
+.pk-paywall__price {
+  color: var(--pk-paywall-text);
+}
+
+.pk-paywall__price-note {
+  color: var(--pk-paywall-text-faint);
+}
+
+.pk-paywall__title {
+  color: var(--pk-paywall-text);
+}
+
+.pk-paywall__desc {
+  color: var(--pk-paywall-text-muted);
+}
+
+.pk-paywall__bullet {
+  color: color-mix(in srgb, var(--pk-paywall-text) 78%, transparent);
+}
+
+.pk-paywall__check {
+  background: var(--pk-paywall-check-bg);
+  color: var(--pk-paywall-check-fg);
+}
+
+.pk-paywall__icon {
+  border: 1px solid var(--pk-paywall-accent-icon);
+  background: var(--pk-paywall-accent-soft);
+  color: color-mix(in srgb, var(--pk-paywall-accent) 70%, white);
+}
+
+.pk-paywall__icon--urgent {
+  border-color: var(--pk-paywall-urgent-border);
+  background: var(--pk-paywall-urgent-bg);
+  color: var(--pk-paywall-urgent-fg);
+}
+
+.pk-paywall__secondary {
+  color: var(--pk-paywall-text-faint);
+}
+
+.pk-paywall__secondary:hover {
+  color: var(--pk-paywall-text-muted);
+}
+
+.pk-paywall__footer {
+  color: var(--pk-paywall-text-faint);
+}
+
+/* Growth modal (referral, loot) */
+.pk-growth-modal__header {
+  border-bottom: 1px solid var(--pk-paywall-border);
+  background: linear-gradient(
+    to bottom right,
+    var(--pk-paywall-header-from),
+    var(--pk-paywall-bg) 45%,
+    var(--pk-paywall-header-to)
+  );
+}
+
+.pk-growth-modal__eyebrow {
+  color: color-mix(in srgb, var(--pk-paywall-accent) 75%, var(--pk-paywall-text-muted));
+}
+
+.pk-growth-modal__title {
+  color: var(--pk-paywall-text);
+}
+
+.pk-growth-modal__subtitle {
+  color: var(--pk-paywall-text-muted);
+}
+
+.pk-growth-modal__card {
+  border: 1px solid var(--pk-paywall-border);
+  background: color-mix(in srgb, var(--pk-paywall-bg) 88%, var(--pk-paywall-accent) 12%);
+  color: color-mix(in srgb, var(--pk-paywall-text) 80%, transparent);
+}
+
+.pk-growth-modal__card strong {
+  color: var(--pk-paywall-text);
+}
+
+.pk-growth-modal__card-muted {
+  color: var(--pk-paywall-text-muted);
+}
+
+.pk-growth-modal__footer {
+  border-top: 1px solid var(--pk-paywall-border);
+  background: color-mix(in srgb, var(--pk-paywall-bg) 75%, black 25%);
+}
+
+html.pk-cloud-active .pk-growth-modal__footer {
+  background: color-mix(in srgb, var(--pk-paywall-bg) 92%, var(--pk-paywall-accent) 8%);
+}
+
+.pk-growth-modal__dismiss {
+  color: var(--pk-paywall-text-faint);
+}
+
+.pk-growth-modal__dismiss:hover {
+  color: var(--pk-paywall-text-muted);
+}
+
+/* Audio retention banner */
+.pk-audio-retention-banner {
+  --pk-retention-border: rgba(34, 211, 238, 0.2);
+  --pk-retention-bg: rgba(34, 211, 238, 0.1);
+  --pk-retention-icon: #67e8f9;
+  --pk-retention-title: rgba(255, 255, 255, 0.92);
+  --pk-retention-body: rgba(255, 255, 255, 0.65);
+  --pk-retention-btn-border: rgba(255, 255, 255, 0.15);
+  --pk-retention-btn-bg: rgba(255, 255, 255, 0.05);
+  --pk-retention-btn-text: rgba(255, 255, 255, 0.92);
+  --pk-retention-cta-bg: #7c3aed;
+  --pk-retention-cta-hover: #8b5cf6;
+
+  border-color: var(--pk-retention-border);
+  background: var(--pk-retention-bg);
+}
+
+.pk-audio-retention-banner--urgent {
+  --pk-retention-border: rgba(251, 191, 36, 0.3);
+  --pk-retention-bg: rgba(245, 158, 11, 0.1);
+  --pk-retention-icon: #fde68a;
+}
+
+.pk-audio-retention-banner__title {
+  color: var(--pk-retention-title);
+}
+
+.pk-audio-retention-banner__body {
+  color: var(--pk-retention-body);
+}
+
+.pk-audio-retention-banner__icon {
+  color: var(--pk-retention-icon);
+}
+
+.pk-audio-retention-banner__btn {
+  border: 1px solid var(--pk-retention-btn-border);
+  background: var(--pk-retention-btn-bg);
+  color: var(--pk-retention-btn-text);
+}
+
+.pk-audio-retention-banner__cta {
+  background: var(--pk-retention-cta-bg);
+  color: #fff;
+}
+
+.pk-audio-retention-banner__cta:hover {
+  background: var(--pk-retention-cta-hover);
+}
+
+html.pk-warm-glass-active .pk-audio-retention-banner {
+  --pk-retention-border: rgba(232, 149, 106, 0.28);
+  --pk-retention-bg: rgba(232, 149, 106, 0.1);
+  --pk-retention-icon: #ffc9a8;
+  --pk-retention-title: rgba(255, 248, 240, 0.94);
+  --pk-retention-body: rgba(255, 220, 180, 0.68);
+  --pk-retention-btn-border: rgba(255, 195, 150, 0.22);
+  --pk-retention-btn-bg: rgba(255, 200, 150, 0.08);
+  --pk-retention-cta-bg: #d4845a;
+  --pk-retention-cta-hover: #e8956a;
+}
+
+html.pk-warm-glass-active .pk-audio-retention-banner--urgent {
+  --pk-retention-border: rgba(255, 160, 80, 0.35);
+  --pk-retention-bg: rgba(255, 140, 60, 0.12);
+  --pk-retention-icon: #ffd4a8;
+}
+
+html.pk-cloud-active .pk-audio-retention-banner {
+  --pk-retention-border: color-mix(in srgb, var(--cloud-accent, #8a9cff) 28%, transparent);
+  --pk-retention-bg: color-mix(in srgb, var(--cloud-accent, #8a9cff) 10%, white);
+  --pk-retention-icon: var(--cloud-accent, #6b7ee8);
+  --pk-retention-title: var(--cloud-text, #1c1c20);
+  --pk-retention-body: var(--cloud-text-muted, rgba(28, 28, 32, 0.56));
+  --pk-retention-btn-border: var(--cloud-glass-border, rgba(0, 0, 0, 0.1));
+  --pk-retention-btn-bg: rgba(0, 0, 0, 0.03);
+  --pk-retention-btn-text: var(--cloud-text, #1c1c20);
+  --pk-retention-cta-bg: var(--cloud-accent, #8a9cff);
+  --pk-retention-cta-hover: color-mix(in srgb, var(--cloud-accent, #8a9cff) 85%, black);
+}
+
+html.pk-cloud-active .pk-audio-retention-banner--urgent {
+  --pk-retention-border: rgba(230, 140, 60, 0.35);
+  --pk-retention-bg: rgba(255, 180, 80, 0.14);
+  --pk-retention-icon: #c45a20;
+}
+
+/* Modal backdrop (shared Modal.tsx) */
+.pk-modal-backdrop {
+  background: rgba(4, 3, 10, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+html.pk-warm-glass-active .pk-modal-backdrop {
+  background: rgba(20, 8, 4, 0.72);
+}
+
+html.pk-cloud-active .pk-modal-backdrop {
+  background: rgba(12, 12, 16, 0.35);
+}

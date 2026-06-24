@@ -11,6 +11,7 @@ export type PromptCategoryId =
   | "rock"
   | "electronic"
   | "impressive"
+  | "ace_prose"
   | "genre_menu";
 
 export type PromptCategory = {

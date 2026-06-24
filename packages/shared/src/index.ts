@@ -43,6 +43,19 @@ export function planMonthlyLimit(plan: string | null | undefined): number {
   return PLAN_LIMITS[normalizePlanId(plan)];
 }
 
+/** Gens carried into the upgrade month (previous tier monthly limit, matches DB trigger). */
+export function planUpgradeCarryoverBonus(previousPlan: string | null | undefined): number {
+  return PLAN_LIMITS[normalizePlanId(previousPlan)];
+}
+
+/** Total monthly cap right after upgrading from previousPlan to nextPlan (excl. referral/level/purchased). */
+export function planLimitAfterUpgrade(
+  nextPlan: PlanId,
+  previousPlan: string | null | undefined,
+): number {
+  return PLAN_LIMITS[nextPlan] + planUpgradeCarryoverBonus(previousPlan);
+}
+
 export type UserProfile = {
   id: string;
   plan: PlanId;
@@ -116,14 +129,14 @@ export const MOBILE_VOCAL_STYLES = [
 export type MobileVocalStyle = (typeof MOBILE_VOCAL_STYLES)[number]["value"];
 
 export const DEFAULT_SONG = {
-  genre: "Pop",
+  genre: "Auto",
   loopLength: "16 bars" as LoopLength,
   description: "",
   lyrics: "",
 };
 
 export const DEFAULT_GENERATOR = {
-  genre: "Melodic Trap",
+  genre: "__random__",
   bpm: 140,
   mood: "Dark",
   influence: "No Influence",
@@ -136,9 +149,42 @@ export const DEFAULT_GENERATOR = {
   prompt: "",
 };
 
+export {
+  ALL_GENRE_OPTIONS,
+  buildPrecisionGenreOptions,
+  catalogGenreValues,
+  findGenreOption,
+  GENRE_CATALOG_COUNT,
+  pickRandomCatalogGenreValue,
+  PRIMARY_GENRE_VALUES,
+} from "./genres/genreMenu";
+export type { GenreDropdownOption } from "./genres/genrePickMode";
+export {
+  FROM_IDEA_GENRE_VALUE,
+  genreSelectionHint,
+  isCatalogGenreSelection,
+  isFromIdeaGenreSelection,
+  isRandomGenreSelection,
+  pickRandomGenreValue,
+  RANDOM_GENRE_VALUE,
+  resolveGenreForGeneration,
+  shouldPickRandomGenreAtGenerate,
+} from "./genres/genrePickMode";
 export * from "./generation/index";
 export { resolveStemsDownloadUrl } from "./stemsDownload";
 export * from "./prompt/inspirationAndDice";
+export * from "./prompt/aceProse";
+export { resolveGenerationCaptionContext, type GenerationCaptionContext } from "./prompt/captionContext";
+export {
+  isPromptBankEnabled,
+  isPromptBankLocale,
+  shouldUsePromptBank,
+  pickPromptBankRoll,
+  getPromptBankDisplayPool,
+  findPromptBankByDisplay,
+  promptBankStats,
+  type PromptBankRoll,
+} from "./prompt/promptBank";
 export {
   getCuratedDisplayPromptPool,
   mergeUniqueDisplayPrompts,
@@ -148,6 +194,14 @@ export {
   ACE_CURATED_PROMPT_LOCALES,
   type AceCuratedPromptLocale,
 } from "./prompt/curatedPromptLocale";
+export {
+  findGenreDiceItemByDisplay,
+  getGenreDiceDisplayPromptPool,
+  getGenreDisplayLabel,
+  pickRandomChipGenre,
+  pickRandomGenreDice,
+} from "./prompt/genreDicePool";
+export { getLocalizedStudioChipGenres, STUDIO_CHIP_GENRES, STUDIO_DICE_GENRES, type StudioGenreOption } from "./genres/studioGenres";
 export {
   UI_LOCALES,
   LOCALE_LABELS,
@@ -160,3 +214,65 @@ export {
 } from "./i18n/locales";
 export { VOCAL_LANGUAGES, vocalLanguageLabel, uiLocaleToAceVocalLanguage } from "./vocalLanguage";
 export { looksLikeStructuredDisplayIdea } from "./displayPromptPatterns";
+export type {
+  DistributionReleaseType,
+  DistributionReleaseStatus,
+  DistributionOutletStatus,
+  DistributionReleaseInput,
+  DistributionReleaseRow,
+  DistributionOutletRow,
+  DistributionUsageSummary,
+} from "./distribution/types";
+export { DISTRIBUTION_OUTLET_LABELS } from "./distribution/types";
+export {
+  DISTRIBUTION_MONTHLY_QUOTA,
+  canDistribute,
+  canViewDistributionRoyalties,
+  distributionMonthlyQuota,
+  distributionPlanRank,
+} from "./distribution/entitlements";
+export { suggestLabelGridGenreName, PRODUCERHIT_TO_LABELGRID_GENRE } from "./distribution/genreMap";
+export {
+  DISTRIBUTION_COVER_SIZE,
+  buildDistributionReadme,
+  suggestDistributionGenre,
+  type DistributionPackMetadata,
+} from "./distribution/pack";
+export {
+  buildCoverGenerationSeed,
+  withCoverCacheBust,
+} from "./distribution/coverGenerationSeed";
+export {
+  COVER_LIGHTING_PRESETS,
+  COVER_PROMPT_MAX_LENGTH,
+  COVER_STYLE_PRESETS,
+  buildCoverPromptSuggestionsFromLoop,
+  buildStructuredCoverPrompt,
+  canAccessDistributionAcademy,
+  parseStructuredCoverPromptFromText,
+  type StructuredCoverPromptInput,
+} from "./distribution/coverPrompt";
+export {
+  COVER_SURPRISE_LIGHTING,
+  COVER_SURPRISE_STYLES,
+  getCoverSurpriseIdeasCount,
+  getCoverSurpriseLibrary,
+  pickCoverSurpriseSuggestion,
+} from "./distribution/coverSurpriseLibrary";
+export { buildLoopCardCoverPrompt } from "./distribution/loopCardCoverPrompt";
+export {
+  DISTRIBUTION_ACADEMY_MODULES,
+  DISTRIBUTION_ACADEMY_VALUE_USD,
+  type DistributionAcademyActionItem,
+  type DistributionAcademyModule,
+} from "./distribution/academyModules";
+export {
+  buildTrackLicenseDocument,
+  buildTrackLicenseId,
+  formatTrackLicenseAsText,
+  planDisplayName,
+  type BuildTrackLicenseInput,
+  type LicenseLocale,
+  type LicenseProfile,
+  type TrackLicenseDocument,
+} from "./commercialLicense";

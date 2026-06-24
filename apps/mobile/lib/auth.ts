@@ -1,6 +1,7 @@
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
 import type { Session, User } from "@supabase/supabase-js";
+import { useAuthStore } from "@/stores/authStore";
 import { supabase } from "./supabase";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -85,6 +86,7 @@ export async function parseAuthCallbackUrl(url: string): Promise<{ session: Sess
 export async function signOut() {
   const { error } = await supabase.auth.signOut({ scope: "local" });
   if (error) throw error;
+  await useAuthStore.getState().clearAuth();
 }
 
 export function onAuthStateChange(callback: (session: Session | null) => void) {

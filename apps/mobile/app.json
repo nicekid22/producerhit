@@ -11,7 +11,23 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#07080f"
+      "backgroundColor": "#1A1220"
+    },
+    "locales": {
+      "en": "./locales/en.json",
+      "fr": "./locales/fr.json",
+      "es": "./locales/es.json",
+      "pt": "./locales/pt.json",
+      "de": "./locales/de.json",
+      "it": "./locales/it.json",
+      "nl": "./locales/nl.json",
+      "ar": "./locales/ar.json",
+      "ja": "./locales/ja.json",
+      "ko": "./locales/ko.json",
+      "tr": "./locales/tr.json",
+      "hi": "./locales/hi.json",
+      "zh": "./locales/zh.json",
+      "th": "./locales/th.json"
     },
     "ios": {
       "supportsTablet": true,
@@ -21,13 +37,34 @@
         "UIBackgroundModes": [
           "audio"
         ],
-        "ITSAppUsesNonExemptEncryption": false
-      }
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleAllowMixedLocalizations": true,
+        "CFBundleDevelopmentRegion": "en",
+        "CFBundleLocalizations": [
+          "en",
+          "fr",
+          "es",
+          "pt",
+          "de",
+          "it",
+          "nl",
+          "ar",
+          "ja",
+          "ko",
+          "tr",
+          "hi",
+          "zh",
+          "th"
+        ]
+      },
+      "associatedDomains": [
+        "applinks:www.producerhit.com"
+      ]
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#07080f"
+        "backgroundColor": "#1A1220"
       },
       "package": "com.producerhit.app"
     },
@@ -35,7 +72,46 @@
       "expo-router",
       "expo-secure-store",
       "react-native-iap",
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      [
+        "expo-localization",
+        {
+          "supportedLocales": {
+            "ios": [
+              "en",
+              "fr",
+              "es",
+              "pt",
+              "de",
+              "it",
+              "nl",
+              "ar",
+              "ja",
+              "ko",
+              "tr",
+              "hi",
+              "zh",
+              "th"
+            ],
+            "android": [
+              "en",
+              "fr",
+              "es",
+              "pt",
+              "de",
+              "it",
+              "nl",
+              "ar",
+              "ja",
+              "ko",
+              "tr",
+              "hi",
+              "zh",
+              "th"
+            ]
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

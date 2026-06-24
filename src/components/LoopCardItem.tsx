@@ -4,10 +4,8 @@ import {
   coverImageKeyFromLoop,
   displayCoverUrl,
   isPersistedStorageCoverUrl,
-  needsPinterestCover,
   resolveLoopDisplayCoverUrl,
 } from "@/lib/coverArt";
-import { useLazyPinterestCover } from "@/hooks/useLazyPinterestCover";
 import { StoredLoopCover } from "@/components/cover/StoredLoopCover";
 import { CoverMedia } from "@/components/CoverMedia";
 import { buildCoverPromptSnapshot, cn, COVER_SURFACE_CLASS } from "@/lib/utils";
@@ -36,7 +34,7 @@ import { downloadCommercialBeat, openTrackLicenseModal } from "@/lib/commercialB
 import { useGrowthUpsellStore } from "@/stores/growthUpsellStore";
 import { GenerationCreditAmount } from "@/components/GenerationCreditIcon";
 import { rerollLoopCover, LOOP_COVER_REROLL_CREDIT_COST } from "@/lib/loopCoverReroll";
-import { PINTEREST_PERSIST_COVERS } from "@/lib/featureFlags";
+import { USE_POLLINATIONS_CARD_COVERS } from "@/lib/featureFlags";
 import {
   Bookmark,
   Check,
@@ -47,6 +45,7 @@ import {
   Layers,
   Loader2,
   MoreHorizontal,
+  Package,
   Pause,
   Pencil,
   Play,
@@ -80,6 +79,7 @@ export const LoopCardItem = memo(function LoopCardItem({
   queueLoops,
   queueSource = "workspace",
   onOpenMaster,
+  onDistribute,
 }: {
   loop: Loop;
   onDelete?: () => void;
@@ -97,6 +97,8 @@ export const LoopCardItem = memo(function LoopCardItem({
   queueLoops?: Loop[];
   queueSource?: string;
   onOpenMaster?: (loop: Loop) => void;
+  /** Ouvre le wizard pack distribution (bibliothèque) */
+  onDistribute?: (loop: Loop) => void;
 }) {
   const locale = useLocaleStore((s) => s.locale);
   const d = buildDashboardSection(locale);
@@ -126,7 +128,7 @@ export const LoopCardItem = memo(function LoopCardItem({
 
   const toggleSavedRemote = useLoopsStore((s) => s.toggleSavedRemote);
   const togglePublicRemote = useLoopsStore((s) => s.togglePublicRemote);
-  const loops = useLoopsStore((s) => s.loops);
+  const shareLoop = useLoopsStore((s) => s.loops.find((l) => l.id === loop.id) ?? loop);
   const renameLoopRemote = useLoopsStore((s) => s.renameLoopRemote);
   const applyLoopCoverUrl = useLoopsStore((s) => s.applyLoopCoverUrl);
   const createLoop = useLoopsStore((s) => s.createLoop);
@@ -169,29 +171,16 @@ export const LoopCardItem = memo(function LoopCardItem({
     ],
   );
 
-  const needsLazyCover = needsPinterestCover(loop) || !coverUrl.startsWith("http");
-  const { ref: coverLazyRef, url: lazyCoverUrl } = useLazyPinterestCover(
-    {
-      id: loop.id,
-      genre: loop.genre,
-      mood: loop.mood,
-      name: loop.name,
-      prompt: loop.details?.coverPrompt,
-    },
-    slotIndex,
-    needsLazyCover,
-    "320px",
-    "workspace",
-  );
-  const bannerCoverUrl =
-    coverUrl.startsWith("http") ? coverUrl : lazyCoverUrl?.startsWith("http") ? lazyCoverUrl : "";
+  const bannerCoverUrl = coverUrl.startsWith("http") ? coverUrl : "";
 
   const isLibraryCard = cardVariant === "library";
   const showWorkspaceCoverPeek = isLibraryCard || !compact;
-  const shareLoop = useMemo(() => loops.find((l) => l.id === loop.id) ?? loop, [loop, loops]);
   const isOwnLoop = Boolean(user?.id && loop.userId === user.id);
   const canRerollCover =
-    PINTEREST_PERSIST_COVERS && isOwnLoop && !loop.id.startsWith("local-") && !loop.id.startsWith("preview-");
+    USE_POLLINATIONS_CARD_COVERS &&
+    isOwnLoop &&
+    !loop.id.startsWith("local-") &&
+    !loop.id.startsWith("preview-");
 
   const handleRerollCover = useCallback(() => {
     if (!canRerollCover || isRerollingCover) return;
@@ -226,10 +215,6 @@ export const LoopCardItem = memo(function LoopCardItem({
         const code = err instanceof Error ? err.message : "";
         if (code === "no_credits") {
           onNeedCredits?.();
-          return;
-        }
-        if (code === "pinterest_all_used") {
-          toast.error(lc.coverPinterestExhausted);
           return;
         }
         toast.error(lc.coverChangeFailed);
@@ -510,6 +495,24 @@ export const LoopCardItem = memo(function LoopCardItem({
         {isDownloading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
         {lc.download}
       </button>
+      {onDistribute ? (
+        <button
+          type="button"
+          className="pk-library-card__menu-item pk-library-card__menu-item--distribute"
+          onClick={(e) => {
+            e.stopPropagation();
+            setMenuOpen(false);
+            if (loop.isSaved === false) {
+              toast.error(lc.distributionSaveFirst);
+              return;
+            }
+            onDistribute(loop);
+          }}
+        >
+          <Package className="h-3.5 w-3.5" />
+          {lc.distributionPack}
+        </button>
+      ) : null}
       {hasCommercialUseRights(plan) ? (
         <button
           type="button"
@@ -628,10 +631,7 @@ export const LoopCardItem = memo(function LoopCardItem({
     return (
       <div
         data-loop-card
-        ref={(node) => {
-          cardRef.current = node;
-          coverLazyRef.current = node;
-        }}
+        ref={cardRef}
         className={cn("pk-library-card group", loopCardClass(active, activePlaying))}
         onClick={() => {
           if (!onOpenDetails) return;
@@ -781,10 +781,7 @@ export const LoopCardItem = memo(function LoopCardItem({
   return (
     <div
       data-loop-card
-      ref={(node) => {
-        cardRef.current = node;
-        coverLazyRef.current = node;
-      }}
+      ref={cardRef}
       className={cn(
         "relative rounded-pk border border-pk-border bg-pk-panel p-4",
         isLibraryCard ? "pk-loop-card--library" : "",

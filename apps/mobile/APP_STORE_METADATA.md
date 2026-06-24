@@ -19,6 +19,19 @@ Fill before `eas submit`:
 - **Support URL**: https://www.producerhit.com
 - **Age rating**: complete questionnaire (no unrestricted web, no tracking)
 
+## Universal Links (AASA)
+
+Before production deploy, set your Team ID and regenerate:
+
+```bash
+APPLE_TEAM_ID=YOUR_TEAM_ID npm run generate:aasa
+```
+
+File: `public/.well-known/apple-app-site-association`  
+Paths: `/loop/*`, `/play/*` → opens iOS app (`com.producerhit.app`).
+
+Verify after deploy: `curl -sI https://www.producerhit.com/.well-known/apple-app-site-association`
+
 ## Screenshots
 
 See [`store-screenshots/README.md`](store-screenshots/README.md).

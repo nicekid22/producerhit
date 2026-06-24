@@ -1,64 +1,7 @@
 import { Component, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
-import "./styles/cover-surface.css";
-import "./styles/site-texture-veil.css";
-import "./styles/library-cozy.css";
-import "./styles/library-collection-art.css";
-import "./styles/library-theme-harmony.css";
-import "./styles/launch-offer.css";
-import "./styles/landing-pricing-teaser.css";
-import "./styles/landing-cloud-moods.css";
-import "./styles/landing-hero-dream.css";
-import "./styles/landing-mood-wow.css";
-import "./styles/theme-skin-wow.css";
-import "./styles/brand-logo.css";
-import "./styles/landing-footer-v2.css";
-import "./styles/page-loader-theme.css";
-import "./styles/gen-loading-theme.css";
-import "./styles/toast-theme.css";
-import "./styles/theme-roast-popup.css";
-import "./styles/cro-trust.css";
-import "./styles/theme-overlays-harmony.css";
-import "./styles/dropdown-theme.css";
-import "./styles/dashboard-idea-prompt.css";
-import "./styles/random-prompt-dice.css";
-import "./styles/community-flux.css";
-import "./styles/header-chrome.css";
-import "./styles/landing-free-shimmer.css";
-import "./styles/landing-mobile-v2.css";
-import "./styles/landing-apple-theme-tokens.css";
-import "./styles/apple-theme-tokens.css";
-import "./styles/apple-app-shell.css";
-import "./styles/prism-dashboard-pills.css";
-import "./styles/landing-mobile-audio-cards.css";
-import "./styles/landing-mobile-apple-restore.css";
-import "./styles/loop-details-sheet.css";
-import "./styles/sidebar-rail.css";
-import "./styles/mobile-dock-harmony.css";
-import "./styles/landing-header-cta.css";
-import "./styles/landing-apple-below-fold.css";
-import "./styles/workspace-header-layout.css";
-import { preloadCloudThemeIfNeeded, preloadWarmGlassThemeIfNeeded } from "@/lib/themeStyles";
-import { registerGenerationCatalogExtensions } from "@producerhit/shared";
-import { buildBeatAmbianceMoodMap } from "@/lib/beatAmbiance";
-import { buildBeatInfluenceMap } from "@/lib/beatInfluence";
-import {
-  extendedGenreAceTagMap,
-  extendedGenreBpmMap,
-} from "@/lib/genres/extendedCatalog";
-
-registerGenerationCatalogExtensions({
-  aceTags: extendedGenreAceTagMap(),
-  bpm: extendedGenreBpmMap(),
-  moodMap: buildBeatAmbianceMoodMap(),
-  influenceMap: buildBeatInfluenceMap(),
-});
-
 import App from "./App";
-
-preloadWarmGlassThemeIfNeeded();
-preloadCloudThemeIfNeeded();
 
 function ErrorScreen({ title, message }: { title: string; message?: string }) {
   const missingEnv = [

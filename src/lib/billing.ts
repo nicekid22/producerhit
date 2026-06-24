@@ -230,6 +230,15 @@ export async function runCheckoutWithAuth({
       window.location.href = "/settings";
       return;
     }
+    if (
+      status === 503 ||
+      lower.includes("failed to send a request") ||
+      lower.includes("edge function") ||
+      lower.includes("non-2xx")
+    ) {
+      toast.error(b.checkoutUnavailable);
+      return;
+    }
     toast.error(message || b.checkoutStartFailed);
   }
 }
@@ -323,6 +332,15 @@ export async function runCreditPackCheckout({
     if (status === 401 || lower.includes("not authenticated") || lower.includes("jwt") || lower.includes("auth")) {
       toast(b.signInToUpgrade);
       window.location.href = buildAuthUrl({ next: `/pricing?pack=${product}` });
+      return;
+    }
+    if (
+      status === 503 ||
+      lower.includes("failed to send a request") ||
+      lower.includes("edge function") ||
+      lower.includes("non-2xx")
+    ) {
+      toast.error(b.checkoutUnavailable);
       return;
     }
     toast.error(message || b.checkoutStartFailed);

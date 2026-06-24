@@ -15,7 +15,7 @@ Hors scope v1 : Remix, Voice Studio, Sample Lab, export vidéo, Stripe in-app, S
 | Jobs async + progression | generationJobs | generationClient | ✅ |
 | Quota / plans | planLimits | usageSummary | ✅ |
 | Paywall Pro IAP | Pricing | paywall.tsx | ✅ (dev build) |
-| Onboarding | checklist | 4 slides song-first + checklist | ✅ |
+| Onboarding | checklist | v3 swipe + preview audio + personnalisation genre | ✅ |
 
 ---
 
@@ -69,7 +69,9 @@ Hors scope v1 : Remix, Voice Studio, Sample Lab, export vidéo, Stripe in-app, S
 
 | Feature | Statut |
 |---------|--------|
-| Onboarding v2 (4 slides song-first, i18n) | ✅ |
+| Onboarding v3 (swipe, preview audio, genre picker, i18n EN/FR) | ✅ |
+| Coach marks Studio (première visite Create) | ✅ |
+| Library filtre genre → GenrePicker 600+ | ✅ |
 | Checklist activation « Premiers pas » | ✅ |
 | Auth screens i18n + polish | ✅ |
 | Tab labels i18n dynamiques | ✅ |

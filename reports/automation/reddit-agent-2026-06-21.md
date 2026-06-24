@@ -39,9 +39,15 @@ Utilise ce sub pour **commenter** (conseils workflow, comparaison Suno, FL tips)
 
 | Mode | Statut |
 |------|--------|
-| OAuth Reddit (auto comment/post) | ❌ — `npm run reddit:oauth -- --open` ou posts manuels |
-| Threads repérés (API) | 0 |
+| Agent Reach — OpenCLI | ❌ extension Chrome (voir ci-dessous) |
+| Agent Reach — Exa scout | ✅ Exa/mcporter |
+| Subs scoutés (rotation) | r/aiMusic, r/SunoAI, r/makinghiphop, r/trapproduction, r/futurebeatmakers, r/Songwriting |
+| OAuth Reddit (auto comment/post) | ❌ — posts manuels recommandés |
+| Threads repérés | 12 |
 | Commentaires auto postés | 0 |
+
+> **OpenCLI** : charge l'extension depuis `%USERPROFILE%\.agent-reach\tools\opencli-extension` → chrome://extensions → Load unpacked. Puis login reddit.com dans Chrome.
+
 
 ---
 
@@ -125,22 +131,151 @@ what lane are you actually aiming for? streaming, beats, or services? the answer
 
 ## 3. Autres discussions (commentaires)
 
-Pas de threads via API (OAuth absent ou quota). Ouvre ces recherches et réponds **à la main** (max 3–5/jour) :
+### 1. is ai going to replace type beat producers? : r/trapproduction - Reddit
 
-- [r/aiMusic · ai · "make money"](https://www.reddit.com/r/aiMusic/search/?q=make+money&restrict_sr=1&sort=new&t=week)
-- [r/aiMusic · ai · "suno"](https://www.reddit.com/r/aiMusic/search/?q=suno&restrict_sr=1&sort=new&t=week)
-- [r/SunoAI · ai · "alternative"](https://www.reddit.com/r/SunoAI/search/?q=alternative&restrict_sr=1&sort=new&t=week)
-- [r/SunoAI · ai · "song"](https://www.reddit.com/r/SunoAI/search/?q=song&restrict_sr=1&sort=new&t=week)
-- [r/Songwriting · song · "writer's block"](https://www.reddit.com/r/Songwriting/search/?q=writer%27s+block&restrict_sr=1&sort=new&t=week)
-- [r/Songwriting · song · "ai"](https://www.reddit.com/r/Songwriting/search/?q=ai&restrict_sr=1&sort=new&t=week)
-- [r/singing · song · "ai vocal"](https://www.reddit.com/r/singing/search/?q=ai+vocal&restrict_sr=1&sort=new&t=week)
-- [r/singing · song · "demo"](https://www.reddit.com/r/singing/search/?q=demo&restrict_sr=1&sort=new&t=week)
-- [r/composer · song · "ai"](https://www.reddit.com/r/composer/search/?q=ai&restrict_sr=1&sort=new&t=week)
-- [r/composer · song · "melody"](https://www.reddit.com/r/composer/search/?q=melody&restrict_sr=1&sort=new&t=week)
-- [r/musicians · song · "ai music"](https://www.reddit.com/r/musicians/search/?q=ai+music&restrict_sr=1&sort=new&t=week)
-- [r/musicians · song · "songwriting"](https://www.reddit.com/r/musicians/search/?q=songwriting&restrict_sr=1&sort=new&t=week)
-- [r/makinghiphop · beats · "suno"](https://www.reddit.com/r/makinghiphop/search/?q=suno&restrict_sr=1&sort=new&t=week)
-- [r/makinghiphop · beats · "ai beat"](https://www.reddit.com/r/makinghiphop/search/?q=ai+beat&restrict_sr=1&sort=new&t=week)
+- **Sub:** r/trapproduction · score 12 · intent `help` · source `exa`
+- **Thread:** https://www.reddit.com/r/trapproduction/comments/134pggt/is_ai_going_to_replace_type_beat_producers
+- **Réponse (copier-coller):**
+
+```
+when i'm blocked i set a 15 min timer for "ugly loops only" — permission to trash everything. usually one sketch is worth developing.
+
+what's your actual unblock ritual?
+```
+
+### 2. Does anyone see any ACTUAL value in AI tools? : r/makinghiphop
+
+- **Sub:** r/makinghiphop · score 10 · intent `discussion` · source `exa`
+- **Thread:** https://www.reddit.com/r/makinghiphop/comments/1oeujfg/does_anyone_see_any_actual_value_in_ai_tools
+- **Réponse (copier-coller):**
+
+```
+following this — been on both sides (trying to ship beats + building tools). the unsexy pattern is always the same: ai gets you to **draft fast**, money shows up after human finishing (mix, arrangement, brand).
+
+what's your actual goal with this — side income or replace a day job?
+```
+
+### 3. [DISCUSSION] Putting Well Known Vocals On Top Of Original Beats
+
+- **Sub:** r/makinghiphop · score 10 · intent `songwriting` · source `exa`
+- **Thread:** https://www.reddit.com/r/makinghiphop/comments/hnjphq/discussion_putting_well_known_vocals_on_top_of.json
+- **Réponse (copier-coller):**
+
+```
+for songwriting i use ai more like a messy voice memo — chord mood + melody idea, then i rewrite lyrics and ditch the ai vocal.
+
+anyone else or is that still a line you won't cross?
+```
+
+### 4. What are the alternatives to Suno? : r/SunoAI - Reddit
+
+- **Sub:** r/SunoAI · score 9 · intent `workflow` · source `exa`
+- **Thread:** https://www.reddit.com/r/SunoAI/comments/1p7zesj/what_are_the_alternatives_to_suno
+- **Réponse (copier-coller):**
+
+```
+workflow that's been working: lock bpm/key → 3–4 ugly sketches → pick one → replace 100% of drums/808 in daw.
+
+ai = reference, not the final beat. anyone else doing this or is it a crutch?
+```
+
+### 5. What's the best AI song you've made recently? I genuinely want to ...
+
+- **Sub:** r/SunoAI · score 9 · intent `help` · source `exa`
+- **Thread:** https://www.reddit.com/r/SunoAI/comments/1t746eu/whats_the_best_ai_song_youve_made_recently_i
+- **Réponse (copier-coller):**
+
+```
+when i'm blocked i set a 15 min timer for "ugly loops only" — permission to trash everything. usually one sketch is worth developing.
+
+what's your actual unblock ritual?
+```
+
+### 6. As producers, how do we all plan to deal with competing against AI?
+
+- **Sub:** r/makinghiphop · score 9 · intent `help` · source `exa`
+- **Thread:** https://www.reddit.com/r/makinghiphop/comments/1d3apis/as_producers_how_do_we_all_plan_to_deal_with
+- **Réponse (copier-coller):**
+
+```
+when i'm blocked i set a 15 min timer for "ugly loops only" — permission to trash everything. usually one sketch is worth developing.
+
+what's your actual unblock ritual?
+```
+
+### 7. Quais conversores de YouTube para MP3 são seguros para usar? : r/makinghiphop
+
+- **Sub:** r/makinghiphop · score 9 · intent `workflow` · source `exa`
+- **Thread:** https://www.reddit.com/r/makinghiphop/comments/cmauj9/what_youtube_to_mp3_converters_are_safe_to_use
+- **Réponse (copier-coller):**
+
+```
+workflow that's been working: lock bpm/key → 3–4 ugly sketches → pick one → replace 100% of drums/808 in daw.
+
+ai = reference, not the final beat. anyone else doing this or is it a crutch?
+```
+
+### 8. Extend song functionality rewriting the song. Help?
+
+- **Sub:** r/SunoAI · score 8 · intent `songwriting` · source `exa`
+- **Thread:** https://www.reddit.com/r/SunoAI/comments/1qjs84w/extend_song_functionality_rewriting_the_song_help
+- **Réponse (copier-coller):**
+
+```
+songwriting angle — i split "beat loops" vs "song sketches" in my head completely.
+
+song mode for me = melody/structure demo → rewrite lyrics → real vocal later. not shipping raw ai vocals.
+
+curious if songwriters here use ai for hooks/lyrics or avoid it entirely?
+```
+
+### 9. is there a difference between a beat that a rapper would sing over it and a beat that a rapper would rap over it? : r/trapproduction
+
+- **Sub:** r/trapproduction · score 8 · intent `songwriting` · source `exa`
+- **Thread:** https://www.reddit.com/r/trapproduction/comments/1hj4w16/is_there_a_difference_between_a_beat_that_a
+- **Réponse (copier-coller):**
+
+```
+for songwriting i use ai more like a messy voice memo — chord mood + melody idea, then i rewrite lyrics and ditch the ai vocal.
+
+anyone else or is that still a line you won't cross?
+```
+
+### 10. How do you come up with inspiration when you haven't experienced that stuff? : r/Songwriting
+
+- **Sub:** r/Songwriting · score 8 · intent `songwriting` · source `exa`
+- **Thread:** https://www.reddit.com/r/Songwriting/comments/1kltybz/how_do_you_come_up_with_inspiration_when_you
+- **Réponse (copier-coller):**
+
+```
+for songwriting i use ai more like a messy voice memo — chord mood + melody idea, then i rewrite lyrics and ditch the ai vocal.
+
+anyone else or is that still a line you won't cross?
+```
+
+### 11. How do you approach songwriting when concept comes before melody/music?
+
+- **Sub:** r/Songwriting · score 8 · intent `songwriting` · source `exa`
+- **Thread:** https://www.reddit.com/r/Songwriting/comments/1nlzl0b/how_do_you_approach_songwriting_when_concept.json
+- **Réponse (copier-coller):**
+
+```
+for songwriting i use ai more like a messy voice memo — chord mood + melody idea, then i rewrite lyrics and ditch the ai vocal.
+
+anyone else or is that still a line you won't cross?
+```
+
+### 12. Ever feel bored with all but one part of a song you write?
+
+- **Sub:** r/Songwriting · score 8 · intent `songwriting` · source `exa`
+- **Thread:** https://www.reddit.com/r/Songwriting/comments/18gd9zb/ever_feel_bored_with_all_but_one_part_of_a_song.json
+- **Réponse (copier-coller):**
+
+```
+for songwriting i use ai more like a messy voice memo — chord mood + melody idea, then i rewrite lyrics and ditch the ai vocal.
+
+anyone else or is that still a line you won't cross?
+```
 
 ---
 

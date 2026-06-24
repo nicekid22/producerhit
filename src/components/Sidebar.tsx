@@ -28,7 +28,7 @@ import { useT } from "@/i18n";
 import { buildAuthUrl } from "@/lib/authRoutes";
 import { SIDEBAR_ICON_CLASS, SIDEBAR_ICON_PROPS } from "@/lib/sidebarIcons";
 
-type Item = { to: string; label: string; icon: React.ReactNode; mobileHidden?: boolean };
+type Item = { to: string; label: string; icon: React.ReactNode; mobileHidden?: boolean; locked?: boolean };
 
 function SidebarIcon({ icon: Icon }: { icon: ComponentType<LucideProps> }) {
   return <Icon className={SIDEBAR_ICON_CLASS} {...SIDEBAR_ICON_PROPS} />;
@@ -38,6 +38,7 @@ export function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
+  const profile = useAuthStore((s) => s.profile);
   const signOut = useAuthStore((s) => s.signOut);
   const { m } = useT();
   const locale = useLocaleStore((s) => s.locale);
@@ -144,32 +145,52 @@ export function Sidebar() {
               it.to === "/?home=1"
                 ? location.pathname === "/" || location.pathname === "/home"
                 : location.pathname === it.to || (it.to !== "/" && location.pathname.startsWith(it.to + "/"));
+            const locked = Boolean(it.locked);
+            const navClass = cn(
+              "pk-studio-nav-link",
+              mobileNavIconClass,
+              it.mobileHidden && "hidden md:flex",
+              active ? "pk-studio-nav-link--active text-pk-accent" : "text-pk-muted hover:text-pk-text",
+              locked && !active && "opacity-45",
+            );
+            const inner = (
+              <>
+                <span className="pk-studio-nav-indicator hidden md:block" aria-hidden />
+                {active ? (
+                  <span
+                    className="absolute bottom-0 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-pk-accent md:hidden"
+                    aria-hidden
+                  />
+                ) : null}
+                {it.icon}
+              </>
+            );
             return (
               <div
                 key={it.to}
                 data-coach={it.to === "/library" ? "nav-library" : undefined}
-                className={cn(
-                  "pk-studio-nav-link",
-                  mobileNavIconClass,
-                  it.mobileHidden && "hidden md:flex",
-                  active ? "pk-studio-nav-link--active text-pk-accent" : "text-pk-muted hover:text-pk-text",
-                )}
+                className={navClass}
+                title={locked ? (locale === "fr" ? "Inclus Studio/Plus" : "Included Studio/Plus") : it.label}
               >
-                <Link
-                  to={it.to}
-                  className="flex h-full w-full items-center justify-center"
-                  aria-label={it.label}
-                  title={it.label}
-                >
-                  <span className="pk-studio-nav-indicator hidden md:block" aria-hidden />
-                  {active ? (
-                    <span
-                      className="absolute bottom-0 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-pk-accent md:hidden"
-                      aria-hidden
-                    />
-                  ) : null}
-                  {it.icon}
-                </Link>
+                {locked ? (
+                  <button
+                    type="button"
+                    onClick={() => navigate("/learn/distribute-ai-music")}
+                    className="flex h-full w-full items-center justify-center"
+                    aria-label={it.label}
+                  >
+                    {inner}
+                  </button>
+                ) : (
+                  <Link
+                    to={it.to}
+                    className="flex h-full w-full items-center justify-center"
+                    aria-label={it.label}
+                    title={it.label}
+                  >
+                    {inner}
+                  </Link>
+                )}
               </div>
             );
           })}

@@ -67,11 +67,14 @@ export function buildLoopStructuredData(opts: {
   locale?: AppLocale;
   /** @deprecated use locale */
   isFr?: boolean;
+  /** Paragraphe unique « à propos » pour meta + JSON-LD */
+  seoDescription?: string;
+  lyricsSnippet?: string | null;
 }) {
   const locale: AppLocale = opts.locale ?? (opts.isFr ? "fr" : "en");
   const seo = buildLoopPageSeoCopy(locale);
   const descriptionParts = [opts.genre, opts.mood, opts.bpm && opts.bpm > 0 ? `${opts.bpm} BPM` : null].filter(Boolean);
-  const description = descriptionParts.join(" · ") || seo.defaultDescription;
+  const description = opts.seoDescription?.trim() || descriptionParts.join(" · ") || seo.defaultDescription;
 
   const recording: Record<string, unknown> = {
     "@type": "MusicRecording",
@@ -88,6 +91,7 @@ export function buildLoopStructuredData(opts: {
   };
 
   if (opts.audioUrl) recording.contentUrl = opts.audioUrl;
+  if (opts.lyricsSnippet?.trim()) recording.lyricist = { "@type": "Person", name: "AI (Song Mode)" };
   if (opts.authorName) recording.byArtist = { "@type": "Person", name: opts.authorName };
   if (typeof opts.ratingValue === "number" && opts.ratingCount && opts.ratingCount > 0) {
     recording.aggregateRating = {
@@ -171,21 +175,26 @@ export function setLoopPageSeo(opts: {
   locale?: AppLocale;
   /** @deprecated use locale */
   isFr?: boolean;
+  /** Paragraphe unique « à propos » pour meta + JSON-LD */
+  seoDescription?: string;
+  lyricsSnippet?: string | null;
 }) {
   const locale: AppLocale = opts.locale ?? (opts.isFr ? "fr" : "en");
   const seo = buildLoopPageSeoCopy(locale);
   const pageUrl = `https://www.producerhit.com/loop/${opts.id}`;
   const title = seo.pageTitle(opts.name, opts.genre);
 
-  const description = [
-    opts.name,
-    (opts.genre ?? "").trim(),
-    opts.mood,
-    opts.bpm && opts.bpm > 0 ? `${opts.bpm} BPM` : null,
-    seo.ogPitch,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  const description =
+    opts.seoDescription?.trim() ||
+    [
+      opts.name,
+      (opts.genre ?? "").trim(),
+      opts.mood,
+      opts.bpm && opts.bpm > 0 ? `${opts.bpm} BPM` : null,
+      seo.ogPitch,
+    ]
+      .filter(Boolean)
+      .join(" · ");
 
   const ogImage = buildOgLoopImageUrl({
     id: opts.id,
@@ -229,6 +238,8 @@ export function setLoopPageSeo(opts: {
       ratingValue: opts.ratingValue,
       ratingCount: opts.ratingCount,
       locale,
+      seoDescription: opts.seoDescription,
+      lyricsSnippet: opts.lyricsSnippet,
     }),
   );
 }

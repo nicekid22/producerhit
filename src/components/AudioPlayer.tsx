@@ -260,6 +260,7 @@ export function AudioPlayer() {
 
   const startVisualizer = useCallback(() => {
     if (skipVisualizer) return;
+    if (document.visibilityState === "hidden") return;
     stopRaf();
     const tick = () => {
       drawVisualizer();
@@ -395,6 +396,7 @@ export function AudioPlayer() {
     const startTick = () => {
       if (tickRef.current) clearInterval(tickRef.current);
       tickRef.current = setInterval(() => {
+        if (document.visibilityState === "hidden") return;
         const audio = audioRef.current;
         if (!audio) return;
         const ct = audio.currentTime ?? 0;
@@ -403,7 +405,7 @@ export function AudioPlayer() {
         setCurrentTimeSec(ct);
         setDurationSec(isFiniteDur ? dur : 0);
         setProgress(isFiniteDur ? Math.min(ct / dur, 1) : 0);
-      }, 250);
+      }, 500);
     };
 
     const stopTick = () => {
@@ -520,6 +522,18 @@ export function AudioPlayer() {
       audio.removeEventListener("error", onError);
     };
   }, [decayVisualizerToZero, ensureAudioGraph, markPausedPlayback, setPlaying, startVisualizer, stopRaf]);
+
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        stopRaf();
+        return;
+      }
+      if (isPlaying && !skipVisualizer) startVisualizer();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [isPlaying, skipVisualizer, startVisualizer, stopRaf]);
 
   useEffect(() => {
     applyOutputVolume(volume);

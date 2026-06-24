@@ -4,16 +4,39 @@ import {
   deferUntilIdle,
   loadCommunityCss,
   loadDashboardCss,
+  loadDistributionCss,
   loadLibraryCss,
   loadMarketingCss,
   loadSharedUiCss,
 } from "@/lib/perf/defer";
 
-function routeCssKind(pathname: string): "marketing" | "dashboard" | "library" | "community" | "shared" | null {
-  if (pathname === "/" || pathname.startsWith("/blog") || pathname === "/pricing" || pathname === "/legal") {
+type RouteCssKind =
+  | "marketing"
+  | "dashboard"
+  | "library"
+  | "community"
+  | "distribution"
+  | "shared"
+  | null;
+
+function routeCssKind(pathname: string): RouteCssKind {
+  if (
+    pathname === "/" ||
+    pathname.startsWith("/blog") ||
+    pathname === "/pricing" ||
+    pathname === "/legal" ||
+    pathname.startsWith("/learn/") ||
+    pathname.startsWith("/fr/apprendre/") ||
+    pathname.startsWith("/ai-") ||
+    pathname.startsWith("/fr/generateur-")
+  ) {
     return "marketing";
   }
-  if (pathname.startsWith("/dashboard") || pathname.startsWith("/voice-studio") || pathname.startsWith("/sample-lab")) {
+  if (
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/voice-studio") ||
+    pathname.startsWith("/sample-lab")
+  ) {
     return "dashboard";
   }
   if (pathname.startsWith("/library")) return "library";
@@ -24,6 +47,9 @@ function routeCssKind(pathname: string): "marketing" | "dashboard" | "library" |
     pathname.startsWith("/loop/")
   ) {
     return "community";
+  }
+  if (pathname.startsWith("/distribution") || pathname.startsWith("/academy/distribution")) {
+    return "distribution";
   }
   if (pathname.startsWith("/auth") || pathname.startsWith("/settings")) return "shared";
   return null;
@@ -41,6 +67,7 @@ export function RouteStylesBootstrap() {
       if (kind === "dashboard") void loadDashboardCss();
       if (kind === "library") void loadLibraryCss();
       if (kind === "community") void loadCommunityCss();
+      if (kind === "distribution") void loadDistributionCss();
     });
   }, [pathname]);
 

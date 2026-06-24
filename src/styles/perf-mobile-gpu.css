@@ -1,0 +1,37 @@
+/* GPU / scroll perf — mobile + reduced motion */
+
+@media (max-width: 768px) {
+  .pk-app-shell,
+  .pk-sidebar-rail,
+  .pk-mobile-dock,
+  .pk-library-detail-panel,
+  .pk-studio-detail-panel,
+  .pk-prism-card-soft,
+  [class*="backdrop-blur"] {
+    backdrop-filter: blur(10px) saturate(1.08) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(1.08) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pk-site-texture-veil,
+  .pk-landing-free-shimmer,
+  .pk-gen-loading-pulse,
+  [class*="animate-pulse"],
+  [class*="shimmer"] {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Listes longues — paint containment */
+.pk-library-grid > *,
+.pk-virtual-grid-row > * {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 320px;
+}
+
+.pk-landing-below-fold {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 600px;
+}

@@ -1,0 +1,201 @@
+/**
+ * Distribution Academy — harmonie par thème (Prism, Warm Glass, Cloud, marketing).
+ * Suit le même modèle que library-theme-harmony.css.
+ */
+
+/* ——— Tokens sémantiques (héritent --pk-apple-* du shell) ——— */
+.pk-apple-app .pk-academy-page,
+.pk-marketing-page .pk-academy-page {
+  --pk-academy-title: var(--pk-apple-title);
+  --pk-academy-lead: color-mix(in srgb, var(--pk-apple-lead) 55%, var(--pk-apple-title));
+  --pk-academy-body: color-mix(in srgb, var(--pk-apple-title) 94%, transparent);
+  --pk-academy-muted: color-mix(in srgb, var(--pk-apple-lead) 75%, var(--pk-apple-title));
+  --pk-academy-faint: var(--pk-apple-eyebrow);
+  --pk-academy-accent: var(--pk-apple-accent-to);
+  --pk-academy-accent-2: var(--pk-apple-accent-from);
+  --pk-academy-accent-soft: color-mix(in srgb, var(--pk-apple-accent-to) 14%, transparent);
+  --pk-academy-accent-border: color-mix(in srgb, var(--pk-apple-accent-to) 42%, var(--pk-apple-surface-border));
+  --pk-academy-accent-text: color-mix(in srgb, var(--pk-apple-accent-to) 65%, white);
+  --pk-academy-border: var(--pk-apple-surface-border);
+  --pk-academy-surface: var(--pk-apple-surface-bg);
+  --pk-academy-surface-inset: color-mix(in srgb, var(--pk-apple-title) 5%, transparent);
+  --pk-academy-surface-inset-strong: color-mix(in srgb, var(--pk-apple-title) 9%, transparent);
+  --pk-academy-highlight: var(--pk-apple-surface-highlight);
+  --pk-academy-shadow: var(--pk-apple-surface-shadow);
+  --pk-academy-glow: color-mix(in srgb, var(--pk-apple-accent-to) 34%, transparent);
+  --pk-academy-pill-border: var(--pk-apple-pill-border);
+  --pk-academy-pill-bg: var(--pk-apple-pill-bg);
+  --pk-academy-title-gradient: var(--pk-apple-text-gradient);
+  --pk-academy-icon: var(--pk-apple-icon);
+  --pk-academy-hero-bg: var(--pk-apple-surface-bg);
+  --pk-academy-mesh-a: color-mix(in srgb, var(--pk-apple-accent-to) 24%, transparent);
+  --pk-academy-mesh-b: color-mix(in srgb, var(--pk-apple-accent-from) 18%, transparent);
+  --pk-academy-mesh-c: color-mix(in srgb, var(--pk-apple-accent-to) 11%, transparent);
+  --pk-academy-grid: color-mix(in srgb, var(--pk-apple-title) 7%, transparent);
+  --pk-academy-ring-track: color-mix(in srgb, var(--pk-apple-title) 10%, transparent);
+  --pk-academy-ring-inner: color-mix(in srgb, var(--pk-apple-title) 4%, #080810);
+  --pk-academy-blur: var(--pk-apple-surface-blur);
+  --pk-academy-cta: linear-gradient(
+    128deg,
+    color-mix(in srgb, var(--pk-apple-accent-to) 92%, #4338ca) 0%,
+    var(--pk-apple-accent-to) 48%,
+    var(--pk-apple-accent-from) 100%
+  );
+  --pk-academy-cta-shadow: color-mix(in srgb, var(--pk-apple-accent-to) 38%, transparent);
+  --pk-academy-success: #34d399;
+  --pk-academy-success-text: #a7f3d0;
+  --pk-academy-success-soft: color-mix(in srgb, #34d399 20%, transparent);
+  --pk-academy-success-border: color-mix(in srgb, #34d399 48%, transparent);
+  --pk-academy-check: var(--pk-apple-accent-to);
+}
+
+/* Prism dashboard — mesh accentué */
+.pk-apple-app.pk-prism-dashboard .pk-academy-hero__mesh {
+  background:
+    radial-gradient(ellipse 80% 60% at 12% 0%, var(--pk-academy-mesh-a), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 88% 20%, var(--pk-academy-mesh-b), transparent 50%),
+    radial-gradient(ellipse 50% 40% at 50% 100%, var(--pk-academy-mesh-c), transparent 55%);
+}
+
+/* ——— Warm Glass ——— */
+html.pk-warm-glass-active .pk-academy-page,
+.pk-warm-glass-stage .pk-academy-page {
+  --pk-academy-accent-text: color-mix(in srgb, var(--warm-accent-gold, #f5dc78) 80%, white);
+  --pk-academy-ring-inner: color-mix(in srgb, #1c0e0a 88%, transparent);
+  --pk-academy-success-text: #86efac;
+}
+
+.pk-warm-glass-stage .pk-academy-hero {
+  background:
+    radial-gradient(560px circle at 0% 0%, rgba(255, 180, 100, 0.16), transparent 55%),
+    radial-gradient(480px circle at 100% 100%, rgba(220, 90, 100, 0.1), transparent 52%),
+    linear-gradient(168deg, var(--warm-glass-surface-elevated, rgba(40, 20, 12, 0.9)), var(--warm-glass-surface, rgba(28, 14, 10, 0.88))) !important;
+  border-color: var(--warm-glass-border, rgba(255, 200, 140, 0.18)) !important;
+  box-shadow:
+    inset 0 1px 0 var(--warm-glass-highlight, rgba(255, 220, 180, 0.2)),
+    0 24px 64px rgba(40, 16, 8, 0.28) !important;
+}
+
+.pk-warm-glass-stage .pk-academy-hero__mesh {
+  background:
+    radial-gradient(ellipse 80% 60% at 12% 0%, rgba(255, 160, 80, 0.22), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 88% 20%, rgba(220, 90, 100, 0.14), transparent 50%),
+    radial-gradient(ellipse 50% 40% at 50% 100%, rgba(255, 200, 120, 0.1), transparent 55%);
+}
+
+.pk-warm-glass-stage .pk-academy-module--active {
+  border-color: rgba(255, 180, 100, 0.38) !important;
+  background: linear-gradient(135deg, rgba(255, 160, 80, 0.16), rgba(220, 90, 100, 0.08)) !important;
+}
+
+.pk-warm-glass-stage .pk-academy-module--active .pk-academy-module__dot {
+  border-color: rgba(255, 200, 140, 0.55);
+  background: linear-gradient(135deg, #f0b848, #e07840);
+  box-shadow: 0 0 16px rgba(255, 160, 80, 0.45);
+}
+
+.pk-warm-glass-stage .pk-academy-pill--accent {
+  border-color: rgba(255, 180, 100, 0.35);
+  background: rgba(255, 160, 80, 0.12);
+  color: rgba(255, 230, 200, 0.98);
+}
+
+.pk-warm-glass-stage .pk-academy-takeaway__num {
+  color: var(--warm-accent-gold, #f5dc78);
+}
+
+.pk-warm-glass-stage .pk-academy-cta-primary {
+  background: linear-gradient(135deg, #f0b848 0%, #e87840 55%, #d85a48 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 8px 28px rgba(220, 90, 50, 0.32);
+}
+
+.pk-warm-glass-stage .pk-academy-lesson__glow {
+  background: radial-gradient(circle, rgba(255, 160, 80, 0.2), transparent 70%);
+}
+
+/* ——— Cloud (fond clair — textes foncés) ——— */
+html.pk-cloud-active .pk-academy-page,
+.pk-cloud-stage .pk-academy-page {
+  --pk-academy-lead: color-mix(in srgb, var(--cloud-text-muted) 40%, var(--cloud-text));
+  --pk-academy-body: color-mix(in srgb, var(--cloud-text) 96%, transparent);
+  --pk-academy-muted: color-mix(in srgb, var(--cloud-text-muted) 55%, var(--cloud-text));
+  --pk-academy-faint: color-mix(in srgb, var(--cloud-text-muted) 88%, transparent);
+  --pk-academy-accent-text: color-mix(in srgb, var(--cloud-accent) 75%, #1a2830);
+  --pk-academy-ring-inner: color-mix(in srgb, var(--cloud-glass-bg-elevated, #fff) 94%, transparent);
+  --pk-academy-ring-track: color-mix(in srgb, var(--cloud-text) 12%, transparent);
+  --pk-academy-surface-inset: color-mix(in srgb, var(--cloud-text) 6%, transparent);
+  --pk-academy-surface-inset-strong: color-mix(in srgb, var(--cloud-text) 10%, transparent);
+  --pk-academy-grid: color-mix(in srgb, var(--cloud-text) 9%, transparent);
+  --pk-academy-success-text: #059669;
+}
+
+.pk-cloud-stage .pk-academy-hero__mesh {
+  background:
+    radial-gradient(ellipse 80% 60% at 12% 0%, color-mix(in srgb, var(--cloud-accent) 16%, transparent), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 88% 20%, color-mix(in srgb, var(--cloud-accent) 11%, transparent), transparent 50%),
+    radial-gradient(ellipse 50% 40% at 50% 100%, color-mix(in srgb, var(--cloud-accent) 8%, transparent), transparent 55%);
+}
+
+.pk-cloud-stage .pk-academy-module--active {
+  border-color: color-mix(in srgb, var(--cloud-accent) 38%, var(--cloud-glass-border)) !important;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--cloud-accent) 14%, transparent),
+    color-mix(in srgb, var(--cloud-accent) 6%, transparent)
+  ) !important;
+}
+
+.pk-cloud-stage .pk-academy-module--active .pk-academy-module__dot {
+  border-color: color-mix(in srgb, var(--cloud-accent) 55%, white);
+  background: linear-gradient(135deg, var(--cloud-accent), color-mix(in srgb, var(--cloud-accent) 70%, #1a2830));
+  color: var(--cloud-text-inverse, #fff);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--cloud-accent) 35%, transparent);
+}
+
+.pk-cloud-stage .pk-academy-module--done .pk-academy-module__dot {
+  color: #059669;
+  background: color-mix(in srgb, #34d399 18%, white);
+}
+
+.pk-cloud-stage .pk-academy-pill--accent {
+  border-color: color-mix(in srgb, var(--cloud-accent) 35%, var(--cloud-glass-border));
+  background: color-mix(in srgb, var(--cloud-accent) 12%, transparent);
+  color: color-mix(in srgb, var(--cloud-accent) 70%, #1a2830);
+}
+
+.pk-cloud-stage .pk-academy-takeaway__num {
+  color: color-mix(in srgb, var(--cloud-accent) 80%, #1a2830);
+}
+
+.pk-cloud-stage .pk-academy-lesson__glow {
+  background: radial-gradient(circle, color-mix(in srgb, var(--cloud-accent) 14%, transparent), transparent 70%);
+}
+
+.pk-cloud-stage .pk-academy-cta-primary {
+  color: var(--cloud-text-inverse, #fff);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--cloud-accent) 88%, #2d4a38),
+    var(--cloud-accent)
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 8px 24px color-mix(in srgb, var(--cloud-accent) 28%, transparent);
+}
+
+.pk-cloud-stage .pk-academy-public-badge {
+  border-color: color-mix(in srgb, var(--cloud-accent) 32%, var(--cloud-glass-border));
+  background: color-mix(in srgb, var(--cloud-accent) 10%, transparent);
+  color: color-mix(in srgb, var(--cloud-accent) 75%, #1a2830);
+}
+
+/* Marketing landing — même harmonie que cloud/warm selon shell */
+.pk-marketing-page.pk-cloud-stage .pk-academy-faq__q {
+  color: var(--cloud-text);
+}
+
+.pk-marketing-page.pk-warm-glass-stage .pk-academy-faq__q {
+  color: rgba(255, 248, 240, 0.98);
+}

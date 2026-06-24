@@ -159,6 +159,11 @@ export default function ForAiPage() {
                 {isFr ? "Outil gratuit : générateur de noms de beats" : "Free tool: beat name generator"}
               </Link>
             </li>
+            <li>
+              <Link to={isFr ? "/fr/generateur-pochette-album-ia" : "/ai-album-cover-generator"} className="text-violet-300 hover:underline">
+                {isFr ? "Générateur de pochette album IA" : "AI album cover generator"}
+              </Link>
+            </li>
           </ul>
         </section>
 
