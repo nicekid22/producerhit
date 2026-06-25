@@ -65,4 +65,49 @@ describe("buildBankLyrics", () => {
     expect(fr).toContain("[fr]");
     expect(fr).toMatch(/tomber amoureux|ville étrangère/i);
   });
+
+  it("does not repeat the same verse line four times for short hooks", () => {
+    const lyrics = buildSingableLyricsFromBankEntry({
+      ...sample,
+      display: "Midnight drive — trap, 140 bpm",
+      id: 42,
+    });
+    const verseBlock = lyrics.split("[verse]")[1]?.split("[pre-chorus]")[0] ?? "";
+    const lines = verseBlock
+      .split("\n")
+      .map((l) => l.trim())
+      .filter((l) => l && !l.startsWith("["));
+    const unique = new Set(lines);
+    expect(unique.size).toBeGreaterThan(1);
+  });
+
+  it("uses theme-specific pre-chorus for hustle vs party", () => {
+    const hustle = buildSingableLyricsFromBankEntry({
+      ...sample,
+      theme: "hustle",
+      display: "Never sleep on the grind — trap, 140 bpm",
+      id: 3001,
+    });
+    const party = buildSingableLyricsFromBankEntry({
+      ...sample,
+      theme: "party",
+      display: "Never sleep on the grind — trap, 140 bpm",
+      id: 3001,
+    });
+    expect(hustle).not.toBe(party);
+    expect(hustle.toLowerCase()).toMatch(/grind|climb|victory|pressure/);
+    expect(party.toLowerCase()).toMatch(/hands|sound|dance|town/);
+  });
+
+  it("covers all bank themes without placeholders", () => {
+    for (const theme of ["love", "loss", "hustle", "party", "heartbreak", "nostalgia", "identity", "night"]) {
+      const lyrics = buildSingableLyricsFromBankEntry({
+        ...sample,
+        theme,
+        id: 5000 + theme.length,
+      });
+      expect(hasPlaceholderBankLyrics(lyrics)).toBe(false);
+      expect(lyrics).toContain("[chorus]");
+    }
+  });
 });

@@ -1,3 +1,12 @@
+import {
+  normalizeBankTheme,
+  themeBridgeLines,
+  themeOutroLines,
+  themePreChorusLines,
+  themeVerseFillers,
+  type BankLyricsTheme,
+} from "./bankLyricsThemes";
+
 export type BuildBankLyricsInput = {
   display: string;
   lyrics_structure: string;
@@ -7,7 +16,7 @@ export type BuildBankLyricsInput = {
 };
 
 const PLACEHOLDER_RE =
-  /\(storytelling|\(atmospheric intro|\(peak moment|\(emotional tension|\(deepen the narrative|\(fade into/i;
+  /\(storytelling|\(atmospheric intro|\(peak moment|\(emotional tension|\(deepen the narrative|\(fade into|\(atmospheric|\(build emotional|\(peak emotional|\(deepen the story|\(emotional climax|\(resolution\)/i;
 
 export function hasPlaceholderBankLyrics(lyrics: string): boolean {
   return PLACEHOLDER_RE.test(lyrics);
@@ -34,18 +43,13 @@ function mulberry32(seed: number): () => number {
   };
 }
 
-function pick<T>(items: readonly T[], rng: () => number): T {
-  return items[Math.floor(rng() * items.length)]!;
-}
-
 function splitHookIntoLines(hook: string, lineCount: number, maxWords: number): string[] {
   const words = hook.split(/\s+/).filter(Boolean);
   if (words.length === 0) {
     return Array.from({ length: lineCount }, () => "...");
   }
   if (words.length <= maxWords) {
-    const line = words.join(" ");
-    return Array.from({ length: lineCount }, (_, i) => (i === 0 ? line : line));
+    return [words.join(" ")];
   }
 
   const lines: string[] = [];
@@ -64,66 +68,38 @@ function splitHookIntoLines(hook: string, lineCount: number, maxWords: number): 
   return lines;
 }
 
-function rotateLines(lines: string[], shift: number): string[] {
-  if (!lines.length) return lines;
-  const n = ((shift % lines.length) + lines.length) % lines.length;
-  return [...lines.slice(n), ...lines.slice(0, n)];
+function buildVerseLines(
+  hook: string,
+  lineCount: number,
+  bankTheme: BankLyricsTheme,
+  lang: "en" | "fr",
+  rng: () => number,
+  fillerOffset: number,
+): string[] {
+  const hookLines = splitHookIntoLines(hook, Math.min(2, lineCount), 7);
+  const fillers = themeVerseFillers(lang, bankTheme, rng);
+  const lines = [...hookLines];
+  let fi = fillerOffset;
+  while (lines.length < lineCount) {
+    lines.push(fillers[fi % fillers.length]!);
+    fi += 1;
+  }
+  return lines.slice(0, lineCount);
 }
 
-function preChorusLines(lang: "en" | "fr", theme: string, rng: () => number): string[] {
-  const en: Record<string, string[][]> = {
-    love: [
-      ["It's rising in my chest", "I can't catch my breath"],
-      ["Every beat pulls me in", "Let the feeling begin"],
-    ],
-    party: [
-      ["Hands up, feel the sound", "Feet leave the ground"],
-      ["Turn it up, don't slow down", "Own the whole town"],
-    ],
-    default: [
-      ["Something's shifting inside", "Can't run, can't hide"],
-      ["Building up in my veins", "Breaking through the chains"],
-    ],
-  };
-  const fr: Record<string, string[][]> = {
-    love: [
-      ["Ça monte dans ma poitrine", "Je perds mon équilibre"],
-      ["Chaque souffle me rapproche", "Le cœur s'emballe encore"],
-    ],
-    party: [
-      ["Les mains en l'air ce soir", "On danse jusqu'au jour"],
-      ["Monte le son, plus fort", "On vit chaque accord"],
-    ],
-    default: [
-      ["Quelque chose change en moi", "Je sens le tempo"],
-      ["Ça gronde sous ma peau", "Jamais trop lent ni trop"],
-    ],
-  };
-  const pool = (lang === "fr" ? fr : en)[theme] ?? (lang === "fr" ? fr.default : en.default);
-  return pick(pool, rng);
-}
-
-function bridgeLines(lang: "en" | "fr", theme: string, rng: () => number): string[] {
-  const en: Record<string, string[][]> = {
-    love: [
-      ["Maybe we don't need a map", "Just your heart on my lap"],
-      ["If this is all we get tonight", "Hold me till the light"],
-    ],
-    default: [["Maybe this is all we need", "Stay right here with me"]],
-  };
-  const fr: Record<string, string[][]> = {
-    love: [
-      ["Peut-être qu'on n'a besoin de rien", "Juste ce moment à deux"],
-      ["Si c'est tout ce qu'on a ce soir", "Garde-moi contre toi"],
-    ],
-    default: [["Peut-être que c'est assez", "Reste encore un peu"]],
-  };
-  const pool = (lang === "fr" ? fr : en)[theme] ?? (lang === "fr" ? fr.default : en.default);
-  return pick(pool, rng);
-}
-
-function outroLines(lang: "en" | "fr"): string[] {
-  return lang === "fr" ? ["On s'éteint doucement", "Dans le silence"] : ["Fade into the night", "Hold the moment tight"];
+function buildChorusLines(hook: string, lineCount: number): string[] {
+  const words = hook.split(/\s+/).filter(Boolean);
+  if (words.length <= 6) {
+    const half = Math.ceil(words.length / 2);
+    const a = words.slice(0, half).join(" ");
+    const b = words.slice(half).join(" ") || a;
+    const lines = [a, b].filter(Boolean);
+    while (lines.length < lineCount) {
+      lines.push(lines[lines.length - 1]!);
+    }
+    return lines.slice(0, lineCount);
+  }
+  return splitHookIntoLines(hook, lineCount, 6);
 }
 
 function joinSections(sections: Array<{ tag: string; lines: string[] }>, lang: "en" | "fr"): string {
@@ -141,13 +117,14 @@ export function buildSingableLyricsFromBankEntry(input: BuildBankLyricsInput): s
     extractHookFromPlaceholder(input.lyrics_structure) ||
     (input.lang === "fr" ? "ce moment entre nous" : "this moment with you");
 
+  const bankTheme = normalizeBankTheme(input.theme);
   const rng = mulberry32(input.id * 9973 + hook.length * 13);
-  const verse1 = splitHookIntoLines(hook, 4, 7);
-  const chorus = splitHookIntoLines(hook, 4, 6);
-  const verse2 = rotateLines(verse1, 1 + Math.floor(rng() * 3));
-  const preChorus = preChorusLines(input.lang, input.theme, rng);
-  const bridge = bridgeLines(input.lang, input.theme, rng);
-  const outro = outroLines(input.lang);
+  const verse1 = buildVerseLines(hook, 4, bankTheme, input.lang, rng, 0);
+  const verse2 = buildVerseLines(hook, 4, bankTheme, input.lang, rng, 2);
+  const chorus = buildChorusLines(hook, 4);
+  const preChorus = themePreChorusLines(input.lang, bankTheme, rng);
+  const bridge = themeBridgeLines(input.lang, bankTheme, rng);
+  const outro = themeOutroLines(input.lang, bankTheme);
 
   return joinSections(
     [
