@@ -65,3 +65,16 @@ export async function markAllNotificationsRead(): Promise<boolean> {
     return false;
   }
 }
+
+/** Idempotent welcome row so the bell is never empty on first login. */
+export async function ensureWelcomeNotification(locale: string): Promise<boolean> {
+  try {
+    const { data, error } = await supabase.rpc("ensure_welcome_notification", {
+      p_locale: locale === "fr" ? "fr" : "en",
+    });
+    if (error) return false;
+    return Boolean((data as { ok?: boolean } | null)?.ok);
+  } catch {
+    return false;
+  }
+}

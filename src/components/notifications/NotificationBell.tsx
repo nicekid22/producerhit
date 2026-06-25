@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Bell, CheckCheck, Loader2, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -53,12 +53,15 @@ function computePanelRect(trigger: HTMLElement): PanelRect {
 }
 
 export function NotificationBell({ locale, className }: Props) {
+  const triggerId = useId();
   const user = useAuthStore((s) => s.user);
   const unreadCount = useNotificationStore((s) => s.unreadCount);
   const open = useNotificationStore((s) => s.open);
+  const activeTriggerId = useNotificationStore((s) => s.activeTriggerId);
   const setOpen = useNotificationStore((s) => s.setOpen);
   const refresh = useNotificationStore((s) => s.refresh);
   const isFr = locale === "fr";
+  const isPanelOwner = open && activeTriggerId === triggerId;
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const [panelRect, setPanelRect] = useState<PanelRect | null>(null);
@@ -71,7 +74,7 @@ export function NotificationBell({ locale, className }: Props) {
   }, [refresh, user?.id]);
 
   useLayoutEffect(() => {
-    if (!open || !triggerRef.current) {
+    if (!isPanelOwner || !triggerRef.current) {
       setPanelRect(null);
       return;
     }
@@ -90,10 +93,10 @@ export function NotificationBell({ locale, className }: Props) {
       window.removeEventListener("resize", update);
       window.removeEventListener("scroll", update, true);
     };
-  }, [open]);
+  }, [isPanelOwner]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!isPanelOwner) return;
     const onDoc = (e: MouseEvent) => {
       const target = e.target as Node;
       if (triggerRef.current?.contains(target)) return;
@@ -109,12 +112,12 @@ export function NotificationBell({ locale, className }: Props) {
       document.removeEventListener("mousedown", onDoc);
       document.removeEventListener("keydown", onKey);
     };
-  }, [open, setOpen]);
+  }, [isPanelOwner, setOpen]);
 
   if (!user) return null;
 
   const panel =
-    open && panelRect
+    isPanelOwner && panelRect
       ? createPortal(
           <>
             <button
@@ -144,10 +147,13 @@ export function NotificationBell({ locale, className }: Props) {
       <button
         ref={triggerRef}
         type="button"
-        className={cn("pk-sidebar-ctrl-btn pk-notification-bell", open && "pk-sidebar-ctrl-btn--open")}
+        className={cn("pk-sidebar-ctrl-btn pk-notification-bell", isPanelOwner && "pk-sidebar-ctrl-btn--open")}
         aria-label={isFr ? "Notifications" : "Notifications"}
-        aria-expanded={open}
-        onClick={() => setOpen(!open)}
+        aria-expanded={isPanelOwner}
+        onClick={() => {
+          if (isPanelOwner) setOpen(false);
+          else setOpen(true, triggerId);
+        }}
       >
         <Bell className={SIDEBAR_ICON_CLASS} {...SIDEBAR_ICON_PROPS} />
         {unreadCount > 0 ? (
@@ -197,9 +203,26 @@ function NotificationPanelBody({ locale, onClose }: { locale: AppLocale; onClose
             <Loader2 className="h-5 w-5 animate-spin" />
           </div>
         ) : items.length === 0 ? (
-          <p className="px-4 py-8 text-center text-sm text-white/50">
-            {isFr ? "Aucune notification pour l'instant." : "No notifications yet."}
-          </p>
+          <div className="px-4 py-8 text-center">
+            <p className="text-sm text-white/50">
+              {isFr ? "Aucune notification pour l'instant." : "No notifications yet."}
+            </p>
+            <p className="mt-2 text-xs leading-relaxed text-white/35">
+              {isFr
+                ? "Parrainages, bonus et alertes studio apparaîtront ici."
+                : "Referrals, bonuses, and studio alerts will show up here."}
+            </p>
+            <button
+              type="button"
+              className="mt-4 rounded-lg bg-white/10 px-3 py-2 text-xs font-semibold text-white hover:bg-white/15"
+              onClick={() => {
+                onClose();
+                navigate("/dashboard");
+              }}
+            >
+              {isFr ? "Ouvrir le studio" : "Open studio"}
+            </button>
+          </div>
         ) : (
           <ul className="divide-y divide-white/5">
             {items.map((n) => (

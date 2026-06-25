@@ -11,8 +11,10 @@ type NotificationState = {
   unreadCount: number;
   loading: boolean;
   open: boolean;
+  /** Which bell instance opened the panel (desktop vs mobile mount twice). */
+  activeTriggerId: string | null;
   refresh: () => Promise<void>;
-  setOpen: (open: boolean) => void;
+  setOpen: (open: boolean, triggerId?: string | null) => void;
   markRead: (id: string) => Promise<void>;
   markAllRead: () => Promise<void>;
 };
@@ -22,6 +24,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   unreadCount: 0,
   loading: false,
   open: false,
+  activeTriggerId: null,
 
   refresh: async () => {
     set({ loading: true });
@@ -33,9 +36,13 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     }
   },
 
-  setOpen: (open) => {
-    set({ open });
-    if (open) void get().refresh();
+  setOpen: (open, triggerId = null) => {
+    if (open) {
+      set({ open: true, activeTriggerId: triggerId });
+      void get().refresh();
+      return;
+    }
+    set({ open: false, activeTriggerId: null });
   },
 
   markRead: async (id) => {
