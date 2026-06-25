@@ -4,7 +4,15 @@ import { matchGenreFromPrompt } from "@/lib/genres/matchGenreFromPrompt";
 import { getGenreCatalogPrompt } from "@/lib/promptBuilder";
 import { ACE_DICE_CAPTION_MAX } from "@/lib/randomPromptIdeas/aceDiceCaption";
 import type { PromptMode } from "@/lib/randomPromptIdeas";
-import { looksLikeAceProsePrompt, normalizeAceCaption, optimizeAceProsePrompt, resolveGenerationCaptionContext as resolveSharedCaptionContext, type GenerationCaptionContext as SharedGenerationCaptionContext } from "@producerhit/shared";
+import {
+  enhanceNaturalIdeaToAce as enhanceNaturalIdeaToAceShared,
+  looksLikeAceProsePrompt,
+  looksLikeNaturalUserIdea as looksLikeNaturalUserIdeaShared,
+  normalizeAceCaption,
+  optimizeAceProsePrompt,
+  resolveGenerationCaptionContext as resolveSharedCaptionContext,
+  type GenerationCaptionContext as SharedGenerationCaptionContext,
+} from "@producerhit/shared";
 
 function trimAceCaption(parts: readonly string[]): string {
   const layers = parts.map((p) => p.trim()).filter(Boolean);
@@ -72,16 +80,7 @@ export function looksLikeStructuredDisplayIdea(text: string): boolean {
 export function looksLikeNaturalUserIdea(text: string): boolean {
   const t = text.trim();
   if (!t || looksLikeAceTechnicalPrompt(t) || looksLikeCuratedDisplayPrompt(t)) return false;
-  if (
-    /^(fais|crée|génère|make me|create|generate)\b/i.test(t) ||
-    /^(chanson sur|beat sur|song about|beat about)\b/i.test(t) ||
-    /^une chanson\s+/i.test(t) ||
-    /^un beat\s+/i.test(t)
-  ) {
-    return true;
-  }
-  const commas = (t.match(/,/g) || []).length;
-  return commas <= 1 && t.split(/\s+/).length >= 6;
+  return looksLikeNaturalUserIdeaShared(t);
 }
 
 const THEME_PHRASE_MAP: Array<[RegExp, string]> = [
@@ -131,10 +130,8 @@ export function enhanceNaturalIdeaToAce(idea: string, formGenre: string, mode: P
       ? "catchy hook, memorable chorus, radio-ready mix"
       : "punchy drums, polished mix, hook-ready loop";
   const raw = trimAceCaption([base, themeTags, production]);
-  return normalizeAceCaption(raw, {
-    mode: mode === "song" ? "song" : "beat",
-    instrumental: mode === "beat",
-  }).caption;
+  // Shared helper keeps tag contract consistent across web + mobile.
+  return enhanceNaturalIdeaToAceShared(raw, genre, mode);
 }
 
 export function resolveIdeaForAceGeneration(args: {

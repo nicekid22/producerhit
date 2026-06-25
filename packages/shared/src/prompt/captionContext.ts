@@ -16,6 +16,8 @@ import {
 
 } from "./aceProse";
 
+import { enhanceNaturalIdeaToAce, looksLikeNaturalUserIdea } from "./naturalIdeaToAce";
+
 import { normalizeAceCaption, normalizeAceLyrics } from "./acePromptContract";
 
 
@@ -168,6 +170,15 @@ export function resolveGenerationCaptionContext(args: {
 
     if (ace.trim()) return captionFromOverride(ace.trim(), args.mode);
 
+  }
+
+  // Natural user idea enhancement (mobile parity). Require uiLocale so legacy callers
+  // without locale keep their previous behavior (no enhancement).
+  if (args.uiLocale && looksLikeNaturalUserIdea(idea)) {
+    const enhanced = enhanceNaturalIdeaToAce(idea, args.formGenre, args.mode);
+    if (enhanced.trim()) {
+      return { captionOverride: enhanced, melodyComposition: false };
+    }
   }
 
 

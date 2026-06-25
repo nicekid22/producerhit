@@ -1,5 +1,5 @@
 /**
- * ACE chat/completions LM instruction builder — edge function copy (keep in sync with packages/shared).
+ * ACE chat/completions LM instruction builder — shared web + edge.
  */
 
 export const MELODY_COMPOSITION_ACE_RULES = [
@@ -41,7 +41,18 @@ export type BuildAceChatCompletionsInput = {
   vocalLanguage?: string;
 };
 
-const LYRICS_PLACEHOLDER_LINE_RE = /^\([^)]*\)\s*$/;
+function hashToIndex(seed: string, length: number): number {
+  let h = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  }
+  return h % length;
+}
+
+function pickOneBySeed<T>(items: readonly T[], seed: string): T {
+  if (items.length <= 1) return items[0]!;
+  return items[hashToIndex(seed, items.length)]!;
+}
 
 function lyricsNeedsLmExpansion(lyrics: string): boolean {
   const t = lyrics.trim();
@@ -50,6 +61,8 @@ function lyricsNeedsLmExpansion(lyrics: string): boolean {
   const lines = t.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
   return lines.length > 0 && lines.every((l) => LYRICS_PLACEHOLDER_LINE_RE.test(l) || /^\[[^\]]+\]$/.test(l));
 }
+
+const LYRICS_PLACEHOLDER_LINE_RE = /^\([^)]*\)\s*$/;
 
 export function buildAceChatCompletionsParts(input: BuildAceChatCompletionsInput): string[] {
   const parts: string[] = [];
@@ -102,4 +115,25 @@ export function buildAceChatCompletionsParts(input: BuildAceChatCompletionsInput
   }
 
   return parts;
+}
+
+/** @deprecated Beat templates kept for callers that still pick a prose opener. */
+export function pickBeatLmOpener(genre: string, seedKey: string): string {
+  if (genre === "Old School Hip-Hop") {
+    return pickOneBySeed(
+      [
+        "Create a classic old-school hip-hop / boom bap beat with a sample-based chopped loop.",
+        "Generate an old-school boom bap hip-hop instrumental with dusty drums and a deconstructed sample chop.",
+        "Old-school hip-hop beat: chopped soul/jazz sample, punchy kick/snare, MPC swing, subtle scratches.",
+      ],
+      seedKey,
+    );
+  }
+  return pickOneBySeed(
+    [
+      `Create a modern ${genre || "hip-hop"} instrumental with contemporary drums and sound design.`,
+      `Generate a release-ready ${genre || "hip-hop"} beat with a strong groove and polished mix.`,
+    ],
+    seedKey,
+  );
 }

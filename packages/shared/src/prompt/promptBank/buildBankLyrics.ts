@@ -93,11 +93,12 @@ function buildChorusLines(hook: string, lineCount: number): string[] {
     const half = Math.ceil(words.length / 2);
     const a = words.slice(0, half).join(" ");
     const b = words.slice(half).join(" ") || a;
-    const lines = [a, b].filter(Boolean);
-    while (lines.length < lineCount) {
-      lines.push(lines[lines.length - 1]!);
+    const base = [a, b].filter(Boolean);
+    const out: string[] = [];
+    for (let i = 0; i < lineCount; i += 1) {
+      out.push(base[i % base.length]!);
     }
-    return lines.slice(0, lineCount);
+    return out;
   }
   return splitHookIntoLines(hook, lineCount, 6);
 }

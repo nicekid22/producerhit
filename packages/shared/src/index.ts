@@ -197,6 +197,7 @@ export {
   hasPlaceholderBankLyrics,
   resolveBankLyrics,
 } from "./prompt/promptBank/buildBankLyrics";
+export { enhanceNaturalIdeaToAce, looksLikeNaturalUserIdea } from "./prompt/naturalIdeaToAce";
 export {
   getCuratedDisplayPromptPool,
   mergeUniqueDisplayPrompts,
