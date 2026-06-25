@@ -144,6 +144,21 @@ describe("promptEnhancer", () => {
     expect(ace).toMatch(/hip|rap|trap/i);
     expect(ace).toMatch(/beach|vacation|seaside|summer/i);
     expect(ace.includes(",")).toBe(true);
+    expect(ace).toContain("clean studio vocal");
+    expect(ace).not.toMatch(/theme:|accrocheur|français/i);
+  });
+
+  it("resolves prompt bank through shared caption context with lyrics", () => {
+    const display = "Working at 3am when everyone is asleep — dark trap, 140 bpm";
+    const ctx = resolveGenerationCaptionContext({
+      displayIdea: display,
+      formGenre: "Trap",
+      mode: "song",
+      uiLocale: "en",
+    });
+    expect(ctx.melodyComposition).toBe(true);
+    expect(ctx.lyricsStructure).toContain("[chorus]");
+    expect(ctx.captionOverride).toContain("clean studio vocal");
   });
 
   it("prefers dice ace override over natural enhancement", () => {

@@ -41,7 +41,7 @@ describe("normalizeAceCaption", () => {
     expect(warnings.some((w) => w.includes("aligned"))).toBe(true);
   });
 
-  it("dedupes tags and respects max tag count", () => {
+  it("dedupes tags and respects max tag count while keeping beat instrumental tags", () => {
     const many = Array.from({ length: 20 }, (_, i) => `tag${i}`).join(", ");
     const { caption, warnings } = normalizeAceCaption(many, {
       mode: "beat",
@@ -49,7 +49,20 @@ describe("normalizeAceCaption", () => {
     });
     const tagCount = caption.split(",").length;
     expect(tagCount).toBeLessThanOrEqual(14);
+    expect(caption.toLowerCase()).toContain("instrumental");
     expect(warnings.some((w) => w.includes("trimmed"))).toBe(true);
+  });
+
+  it("keeps vocal stability tags when trimming long song captions", () => {
+    const many = Array.from({ length: 20 }, (_, i) => `tag${i}`).join(", ");
+    const { caption } = normalizeAceCaption(many, {
+      mode: "song",
+      instrumental: false,
+      bpm: 140,
+    });
+    expect(caption).toContain("clean studio vocal");
+    expect(caption).toContain("controlled delivery");
+    expect(caption.split(",").length).toBeLessThanOrEqual(14);
   });
 });
 

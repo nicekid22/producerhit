@@ -125,10 +125,40 @@ function stripTempoHintsWhenBpmPresent(tags: string[], bpm: number | null | unde
   return tags.filter((t) => !TEMPO_HINT_RE.test(t));
 }
 
-function enforceTagLimit(tags: string[], warnings: string[]): string[] {
+function enforceTagLimit(
+  tags: string[],
+  warnings: string[],
+  options?: { mode?: AceGenerationMode },
+): string[] {
   if (tags.length <= ACE_CAPTION_TAG_MAX) return tags;
-  warnings.push(`caption trimmed from ${tags.length} to ${ACE_CAPTION_TAG_MAX} tags`);
-  return tags.slice(0, ACE_CAPTION_TAG_MAX);
+
+  const mode = options?.mode ?? "song";
+  const protectedTags: string[] = [];
+
+  if (mode === "beat" || mode === "melody") {
+    for (const tag of ACE_BEAT_INSTRUMENTAL_TAGS) {
+      const hit = tags.find((t) => t.toLowerCase() === tag);
+      if (hit) protectedTags.push(hit);
+    }
+  } else {
+    for (const tag of ACE_SONG_VOCAL_STABILITY_TAGS) {
+      const hit = tags.find((t) => t.toLowerCase() === tag);
+      if (hit) protectedTags.push(hit);
+    }
+    const vocalDelivery = tags.find((t) => hasSpecificVocalDeliveryTag([t]) && !protectedTags.includes(t));
+    if (vocalDelivery) protectedTags.push(vocalDelivery);
+  }
+
+  const bpmTags = tags.filter((t) => BPM_TAG_RE.test(t));
+  const protectedKeys = new Set(
+    [...protectedTags, ...bpmTags].map((t) => t.toLowerCase()),
+  );
+  const rest = tags.filter((t) => !protectedKeys.has(t.toLowerCase()));
+  const slots = Math.max(0, ACE_CAPTION_TAG_MAX - protectedTags.length - bpmTags.length);
+  const trimmed = uniqTags([...rest.slice(0, slots), ...protectedTags, ...bpmTags]);
+
+  warnings.push(`caption trimmed from ${tags.length} to ${trimmed.length} tags`);
+  return trimmed.slice(0, ACE_CAPTION_TAG_MAX);
 }
 
 export function normalizeAceCaption(
@@ -176,7 +206,7 @@ export function normalizeAceCaption(
     }
   }
 
-  tags = enforceTagLimit(tags, warnings);
+  tags = enforceTagLimit(tags, warnings, { mode });
   return { caption: limitChars(tags.join(", "), ACE_CAPTION_MAX_CHARS), warnings };
 }
 
