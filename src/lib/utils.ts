@@ -24,7 +24,7 @@ export function hashString(input: string) {
 
 /** Snapshot cover prompt when a track is created (uses live prompt once). */
 export function buildCoverPromptSnapshot(loop: Pick<Loop, "prompt" | "genre" | "mood" | "influence">): string {
-  const fromPrompt = (loop.prompt || "").trim()
+  const fromPrompt = (typeof loop.prompt === "string" ? loop.prompt : "").trim()
   const base = fromPrompt || `${loop.genre || ""} ${loop.mood || ""} ${loop.influence || ""}`.trim()
   const trimmed = base.length > 160 ? base.slice(0, 160) : base
   return trimmed || "dreamy beat"

@@ -116,13 +116,14 @@ describe("resolveGenerationCaptionContext", () => {
     ).toEqual({ melodyComposition: false });
   });
 
-  it("skips prompt bank for non EN/FR locales", () => {
+  it("empty idea with catalog genre does not use bank lyrics", () => {
     const ctx = resolveGenerationCaptionContext({
-      displayIdea: BANK_HUSTLE_DISPLAY,
-      formGenre: "Trap",
+      displayIdea: "",
+      formGenre: "Melodic Trap",
       mode: "song",
-      uiLocale: "es",
+      uiLocale: "en",
     });
+    expect(ctx).toEqual({ melodyComposition: false });
     expect(ctx.lyricsStructure).toBeUndefined();
   });
 });

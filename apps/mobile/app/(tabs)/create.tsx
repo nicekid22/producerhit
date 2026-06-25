@@ -191,12 +191,6 @@ export default function CreateScreen() {
     paused: beatFieldFocused || beatPrompt.trim().length > 0,
   });
 
-  const effectiveSongDescription =
-    songDescription.trim() || (songFieldFocused ? "" : songRotatingPlaceholder.trim());
-
-  const effectiveBeatPrompt =
-    beatPrompt.trim() || (beatFieldFocused ? "" : beatRotatingPlaceholder.trim());
-
   const chipsGenre = useMemo(() => {
     if (isCatalogGenreSelection(activeFormGenre)) return activeFormGenre;
     if (lastRandomGenre) return lastRandomGenre;
@@ -271,7 +265,11 @@ export default function CreateScreen() {
   };
 
   const songReady =
-    effectiveSongDescription.length > 0 || (lyricsMode === "manual" && lyrics.trim().length > 0);
+    songDescription.trim().length > 0 ||
+    (lyricsMode === "manual" && lyrics.trim().length > 0) ||
+    isCatalogGenreSelection(genre) ||
+    isRandomGenreSelection(genre) ||
+    isFromIdeaGenreSelection(genre);
 
   const progress = useGenerationProgress({
     active: generating || awaitingPlayback,
@@ -402,7 +400,7 @@ export default function CreateScreen() {
 
       const songCaptionCtx = resolveGenerationCaptionContext({
         diceAceOverride: songAceOverrideRef.current,
-        displayIdea: effectiveSongDescription,
+        displayIdea: runIdeaText,
         formGenre: runFormGenre,
         mode: "song",
         uiLocale: promptLocale,
@@ -413,7 +411,7 @@ export default function CreateScreen() {
       const runLyrics = bankLyrics || (lyricsMode === "manual" ? lyrics : "");
       const beatCaptionCtx = resolveGenerationCaptionContext({
         diceAceOverride: beatAceOverrideRef.current,
-        displayIdea: effectiveBeatPrompt,
+        displayIdea: runIdeaText,
         formGenre: runFormGenre,
         mode: "beat",
         uiLocale: promptLocale,
@@ -423,7 +421,7 @@ export default function CreateScreen() {
         ? await generateSong(
             {
               genre: activeGenreResolved,
-              description: effectiveSongDescription,
+              description: runIdeaText,
               lyrics: runLyrics,
               lyricsMode: runLyricsMode,
               vocalStyle,
@@ -441,7 +439,7 @@ export default function CreateScreen() {
               {
                 genre: activeGenreResolved,
                 bpm: bpmNum,
-                prompt: effectiveBeatPrompt,
+                prompt: runIdeaText,
                 mood: beatMood,
                 loopLength,
               },

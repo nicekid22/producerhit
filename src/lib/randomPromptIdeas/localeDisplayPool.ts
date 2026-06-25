@@ -1,16 +1,16 @@
 import type { AppLocale } from "@/i18n/config";
-import { getUnifiedUserPromptPool } from "@/lib/randomPromptIdeas/unifiedDisplayPool";
+import { getRotatingPlaceholderPool } from "@producerhit/shared";
 import type { PromptMode } from "@/lib/randomPromptIdeas";
 
 const rotatingPoolCache = new Map<string, readonly string[]>();
 
-/** Placeholder rotatif — pool unifié (curated traduit + display dé). */
+/** Placeholder rotatif — exemples curated (jamais soumis à la génération). */
 export function getLocaleDisplayPromptPool(locale: AppLocale, mode: PromptMode): readonly string[] {
   const cacheKey = `${locale}:${mode}`;
   const cached = rotatingPoolCache.get(cacheKey);
   if (cached) return cached;
 
-  const pool = getUnifiedUserPromptPool(locale, mode);
+  const pool = getRotatingPlaceholderPool(locale, mode);
   rotatingPoolCache.set(cacheKey, pool);
   return pool;
 }

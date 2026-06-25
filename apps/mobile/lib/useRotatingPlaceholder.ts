@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { PromptMode } from "@producerhit/shared";
-import { getUnifiedMobileDisplayPool, pickNextPoolIndex } from "@producerhit/shared";
+import { getRotatingPlaceholderPool, pickNextPoolIndex } from "@producerhit/shared";
 import type { AppLocale } from "@/lib/i18n/catalog";
 import { resolveMobilePromptLocale, type VocalLanguageMode } from "@/lib/resolvePromptLocale";
 
@@ -30,7 +30,7 @@ export function useRotatingPlaceholder({
     [uiLocale, mode, vocalLanguageMode, manualVocalLanguage],
   );
 
-  const pool = useMemo(() => getUnifiedMobileDisplayPool(promptLocale, mode), [promptLocale, mode]);
+  const pool = useMemo(() => getRotatingPlaceholderPool(promptLocale, mode), [promptLocale, mode]);
   const poolRef = useRef(pool);
   poolRef.current = pool;
 

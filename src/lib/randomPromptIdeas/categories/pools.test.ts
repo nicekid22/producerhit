@@ -107,7 +107,7 @@ describe("random prompt pools", () => {
     const itSong = getLandingDisplayPromptPool("it", "song");
     expect(itSong.length).toBeGreaterThanOrEqual(40);
     expect(itSong.some((p) => /Mondiale|TikTok|divertente|BeatStars/i.test(p))).toBe(true);
-    expect(itSong.some((p) => /^A [a-z].* song /i.test(p))).toBe(true);
+    expect(itSong.some((p) => /^Una canzone /i.test(p))).toBe(true);
   });
 
   it("IT dice can pick Italian curated or genre shell", () => {
@@ -120,7 +120,7 @@ describe("random prompt pools", () => {
     const esSong = getLandingDisplayPromptPool("es", "song");
     expect(esSong.length).toBeGreaterThanOrEqual(40);
     expect(esSong.some((p) => /Mundial|TikTok|graciosa/i.test(p))).toBe(true);
-    expect(esSong.some((p) => /^A [a-z].* song /i.test(p))).toBe(true);
+    expect(esSong.some((p) => /^Una canción /i.test(p))).toBe(true);
   });
 
   it("ES dice can pick Spanish curated or genre shell", () => {

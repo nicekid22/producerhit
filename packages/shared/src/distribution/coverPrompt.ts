@@ -67,7 +67,7 @@ export function buildCoverPromptSuggestionsFromLoop(loop: {
   const mood = (loop.mood ?? "").trim();
   const influence = (loop.influence ?? "").trim();
   const name = (loop.name ?? "").trim();
-  const fromPrompt = (loop.prompt ?? "").trim().split(/[,.]/)[0]?.trim() ?? "";
+  const fromPrompt = (typeof loop.prompt === "string" ? loop.prompt : "").trim().split(/[,.]/)[0]?.trim() ?? "";
 
   const subjects = [
     fromPrompt || `${genre} artist silhouette`,

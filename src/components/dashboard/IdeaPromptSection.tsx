@@ -19,7 +19,7 @@ type Props = {
   onChange: (value: string) => void;
   /** Prompt ACE caché quand le dé est utilisé. */
   onPickAce?: (acePrompt: string) => void;
-  /** Placeholder rotatif visible — utilisé si l’utilisateur génère sans saisir d’idée. */
+  /** Placeholder rotatif visible — exemples uniquement, jamais envoyés à la génération. */
   onRotatingPlaceholder?: (text: string) => void;
   /** Sync genre dropdown when dice picks a catalog genre prompt. */
   onPickGenre?: (genre: string) => void;

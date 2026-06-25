@@ -125,7 +125,7 @@
     0 0 16px color-mix(in srgb, var(--dice-accent-a) 28%, transparent);
 }
 
-.pk-random-prompt-dice--rolling {
+.pk-random-prompt-dice.pk-random-prompt-dice--rolling {
   pointer-events: none;
   animation: pkDiceRoll 0.58s cubic-bezier(0.34, 1.35, 0.64, 1) both;
   border-color: color-mix(in srgb, var(--dice-accent-a) 58%, rgba(255, 255, 255, 0.2));
@@ -140,7 +140,7 @@
     0 0 16px color-mix(in srgb, var(--dice-accent-a) 38%, transparent);
 }
 
-.pk-random-prompt-dice--rolling .pk-random-prompt-dice__icon {
+.pk-random-prompt-dice.pk-random-prompt-dice--rolling .pk-random-prompt-dice__icon {
   animation: pkDiceIconWobble 0.58s ease-in-out both;
 }
 
@@ -258,10 +258,19 @@ html.pk-cloud-active .pk-random-prompt-dice--landing.pk-random-prompt-dice--roll
   color: #fff !important;
 }
 
-/* Landing — dé empilé au-dessus du micro, même colonne */
+/* Landing — dé empilé au-dessus du micro, même colonne / même bouton que le micro */
 .pk-landing-gen__prompt-zone .pk-speech-field__side-tools {
   gap: 0.5rem;
   padding-bottom: 0.1rem;
+}
+
+.pk-landing-gen__prompt-zone .pk-speech-field__mic.pk-random-prompt-dice--rolling {
+  pointer-events: none;
+  animation: pkDiceRoll 0.58s cubic-bezier(0.34, 1.35, 0.64, 1) both;
+}
+
+.pk-landing-gen__prompt-zone .pk-speech-field__mic.pk-random-prompt-dice--rolling .pk-speech-field__mic-icon {
+  animation: pkDiceIconWobble 0.58s ease-in-out both;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -270,8 +279,10 @@ html.pk-cloud-active .pk-random-prompt-dice--landing.pk-random-prompt-dice--roll
     animation: none !important;
   }
 
-  .pk-random-prompt-dice--rolling,
-  .pk-random-prompt-dice--rolling .pk-random-prompt-dice__icon {
+  .pk-random-prompt-dice.pk-random-prompt-dice--rolling,
+  .pk-random-prompt-dice.pk-random-prompt-dice--rolling .pk-random-prompt-dice__icon,
+  .pk-landing-gen__prompt-zone .pk-speech-field__mic.pk-random-prompt-dice--rolling,
+  .pk-landing-gen__prompt-zone .pk-speech-field__mic.pk-random-prompt-dice--rolling .pk-speech-field__mic-icon {
     animation: none !important;
   }
 }

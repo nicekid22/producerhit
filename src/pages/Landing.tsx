@@ -470,13 +470,28 @@ export default function Landing() {
     if (generating) return;
 
     const trimmedInput = prompt.trim();
-    const placeholderText = rotatingPlaceholderRef.current.trim();
-    const promptValue =
-      trimmedInput ||
-      placeholderText ||
-      (mode === "beat" ? inferBeatPrompt() : "");
 
-    if (!promptValue.trim()) {
+    if (!trimmedInput) {
+      if (mode === "beat") {
+        const inferred = inferBeatPrompt();
+        if (inferred.trim()) {
+          saveLandingPendingGeneration({
+            prompt: inferred,
+            mode,
+            genreStrategy: "from_idea",
+            acePrompt: acePromptOverrideRef.current?.trim() || undefined,
+          });
+          const dashboardNext = `/dashboard?prompt=${encodeURIComponent(inferred)}&mode=${mode}`;
+          if (!user) {
+            trackClientEvent("landing_generate_click", { mode, auth_required: true });
+            navigate(buildAuthUrl({ next: dashboardNext }));
+            return;
+          }
+          trackClientEvent("landing_generate_click", { mode, auth_required: false });
+          navigate(dashboardNext);
+          return;
+        }
+      }
       saveLandingPendingGeneration({ prompt: "", mode, genreStrategy: "random" });
       const dashboardNext = `/dashboard?mode=${mode}`;
       if (!user) {
@@ -487,16 +502,15 @@ export default function Landing() {
       return;
     }
 
-    const usedPlaceholder = !trimmedInput && Boolean(placeholderText);
     const aceFromDice = acePromptOverrideRef.current?.trim() || undefined;
 
     saveLandingPendingGeneration({
-      prompt: promptValue,
+      prompt: trimmedInput,
       mode,
       genreStrategy: "from_idea",
-      acePrompt: usedPlaceholder ? undefined : aceFromDice,
+      acePrompt: aceFromDice,
     });
-    const dashboardNext = `/dashboard?prompt=${encodeURIComponent(promptValue)}&mode=${mode}`;
+    const dashboardNext = `/dashboard?prompt=${encodeURIComponent(trimmedInput)}&mode=${mode}`;
     if (!user) {
       trackClientEvent("landing_generate_click", { mode, auth_required: true });
       navigate(buildAuthUrl({ next: dashboardNext }));

@@ -1,37 +1,50 @@
 import type { AppLocale } from "@/i18n/config";
 import type { PromptMode } from "@/lib/randomPromptIdeas";
-import { mergeUniqueDisplayPrompts } from "@/lib/randomPromptIdeas/curatedDisplayPrompts";
 import { formatDicePrompt } from "@/lib/randomPromptIdeas";
-import { findGenreDiceItemByDisplay, getGenreDiceDisplayPromptPool, pickRandomGenreMenuDice } from "@/lib/randomPromptIdeas/genreMenuPrompts";
+import { buildAceCaption, type GenerateParams } from "@/lib/promptBuilder";
 import {
-  getCuratedDisplayPromptPool,
-  getAceProseCuratedPool,
-  getPromptBankDisplayPool,
-  looksLikeAceProsePrompt,
-  optimizeAceProsePrompt,
-  pickPromptBankRoll,
-  shouldUsePromptBank,
+  buildUnifiedDisplayPool,
+  pickVariedDiceRoll,
   resolveCuratedPromptLocale,
+  uiLocaleToAceVocalLanguage,
   type AceCuratedPromptLocale,
 } from "@producerhit/shared";
-import { matchGenreFromPrompt } from "@/lib/genres/matchGenreFromPrompt";
 
 export { resolveCuratedPromptLocale, type AceCuratedPromptLocale };
 
-/** Pool unifié : prompts drôles curated (langue ACE) + phrases display du dé genre. */
-export function getUnifiedUserPromptPool(uiLocale: AppLocale, mode: PromptMode): readonly string[] {
-  if (mode === "song" && shouldUsePromptBank(uiLocale)) {
-    const bank = getPromptBankDisplayPool(uiLocale);
-    if (bank.length > 0) return bank;
-  }
-  const curatedLocale = resolveCuratedPromptLocale(uiLocale);
-  const curated = getCuratedDisplayPromptPool(curatedLocale, mode);
-  const genreDisplays = getGenreDiceDisplayPromptPool(mode, uiLocale);
-  const aceProse = getAceProseCuratedPool(mode, curatedLocale);
-  return mergeUniqueDisplayPrompts(curated, genreDisplays, aceProse);
+function buildWebDiceAceCaption(
+  uiLocale: AppLocale,
+  mode: PromptMode,
+  genre: string,
+  displayPrompt: string,
+): string {
+  const params: GenerateParams = {
+    genre,
+    influence: "No Influence",
+    key: "",
+    scale: "",
+    bpm: 0,
+    loopLengthBars: mode === "song" ? 16 : 8,
+    swing: 0,
+    mood: "",
+    energyLevel: "",
+    reverb: "Medium",
+    prompt: displayPrompt,
+  };
+  return buildAceCaption(params, {
+    isSong: mode === "song",
+    instrumental: mode === "beat",
+    autoMeta: true,
+    vocalLanguage: uiLocaleToAceVocalLanguage(uiLocale),
+  });
 }
 
-/** Dé ou placeholder — même ensemble de possibilités. */
+/** Pool unifié : banque (échantillon) + dé genre (catalogue) + curated + ACE prose. */
+export function getUnifiedUserPromptPool(uiLocale: AppLocale, mode: PromptMode): readonly string[] {
+  return buildUnifiedDisplayPool(uiLocale, mode);
+}
+
+/** Dé ou placeholder — variété de genres (⅓ banque / ⅓ catalogue / ⅓ curated en song EN-FR). */
 export function pickRandomUnifiedDiceRoll(
   uiLocale: AppLocale,
   mode: PromptMode,
@@ -43,61 +56,14 @@ export function pickRandomUnifiedDiceRoll(
   lyricsStructure?: string;
   promptBankId?: number;
 } {
-  if (mode === "song" && shouldUsePromptBank(uiLocale)) {
-    const bank = pickPromptBankRoll(uiLocale);
-    return {
-      genre: bank.genre,
-      displayPrompt: bank.display,
-      acePrompt: bank.aceCaption,
-      prompt: bank.display,
-      lyricsStructure: bank.lyricsStructure,
-      promptBankId: bank.id,
-    };
-  }
-
-  const pool = getUnifiedUserPromptPool(uiLocale, mode);
-  const curatedLocale = resolveCuratedPromptLocale(uiLocale);
-  const curatedSet = new Set(getCuratedDisplayPromptPool(curatedLocale, mode).map((p) => p.trim().toLowerCase()));
-
-  const display = pool[Math.floor(Math.random() * pool.length)] ?? pool[0] ?? "";
-  const isCurated = curatedSet.has(display.trim().toLowerCase());
-
-  if (looksLikeAceProsePrompt(display)) {
-    const genre = matchGenreFromPrompt(display) ?? pickRandomGenreMenuDice(mode, uiLocale).genre;
-    const ace = optimizeAceProsePrompt(display, { mode });
-    return {
-      genre,
-      displayPrompt: display,
-      acePrompt: ace,
-      prompt: display,
-    };
-  }
-
-  if (isCurated) {
-    const genrePick = pickRandomGenreMenuDice(mode, uiLocale);
-    return {
-      genre: genrePick.genre,
-      displayPrompt: display,
-      acePrompt: "",
-      prompt: display,
-    };
-  }
-
-  const matched = findGenreDiceItemByDisplay(display, mode, uiLocale);
-  if (matched) {
-    return {
-      genre: matched.genre,
-      displayPrompt: matched.displayPrompt,
-      acePrompt: formatDicePrompt(matched.acePrompt, mode),
-      prompt: matched.displayPrompt,
-    };
-  }
-
-  const fallback = pickRandomGenreMenuDice(mode, uiLocale);
+  const roll = pickVariedDiceRoll(uiLocale, mode, buildWebDiceAceCaption);
+  const acePrompt = roll.acePrompt ? formatDicePrompt(roll.acePrompt, mode) : "";
   return {
-    genre: fallback.genre,
-    displayPrompt: display,
-    acePrompt: formatDicePrompt(fallback.acePrompt, mode),
-    prompt: display,
+    genre: roll.genre,
+    displayPrompt: roll.displayPrompt,
+    acePrompt,
+    prompt: roll.displayPrompt,
+    lyricsStructure: roll.lyricsStructure,
+    promptBankId: roll.promptBankId,
   };
 }

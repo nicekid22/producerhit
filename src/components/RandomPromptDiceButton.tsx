@@ -45,12 +45,15 @@ export function RandomPromptDiceButton({
     window.setTimeout(() => setRolling(false), 580);
   };
 
+  const isLanding = variant === "landing";
+
   return (
     <button
       type="button"
       className={cn(
-        "pk-random-prompt-dice",
-        variant === "landing" && "pk-random-prompt-dice--landing",
+        isLanding
+          ? "pk-speech-field__mic pk-speech-field__mic--landing pk-speech-field__mic--multiline"
+          : "pk-random-prompt-dice",
         rolling && "pk-random-prompt-dice--rolling",
         className,
       )}
@@ -58,7 +61,12 @@ export function RandomPromptDiceButton({
       title={label}
       onClick={roll}
     >
-      <Dices className="pk-random-prompt-dice__icon" aria-hidden />
+      <Dices
+        className={cn(
+          isLanding ? "pk-speech-field__mic-icon h-4 w-4" : "pk-random-prompt-dice__icon",
+        )}
+        aria-hidden
+      />
     </button>
   );
 }

@@ -209,11 +209,18 @@ export {
 } from "./prompt/curatedPromptLocale";
 export {
   findGenreDiceItemByDisplay,
+  getGenreDiceAllDisplayPrompts,
   getGenreDiceDisplayPromptPool,
   getGenreDisplayLabel,
   pickRandomChipGenre,
   pickRandomGenreDice,
 } from "./prompt/genreDicePool";
+export {
+  buildUnifiedDisplayPool,
+  pickVariedDiceRoll,
+  resolveDisplayToDiceRoll,
+  type ResolvedDiceRoll,
+} from "./prompt/variedDiceRoll";
 export { getLocalizedStudioChipGenres, STUDIO_CHIP_GENRES, STUDIO_DICE_GENRES, type StudioGenreOption } from "./genres/studioGenres";
 export {
   UI_LOCALES,

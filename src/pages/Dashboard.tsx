@@ -1364,20 +1364,6 @@ export default function Dashboard() {
     let runSongDescription = landingSnap && runAsSong ? landingSnap.prompt : songDescription;
     let runFormPrompt = landingSnap && !runAsSong ? landingSnap.prompt : form.prompt;
 
-    if (runAsSong && !runSongDescription.trim()) {
-      const placeholder = songRotatingPlaceholderRef.current.trim();
-      if (placeholder) {
-        runSongDescription = placeholder;
-        songAceOverrideRef.current = null;
-      }
-    } else if (!runAsSong && !(runFormPrompt?.trim() ?? "")) {
-      const placeholder = beatRotatingPlaceholderRef.current.trim();
-      if (placeholder) {
-        runFormPrompt = placeholder;
-        beatAceOverrideRef.current = null;
-      }
-    }
-
     const ideaTextForGenre = runAsSong ? runSongDescription.trim() : (runFormPrompt?.trim() ?? "");
 
     const runUiPrompt =
@@ -1597,12 +1583,14 @@ export default function Dashboard() {
           "[generate] 1 seule clé VITE ACE — ajoute VITE_ACE_STEP_API_KEYS (comme ACE_STEP_API_KEYS) pour v1/v2 en parallèle sans 429.",
         );
       }
-      const prompt = runAsSong ? runSongDescription.trim() || runUiPrompt : (runFormPrompt?.trim() ?? "");
+      const displayIdeaForCaption = runAsSong
+        ? runSongDescription.trim()
+        : (runFormPrompt?.trim() ?? "");
 
       const captionCtx = resolveGenerationCaptionContext({
         diceAceOverride: runAsSong ? songAceOverrideRef.current : beatAceOverrideRef.current,
         landingAceOverride: landingSnap?.acePrompt ?? null,
-        displayIdea: prompt,
+        displayIdea: displayIdeaForCaption,
         formGenre: normalizedGenreForPrompt,
         mode: runAsSong ? "song" : "beat",
         uiLocale: locale,
@@ -1710,7 +1698,7 @@ export default function Dashboard() {
         }
       }
 
-      const storedPrompt = prompt;
+      const storedPrompt = effectiveRunUiPrompt || runUiPrompt || "";
 
       const buildDraft = (result: Awaited<ReturnType<typeof generateBeat>>, audioUrl: string) => {
         const generatedKeyScale = parseKeyScale(result.meta?.keyScale ?? "");

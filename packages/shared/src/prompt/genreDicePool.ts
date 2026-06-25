@@ -133,7 +133,21 @@ export function pickRandomGenreDice(mode: PromptMode, locale: AppLocale): GenreD
   return pool[Math.floor(Math.random() * pool.length)] ?? pool[0]!;
 }
 
-/** Phrases display liées à un genre — pour placeholder / dé unifié. */
+/** Toutes les phrases display du dé genre (1+ par genre du catalogue). */
+export function getGenreDiceAllDisplayPrompts(mode: PromptMode, locale: AppLocale): readonly string[] {
+  const pool = getGenreDicePool(mode, locale);
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const item of pool) {
+    const key = item.displayPrompt.trim().toLowerCase();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push(item.displayPrompt);
+  }
+  return out;
+}
+
+/** Phrases display liées à un genre — échantillon équilibré pour rotation placeholder. */
 export function getGenreDiceDisplayPromptPool(mode: PromptMode, locale: AppLocale): readonly string[] {
   const pool = getGenreDicePool(mode, locale);
   if (pool.length === 0) return [];
