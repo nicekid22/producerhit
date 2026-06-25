@@ -3,6 +3,8 @@ import { guessGenreFromPromptBank } from "./genreFromCaption";
 import { resolveBankLyrics } from "./buildBankLyrics";
 import type { PromptBankEntry, PromptBankRoll } from "./types";
 
+export type { PromptBankRoll };
+
 import v1 from "../../../data/prompt-bank/v1.json";
 import v2 from "../../../data/prompt-bank/v2.json";
 

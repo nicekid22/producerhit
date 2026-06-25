@@ -1,5 +1,5 @@
 import type { AppLocale } from "@/i18n/config";
-import { getCuratedDisplayPromptPool } from "@/lib/randomPromptIdeas/curatedDisplayPrompts";
+import { getCuratedDisplayPromptPool, resolveCuratedPromptLocale } from "@/lib/randomPromptIdeas/curatedDisplayPrompts";
 import type { PublicLoopRow } from "@/lib/publicLoops";
 import { hashString } from "@/lib/utils";
 
@@ -14,7 +14,8 @@ function pickIndex(seed: string, length: number): number {
 }
 
 export function pickDailyPrompt(locale: AppLocale, mode: "beat" | "song" = "beat", dayKey = dailySpotlightKey()): string {
-  const pool = getCuratedDisplayPromptPool(locale, mode);
+  const curatedLocale = resolveCuratedPromptLocale(locale);
+  const pool = getCuratedDisplayPromptPool(curatedLocale, mode);
   if (!pool.length) return mode === "song" ? "Melodic trap song with raw emotion" : "Dark trap type beat, 140 BPM";
   return pool[pickIndex(`${dayKey}:prompt:${mode}:${locale}`, pool.length)] ?? pool[0]!;
 }

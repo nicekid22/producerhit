@@ -11,7 +11,7 @@ import {
   resolveAceProseLocale,
   type AceProseLocale,
 } from "./locales";
-import type { AppLocale } from "../i18n/locales";
+import type { AppLocale } from "../../i18n/locales";
 
 export const ACE_PROSE_PROMPT_MAX = 240;
 

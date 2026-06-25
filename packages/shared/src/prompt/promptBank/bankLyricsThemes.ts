@@ -236,7 +236,9 @@ const BRIDGE_FR: ThemeLinePools = {
   ],
 };
 
-const OUTRO_EN: ThemeLinePools = {
+type ThemeOutroPools = Record<BankLyricsTheme, string[]>;
+
+const OUTRO_EN: ThemeOutroPools = {
   love: ["Fade into your arms", "Hold the moment tight"],
   loss: ["Let the rain fall down", "You're not around"],
   hustle: ["Back to the grind", "Winning in my mind"],
@@ -247,7 +249,7 @@ const OUTRO_EN: ThemeLinePools = {
   night: ["City fades away", "Till another day"],
 };
 
-const OUTRO_FR: ThemeLinePools = {
+const OUTRO_FR: ThemeOutroPools = {
   love: ["On s'éteint doucement", "Dans tes bras ce soir"],
   loss: ["La pluie tombe encore", "Tu n'es plus là"],
   hustle: ["Retour au grind", "Victoire dans ma tête"],

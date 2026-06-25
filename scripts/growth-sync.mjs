@@ -166,16 +166,23 @@ async function submitIndexNow(urls) {
     urlList: list,
   };
 
-  const res = await fetch("https://api.indexnow.org/indexnow", {
-    method: "POST",
-    headers: { "Content-Type": "application/json; charset=utf-8" },
-    body: JSON.stringify(body),
-  });
+  try {
+    const res = await fetch("https://api.indexnow.org/indexnow", {
+      method: "POST",
+      headers: { "Content-Type": "application/json; charset=utf-8" },
+      body: JSON.stringify(body),
+    });
 
-  if (res.ok || res.status === 202) {
-    console.log(`growth-sync: IndexNow submitted ${list.length} URLs`);
-  } else {
-    console.warn(`growth-sync: IndexNow ${res.status} ${await res.text()}`);
+    if (res.ok || res.status === 202) {
+      console.log(`growth-sync: IndexNow submitted ${list.length} URLs`);
+    } else {
+      console.warn(`growth-sync: IndexNow ${res.status} ${await res.text()}`);
+    }
+  } catch (err) {
+    console.warn(
+      "growth-sync: IndexNow request failed — continuing build",
+      err instanceof Error ? err.message : err
+    );
   }
 }
 

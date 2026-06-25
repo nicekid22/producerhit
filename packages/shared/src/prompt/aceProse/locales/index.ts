@@ -1,4 +1,4 @@
-import type { AppLocale } from "../../i18n/locales";
+import type { AppLocale } from "../../../i18n/locales";
 import {
   ACE_CURATED_PROMPT_LOCALES,
   resolveCuratedPromptLocale,

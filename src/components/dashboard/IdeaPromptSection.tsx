@@ -23,8 +23,6 @@ type Props = {
   onRotatingPlaceholder?: (text: string) => void;
   /** Sync genre dropdown when dice picks a catalog genre prompt. */
   onPickGenre?: (genre: string) => void;
-  /** Prompt ACE caché quand le dé est utilisé. */
-  onPickAce?: (acePrompt: string) => void;
   collapsible?: boolean;
   defaultOpen?: boolean;
 };

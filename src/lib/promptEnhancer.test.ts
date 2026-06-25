@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { looksLikeAceProsePrompt, normalizeAceCaption, pickUnifiedDiceRoll, resolveGenerationCaptionContext } from "@producerhit/shared";
+import { looksLikeAceProsePrompt, normalizeAceCaption, pickUnifiedDiceRoll } from "@producerhit/shared";
 import {
   enhanceNaturalIdeaToAce,
   looksLikeAceTechnicalPrompt,
