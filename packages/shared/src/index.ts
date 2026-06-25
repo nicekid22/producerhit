@@ -193,6 +193,11 @@ export {
   type PromptBankRoll,
 } from "./prompt/promptBank";
 export {
+  buildSingableLyricsFromBankEntry,
+  hasPlaceholderBankLyrics,
+  resolveBankLyrics,
+} from "./prompt/promptBank/buildBankLyrics";
+export {
   getCuratedDisplayPromptPool,
   mergeUniqueDisplayPrompts,
 } from "./prompt/curated/index";

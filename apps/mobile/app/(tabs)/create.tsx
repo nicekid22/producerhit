@@ -797,6 +797,7 @@ export default function CreateScreen() {
                 done={done && !awaitingPlayback}
                 finishing={progressFinishing}
                 status={jobStatus ?? undefined}
+                showVocalHint={isSong}
                 screenFocused={screenFocused}
               />
             ) : null}

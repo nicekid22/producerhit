@@ -4629,11 +4629,13 @@ export default function Dashboard() {
                   if (slot.visible && slot.status === "generating") {
                     const pct = slot.progressPct ?? 0;
                     const sub = pct >= 90 ? d.finishingUp : d.generatingProgress;
+                    const vocalHint = isSong && pct >= 85 ? d.songVocalRegenerateHint : undefined;
                     return (
                       <LoopCardSkeleton
                         key={slot.idx}
                         title={slot.title}
                         sub={sub}
+                        hint={vocalHint}
                         progressPct={pct}
                         progressLabel={d.progressLabel}
                       />

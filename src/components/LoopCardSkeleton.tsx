@@ -5,11 +5,13 @@ import { WaveformLoader } from "@/components/WaveformVisualizer";
 export function LoopCardSkeleton({
   title,
   sub,
+  hint,
   progressPct,
   progressLabel,
 }: {
   title: string;
   sub?: string;
+  hint?: string;
   /** Estimation locale (ACE ne renvoie pas de % réel). */
   progressPct?: number;
   progressLabel?: string;
@@ -40,6 +42,7 @@ export function LoopCardSkeleton({
               sub || "Création en cours…"
             )}
           </div>
+          {hint ? <div className="mt-1.5 text-[11px] leading-snug text-pk-muted/80">{hint}</div> : null}
         </div>
       </div>
 

@@ -85,6 +85,7 @@ const WEB_KEY_MAP: Record<string, string> = {
   genErrorTimeout: "genErrorTimeout",
   genErrorProvider: "genErrorProvider",
   genErrorGeneric: "genErrorGeneric",
+  genVocalRegenerateHint: "genVocalRegenerateHint",
   purchaseFailed: "purchaseFailed",
   restoreFailed: "restoreFailed",
 };

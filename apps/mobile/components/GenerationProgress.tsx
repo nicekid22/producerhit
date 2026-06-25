@@ -16,6 +16,8 @@ type Props = {
   done?: boolean;
   finishing?: boolean;
   status?: GenerationJobStatus;
+  /** Show vocal timing hint after a song finishes generating. */
+  showVocalHint?: boolean;
   /** Pause orb when Create tab is not focused. */
   screenFocused?: boolean;
 };
@@ -30,6 +32,7 @@ export const GenerationProgress = memo(function GenerationProgress({
   done,
   finishing,
   status,
+  showVocalHint = false,
   screenFocused = true,
 }: Props) {
   const { t } = useI18n();
@@ -158,6 +161,12 @@ export const GenerationProgress = memo(function GenerationProgress({
 
       {status === "failed" && !done ? (
         <Text style={[typography.caption, { color: colors.danger }]}>{t("genError")}</Text>
+      ) : null}
+
+      {showVocalHint && done && !finishing ? (
+        <Text style={[typography.caption, { color: colors.textMuted, textAlign: "center", lineHeight: 18 }]}>
+          {t("genVocalRegenerateHint")}
+        </Text>
       ) : null}
     </PhCard>
   );

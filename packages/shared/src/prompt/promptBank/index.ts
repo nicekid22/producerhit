@@ -1,5 +1,6 @@
 import type { AppLocale } from "../../i18n/locales";
 import { guessGenreFromPromptBank } from "./genreFromCaption";
+import { resolveBankLyrics } from "./buildBankLyrics";
 import type { PromptBankEntry, PromptBankRoll } from "./types";
 
 import v1 from "../../../data/prompt-bank/v1.json";
@@ -73,6 +74,16 @@ export function getPromptBankDisplayPool(uiLocale: AppLocale): readonly string[]
   return poolForLocale(uiLocale).map((e) => e.display);
 }
 
+function bankLyricsForEntry(entry: PromptBankEntry): string {
+  return resolveBankLyrics({
+    display: entry.display,
+    lyrics_structure: entry.acestep.lyrics_structure,
+    lang: entry.lang,
+    theme: entry.theme,
+    id: entry.id,
+  });
+}
+
 export function pickPromptBankRoll(uiLocale: AppLocale, seed?: number): PromptBankRoll {
   const pool = poolForLocale(uiLocale);
   const idx =
@@ -81,7 +92,7 @@ export function pickPromptBankRoll(uiLocale: AppLocale, seed?: number): PromptBa
       : Math.floor(Math.random() * pool.length);
   const entry = pool[idx] ?? pool[0]!;
   const caption = entry.acestep.caption.trim();
-  const lyricsStructure = entry.acestep.lyrics_structure.trim();
+  const lyricsStructure = bankLyricsForEntry(entry);
   return {
     id: entry.id,
     theme: entry.theme,
@@ -104,7 +115,7 @@ export function findPromptBankByDisplay(display: string, uiLocale: AppLocale): P
     theme: hit.theme,
     display: hit.display.trim(),
     aceCaption: caption,
-    lyricsStructure: hit.acestep.lyrics_structure.trim(),
+    lyricsStructure: bankLyricsForEntry(hit),
     lang: hit.lang,
     genre: guessGenreFromPromptBank(hit.display, caption),
   };
