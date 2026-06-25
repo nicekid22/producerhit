@@ -22,6 +22,7 @@ export {
 export {
   looksLikeAceProsePrompt,
   optimizeAceProsePrompt,
+  proseToAceTags,
   sanitizeBeatAceCaption,
   type OptimizeAceProseOptions,
 } from "./optimize";

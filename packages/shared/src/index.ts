@@ -174,6 +174,13 @@ export * from "./generation/index";
 export { resolveStemsDownloadUrl } from "./stemsDownload";
 export * from "./prompt/inspirationAndDice";
 export * from "./prompt/aceProse";
+export {
+  buildAceChatCompletionsParts,
+  MELODY_COMPOSITION_ACE_RULES,
+  ACE_SONG_LM_RULES,
+  ACE_BEAT_LM_RULES,
+  type BuildAceChatCompletionsInput,
+} from "./prompt/aceChatCompletions";
 export { resolveGenerationCaptionContext, type GenerationCaptionContext } from "./prompt/captionContext";
 export {
   isPromptBankEnabled,

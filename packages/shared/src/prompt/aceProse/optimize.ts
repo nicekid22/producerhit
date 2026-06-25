@@ -1,5 +1,6 @@
 import { ACE_PROSE_PROMPT_MAX, classifyAceProseMode } from "./generate";
 import type { AceProseMode } from "./lexicon";
+import { normalizeAceCaption } from "../acePromptContract";
 
 const VAGUE_IN_THEME: Record<string, string> = {
   nice: "tender",
@@ -23,22 +24,30 @@ const GENRE_ALIASES: Record<string, string> = {
 const PRODUCTION_BOOSTERS_SONG = ["heavy 808", "cinematic atmosphere", "crisp hi-hats"];
 const PRODUCTION_BOOSTERS_BEAT = ["heavy 808", "cinematic atmosphere", "wide reverb"];
 
-const VOCAL_DEFAULTS = ["deep male vocal", "breathy female vocal", "smooth male vocal"];
+const PROSE_GENRE_PATTERNS: RegExp[] = [
+  /^(.+?)\s+(?:song|beat)\s+about\s+/i,
+  /^(.+?)\s+chanson\s+sur\s+/i,
+  /^(.+?)\s+beat\s+sur\s+/i,
+  /^(.+?)\s+canción\s+sobre\s+/i,
+  /^(.+?)\s+canzone\s+su\s+/i,
+];
+
+const PROSE_THEME_PATTERNS: RegExp[] = [
+  /\babout\s+(.+)$/i,
+  /\bsur\s+(.+)$/i,
+  /\bsobre\s+(.+)$/i,
+  /\bsu\s+(.+)$/i,
+  /\büber\s+(.+)$/i,
+  /عن\s+(.+)$/,
+];
 
 function normalizeWhitespace(s: string): string {
   return s.replace(/\s+/g, " ").trim();
 }
 
-const BEAT_VOCAL_TAGS =
-  /\b(deep |breathy |smooth |raspy |airy )?(male|female) vocal\b|\bharmonies\b|\bchoir\b|\bspoken-word\b|\bvocal runs\b|\bclear lead vocals\b/gi;
-
 /** Retire les tags vocaux d’un caption beat avant envoi ACE. */
 export function sanitizeBeatAceCaption(caption: string): string {
-  return caption
-    .replace(BEAT_VOCAL_TAGS, "wide stereo")
-    .replace(/,\s*,/g, ", ")
-    .replace(/,\s*$/g, "")
-    .trim();
+  return normalizeAceCaption(caption, { mode: "beat", instrumental: true }).caption;
 }
 
 function applyGenreAliases(text: string): string {
@@ -86,19 +95,63 @@ function ensureProductionTail(tail: string, mode: "song" | "beat"): string {
     const boosters = mode === "song" ? PRODUCTION_BOOSTERS_SONG : PRODUCTION_BOOSTERS_BEAT;
     out = out ? `${boosters.join(", ")}, ${out}` : boosters.join(", ");
   }
-  if (mode === "song" && !/\b(vocal|harmonies|choir|spoken-word|lead)\b/i.test(out)) {
-    out = `${out}, ${VOCAL_DEFAULTS[Math.abs(out.length) % VOCAL_DEFAULTS.length]}`;
-  }
   if (mode === "beat") {
     out = out.replace(/\b(male vocal|female vocal|harmonies|spoken-word vocal|vocal runs)\b/gi, "wide stereo");
   }
   return out.replace(/,\s*,/g, ", ").replace(/,\s*$/g, "").trim();
 }
 
-function capitalizeOpener(opener: string): string {
-  const t = opener.trim();
-  if (!t) return t;
-  return t.charAt(0).toUpperCase() + t.slice(1);
+function extractProseGenre(opener: string, mode: AceProseMode): string {
+  for (const re of PROSE_GENRE_PATTERNS) {
+    const m = opener.match(re);
+    if (m?.[1]) return normalizeWhitespace(m[1]);
+  }
+  const kind = mode === "song" ? "song" : "beat";
+  return opener.split(/\s+/).slice(0, 4).join(" ") || kind;
+}
+
+function extractProseTheme(opener: string): string {
+  for (const re of PROSE_THEME_PATTERNS) {
+    const m = opener.match(re);
+    if (m?.[1]) {
+      const theme = polishTheme(m[1].split(/[,.]/)[0]?.trim() ?? "");
+      if (theme) return theme.length > 56 ? theme.slice(0, 56).trim() : theme;
+    }
+  }
+  return "";
+}
+
+function splitProductionTags(tail: string): string[] {
+  return tail
+    .split(",")
+    .map((t) => normalizeWhitespace(t))
+    .filter(Boolean);
+}
+
+/** Convertit une prose ACE (dé / landing) en caption tags normalisé. */
+export function proseToAceTags(raw: string, mode: AceProseMode): string {
+  const input = normalizeWhitespace(applyGenreAliases(raw));
+  if (!input) return "";
+
+  const { opener: rawOpener, tail: rawTail } = ensureTwoPartStructure(input);
+  const genre = extractProseGenre(rawOpener, mode);
+  const theme = extractProseTheme(rawOpener);
+  const production = ensureProductionTail(rawTail, mode);
+  const productionTags = splitProductionTags(
+    production.replace(/\b(deep|breathy|smooth|raspy|airy)\s+(male|female)\s+vocal\b/gi, "clean studio vocal"),
+  );
+
+  const tags = [
+    genre,
+    theme ? `${theme} mood` : "",
+    ...productionTags,
+    mode === "song" ? "radio-ready mix" : "polished mix",
+  ].filter(Boolean);
+
+  return normalizeAceCaption(tags.join(", "), {
+    mode: mode === "beat" ? "beat" : "song",
+    instrumental: mode === "beat",
+  }).caption;
 }
 
 export type OptimizeAceProseOptions = {
@@ -107,30 +160,18 @@ export type OptimizeAceProseOptions = {
 };
 
 /**
- * Suno-style optimizer: 2 phrases, instruments concrets, vocal si chanson.
+ * Convertit une prose ACE en caption tags (comma-separated EN).
  */
 export function optimizeAceProsePrompt(raw: string, options?: OptimizeAceProseOptions): string {
   const input = normalizeWhitespace(applyGenreAliases(raw));
   if (!input) return "";
 
   const mode = options?.mode ?? classifyAceProseMode(input);
-  const { opener: rawOpener, tail: rawTail } = ensureTwoPartStructure(input);
-
-  const aboutIdx = rawOpener.search(/\babout\s+/i);
-  let opener = rawOpener;
-  if (aboutIdx >= 0) {
-    const head = rawOpener.slice(0, aboutIdx + 6);
-    const theme = polishTheme(rawOpener.slice(aboutIdx + 6));
-    opener = `${head}${theme}`;
+  const tags = proseToAceTags(raw, mode);
+  if (tags.length > ACE_PROSE_PROMPT_MAX) {
+    return tags.slice(0, ACE_PROSE_PROMPT_MAX).replace(/[,\s]+$/g, "").trim();
   }
-
-  const tail = ensureProductionTail(rawTail, mode);
-  let out = tail ? `${capitalizeOpener(opener)}. ${tail}` : capitalizeOpener(opener);
-
-  if (out.length > ACE_PROSE_PROMPT_MAX) {
-    out = out.slice(0, ACE_PROSE_PROMPT_MAX).replace(/[,\s]+$/g, "").trim();
-  }
-  return mode === "beat" ? sanitizeBeatAceCaption(out) : out;
+  return tags;
 }
 
 export function looksLikeAceProsePrompt(text: string): boolean {

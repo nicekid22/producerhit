@@ -3,7 +3,7 @@ import { nextAceKeyPreferIndex } from "@/lib/aceKeyRotation";
 import { supabase } from "@/lib/supabaseClient";
 import { aceMelodyCompositionAceFields } from "@/lib/aceMelodyComposition";
 import { buildAceCaption, buildRichPrompt, buildSonautoTags, type GenerateParams } from "@/lib/promptBuilder";
-import { buildAceRequestBody, normalizeAceGenerationPayload } from "@producerhit/shared";
+import { buildAceChatCompletionsParts, buildAceRequestBody, normalizeAceGenerationPayload } from "@producerhit/shared";
 import { appendAceQualityToParamObj, ACE_RELEASE_MODEL, ACE_QUALITY_DEFAULTS, isAceReleaseTaskEnabled, resolveAceQualityFlags } from "@/lib/aceQuality";
 import { parseAceChatCompletionsResponse, parseAllAceChatCompletionsAudios } from "@/lib/aceChatCompletions";
 import type { AceDualBatchResponse } from "@/lib/aceDualBatch";
@@ -227,8 +227,6 @@ type GenerateLoopAceOptions = {
   voiceCloneStrength?: number;
 };
 
-const MELODY_COMPOSITION_ACE_RULES =
-  "TASK: Melody-only sample pack composition for beatmakers. CRITICAL — generate ZERO drums: no kick, snare, clap, hi-hat, percussion, trap drums, or 808. Only melodic layers and optional vocal chops. NOT a beat. Do not output lyrics.";
 
 function isHttpAceUrl(url: unknown): url is string {
   const s = typeof url === "string" ? url.trim() : "";
@@ -308,17 +306,6 @@ async function generateLoopAceDirect(
   const baseUrl = normalizeAceBaseUrl(baseUrlRaw);
   if (!keyCount) throw new Error("Missing VITE_ACE_STEP_API_KEY");
   const aceApiKey = aceKeys[preferStart]!;
-
-  const pickOne = <T,>(items: T[]): T => {
-    if (items.length <= 1) return items[0];
-    try {
-      const a = new Uint32Array(1);
-      crypto.getRandomValues(a);
-      return items[a[0] % items.length];
-    } catch {
-      return items[Math.floor(Math.random() * items.length)];
-    }
-  };
 
   const isSong = options?.isSong ?? !options?.instrumental;
   const promptParams = options?.autoMeta ? { ...params, bpm: 0, key: "", scale: "" } : params;
@@ -401,60 +388,23 @@ async function generateLoopAceDirect(
   };
 
   const generateViaChatCompletions = async (): Promise<{ audioUrl: string; meta: AceMeta | null }> => {
-    const parts: string[] = [];
-    if (melodyComposition) {
-      parts.push(baseCaption.trim());
-      parts.push(MELODY_COMPOSITION_ACE_RULES);
-      if (params.mood) parts.push(`Mood: ${params.mood}.`);
-      if (params.energyLevel) parts.push(`Energy: ${params.energyLevel}.`);
-      if (!options?.autoMeta && params.bpm > 0) parts.push(`BPM: ${params.bpm}.`);
-      if (!options?.autoMeta && params.key && params.scale) parts.push(`Key: ${params.key} ${params.scale}.`);
-      if (options?.timeSignature) parts.push(`Time signature: ${options.timeSignature}.`);
-      if (params.genre) parts.push(`Genre in metadata: "${params.genre}".`);
-    } else if (instrumental) {
-      const beatTemplate =
-        params.genre === "Old School Hip-Hop"
-          ? pickOne([
-              "Create a classic old-school hip-hop / boom bap beat with a sample-based chopped loop.",
-              "Generate an old-school boom bap hip-hop instrumental with dusty drums and a deconstructed sample chop.",
-              "Old-school hip-hop beat: chopped soul/jazz sample, punchy kick/snare, MPC swing, subtle scratches.",
-            ])
-          : pickOne([
-              `Create a modern 2026 ${params.genre} beat with contemporary drums and sound design.`,
-              `Generate a modern 2026 ${params.genre} beat that feels current, clean, and release-ready.`,
-              `Modern 2026 ${params.genre} beat with a strong groove, modern textures, and a polished mix.`,
-            ]);
-      parts.push(beatTemplate);
-      parts.push(baseCaption.trim());
-      if (params.mood) parts.push(`Mood: ${params.mood}.`);
-      if (params.energyLevel) parts.push(`Energy: ${params.energyLevel}.`);
-      parts.push("No lead singing and no rapped verses. Avoid intelligible lyrics or spoken words.");
-      parts.push("Vocal chops/samples are allowed as texture (short, chopped, and non-lyrical).");
-      parts.push("Do not output any lyrics text. Omit the '## Lyrics' section entirely.");
-    } else {
-      parts.push(baseCaption.trim());
-      if (params.genre) {
-        parts.push(`Create a full vocal song in the ${params.genre} style with a release-ready modern mix.`);
-      }
-      parts.push("Include clear lead vocals with professional production quality.");
-    }
-    if (!melodyComposition && !instrumental && effectiveLyrics) parts.push(`Lyrics:\n${effectiveLyrics}`);
-    if (!melodyComposition) {
-      parts.push(
-        instrumental
-          ? "Instrumental beat. No lead singing and no rapped verses. Avoid intelligible lyrics or spoken words. Vocal chops are allowed."
-          : "Include vocals.",
-      );
-      if (!options?.autoMeta && params.bpm > 0) parts.push(`BPM: ${params.bpm}.`);
-      if (!options?.autoMeta && params.key && params.scale) parts.push(`Key: ${params.key} ${params.scale}.`);
-      if (options?.timeSignature) parts.push(`Time signature: ${options.timeSignature}.`);
-      if (params.genre) {
-        parts.push(`In the generated Metadata caption, explicitly include the genre: "${params.genre}".`);
-      }
-      if (params.genre === "Dancehall") {
-        parts.push('In the generated Metadata caption, explicitly include the words: "dancehall" and "riddim".');
-      }
-    }
+    const parts = buildAceChatCompletionsParts({
+      seedKey: String(preferStart),
+      baseCaption,
+      prompt: params.prompt || "",
+      lyrics: effectiveLyrics,
+      instrumental,
+      melodyComposition,
+      genre: params.genre || "",
+      mood: params.mood || "",
+      energyLevel: params.energyLevel || "",
+      autoMeta: Boolean(options?.autoMeta),
+      bpm: !options?.autoMeta && params.bpm > 0 ? params.bpm : null,
+      key: params.key || "",
+      scale: params.scale || "",
+      timeSignature: options?.timeSignature || "",
+      vocalLanguage,
+    });
 
     const res = await fetch(`${baseUrl}/v1/chat/completions`, {
       method: "POST",
@@ -978,20 +928,22 @@ export async function generateLoopAceDualBatch(
         : null;
     const requestedDuration = computeAceRequestedDurationSec({ instrumental, durationRaw });
 
-    const parts: string[] = [];
-    if (instrumental) {
-      parts.push(`Create a modern 2026 ${params.genre} beat with contemporary drums and sound design.`);
-      parts.push(baseCaption.trim());
-      if (params.mood) parts.push(`Mood: ${params.mood}.`);
-      if (params.energyLevel) parts.push(`Energy: ${params.energyLevel}.`);
-      parts.push("No lead singing and no rapped verses. Avoid intelligible lyrics or spoken words.");
-    } else {
-      parts.push(baseCaption.trim());
-      parts.push("Include clear lead vocals with professional production quality.");
-      if (effectiveLyrics) parts.push(`Lyrics:\n${effectiveLyrics}`);
-    }
-    if (!options?.autoMeta && params.bpm > 0) parts.push(`BPM: ${params.bpm}.`);
-    if (!options?.autoMeta && params.key && params.scale) parts.push(`Key: ${params.key} ${params.scale}.`);
+    const parts = buildAceChatCompletionsParts({
+      seedKey: String(preferStart),
+      baseCaption,
+      prompt: params.prompt || "",
+      lyrics: effectiveLyrics,
+      instrumental,
+      genre: params.genre || "",
+      mood: params.mood || "",
+      energyLevel: params.energyLevel || "",
+      autoMeta: Boolean(options?.autoMeta),
+      bpm: !options?.autoMeta && params.bpm > 0 ? params.bpm : null,
+      key: params.key || "",
+      scale: params.scale || "",
+      timeSignature: options?.timeSignature || "",
+      vocalLanguage,
+    });
 
     const res = await fetch(`${baseUrl}/v1/chat/completions`, {
       method: "POST",

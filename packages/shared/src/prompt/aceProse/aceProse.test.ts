@@ -52,13 +52,15 @@ describe("aceProse", () => {
     expect(beat).not.toMatch(/\bmale vocal\b/i);
   });
 
-  it("optimizer preserves example structure", () => {
+  it("optimizer converts prose to ACE tags", () => {
     const raw =
       "dark emotional trap song about betrayal and loneliness. heavy 808, cinematic atmosphere, deep male vocal";
     const out = optimizeAceProsePrompt(raw);
-    expect(out).toMatch(/^Dark emotional trap song about betrayal and loneliness\./i);
+    expect(out).toMatch(/betrayal|loneliness/i);
     expect(out.toLowerCase()).toContain("heavy 808");
-    expect(out.toLowerCase()).toContain("deep male vocal");
+    expect(out.toLowerCase()).toContain("clean studio vocal");
+    expect(out.includes(". ")).toBe(false);
+    expect((out.match(/,/g) || []).length).toBeGreaterThanOrEqual(3);
   });
 
   it("beat mode forces instrumental tail without vocals", () => {
@@ -85,10 +87,11 @@ describe("aceProse", () => {
     }
   });
 
-  it("pickAceProsePrompt returns optimized curated or dynamic", () => {
+  it("pickAceProsePrompt returns stable optimized tags from curated pool", () => {
     const a = pickAceProsePrompt("song", { seed: 42, dynamicRatio: 0 });
     const b = pickAceProsePrompt("song", { seed: 42, dynamicRatio: 0 });
     expect(a).toBe(b);
-    expect(getAceProseCuratedPool("song")).toContain(a);
+    expect(a.includes(",")).toBe(true);
+    expect(looksLikeAceProsePrompt(a)).toBe(false);
   });
 });

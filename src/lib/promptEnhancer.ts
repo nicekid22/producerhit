@@ -4,7 +4,7 @@ import { matchGenreFromPrompt } from "@/lib/genres/matchGenreFromPrompt";
 import { getGenreCatalogPrompt } from "@/lib/promptBuilder";
 import { ACE_DICE_CAPTION_MAX } from "@/lib/randomPromptIdeas/aceDiceCaption";
 import type { PromptMode } from "@/lib/randomPromptIdeas";
-import { looksLikeAceProsePrompt, optimizeAceProsePrompt, resolveGenerationCaptionContext as resolveSharedCaptionContext, sanitizeBeatAceCaption, type GenerationCaptionContext as SharedGenerationCaptionContext } from "@producerhit/shared";
+import { looksLikeAceProsePrompt, normalizeAceCaption, optimizeAceProsePrompt, resolveGenerationCaptionContext as resolveSharedCaptionContext, type GenerationCaptionContext as SharedGenerationCaptionContext } from "@producerhit/shared";
 
 function trimAceCaption(parts: readonly string[]): string {
   const layers = parts.map((p) => p.trim()).filter(Boolean);
@@ -111,13 +111,6 @@ function themeToAceTags(idea: string): string {
   for (const [re, tag] of THEME_PHRASE_MAP) {
     if (re.test(idea)) tags.push(tag);
   }
-  const cleaned = stripConversationalPrefix(idea)
-    .replace(/\b(hip hop|hip-hop|hiphop|rap|trap|r&b|rnb|pop|drill|afrobeats|reggaeton)\b/gi, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  if (cleaned.length >= 8 && cleaned.length <= 80) {
-    tags.push(`theme: ${cleaned}`);
-  }
   return tags.join(", ");
 }
 
@@ -135,9 +128,13 @@ export function enhanceNaturalIdeaToAce(idea: string, formGenre: string, mode: P
   const themeTags = themeToAceTags(trimmed);
   const production =
     mode === "song"
-      ? "hook chorus accrocheur, mix radio-ready 2026, vocal delivery émotionnelle"
-      : "drums punchy, mix 2026 polie, loop hook-ready";
-  return trimAceCaption([base, themeTags, production]);
+      ? "catchy hook, memorable chorus, radio-ready mix"
+      : "punchy drums, polished mix, hook-ready loop";
+  const raw = trimAceCaption([base, themeTags, production]);
+  return normalizeAceCaption(raw, {
+    mode: mode === "song" ? "song" : "beat",
+    instrumental: mode === "beat",
+  }).caption;
 }
 
 export function resolveIdeaForAceGeneration(args: {
@@ -185,7 +182,13 @@ export function resolveGenerationCaptionContext(args: {
     mode: args.mode,
   });
   if (enhanced.useCaptionOverride && enhanced.aceCaption.trim()) {
-    return { captionOverride: enhanced.aceCaption.trim(), melodyComposition: false };
+    return {
+      captionOverride: normalizeAceCaption(enhanced.aceCaption, {
+        mode: args.mode === "song" ? "song" : "beat",
+        instrumental: args.mode === "beat",
+      }).caption,
+      melodyComposition: false,
+    };
   }
   return { melodyComposition: false };
 }
