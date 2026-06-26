@@ -183,6 +183,16 @@ export {
 } from "./prompt/aceChatCompletions";
 export { resolveGenerationCaptionContext, type GenerationCaptionContext } from "./prompt/captionContext";
 export {
+  buildRichAceCaption,
+  dedupeGenreInCaption,
+  type BuildRichAceCaptionArgs,
+} from "./prompt/richDisplayAce";
+export {
+  matchGenreFromPrompt,
+  normalizePromptForGenreMatch,
+  resolveGenreForLandingPrompt,
+} from "./genres/matchGenreFromPrompt";
+export {
   isPromptBankEnabled,
   isPromptBankLocale,
   shouldUsePromptBank,

@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import { loadWavFormatCoachProgress, saveWavFormatCoachProgress } from "@/lib/onboarding/wavFormatCoachStorage";
-import { useOnboardingCoachStore } from "@/stores/onboardingCoachStore";
 
 export type WavFormatCoachMode = "pro" | "free";
 
@@ -17,10 +16,6 @@ type WavFormatCoachState = {
   cancelPending: () => void;
 };
 
-function coachBusy(): boolean {
-  const onboarding = useOnboardingCoachStore.getState();
-  return onboarding.visible && onboarding.phase !== "idle";
-}
 
 export const useWavFormatCoachStore = create<WavFormatCoachState>((set, get) => ({
   visible: false,
@@ -35,7 +30,6 @@ export const useWavFormatCoachStore = create<WavFormatCoachState>((set, get) => 
   },
 
   show: (userId, mode) => {
-    if (coachBusy()) return;
     const progress = loadWavFormatCoachProgress(userId);
     if (mode === "pro" && progress.proTipDone) return;
     if (mode === "free" && progress.freeTeaseDone) return;
@@ -49,7 +43,6 @@ export const useWavFormatCoachStore = create<WavFormatCoachState>((set, get) => 
 
     const timerId = window.setTimeout(() => {
       if (get().userId && get().userId !== userId) return;
-      if (coachBusy()) return;
       get().show(userId, "pro");
     }, delayMs);
     set({ userId, timerId });
@@ -62,7 +55,6 @@ export const useWavFormatCoachStore = create<WavFormatCoachState>((set, get) => 
 
     const timerId = window.setTimeout(() => {
       if (get().userId && get().userId !== userId) return;
-      if (coachBusy()) return;
       get().show(userId, "free");
     }, delayMs);
     set({ userId, timerId });

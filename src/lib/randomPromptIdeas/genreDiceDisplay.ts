@@ -31,7 +31,7 @@ const FR_SONG_THEMES: Record<ThemeGroup, readonly string[]> = {
   dnb: ["sur une nuit liquid", "sur une ruée jungle", "sur une rage contrôlée", "sur un rêve atmosphérique"],
   electronic_club: ["sur une nuit warehouse", "sur une montée festival", "sur une groove club", "sur une transe techno"],
   lab: ["sur un futur glitché", "sur une love story AI", "sur une fusion expérimentale", "sur une orbite sci-fi"],
-  default: ["sur une histoire nocturne", "sur une émotion brute", "sur un moment de vérité", "sur une vibe cinématique"],
+  default: ["sur une histoire nocturne", "sur une émotion brute", "sur un moment de vérité", "sur une tension cinématique"],
 };
 
 const EN_BEAT_THEMES: Record<ThemeGroup, readonly string[]> = {

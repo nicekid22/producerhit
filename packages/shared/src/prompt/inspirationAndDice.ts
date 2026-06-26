@@ -1,7 +1,5 @@
-import { buildAceCaption } from "../generation/promptAce";
-import type { GenerateParams } from "../generation/types";
+import { buildRichAceCaption } from "./richDisplayAce";
 import type { AppLocale } from "../i18n/locales";
-import { uiLocaleToAceVocalLanguage } from "../vocalLanguage";
 import { getCuratedDisplayPromptPool, resolveCuratedPromptLocale } from "./curated/index";
 import { resolvePromptPools } from "./localePools";
 import { buildUnifiedDisplayPool, pickVariedDiceRoll } from "./variedDiceRoll";
@@ -137,25 +135,11 @@ export function buildDiceAceCaptionFromDisplay(
   genre: string,
   displayPrompt: string,
 ): string {
-  const vocalLanguage = uiLocaleToAceVocalLanguage(locale);
-  const params: GenerateParams = {
-    genre,
-    influence: "No Influence",
-    key: "",
-    scale: "",
-    bpm: 0,
-    loopLengthBars: mode === "song" ? 16 : 8,
-    swing: 0,
-    mood: "",
-    energyLevel: "",
-    reverb: "Medium",
-    prompt: displayPrompt,
-  };
-  return buildAceCaption(params, {
-    isSong: mode === "song",
-    instrumental: mode === "beat",
-    autoMeta: true,
-    vocalLanguage,
+  return buildRichAceCaption({
+    display: displayPrompt,
+    locale,
+    mode,
+    formGenre: genre,
   });
 }
 

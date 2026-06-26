@@ -1,7 +1,11 @@
 import { useMemo, useState } from "react";
+import { toastInfo } from "@/lib/appToast";
 import type { AppLocale } from "@/i18n/config";
 import { legacyEnFr } from "@/i18n/config";
+import { buildDashboardSection } from "@/i18n/dashboardCatalog";
 import { GeneratorSection } from "@/components/dashboard/GeneratorSection";
+import { AceCaptionPreview } from "@/components/dashboard/AceCaptionPreview";
+import { IdeaPromptHint } from "@/components/dashboard/IdeaPromptHint";
 import { RandomPromptDiceButton } from "@/components/RandomPromptDiceButton";
 import { SpeechDictationField } from "@/components/SpeechDictationField";
 import { useRotatingPromptPlaceholder } from "@/hooks/useRotatingPromptPlaceholder";
@@ -17,6 +21,7 @@ type Props = {
   mode: "beat" | "song";
   value: string;
   onChange: (value: string) => void;
+  formGenre: string;
   /** Prompt ACE caché quand le dé est utilisé. */
   onPickAce?: (acePrompt: string) => void;
   /** Placeholder rotatif visible — exemples uniquement, jamais envoyés à la génération. */
@@ -33,6 +38,7 @@ export function IdeaPromptSection({
   mode,
   value,
   onChange,
+  formGenre,
   onPickGenre,
   onPickAce,
   onRotatingPlaceholder,
@@ -40,6 +46,21 @@ export function IdeaPromptSection({
   defaultOpen = true,
 }: Props) {
   const [focused, setFocused] = useState(false);
+  const [diceAceOverride, setDiceAceOverride] = useState<string | null>(null);
+
+  const dash = buildDashboardSection(locale);
+
+  const showHint = focused || value.trim().length > 0;
+
+  const handleDiceRolled = () => {
+    try {
+      if (sessionStorage.getItem("pk.diceHintShown") === "1") return;
+      sessionStorage.setItem("pk.diceHintShown", "1");
+      toastInfo(dash.ideaPromptDiceHint, { id: "dice-hint" });
+    } catch {
+      toastInfo(dash.ideaPromptDiceHint, { id: "dice-hint" });
+    }
+  };
 
   const fallbackPlaceholder = useMemo(
     () => getLocaleIdeaFallback(locale, mode),
@@ -73,7 +94,10 @@ export function IdeaPromptSection({
             multiline
             locale={locale}
             value={value}
-            onChange={onChange}
+            onChange={(next) => {
+              setDiceAceOverride(null);
+              onChange(next);
+            }}
             rows={DASHBOARD_PROMPT_ROWS}
             micPlacement="inside"
             onFocus={() => setFocused(true)}
@@ -84,8 +108,12 @@ export function IdeaPromptSection({
                 promptLocale={promptLocale}
                 mode={mode}
                 onPick={onChange}
-                onPickAce={onPickAce}
+                onPickAce={(ace) => {
+                  setDiceAceOverride(ace?.trim() || null);
+                  onPickAce?.(ace);
+                }}
                 onPickGenre={onPickGenre}
+                onDiceRolled={handleDiceRolled}
               />
             }
             wrapperClassName="pk-dashboard-text-field-wrap"
@@ -94,6 +122,14 @@ export function IdeaPromptSection({
             showStatus={false}
           />
         </div>
+        <IdeaPromptHint locale={locale} visible={showHint} />
+        <AceCaptionPreview
+          locale={locale}
+          displayIdea={value}
+          formGenre={formGenre}
+          mode={mode}
+          diceAceOverride={diceAceOverride}
+        />
       </div>
     </GeneratorSection>
   );

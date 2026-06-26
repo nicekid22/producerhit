@@ -76,6 +76,7 @@ import type { PublicProfileCard } from "@/lib/creatorProfile";
 import { LaunchOfferBanner } from "@/components/marketing/LaunchOfferBanner";
 import { CheckoutRecoveryBanner } from "@/components/billing/CheckoutRecoveryBanner";
 import { FreeUpgradeStrip } from "@/components/billing/FreeUpgradeStrip";
+import { useResolvedPlan } from "@/hooks/useResolvedPlan";
 import { getLaunchOfferCtaButton, isLaunchOfferActive } from "@/lib/launchOffer";
 
 type CreateMode = "song" | "beat";
@@ -200,6 +201,7 @@ export default function Landing() {
   const user = useAuthStore((s) => s.user);
   const authStatus = useAuthStore((s) => s.status);
   const profile = useAuthStore((s) => s.profile);
+  const { plan: resolvedPlan, ready: planReady, bannersReady } = useResolvedPlan();
   const refreshProfile = useAuthStore((s) => s.refreshProfile);
   const locale = useLocaleStore((s) => s.locale);
   const { m } = useT();
@@ -1052,9 +1054,9 @@ export default function Landing() {
     };
   }, [shouldLoadTrending, trendingRefreshKey, locale]);
 
-  const currentPlan = normalizePlan(profile?.plan);
+  const currentPlan = planReady ? resolvedPlan : normalizePlan(profile?.plan);
   const [launchCheckoutLoading, setLaunchCheckoutLoading] = useState(false);
-  const showLaunchProCta = !user || currentPlan === "free";
+  const showLaunchProCta = !user || (planReady && currentPlan === "free");
 
   const handleLaunchProCheckout = useCallback(async () => {
     trackClientEvent("pricing_cta_click", {
@@ -1438,11 +1440,18 @@ export default function Landing() {
           <CheckoutRecoveryBanner
             locale={locale}
             location="landing"
-            currentPlan={user ? currentPlan : undefined}
+            currentPlan={user && bannersReady ? currentPlan : undefined}
+            planReady={!user || bannersReady}
             className="mb-6"
           />
-          {user && currentPlan === "free" ? (
-            <FreeUpgradeStrip locale={locale} location="landing_strip" plan={currentPlan} className="mb-6" />
+          {user && bannersReady && currentPlan === "free" ? (
+            <FreeUpgradeStrip
+              locale={locale}
+              location="landing_strip"
+              plan={currentPlan}
+              ready={bannersReady}
+              className="mb-6"
+            />
           ) : null}
           {isLaunchOfferActive() && showLaunchProCta ? (
             <LaunchOfferBanner

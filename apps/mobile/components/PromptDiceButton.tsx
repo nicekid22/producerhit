@@ -72,7 +72,7 @@ type Props = {
 
   onPickGenre?: (genre: string) => void;
 
-
+  onDiceRolled?: () => void;
 
 };
 
@@ -119,6 +119,10 @@ export function PromptDiceButton({
 
 
   onPickGenre,
+
+
+
+  onDiceRolled,
 
 
 
@@ -248,6 +252,10 @@ export function PromptDiceButton({
 
 
       if (result.genre && onPickGenre) onPickGenre(result.genre);
+
+
+
+      onDiceRolled?.();
 
 
 

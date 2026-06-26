@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { normalizePlan, runCheckoutWithAuth } from "@/lib/billing";
 import { CheckoutRecoveryBanner } from "@/components/billing/CheckoutRecoveryBanner";
 import { FreeUpgradeStrip } from "@/components/billing/FreeUpgradeStrip";
+import { useResolvedPlan } from "@/hooks/useResolvedPlan";
 import { supabase } from "@/lib/supabaseClient";
 import { readProfileCache, syncProfileCache } from "@/lib/profileBootstrap";
 import { validateLegalName } from "@/lib/saveLegalName";
@@ -43,7 +44,7 @@ import { SettingsGrowthExtras } from "@/components/settings/SettingsGrowthExtras
 import { ReferralStatsPanel } from "@/components/growth/ReferralStatsPanel";
 import { ReferralLeaderboard } from "@/components/growth/ReferralLeaderboard";
 import { ViralShareBar } from "@/components/growth/ViralShareBar";
-import { markActivationStepLocal } from "@/components/onboarding/OnboardingChecklist";
+import { markActivationStepLocal } from "@/lib/onboardingProgress";
 import { SettingsIdentityHero } from "@/components/settings/SettingsIdentityHero";
 
 function tierClass(plan: string) {
@@ -59,6 +60,7 @@ export default function Settings() {
   const authStatus = useAuthStore((s) => s.status);
   const authProfile = useAuthStore((s) => s.profile);
   const profileReady = useAuthStore((s) => s.profileReady);
+  const { plan: billingPlan, ready: billingPlanReady, bannersReady: billingBannersReady } = useResolvedPlan();
   const refreshProfile = useAuthStore((s) => s.refreshProfile);
   const signOut = useAuthStore((s) => s.signOut);
   const resetPassword = useAuthStore((s) => s.resetPassword);
@@ -478,9 +480,21 @@ export default function Settings() {
                 </div>
 
                 <div id="pk-settings-plan" className="pk-prism-section-card pk-settings-section pk-settings-section--compact">
-                  <CheckoutRecoveryBanner locale={locale} location="settings" currentPlan={plan} className="mb-4" />
-                  {plan === "free" ? (
-                    <FreeUpgradeStrip locale={locale} location="settings_strip" plan={plan} className="mb-4" />
+                  <CheckoutRecoveryBanner
+                    locale={locale}
+                    location="settings"
+                    currentPlan={billingBannersReady ? billingPlan : undefined}
+                    planReady={billingBannersReady}
+                    className="mb-4"
+                  />
+                  {billingBannersReady && billingPlan === "free" ? (
+                    <FreeUpgradeStrip
+                      locale={locale}
+                      location="settings_strip"
+                      plan={billingPlan}
+                      ready={billingBannersReady}
+                      className="mb-4"
+                    />
                   ) : null}
                   <div className="pk-prism-section-head">
                     <div className="pk-prism-section-head__icon">

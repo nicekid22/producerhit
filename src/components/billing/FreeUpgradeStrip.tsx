@@ -11,9 +11,11 @@ type Props = {
   location: string;
   plan: string;
   className?: string;
+  /** Attendre hydratation profil avant d’afficher l’upsell Free */
+  ready?: boolean;
 };
 
-export function FreeUpgradeStrip({ locale, location, plan, className }: Props) {
+export function FreeUpgradeStrip({ locale, location, plan, className, ready = true }: Props) {
   const [loading, setLoading] = useState(false);
   const isFr = locale === "fr";
 
@@ -27,7 +29,7 @@ export function FreeUpgradeStrip({ locale, location, plan, className }: Props) {
     }
   }, [locale, location]);
 
-  if (plan !== "free") return null;
+  if (!ready || plan !== "free") return null;
 
   const launch = isLaunchOfferActive();
   const title = launch

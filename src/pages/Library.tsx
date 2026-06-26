@@ -23,14 +23,14 @@ import { LibraryCollectionsRow } from "@/components/library/LibraryCollectionsRo
 import { buildLibraryCollections, loopsForCollection } from "@/lib/libraryCurations";
 import { buildLibrarySection, libraryCollectionTitle } from "@/i18n/libraryCatalog";
 import { buildCommonSection } from "@/i18n/systemCatalog";
-import { markActivationStepLocal } from "@/components/onboarding/OnboardingChecklist";
+import { markActivationStepLocal } from "@/lib/onboardingProgress";
 import { useAuthStore } from "@/stores/authStore";
-import { normalizePlan } from "@/lib/billing";
 import { CheckoutRecoveryBanner } from "@/components/billing/CheckoutRecoveryBanner";
 import { FreeUpgradeStrip } from "@/components/billing/FreeUpgradeStrip";
 import { LibraryDistributionBanner } from "@/components/distribution/LibraryDistributionBanner";
 import { DistributionWizard } from "@/components/distribution/DistributionWizard";
-import { readProfileCache } from "@/lib/profileBootstrap";
+import { useResolvedPlan } from "@/hooks/useResolvedPlan";
+import { useAudioRetentionDailyNotice } from "@/hooks/useAudioRetentionDailyNotice";
 import type { Loop } from "@/types/loop";
 
 type Filter = "all" | "genre" | "key" | "bpm";
@@ -40,14 +40,8 @@ export default function Library() {
   const locale = useLocaleStore((s) => s.locale);
   const user = useAuthStore((s) => s.user);
   const profile = useAuthStore((s) => s.profile);
-  const userPlan = useMemo(() => {
-    if (profile?.plan) return normalizePlan(profile.plan);
-    if (user?.id) {
-      const cached = readProfileCache(user.id);
-      if (cached?.plan) return normalizePlan(cached.plan);
-    }
-    return "free";
-  }, [profile?.plan, user]);
+  const profileReady = useAuthStore((s) => s.profileReady);
+  const { plan: userPlan, ready: planReady, bannersReady } = useResolvedPlan();
   const lb = buildLibrarySection(locale);
   const common = buildCommonSection(locale);
   const loops = useLoopsStore((s) => s.loops);
@@ -56,6 +50,16 @@ export default function Library() {
   const loopsSyncError = useLoopsStore((s) => s.lastSyncError);
   const loopsHydrated = useLoopsStore((s) => s.loopsHydrated);
   const loadMyLoops = useLoopsStore((s) => s.loadMyLoops);
+
+  useAudioRetentionDailyNotice({
+    locale,
+    loops,
+    loopsReady: profileReady && loopsHydrated && !loopsLoading,
+    plan: userPlan,
+    planReady,
+    hostedAudioExpiresAt: profile?.hosted_audio_expires_at ?? null,
+  });
+
   const durationsSecById = useLoopsStore((s) => s.durationsSecById);
   const deleteLoopRemote = useLoopsStore((s) => s.deleteLoopRemote);
   const [filter, setFilter] = useState<Filter>("all");
@@ -199,9 +203,14 @@ export default function Library() {
   return (
     <AppShell theme="prism" variant="single">
       <div className="pk-library-page h-full space-y-4 px-4 pb-6 pt-4 md:pb-24 md:pt-6">
-        <CheckoutRecoveryBanner locale={locale} location="library" currentPlan={user ? userPlan : undefined} />
-        {user && userPlan === "free" ? (
-          <FreeUpgradeStrip locale={locale} location="library_strip" plan={userPlan} />
+        <CheckoutRecoveryBanner
+          locale={locale}
+          location="library"
+          currentPlan={bannersReady ? userPlan : undefined}
+          planReady={bannersReady}
+        />
+        {user && bannersReady && userPlan === "free" ? (
+          <FreeUpgradeStrip locale={locale} location="library_strip" plan={userPlan} ready={bannersReady} />
         ) : null}
         {user ? (
           <LibraryDistributionBanner

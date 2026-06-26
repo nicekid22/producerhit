@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
+import { toast, toastImportant, toastLoading, toastSuccess, TOAST_DURATIONS } from "@/lib/appToast";
 import { AppShell } from "@/components/AppShell";
 import { Dropdown, type DropdownOption } from "@/components/ui/Dropdown";
 import { GenrePickControl } from "@/components/dashboard/GenrePickControl";
@@ -81,10 +81,8 @@ import { MasteringUpsellModal } from "@/components/growth/MasteringUpsellModal";
 import { notifyGamificationGeneration } from "@/components/growth/GamificationStrip";
 import { DailyBonusBannerButton } from "@/components/growth/DailyBonusBannerButton";
 import { DashboardPromoBillboard } from "@/components/growth/DashboardPromoBillboard";
-import { AudioRetentionBanner } from "@/components/growth/AudioRetentionBanner";
 import { CheckoutRecoveryBanner } from "@/components/billing/CheckoutRecoveryBanner";
 import { FreeUpgradeStrip } from "@/components/billing/FreeUpgradeStrip";
-import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
 import { pickLoopForSharePrompt, shouldShowSharePromptAfterGeneration } from "@/lib/sharePrompt";
 import { trackFreeGenerationMilestones } from "@/lib/conversionMetrics";
 import { markReferralInvitePromptShown, shouldShowReferralInvitePrompt } from "@/lib/referralPrompt";
@@ -99,12 +97,9 @@ import {
 import { isRemixVibeRecreateEnabled, getRemixVibeCopy } from "@/lib/remixVibeFallback";
 import { prepareLoopVariantGeneration, variantResultTitle } from "@/lib/loopVariantGeneration";
 import { loopToRemixSource } from "@/lib/remixSourceLoop";
-import { MobileOnboardingSheet, hasSeenMobileOnboarding } from "@/components/dashboard/MobileOnboardingSheet";
-import { OnboardingCoach } from "@/components/onboarding/OnboardingCoach";
 import { WavFormatCoach } from "@/components/onboarding/WavFormatCoach";
-import { loadCoachProgress, shouldShowCoachTour } from "@/lib/onboarding/coachStorage";
 import { ensureGenerationCatalogExtensions } from "@/lib/generationCatalogBootstrap";
-import { useOnboardingCoachStore } from "@/stores/onboardingCoachStore";
+import { completeOnboardingStepOnServer } from "@/lib/onboardingProgress";
 import { useWavFormatCoachStore } from "@/stores/wavFormatCoachStore";
 import { useAuthStore } from "@/stores/authStore";
 import { useLocaleStore } from "@/stores/localeStore";
@@ -140,6 +135,8 @@ import { DashboardStudioBrand } from "@/components/dashboard/DashboardStudioBran
 import { DASHBOARD_VOICE_SECTIONS_ENABLED, MOBILE_DASHBOARD_V2 } from "@/lib/featureFlags";
 import { useIsCompactMobileViewport, useIsDesktop } from "@/hooks/useMediaQuery";
 import { useMobileDashboardTab } from "@/hooks/useMobileDashboardTab";
+import { useResolvedPlan } from "@/hooks/useResolvedPlan";
+import { useAudioRetentionDailyNotice } from "@/hooks/useAudioRetentionDailyNotice";
 import { DashboardMobileTabs } from "@/components/dashboard/DashboardMobileTabs";
 import { MobileResultsToolbar } from "@/components/dashboard/MobileResultsToolbar";
 import { GeneratorSection, generatorSectionPad } from "@/components/dashboard/GeneratorSection";
@@ -396,6 +393,7 @@ export default function Dashboard() {
   const authStatus = useAuthStore((s) => s.status);
   const authProfile = useAuthStore((s) => s.profile);
   const profileReady = useAuthStore((s) => s.profileReady);
+  const { plan: billingPlan, ready: billingPlanReady, bannersReady: billingBannersReady } = useResolvedPlan();
   const refreshAuthProfile = useAuthStore((s) => s.refreshProfile);
   const authProfileError = useAuthStore((s) => s.lastError);
   const locale = useLocaleStore((s) => s.locale);
@@ -465,7 +463,6 @@ export default function Dashboard() {
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, [hydrateGenerationFromStore]);
   const [externalRemix, setExternalRemix] = useState<PendingRemix | null>(null);
-  const [mobileOnboardingOpen, setMobileOnboardingOpen] = useState(false);
   const [masteringUpsellLoop, setMasteringUpsellLoop] = useState<Loop | null>(null);
   const [gamificationRefreshKey, setGamificationRefreshKey] = useState(0);
   const usedCountRef = useRef(usedThisMonth);
@@ -752,6 +749,15 @@ export default function Dashboard() {
   const showQuotaLoading = profileBusy && !hasQuotaSnapshot;
   const quotaReady = !profileSyncing || hasQuotaSnapshot;
 
+  useAudioRetentionDailyNotice({
+    locale,
+    loops,
+    loopsReady: profileReady && loopsHydrated && !loopsLoading,
+    plan: authProfile?.plan ?? plan,
+    planReady: billingBannersReady && profileReady,
+    hostedAudioExpiresAt: authProfile?.hosted_audio_expires_at ?? null,
+  });
+
   const detailsLoop = useMemo(() => {
     if (!detailsId) return null;
     return loops.find((l) => l.id === detailsId) ?? null;
@@ -784,7 +790,7 @@ export default function Dashboard() {
     try {
       const key = `producerhit_dashboard_welcome_${user.id}`;
       if (window.localStorage.getItem(key)) return;
-      if (authProfile.loops_used_this_month > 0 || loadCoachProgress(user.id).tourDone) {
+      if (authProfile.loops_used_this_month > 0) {
         window.localStorage.setItem(key, "1");
         return;
       }
@@ -809,7 +815,7 @@ export default function Dashboard() {
             toast.success(`${d.planActivatedPrefix}${nextPlan}`);
             if (user?.id) useWavFormatCoachStore.getState().scheduleProTip(user.id, 6_000);
             if (!hasLegalHolderName(fromStore)) {
-              toast(d.addLegalName, { icon: "📄", duration: 5000 });
+      toastImportant(d.addLegalName, { icon: "📄" });
             }
             return;
           }
@@ -933,19 +939,6 @@ export default function Dashboard() {
     else if (urlGenre || params.has("mode")) window.history.replaceState({}, "", "/dashboard");
   }, []);
 
-  useEffect(() => {
-    if (!mobileV2 || !user?.id || !profileReady || !authProfile || hasSeenMobileOnboarding()) return;
-    if (shouldShowCoachTour(user.id, authProfile.loops_used_this_month)) return;
-    const timer = window.setTimeout(() => setMobileOnboardingOpen(true), 900);
-    return () => window.clearTimeout(timer);
-  }, [authProfile, mobileV2, profileReady, user?.id]);
-
-  useEffect(() => {
-    if (!user?.id || !profileReady || !authProfile) return;
-    useOnboardingCoachStore
-      .getState()
-      .hydrate(user.id, authProfile.loops_used_this_month, true);
-  }, [authProfile, profileReady, user?.id]);
 
   useEffect(() => {
     trackClientEvent("dashboard_view", { source: entrySource });
@@ -1144,15 +1137,13 @@ export default function Dashboard() {
     if (profileBusy || !user?.id) return;
     const store = useWavFormatCoachStore.getState();
     store.cancelPending();
-    const tourPending = shouldShowCoachTour(user.id, authProfile?.loops_used_this_month ?? 0);
-    const delayBoost = tourPending ? 12_000 : 0;
     if (canExportWav(plan)) {
-      store.scheduleProTip(user.id, 14_000 + delayBoost);
+      store.scheduleProTip(user.id, 14_000);
     } else {
-      store.scheduleFreeTease(user.id, 22_000 + delayBoost);
+      store.scheduleFreeTease(user.id, 22_000);
     }
     return () => store.cancelPending();
-  }, [authProfile?.loops_used_this_month, plan, profileBusy, user?.id]);
+  }, [plan, profileBusy, user?.id]);
 
   const displayedLoops = useMemo(
     () => buildWorkspacePlaybackQueue(loops, { query, savedOnly }),
@@ -2047,10 +2038,7 @@ export default function Dashboard() {
       const runDualFallbackSequential = async (indices: Array<1 | 2>, fromMode: string) => {
         trackClientEvent("generate_dual_fallback", { from: fromMode, to: "sequential", slots: indices.join(",") });
         if (import.meta.env.DEV) console.info("[generate] dual fallback → sequential", { from: fromMode, indices });
-        toast.loading(
-          d.retryingQueue,
-          { id: "dual-fallback", duration: 5000 },
-        );
+        toastLoading(d.retryingQueue, { id: "dual-fallback", duration: TOAST_DURATIONS.important });
 
         for (const idx of indices) {
           delete slotErrors[idx];
@@ -2269,7 +2257,7 @@ export default function Dashboard() {
       const isFirstEver = totalGens === successCount && successCount > 0;
       const seed = playableCreated[0]?.id ?? String(Date.now());
       triggerBeatReady(locale, seed, { isFirst: isFirstEver, versionCount: successCount >= 2 ? successCount : 1 });
-      if (isFirstEver) useOnboardingCoachStore.getState().celebrateFirstGeneration();
+      if (isFirstEver) void completeOnboardingStepOnServer("first_beat");
       if (effectiveVersions === 2 && successCount === 1) {
         toast.error(
           d.oneOfTwoFailed,
@@ -2477,7 +2465,7 @@ export default function Dashboard() {
           promptPlanUpsell("limit_reached");
         } else if (err instanceof AceRemixUnavailableError) {
           toast.error(pickFrEn(locale, ACE_REMIX_UNAVAILABLE_COPY.fr, ACE_REMIX_UNAVAILABLE_COPY.en), {
-            duration: 10_000,
+            duration: TOAST_DURATIONS.persistent,
           });
         } else {
           toast.error(err instanceof Error ? err.message : d.remixFailed);
@@ -2997,11 +2985,11 @@ export default function Dashboard() {
     autoLandingGenerateRef.current = true;
     setLandingAutoGenQueued(false);
     trackClientEvent("landing_auto_generate_start", { entry_source: entrySource, mobile: mobileV2 });
-    toast.success(
+    toastSuccess(
       snap.genreStrategy === "random" || !snap.prompt.trim()
         ? d.surpriseStarted
         : d.generatingFromIdea,
-      { duration: 3200 },
+      { duration: TOAST_DURATIONS.default },
     );
     if (mobileV2) goResults();
     void handleGenerate();
@@ -3216,14 +3204,16 @@ export default function Dashboard() {
             <CheckoutRecoveryBanner
               locale={locale}
               location="dashboard"
-              currentPlan={plan}
+              currentPlan={billingBannersReady ? billingPlan : undefined}
+              planReady={billingBannersReady}
               className={mobileV2 ? "mb-2" : "mb-3"}
             />
-            {plan === "free" && remaining > 2 ? (
+            {billingBannersReady && billingPlan === "free" && remaining > 2 ? (
               <FreeUpgradeStrip
                 locale={locale}
                 location="dashboard_strip"
-                plan={plan}
+                plan={billingPlan}
+                ready={billingBannersReady}
                 className={mobileV2 ? "mb-2" : "mb-3"}
               />
             ) : null}
@@ -3415,6 +3405,7 @@ export default function Dashboard() {
                   locale={locale}
                   promptLocale={beatPromptLocale}
                   mode="beat"
+                  formGenre={form.genre}
                   value={form.prompt}
                   onChange={(v) => {
                     beatAceOverrideRef.current = null;
@@ -3790,6 +3781,7 @@ export default function Dashboard() {
                   locale={locale}
                   promptLocale={songPromptLocale}
                   mode="song"
+                  formGenre={form.genre}
                   value={songDescription}
                   onChange={(v) => {
                     songAceOverrideRef.current = null;
@@ -4445,16 +4437,6 @@ export default function Dashboard() {
         )}
       >
         {!mobileV2 ? dashboardPromoAndGaming : null}
-        <div className="mb-4 space-y-4">
-          <OnboardingChecklist locale={locale} />
-          <AudioRetentionBanner
-            locale={locale}
-            plan={authProfile?.plan ?? plan}
-            loops={loops}
-            ready={profileReady && loopsHydrated && !loopsLoading}
-            hostedAudioExpiresAt={authProfile?.hosted_audio_expires_at ?? null}
-          />
-        </div>
         {showMasterWorkspace ? (
           <MasteringPanel
             locale={locale}
@@ -4852,12 +4834,6 @@ export default function Dashboard() {
         referralCode={referralCodeForPrompt ?? authProfile?.referral_code ?? null}
         onClose={() => setReferralPromptOpen(false)}
       />
-      <MobileOnboardingSheet
-        locale={locale}
-        open={mobileOnboardingOpen}
-        onClose={() => setMobileOnboardingOpen(false)}
-      />
-      <OnboardingCoach locale={locale} />
       <WavFormatCoach
         locale={locale}
         onPrepareTarget={prepareWavCoachTarget}

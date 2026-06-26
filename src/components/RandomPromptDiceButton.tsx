@@ -16,6 +16,8 @@ type Props = {
   onPickAce?: (acePrompt: string) => void;
   /** When set, dice also selects the matching catalog genre (genre-menu prompts). */
   onPickGenre?: (genre: string) => void;
+  /** Called after a successful dice roll (e.g. one-time hint toast). */
+  onDiceRolled?: () => void;
   className?: string;
   variant?: "dashboard" | "landing";
 };
@@ -27,6 +29,7 @@ export function RandomPromptDiceButton({
   onPick,
   onPickAce,
   onPickGenre,
+  onDiceRolled,
   className,
   variant = "dashboard",
 }: Props) {
@@ -42,6 +45,7 @@ export function RandomPromptDiceButton({
     if (acePrompt.trim()) onPickAce?.(acePrompt);
     else onPickAce?.("");
     onPickGenre?.(genre);
+    onDiceRolled?.();
     window.setTimeout(() => setRolling(false), 580);
   };
 

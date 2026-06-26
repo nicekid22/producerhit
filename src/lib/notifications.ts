@@ -78,3 +78,16 @@ export async function ensureWelcomeNotification(locale: string): Promise<boolean
     return false;
   }
 }
+
+/** Une seule notif « prochain pas » tant que l'activation n'est pas complète. */
+export async function ensureActivationNudge(locale: string): Promise<boolean> {
+  try {
+    const { data, error } = await supabase.rpc("ensure_activation_nudge", {
+      p_locale: locale === "fr" ? "fr" : "en",
+    });
+    if (error) return false;
+    return Boolean((data as { ok?: boolean } | null)?.ok);
+  } catch {
+    return false;
+  }
+}

@@ -9,6 +9,9 @@ const BANK_HUSTLE_DISPLAY =
 const BANK_FR_DISPLAY =
   "Te voir pour la première fois de l'autre côté de la pièce — R&B romantique, 80 bpm";
 
+const CURATED_EN_SAMPLE =
+  "Funny song about a collaborator who uses the same hi-hat on everything";
+
 describe("resolveGenerationCaptionContext", () => {
   it("prioritizes dice override over bank display match", () => {
     const ctx = resolveGenerationCaptionContext({
@@ -125,5 +128,18 @@ describe("resolveGenerationCaptionContext", () => {
     });
     expect(ctx).toEqual({ melodyComposition: false });
     expect(ctx.lyricsStructure).toBeUndefined();
+  });
+
+  it("enriches short curated display with rich ACE tags", () => {
+    const ctx = resolveGenerationCaptionContext({
+      displayIdea: CURATED_EN_SAMPLE,
+      formGenre: "Orchestral Drill",
+      mode: "song",
+      uiLocale: "en",
+    });
+    expect(ctx.captionOverride).toBeDefined();
+    expect(ctx.captionOverride!.length).toBeGreaterThan(80);
+    expect((ctx.captionOverride!.match(/,/g) ?? []).length).toBeGreaterThanOrEqual(4);
+    expect(ctx.melodyComposition).toBe(true);
   });
 });

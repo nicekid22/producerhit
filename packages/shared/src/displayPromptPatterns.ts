@@ -5,8 +5,13 @@ const LEGACY_DICE_DISPLAY_RE =
 function looksLikeFrenchConversationalSongRequest(text: string): boolean {
   const t = text.trim();
   if (!/^une chanson\s+/i.test(t)) return false;
+  // Shell dé catalogue — sauf demandes libres avec marqueurs conversationnels.
+  if (/^une chanson\s+.+?\s+sur\s+\S/i.test(t) && t.split(/\s+/).length <= 14) {
+    if (/\b(hip hop|hip-hop|vacances|bord de la mer|plage|fais|crée|génère)\b/i.test(t)) return true;
+    return false;
+  }
   if (/\b(hip hop|hip-hop|fais|crée|génère|vacances|bord de la mer|plage)\b/i.test(t)) return true;
-  return t.split(/\s+/).length >= 10;
+  return t.split(/\s+/).length >= 12;
 }
 
 export function looksLikeStructuredDisplayIdea(text: string): boolean {

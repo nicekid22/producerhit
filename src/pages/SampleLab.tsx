@@ -16,6 +16,7 @@ import { getRemainingBeats } from "@/lib/planLimits";
 import { shouldShowPlanUpsell } from "@/lib/growthUpsell";
 import { normalizePlan, runCreditPackCheckout } from "@/lib/billing";
 import { CheckoutRecoveryBanner } from "@/components/billing/CheckoutRecoveryBanner";
+import { useResolvedPlan } from "@/hooks/useResolvedPlan";
 import { estimateGenerationDurationMs } from "@/lib/aceDuration";
 import { generateSampleLabLoop } from "@/lib/sampleLabGenerate";
 import {
@@ -53,6 +54,7 @@ function SampleLabContent() {
   const isFr = locale === "fr";
   const user = useAuthStore((s) => s.user);
   const profile = useAuthStore((s) => s.profile);
+  const { plan: resolvedPlan, ready: planReady, bannersReady } = useResolvedPlan();
   const refreshProfile = useAuthStore((s) => s.refreshProfile);
   const openUpsell = useGrowthUpsellStore((s) => s.openUpsell);
   const createLoop = useLoopsStore((s) => s.createLoop);
@@ -330,7 +332,13 @@ function SampleLabContent() {
     >
       <div className="pk-prism-page flex min-h-0 flex-1 flex-col overflow-y-auto">
         <div className="mx-auto w-full max-w-5xl flex-1 px-4 pb-24 pt-4 md:px-6">
-          <CheckoutRecoveryBanner locale={locale} location="sample_lab" currentPlan={normalizePlan(plan)} className="mb-4" />
+          <CheckoutRecoveryBanner
+            locale={locale}
+            location="sample_lab"
+            currentPlan={bannersReady ? normalizePlan(resolvedPlan) : undefined}
+            planReady={bannersReady}
+            className="mb-4"
+          />
           <PrismPageHero
             eyebrow={t("ProducerHit Samples · Beta", "ProducerHit Samples · Bêta")}
             title={t("AI Sample Lab", "AI Sample Lab")}

@@ -1,37 +1,17 @@
 import type { AppLocale } from "@/i18n/config";
-import { isCatalogGenreSelection } from "@/lib/genres/genrePickMode";
-import { matchGenreFromPrompt } from "@/lib/genres/matchGenreFromPrompt";
-import { getGenreCatalogPrompt } from "@/lib/promptBuilder";
-import { ACE_DICE_CAPTION_MAX } from "@/lib/randomPromptIdeas/aceDiceCaption";
 import type { PromptMode } from "@/lib/randomPromptIdeas";
 import {
   enhanceNaturalIdeaToAce as enhanceNaturalIdeaToAceShared,
-  looksLikeAceProsePrompt,
   looksLikeNaturalUserIdea as looksLikeNaturalUserIdeaShared,
   normalizeAceCaption,
-  optimizeAceProsePrompt,
   resolveGenerationCaptionContext as resolveSharedCaptionContext,
   type GenerationCaptionContext as SharedGenerationCaptionContext,
 } from "@producerhit/shared";
-
-function trimAceCaption(parts: readonly string[]): string {
-  const layers = parts.map((p) => p.trim()).filter(Boolean);
-  let result = layers.join(", ");
-  while (result.length > ACE_DICE_CAPTION_MAX && layers.length > 1) {
-    layers.pop();
-    result = layers.join(", ");
-  }
-  if (result.length > ACE_DICE_CAPTION_MAX) {
-    result = result.slice(0, ACE_DICE_CAPTION_MAX).replace(/[,\s]+$/g, "").trim();
-  }
-  return result;
-}
 
 /** Prompt déjà au format tags ACE (virgules, instruments, mix). */
 export function looksLikeAceTechnicalPrompt(text: string): boolean {
   const t = text.trim();
   if (!t) return false;
-  // Prompts display v2 : phrases naturelles (tirets, points) — pas des listes ACE
   if (/[.!?]/.test(t) || t.includes("—") || t.includes(" – ")) return false;
   const commas = (t.match(/,/g) || []).length;
   if (commas >= 3 && t.length >= 60) return true;
@@ -39,18 +19,21 @@ export function looksLikeAceTechnicalPrompt(text: string): boolean {
   return /\b(808|hi-hat|rhodes|sidechain|supersaw|log drum|mix 2026|four-on-floor|reese bass)\b/i.test(t);
 }
 
-/** Shells dé legacy (IT/ES/DE/NL/PT) — pas les formules FR courantes. */
 const LEGACY_DICE_DISPLAY_RE =
   /^(Una canzone |Una canción |Uma música |Ein [\w\s.'-]+-Song |Ein [\w\s.'-]+-Beat |Een [\w\s.'-]+-song |Een [\w\s.'-]+-beat )/i;
 
 function looksLikeFrenchConversationalSongRequest(text: string): boolean {
   const t = text.trim();
   if (!/^une chanson\s+/i.test(t)) return false;
+  if (/^une chanson\s+.+?\s+sur\s+\S/i.test(t) && t.split(/\s+/).length <= 14) {
+    if (/\b(hip hop|hip-hop|vacances|bord de la mer|plage|fais|crée|génère)\b/i.test(t)) return true;
+    return false;
+  }
   if (/\b(hip hop|hip-hop|fais|crée|génère|vacances|bord de la mer|plage)\b/i.test(t)) return true;
-  return t.split(/\s+/).length >= 10;
+  return t.split(/\s+/).length >= 12;
 }
 
-/** Prompts curated / dé display — laisser buildAceCaption (genre + idée + langue vocale). */
+/** Prompts curated / dé display — enrichis via buildRichAceCaption côté shared. */
 export function looksLikeCuratedDisplayPrompt(text: string): boolean {
   const t = text.trim();
   if (!t || looksLikeAceTechnicalPrompt(t)) return false;
@@ -71,89 +54,29 @@ export function looksLikeCuratedDisplayPrompt(text: string): boolean {
   );
 }
 
-/** Idée structurée (curated ou dé) — la langue vocale suit la locale UI en mode auto. */
 export function looksLikeStructuredDisplayIdea(text: string): boolean {
   return looksLikeCuratedDisplayPrompt(text.trim());
 }
 
-/** Idée tapée en langage naturel (pas des tags ACE ni curated). */
 export function looksLikeNaturalUserIdea(text: string): boolean {
   const t = text.trim();
   if (!t || looksLikeAceTechnicalPrompt(t) || looksLikeCuratedDisplayPrompt(t)) return false;
   return looksLikeNaturalUserIdeaShared(t);
 }
 
-const THEME_PHRASE_MAP: Array<[RegExp, string]> = [
-  [/vacances?|été|summer holiday/i, "summer vacation mood"],
-  [/bord de la mer|au bord de la mer|plage|seaside|beach|ocean|océan|mer\b/i, "beach seaside vibe, coastal atmosphere"],
-  [/nuit|night/i, "nocturnal mood"],
-  [/amour|love|cœur|coeur|heartbreak/i, "romantic emotional theme"],
-  [/rue|street|banlieue|suburb/i, "street life atmosphere"],
-  [/fête|party|club|soirée/i, "party energy, club-ready vibe"],
-  [/triste|sad|mélancol|melanchol/i, "melancholic emotional depth"],
-  [/hype|énergie|energy|motiv/i, "high energy motivational vibe"],
-  [/pluie|rain/i, "rainy atmospheric mood"],
-  [/ville|city|urban/i, "urban city atmosphere"],
-];
-
-function stripConversationalPrefix(text: string): string {
-  return text
-    .replace(/^(fais(-moi)?|crée(-moi)?|génère(-moi)?|make me|create|generate)\s+/gi, "")
-    .replace(/^(une|un|des|a|an)\s+/gi, "")
-    .replace(/^(chanson|beat|son|instru|instrumental|type beat|song|track)\s+(sur|about|on|de|d')\s+/gi, "")
-    .replace(/^(chanson|beat|song|track)\s+/gi, "")
-    .trim();
-}
-
-function themeToAceTags(idea: string): string {
-  const tags: string[] = [];
-  for (const [re, tag] of THEME_PHRASE_MAP) {
-    if (re.test(idea)) tags.push(tag);
-  }
-  return tags.join(", ");
-}
-
-function resolveGenreForEnhancement(idea: string, formGenre: string): string {
-  if (isCatalogGenreSelection(formGenre) && formGenre !== "Auto") return formGenre;
-  return matchGenreFromPrompt(idea) ?? (formGenre !== "Auto" ? formGenre : "Melodic Trap");
-}
-
-/** Transforme une idée naturelle en caption ACE pour l'API. */
-export function enhanceNaturalIdeaToAce(idea: string, formGenre: string, mode: PromptMode): string {
-  const trimmed = idea.trim();
-  if (!trimmed) return "";
-  const genre = resolveGenreForEnhancement(trimmed, formGenre);
-  const base = getGenreCatalogPrompt(genre) || genre.toLowerCase();
-  const themeTags = themeToAceTags(trimmed);
-  const production =
-    mode === "song"
-      ? "catchy hook, memorable chorus, radio-ready mix"
-      : "punchy drums, polished mix, hook-ready loop";
-  const raw = trimAceCaption([base, themeTags, production]);
-  // Shared helper keeps tag contract consistent across web + mobile.
-  return enhanceNaturalIdeaToAceShared(raw, genre, mode);
-}
-
-export function resolveIdeaForAceGeneration(args: {
-  displayIdea: string;
-  formGenre: string;
-  mode: PromptMode;
-}): { aceCaption: string; useCaptionOverride: boolean } {
-  const idea = args.displayIdea.trim();
-  if (!idea) return { aceCaption: "", useCaptionOverride: false };
-  if (looksLikeAceTechnicalPrompt(idea)) {
-    return { aceCaption: idea, useCaptionOverride: true };
-  }
-  if (!looksLikeNaturalUserIdea(idea)) {
-    return { aceCaption: "", useCaptionOverride: false };
-  }
-  const aceCaption = enhanceNaturalIdeaToAce(idea, args.formGenre, args.mode);
-  return { aceCaption, useCaptionOverride: Boolean(aceCaption.trim()) };
+/** Transforme une idée naturelle en caption ACE — délègue au moteur shared. */
+export function enhanceNaturalIdeaToAce(
+  idea: string,
+  formGenre: string,
+  mode: PromptMode,
+  uiLocale: AppLocale = "en",
+): string {
+  return enhanceNaturalIdeaToAceShared(idea, formGenre, mode, uiLocale);
 }
 
 export type GenerationCaptionContext = SharedGenerationCaptionContext;
 
-/** Priorité : override dé / landing / banque 2000, sinon enhancement naturel léger. */
+/** Résolution unique via @producerhit/shared (+ tags ACE techniques collés par l'utilisateur). */
 export function resolveGenerationCaptionContext(args: {
   diceAceOverride?: string | null;
   landingAceOverride?: string | null;
@@ -162,32 +85,17 @@ export function resolveGenerationCaptionContext(args: {
   mode: PromptMode;
   uiLocale?: AppLocale;
 }): GenerationCaptionContext {
-  const shared = resolveSharedCaptionContext(args);
-  if (shared.captionOverride?.trim() || shared.lyricsStructure?.trim()) return shared;
-
   const idea = args.displayIdea.trim();
-  if (looksLikeAceProsePrompt(idea)) {
+  if (idea && looksLikeAceTechnicalPrompt(idea)) {
     return {
-      captionOverride: optimizeAceProsePrompt(idea, { mode: args.mode }),
-      melodyComposition: args.mode === "song",
-    };
-  }
-
-  const enhanced = resolveIdeaForAceGeneration({
-    displayIdea: args.displayIdea,
-    formGenre: args.formGenre,
-    mode: args.mode,
-  });
-  if (enhanced.useCaptionOverride && enhanced.aceCaption.trim()) {
-    return {
-      captionOverride: normalizeAceCaption(enhanced.aceCaption, {
+      captionOverride: normalizeAceCaption(idea, {
         mode: args.mode === "song" ? "song" : "beat",
         instrumental: args.mode === "beat",
       }).caption,
       melodyComposition: false,
     };
   }
-  return { melodyComposition: false };
+  return resolveSharedCaptionContext(args);
 }
 
 /** @deprecated Préférer resolveGenerationCaptionContext */
@@ -197,6 +105,7 @@ export function resolveCaptionOverrideForGeneration(args: {
   displayIdea: string;
   formGenre: string;
   mode: PromptMode;
+  uiLocale?: AppLocale;
 }): string | undefined {
   return resolveGenerationCaptionContext(args).captionOverride;
 }

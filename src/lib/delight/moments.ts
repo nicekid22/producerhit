@@ -1,4 +1,4 @@
-import toast from "react-hot-toast";
+import { toastSuccess, TOAST_DURATIONS } from "@/lib/appToast";
 import { pickBeatReadyToast } from "@/lib/delight/copy";
 import type { DelightKind } from "@/lib/delight/copy";
 
@@ -19,8 +19,8 @@ export function triggerDelight(_kind: DelightKind, _locale: AppLocale, _options:
 }
 
 export function triggerBeatReady(locale: AppLocale, seed?: string, _options?: { isFirst?: boolean; versionCount?: number }) {
-  toast.success(pickBeatReadyToast(locale, seed), {
-    duration: 3200,
+  toastSuccess(pickBeatReadyToast(locale, seed), {
+    duration: TOAST_DURATIONS.default,
     className: "pk-toast pk-toast--success pk-toast--delight",
     icon: "🔥",
   });

@@ -103,6 +103,12 @@ describe("random prompt pools", () => {
     expect(new Set(runs.map((r) => r.startIndex)).size).toBeGreaterThan(1);
   });
 
+  it("rotating placeholders exclude prompt bank 2000 entries", () => {
+    const frSong = getLandingDisplayPromptPool("fr", "song");
+    expect(frSong.some((p) => /—\s*\w+.*\d{2,3}\s*bpm/i.test(p))).toBe(false);
+    expect(frSong.some((p) => p.includes("Danser lentement dans la cuisine"))).toBe(false);
+  });
+
   it("IT landing includes Italian translated curated", () => {
     const itSong = getLandingDisplayPromptPool("it", "song");
     expect(itSong.length).toBeGreaterThanOrEqual(40);

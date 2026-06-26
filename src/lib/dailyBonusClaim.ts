@@ -1,4 +1,4 @@
-import toast from "react-hot-toast";
+import { toastShort, toastSuccess } from "@/lib/appToast";
 import { claimDailyBonus, getLevel, loadGamification } from "@/lib/gamification";
 import { syncDailyGenerationBonus, syncLevelRewards } from "@/lib/gamificationRewards";
 import { useLootRevealStore } from "@/stores/lootRevealStore";
@@ -22,9 +22,7 @@ export async function performDailyBonusClaim(
   const result = claimDailyBonus();
 
   if (result.alreadyClaimed) {
-    toast(isFr ? "Bonus déjà récupéré — reviens demain" : "Bonus already claimed — see you tomorrow", {
-      duration: 2500,
-    });
+    toastShort(isFr ? "Bonus déjà récupéré — reviens demain" : "Bonus already claimed — see you tomorrow");
     return { claimed: false, alreadyClaimed: true };
   }
 
@@ -51,6 +49,6 @@ export async function performDailyBonusClaim(
     showLoot({ kind: "daily", credits, xp: result.xpGained });
   }
 
-  toast.success(isFr ? "Bonus du jour récupéré" : "Daily bonus claimed", { duration: 2200 });
+  toastSuccess(isFr ? "Bonus du jour récupéré" : "Daily bonus claimed", { duration: 2200 });
   return { claimed: true, alreadyClaimed: false };
 }

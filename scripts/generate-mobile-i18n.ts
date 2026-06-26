@@ -66,6 +66,11 @@ const WEB_KEY_MAP: Record<string, string> = {
   songIdea: "songIdea",
   songIdeaHint: "songIdeaHint",
   songIdeaRequired: "songIdeaRequired",
+  ideaPromptHint: "ideaPromptHint",
+  ideaPromptDiceHint: "ideaPromptDiceHint",
+  acePreviewTitle: "acePreviewTitle",
+  acePreviewNote: "acePreviewNote",
+  acePreviewEnable: "acePreviewEnable",
   genLangAuto: "genLangAuto",
   genLangFr: "genLangFr",
   genLangEn: "genLangEn",
@@ -286,7 +291,17 @@ function escapeTs(s: string): string {
 function main() {
   const web = loadWebBlocks();
   const { en, fr } = parseMobileEnFr();
-  const keys = Object.keys(en).sort();
+  const keys = new Set(Object.keys(en));
+
+  for (const [mobileKey, webKey] of Object.entries(WEB_KEY_MAP)) {
+    keys.add(mobileKey);
+    const webBlock = web.get(webKey);
+    if (!webBlock) continue;
+    if (!en[mobileKey]) en[mobileKey] = webBlock.en;
+    if (!fr[mobileKey]) fr[mobileKey] = webBlock.fr ?? webBlock.en;
+  }
+
+  const sortedKeys = [...keys].sort();
 
   const lines: string[] = [
     `/* eslint-disable max-lines -- généré par scripts/generate-mobile-i18n.ts */`,
@@ -298,7 +313,7 @@ function main() {
   ];
 
   let mapped = 0;
-  for (const key of keys) {
+  for (const key of sortedKeys) {
     const navPath = LOCALE_NAV_MAP[key];
     const webKey = WEB_KEY_MAP[key];
     const webBlock = navPath ? web.get(navPath) : webKey ? web.get(webKey) : undefined;
@@ -315,7 +330,7 @@ function main() {
 
   const outPath = path.join(root, "apps/mobile/lib/i18n/messages.generated.ts");
   fs.writeFileSync(outPath, lines.join("\n"), "utf8");
-  console.log(`Wrote ${keys.length} keys (${mapped} mapped from web) → ${outPath}`);
+  console.log(`Wrote ${sortedKeys.length} keys (${mapped} mapped from web) → ${outPath}`);
 }
 
 main();

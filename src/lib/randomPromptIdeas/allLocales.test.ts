@@ -10,7 +10,7 @@ import { getUnifiedUserPromptPool } from "@/lib/randomPromptIdeas/unifiedDisplay
 import { looksLikeAceTechnicalPrompt, resolveGenerationCaptionContext } from "@/lib/promptEnhancer";
 import { resolveRandomPromptLocale } from "@/lib/resolveRandomPromptLocale";
 import { resolveSongVocalLanguage } from "@/lib/vocalLanguages";
-import { getCuratedDisplayPromptPool, getDisplayPromptPool, looksLikeAceProsePrompt, resolveCuratedPromptLocale } from "@producerhit/shared";
+import { getCuratedDisplayPromptPool, getDisplayPromptPool, getAceProseCuratedPool, looksLikeAceProsePrompt, normalizeAceCaption, resolveCuratedPromptLocale } from "@producerhit/shared";
 import { uiLocaleToAceVocalLanguage } from "@producerhit/shared";
 
 const NON_EN_FR = UI_LOCALES.filter((l) => l !== "en" && l !== "fr");
@@ -66,7 +66,7 @@ describe("all 14 UI locales — prompts", () => {
     (locale) => {
       const pool = getLandingDisplayPromptPool(locale, "song");
       expect(pool.some((p) => /TikTok|BeatStars|hi-hat|Coupe du monde|World Cup|Mundial/i.test(p))).toBe(true);
-      expect(pool.some((p) => /^A [a-z0-9].* song /i.test(p))).toBe(true);
+      expect(pool.some((p) => p.trim().length >= 60)).toBe(true);
     },
   );
 
@@ -99,24 +99,25 @@ describe("all 14 UI locales — dice", () => {
   });
 
   it.each(["es", "de", "it", "ja", "ko", "zh", "ar", "pt"] as const)(
-    "%s unified pool includes localized ACE prose",
+    "%s curated locale has localized ACE prose pool",
     (locale) => {
-      const pool = getUnifiedUserPromptPool(locale, "song");
-      const ace = pool.filter((p) => looksLikeAceProsePrompt(p));
+      const curatedLocale = resolveCuratedPromptLocale(locale);
+      const ace = getAceProseCuratedPool("song", curatedLocale);
       expect(ace.length).toBeGreaterThanOrEqual(200);
     },
   );
 
   it("dice pool includes translated curated funny prompts (same as placeholder)", () => {
-    const pool = getUnifiedUserPromptPool("es", "song");
-    const funny = pool.find((p) => /graciosa|colaborador|hi-hat/i.test(p));
-    expect(funny).toBeTruthy();
     const curated = getCuratedDisplayPromptPool(resolveCuratedPromptLocale("es"), "song");
-    expect(curated).toContain(funny);
+    const funny = curated.find((p) => /graciosa|colaborador|hi-hat/i.test(p));
+    expect(funny).toBeTruthy();
+    const pool = getUnifiedUserPromptPool("es", "song");
+    expect(pool.some((p) => p === funny)).toBe(true);
     const roll = pickRandomGenreMenuDiceRoll("es", "song");
     expect(roll.displayPrompt.trim().length).toBeGreaterThan(12);
     if (/graciosa|colaborador|hi-hat/i.test(roll.displayPrompt)) {
-      expect(roll.acePrompt).toBe("");
+      expect(roll.acePrompt.trim().length).toBeGreaterThan(80);
+      expect(roll.acePrompt.includes(",")).toBe(true);
     }
   });
 
@@ -234,7 +235,7 @@ describe("all 14 UI locales — vocal language", () => {
 });
 
 describe("all 14 UI locales — generation caption", () => {
-  it.each(UI_LOCALES)("curated prompt does not force melodyComposition for %s", (locale) => {
+  it.each(UI_LOCALES)("curated prompt enriches ACE caption for %s", (locale) => {
     const sample =
       locale === "fr"
         ? "Chanson drôle sur ton collègue qui met le même hi-hat sur tous ses sons"
@@ -245,8 +246,10 @@ describe("all 14 UI locales — generation caption", () => {
       mode: "song",
       uiLocale: locale,
     });
-    expect(ctx.melodyComposition).toBe(false);
-    expect(ctx.captionOverride).toBeUndefined();
+    expect(ctx.melodyComposition).toBe(true);
+    expect(ctx.captionOverride).toBeDefined();
+    expect(ctx.captionOverride!.length).toBeGreaterThan(80);
+    expect((ctx.captionOverride!.match(/,/g) ?? []).length).toBeGreaterThanOrEqual(4);
   });
 
   it.each(UI_LOCALES)("dice override enables melodyComposition for %s", (locale) => {
@@ -260,8 +263,10 @@ describe("all 14 UI locales — generation caption", () => {
       displayIdea: roll.displayPrompt,
       formGenre: roll.genre,
       mode: "song",
+      uiLocale: locale,
     });
     expect(ctx.melodyComposition).toBe(true);
-    expect(ctx.captionOverride).toBe(roll.acePrompt);
+    const expected = normalizeAceCaption(roll.acePrompt, { mode: "song", instrumental: false }).caption;
+    expect(ctx.captionOverride).toBe(expected);
   });
 });

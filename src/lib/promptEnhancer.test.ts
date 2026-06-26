@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { looksLikeAceProsePrompt, normalizeAceCaption, pickUnifiedDiceRoll } from "@producerhit/shared";
+import { looksLikeAceProsePrompt, normalizeAceCaption, optimizeAceProsePrompt, pickUnifiedDiceRoll, generateAceProsePrompt } from "@producerhit/shared";
 import {
   enhanceNaturalIdeaToAce,
   looksLikeAceTechnicalPrompt,
@@ -28,7 +28,7 @@ describe("promptEnhancer", () => {
     expect(looksLikeNaturalUserIdea("une chanson hip hop sur des vacances au bord de la mer")).toBe(true);
   });
 
-  it("skips enhancement for curated display prompts", () => {
+  it("enriches curated display prompts when uiLocale is set", () => {
     const curated = "Funny song about a collaborator who uses the same hi-hat on everything";
     expect(looksLikeCuratedDisplayPrompt(curated)).toBe(true);
     expect(looksLikeNaturalUserIdea(curated)).toBe(false);
@@ -36,9 +36,11 @@ describe("promptEnhancer", () => {
       displayIdea: curated,
       formGenre: "Orchestral Drill",
       mode: "song",
+      uiLocale: "en",
     });
-    expect(ctx.captionOverride).toBeUndefined();
-    expect(ctx.melodyComposition).toBe(false);
+    expect(ctx.captionOverride).toBeDefined();
+    expect(ctx.captionOverride!.length).toBeGreaterThan(80);
+    expect(ctx.captionOverride).toContain(",");
   });
 
   it("v2 rich display prompt is curated not ACE tags", () => {
@@ -105,11 +107,13 @@ describe("promptEnhancer", () => {
   });
 
   it("beat mode disables melody composition for dice ACE prose", () => {
-    let roll = pickRandomUnifiedDiceRoll("fr", "beat");
-    for (let i = 0; i < 60 && !looksLikeAceProsePrompt(roll.displayPrompt); i += 1) {
-      roll = pickRandomUnifiedDiceRoll("fr", "beat");
-    }
-    expect(looksLikeAceProsePrompt(roll.displayPrompt)).toBe(true);
+    const prose = generateAceProsePrompt("beat", 9001, "en");
+    expect(looksLikeAceProsePrompt(prose)).toBe(true);
+    const roll = {
+      displayPrompt: prose,
+      acePrompt: optimizeAceProsePrompt(prose, { mode: "beat" }),
+      genre: "Melodic Trap",
+    };
     expect(roll.acePrompt).not.toMatch(/\b(male|female) vocal\b/i);
     const ctx = resolveGenerationCaptionContext({
       diceAceOverride: roll.acePrompt,
@@ -140,11 +144,12 @@ describe("promptEnhancer", () => {
       "une chanson hip hop sur des vacances au bord de la mer",
       "Auto",
       "song",
+      "fr",
     );
     expect(ace).toMatch(/hip|rap|trap/i);
     expect(ace).toMatch(/beach|vacation|seaside|summer/i);
     expect(ace.includes(",")).toBe(true);
-    expect(ace).toContain("clean studio vocal");
+    expect(ace).toMatch(/\bvocal\b/i);
     expect(ace).not.toMatch(/theme:|accrocheur|français/i);
   });
 
@@ -187,5 +192,15 @@ describe("genre dice display split", () => {
     expect(item.displayPrompt).toMatch(/^Une chanson /i);
     expect(item.acePrompt.includes(",")).toBe(true);
     expect(/^(fais|une chanson sur les tags)/i.test(item.displayPrompt)).toBe(false);
+  });
+
+  it("unified dice roll keeps French in display only, not ace caption", () => {
+    let roll = pickRandomUnifiedDiceRoll("fr", "song");
+    for (let i = 0; i < 40 && !roll.acePrompt.trim(); i += 1) {
+      roll = pickRandomUnifiedDiceRoll("fr", "song");
+    }
+    expect(roll.acePrompt.trim().length).toBeGreaterThan(40);
+    expect(roll.acePrompt).not.toMatch(/\bune chanson\b/i);
+    expect(roll.displayPrompt.trim().length).toBeGreaterThan(10);
   });
 });

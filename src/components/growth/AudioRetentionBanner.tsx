@@ -4,13 +4,11 @@ import { useNavigate } from "react-router-dom";
 import type { AppLocale } from "@/i18n/config";
 import type { Loop } from "@/types/loop";
 import {
-  getDaysUntilAudioExpiry,
-  getLoopAudioRetentionState,
-  isHostedLoopAudioUrl,
-  isLoopAudioRetentionDisabled,
+  LOOP_AUDIO_RETENTION_DAYS_FREE,
+  LOOP_AUDIO_RETENTION_DAYS_PRO,
+  summarizeHostedAudioRetention,
 } from "@/lib/loopAudioRetention";
 import { hasPermanentHostedAudio, normalizePlanId } from "@/lib/planEntitlements";
-import { LOOP_AUDIO_RETENTION_DAYS_FREE, LOOP_AUDIO_RETENTION_DAYS_PRO } from "@/lib/loopAudioRetention";
 import { useGrowthUpsellStore } from "@/stores/growthUpsellStore";
 import { cn } from "@/lib/utils";
 import "@/styles/paywall-modal.css";
@@ -45,29 +43,8 @@ export function AudioRetentionBanner({
 
   const summary = useMemo(() => {
     if (!ready) return null;
-    if (isLoopAudioRetentionDisabled() || hasPermanentHostedAudio(plan)) return null;
-
-    let expiring = 0;
-    let expired = 0;
-    let soonestDays: number | null = null;
-
-    for (const loop of loops) {
-      if (!loop.createdAt || !isHostedLoopAudioUrl(loop.audioUrl)) continue;
-      const state = getLoopAudioRetentionState(loop.createdAt, retentionCtx);
-      if (state === "expired") {
-        expired += 1;
-        continue;
-      }
-      if (state === "expiring") {
-        expiring += 1;
-        const days = getDaysUntilAudioExpiry(loop.createdAt, retentionCtx);
-        if (soonestDays === null || days < soonestDays) soonestDays = days;
-      }
-    }
-
-    if (expired === 0 && expiring === 0) return null;
-    return { expiring, expired, soonestDays };
-  }, [loops, plan, ready, retentionCtx]);
+    return summarizeHostedAudioRetention(loops, retentionCtx);
+  }, [loops, ready, retentionCtx]);
 
   if (!summary) return null;
 

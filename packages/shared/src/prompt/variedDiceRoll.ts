@@ -106,10 +106,11 @@ export function resolveDisplayToDiceRoll(
   }
 
   if (isCurated) {
+    const genre = pickRandomGenreValue();
     return {
       displayPrompt,
-      acePrompt: "",
-      genre: pickRandomGenreValue(),
+      acePrompt: buildAceCaption(locale, mode, genre, displayPrompt),
+      genre,
     };
   }
 

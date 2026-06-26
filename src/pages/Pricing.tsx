@@ -23,6 +23,7 @@ import { trackClientEvent } from "@/lib/supabaseClient";
 import { markCheckoutAbandoned, syncCheckoutAbandonNurture } from "@/lib/checkoutRecovery";
 import { CheckoutRecoveryBanner } from "@/components/billing/CheckoutRecoveryBanner";
 import { FreeUpgradeStrip } from "@/components/billing/FreeUpgradeStrip";
+import { useResolvedPlan } from "@/hooks/useResolvedPlan";
 import { EmailCaptureSection } from "@/components/growth/EmailCaptureSection";
 import { PLAN_BILLING_CURRENCY } from "@/lib/planPricing";
 import {
@@ -68,9 +69,10 @@ export default function Pricing() {
   const user = useAuthStore((s) => s.user);
   const profile = useAuthStore((s) => s.profile);
   const refreshProfile = useAuthStore((s) => s.refreshProfile);
+  const { plan: resolvedPlan, ready: planReady, bannersReady } = useResolvedPlan();
   const locale = useLocaleStore((s) => s.locale);
   const px = useMemo(() => buildPricingPageSection(locale), [locale]);
-  const currentPlan = normalizePlan(profile?.plan);
+  const currentPlan = planReady ? resolvedPlan : normalizePlan(profile?.plan);
   const [searchParams, setSearchParams] = useSearchParams();
   const [open, setOpen] = useState<number | null>(0);
   const [loading, setLoading] = useState<PaidPlan | null>(null);
@@ -223,12 +225,19 @@ export default function Pricing() {
         <CheckoutRecoveryBanner
           locale={locale}
           location="pricing_abandoned"
-          currentPlan={currentPlan}
+          currentPlan={user && bannersReady ? currentPlan : undefined}
+          planReady={!user || bannersReady}
           className="mt-6"
         />
 
-        {user && currentPlan === "free" ? (
-          <FreeUpgradeStrip locale={locale} location="pricing_strip" plan={currentPlan} className="mt-4" />
+        {user && bannersReady && currentPlan === "free" ? (
+          <FreeUpgradeStrip
+            locale={locale}
+            location="pricing_strip"
+            plan={currentPlan}
+            ready={bannersReady}
+            className="mt-4"
+          />
         ) : null}
 
         {/* Plan cards */}

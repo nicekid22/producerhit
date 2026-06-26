@@ -3,7 +3,8 @@ import { useAuthStore } from "@/stores/authStore";
 import { useNotificationStore } from "@/stores/notificationStore";
 import { useLocaleStore } from "@/stores/localeStore";
 import { hydrateGamificationFromServer } from "@/lib/gamificationSync";
-import { ensureWelcomeNotification } from "@/lib/notifications";
+import { ensureActivationNudge, ensureWelcomeNotification } from "@/lib/notifications";
+import { syncActivationProgressFromLocal } from "@/lib/onboardingProgress";
 import { deferUntilIdle } from "@/lib/perf/defer";
 
 /** Hydrate growth state après login (XP cross-device + notifications). */
@@ -18,7 +19,9 @@ export function GrowthPlatformBootstrap() {
     deferUntilIdle(() => {
       void hydrateGamificationFromServer();
       void (async () => {
+        await syncActivationProgressFromLocal();
         await ensureWelcomeNotification(locale);
+        await ensureActivationNudge(locale);
         await refreshNotifications();
       })();
     }, 2200);

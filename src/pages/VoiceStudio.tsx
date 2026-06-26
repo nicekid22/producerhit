@@ -26,6 +26,7 @@ import { shouldShowPlanUpsell } from "@/lib/growthUpsell";
 import { readVoiceStudioPrefs, writeVoiceStudioPrefs } from "@/lib/voiceStudioPrefs";
 import { CheckoutRecoveryBanner } from "@/components/billing/CheckoutRecoveryBanner";
 import { FreeUpgradeStrip } from "@/components/billing/FreeUpgradeStrip";
+import { useResolvedPlan } from "@/hooks/useResolvedPlan";
 import { normalizePlan } from "@/lib/billing";
 import { Plus, Type, Users, Wand2 } from "lucide-react";
 
@@ -34,6 +35,7 @@ export default function VoiceStudioPage() {
   const isFr = locale === "fr";
   const user = useAuthStore((s) => s.user);
   const profile = useAuthStore((s) => s.profile);
+  const { plan: resolvedPlan, ready: planReady, bannersReady } = useResolvedPlan();
   const refreshProfile = useAuthStore((s) => s.refreshProfile);
   const openUpsell = useGrowthUpsellStore((s) => s.openUpsell);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -151,9 +153,21 @@ export default function VoiceStudioPage() {
     <AppShell theme="prism" variant="single">
       <div className="pk-voice-studio-page pk-prism-page flex min-h-0 flex-1 flex-col overflow-y-auto">
         <div className="mx-auto w-full max-w-6xl flex-1 px-4 pb-24 pt-4 md:px-6">
-          <CheckoutRecoveryBanner locale={locale} location="voice_studio" currentPlan={normalizePlan(plan)} className="mb-4" />
-          {plan === "free" ? (
-            <FreeUpgradeStrip locale={locale} location="voice_studio_strip" plan={plan} className="mb-4" />
+          <CheckoutRecoveryBanner
+            locale={locale}
+            location="voice_studio"
+            currentPlan={bannersReady ? normalizePlan(resolvedPlan) : undefined}
+            planReady={bannersReady}
+            className="mb-4"
+          />
+          {bannersReady && resolvedPlan === "free" ? (
+            <FreeUpgradeStrip
+              locale={locale}
+              location="voice_studio_strip"
+              plan={resolvedPlan}
+              ready={bannersReady}
+              className="mb-4"
+            />
           ) : null}
           <VoiceStudioHero isFr={isFr} stats={heroStats} profileCount={profiles.length} />
 

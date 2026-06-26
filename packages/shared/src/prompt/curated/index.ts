@@ -28,9 +28,9 @@ const CURATED_BY_LOCALE: Record<AceCuratedPromptLocale, { song: readonly string[
 };
 
 export function getCuratedDisplayPromptPool(locale: AceCuratedPromptLocale, mode: CuratedDisplayMode): readonly string[] {
-  const v1 = CURATED_BY_LOCALE[locale][mode];
   const v2 = getCuratedV2DisplayPromptPool(locale, mode);
-  return mergeUniqueDisplayPrompts(v1, v2);
+  const v1 = CURATED_BY_LOCALE[locale][mode];
+  return mergeUniqueDisplayPrompts(v2, v1);
 }
 
 export function mergeUniqueDisplayPrompts(...pools: readonly (readonly string[])[]): string[] {

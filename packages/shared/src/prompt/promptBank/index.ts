@@ -1,6 +1,7 @@
 import type { AppLocale } from "../../i18n/locales";
 import { guessGenreFromPromptBank } from "./genreFromCaption";
 import { resolveBankLyrics } from "./buildBankLyrics";
+import { enrichBankAceCaption } from "./enrichBankCaption";
 import type { PromptBankEntry, PromptBankRoll } from "./types";
 
 export type { PromptBankRoll };
@@ -86,6 +87,27 @@ function bankLyricsForEntry(entry: PromptBankEntry): string {
   });
 }
 
+function rollFromEntry(entry: PromptBankEntry, uiLocale: AppLocale): PromptBankRoll {
+  const caption = entry.acestep.caption.trim();
+  const genre = guessGenreFromPromptBank(entry.display, caption);
+  const aceCaption = enrichBankAceCaption({
+    display: entry.display.trim(),
+    aceCaption: caption,
+    locale: uiLocale,
+    mode: "song",
+    genre,
+  });
+  return {
+    id: entry.id,
+    theme: entry.theme,
+    display: entry.display.trim(),
+    aceCaption,
+    lyricsStructure: bankLyricsForEntry(entry),
+    lang: entry.lang,
+    genre,
+  };
+}
+
 export function pickPromptBankRoll(uiLocale: AppLocale, seed?: number): PromptBankRoll {
   const pool = poolForLocale(uiLocale);
   const idx =
@@ -93,17 +115,7 @@ export function pickPromptBankRoll(uiLocale: AppLocale, seed?: number): PromptBa
       ? Math.abs(Math.floor(seed)) % pool.length
       : Math.floor(Math.random() * pool.length);
   const entry = pool[idx] ?? pool[0]!;
-  const caption = entry.acestep.caption.trim();
-  const lyricsStructure = bankLyricsForEntry(entry);
-  return {
-    id: entry.id,
-    theme: entry.theme,
-    display: entry.display.trim(),
-    aceCaption: caption,
-    lyricsStructure,
-    lang: entry.lang,
-    genre: guessGenreFromPromptBank(entry.display, caption),
-  };
+  return rollFromEntry(entry, uiLocale);
 }
 
 export function findPromptBankByDisplay(display: string, uiLocale: AppLocale): PromptBankRoll | null {
@@ -111,14 +123,5 @@ export function findPromptBankByDisplay(display: string, uiLocale: AppLocale): P
   if (!needle) return null;
   const hit = poolForLocale(uiLocale).find((e) => e.display.trim().toLowerCase() === needle);
   if (!hit) return null;
-  const caption = hit.acestep.caption.trim();
-  return {
-    id: hit.id,
-    theme: hit.theme,
-    display: hit.display.trim(),
-    aceCaption: caption,
-    lyricsStructure: bankLyricsForEntry(hit),
-    lang: hit.lang,
-    genre: guessGenreFromPromptBank(hit.display, caption),
-  };
+  return rollFromEntry(hit, uiLocale);
 }

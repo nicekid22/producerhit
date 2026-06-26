@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Animated, InteractionManager, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useIsFocused } from "@react-navigation/native";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -38,6 +39,7 @@ import { useResponsiveLayout } from "@/lib/useResponsiveLayout";
 import { useTabScreenBottomPadding } from "@/lib/useTabScreenBottomPadding";
 import { InspirationChipRow } from "@/components/InspirationChipRow";
 import { PromptDiceButton } from "@/components/PromptDiceButton";
+import { MobileAceCaptionPreview } from "@/components/MobileAceCaptionPreview";
 import { useRotatingPlaceholder } from "@/lib/useRotatingPlaceholder";
 import { useStaggerEntrance } from "@/lib/useStaggerEntrance";
 import { PhButton } from "@/components/PhButton";
@@ -118,6 +120,9 @@ export default function CreateScreen() {
   const [error, setError] = useState<string | null>(null);
   const [songFieldFocused, setSongFieldFocused] = useState(false);
   const [beatFieldFocused, setBeatFieldFocused] = useState(false);
+  const [songDiceAcePreview, setSongDiceAcePreview] = useState<string | null>(null);
+  const [beatDiceAcePreview, setBeatDiceAcePreview] = useState<string | null>(null);
+  const [diceTipVisible, setDiceTipVisible] = useState(false);
   const [lastRandomGenre, setLastRandomGenre] = useState<string | undefined>();
   const [softUpgradeVisible, setSoftUpgradeVisible] = useState(false);
   const [softUpgradeKind, setSoftUpgradeKind] = useState<SoftUpgradeKind>("low_quota");
@@ -203,6 +208,18 @@ export default function CreateScreen() {
   );
 
   const inspirationChips = useMemo(() => getInspirationChipsForGenre(chipsGenre), [chipsGenre]);
+
+  const showDiceTipOnce = useCallback(async () => {
+    try {
+      const seen = await AsyncStorage.getItem("pk.diceHintShown");
+      if (seen === "1") return;
+      await AsyncStorage.setItem("pk.diceHintShown", "1");
+    } catch {
+      /* ignore */
+    }
+    setDiceTipVisible(true);
+    setTimeout(() => setDiceTipVisible(false), 4500);
+  }, []);
 
   useEffect(() => {
     if (!prefsHydrated || onboardingPrefsAppliedRef.current) return;
@@ -617,7 +634,9 @@ export default function CreateScreen() {
                     }}
                     onPickAce={(ace) => {
                       songAceOverrideRef.current = ace || null;
+                      setSongDiceAcePreview(ace?.trim() || null);
                     }}
+                    onDiceRolled={() => void showDiceTipOnce()}
                     onPickLyrics={(structure) => {
                       songLyricsOverrideRef.current = structure || null;
                     }}
@@ -629,11 +648,29 @@ export default function CreateScreen() {
                   onChangeText: (text) => {
                     songAceOverrideRef.current = null;
                     songLyricsOverrideRef.current = null;
+                    setSongDiceAcePreview(null);
                     setSongDescription(text);
                     if (error) setError(null);
                   },
                   placeholder: songRotatingPlaceholder || t("songPlaceholder"),
                 }}
+              />
+              {(songFieldFocused || songDescription.trim().length > 0) ? (
+                <Text style={[typography.micro, { color: colors.textSubtle, lineHeight: 16 }]}>
+                  {t("ideaPromptHint")}
+                </Text>
+              ) : null}
+              {diceTipVisible ? (
+                <Text style={[typography.micro, { color: colors.accentPrimary, lineHeight: 16 }]}>
+                  {t("ideaPromptDiceHint")}
+                </Text>
+              ) : null}
+              <MobileAceCaptionPreview
+                locale={locale}
+                displayIdea={songDescription}
+                formGenre={activeFormGenre}
+                mode="song"
+                diceAceOverride={songDiceAcePreview}
               />
 
               <View style={styles.songLyrics}>
@@ -685,7 +722,9 @@ export default function CreateScreen() {
                     onPick={setBeatPrompt}
                     onPickAce={(ace) => {
                       beatAceOverrideRef.current = ace || null;
+                      setBeatDiceAcePreview(ace?.trim() || null);
                     }}
+                    onDiceRolled={() => void showDiceTipOnce()}
                     onPickGenre={setActiveFormGenre}
                   />
                 }
@@ -693,10 +732,28 @@ export default function CreateScreen() {
                   value: beatPrompt,
                   onChangeText: (text) => {
                     beatAceOverrideRef.current = null;
+                    setBeatDiceAcePreview(null);
                     setBeatPrompt(text);
                   },
                   placeholder: beatRotatingPlaceholder || t("beatPromptPlaceholder"),
                 }}
+              />
+              {(beatFieldFocused || beatPrompt.trim().length > 0) ? (
+                <Text style={[typography.micro, { color: colors.textSubtle, lineHeight: 16 }]}>
+                  {t("ideaPromptHint")}
+                </Text>
+              ) : null}
+              {diceTipVisible ? (
+                <Text style={[typography.micro, { color: colors.accentPrimary, lineHeight: 16 }]}>
+                  {t("ideaPromptDiceHint")}
+                </Text>
+              ) : null}
+              <MobileAceCaptionPreview
+                locale={locale}
+                displayIdea={beatPrompt}
+                formGenre={activeFormGenre}
+                mode="beat"
+                diceAceOverride={beatDiceAcePreview}
               />
             </View>
           )}

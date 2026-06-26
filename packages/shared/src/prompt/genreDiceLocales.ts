@@ -71,7 +71,7 @@ export const FR_SONG_THEMES = theme(
   ["sur une nuit liquid", "sur une ruée jungle", "sur une rage contrôlée"],
   ["sur une nuit warehouse", "sur une montée festival", "sur une groove club"],
   ["sur un futur glitché", "sur une love story AI", "sur une fusion expérimentale"],
-  ["sur un dimanche sans alarme", "sur avoir dit non au patron", "sur retrouver ton groupe de potes après des années"],
+  ["sur un matin lent sans urgence", "sur un retour en ville après des années loin", "sur des retrouvailles qui font du bien"],
 );
 
 export const EN_BEAT_THEMES = theme(
@@ -101,7 +101,7 @@ export const EN_SONG_THEMES = theme(
   ["about a liquid night", "about a jungle rush", "about controlled rage"],
   ["about a warehouse night", "about a festival build", "about a club groove"],
   ["about a glitched future", "about an AI love story", "about an experimental fusion"],
-  ["about a lazy Sunday with no alarm", "about saying no to your boss for once", "about reuniting with old friends"],
+  ["about a slow morning with nowhere to be", "about coming back to your city after years away", "about reuniting with people who still feel like home"],
 );
 
 export const ES_SONG_THEMES = theme(
@@ -116,7 +116,7 @@ export const ES_SONG_THEMES = theme(
   ["sobre una noche liquid", "sobre una carrera jungle", "sobre una rabia controlada"],
   ["sobre una noche en warehouse", "sobre un build de festival", "sobre un groove de club"],
   ["sobre un futuro glitch", "sobre una historia de amor con IA", "sobre una fusión experimental"],
-  ["sobre un domingo sin despertador", "sobre decirle que no al jefe por primera vez", "sobre reencontrarte con viejos amigos"],
+  ["sobre una mañana lenta sin prisa", "sobre volver a tu ciudad después de años", "sobre reencontrarte con gente que sigue importando"],
 );
 
 export const ES_BEAT_THEMES = theme(

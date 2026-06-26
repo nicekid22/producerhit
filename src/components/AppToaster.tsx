@@ -1,5 +1,6 @@
 import { Toaster } from "react-hot-toast";
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
+import { TOAST_DURATIONS } from "@/lib/appToast";
 
 export function AppToaster() {
   return (
@@ -9,7 +10,7 @@ export function AppToaster() {
       containerClassName="pk-toast-container"
       toastOptions={{
         className: "pk-toast",
-        duration: 4200,
+        duration: TOAST_DURATIONS.default,
         success: {
           className: "pk-toast pk-toast--success",
         },

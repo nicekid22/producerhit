@@ -1,8 +1,8 @@
 import type { AppLocale } from "@/i18n/config";
 import type { PromptMode } from "@/lib/randomPromptIdeas";
 import { formatDicePrompt } from "@/lib/randomPromptIdeas";
-import { buildAceCaption, type GenerateParams } from "@/lib/promptBuilder";
 import {
+  buildRichAceCaption,
   buildUnifiedDisplayPool,
   pickVariedDiceRoll,
   resolveCuratedPromptLocale,
@@ -18,24 +18,11 @@ function buildWebDiceAceCaption(
   genre: string,
   displayPrompt: string,
 ): string {
-  const params: GenerateParams = {
-    genre,
-    influence: "No Influence",
-    key: "",
-    scale: "",
-    bpm: 0,
-    loopLengthBars: mode === "song" ? 16 : 8,
-    swing: 0,
-    mood: "",
-    energyLevel: "",
-    reverb: "Medium",
-    prompt: displayPrompt,
-  };
-  return buildAceCaption(params, {
-    isSong: mode === "song",
-    instrumental: mode === "beat",
-    autoMeta: true,
-    vocalLanguage: uiLocaleToAceVocalLanguage(uiLocale),
+  return buildRichAceCaption({
+    display: displayPrompt,
+    locale: uiLocale,
+    mode,
+    formGenre: genre,
   });
 }
 

@@ -1,6 +1,7 @@
 /** Rétention audio hébergé (Supabase Storage). Plus = permanent. Rollback : VITE_LOOP_AUDIO_RETENTION_DAYS=0. */
 
 import { hasPermanentHostedAudio, normalizePlanId } from "@/lib/planEntitlements";
+import type { Loop } from "@/types/loop";
 import type { AppLocale } from "@/i18n/config";
 import { L, pickL } from "@/i18n/localized";
 import { isPublicAceStreamUrl } from "@/lib/publicAcePlayback";
@@ -129,6 +130,42 @@ export function getDaysUntilAudioExpiry(
   const leftMs = createdMs + maxAgeMs - nowMs;
   if (leftMs <= 0) return 0;
   return Math.ceil(leftMs / DAY_MS);
+}
+
+export type HostedAudioRetentionSummary = {
+  expired: number;
+  expiring: number;
+  soonestDays: number | null;
+};
+
+/** Compte tracks hébergées expirées / bientôt expirées pour bannières et notices. */
+export function summarizeHostedAudioRetention(
+  loops: readonly Pick<Loop, "createdAt" | "audioUrl">[],
+  ctx?: LoopAudioRetentionContext,
+  nowMs = Date.now(),
+): HostedAudioRetentionSummary | null {
+  if (isLoopAudioRetentionDisabled() || hasPermanentHostedAudio(ctx?.plan)) return null;
+
+  let expiring = 0;
+  let expired = 0;
+  let soonestDays: number | null = null;
+
+  for (const loop of loops) {
+    if (!loop.createdAt || !isHostedLoopAudioUrl(loop.audioUrl)) continue;
+    const state = getLoopAudioRetentionState(loop.createdAt, ctx, nowMs);
+    if (state === "expired") {
+      expired += 1;
+      continue;
+    }
+    if (state === "expiring") {
+      expiring += 1;
+      const days = getDaysUntilAudioExpiry(loop.createdAt, ctx, nowMs);
+      if (soonestDays === null || days < soonestDays) soonestDays = days;
+    }
+  }
+
+  if (expired === 0 && expiring === 0) return null;
+  return { expired, expiring, soonestDays };
 }
 
 /** Libellé discret pour cartes Dashboard. */

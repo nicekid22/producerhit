@@ -3,6 +3,8 @@
  * Tags: comma-separated EN keywords, 8–14 tags, max 512 chars.
  */
 
+import { isNonEnglishCaptionTag } from "./themeFromDiceDisplay";
+
 export const ACE_CAPTION_MAX_CHARS = 512;
 export const ACE_CAPTION_TAG_MAX = 14;
 
@@ -176,7 +178,7 @@ export function normalizeAceCaption(
   const instrumental = options.instrumental ?? options.mode !== "song";
   const mode = options.mode === "melody" ? "melody" : instrumental ? "beat" : "song";
 
-  let tags = uniqTags(parseTags(caption));
+  let tags = uniqTags(parseTags(caption)).filter((t) => !isNonEnglishCaptionTag(t));
 
   if (mode === "beat" || mode === "melody") {
     tags = tags.map((t) => t.replace(BEAT_VOCAL_TAG_RE, "").trim()).filter(Boolean);
