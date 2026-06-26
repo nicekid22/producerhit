@@ -10,7 +10,13 @@ export type {
 export { computeAceRequestedDurationSec } from "./aceDuration";
 export { resolveAceQualityFlags, ACE_QUALITY_DEFAULTS } from "./aceQuality";
 export { buildAceCaption } from "./promptAce";
-export { buildAceRequestBody } from "./aceRequest";
+export { buildAceRequestBody, resolveAceSampleMode } from "./aceRequest";
+export {
+  ACE_AI_COMPOSE_LYRICS_PLACEHOLDER,
+  looksLikeAceCaptionEchoLyrics,
+  resolveAceLyricsApiField,
+  resolveAceLyricsForMeta,
+} from "./aceLyricsApi";
 export {
   normalizeAceCaption,
   normalizeAceGenerationPayload,

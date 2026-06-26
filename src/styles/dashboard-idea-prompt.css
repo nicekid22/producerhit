@@ -12,6 +12,46 @@
   position: relative;
 }
 
+.pk-idea-prompt-field__shell {
+  position: relative;
+}
+
+.pk-idea-prompt-ghost {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  padding: 0.7rem 0.85rem 2.75rem 0.85rem;
+  pointer-events: none;
+  color: var(--pk-muted, rgba(255, 255, 255, 0.42));
+  font-size: 0.875rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  animation: pk-idea-prompt-ghost-in 1.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes pk-idea-prompt-ghost-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pk-idea-prompt-ghost {
+    animation: none;
+  }
+}
+
+.pk-idea-prompt-field__shell .pk-dashboard-text-field__control {
+  position: relative;
+  z-index: 2;
+  background: transparent;
+}
+
 .pk-dashboard-text-field .pk-speech-field__shell--mic-inside,
 .pk-idea-prompt-field .pk-speech-field__shell--mic-inside,
 .pk-cover-lyrics-field .pk-speech-field__shell--mic-inside {

@@ -7,7 +7,7 @@ import {
 } from "@/lib/randomPromptIdeas";
 import { resolveRandomPromptLocale } from "@/lib/resolveRandomPromptLocale";
 
-const DEFAULT_CYCLE_MS = 2300;
+const DEFAULT_CYCLE_MS = 6200;
 
 type Options = {
   uiLocale: AppLocale;

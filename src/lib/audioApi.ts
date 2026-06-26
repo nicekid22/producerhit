@@ -3,7 +3,14 @@ import { nextAceKeyPreferIndex } from "@/lib/aceKeyRotation";
 import { supabase } from "@/lib/supabaseClient";
 import { aceMelodyCompositionAceFields } from "@/lib/aceMelodyComposition";
 import { buildAceCaption, buildRichPrompt, buildSonautoTags, type GenerateParams } from "@/lib/promptBuilder";
-import { buildAceChatCompletionsParts, buildAceRequestBody, normalizeAceGenerationPayload } from "@producerhit/shared";
+import {
+  buildAceChatCompletionsParts,
+  buildAceRequestBody,
+  normalizeAceGenerationPayload,
+  resolveAceLyricsApiField,
+  resolveAceLyricsForMeta,
+  resolveAceSampleMode,
+} from "@producerhit/shared";
 import { appendAceQualityToParamObj, ACE_RELEASE_MODEL, ACE_QUALITY_DEFAULTS, isAceReleaseTaskEnabled, resolveAceQualityFlags } from "@/lib/aceQuality";
 import { parseAceChatCompletionsResponse, parseAllAceChatCompletionsAudios } from "@/lib/aceChatCompletions";
 import type { AceDualBatchResponse } from "@/lib/aceDualBatch";
@@ -334,8 +341,18 @@ async function generateLoopAceDirect(
 
   const lyrics = normalized.lyrics || (instrumental ? "[Instrumental]" : lyricsRaw.trim());
   const effectiveLyrics = lyrics;
-  const isAiLyrics = !instrumental && lyrics.trim() === "";
-  const effectiveSampleMode = Boolean(!captionOverride && (options?.sampleMode || isAiLyrics));
+  const userLyricsTrimmed = lyricsRaw.trim();
+  const aceLyricsApiField = resolveAceLyricsApiField({
+    instrumental,
+    lyricsTrimmed: userLyricsTrimmed,
+  });
+  const effectiveSampleMode = resolveAceSampleMode({
+    captionOverride,
+    baseCaption,
+    instrumental,
+    lyricsTrimmed: lyricsRaw.trim(),
+    explicitSampleMode: options?.sampleMode,
+  });
   const releasePrompt = effectiveSampleMode ? (options?.sampleQuery?.trim() || baseCaption) : baseCaption;
   const quality = resolveAceQualityFlags({
     thinking: options?.thinking,
@@ -418,7 +435,7 @@ async function generateLoopAceDirect(
         thinking: quality.thinking,
         use_format: quality.useFormat,
         messages: [{ role: "user", content: parts.join("\n\n") }],
-        lyrics: instrumental ? "[instrumental]" : effectiveLyrics,
+        lyrics: aceLyricsApiField,
         task_type: "text2music",
         ...(melodyComposition ? aceMelodyCompositionAceFields() : {}),
         audio_config: {
@@ -459,7 +476,11 @@ async function generateLoopAceDirect(
     const fallbackKeyScale = !options?.autoMeta && params.key && params.scale ? `${params.key} ${params.scale}` : "";
     const meta: AceMeta = {
       prompt: parsed.prompt || baseCaption,
-      lyrics: instrumental ? "" : parsed.lyrics || effectiveLyrics || undefined,
+      lyrics: instrumental ? "" : resolveAceLyricsForMeta({
+        parsedLyrics: parsed.lyrics,
+        userLyrics: userLyricsTrimmed,
+        caption: baseCaption,
+      }) || undefined,
       bpm: (parsed.bpm && parsed.bpm > 0 ? parsed.bpm : fallbackBpm) ?? null,
       duration: (parsed.duration && parsed.duration > 0 ? parsed.duration : requestedDuration) ?? null,
       keyScale: (parsed.keyScale || fallbackKeyScale || undefined) ?? undefined,
@@ -501,7 +522,7 @@ async function generateLoopAceDirect(
   createForm.append("env", "production");
   createForm.append("ai_token", aceApiKey);
   createForm.append("prompt", releasePrompt);
-  createForm.append("lyrics", effectiveLyrics);
+  createForm.append("lyrics", aceLyricsApiField);
   createForm.append("model_name", ACE_RELEASE_MODEL);
   createForm.append("app", "studio-web");
   createForm.append("thinking", quality.thinking ? "true" : "false");
@@ -591,7 +612,11 @@ async function generateLoopAceDirect(
       meta = {
         taskId,
         prompt: baseCaption,
-        lyrics: lyricsFromResult || effectiveLyrics || undefined,
+        lyrics: resolveAceLyricsForMeta({
+          parsedLyrics: lyricsFromResult,
+          userLyrics: userLyricsTrimmed,
+          caption: baseCaption,
+        }) || undefined,
         bpm: bpm && isFinite(bpm) ? bpm : null,
         duration: duration && isFinite(duration) ? duration : null,
         keyScale: keyScale || undefined,
@@ -784,6 +809,7 @@ function metaFromAceChatJson(
   ctx: {
     baseCaption: string;
     effectiveLyrics: string;
+    userLyrics: string;
     instrumental: boolean;
     audioFormat: string;
     requestedDuration: number | null;
@@ -840,7 +866,13 @@ function metaFromAceChatJson(
 
   return {
     prompt: parsedContent.prompt || ctx.baseCaption,
-    lyrics: ctx.instrumental ? "" : parsedContent.lyrics || ctx.effectiveLyrics || undefined,
+    lyrics: ctx.instrumental
+      ? ""
+      : resolveAceLyricsForMeta({
+          parsedLyrics: parsedContent.lyrics,
+          userLyrics: ctx.userLyrics,
+          caption: ctx.baseCaption,
+        }) || undefined,
     bpm: (parsedContent.bpm && parsedContent.bpm > 0 ? parsedContent.bpm : ctx.fallbackBpm) ?? null,
     duration: (parsedContent.duration && parsedContent.duration > 0 ? parsedContent.duration : ctx.requestedDuration) ?? null,
     keyScale: parsedContent.keyScale || ctx.fallbackKeyScale || undefined,
@@ -905,10 +937,22 @@ export async function generateLoopAceDualBatch(
     });
     const baseCaption = normalized.caption;
     const effectiveLyrics = normalized.lyrics || (instrumental ? "[Instrumental]" : lyricsRaw.trim());
+    const batchUserLyrics = lyricsRaw.trim();
+    const batchAceLyricsField = resolveAceLyricsApiField({
+      instrumental,
+      lyricsTrimmed: batchUserLyrics,
+    });
+    const effectiveSampleMode = resolveAceSampleMode({
+      captionOverride,
+      baseCaption,
+      instrumental,
+      lyricsTrimmed: lyricsRaw.trim(),
+      explicitSampleMode: options?.sampleMode,
+    });
     const quality = resolveAceQualityFlags({
       thinking: options?.thinking,
       useFormat: options?.useFormat,
-      sampleMode: Boolean(options?.sampleMode || (!instrumental && effectiveLyrics === "")),
+      sampleMode: effectiveSampleMode,
     });
     const audioFormatRaw = (options?.audioFormat || "").trim().toLowerCase();
     const audioFormat =
@@ -932,7 +976,7 @@ export async function generateLoopAceDualBatch(
       seedKey: String(preferStart),
       baseCaption,
       prompt: params.prompt || "",
-      lyrics: effectiveLyrics,
+      lyrics: batchUserLyrics,
       instrumental,
       genre: params.genre || "",
       mood: params.mood || "",
@@ -958,7 +1002,7 @@ export async function generateLoopAceDualBatch(
         use_format: quality.useFormat,
         batch_size: 2,
         messages: [{ role: "user", content: parts.join("\n\n") }],
-        lyrics: instrumental ? "[instrumental]" : effectiveLyrics,
+        lyrics: batchAceLyricsField,
         task_type: "text2music",
         audio_config: {
           instrumental,
@@ -987,6 +1031,7 @@ export async function generateLoopAceDualBatch(
     const metaCtx = {
       baseCaption,
       effectiveLyrics,
+      userLyrics: batchUserLyrics,
       instrumental,
       audioFormat,
       requestedDuration,

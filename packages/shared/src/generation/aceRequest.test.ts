@@ -60,6 +60,31 @@ describe("buildAceRequestBody", () => {
     expect(String(body.caption)).toContain("trap");
   });
 
+  it("idée vide + genre catalogue envoie le prompt genre (pas sample_mode)", () => {
+    const body = buildAceRequestBody(
+      {
+        ...BASE_PARAMS,
+        genre: "Luxury Hotel R&B",
+        prompt: "Luxury Hotel R&B",
+        bpm: 0,
+        key: "",
+        scale: "",
+        mood: "",
+        energyLevel: "",
+      },
+      {
+        isSong: true,
+        instrumental: false,
+        vocalLanguage: "fr",
+        autoMeta: true,
+      },
+    );
+    expect(body.sampleMode).toBe(false);
+    expect(body.useFormat).toBe(true);
+    expect(String(body.caption).length).toBeGreaterThan(30);
+    expect(String(body.caption).toLowerCase()).toMatch(/luxury|r&b|rhodes|vocal/);
+  });
+
   it("flows bank caption and lyrics from caption context", () => {
     const ctx = resolveGenerationCaptionContext({
       displayIdea: BANK_DISPLAY,

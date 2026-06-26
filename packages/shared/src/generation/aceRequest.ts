@@ -4,6 +4,34 @@ import { normalizeAceGenerationPayload } from "../prompt/acePromptContract";
 import { buildAceCaption } from "./promptAce";
 import type { GenerateLoopAceOptions, GenerateParams } from "./types";
 
+/**
+ * Routage ACE prompt vs sample_mode (champ « Idée » UI, pas les paroles).
+ *
+ * | Cas | caption envoyée | sample_mode | useFormat |
+ * |-----|-----------------|-------------|-----------|
+ * | Idée remplie / dé / landing (captionOverride) | override enrichi | false | true |
+ * | Idée vide + genre catalogue (buildAceCaption) | tags genre ACE | false | true |
+ * | Idée vide + rien à mettre en caption | "" + sample_query | true | false |
+ * | Beat instrumental | tags beat | false | true |
+ *
+ * Bug corrigé : idée vide + genre choisi activait sample_mode car lyrics vides,
+ * vidant caption et désactivant l'enrichissement — alors que buildAceCaption
+ * fournit déjà le prompt genre à envoyer.
+ */
+export function resolveAceSampleMode(args: {
+  captionOverride: string;
+  baseCaption: string;
+  instrumental: boolean;
+  lyricsTrimmed: string;
+  explicitSampleMode?: boolean;
+}): boolean {
+  if (args.captionOverride.trim()) return false;
+  const isAiLyrics = !args.instrumental && args.lyricsTrimmed === "";
+  const hasCatalogPrompt = args.baseCaption.trim().length > 0;
+  if (isAiLyrics && hasCatalogPrompt) return args.explicitSampleMode === true;
+  return Boolean(args.explicitSampleMode || isAiLyrics);
+}
+
 export function buildAceRequestBody(
   params: GenerateParams,
   options?: GenerateLoopAceOptions,
@@ -45,8 +73,13 @@ export function buildAceRequestBody(
       ? audioFormatRaw
       : "mp3";
 
-  const isAiLyrics = !instrumental && lyricsTrimmed === "";
-  const effectiveSampleMode = Boolean(!captionOverride && (options?.sampleMode || isAiLyrics));
+  const effectiveSampleMode = resolveAceSampleMode({
+    captionOverride,
+    baseCaption,
+    instrumental,
+    lyricsTrimmed,
+    explicitSampleMode: options?.sampleMode,
+  });
   const caption = effectiveSampleMode ? "" : baseCaption;
   const lyrics = normalized.lyrics || (instrumental ? "[Instrumental]" : lyricsTrimmed);
   const effectiveSampleQuery = effectiveSampleMode ? sampleQuery || baseCaption : sampleQuery;

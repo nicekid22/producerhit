@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { resolveAceLyricsApiField, resolveAceLyricsForMeta } from "./aceLyricsApi.ts";
 
 export type GenerationJobStatus = "pending" | "running" | "completed" | "failed";
 
@@ -321,7 +322,11 @@ export async function pollAceTaskOnce(args: {
     taskId: args.taskId,
     task_id: args.taskId,
     prompt: args.effectivePrompt,
-    lyrics: lyricsFromResult.trim() || args.effectiveLyrics,
+    lyrics: resolveAceLyricsForMeta({
+      parsedLyrics: lyricsFromResult,
+      userLyrics: args.effectiveLyrics.trim(),
+      caption: args.effectivePrompt,
+    }),
     bpm: metasObj && typeof metasObj.bpm === "number" ? metasObj.bpm : args.bpm,
     duration: metasObj && typeof metasObj.duration === "number" ? metasObj.duration : args.requestedDuration,
     keyScale:
@@ -485,7 +490,13 @@ export async function createAceReleaseTask(args: {
   releaseForm.append("env", "production");
   releaseForm.append("ai_token", args.apiKey);
   releaseForm.append("prompt", args.effectivePrompt);
-  releaseForm.append("lyrics", args.effectiveLyrics);
+  releaseForm.append(
+    "lyrics",
+    resolveAceLyricsApiField({
+      instrumental: args.instrumental,
+      lyricsTrimmed: args.effectiveLyrics.trim(),
+    }),
+  );
   releaseForm.append("model_name", args.modelName);
   releaseForm.append("app", "studio-web");
   releaseForm.append("thinking", args.thinking ? "true" : "false");

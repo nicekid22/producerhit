@@ -17,6 +17,7 @@ import {
   updateGenerationJob,
 } from "../_shared/generationJobUtils.ts";
 import { buildAceChatCompletionsParts } from "../_shared/aceChatCompletions.ts";
+import { resolveAceLyricsApiField, resolveAceLyricsForMeta } from "../_shared/aceLyricsApi.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -895,13 +896,16 @@ async function generateViaChatCompletionsAce(input: {
   batchSize?: number;
   seeds?: number[];
 }): Promise<{ audioUrl: string; meta: Record<string, unknown> }> {
-  const effectiveLyrics = input.instrumental ? "[Instrumental]" : input.lyrics.trim();
-  const aceLyricsField = input.instrumental ? "[instrumental]" : effectiveLyrics;
+  const userLyrics = input.lyrics.trim();
+  const aceLyricsField = resolveAceLyricsApiField({
+    instrumental: input.instrumental,
+    lyricsTrimmed: userLyrics,
+  });
   const parts = buildAceChatCompletionsParts({
     seedKey: input.seedKey,
     baseCaption: input.baseCaption,
     prompt: input.prompt,
-    lyrics: input.lyrics,
+    lyrics: userLyrics,
     instrumental: input.instrumental,
     melodyComposition: input.melodyComposition,
     genre: input.genre,
@@ -978,7 +982,13 @@ async function generateViaChatCompletionsAce(input: {
     chatJson: json,
     meta: {
       prompt: parsedContent.prompt || input.baseCaption || input.prompt,
-      lyrics: input.instrumental ? "" : parsedContent.lyrics || effectiveLyrics || undefined,
+      lyrics: input.instrumental
+        ? ""
+        : resolveAceLyricsForMeta({
+            parsedLyrics: parsedContent.lyrics,
+            userLyrics,
+            caption: input.baseCaption || input.prompt,
+          }) || undefined,
       bpm: (parsedContent.bpm && parsedContent.bpm > 0 ? parsedContent.bpm : input.bpm) ?? null,
       duration: (parsedContent.duration && parsedContent.duration > 0 ? parsedContent.duration : input.requestedDuration) ?? null,
       keyScale: parsedContent.keyScale || fallbackKeyScale || input.keyScale.trim() || null,
@@ -2601,7 +2611,11 @@ serve(async (req) => {
               taskId,
               task_id: taskId,
               prompt: effectivePrompt,
-              lyrics: lyricsFromResult ? lyricsFromResult.trim() : effectiveLyrics,
+              lyrics: resolveAceLyricsForMeta({
+                parsedLyrics: lyricsFromResult,
+                userLyrics: lyricsRaw ? lyricsRaw.trim() : "",
+                caption: effectivePrompt,
+              }),
               bpm: bpmFromMetas ?? bpm ?? null,
               duration: durationFromMetas ?? requestedDuration ?? null,
               keyScale: keyScaleFromMetas ?? (keyValueRelease || null),

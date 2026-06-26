@@ -89,7 +89,12 @@ export function IdeaPromptSection({
       className="pk-idea-prompt-section"
     >
       <div className="pk-idea-prompt-field">
-        <div className="pk-dashboard-text-field" data-coach="prompt-field">
+        <div className="pk-dashboard-text-field pk-idea-prompt-field__shell" data-coach="prompt-field">
+          {!value.trim() && !focused ? (
+            <div key={rotatingPlaceholder} className="pk-idea-prompt-ghost" aria-hidden="true">
+              {rotatingPlaceholder}
+            </div>
+          ) : null}
           <SpeechDictationField
             multiline
             locale={locale}
@@ -117,8 +122,8 @@ export function IdeaPromptSection({
               />
             }
             wrapperClassName="pk-dashboard-text-field-wrap"
-            className="pk-dashboard-text-field__control bg-pk-input border border-pk-border text-sm text-pk-text placeholder:text-pk-muted focus:border-pk-accent"
-            placeholder={rotatingPlaceholder}
+            className="pk-dashboard-text-field__control bg-pk-input border border-pk-border text-sm text-pk-text placeholder:text-transparent focus:border-pk-accent"
+            placeholder=""
             showStatus={false}
           />
         </div>
