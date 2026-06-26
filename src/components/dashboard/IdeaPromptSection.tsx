@@ -123,13 +123,15 @@ export function IdeaPromptSection({
           />
         </div>
         <IdeaPromptHint locale={locale} visible={showHint} />
-        <AceCaptionPreview
-          locale={locale}
-          displayIdea={value}
-          formGenre={formGenre}
-          mode={mode}
-          diceAceOverride={diceAceOverride}
-        />
+        {import.meta.env.DEV ? (
+          <AceCaptionPreview
+            locale={locale}
+            displayIdea={value}
+            formGenre={formGenre}
+            mode={mode}
+            diceAceOverride={diceAceOverride}
+          />
+        ) : null}
       </div>
     </GeneratorSection>
   );
