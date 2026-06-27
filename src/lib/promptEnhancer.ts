@@ -84,6 +84,7 @@ export function resolveGenerationCaptionContext(args: {
   formGenre: string;
   mode: PromptMode;
   uiLocale?: AppLocale;
+  skipPromptBankPipeline?: boolean;
 }): GenerationCaptionContext {
   const idea = args.displayIdea.trim();
   if (idea && looksLikeAceTechnicalPrompt(idea)) {

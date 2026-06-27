@@ -135,11 +135,13 @@ export default function CreateScreen() {
 
   const songAceOverrideRef = useRef<string | null>(null);
   const songLyricsOverrideRef = useRef<string | null>(null);
+  const songBankDiceRef = useRef(false);
   const beatAceOverrideRef = useRef<string | null>(null);
 
   useEffect(() => {
     songAceOverrideRef.current = null;
     songLyricsOverrideRef.current = null;
+    songBankDiceRef.current = false;
     beatAceOverrideRef.current = null;
   }, [locale]);
   const onboardingPrefsAppliedRef = useRef(false);
@@ -420,6 +422,7 @@ export default function CreateScreen() {
         formGenre: promptGenre || runFormGenre,
         mode: "song",
         uiLocale: promptLocale,
+        skipPromptBankPipeline: songBankDiceRef.current,
       });
       const activeGenreResolved = songCaptionCtx.bankGenre ?? promptGenre;
       const beatNameGenre = activeGenreResolved || randomGenre || chipsGenre;
@@ -489,6 +492,7 @@ export default function CreateScreen() {
       setJobStatus("completed");
       setDone(true);
       setGenerating(false);
+      songBankDiceRef.current = false;
 
       pendingPlaybackLoopIdRef.current = loop.id;
       setCurrent(loop, [loop]);
@@ -655,6 +659,9 @@ export default function CreateScreen() {
                       songLyricsOverrideRef.current = structure || null;
                     }}
                     onPickGenre={setActiveFormGenre}
+                    onPickFromBank={(fromBank) => {
+                      songBankDiceRef.current = fromBank;
+                    }}
                   />
                 }
                 inputProps={{
@@ -662,6 +669,7 @@ export default function CreateScreen() {
                   onChangeText: (text) => {
                     songAceOverrideRef.current = null;
                     songLyricsOverrideRef.current = null;
+                    songBankDiceRef.current = false;
                     setSongDiceAcePreview(null);
                     setSongDescription(text);
                     if (error) setError(null);
@@ -794,6 +802,7 @@ export default function CreateScreen() {
                   value={songDescription}
                   onChange={(next) => {
                     songAceOverrideRef.current = null;
+                    songBankDiceRef.current = false;
                     setSongDescription(next);
                     if (error) setError(null);
                   }}

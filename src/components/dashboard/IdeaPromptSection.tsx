@@ -28,6 +28,8 @@ type Props = {
   onRotatingPlaceholder?: (text: string) => void;
   /** Sync genre dropdown when dice picks a catalog genre prompt. */
   onPickGenre?: (genre: string) => void;
+  /** True when dice roll came from prompt bank (skip bank injection at generate). */
+  onPickFromBank?: (fromBank: boolean) => void;
   collapsible?: boolean;
   defaultOpen?: boolean;
 };
@@ -40,6 +42,7 @@ export function IdeaPromptSection({
   onChange,
   formGenre,
   onPickGenre,
+  onPickFromBank,
   onPickAce,
   onRotatingPlaceholder,
   collapsible = false,
@@ -118,6 +121,7 @@ export function IdeaPromptSection({
                   onPickAce?.(ace);
                 }}
                 onPickGenre={onPickGenre}
+                onPickFromBank={onPickFromBank}
                 onDiceRolled={handleDiceRolled}
               />
             }

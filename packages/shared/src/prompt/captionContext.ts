@@ -70,6 +70,8 @@ export function resolveGenerationCaptionContext(args: {
   formGenre: string;
   mode: PromptMode;
   uiLocale?: AppLocale;
+  /** Dé banque : ne pas injecter caption/lyrics/genre depuis le JSON (Style + sample_mode). */
+  skipPromptBankPipeline?: boolean;
 }): GenerationCaptionContext {
   const isSong = args.mode === "song";
 
@@ -84,7 +86,12 @@ export function resolveGenerationCaptionContext(args: {
     return { melodyComposition: false };
   }
 
-  if (isSong && shouldUsePromptBank(args.uiLocale) && args.uiLocale) {
+  if (
+    isSong &&
+    shouldUsePromptBank(args.uiLocale) &&
+    args.uiLocale &&
+    !args.skipPromptBankPipeline
+  ) {
     const bank = findPromptBankByDisplay(idea, args.uiLocale);
     if (bank) {
       const lyricsNorm = normalizeAceLyrics(bank.lyricsStructure, { instrumental: false });

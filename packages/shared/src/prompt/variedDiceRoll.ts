@@ -97,8 +97,7 @@ export function resolveDisplayToDiceRoll(
   if (bankHit) {
     return {
       displayPrompt: bankHit.display,
-      acePrompt: bankHit.aceCaption,
-      lyricsStructure: bankHit.lyricsStructure,
+      acePrompt: buildAceCaption(locale, mode, bankHit.genre, bankHit.display),
       genre: bankHit.genre,
       promptBankId: bankHit.id,
     };
@@ -144,11 +143,14 @@ export function resolveDisplayToDiceRoll(
   };
 }
 
-function rollFromPromptBank(locale: PromptLocale, bank: ReturnType<typeof pickPromptBankRoll>): ResolvedDiceRoll {
+function rollFromPromptBank(
+  locale: PromptLocale,
+  bank: ReturnType<typeof pickPromptBankRoll>,
+  buildAceCaption: BuildDiceAceCaptionFn,
+): ResolvedDiceRoll {
   return {
     displayPrompt: bank.display,
-    acePrompt: bank.aceCaption,
-    lyricsStructure: bank.lyricsStructure,
+    acePrompt: buildAceCaption(locale, "song", bank.genre, bank.display),
     genre: bank.genre,
     promptBankId: bank.id,
   };
@@ -167,12 +169,12 @@ export function pickVariedDiceRoll(
   if (mode === "song" && shouldUsePromptBank(locale)) {
     const bucket = Math.random();
     if (bucket < 0.4) {
-      return rollFromPromptBank(locale, pickPromptBankRoll(locale));
+      return rollFromPromptBank(locale, pickPromptBankRoll(locale), buildAceCaption);
     }
     if (bucket < 0.7) {
       const happy = pickPromptBankRollByTheme(locale, "good_vibes");
-      if (happy) return rollFromPromptBank(locale, happy);
-      return rollFromPromptBank(locale, pickPromptBankRoll(locale));
+      if (happy) return rollFromPromptBank(locale, happy, buildAceCaption);
+      return rollFromPromptBank(locale, pickPromptBankRoll(locale), buildAceCaption);
     }
     if (bucket < 0.85) {
       const dice = pickRandomGenreDice(mode, locale);

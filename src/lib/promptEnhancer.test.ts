@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { looksLikeAceProsePrompt, normalizeAceCaption, optimizeAceProsePrompt, pickUnifiedDiceRoll, generateAceProsePrompt } from "@producerhit/shared";
+import { looksLikeAceProsePrompt, optimizeAceProsePrompt, pickUnifiedDiceRoll, generateAceProsePrompt } from "@producerhit/shared";
 import {
   enhanceNaturalIdeaToAce,
   looksLikeAceTechnicalPrompt,
@@ -11,10 +11,6 @@ import {
 import { pickRandomGenreMenuDiceRoll } from "@/lib/randomPromptIdeas";
 import { pickRandomGenreMenuDice } from "@/lib/randomPromptIdeas/genreMenuPrompts";
 import { pickRandomUnifiedDiceRoll } from "@/lib/randomPromptIdeas/unifiedDisplayPool";
-
-function normalizedSongCaption(caption: string): string {
-  return normalizeAceCaption(caption, { mode: "song", instrumental: false }).caption;
-}
 
 describe("promptEnhancer", () => {
   it("detects ACE technical prompts", () => {
@@ -28,7 +24,7 @@ describe("promptEnhancer", () => {
     expect(looksLikeNaturalUserIdea("une chanson hip hop sur des vacances au bord de la mer")).toBe(true);
   });
 
-  it("enriches curated display prompts when uiLocale is set", () => {
+  it("curated song display uses sample_mode (no captionOverride at context)", () => {
     const curated = "Funny song about a collaborator who uses the same hi-hat on everything";
     expect(looksLikeCuratedDisplayPrompt(curated)).toBe(true);
     expect(looksLikeNaturalUserIdea(curated)).toBe(false);
@@ -38,12 +34,11 @@ describe("promptEnhancer", () => {
       mode: "song",
       uiLocale: "en",
     });
-    expect(ctx.captionOverride).toBeDefined();
-    expect(ctx.captionOverride!.length).toBeGreaterThan(80);
-    expect(ctx.captionOverride).toContain(",");
+    expect(ctx.captionOverride).toBeUndefined();
+    expect(ctx.melodyComposition).toBe(false);
   });
 
-  it("v2 rich display prompt is curated not ACE tags", () => {
+  it("v2 rich song display uses sample_mode not tag captionOverride", () => {
     const v2 =
       "80s synthwave song — analog Juno pads, gated reverb snare, neon highway at night. Stranger Things meets Miami Vice: emotional, cinematic, not cheesy.";
     expect(looksLikeAceTechnicalPrompt(v2)).toBe(false);
@@ -55,11 +50,10 @@ describe("promptEnhancer", () => {
       uiLocale: "en",
     });
     expect(ctx.melodyComposition).toBe(false);
-    expect(ctx.captionOverride).toBeDefined();
-    expect(ctx.captionOverride).toContain(",");
+    expect(ctx.captionOverride).toBeUndefined();
   });
 
-  it("legacy IT dice shell is curated not natural enhancement", () => {
+  it("legacy IT song dice shell uses sample_mode", () => {
     const legacy = "Una canzone deep focus su una storia notturna";
     expect(looksLikeCuratedDisplayPrompt(legacy)).toBe(true);
     expect(looksLikeNaturalUserIdea(legacy)).toBe(false);
@@ -70,10 +64,10 @@ describe("promptEnhancer", () => {
       uiLocale: "it",
     });
     expect(ctx.melodyComposition).toBe(false);
-    expect(ctx.captionOverride).toBeDefined();
+    expect(ctx.captionOverride).toBeUndefined();
   });
 
-  it("rebuilds dice ACE when override missing but display matches pool", () => {
+  it("genre dice song display uses sample_mode when ace override absent", () => {
     let roll = pickRandomGenreMenuDiceRoll("it", "song");
     for (let i = 0; i < 40 && !roll.acePrompt.trim(); i += 1) {
       roll = pickRandomGenreMenuDiceRoll("it", "song");
@@ -84,13 +78,13 @@ describe("promptEnhancer", () => {
       formGenre: roll.genre,
       mode: "song",
       uiLocale: "it",
+      skipPromptBankPipeline: roll.promptBankId != null,
     });
     expect(ctx.melodyComposition).toBe(false);
-    expect(ctx.captionOverride).toBeDefined();
-    expect(ctx.captionOverride).toContain("clean studio vocal");
+    expect(ctx.captionOverride).toBeUndefined();
   });
 
-  it("dice override enables melody composition", () => {
+  it("song dice ace override does not set captionOverride (sample_mode at edge)", () => {
     let dice = pickRandomGenreMenuDiceRoll("fr", "song");
     for (let i = 0; i < 40 && !dice.acePrompt.trim(); i += 1) {
       dice = pickRandomGenreMenuDiceRoll("fr", "song");
@@ -101,8 +95,9 @@ describe("promptEnhancer", () => {
       displayIdea: dice.displayPrompt,
       formGenre: dice.genre,
       mode: "song",
+      skipPromptBankPipeline: dice.promptBankId != null,
     });
-    expect(ctx.captionOverride).toBe(normalizedSongCaption(dice.acePrompt));
+    expect(ctx.captionOverride).toBeUndefined();
     expect(ctx.melodyComposition).toBe(false);
   });
 
@@ -166,22 +161,20 @@ describe("promptEnhancer", () => {
     expect(ctx.captionOverride).toContain("clean studio vocal");
   });
 
-  it("prefers dice ace override over natural enhancement", () => {
-    let dice = pickRandomGenreMenuDiceRoll("fr", "song");
+  it("prefers dice ace override for beats only (song uses sample_mode)", () => {
+    let dice = pickRandomGenreMenuDiceRoll("fr", "beat");
     for (let i = 0; i < 40 && !dice.acePrompt.trim(); i += 1) {
-      dice = pickRandomGenreMenuDiceRoll("fr", "song");
+      dice = pickRandomGenreMenuDiceRoll("fr", "beat");
     }
     expect(dice.acePrompt.trim().length).toBeGreaterThan(0);
     const caption = resolveCaptionOverrideForGeneration({
       diceAceOverride: dice.acePrompt,
       displayIdea: dice.displayPrompt,
       formGenre: dice.genre,
-      mode: "song",
+      mode: "beat",
     });
-    expect(caption).toBe(normalizedSongCaption(dice.acePrompt));
-    if (!looksLikeAceProsePrompt(dice.displayPrompt)) {
-      expect(caption).not.toBe(dice.displayPrompt);
-    }
+    expect(caption).toBeDefined();
+    expect(caption!.length).toBeGreaterThan(10);
   });
 });
 

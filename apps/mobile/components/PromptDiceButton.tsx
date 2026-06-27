@@ -72,6 +72,9 @@ type Props = {
 
   onPickGenre?: (genre: string) => void;
 
+  /** True when roll came from prompt bank (skip bank injection at generate). */
+  onPickFromBank?: (fromBank: boolean) => void;
+
   onDiceRolled?: () => void;
 
 };
@@ -119,6 +122,10 @@ export function PromptDiceButton({
 
 
   onPickGenre,
+
+
+
+  onPickFromBank,
 
 
 
@@ -252,6 +259,10 @@ export function PromptDiceButton({
 
 
       if (result.genre && onPickGenre) onPickGenre(result.genre);
+
+
+
+      onPickFromBank?.(result.promptBankId != null);
 
 
 

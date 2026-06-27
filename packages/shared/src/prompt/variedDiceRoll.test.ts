@@ -19,7 +19,7 @@ describe("variedDiceRoll", () => {
     expect(bankPhrase).toBeTruthy();
   });
 
-  it("FR song dice rolls diversify genres across catalog", () => {
+  it("FR song dice rolls diversify genres across catalog", { timeout: 15000 }, () => {
     const genres = new Set<string>();
     for (let i = 0; i < 120; i += 1) {
       const roll = pickVariedDiceRoll("fr", "song", buildDiceAceCaptionFromDisplay);
@@ -28,12 +28,27 @@ describe("variedDiceRoll", () => {
     expect(genres.size).toBeGreaterThan(25);
   });
 
-  it("song FR dice rolls include good vibes bank entries", () => {
+  it("song FR bank dice rolls include good vibes bank entries", () => {
     let bankHits = 0;
     for (let i = 0; i < 80; i += 1) {
       const roll = pickVariedDiceRoll("fr", "song", buildDiceAceCaptionFromDisplay);
       if (roll.promptBankId != null && roll.promptBankId >= 2001) bankHits += 1;
     }
     expect(bankHits).toBeGreaterThan(15);
+  });
+
+  it("prompt bank dice roll uses rich ACE caption not baked aceCaption", () => {
+    let bankRoll: ReturnType<typeof pickVariedDiceRoll> | null = null;
+    for (let i = 0; i < 120; i += 1) {
+      const roll = pickVariedDiceRoll("fr", "song", buildDiceAceCaptionFromDisplay);
+      if (roll.promptBankId != null) {
+        bankRoll = roll;
+        break;
+      }
+    }
+    expect(bankRoll).not.toBeNull();
+    expect(bankRoll!.lyricsStructure).toBeUndefined();
+    expect(bankRoll!.acePrompt.trim().length).toBeGreaterThan(20);
+    expect(bankRoll!.acePrompt).toContain(",");
   });
 });

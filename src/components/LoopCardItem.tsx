@@ -24,6 +24,7 @@ import { useLocaleStore } from "@/stores/localeStore";
 import { buildDashboardSection } from "@/i18n/dashboardCatalog";
 import { buildLoopCardSection, loopCardCoverRerollAria, loopCardVoiceCloneLabel } from "@/i18n/loopCardCatalog";
 import type { Loop } from "@/types/loop";
+import { resolveAceLyricsForMeta } from "@producerhit/shared";
 import { prepareLoopVariantGeneration, variantResultTitle } from "@/lib/loopVariantGeneration";
 import { extractLoopVocalLanguage, formatVocalLanguageLabel, isSongLoop } from "@/lib/vocalLanguages";
 import { resolveLoopVoiceCloneInfo } from "@/lib/voiceCloneMeta";
@@ -302,7 +303,11 @@ export const LoopCardItem = memo(function LoopCardItem({
           details: result.meta
             ? {
                 caption: result.meta.prompt ?? variantPrompt,
-                lyrics: result.meta.lyrics ?? "",
+                lyrics: resolveAceLyricsForMeta({
+                  parsedLyrics: result.meta.lyrics,
+                  userLyrics: "",
+                  caption: result.meta.prompt ?? variantPrompt,
+                }),
                 bpm: result.meta.bpm ?? null,
                 duration: result.meta.duration ?? null,
                 keyScale: result.meta.keyScale ?? "",

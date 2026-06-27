@@ -528,10 +528,12 @@ export default function Dashboard() {
   );
   const beatAceOverrideRef = useRef<string | null>(null);
   const songAceOverrideRef = useRef<string | null>(null);
+  const songBankDiceRef = useRef(false);
 
   useEffect(() => {
     beatAceOverrideRef.current = null;
     songAceOverrideRef.current = null;
+    songBankDiceRef.current = false;
   }, [locale]);
   const songRotatingPlaceholderRef = useRef("");
   const beatRotatingPlaceholderRef = useRef("");
@@ -1543,6 +1545,7 @@ export default function Dashboard() {
       if (didGenerate) {
         beatAceOverrideRef.current = null;
         songAceOverrideRef.current = null;
+        songBankDiceRef.current = false;
       }
       setGenerating(false);
       let nextSlots: GenerationSlot[] | null = null;
@@ -1586,6 +1589,7 @@ export default function Dashboard() {
         formGenre: normalizedGenreForPrompt,
         mode: runAsSong ? "song" : "beat",
         uiLocale: locale,
+        skipPromptBankPipeline: runAsSong ? songBankDiceRef.current : false,
       });
 
       const genreForAce = captionCtx.bankGenre ?? normalizedGenreForPrompt;
@@ -3833,10 +3837,14 @@ export default function Dashboard() {
                   value={songDescription}
                   onChange={(v) => {
                     songAceOverrideRef.current = null;
+                    songBankDiceRef.current = false;
                     setSongDescription(v);
                   }}
                   onPickAce={(ace) => {
                     songAceOverrideRef.current = ace?.trim() || null;
+                  }}
+                  onPickFromBank={(fromBank) => {
+                    songBankDiceRef.current = fromBank;
                   }}
                   onRotatingPlaceholder={(text) => {
                     songRotatingPlaceholderRef.current = text;

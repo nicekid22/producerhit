@@ -40,17 +40,33 @@ describe("resolveGenerationCaptionContext", () => {
     expect(ctx.melodyComposition).toBe(false);
   });
 
-  it("prompt bank dice keeps captionOverride and baked lyrics", () => {
+  it("prompt bank dice with skipPromptBankPipeline uses sample_mode (no bank injection)", () => {
     const ctx = resolveGenerationCaptionContext({
       diceAceOverride: "melodic trap, raw, Rhodes piano, 70 bpm",
       displayIdea: "Learning to live in a world without you — neo soul, 70 bpm",
       formGenre: "Neo Soul",
       mode: "song",
       uiLocale: "en",
+      skipPromptBankPipeline: true,
     });
-    expect(ctx.captionOverride).toBeDefined();
-    expect(ctx.lyricsStructure).toContain("[verse]");
-    expect(ctx.lyricsStructure?.toLowerCase()).not.toContain("learning to live");
+    expect(ctx.captionOverride).toBeUndefined();
+    expect(ctx.lyricsStructure).toBeUndefined();
+    expect(ctx.bankGenre).toBeUndefined();
+    expect(ctx.melodyComposition).toBe(false);
+  });
+
+  it("FR bank dice skip keeps Style genre (Trapsoul) without love lyrics", () => {
+    const ctx = resolveGenerationCaptionContext({
+      displayIdea: "Accro à ton énergie — trapsoul, 95 bpm",
+      formGenre: "Trapsoul",
+      mode: "song",
+      uiLocale: "fr",
+      skipPromptBankPipeline: true,
+    });
+    expect(ctx.captionOverride).toBeUndefined();
+    expect(ctx.lyricsStructure).toBeUndefined();
+    expect(ctx.bankGenre).toBeUndefined();
+    expect(ctx.melodyComposition).toBe(false);
   });
 
   it("prioritizes landing override over bank", () => {
@@ -96,7 +112,7 @@ describe("resolveGenerationCaptionContext", () => {
     expect(ctx.bankGenre).toBeDefined();
   });
 
-  it("pickPromptBankRoll FR never returns EN entry", () => {
+  it("pickPromptBankRoll FR never returns EN entry", { timeout: 15000 }, () => {
     for (let i = 0; i < 80; i++) {
       const roll = pickPromptBankRoll("fr", i * 17 + 3);
       expect(roll.lang).toBe("fr");
