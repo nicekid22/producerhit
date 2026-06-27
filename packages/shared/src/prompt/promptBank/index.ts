@@ -79,11 +79,10 @@ export function shouldUsePromptBank(uiLocale: AppLocale): boolean {
   return isPromptBankEnabled() && isPromptBankLocale(uiLocale);
 }
 
+/** Pool banque — langue UI uniquement (pas de mélange EN dans FR). */
 function poolForLocale(uiLocale: AppLocale): PromptBankEntry[] {
   const p = pools();
-  const primary = resolvePromptBankLang(uiLocale);
-  const secondary = primary === "fr" ? "en" : "fr";
-  return [...p[primary], ...p[secondary]];
+  return p[resolvePromptBankLang(uiLocale)];
 }
 
 /** Display strings pour placeholders rotatifs (song). */

@@ -94,6 +94,13 @@ describe("resolveGenerationCaptionContext", () => {
     expect(ctx.lyricsStructure?.toLowerCase()).toContain("te voir");
   });
 
+  it("pickPromptBankRoll FR never returns EN entry", () => {
+    for (let i = 0; i < 80; i++) {
+      const roll = pickPromptBankRoll("fr", i * 17 + 3);
+      expect(roll.lang).toBe("fr");
+    }
+  });
+
   it("pickPromptBankRoll matches findPromptBankByDisplay path", () => {
     const roll = pickPromptBankRoll("en", 250);
     const ctx = resolveGenerationCaptionContext({
