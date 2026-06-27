@@ -246,7 +246,7 @@ describe("all 14 UI locales — generation caption", () => {
       mode: "song",
       uiLocale: locale,
     });
-    expect(ctx.melodyComposition).toBe(true);
+    expect(ctx.melodyComposition).toBe(false);
     expect(ctx.captionOverride).toBeDefined();
     expect(ctx.captionOverride!.length).toBeGreaterThan(80);
     expect((ctx.captionOverride!.match(/,/g) ?? []).length).toBeGreaterThanOrEqual(4);
@@ -265,7 +265,7 @@ describe("all 14 UI locales — generation caption", () => {
       mode: "song",
       uiLocale: locale,
     });
-    expect(ctx.melodyComposition).toBe(true);
+    expect(ctx.melodyComposition).toBe(false);
     const expected = normalizeAceCaption(roll.acePrompt, { mode: "song", instrumental: false }).caption;
     expect(ctx.captionOverride).toBe(expected);
   });

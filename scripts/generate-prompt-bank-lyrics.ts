@@ -13,7 +13,7 @@ import type { PromptBankEntry } from "../packages/shared/src/prompt/promptBank/t
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const write = process.argv.includes("--write");
 
-for (const file of ["v1.json", "v2.json"]) {
+for (const file of ["v1.json", "v2.json", "v3.json", "v4.json"]) {
   const filePath = path.join(root, "packages/shared/data/prompt-bank", file);
   const data = JSON.parse(fs.readFileSync(filePath, "utf8")) as PromptBankEntry[];
   let changed = 0;

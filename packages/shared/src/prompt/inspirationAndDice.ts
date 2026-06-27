@@ -1,7 +1,8 @@
 import { buildRichAceCaption } from "./richDisplayAce";
 import type { AppLocale } from "../i18n/locales";
-import { getCuratedDisplayPromptPool, resolveCuratedPromptLocale } from "./curated/index";
+import { getCuratedDisplayPromptPool, mergeUniqueDisplayPrompts, resolveCuratedPromptLocale } from "./curated/index";
 import { resolvePromptPools } from "./localePools";
+import { getPromptBankDisplayPoolByTheme, shouldUsePromptBank } from "./promptBank";
 import { buildUnifiedDisplayPool, pickVariedDiceRoll } from "./variedDiceRoll";
 
 export type PromptLocale = AppLocale;
@@ -118,9 +119,35 @@ export function getDisplayPromptPool(locale: PromptLocale, mode: PromptMode): re
   return getCuratedDisplayPromptPool(curatedLocale, mode);
 }
 
-/** Placeholders rotatifs — curated uniquement (pas la banque 2000 ni le pool dé). */
+function shuffleStrings(pool: readonly string[]): string[] {
+  const out = [...pool];
+  for (let i = out.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j]!, out[i]!];
+  }
+  return out;
+}
+
+/** Placeholders rotatifs — curated + échantillon aléatoire good vibes (song EN/FR). */
 export function getRotatingPlaceholderPool(locale: PromptLocale, mode: PromptMode): readonly string[] {
-  return getDisplayPromptPool(locale, mode);
+  const curated = getDisplayPromptPool(locale, mode);
+  if (mode !== "song" || !shouldUsePromptBank(locale)) return curated;
+
+  const happy = getPromptBankDisplayPoolByTheme(locale, "good_vibes");
+  if (!happy.length) return curated;
+
+  const sampleSize = Math.min(72, happy.length);
+  const happySample: string[] = [];
+  const indices = happy.map((_, i) => i);
+  for (let i = 0; i < sampleSize; i += 1) {
+    const j = i + Math.floor(Math.random() * (indices.length - i));
+    const tmp = indices[i]!;
+    indices[i] = indices[j]!;
+    indices[j] = tmp;
+    happySample.push(happy[indices[i]!]!);
+  }
+
+  return shuffleStrings(mergeUniqueDisplayPrompts(curated, happySample));
 }
 
 /** Pool unifié curated + phrases display liées au genre (aligné web). */

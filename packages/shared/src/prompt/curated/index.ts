@@ -11,8 +11,31 @@ import { CURATED_KO } from "./ko";
 import { CURATED_PT } from "./pt";
 import { CURATED_ZH } from "./zh";
 import { getCuratedV2DisplayPromptPool } from "./v2";
+import {
+  GOOD_VIBES_SONG_AR,
+  GOOD_VIBES_SONG_DE,
+  GOOD_VIBES_SONG_ES,
+  GOOD_VIBES_SONG_IT,
+  GOOD_VIBES_SONG_JA,
+  GOOD_VIBES_SONG_KO,
+  GOOD_VIBES_SONG_PT,
+  GOOD_VIBES_SONG_ZH,
+} from "./goodVibesSongPrompts";
 
 export type CuratedDisplayMode = "beat" | "song";
+
+const GOOD_VIBES_SONG_BY_LOCALE: Record<AceCuratedPromptLocale, readonly string[]> = {
+  en: [],
+  fr: [],
+  es: GOOD_VIBES_SONG_ES,
+  pt: GOOD_VIBES_SONG_PT,
+  de: GOOD_VIBES_SONG_DE,
+  it: GOOD_VIBES_SONG_IT,
+  ja: GOOD_VIBES_SONG_JA,
+  ko: GOOD_VIBES_SONG_KO,
+  zh: GOOD_VIBES_SONG_ZH,
+  ar: GOOD_VIBES_SONG_AR,
+};
 
 const CURATED_BY_LOCALE: Record<AceCuratedPromptLocale, { song: readonly string[]; beat: readonly string[] }> = {
   en: CURATED_EN,
@@ -30,6 +53,10 @@ const CURATED_BY_LOCALE: Record<AceCuratedPromptLocale, { song: readonly string[
 export function getCuratedDisplayPromptPool(locale: AceCuratedPromptLocale, mode: CuratedDisplayMode): readonly string[] {
   const v2 = getCuratedV2DisplayPromptPool(locale, mode);
   const v1 = CURATED_BY_LOCALE[locale][mode];
+  if (mode === "song") {
+    const goodVibes = GOOD_VIBES_SONG_BY_LOCALE[locale];
+    return mergeUniqueDisplayPrompts(v2, v1, goodVibes);
+  }
   return mergeUniqueDisplayPrompts(v2, v1);
 }
 

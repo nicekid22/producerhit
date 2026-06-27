@@ -16,7 +16,9 @@ import {
 import {
   findPromptBankByDisplay,
   getPromptBankDisplayPool,
+  getPromptBankDisplayPoolByTheme,
   pickPromptBankRoll,
+  pickPromptBankRollByTheme,
   shouldUsePromptBank,
 } from "./promptBank";
 import { resolvePromptPools } from "./localePools";
@@ -26,19 +28,30 @@ export type PromptMode = "beat" | "song";
 
 const FULL_DISPLAY_LOCALES = new Set<PromptLocale>(["en", "fr", "es", "pt", "de", "it", "ja", "ko", "zh", "ar"]);
 
-/** Échantillon banque — évite qu'elle noie genre + curated dans les pools display. */
-const BANK_DISPLAY_SAMPLE_CAP = 96;
+/** Échantillon banque dans le pool display — tirage aléatoire sans remplacement. */
+const BANK_DISPLAY_SAMPLE_CAP = 160;
+
+function sampleRandomStrings(pool: readonly string[], cap: number): readonly string[] {
+  if (pool.length <= cap) return pool;
+  const indices = pool.map((_, i) => i);
+  for (let i = 0; i < cap; i += 1) {
+    const j = i + Math.floor(Math.random() * (indices.length - i));
+    const tmp = indices[i]!;
+    indices[i] = indices[j]!;
+    indices[j] = tmp;
+  }
+  return indices.slice(0, cap).map((i) => pool[i]!);
+}
 
 function sampleBankDisplayPool(uiLocale: AppLocale): readonly string[] {
+  const goodVibes = getPromptBankDisplayPoolByTheme(uiLocale, "good_vibes");
   const bank = getPromptBankDisplayPool(uiLocale);
-  if (bank.length <= BANK_DISPLAY_SAMPLE_CAP) return bank;
-  const step = Math.max(1, Math.floor(bank.length / BANK_DISPLAY_SAMPLE_CAP));
-  const out: string[] = [];
-  for (let i = 0; i < bank.length && out.length < BANK_DISPLAY_SAMPLE_CAP; i += step) {
-    const p = bank[i];
-    if (p) out.push(p);
-  }
-  return out;
+  const goodCap = Math.min(80, goodVibes.length);
+  const restCap = Math.max(0, BANK_DISPLAY_SAMPLE_CAP - goodCap);
+  const goodSample = sampleRandomStrings(goodVibes, goodCap);
+  const restPool = bank.filter((d) => !goodSample.includes(d));
+  const restSample = sampleRandomStrings(restPool, restCap);
+  return mergeUniqueDisplayPrompts(goodSample, restSample);
 }
 
 export type BuildDiceAceCaptionFn = (
@@ -131,9 +144,19 @@ export function resolveDisplayToDiceRoll(
   };
 }
 
+function rollFromPromptBank(locale: PromptLocale, bank: ReturnType<typeof pickPromptBankRoll>): ResolvedDiceRoll {
+  return {
+    displayPrompt: bank.display,
+    acePrompt: bank.aceCaption,
+    lyricsStructure: bank.lyricsStructure,
+    genre: bank.genre,
+    promptBankId: bank.id,
+  };
+}
+
 /**
  * Tirage dé / placeholder avec variété de genres :
- * - song EN/FR : ~⅓ banque, ~⅓ dé genre (catalogue entier), ~⅓ curated
+ * - song EN/FR : ~40 % banque entière, ~30 % good vibes, ~15 % dé genre, ~15 % pool mixte (aléatoire)
  * - sinon : pool intercalé genre + curated + ACE prose
  */
 export function pickVariedDiceRoll(
@@ -143,17 +166,15 @@ export function pickVariedDiceRoll(
 ): ResolvedDiceRoll {
   if (mode === "song" && shouldUsePromptBank(locale)) {
     const bucket = Math.random();
-    if (bucket < 1 / 3) {
-      const bank = pickPromptBankRoll(locale);
-      return {
-        displayPrompt: bank.display,
-        acePrompt: bank.aceCaption,
-        lyricsStructure: bank.lyricsStructure,
-        genre: bank.genre,
-        promptBankId: bank.id,
-      };
+    if (bucket < 0.4) {
+      return rollFromPromptBank(locale, pickPromptBankRoll(locale));
     }
-    if (bucket < 2 / 3) {
+    if (bucket < 0.7) {
+      const happy = pickPromptBankRollByTheme(locale, "good_vibes");
+      if (happy) return rollFromPromptBank(locale, happy);
+      return rollFromPromptBank(locale, pickPromptBankRoll(locale));
+    }
+    if (bucket < 0.85) {
       const dice = pickRandomGenreDice(mode, locale);
       return {
         displayPrompt: dice.displayPrompt,

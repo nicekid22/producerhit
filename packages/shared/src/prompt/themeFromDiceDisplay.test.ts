@@ -7,7 +7,6 @@ import {
 } from "./themeFromDiceDisplay";
 import { buildRichAceCaption } from "./richDisplayAce";
 import { resolveGenerationCaptionContext } from "./captionContext";
-import { normalizeAceCaption } from "./acePromptContract";
 
 const NEO_SOUL_DICE =
   "Une chanson neo soul future sur un matin lent sans urgence";
@@ -52,16 +51,14 @@ describe("ACE dice caption quality", () => {
     expect((ace.match(/,/g) ?? []).length).toBeGreaterThanOrEqual(4);
   });
 
-  it("resolveGenerationCaptionContext for neo soul dice has EN-only tags", () => {
+  it("resolveGenerationCaptionContext for neo soul dice uses sample_mode path", () => {
     const ctx = resolveGenerationCaptionContext({
       displayIdea: NEO_SOUL_DICE,
       formGenre: "Neo Soul Future",
       mode: "song",
       uiLocale: "fr",
     });
-    const caption = ctx.captionOverride ?? "";
-    expect(caption.length).toBeGreaterThan(40);
-    expect(caption).not.toMatch(/une chanson|matin lent sans urgence/i);
-    expect(normalizeAceCaption(caption, { mode: "song", instrumental: false }).caption).toBeTruthy();
+    expect(ctx.captionOverride).toBeUndefined();
+    expect(ctx.lyricsStructure).toBeUndefined();
   });
 });

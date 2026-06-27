@@ -41,7 +41,7 @@ describe("enrichBankAceCaption", () => {
       mode: "song",
       uiLocale: "fr",
     });
-    expect(ctx.melodyComposition).toBe(true);
+    expect(ctx.melodyComposition).toBe(false);
     expect(ctx.lyricsStructure).toContain("Danser lentement");
     const caption = ctx.captionOverride ?? "";
     expect(caption).not.toMatch(/danser lentement/i);

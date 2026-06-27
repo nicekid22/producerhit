@@ -13,18 +13,44 @@ const CURATED_EN_SAMPLE =
   "Funny song about a collaborator who uses the same hi-hat on everything";
 
 describe("resolveGenerationCaptionContext", () => {
-  it("prioritizes dice override over bank display match", () => {
+  it("prioritizes dice override over bank display match (beat only)", () => {
     const ctx = resolveGenerationCaptionContext({
       diceAceOverride: "dark trap, icy pads, hard 808, 140 bpm",
       displayIdea: BANK_HUSTLE_DISPLAY,
       formGenre: "Dark Trap",
-      mode: "song",
+      mode: "beat",
       uiLocale: "en",
     });
     expect(ctx.captionOverride).toContain("140 bpm");
-    expect(ctx.captionOverride).toContain("clean studio vocal");
+    expect(ctx.captionOverride).toContain("instrumental");
     expect(ctx.lyricsStructure).toBeUndefined();
-    expect(ctx.melodyComposition).toBe(true);
+    expect(ctx.melodyComposition).toBe(false);
+  });
+
+  it("song dice override does not block sample_mode (no captionOverride)", () => {
+    const ctx = resolveGenerationCaptionContext({
+      diceAceOverride: "neo soul, electric piano, 70 bpm, clean studio vocal",
+      displayIdea: "A totally custom song about coffee on Tuesday — indie pop, 88 bpm",
+      formGenre: "Indie Pop",
+      mode: "song",
+      uiLocale: "en",
+    });
+    expect(ctx.captionOverride).toBeUndefined();
+    expect(ctx.lyricsStructure).toBeUndefined();
+    expect(ctx.melodyComposition).toBe(false);
+  });
+
+  it("prompt bank dice keeps captionOverride and baked lyrics", () => {
+    const ctx = resolveGenerationCaptionContext({
+      diceAceOverride: "melodic trap, raw, Rhodes piano, 70 bpm",
+      displayIdea: "Learning to live in a world without you — neo soul, 70 bpm",
+      formGenre: "Neo Soul",
+      mode: "song",
+      uiLocale: "en",
+    });
+    expect(ctx.captionOverride).toBeDefined();
+    expect(ctx.lyricsStructure).toContain("[verse]");
+    expect(ctx.lyricsStructure?.toLowerCase()).toContain("learning to live");
   });
 
   it("prioritizes landing override over bank", () => {
@@ -47,7 +73,7 @@ describe("resolveGenerationCaptionContext", () => {
       mode: "song",
       uiLocale: "en",
     });
-    expect(ctx.melodyComposition).toBe(true);
+    expect(ctx.melodyComposition).toBe(false);
     expect(ctx.captionOverride).toContain("clean studio vocal");
     expect(ctx.captionOverride).toContain("140 bpm");
     expect(ctx.lyricsStructure).toContain("[verse]");
@@ -63,7 +89,7 @@ describe("resolveGenerationCaptionContext", () => {
       mode: "song",
       uiLocale: "fr",
     });
-    expect(ctx.melodyComposition).toBe(true);
+    expect(ctx.melodyComposition).toBe(false);
     expect(ctx.lyricsStructure).toContain("[fr]");
     expect(ctx.lyricsStructure?.toLowerCase()).toContain("te voir");
   });
@@ -78,7 +104,7 @@ describe("resolveGenerationCaptionContext", () => {
     });
     expect(ctx.captionOverride).toBeDefined();
     expect(ctx.lyricsStructure).toBeDefined();
-    expect(ctx.melodyComposition).toBe(true);
+    expect(ctx.melodyComposition).toBe(false);
   });
 
   it("converts ACE prose beat display to instrumental tag caption", () => {
@@ -95,7 +121,7 @@ describe("resolveGenerationCaptionContext", () => {
     expect(ctx.captionOverride).not.toMatch(/\b(male|female) vocal\b/i);
   });
 
-  it("converts ACE prose song display to tag caption with melody flag", () => {
+  it("ACE prose song display → sample_mode path (no tag captionOverride)", () => {
     const prose = generateAceProsePrompt("song", 4242, "en");
     const ctx = resolveGenerationCaptionContext({
       displayIdea: prose,
@@ -103,23 +129,22 @@ describe("resolveGenerationCaptionContext", () => {
       mode: "song",
       uiLocale: "en",
     });
-    expect(ctx.melodyComposition).toBe(true);
-    expect(ctx.captionOverride).toContain(",");
-    expect(ctx.captionOverride?.toLowerCase()).toMatch(/vocal|mix/);
+    expect(ctx.melodyComposition).toBe(false);
+    expect(ctx.captionOverride).toBeUndefined();
   });
 
-  it("returns empty context when display idea is blank", () => {
+  it("returns empty context when display idea is blank and genre is Auto", () => {
     expect(
       resolveGenerationCaptionContext({
         displayIdea: "",
-        formGenre: "Trap",
+        formGenre: "Auto",
         mode: "song",
         uiLocale: "en",
       }),
     ).toEqual({ melodyComposition: false });
   });
 
-  it("empty idea with catalog genre does not use bank lyrics", () => {
+  it("empty idea with catalog genre → no captionOverride (buildAceCaption at call site)", () => {
     const ctx = resolveGenerationCaptionContext({
       displayIdea: "",
       formGenre: "Melodic Trap",
@@ -127,19 +152,56 @@ describe("resolveGenerationCaptionContext", () => {
       uiLocale: "en",
     });
     expect(ctx).toEqual({ melodyComposition: false });
+    expect(ctx.captionOverride).toBeUndefined();
     expect(ctx.lyricsStructure).toBeUndefined();
   });
 
-  it("enriches short curated display with rich ACE tags", () => {
+  it("user idea / dice display → sample_mode (no captionOverride)", () => {
     const ctx = resolveGenerationCaptionContext({
       displayIdea: CURATED_EN_SAMPLE,
       formGenre: "Orchestral Drill",
       mode: "song",
       uiLocale: "en",
     });
+    expect(ctx.captionOverride).toBeUndefined();
+    expect(ctx.melodyComposition).toBe(false);
+  });
+
+  it("beat user idea → rich captionOverride with instrumental tags (not sample_mode)", () => {
+    const ctx = resolveGenerationCaptionContext({
+      displayIdea: "Un beat chrome soul sur un cœur brisé nocturne",
+      formGenre: "Dark R&B",
+      mode: "beat",
+      uiLocale: "fr",
+    });
     expect(ctx.captionOverride).toBeDefined();
-    expect(ctx.captionOverride!.length).toBeGreaterThan(80);
-    expect((ctx.captionOverride!.match(/,/g) ?? []).length).toBeGreaterThanOrEqual(4);
-    expect(ctx.melodyComposition).toBe(true);
+    expect(ctx.captionOverride!.toLowerCase()).toContain("instrumental");
+    expect(ctx.captionOverride!.toLowerCase()).toMatch(/no vocals|no lyrics/);
+    expect(ctx.lyricsStructure).toBeUndefined();
+    expect(ctx.melodyComposition).toBe(false);
+  });
+
+  it("beat empty idea + catalog genre → no captionOverride (catalog tags at call site)", () => {
+    const ctx = resolveGenerationCaptionContext({
+      displayIdea: "",
+      formGenre: "Melodic Trap",
+      mode: "beat",
+      uiLocale: "en",
+    });
+    expect(ctx).toEqual({ melodyComposition: false });
+    expect(ctx.captionOverride).toBeUndefined();
+  });
+
+  it("good vibes bank entry resolves captionOverride and singable lyrics", () => {
+    const ctx = resolveGenerationCaptionContext({
+      displayIdea: "First day of summer with nowhere to be — dance pop, 118 bpm",
+      formGenre: "Dance Pop",
+      mode: "song",
+      uiLocale: "en",
+    });
+    expect(ctx.captionOverride).toBeDefined();
+    expect(ctx.captionOverride!.toLowerCase()).toContain("euphoric");
+    expect(ctx.lyricsStructure).toContain("[chorus]");
+    expect(ctx.melodyComposition).toBe(false);
   });
 });

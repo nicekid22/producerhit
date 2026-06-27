@@ -6,7 +6,8 @@ export type BankLyricsTheme =
   | "heartbreak"
   | "nostalgia"
   | "identity"
-  | "night";
+  | "night"
+  | "good_vibes";
 
 const THEMES = new Set<string>([
   "love",
@@ -17,6 +18,7 @@ const THEMES = new Set<string>([
   "nostalgia",
   "identity",
   "night",
+  "good_vibes",
 ]);
 
 export function normalizeBankTheme(theme: string): BankLyricsTheme {
@@ -59,6 +61,10 @@ const VERSE_FILLERS_EN: ThemeLinePools = {
     ["Neon on my face", "City never sleeps", "Moon on the rooftop", "Secrets in the dark"],
     ["3 AM on my mind", "Streetlights guide me home", "Shadows know my name", "Stars above the noise"],
   ],
+  good_vibes: [
+    ["Sun on my skin today", "Smile I can't erase", "Good news on my phone", "Life feels wide open"],
+    ["Laughing with my crew", "Golden hour mood", "Nothing left to prove", "Today belongs to us"],
+  ],
 };
 
 const VERSE_FILLERS_FR: ThemeLinePools = {
@@ -93,6 +99,10 @@ const VERSE_FILLERS_FR: ThemeLinePools = {
   night: [
     ["Néon sur mon visage", "La ville ne dort pas", "Lune sur le toit", "Secrets dans le noir"],
     ["Trois heures dans ma tête", "Réverbères me guident", "Les ombres me connaissent", "Étoiles au-dessus du bruit"],
+  ],
+  good_vibes: [
+    ["Soleil sur ma peau aujourd'hui", "Sourire impossible à cacher", "Bonnes nouvelles au téléphone", "La vie s'ouvre devant moi"],
+    ["On rigole entre potes", "Ambiance heure dorée", "Plus rien à prouver", "Aujourd'hui c'est pour nous"],
   ],
 };
 
@@ -129,6 +139,10 @@ const PRE_CHORUS_EN: ThemeLinePools = {
     ["City lights on my skin", "Let the night begin"],
     ["We move under the moon", "Midnight coming soon"],
   ],
+  good_vibes: [
+    ["Hands up, feel the joy", "Every worry destroyed"],
+    ["Sunshine in my chest", "This day is the best"],
+  ],
 };
 
 const PRE_CHORUS_FR: ThemeLinePools = {
@@ -163,6 +177,10 @@ const PRE_CHORUS_FR: ThemeLinePools = {
   night: [
     ["Les néons sur ma peau", "Que la nuit commence"],
     ["On avance sous la lune", "Minuit arrive bientôt"],
+  ],
+  good_vibes: [
+    ["Les mains en l'air, joie", "Chaque souci s'efface"],
+    ["Soleil dans ma poitrine", "Ce jour est le nôtre"],
   ],
 };
 
@@ -199,6 +217,10 @@ const BRIDGE_EN: ThemeLinePools = {
     ["3 AM thoughts collide", "City on my side"],
     ["Darkness feels like home", "Never sleep alone"],
   ],
+  good_vibes: [
+    ["We made it through the week", "Dance like we are free"],
+    ["Hold this golden light", "Everything feels right"],
+  ],
 };
 
 const BRIDGE_FR: ThemeLinePools = {
@@ -234,6 +256,10 @@ const BRIDGE_FR: ThemeLinePools = {
     ["Pensées de trois heures", "La ville avec moi"],
     ["Le noir me ressemble", "Jamais seul la nuit"],
   ],
+  good_vibes: [
+    ["On a survécu la semaine", "Danse comme on est libres"],
+    ["Garde cette lumière dorée", "Tout semble aligné"],
+  ],
 };
 
 type ThemeOutroPools = Record<BankLyricsTheme, string[]>;
@@ -247,6 +273,7 @@ const OUTRO_EN: ThemeOutroPools = {
   nostalgia: ["Tape stops spinning", "Memories thinning"],
   identity: ["I know who I am", "Here I stand"],
   night: ["City fades away", "Till another day"],
+  good_vibes: ["Keep the good vibes close", "Let the joy stay loud"],
 };
 
 const OUTRO_FR: ThemeOutroPools = {
@@ -258,6 +285,7 @@ const OUTRO_FR: ThemeOutroPools = {
   nostalgia: ["La cassette s'arrête", "Souvenirs qui s'effacent"],
   identity: ["Je sais qui je suis", "Me voici debout"],
   night: ["La ville s'éloigne", "Jusqu'à demain"],
+  good_vibes: ["Garde les bonnes ondes", "La joie reste forte"],
 };
 
 export function pickThemeLines(

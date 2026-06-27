@@ -27,4 +27,13 @@ describe("variedDiceRoll", () => {
     }
     expect(genres.size).toBeGreaterThan(25);
   });
+
+  it("song FR dice rolls include good vibes bank entries", () => {
+    let bankHits = 0;
+    for (let i = 0; i < 80; i += 1) {
+      const roll = pickVariedDiceRoll("fr", "song", buildDiceAceCaptionFromDisplay);
+      if (roll.promptBankId != null && roll.promptBankId >= 2001) bankHits += 1;
+    }
+    expect(bankHits).toBeGreaterThan(15);
+  });
 });

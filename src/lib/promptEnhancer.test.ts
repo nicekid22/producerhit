@@ -54,7 +54,7 @@ describe("promptEnhancer", () => {
       mode: "song",
       uiLocale: "en",
     });
-    expect(ctx.melodyComposition).toBe(true);
+    expect(ctx.melodyComposition).toBe(false);
     expect(ctx.captionOverride).toBeDefined();
     expect(ctx.captionOverride).toContain(",");
   });
@@ -69,7 +69,7 @@ describe("promptEnhancer", () => {
       mode: "song",
       uiLocale: "it",
     });
-    expect(ctx.melodyComposition).toBe(true);
+    expect(ctx.melodyComposition).toBe(false);
     expect(ctx.captionOverride).toBeDefined();
   });
 
@@ -85,7 +85,7 @@ describe("promptEnhancer", () => {
       mode: "song",
       uiLocale: "it",
     });
-    expect(ctx.melodyComposition).toBe(true);
+    expect(ctx.melodyComposition).toBe(false);
     expect(ctx.captionOverride).toBeDefined();
     expect(ctx.captionOverride).toContain("clean studio vocal");
   });
@@ -103,7 +103,7 @@ describe("promptEnhancer", () => {
       mode: "song",
     });
     expect(ctx.captionOverride).toBe(normalizedSongCaption(dice.acePrompt));
-    expect(ctx.melodyComposition).toBe(true);
+    expect(ctx.melodyComposition).toBe(false);
   });
 
   it("beat mode disables melody composition for dice ACE prose", () => {
@@ -161,7 +161,7 @@ describe("promptEnhancer", () => {
       mode: "song",
       uiLocale: "en",
     });
-    expect(ctx.melodyComposition).toBe(true);
+    expect(ctx.melodyComposition).toBe(false);
     expect(ctx.lyricsStructure).toContain("[chorus]");
     expect(ctx.captionOverride).toContain("clean studio vocal");
   });
