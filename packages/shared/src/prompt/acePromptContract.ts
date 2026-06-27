@@ -192,10 +192,6 @@ export function normalizeAceCaption(
     if (!hasSpecificVocalDeliveryTag(tags)) {
       tags = uniqTags([...tags, ...ACE_SONG_VOCAL_STABILITY_TAGS]);
     }
-    const lang = (options.vocalLanguage || "").trim().toLowerCase();
-    if (lang && !tags.some((t) => /^vocal language /i.test(t))) {
-      tags.push(`vocal language ${lang}`);
-    }
   }
 
   tags = stripTempoHintsWhenBpmPresent(tags, options.bpm);

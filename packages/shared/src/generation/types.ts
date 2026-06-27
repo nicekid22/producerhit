@@ -67,6 +67,7 @@ export type GenerateLoopAceOptions = {
   melodyComposition?: boolean;
   voiceProfileId?: string;
   voiceCloneStrength?: number;
+  vocalStyle?: string;
 };
 
 export type GenerateBeatResult = {

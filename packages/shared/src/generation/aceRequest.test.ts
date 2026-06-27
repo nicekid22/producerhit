@@ -45,7 +45,46 @@ describe("buildAceRequestBody", () => {
     });
     expect(body.lyrics).toBe("[Instrumental]");
     expect(body.instrumental).toBe(true);
+    expect(body.sampleMode).toBe(false);
+    expect(body.useFormat).toBe(true);
+    expect(String(body.caption).toLowerCase()).toContain("instrumental");
     expect(String(body.caption).length).toBeGreaterThan(20);
+  });
+
+  it("beat with user idea captionOverride stays on tag+LM path (no sample_mode)", () => {
+    const ctx = resolveGenerationCaptionContext({
+      displayIdea: "Un beat lo-fi melodic trap sur un passage de train la nuit",
+      formGenre: "Lo-Fi Hip-Hop",
+      mode: "beat",
+      uiLocale: "fr",
+    });
+    expect(ctx.captionOverride).toBeDefined();
+
+    const body = buildAceRequestBody(
+      {
+        ...BASE_PARAMS,
+        genre: "Lo-Fi Hip-Hop",
+        prompt: "Un beat lo-fi melodic trap sur un passage de train la nuit",
+        bpm: 0,
+        key: "",
+        scale: "",
+        mood: "Chill",
+        energyLevel: "Low",
+      },
+      {
+        isSong: false,
+        instrumental: true,
+        captionOverride: ctx.captionOverride,
+        melodyComposition: ctx.melodyComposition,
+        autoMeta: true,
+      },
+    );
+    expect(body.sampleMode).toBe(false);
+    expect(body.useFormat).toBe(true);
+    expect(body.instrumental).toBe(true);
+    expect(body.isSong).toBe(false);
+    expect(String(body.caption)).toContain(ctx.captionOverride!);
+    expect(body.lyrics).toBe("[Instrumental]");
   });
 
   it("melody composition mode uses melody contract path", () => {
@@ -57,15 +96,50 @@ describe("buildAceRequestBody", () => {
       vocalLanguage: "en",
     });
     expect(body.sampleMode).toBe(false);
-    expect(String(body.caption)).toContain("trap");
+    expect(body.captionOverride).toBe("trap, dark piano, 140 bpm");
   });
 
-  it("idée vide + genre catalogue envoie le prompt genre (pas sample_mode)", () => {
+  it("idée utilisateur + paroles vides → sample_mode ACE", () => {
+    const body = buildAceRequestBody(
+      {
+        ...BASE_PARAMS,
+        genre: "Neo Soul",
+        prompt: "Learning to live in a world without you — neo soul, 70 bpm",
+        bpm: 0,
+        key: "",
+        scale: "",
+        mood: "",
+        energyLevel: "",
+      },
+      {
+        isSong: true,
+        instrumental: false,
+        vocalLanguage: "en",
+        autoMeta: true,
+        lyrics: "",
+        vocalStyle: "Singer",
+      },
+    );
+    expect(body.sampleMode).toBe(true);
+    expect(body.useFormat).toBe(false);
+    expect(body.caption).toBe("");
+    expect(String(body.sampleQuery).toLowerCase()).toContain("learning to live");
+  });
+
+  it("idée vide + genre catalogue → sample_mode ACE (description naturelle, pas tags LM)", () => {
+    const ctx = resolveGenerationCaptionContext({
+      displayIdea: "",
+      formGenre: "Luxury Hotel R&B",
+      mode: "song",
+      uiLocale: "en",
+    });
+    expect(ctx).toEqual({ melodyComposition: false });
+
     const body = buildAceRequestBody(
       {
         ...BASE_PARAMS,
         genre: "Luxury Hotel R&B",
-        prompt: "Luxury Hotel R&B",
+        prompt: "",
         bpm: 0,
         key: "",
         scale: "",
@@ -77,12 +151,13 @@ describe("buildAceRequestBody", () => {
         instrumental: false,
         vocalLanguage: "fr",
         autoMeta: true,
+        lyrics: "",
       },
     );
-    expect(body.sampleMode).toBe(false);
-    expect(body.useFormat).toBe(true);
-    expect(String(body.caption).length).toBeGreaterThan(30);
-    expect(String(body.caption).toLowerCase()).toMatch(/luxury|r&b|rhodes|vocal/);
+    expect(body.sampleMode).toBe(true);
+    expect(body.useFormat).toBe(false);
+    expect(body.caption).toBe("");
+    expect(String(body.sampleQuery).toLowerCase()).toContain("luxury hotel r&b");
   });
 
   it("flows bank caption and lyrics from caption context", () => {
@@ -134,5 +209,29 @@ describe("buildAceRequestBody", () => {
     expect(normalized.caption).toContain("clean studio vocal");
     expect(normalized.caption.split(",").length).toBeLessThanOrEqual(14);
     expect(normalized.caption.toLowerCase()).toMatch(/140 bpm|melodic/);
+  });
+
+  it("autoMeta + bank captionOverride still sends BPM from caption tags", () => {
+    const ctx = resolveGenerationCaptionContext({
+      displayIdea: "Accro à ton énergie — trapsoul, 95 bpm",
+      formGenre: "Trapsoul",
+      mode: "song",
+      uiLocale: "fr",
+    });
+    const body = buildAceRequestBody(
+      { ...BASE_PARAMS, genre: "Trapsoul", bpm: 0, prompt: "Accro à ton énergie — trapsoul, 95 bpm" },
+      {
+        isSong: true,
+        instrumental: false,
+        autoMeta: true,
+        captionOverride: ctx.captionOverride,
+        lyrics: ctx.lyricsStructure,
+        vocalLanguage: "fr",
+      },
+    );
+    expect(body.autoMeta).toBe(true);
+    expect(body.bpm).toBe(95);
+    expect(body.sampleMode).toBe(false);
+    expect(String(body.caption).toLowerCase()).not.toContain("pop rnb");
   });
 });

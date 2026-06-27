@@ -1,6 +1,9 @@
 import type { AppLocale } from "../../i18n/locales";
-import { guessGenreFromPromptBank } from "./genreFromCaption";
-import { resolveBankLyrics } from "./buildBankLyrics";
+import {
+  extractGenreFromBankDisplay,
+  guessGenreFromPromptBank,
+} from "./genreFromCaption";
+import { buildSingableLyricsFromBankEntry } from "./buildBankLyrics";
 import { enrichBankAceCaption } from "./enrichBankCaption";
 import type { PromptBankEntry, PromptBankRoll } from "./types";
 
@@ -91,11 +94,16 @@ export function getPromptBankDisplayPool(uiLocale: AppLocale): readonly string[]
 }
 
 function bankLyricsForEntry(entry: PromptBankEntry): string {
-  return resolveBankLyrics({
+  const displayGenre = extractGenreFromBankDisplay(entry.display).toLowerCase();
+  const trapFamily = /trapsoul|\btrap\b|\bdrill\b/.test(displayGenre);
+  const lyricTheme =
+    trapFamily && (entry.theme === "love" || entry.theme === "family") ? "good_vibes" : entry.theme;
+
+  return buildSingableLyricsFromBankEntry({
     display: entry.display,
     lyrics_structure: entry.acestep.lyrics_structure,
     lang: entry.lang,
-    theme: entry.theme,
+    theme: lyricTheme,
     id: entry.id,
   });
 }

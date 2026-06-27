@@ -53,4 +53,49 @@ describe("buildAceChatCompletionsParts", () => {
     expect(parts.join("\n")).toContain("expand every section");
     expect(parts.join("\n")).toContain(structure);
   });
+
+  it("genre-only song (empty lyrics) adds AI compose rules, not skeleton expansion", () => {
+    const parts = buildAceChatCompletionsParts({
+      ...base,
+      instrumental: false,
+      baseCaption: "Y2K futuristic pop, glossy synths, catchy hook, clean studio vocal, 120 BPM",
+      lyrics: "",
+      vocalLanguage: "fr",
+      vocalStyle: "Singer",
+    });
+    const joined = parts.join("\n");
+    expect(joined).toContain("lead singer");
+    expect(joined).toContain("Vocal language: fr");
+    expect(joined).toContain("Vocal delivery style: Singer");
+    expect(joined).not.toContain("expand every section");
+    expect(joined).not.toContain("vocal style Singer");
+  });
+
+  it("drill genre adds anti dance-pop guard", () => {
+    const parts = buildAceChatCompletionsParts({
+      ...base,
+      instrumental: false,
+      genre: "Drill",
+      baseCaption: "conscious drill, sliding 808, dark strings, 142 bpm",
+      lyrics: "[verse]\nBlock remembers names",
+      vocalLanguage: "fr",
+    });
+    const joined = parts.join("\n");
+    expect(joined).toMatch(/NOT dance-pop|sliding 808/);
+    expect(joined).toContain("Target BPM: 142");
+  });
+
+  it("trapsoul genre adds anti pop-ballad guard", () => {
+    const parts = buildAceChatCompletionsParts({
+      ...base,
+      instrumental: false,
+      genre: "Trapsoul",
+      baseCaption: "trapsoul, 808 bass, trap hi-hats, 95 bpm",
+      lyrics: "[verse]\nFeel the night alive",
+      vocalLanguage: "fr",
+    });
+    const joined = parts.join("\n");
+    expect(joined).toMatch(/NOT acoustic pop ballad|trap soul/);
+    expect(joined).toContain("Target BPM: 95");
+  });
 });

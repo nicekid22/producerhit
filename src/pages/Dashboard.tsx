@@ -34,6 +34,7 @@ import {
 } from "@/lib/generationStrategy";
 import { estimateGenerationDurationMs, simulatedGenerationPercent } from "@/lib/generationProgress";
 import { estimateSongDurationFromLyrics } from "@/lib/aceDuration";
+import { resolveAceLyricsForMeta } from "@producerhit/shared";
 import {
   formatGenerationErrorMessage,
   generationRetryDelayMs,
@@ -1587,6 +1588,8 @@ export default function Dashboard() {
         uiLocale: locale,
       });
 
+      const genreForAce = captionCtx.bankGenre ?? normalizedGenreForPrompt;
+
       if (runAsSong && captionCtx.lyricsStructure?.trim()) {
         effectiveSongLyrics = captionCtx.lyricsStructure.trim();
         effectiveLyricsMode = "manual";
@@ -1602,8 +1605,11 @@ export default function Dashboard() {
             .join(", ")
         : (runFormPrompt?.trim() ?? "");
 
+      const aceInputPrompt =
+        runAsSong && !runSongDescription.trim() ? "" : effectiveRunUiPrompt || runUiPrompt;
+
       const inputParams = {
-        genre: normalizedGenreForPrompt,
+        genre: genreForAce,
         influence: form.influence,
         key: effectiveKey,
         scale: effectiveScale,
@@ -1613,23 +1619,25 @@ export default function Dashboard() {
         mood: runAsSong ? "" : form.mood,
         energyLevel: runAsSong ? "" : form.energyLevel,
         reverb: form.reverb,
-        prompt: effectiveRunUiPrompt || runUiPrompt,
+        prompt: runAsSong
+          ? runSongDescription.trim() || normalizedGenreForPrompt
+          : aceInputPrompt,
       };
 
       const buildOptions = (seed?: number, slotIdx?: 1 | 2) => {
         const aceKeyPreferIndex = aceKeyPreferIndexForSlot(slotIdx, effectiveVersions);
         const hasManualLyrics = effectiveLyricsMode === "manual" && effectiveSongLyrics.length > 0;
+        const aceComposeLyrics = hasManualLyrics ? effectiveSongLyrics : "";
         const songAceDuration =
           manualSongDuration ??
-          (hasManualLyrics ? estimateSongDurationFromLyrics(effectiveSongLyrics) : undefined);
+          (aceComposeLyrics ? estimateSongDurationFromLyrics(aceComposeLyrics) : undefined);
         const base = runAsSong
           ? {
               instrumental: false,
-              lyrics: effectiveSongLyrics,
+              lyrics: aceComposeLyrics,
               vocalLanguage: runVocalLanguage,
               autoMeta: autoMetaEnabled,
               thinking: true,
-              useFormat: !hasManualLyrics,
               duration: songAceDuration,
               timeSignature: manualSongTimeSignature || undefined,
               isSong: true,
@@ -1645,15 +1653,31 @@ export default function Dashboard() {
               audioFormat: effectiveAudioFormat,
               seed,
             };
-        const captionOpts = captionCtx.captionOverride
-          ? {
-              captionOverride: captionCtx.captionOverride,
-              melodyComposition: captionCtx.melodyComposition,
-            }
-          : {};
+        const captionOpts = runAsSong
+          ? captionCtx.lyricsStructure?.trim()
+            ? {
+                captionOverride: captionCtx.captionOverride,
+                melodyComposition: captionCtx.melodyComposition,
+              }
+            : {}
+          : captionCtx.captionOverride
+            ? {
+                captionOverride: captionCtx.captionOverride,
+                melodyComposition: captionCtx.melodyComposition,
+              }
+            : {};
         return aceKeyPreferIndex !== undefined
-          ? { ...base, aceKeyPreferIndex, ...captionOpts }
-          : { ...base, ...captionOpts };
+          ? {
+              ...base,
+              aceKeyPreferIndex,
+              ...captionOpts,
+              ...(runAsSong && songVocalStyle.trim() ? { vocalStyle: songVocalStyle.trim() } : {}),
+            }
+          : {
+              ...base,
+              ...captionOpts,
+              ...(runAsSong && songVocalStyle.trim() ? { vocalStyle: songVocalStyle.trim() } : {}),
+            };
       };
 
       const cloneCfg = voiceCloneConfigRef.current;
@@ -1723,7 +1747,11 @@ export default function Dashboard() {
                 lyrics:
                   runAsSong && effectiveLyricsMode === "manual" && effectiveSongLyrics
                     ? effectiveSongLyrics
-                    : (result.meta.lyrics ?? ""),
+                    : resolveAceLyricsForMeta({
+                        parsedLyrics: result.meta?.lyrics,
+                        userLyrics: "",
+                        caption: result.meta?.prompt ?? storedPrompt,
+                      }),
                 bpm: result.meta.bpm ?? null,
                 duration: result.meta.duration ?? null,
                 keyScale: result.meta.keyScale ?? "",
@@ -2563,7 +2591,17 @@ export default function Dashboard() {
           details: result.meta
             ? {
                 caption: result.meta.prompt ?? variantPrompt,
-                lyrics: result.meta.lyrics ?? input.sourceLoop.details?.lyrics ?? "",
+                lyrics:
+                  resolveAceLyricsForMeta({
+                    parsedLyrics: result.meta.lyrics,
+                    userLyrics: "",
+                    caption: result.meta.prompt ?? variantPrompt,
+                  }) ||
+                  resolveAceLyricsForMeta({
+                    parsedLyrics: input.sourceLoop.details?.lyrics,
+                    userLyrics: input.sourceLoop.details?.lyrics ?? "",
+                    caption: variantPrompt,
+                  }),
                 bpm: result.meta.bpm ?? null,
                 duration: result.meta.duration ?? input.sourceLoop.details?.duration ?? null,
                 keyScale: result.meta.keyScale ?? "",
@@ -2612,7 +2650,17 @@ export default function Dashboard() {
           details: result.meta
             ? {
                 caption: result.meta.prompt ?? variantPrompt,
-                lyrics: result.meta.lyrics ?? input.sourceLoop.details?.lyrics ?? "",
+                lyrics:
+                  resolveAceLyricsForMeta({
+                    parsedLyrics: result.meta.lyrics,
+                    userLyrics: "",
+                    caption: result.meta.prompt ?? variantPrompt,
+                  }) ||
+                  resolveAceLyricsForMeta({
+                    parsedLyrics: input.sourceLoop.details?.lyrics,
+                    userLyrics: input.sourceLoop.details?.lyrics ?? "",
+                    caption: variantPrompt,
+                  }),
                 bpm: result.meta.bpm ?? null,
                 duration: result.meta.duration ?? input.sourceLoop.details?.duration ?? null,
                 keyScale: result.meta.keyScale ?? "",

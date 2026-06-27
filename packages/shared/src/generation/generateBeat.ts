@@ -144,7 +144,10 @@ export function toSongGenerateParams(input: {
   vocalStyle?: string;
   loopLength?: string;
 }): GenerateParams {
-  const uiPrompt = buildSongUiPrompt(input.genre, input.description, input.vocalStyle);
+  const description = input.description.trim();
+  const uiPrompt = description
+    ? buildSongUiPrompt(input.genre, description, input.vocalStyle)
+    : "";
   return {
     genre: input.genre,
     influence: "No Influence",

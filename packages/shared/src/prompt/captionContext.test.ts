@@ -50,7 +50,7 @@ describe("resolveGenerationCaptionContext", () => {
     });
     expect(ctx.captionOverride).toBeDefined();
     expect(ctx.lyricsStructure).toContain("[verse]");
-    expect(ctx.lyricsStructure?.toLowerCase()).toContain("learning to live");
+    expect(ctx.lyricsStructure?.toLowerCase()).not.toContain("learning to live");
   });
 
   it("prioritizes landing override over bank", () => {
@@ -79,7 +79,8 @@ describe("resolveGenerationCaptionContext", () => {
     expect(ctx.lyricsStructure).toContain("[verse]");
     expect(ctx.lyricsStructure).toContain("[chorus]");
     expect(ctx.lyricsStructure).not.toMatch(/storytelling/i);
-    expect(ctx.lyricsStructure?.toLowerCase()).toContain("working at 3am");
+    expect(ctx.lyricsStructure?.toLowerCase()).not.toContain("working at 3am");
+    expect(ctx.bankGenre).toBe("Dark Trap");
   });
 
   it("resolves French prompt bank entry with [fr] marker", () => {
@@ -91,7 +92,8 @@ describe("resolveGenerationCaptionContext", () => {
     });
     expect(ctx.melodyComposition).toBe(false);
     expect(ctx.lyricsStructure).toContain("[fr]");
-    expect(ctx.lyricsStructure?.toLowerCase()).toContain("te voir");
+    expect(ctx.lyricsStructure?.toLowerCase()).not.toContain("te voir");
+    expect(ctx.bankGenre).toBeDefined();
   });
 
   it("pickPromptBankRoll FR never returns EN entry", () => {
@@ -200,8 +202,9 @@ describe("resolveGenerationCaptionContext", () => {
   });
 
   it("good vibes bank entry resolves captionOverride and singable lyrics", () => {
+    const display = "Remember last summer nights — dance pop, 118 bpm";
     const ctx = resolveGenerationCaptionContext({
-      displayIdea: "First day of summer with nowhere to be — dance pop, 118 bpm",
+      displayIdea: display,
       formGenre: "Dance Pop",
       mode: "song",
       uiLocale: "en",
@@ -209,6 +212,8 @@ describe("resolveGenerationCaptionContext", () => {
     expect(ctx.captionOverride).toBeDefined();
     expect(ctx.captionOverride!.toLowerCase()).toContain("euphoric");
     expect(ctx.lyricsStructure).toContain("[chorus]");
+    expect(ctx.lyricsStructure?.toLowerCase()).not.toContain("remember last summer nights");
+    expect(ctx.bankGenre).toBe("Dance Pop");
     expect(ctx.melodyComposition).toBe(false);
   });
 });

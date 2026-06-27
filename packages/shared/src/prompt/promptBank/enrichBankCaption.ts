@@ -2,6 +2,11 @@ import type { AppLocale } from "../../i18n/locales";
 import { normalizeAceCaption } from "../acePromptContract";
 import { buildRichAceCaption } from "../richDisplayAce";
 import { extractPromptBankSubject } from "../themeFromDiceDisplay";
+import {
+  bankCaptionAlignsWithDisplay,
+  buildDisplayGenreCaptionSeed,
+  englishAceCaptionFromBank,
+} from "./genreFromCaption";
 
 type PromptMode = "beat" | "song";
 
@@ -38,7 +43,13 @@ export function enrichBankAceCaption(args: {
   genre: string;
 }): string {
   const raw = args.aceCaption.trim();
-  if (!raw) {
+  const englishCaption = englishAceCaptionFromBank(args.display, raw, args.genre);
+  const captionAligned = englishCaption
+    ? bankCaptionAlignsWithDisplay(args.display, englishCaption)
+    : false;
+  const effectiveAce = captionAligned ? englishCaption : buildDisplayGenreCaptionSeed(args.display);
+
+  if (!effectiveAce) {
     return buildRichAceCaption({
       display: args.display,
       locale: args.locale,
@@ -49,8 +60,8 @@ export function enrichBankAceCaption(args: {
 
   const bankSubject = extractPromptBankSubject(args.display);
   const needsThemeLayers = Boolean(bankSubject);
-  if (!needsThemeLayers && !isThinAceCaption(raw)) {
-    return normalizeAceCaption(raw, {
+  if (captionAligned && !needsThemeLayers && !isThinAceCaption(englishCaption)) {
+    return normalizeAceCaption(englishCaption, {
       mode: args.mode === "song" ? "song" : "beat",
       instrumental: args.mode === "beat",
     }).caption;
@@ -61,6 +72,6 @@ export function enrichBankAceCaption(args: {
     locale: args.locale,
     mode: args.mode,
     formGenre: args.genre,
-    preferPrebuiltAce: raw,
+    preferPrebuiltAce: effectiveAce,
   });
 }

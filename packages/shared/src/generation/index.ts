@@ -10,10 +10,18 @@ export type {
 export { computeAceRequestedDurationSec } from "./aceDuration";
 export { resolveAceQualityFlags, ACE_QUALITY_DEFAULTS } from "./aceQuality";
 export { buildAceCaption } from "./promptAce";
-export { buildAceRequestBody, resolveAceSampleMode } from "./aceRequest";
+export { buildAceRequestBody, resolveAceSampleMode, buildAceSampleQuery } from "./aceRequest";
+export {
+  buildAceChatCompletionsMessage,
+  buildAceChatCompletionsHttpBody,
+  resolveAceLyricsApiFieldForRequest,
+} from "./aceSampleMode";
+export { isAiComposeSongRequest } from "./aceGenreOnlyLyrics";
 export {
   ACE_AI_COMPOSE_LYRICS_PLACEHOLDER,
   looksLikeAceCaptionEchoLyrics,
+  looksLikeAceStructuralLyrics,
+  looksLikeSingableLyrics,
   resolveAceLyricsApiField,
   resolveAceLyricsForMeta,
 } from "./aceLyricsApi";

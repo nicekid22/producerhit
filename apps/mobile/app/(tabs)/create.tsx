@@ -24,6 +24,7 @@ import {
   shouldPickRandomGenreAtGenerate,
   getInspirationChipsForGenre,
   resolveGenerationCaptionContext,
+  resolveSongVocalLanguage,
   type GenerationJobStatus,
   type LoopLength,
   type MobileVocalStyle,
@@ -412,20 +413,31 @@ export default function CreateScreen() {
         : undefined;
       if (randomGenre) setLastRandomGenre(randomGenre);
       const { promptGenre } = resolveGenreForGeneration(runFormGenre, runIdeaText, randomGenre);
-      const activeGenreResolved = promptGenre;
-      const beatNameGenre = activeGenreResolved || randomGenre || chipsGenre;
 
       const songCaptionCtx = resolveGenerationCaptionContext({
         diceAceOverride: songAceOverrideRef.current,
         displayIdea: runIdeaText,
-        formGenre: runFormGenre,
+        formGenre: promptGenre || runFormGenre,
         mode: "song",
         uiLocale: promptLocale,
       });
+      const activeGenreResolved = songCaptionCtx.bankGenre ?? promptGenre;
+      const beatNameGenre = activeGenreResolved || randomGenre || chipsGenre;
       const bankLyrics =
         songCaptionCtx.lyricsStructure?.trim() || songLyricsOverrideRef.current?.trim() || "";
       const runLyricsMode = bankLyrics ? ("manual" as const) : lyricsMode;
       const runLyrics = bankLyrics || (lyricsMode === "manual" ? lyrics : "");
+      const prelimLyrics = runLyrics;
+      const prelimLyricsMode: "ai" | "manual" = runLyricsMode;
+      const runVocalLanguage = resolveSongVocalLanguage({
+        mode: vocalLanguageMode,
+        manualCode: manualVocalLanguage,
+        lyricsMode: prelimLyricsMode,
+        lyrics: prelimLyrics,
+        songDescription: runIdeaText,
+        uiLocale: locale,
+      });
+
       const beatCaptionCtx = resolveGenerationCaptionContext({
         diceAceOverride: beatAceOverrideRef.current,
         displayIdea: runIdeaText,
@@ -442,7 +454,9 @@ export default function CreateScreen() {
               lyrics: runLyrics,
               lyricsMode: runLyricsMode,
               vocalStyle,
-              captionOverride: songCaptionCtx.captionOverride,
+              captionOverride: songCaptionCtx.lyricsStructure?.trim()
+                ? songCaptionCtx.captionOverride
+                : undefined,
               melodyComposition: songCaptionCtx.melodyComposition,
               vocalLanguageMode,
               manualVocalLanguage,

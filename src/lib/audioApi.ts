@@ -4,10 +4,12 @@ import { supabase } from "@/lib/supabaseClient";
 import { aceMelodyCompositionAceFields } from "@/lib/aceMelodyComposition";
 import { buildAceCaption, buildRichPrompt, buildSonautoTags, type GenerateParams } from "@/lib/promptBuilder";
 import {
-  buildAceChatCompletionsParts,
+  buildAceChatCompletionsMessage,
+  buildAceChatCompletionsHttpBody,
+  buildAceSampleQuery,
   buildAceRequestBody,
   normalizeAceGenerationPayload,
-  resolveAceLyricsApiField,
+  resolveAceLyricsApiFieldForRequest,
   resolveAceLyricsForMeta,
   resolveAceSampleMode,
 } from "@producerhit/shared";
@@ -342,18 +344,21 @@ async function generateLoopAceDirect(
   const lyrics = normalized.lyrics || (instrumental ? "[Instrumental]" : lyricsRaw.trim());
   const effectiveLyrics = lyrics;
   const userLyricsTrimmed = lyricsRaw.trim();
-  const aceLyricsApiField = resolveAceLyricsApiField({
-    instrumental,
-    lyricsTrimmed: userLyricsTrimmed,
-  });
   const effectiveSampleMode = resolveAceSampleMode({
     captionOverride,
-    baseCaption,
     instrumental,
-    lyricsTrimmed: lyricsRaw.trim(),
     explicitSampleMode: options?.sampleMode,
+    lyricsTrimmed: userLyricsTrimmed,
   });
-  const releasePrompt = effectiveSampleMode ? (options?.sampleQuery?.trim() || baseCaption) : baseCaption;
+  const effectiveSampleQuery = effectiveSampleMode
+    ? options?.sampleQuery?.trim() ||
+      buildAceSampleQuery({
+        genre: params.genre,
+        idea: params.prompt,
+        vocalStyle: options?.vocalStyle,
+      })
+    : "";
+  const releasePrompt = effectiveSampleMode ? effectiveSampleQuery : baseCaption;
   const quality = resolveAceQualityFlags({
     thinking: options?.thinking,
     useFormat: options?.useFormat,
@@ -404,12 +409,18 @@ async function generateLoopAceDirect(
     };
   };
 
+  const durationRaw =
+    typeof options?.duration === "number" && Number.isFinite(options.duration) && options.duration > 0
+      ? options.duration
+      : null;
+  const requestedDuration = computeAceRequestedDurationSec({ instrumental, durationRaw });
+
   const generateViaChatCompletions = async (): Promise<{ audioUrl: string; meta: AceMeta | null }> => {
-    const parts = buildAceChatCompletionsParts({
+    const messageContent = buildAceChatCompletionsMessage({
       seedKey: String(preferStart),
       baseCaption,
       prompt: params.prompt || "",
-      lyrics: effectiveLyrics,
+      lyrics: userLyricsTrimmed,
       instrumental,
       melodyComposition,
       genre: params.genre || "",
@@ -421,6 +432,15 @@ async function generateLoopAceDirect(
       scale: params.scale || "",
       timeSignature: options?.timeSignature || "",
       vocalLanguage,
+      vocalStyle: options?.vocalStyle?.trim() || undefined,
+      sampleMode: effectiveSampleMode,
+      sampleQuery: effectiveSampleQuery,
+    });
+
+    const lyricsField = resolveAceLyricsApiFieldForRequest({
+      instrumental,
+      lyricsTrimmed: userLyricsTrimmed,
+      sampleMode: effectiveSampleMode,
     });
 
     const res = await fetch(`${baseUrl}/v1/chat/completions`, {
@@ -430,28 +450,30 @@ async function generateLoopAceDirect(
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      body: JSON.stringify({
-        model: ACE_RELEASE_MODEL,
-        thinking: quality.thinking,
-        use_format: quality.useFormat,
-        messages: [{ role: "user", content: parts.join("\n\n") }],
-        lyrics: aceLyricsApiField,
-        task_type: "text2music",
-        ...(melodyComposition ? aceMelodyCompositionAceFields() : {}),
-        audio_config: {
-          instrumental,
-          ...(requestedDuration != null ? { duration: requestedDuration } : {}),
-          bpm: !options?.autoMeta && params.bpm > 0 ? params.bpm : null,
-          key_scale: !options?.autoMeta && params.key && params.scale ? `${params.key} ${params.scale}` : null,
-          time_signature: options?.timeSignature || null,
-          vocal_language: options?.vocalLanguage || "en",
-          format: audioFormat,
-          audio_format: audioFormat,
-          shift: ACE_QUALITY_DEFAULTS.shift,
-          inference_steps: ACE_QUALITY_DEFAULTS.inferenceSteps,
-        },
-        stream: false,
-      }),
+      body: JSON.stringify(
+        buildAceChatCompletionsHttpBody({
+          model: ACE_RELEASE_MODEL,
+          thinking: quality.thinking,
+          useFormat: quality.useFormat,
+          sampleMode: effectiveSampleMode,
+          sampleQuery: effectiveSampleQuery,
+          messageContent,
+          lyricsField,
+          audioConfig: {
+            instrumental,
+            ...(requestedDuration != null ? { duration: requestedDuration } : {}),
+            bpm: !options?.autoMeta && params.bpm > 0 ? params.bpm : null,
+            key_scale: !options?.autoMeta && params.key && params.scale ? `${params.key} ${params.scale}` : null,
+            time_signature: options?.timeSignature || null,
+            vocal_language: vocalLanguage,
+            format: audioFormat,
+            audio_format: audioFormat,
+            shift: ACE_QUALITY_DEFAULTS.shift,
+            inference_steps: ACE_QUALITY_DEFAULTS.inferenceSteps,
+          },
+          extraFields: melodyComposition ? aceMelodyCompositionAceFields() : undefined,
+        }),
+      ),
     });
 
     const text = await res.text().catch(() => "");
@@ -474,12 +496,13 @@ async function generateLoopAceDirect(
     const parsed = content ? parseChatContent(content) : {};
     const fallbackBpm = !options?.autoMeta && params.bpm > 0 ? params.bpm : null;
     const fallbackKeyScale = !options?.autoMeta && params.key && params.scale ? `${params.key} ${params.scale}` : "";
+    const metaCaption = effectiveSampleMode ? effectiveSampleQuery : baseCaption;
     const meta: AceMeta = {
-      prompt: parsed.prompt || baseCaption,
+      prompt: parsed.prompt || metaCaption,
       lyrics: instrumental ? "" : resolveAceLyricsForMeta({
         parsedLyrics: parsed.lyrics,
         userLyrics: userLyricsTrimmed,
-        caption: baseCaption,
+        caption: metaCaption,
       }) || undefined,
       bpm: (parsed.bpm && parsed.bpm > 0 ? parsed.bpm : fallbackBpm) ?? null,
       duration: (parsed.duration && parsed.duration > 0 ? parsed.duration : requestedDuration) ?? null,
@@ -496,12 +519,6 @@ async function generateLoopAceDirect(
   };
 
   const clampNumber = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
-
-  const durationRaw =
-    typeof options?.duration === "number" && Number.isFinite(options.duration) && options.duration > 0
-      ? options.duration
-      : null;
-  const requestedDuration = computeAceRequestedDurationSec({ instrumental, durationRaw });
 
   const paramObj: Record<string, unknown> = {};
   if (requestedDuration != null) paramObj.duration = requestedDuration;
@@ -522,14 +539,19 @@ async function generateLoopAceDirect(
   createForm.append("env", "production");
   createForm.append("ai_token", aceApiKey);
   createForm.append("prompt", releasePrompt);
-  createForm.append("lyrics", aceLyricsApiField);
+  const releaseLyricsField = resolveAceLyricsApiFieldForRequest({
+    instrumental,
+    lyricsTrimmed: userLyricsTrimmed,
+    sampleMode: effectiveSampleMode,
+  });
+  if (releaseLyricsField !== undefined) createForm.append("lyrics", releaseLyricsField);
   createForm.append("model_name", ACE_RELEASE_MODEL);
   createForm.append("app", "studio-web");
   createForm.append("thinking", quality.thinking ? "true" : "false");
   createForm.append("use_format", quality.useFormat ? "true" : "false");
   if (effectiveSampleMode) {
     createForm.append("sample_mode", "true");
-    const sq = options?.sampleQuery?.trim() || baseCaption;
+    const sq = effectiveSampleQuery.trim();
     if (sq) createForm.append("sample_query", sq);
   }
   createForm.append("vocal_language", vocalLanguage);
@@ -938,17 +960,20 @@ export async function generateLoopAceDualBatch(
     const baseCaption = normalized.caption;
     const effectiveLyrics = normalized.lyrics || (instrumental ? "[Instrumental]" : lyricsRaw.trim());
     const batchUserLyrics = lyricsRaw.trim();
-    const batchAceLyricsField = resolveAceLyricsApiField({
-      instrumental,
-      lyricsTrimmed: batchUserLyrics,
-    });
     const effectiveSampleMode = resolveAceSampleMode({
       captionOverride,
-      baseCaption,
       instrumental,
-      lyricsTrimmed: lyricsRaw.trim(),
       explicitSampleMode: options?.sampleMode,
+      lyricsTrimmed: batchUserLyrics,
     });
+    const effectiveSampleQuery = effectiveSampleMode
+      ? options?.sampleQuery?.trim() ||
+        buildAceSampleQuery({
+          genre: params.genre,
+          idea: params.prompt,
+          vocalStyle: options?.vocalStyle,
+        })
+      : "";
     const quality = resolveAceQualityFlags({
       thinking: options?.thinking,
       useFormat: options?.useFormat,
@@ -972,7 +997,7 @@ export async function generateLoopAceDualBatch(
         : null;
     const requestedDuration = computeAceRequestedDurationSec({ instrumental, durationRaw });
 
-    const parts = buildAceChatCompletionsParts({
+    const messageContent = buildAceChatCompletionsMessage({
       seedKey: String(preferStart),
       baseCaption,
       prompt: params.prompt || "",
@@ -987,6 +1012,15 @@ export async function generateLoopAceDualBatch(
       scale: params.scale || "",
       timeSignature: options?.timeSignature || "",
       vocalLanguage,
+      vocalStyle: options?.vocalStyle?.trim() || undefined,
+      sampleMode: effectiveSampleMode,
+      sampleQuery: effectiveSampleQuery,
+    });
+
+    const batchLyricsField = resolveAceLyricsApiFieldForRequest({
+      instrumental,
+      lyricsTrimmed: batchUserLyrics,
+      sampleMode: effectiveSampleMode,
     });
 
     const res = await fetch(`${baseUrl}/v1/chat/completions`, {
@@ -996,30 +1030,32 @@ export async function generateLoopAceDualBatch(
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      body: JSON.stringify({
-        model: ACE_RELEASE_MODEL,
-        thinking: quality.thinking,
-        use_format: quality.useFormat,
-        batch_size: 2,
-        messages: [{ role: "user", content: parts.join("\n\n") }],
-        lyrics: batchAceLyricsField,
-        task_type: "text2music",
-        audio_config: {
-          instrumental,
-          ...(requestedDuration != null ? { duration: requestedDuration } : {}),
-          bpm: !options?.autoMeta && params.bpm > 0 ? params.bpm : null,
-          key_scale: !options?.autoMeta && params.key && params.scale ? `${params.key} ${params.scale}` : null,
-          time_signature: options?.timeSignature || null,
-          vocal_language: vocalLanguage,
-          format: audioFormat,
-          audio_format: audioFormat,
-          shift: ACE_QUALITY_DEFAULTS.shift,
-          inference_steps: ACE_QUALITY_DEFAULTS.inferenceSteps,
-          seed: seeds[0],
-          seeds,
-        },
-        stream: false,
-      }),
+      body: JSON.stringify(
+        buildAceChatCompletionsHttpBody({
+          model: ACE_RELEASE_MODEL,
+          thinking: quality.thinking,
+          useFormat: quality.useFormat,
+          sampleMode: effectiveSampleMode,
+          sampleQuery: effectiveSampleQuery,
+          messageContent,
+          lyricsField: batchLyricsField,
+          batchSize: 2,
+          audioConfig: {
+            instrumental,
+            ...(requestedDuration != null ? { duration: requestedDuration } : {}),
+            bpm: !options?.autoMeta && params.bpm > 0 ? params.bpm : null,
+            key_scale: !options?.autoMeta && params.key && params.scale ? `${params.key} ${params.scale}` : null,
+            time_signature: options?.timeSignature || null,
+            vocal_language: vocalLanguage,
+            format: audioFormat,
+            audio_format: audioFormat,
+            shift: ACE_QUALITY_DEFAULTS.shift,
+            inference_steps: ACE_QUALITY_DEFAULTS.inferenceSteps,
+            seed: seeds[0],
+            seeds,
+          },
+        }),
+      ),
     });
     const text = await res.text().catch(() => "");
     if (!res.ok) throw new Error(`ACE API dual batch failed (${res.status}): ${text.slice(0, 400)}`);

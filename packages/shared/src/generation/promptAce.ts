@@ -146,7 +146,7 @@ export function buildAceCaption(
   const reverb = REVERB_MAP[params.reverb] ?? params.reverb;
 
   const extraRaw = (params.prompt || "").trim();
-  const { style: vocalStyle, rest: extraRest } = extractVocalStyle(extraRaw);
+  const { rest: extraRest } = extractVocalStyle(extraRaw);
   const extra = limitChars(extraRest, 220);
 
   const tags = uniqTags(
@@ -157,14 +157,12 @@ export function buildAceCaption(
       energy,
       reverb,
       bpmHint > 0 ? `${bpmHint} BPM` : "",
-      params.loopLengthBars > 0 ? `loopable ${params.loopLengthBars} bars` : "",
+      !isSong && params.loopLengthBars > 0 ? `loopable ${params.loopLengthBars} bars` : "",
       autoMeta ? "" : params.key && params.scale ? `${params.key} ${params.scale}` : "",
       tempoHintFromBpm(params.bpm),
-      instrumental ? "instrumental" : "vocals",
+      instrumental ? "instrumental" : "",
       instrumental && !isSong ? "no vocals" : "",
       instrumental && !isSong ? "no lyrics" : "",
-      !instrumental && vocalStyle ? `vocal style ${vocalStyle}` : "",
-      !instrumental && vocalLanguage ? `vocal language ${vocalLanguage}` : "",
       extra ? extra : "",
     ].filter(Boolean) as string[],
   );

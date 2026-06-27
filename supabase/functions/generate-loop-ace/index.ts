@@ -16,8 +16,14 @@ import {
   scheduleRunJob,
   updateGenerationJob,
 } from "../_shared/generationJobUtils.ts";
-import { buildAceChatCompletionsParts } from "../_shared/aceChatCompletions.ts";
-import { resolveAceLyricsApiField, resolveAceLyricsForMeta } from "../_shared/aceLyricsApi.ts";
+import { resolveAceLyricsForMeta } from "../_shared/aceLyricsApi.ts";
+import {
+  buildAceChatCompletionsHttpBody,
+  buildAceChatCompletionsMessage,
+  buildAceSampleQuery,
+  resolveAceLyricsApiFieldForRequest,
+  resolveAceSampleMode,
+} from "../_shared/aceSampleMode.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -153,6 +159,42 @@ function resolveAceQualityFlags(input: {
     useFormat: !input.sampleMode && input.useFormat !== false,
     shift: ACE_SHIFT,
   };
+}
+
+function resolveEdgeSampleMode(args: {
+  action: string;
+  instrumental: boolean;
+  lyricsUserTrimmed: string;
+  captionOverride: string;
+  bodySampleMode?: boolean;
+}): boolean {
+  if (args.action === "format") return false;
+  const explicit = args.bodySampleMode === true ? true : undefined;
+  return resolveAceSampleMode({
+    captionOverride: args.captionOverride,
+    instrumental: args.instrumental,
+    explicitSampleMode: explicit,
+    lyricsTrimmed: args.lyricsUserTrimmed,
+  });
+}
+
+function resolveEffectiveSampleQuery(args: {
+  sampleMode: boolean;
+  sampleQuery: string;
+  genre: string;
+  prompt: string;
+  vocalStyle?: string;
+}): string {
+  const trimmed = args.sampleQuery.trim();
+  if (!args.sampleMode) return trimmed;
+  return (
+    trimmed ||
+    buildAceSampleQuery({
+      genre: args.genre,
+      idea: args.prompt,
+      vocalStyle: args.vocalStyle,
+    })
+  );
 }
 
 function toAbsoluteUrl(baseUrl: string, maybePath: string) {
@@ -889,6 +931,9 @@ async function generateViaChatCompletionsAce(input: {
   keyScale: string;
   timeSignature: string;
   vocalLanguage: string;
+  vocalStyle?: string;
+  sampleMode?: boolean;
+  sampleQuery?: string;
   audioFormat: string;
   thinking: boolean;
   useFormat: boolean;
@@ -897,11 +942,17 @@ async function generateViaChatCompletionsAce(input: {
   seeds?: number[];
 }): Promise<{ audioUrl: string; meta: Record<string, unknown> }> {
   const userLyrics = input.lyrics.trim();
-  const aceLyricsField = resolveAceLyricsApiField({
-    instrumental: input.instrumental,
-    lyricsTrimmed: userLyrics,
-  });
-  const parts = buildAceChatCompletionsParts({
+  const sampleMode = input.sampleMode === true;
+  const sampleQuery =
+    (input.sampleQuery || "").trim() ||
+    (sampleMode
+      ? buildAceSampleQuery({
+          genre: input.genre,
+          idea: input.prompt,
+          vocalStyle: input.vocalStyle,
+        })
+      : "");
+  const messageContent = buildAceChatCompletionsMessage({
     seedKey: input.seedKey,
     baseCaption: input.baseCaption,
     prompt: input.prompt,
@@ -917,7 +968,16 @@ async function generateViaChatCompletionsAce(input: {
     scale: input.scale,
     timeSignature: input.timeSignature,
     vocalLanguage: input.vocalLanguage,
+    vocalStyle: input.vocalStyle,
+    sampleMode,
+    sampleQuery,
   });
+  const lyricsField = resolveAceLyricsApiFieldForRequest({
+    instrumental: input.instrumental,
+    lyricsTrimmed: userLyrics,
+    sampleMode,
+  });
+  const metaCaption = sampleMode ? sampleQuery : input.baseCaption || input.prompt;
 
   const res = await fetch(`${input.baseUrl}/v1/chat/completions`, {
     method: "POST",
@@ -926,35 +986,37 @@ async function generateViaChatCompletionsAce(input: {
       "Content-Type": "application/json",
       Accept: "application/json",
     },
-    body: JSON.stringify({
-      model: ACE_RELEASE_MODEL,
-      thinking: input.thinking,
-      use_format: input.useFormat,
-      ...(input.melodyComposition ? aceMelodyCompositionAceFields() : {}),
-      ...(input.batchSize && input.batchSize > 1 ? { batch_size: input.batchSize } : {}),
-      messages: [{ role: "user", content: parts.join("\n\n") }],
-      lyrics: aceLyricsField,
-      task_type: "text2music",
-      audio_config: {
-        instrumental: input.instrumental,
-        ...(input.requestedDuration != null ? { duration: input.requestedDuration } : {}),
-        bpm: !input.autoMeta && input.bpm && input.bpm > 0 ? input.bpm : null,
-        key_scale:
-          !input.autoMeta && input.key && input.scale
-            ? `${input.key} ${input.scale}`
-            : input.keyScale.trim() || null,
-        time_signature: input.timeSignature.trim() || null,
-        vocal_language: input.vocalLanguage || "en",
-        format: input.audioFormat,
-        audio_format: input.audioFormat,
-        shift: ACE_SHIFT,
-        inference_steps: ACE_INFERENCE_STEPS,
-        ...(input.seeds?.length
-          ? { seed: input.seeds[0], seeds: input.seeds, use_random_seed: false }
-          : {}),
-      },
-      stream: false,
-    }),
+    body: JSON.stringify(
+      buildAceChatCompletionsHttpBody({
+        model: ACE_RELEASE_MODEL,
+        thinking: input.thinking,
+        useFormat: input.useFormat,
+        sampleMode,
+        sampleQuery,
+        messageContent,
+        lyricsField,
+        batchSize: input.batchSize,
+        audioConfig: {
+          instrumental: input.instrumental,
+          ...(input.requestedDuration != null ? { duration: input.requestedDuration } : {}),
+          bpm: input.bpm && input.bpm > 0 ? input.bpm : null,
+          key_scale:
+            !input.autoMeta && input.key && input.scale
+              ? `${input.key} ${input.scale}`
+              : input.keyScale.trim() || null,
+          time_signature: input.timeSignature.trim() || null,
+          vocal_language: input.vocalLanguage || "en",
+          format: input.audioFormat,
+          audio_format: input.audioFormat,
+          shift: ACE_SHIFT,
+          inference_steps: ACE_INFERENCE_STEPS,
+          ...(input.seeds?.length
+            ? { seed: input.seeds[0], seeds: input.seeds, use_random_seed: false }
+            : {}),
+        },
+        extraFields: input.melodyComposition ? aceMelodyCompositionAceFields() : undefined,
+      }),
+    ),
     signal: input.signal,
   });
   const text = await readTextSafe(res);
@@ -981,13 +1043,13 @@ async function generateViaChatCompletionsAce(input: {
     audioUrl: (parsed.httpAudioUrl && isHttpUrl(parsed.httpAudioUrl) ? parsed.httpAudioUrl : "") || parsed.audioUrl,
     chatJson: json,
     meta: {
-      prompt: parsedContent.prompt || input.baseCaption || input.prompt,
+      prompt: parsedContent.prompt || metaCaption,
       lyrics: input.instrumental
         ? ""
         : resolveAceLyricsForMeta({
             parsedLyrics: parsedContent.lyrics,
             userLyrics,
-            caption: input.baseCaption || input.prompt,
+            caption: metaCaption,
           }) || undefined,
       bpm: (parsedContent.bpm && parsedContent.bpm > 0 ? parsedContent.bpm : input.bpm) ?? null,
       duration: (parsedContent.duration && parsedContent.duration > 0 ? parsedContent.duration : input.requestedDuration) ?? null,
@@ -1073,7 +1135,10 @@ async function generateViaMusicGenerateReference(input: {
   signal?: AbortSignal;
 }): Promise<{ audioUrl: string; meta: Record<string, unknown> }> {
   const base = input.baseUrl.replace(/\/$/, "");
-  const effectiveLyrics = input.lyrics.trim() || "[Verse]\n(lyrics)";
+  const effectiveLyrics = resolveAceLyricsApiField({
+    instrumental: false,
+    lyricsTrimmed: input.lyrics,
+  });
   const form = new FormData();
   form.append("caption", input.prompt);
   form.append("prompt", input.prompt);
@@ -1391,7 +1456,6 @@ serve(async (req) => {
       const timeSignature = asString(p.timeSignature);
       const thinking = typeof p.thinking === "boolean" ? Boolean(p.thinking) : null;
       const useFormat = typeof p.useFormat === "boolean" ? Boolean(p.useFormat) : null;
-      const sampleMode = typeof p.sampleMode === "boolean" ? Boolean(p.sampleMode) : false;
       const instrumental = p.instrumental !== false;
       const melodyComposition =
         p.melodyComposition === true ||
@@ -1399,14 +1463,30 @@ serve(async (req) => {
         (caption.includes("ProducerHit") && /NO drums|no drums|sans drums/i.test(caption));
       const seed = asNumber(p.seed);
       const vocalLanguage = asString(p.vocalLanguage) || "en";
+      const vocalStyle = asString(p.vocalStyle).trim();
+      const sampleMode = resolveEdgeSampleMode({
+        action: "generate",
+        instrumental,
+        lyricsUserTrimmed: lyricsRaw.trim(),
+        captionOverride: asString(p.captionOverride).trim(),
+        bodySampleMode: typeof p.sampleMode === "boolean" ? p.sampleMode : undefined,
+      });
+      const genreStr = asString(p.genre);
+      const effectiveSampleQuery = resolveEffectiveSampleQuery({
+        sampleMode,
+        sampleQuery,
+        genre: genreStr,
+        prompt: asString(p.prompt) || sampleQuery || caption,
+        vocalStyle: vocalStyle || undefined,
+      });
       const audioFormatRaw = (asString(p.audioFormat) || asString(p.audio_format)).trim().toLowerCase();
       const audioFormat =
         audioFormatRaw === "wav" || audioFormatRaw === "wav32" || audioFormatRaw === "flac" || audioFormatRaw === "mp3"
           ? audioFormatRaw
           : "mp3";
       const effectiveLyrics = instrumental ? "[Instrumental]" : (lyricsRaw ? lyricsRaw.trim() : "");
-      const baseCaption = caption.trim() || sampleQuery.trim();
-      const effectivePrompt = (sampleMode ? (sampleQuery.trim() || caption) : caption).trim();
+      const baseCaption = sampleMode ? effectiveSampleQuery : caption.trim() || sampleQuery.trim();
+      const effectivePrompt = (sampleMode ? effectiveSampleQuery : caption).trim();
       if (!effectivePrompt) {
         await updateGenerationJob(svc, jobId, { status: "failed", error: "Missing caption" });
         const failed = await loadGenerationJob(svc, jobId);
@@ -1529,9 +1609,12 @@ serve(async (req) => {
           keyScale: keyScale.trim().length > 0 ? keyScale.trim() : "",
           timeSignature,
           vocalLanguage,
+          vocalStyle: vocalStyle || undefined,
           audioFormat,
           thinking: quality.thinking,
           useFormat: quality.useFormat,
+          sampleMode,
+          sampleQuery: effectiveSampleQuery,
         };
         for (const t of aceTargets) {
           try {
@@ -1934,12 +2017,28 @@ serve(async (req) => {
     const timeSignature = asString(body?.timeSignature);
     const thinking = typeof body?.thinking === "boolean" ? Boolean(body.thinking) : null;
     const useFormat = typeof body?.useFormat === "boolean" ? Boolean(body.useFormat) : null;
-    const sampleMode = action === "format" ? false : (typeof body?.sampleMode === "boolean" ? Boolean(body.sampleMode) : false);
     const instrumental = body?.instrumental !== false;
     const melodyComposition =
       body?.melodyComposition === true ||
       asString(body?.melodyComposition) === "true" ||
       (caption.includes("ProducerHit") && /NO drums|no drums|sans drums/i.test(caption));
+    const genre = asString(body?.genre);
+    const promptField = asString(body?.prompt);
+    const captionOverride = asString(body?.captionOverride).trim();
+    const sampleMode = resolveEdgeSampleMode({
+      action,
+      instrumental,
+      lyricsUserTrimmed: lyricsRaw.trim(),
+      captionOverride,
+      bodySampleMode: typeof body?.sampleMode === "boolean" ? body.sampleMode : undefined,
+    });
+    const effectiveSampleQuery = resolveEffectiveSampleQuery({
+      sampleMode,
+      sampleQuery,
+      genre,
+      prompt: promptField || sampleQuery || caption,
+      vocalStyle: asString(body?.vocalStyle).trim() || undefined,
+    });
     const seed = asNumber(body?.seed);
     const audioFormatRaw = (asString(body?.audioFormat) || asString(body?.audio_format)).trim().toLowerCase();
     const requestedAudioFormat =
@@ -1954,7 +2053,7 @@ serve(async (req) => {
       requestId,
       action,
       caption: caption.slice(0, 80),
-      sampleQuery: sampleQuery.slice(0, 80),
+      sampleQuery: effectiveSampleQuery.slice(0, 80),
       bpm,
       keyScale,
       instrumental,
@@ -2068,8 +2167,8 @@ serve(async (req) => {
     }
 
     const effectiveLyrics = instrumental ? "[Instrumental]" : (lyricsRaw ? lyricsRaw.trim() : "");
-    const baseCaption = caption.trim() || sampleQuery.trim();
-    const effectivePrompt = (sampleMode ? (sampleQuery.trim() || caption) : caption).trim();
+    const baseCaption = sampleMode ? effectiveSampleQuery : caption.trim() || sampleQuery.trim();
+    const effectivePrompt = (sampleMode ? effectiveSampleQuery : caption).trim();
     if (!effectivePrompt) throw new Error("Missing caption");
 
     const isSongRequest = body?.isSong === true;
@@ -2154,9 +2253,12 @@ serve(async (req) => {
         keyScale: keyScale.trim().length > 0 ? keyScale.trim() : key && scale ? `${key} ${scale}` : keyScale.trim(),
         timeSignature,
         vocalLanguage: asString(body?.vocalLanguage) || "en",
+        vocalStyle: asString(body?.vocalStyle).trim() || undefined,
         audioFormat,
         thinking: resolveAceQualityFlags({ thinking, useFormat, sampleMode }).thinking,
         useFormat: resolveAceQualityFlags({ thinking, useFormat, sampleMode }).useFormat,
+        sampleMode,
+        sampleQuery: effectiveSampleQuery,
       };
 
       const controller = new AbortController();
@@ -2167,7 +2269,17 @@ serve(async (req) => {
         let lastErr: unknown = null;
         for (const t of aceTargets) {
           try {
-            const batchParts = buildAceChatCompletionsParts({
+            const batchSampleMode = chatAceArgs.sampleMode === true;
+            const batchSampleQuery =
+              (chatAceArgs.sampleQuery || "").trim() ||
+              (batchSampleMode
+                ? buildAceSampleQuery({
+                    genre: chatAceArgs.genre,
+                    idea: chatAceArgs.prompt,
+                    vocalStyle: chatAceArgs.vocalStyle,
+                  })
+                : "");
+            const batchMessage = buildAceChatCompletionsMessage({
               seedKey: chatAceArgs.seedKey,
               baseCaption: chatAceArgs.baseCaption,
               prompt: chatAceArgs.prompt,
@@ -2183,7 +2295,16 @@ serve(async (req) => {
               scale: chatAceArgs.scale,
               timeSignature: chatAceArgs.timeSignature,
               vocalLanguage: chatAceArgs.vocalLanguage,
+              vocalStyle: chatAceArgs.vocalStyle,
+              sampleMode: batchSampleMode,
+              sampleQuery: batchSampleQuery,
             });
+            const batchLyricsField = resolveAceLyricsApiFieldForRequest({
+              instrumental,
+              lyricsTrimmed: effectiveLyrics,
+              sampleMode: batchSampleMode,
+            });
+            const batchMetaCaption = batchSampleMode ? batchSampleQuery : chatAceArgs.baseCaption || chatAceArgs.prompt;
             const res = await fetch(`${t.baseUrl}/v1/chat/completions`, {
               method: "POST",
               headers: {
@@ -2191,32 +2312,34 @@ serve(async (req) => {
                 "Content-Type": "application/json",
                 Accept: "application/json",
               },
-              body: JSON.stringify({
-                model: ACE_RELEASE_MODEL,
-                thinking: chatAceArgs.thinking,
-                use_format: chatAceArgs.useFormat,
-                ...(melodyComposition ? aceMelodyCompositionAceFields() : {}),
-                batch_size: 2,
-                messages: [{ role: "user", content: batchParts.join("\n\n") }],
-                lyrics: instrumental ? "[instrumental]" : effectiveLyrics,
-                task_type: "text2music",
-                audio_config: {
-                  instrumental,
-                  ...(chatAceArgs.requestedDuration != null ? { duration: chatAceArgs.requestedDuration } : {}),
-                  bpm: chatAceArgs.bpm && chatAceArgs.bpm > 0 ? chatAceArgs.bpm : null,
-                  key_scale: chatAceArgs.keyScale || null,
-                  time_signature: chatAceArgs.timeSignature.trim() || null,
-                  vocal_language: chatAceArgs.vocalLanguage || "en",
-                  format: audioFormat,
-                  audio_format: audioFormat,
-                  shift: ACE_SHIFT,
-                  inference_steps: ACE_INFERENCE_STEPS,
-                  seed: dualSeedsParsed[0],
-                  seeds: dualSeedsParsed,
-                  use_random_seed: false,
-                },
-                stream: false,
-              }),
+              body: JSON.stringify(
+                buildAceChatCompletionsHttpBody({
+                  model: ACE_RELEASE_MODEL,
+                  thinking: chatAceArgs.thinking,
+                  useFormat: chatAceArgs.useFormat,
+                  sampleMode: batchSampleMode,
+                  sampleQuery: batchSampleQuery,
+                  messageContent: batchMessage,
+                  lyricsField: batchLyricsField,
+                  batchSize: 2,
+                  audioConfig: {
+                    instrumental,
+                    ...(chatAceArgs.requestedDuration != null ? { duration: chatAceArgs.requestedDuration } : {}),
+                    bpm: chatAceArgs.bpm && chatAceArgs.bpm > 0 ? chatAceArgs.bpm : null,
+                    key_scale: chatAceArgs.keyScale || null,
+                    time_signature: chatAceArgs.timeSignature.trim() || null,
+                    vocal_language: chatAceArgs.vocalLanguage || "en",
+                    format: audioFormat,
+                    audio_format: audioFormat,
+                    shift: ACE_SHIFT,
+                    inference_steps: ACE_INFERENCE_STEPS,
+                    seed: dualSeedsParsed[0],
+                    seeds: dualSeedsParsed,
+                    use_random_seed: false,
+                  },
+                  extraFields: melodyComposition ? aceMelodyCompositionAceFields() : undefined,
+                }),
+              ),
               signal: controller.signal,
             });
             const text = await readTextSafe(res);
@@ -2244,8 +2367,14 @@ serve(async (req) => {
               audioUrl: parsed.httpAudioUrl || parsed.audioUrl,
               seed: dualSeedsParsed[i],
               meta: {
-                prompt: parsedContent.prompt || baseCaption,
-                lyrics: instrumental ? "" : parsedContent.lyrics || effectiveLyrics,
+                prompt: parsedContent.prompt || batchMetaCaption,
+                lyrics: instrumental
+                  ? ""
+                  : resolveAceLyricsForMeta({
+                      parsedLyrics: parsedContent.lyrics,
+                      userLyrics: effectiveLyrics,
+                      caption: batchMetaCaption,
+                    }) || undefined,
                 bpm: parsedContent.bpm ?? (bpm && bpm > 0 ? bpm : null),
                 duration: parsedContent.duration ?? chatAceArgs.requestedDuration,
                 keyScale: parsedContent.keyScale || chatAceArgs.keyScale || null,
@@ -2299,6 +2428,7 @@ serve(async (req) => {
     });
 
     const vocalLanguage = asString(body?.vocalLanguage) || "en";
+    const vocalStyle = asString(body?.vocalStyle).trim();
     const keyValue = keyScale.trim().length > 0 ? keyScale.trim() : key && scale ? `${key} ${scale}` : keyScale.trim();
     const quality = resolveAceQualityFlags({ thinking, useFormat, sampleMode });
 
@@ -2320,9 +2450,12 @@ serve(async (req) => {
       keyScale: keyValue,
       timeSignature,
       vocalLanguage,
+      vocalStyle: vocalStyle || undefined,
       audioFormat,
       thinking: quality.thinking,
       useFormat: quality.useFormat,
+      sampleMode,
+      sampleQuery: effectiveSampleQuery,
     };
 
     const runChatCompletions = async (signal: AbortSignal) => {
@@ -2481,7 +2614,7 @@ serve(async (req) => {
         releaseForm.append("use_format", quality.useFormat ? "true" : "false");
         if (sampleMode) {
           releaseForm.append("sample_mode", "true");
-          const sq = sampleQuery.trim();
+          const sq = effectiveSampleQuery.trim();
           if (sq) releaseForm.append("sample_query", sq);
         }
         releaseForm.append("vocal_language", vocalLanguage);

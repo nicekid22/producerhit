@@ -29,6 +29,8 @@ export type GenerationCaptionContext = {
   melodyComposition: boolean;
   /** Structure lyrics ACE-Step (banque 2000 prompts). */
   lyricsStructure?: string;
+  /** Genre catalogue déduit de la banque (prioritaire sur le dropdown à la génération). */
+  bankGenre?: string;
 };
 
 function captionFromOverride(override: string, mode: PromptMode): GenerationCaptionContext {
@@ -36,7 +38,7 @@ function captionFromOverride(override: string, mode: PromptMode): GenerationCapt
     mode: mode === "beat" ? "beat" : "song",
     instrumental: mode === "beat",
   });
-  return { captionOverride: caption, melodyComposition: mode === "song" };
+  return { captionOverride: caption, melodyComposition: false };
 }
 
 function resolveRichCaption(
@@ -69,16 +71,20 @@ export function resolveGenerationCaptionContext(args: {
   mode: PromptMode;
   uiLocale?: AppLocale;
 }): GenerationCaptionContext {
+  const isSong = args.mode === "song";
+
   const dice = args.diceAceOverride?.trim();
-  if (dice) return captionFromOverride(dice, args.mode);
+  if (dice && !isSong) return captionFromOverride(dice, args.mode);
 
   const landing = args.landingAceOverride?.trim();
-  if (landing) return captionFromOverride(landing, args.mode);
+  if (landing && !isSong) return captionFromOverride(landing, args.mode);
 
   const idea = args.displayIdea.trim();
-  if (!idea) return { melodyComposition: false };
+  if (!idea) {
+    return { melodyComposition: false };
+  }
 
-  if (args.mode === "song" && shouldUsePromptBank(args.uiLocale) && args.uiLocale) {
+  if (isSong && shouldUsePromptBank(args.uiLocale) && args.uiLocale) {
     const bank = findPromptBankByDisplay(idea, args.uiLocale);
     if (bank) {
       const lyricsNorm = normalizeAceLyrics(bank.lyricsStructure, { instrumental: false });
@@ -87,16 +93,18 @@ export function resolveGenerationCaptionContext(args: {
           mode: "song",
           instrumental: false,
         }).caption,
-        melodyComposition: true,
+        melodyComposition: false,
         lyricsStructure: lyricsNorm.lyrics,
+        bankGenre: bank.genre,
       };
     }
   }
 
   if (looksLikeAceProsePrompt(idea)) {
+    if (isSong) return { melodyComposition: false };
     return {
       captionOverride: optimizeAceProsePrompt(idea, { mode: args.mode }),
-      melodyComposition: args.mode === "song",
+      melodyComposition: false,
     };
   }
 
@@ -104,20 +112,27 @@ export function resolveGenerationCaptionContext(args: {
     const matched = findGenreDiceItemByDisplay(idea, args.mode, args.uiLocale);
     if (matched) {
       const ace = resolveRichCaption(idea, args.uiLocale, args.mode, matched.genre);
-      if (ace.trim()) return captionFromOverride(ace.trim(), args.mode);
+      if (ace.trim()) {
+        if (isSong) return { melodyComposition: false };
+        return captionFromOverride(ace.trim(), args.mode);
+      }
     }
   }
 
   if (looksLikeStructuredDisplayIdea(idea) && args.uiLocale) {
     const genre = resolveGenreForStructured(idea, args.formGenre);
     const ace = resolveRichCaption(idea, args.uiLocale, args.mode, genre);
-    if (ace.trim()) return captionFromOverride(ace.trim(), args.mode);
+    if (ace.trim()) {
+      if (isSong) return { melodyComposition: false };
+      return captionFromOverride(ace.trim(), args.mode);
+    }
   }
 
   if (args.uiLocale && looksLikeNaturalUserIdea(idea)) {
     const ace = resolveRichCaption(idea, args.uiLocale, args.mode, args.formGenre);
     if (ace.trim()) {
-      return { captionOverride: ace, melodyComposition: false };
+      if (isSong) return { melodyComposition: false };
+      return captionFromOverride(ace.trim(), args.mode);
     }
   }
 

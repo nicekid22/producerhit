@@ -1,36 +1,16 @@
 import { computeAceRequestedDurationSec } from "./aceDuration";
 import { resolveAceQualityFlags } from "./aceQuality";
 import { normalizeAceGenerationPayload } from "../prompt/acePromptContract";
+import { extractBpmNumberFromText } from "../prompt/promptBank/genreFromCaption";
 import { buildAceCaption } from "./promptAce";
+import { buildAceSampleQuery, resolveAceSampleMode } from "./aceSampleMode";
 import type { GenerateLoopAceOptions, GenerateParams } from "./types";
 
 /**
- * Routage ACE prompt vs sample_mode (champ « Idée » UI, pas les paroles).
- *
- * | Cas | caption envoyée | sample_mode | useFormat |
- * |-----|-----------------|-------------|-----------|
- * | Idée remplie / dé / landing (captionOverride) | override enrichi | false | true |
- * | Idée vide + genre catalogue (buildAceCaption) | tags genre ACE | false | true |
- * | Idée vide + rien à mettre en caption | "" + sample_query | true | false |
- * | Beat instrumental | tags beat | false | true |
- *
- * Bug corrigé : idée vide + genre choisi activait sample_mode car lyrics vides,
- * vidant caption et désactivant l'enrichissement — alors que buildAceCaption
- * fournit déjà le prompt genre à envoyer.
+ * `sample_mode` = mode ACE « Simple / Song Description » (description naturelle → chanson complète).
+ * Activé automatiquement quand il n'y a pas de paroles manuelles ni captionOverride banque.
  */
-export function resolveAceSampleMode(args: {
-  captionOverride: string;
-  baseCaption: string;
-  instrumental: boolean;
-  lyricsTrimmed: string;
-  explicitSampleMode?: boolean;
-}): boolean {
-  if (args.captionOverride.trim()) return false;
-  const isAiLyrics = !args.instrumental && args.lyricsTrimmed === "";
-  const hasCatalogPrompt = args.baseCaption.trim().length > 0;
-  if (isAiLyrics && hasCatalogPrompt) return args.explicitSampleMode === true;
-  return Boolean(args.explicitSampleMode || isAiLyrics);
-}
+export { resolveAceSampleMode, buildAceSampleQuery } from "./aceSampleMode";
 
 export function buildAceRequestBody(
   params: GenerateParams,
@@ -75,14 +55,20 @@ export function buildAceRequestBody(
 
   const effectiveSampleMode = resolveAceSampleMode({
     captionOverride,
-    baseCaption,
     instrumental,
-    lyricsTrimmed,
     explicitSampleMode: options?.sampleMode,
+    lyricsTrimmed: lyricsTrimmed,
   });
   const caption = effectiveSampleMode ? "" : baseCaption;
   const lyrics = normalized.lyrics || (instrumental ? "[Instrumental]" : lyricsTrimmed);
-  const effectiveSampleQuery = effectiveSampleMode ? sampleQuery || baseCaption : sampleQuery;
+  const effectiveSampleQuery = effectiveSampleMode
+    ? sampleQuery ||
+      buildAceSampleQuery({
+        genre: params.genre,
+        idea: params.prompt,
+        vocalStyle: options?.vocalStyle,
+      })
+    : sampleQuery;
 
   const clampNumber = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
   const bars =
@@ -118,10 +104,19 @@ export function buildAceRequestBody(
     body.generationKey = options.generationKey.trim();
   }
   if (effectiveSampleQuery) body.sampleQuery = effectiveSampleQuery;
-  if (!options?.autoMeta && params.bpm > 0) body.bpm = params.bpm;
+  const bankBpmFromCaption =
+    options?.autoMeta && captionOverride ? extractBpmNumberFromText(baseCaption) : null;
+  const resolvedBpm =
+    !options?.autoMeta && params.bpm > 0
+      ? Math.round(params.bpm)
+      : bankBpmFromCaption && bankBpmFromCaption > 0
+        ? bankBpmFromCaption
+        : null;
+  if (resolvedBpm && resolvedBpm > 0) body.bpm = resolvedBpm;
   if (!options?.autoMeta && params.key && params.scale) body.keyScale = `${params.key} ${params.scale}`;
   if (options?.timeSignature) body.timeSignature = options.timeSignature;
   if (params.genre) body.genre = params.genre;
+  if (options?.vocalStyle?.trim()) body.vocalStyle = options.vocalStyle.trim();
   if (params.mood) body.mood = params.mood;
   if (params.energyLevel) body.energyLevel = params.energyLevel;
   if (options?.autoMeta) body.autoMeta = true;
@@ -132,6 +127,7 @@ export function buildAceRequestBody(
     body.aceKeyPreferIndex = Math.abs(Math.floor(options.aceKeyPreferIndex));
   }
   if (options?.requirePersistableUrl) body.requirePersistableUrl = true;
+  if (captionOverride) body.captionOverride = captionOverride;
   if (melodyComposition) {
     body.melodyComposition = true;
   }

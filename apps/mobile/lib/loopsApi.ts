@@ -337,8 +337,6 @@ export type GenerateSongInput = {
 
 export async function generateSong(input: GenerateSongInput, options?: GenerateJobOptions): Promise<Loop> {
   const generationKey = randomKey();
-  const description = input.description.trim() || (input.lyricsMode === "manual" ? (input.lyrics ?? "").trim() : "");
-  if (!description) throw new Error("Describe your song idea first");
 
   let effectiveLyricsMode = input.lyricsMode;
   let effectiveLyrics = input.lyricsMode === "manual" ? (input.lyrics ?? "").trim() : "";
@@ -348,6 +346,13 @@ export async function generateSong(input: GenerateSongInput, options?: GenerateJ
   }
 
   const hasManualLyrics = effectiveLyricsMode === "manual" && effectiveLyrics.length > 0;
+  const genreOnlySong = Boolean(!input.description.trim() && !hasManualLyrics && input.genre.trim());
+
+  const description =
+    input.description.trim() || (hasManualLyrics ? effectiveLyrics : "") || (genreOnlySong ? "" : "");
+  if (!description && !genreOnlySong) {
+    throw new Error("Describe your song idea first");
+  }
   const vocalLanguage = resolveSongVocalLanguage({
     mode: input.vocalLanguageMode ?? "auto",
     manualCode: input.manualVocalLanguage ?? "en",
@@ -372,16 +377,16 @@ export async function generateSong(input: GenerateSongInput, options?: GenerateJ
   const result = await generateTypeBeatAce(params, createAceDeps(session.access_token), {
     instrumental: false,
     isSong: true,
-    lyrics: effectiveLyrics,
+    lyrics: hasManualLyrics ? effectiveLyrics : "",
     vocalLanguage,
     autoMeta: true,
     thinking: true,
-    useFormat: !hasManualLyrics,
     duration: hasManualLyrics ? estimateSongDurationFromLyrics(effectiveLyrics) : undefined,
     generationKey,
     requirePersistableUrl: true,
     captionOverride: input.captionOverride ?? undefined,
-    melodyComposition: input.melodyComposition ?? Boolean(input.captionOverride?.trim()),
+    melodyComposition: input.melodyComposition === true,
+    vocalStyle: input.vocalStyle?.trim() || undefined,
     onJobStatus: options?.onJobStatus,
   });
 
@@ -515,7 +520,7 @@ export async function generateTypeBeat(
     requirePersistableUrl: true,
     autoMeta: false,
     captionOverride: options?.captionOverride ?? undefined,
-    melodyComposition: options?.melodyComposition ?? Boolean(options?.captionOverride?.trim()),
+    melodyComposition: options?.melodyComposition === true,
     onJobStatus: options?.onJobStatus,
   });
 

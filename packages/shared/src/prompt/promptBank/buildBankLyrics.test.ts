@@ -36,7 +36,20 @@ describe("buildBankLyrics", () => {
     expect(lyrics).toContain("[chorus]");
     expect(lyrics).toContain("[en]");
     expect(lyrics).not.toMatch(/\(storytelling/i);
-    expect(lyrics.toLowerCase()).toContain("you fell asleep");
+    expect(lyrics.toLowerCase()).not.toContain("you fell asleep");
+  });
+
+  it("does not sing the display hook verbatim in verses or chorus", () => {
+    const display = "Sens la vague sens l'amour — tropical house, 126 bpm";
+    const hook = extractHookFromDisplay(display);
+    const lyrics = buildSingableLyricsFromBankEntry({
+      ...sample,
+      lang: "fr",
+      theme: "good_vibes",
+      display,
+      id: 2396,
+    });
+    expect(lyrics.toLowerCase()).not.toContain(hook.toLowerCase());
   });
 
   it("is deterministic per bank id", () => {
@@ -63,7 +76,23 @@ describe("buildBankLyrics", () => {
       id: 2002,
     });
     expect(fr).toContain("[fr]");
-    expect(fr).toMatch(/tomber amoureux|ville étrangère/i);
+    expect(fr.toLowerCase()).not.toMatch(/tomber amoureux|ville étrangère/);
+    expect(fr.toLowerCase()).toMatch(/cœur|poitrine|reste|nuit/);
+  });
+
+  it("street theme drill FR — no romantic love lines", () => {
+    const display = "Ils glorifient la vie et ignorent le coût — drill conscient, 142 bpm";
+    const lyrics = buildSingableLyricsFromBankEntry({
+      ...sample,
+      lang: "fr",
+      theme: "street",
+      display,
+      id: 1662,
+    });
+    const lower = lyrics.toLowerCase();
+    expect(lower).not.toMatch(/tes yeux|dans tes bras|cœur s'emballe|mon cœur bat|reste encore un peu/);
+    expect(lower).toMatch(/bloc|vérité|coût|prix|rue|flow|dream|cost|block|truth/);
+    expect(lyrics).toContain("[fr]");
   });
 
   it("does not repeat the same verse line four times for short hooks", () => {
@@ -100,7 +129,18 @@ describe("buildBankLyrics", () => {
   });
 
   it("covers all bank themes without placeholders", () => {
-    for (const theme of ["love", "loss", "hustle", "party", "heartbreak", "nostalgia", "identity", "night"]) {
+    for (const theme of [
+      "love",
+      "loss",
+      "hustle",
+      "party",
+      "heartbreak",
+      "nostalgia",
+      "identity",
+      "night",
+      "good_vibes",
+      "street",
+    ]) {
       const lyrics = buildSingableLyricsFromBankEntry({
         ...sample,
         theme,

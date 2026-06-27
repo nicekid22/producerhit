@@ -1,6 +1,7 @@
 import {
   normalizeBankTheme,
   themeBridgeLines,
+  themeChorusLines,
   themeOutroLines,
   themePreChorusLines,
   themeVerseFillers,
@@ -43,64 +44,24 @@ function mulberry32(seed: number): () => number {
   };
 }
 
-function splitHookIntoLines(hook: string, lineCount: number, maxWords: number): string[] {
-  const words = hook.split(/\s+/).filter(Boolean);
-  if (words.length === 0) {
-    return Array.from({ length: lineCount }, () => "...");
-  }
-  if (words.length <= maxWords) {
-    return [words.join(" ")];
-  }
-
-  const lines: string[] = [];
-  let cursor = 0;
-  for (let i = 0; i < lineCount; i += 1) {
-    const remainingLines = lineCount - i;
-    const remainingWords = words.length - cursor;
-    const size = Math.min(maxWords, Math.max(3, Math.ceil(remainingWords / remainingLines)));
-    const chunk = words.slice(cursor, cursor + size);
-    cursor += size;
-    lines.push(chunk.join(" "));
-  }
-  while (lines.length < lineCount) {
-    lines.push(lines[lines.length - 1] ?? hook);
-  }
-  return lines;
-}
-
 function buildVerseLines(
-  hook: string,
   lineCount: number,
   bankTheme: BankLyricsTheme,
   lang: "en" | "fr",
   rng: () => number,
-  fillerOffset: number,
 ): string[] {
-  const hookLines = splitHookIntoLines(hook, Math.min(2, lineCount), 7);
-  const fillers = themeVerseFillers(lang, bankTheme, rng);
-  const lines = [...hookLines];
-  let fi = fillerOffset;
-  while (lines.length < lineCount) {
-    lines.push(fillers[fi % fillers.length]!);
-    fi += 1;
-  }
+  const lines = themeVerseFillers(lang, bankTheme, rng);
   return lines.slice(0, lineCount);
 }
 
-function buildChorusLines(hook: string, lineCount: number): string[] {
-  const words = hook.split(/\s+/).filter(Boolean);
-  if (words.length <= 6) {
-    const half = Math.ceil(words.length / 2);
-    const a = words.slice(0, half).join(" ");
-    const b = words.slice(half).join(" ") || a;
-    const base = [a, b].filter(Boolean);
-    const out: string[] = [];
-    for (let i = 0; i < lineCount; i += 1) {
-      out.push(base[i % base.length]!);
-    }
-    return out;
+function buildChorusLines(lineCount: number, bankTheme: BankLyricsTheme, lang: "en" | "fr", rng: () => number): string[] {
+  const [a, b] = themeChorusLines(lang, bankTheme, rng);
+  const base = [a, b].filter(Boolean);
+  const out: string[] = [];
+  for (let i = 0; i < lineCount; i += 1) {
+    out.push(base[i % base.length]!);
   }
-  return splitHookIntoLines(hook, lineCount, 6);
+  return out;
 }
 
 function joinSections(sections: Array<{ tag: string; lines: string[] }>, lang: "en" | "fr"): string {
@@ -111,18 +72,13 @@ function joinSections(sections: Array<{ tag: string; lines: string[] }>, lang: "
   return blocks.join("\n").trim();
 }
 
-/** Génère des paroles courtes chantables (4–7 mots/ligne) à partir du hook display. */
+/** Paroles thématiques — le hook display inspire le thème, mais n'est pas chanté mot pour mot. */
 export function buildSingableLyricsFromBankEntry(input: BuildBankLyricsInput): string {
-  const hook =
-    extractHookFromDisplay(input.display) ||
-    extractHookFromPlaceholder(input.lyrics_structure) ||
-    (input.lang === "fr" ? "ce moment entre nous" : "this moment with you");
-
   const bankTheme = normalizeBankTheme(input.theme);
-  const rng = mulberry32(input.id * 9973 + hook.length * 13);
-  const verse1 = buildVerseLines(hook, 4, bankTheme, input.lang, rng, 0);
-  const verse2 = buildVerseLines(hook, 4, bankTheme, input.lang, rng, 2);
-  const chorus = buildChorusLines(hook, 4);
+  const rng = mulberry32(input.id * 9973 + input.display.length * 13);
+  const verse1 = buildVerseLines(4, bankTheme, input.lang, rng);
+  const verse2 = buildVerseLines(4, bankTheme, input.lang, rng);
+  const chorus = buildChorusLines(4, bankTheme, input.lang, rng);
   const preChorus = themePreChorusLines(input.lang, bankTheme, rng);
   const bridge = themeBridgeLines(input.lang, bankTheme, rng);
   const outro = themeOutroLines(input.lang, bankTheme);

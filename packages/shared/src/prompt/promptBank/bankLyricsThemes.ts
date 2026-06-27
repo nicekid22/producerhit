@@ -7,7 +7,8 @@ export type BankLyricsTheme =
   | "nostalgia"
   | "identity"
   | "night"
-  | "good_vibes";
+  | "good_vibes"
+  | "street";
 
 const THEMES = new Set<string>([
   "love",
@@ -19,11 +20,25 @@ const THEMES = new Set<string>([
   "identity",
   "night",
   "good_vibes",
+  "street",
 ]);
+
+/** Thèmes v2 banque → pools lyrics v1. */
+const THEME_ALIASES: Record<string, BankLyricsTheme> = {
+  street: "street",
+  freedom: "hustle",
+  rage: "hustle",
+  family: "love",
+  introspection: "night",
+  spiritual: "identity",
+  summer: "good_vibes",
+};
 
 export function normalizeBankTheme(theme: string): BankLyricsTheme {
   const key = theme.trim().toLowerCase();
-  return THEMES.has(key) ? (key as BankLyricsTheme) : "love";
+  if (THEME_ALIASES[key]) return THEME_ALIASES[key];
+  if (THEMES.has(key)) return key as BankLyricsTheme;
+  return "hustle";
 }
 
 type ThemeLinePools = Record<BankLyricsTheme, string[][]>;
@@ -65,6 +80,10 @@ const VERSE_FILLERS_EN: ThemeLinePools = {
     ["Sun on my skin today", "Smile I can't erase", "Good news on my phone", "Life feels wide open"],
     ["Laughing with my crew", "Golden hour mood", "Nothing left to prove", "Today belongs to us"],
   ],
+  street: [
+    ["They sell the dream online", "Ignore the real cost", "Blocks remember every name", "Truth inside each bar"],
+    ["Same corners, heavy eyes", "Glory on a screen", "We pay in blood and time", "Speak it out loud"],
+  ],
 };
 
 const VERSE_FILLERS_FR: ThemeLinePools = {
@@ -103,6 +122,96 @@ const VERSE_FILLERS_FR: ThemeLinePools = {
   good_vibes: [
     ["Soleil sur ma peau aujourd'hui", "Sourire impossible à cacher", "Bonnes nouvelles au téléphone", "La vie s'ouvre devant moi"],
     ["On rigole entre potes", "Ambiance heure dorée", "Plus rien à prouver", "Aujourd'hui c'est pour nous"],
+  ],
+  street: [
+    ["Ils vendent le faux rêve", "Ignorent le vrai prix", "Le bloc garde les noms", "La vérité dans le flow"],
+    ["Mêmes coins, yeux lourds", "Gloire sur un écran", "On paie en sang et temps", "Dis-le à voix haute"],
+  ],
+};
+
+const CHORUS_EN: ThemeLinePools = {
+  love: [
+    ["Stay with me tonight", "You feel so right"],
+    ["Heartbeats sync as one", "This has just begun"],
+  ],
+  loss: [
+    ["You're gone but not forgotten", "Memories stay broken"],
+    ["Empty where you were", "Silence is my curse"],
+  ],
+  hustle: [
+    ["Grind until I win", "Never giving in"],
+    ["Built from dust to gold", "Story still untold"],
+  ],
+  party: [
+    ["Hands up feel alive", "Dance until sunrise"],
+    ["Turn the night up loud", "Own the whole crowd"],
+  ],
+  heartbreak: [
+    ["Love turned into dust", "Trust was never enough"],
+    ["Tears fall like rain", "Nothing left to save"],
+  ],
+  nostalgia: [
+    ["Take me back in time", "Those days felt so right"],
+    ["Golden hour again", "Wish we could rewind"],
+  ],
+  identity: [
+    ["This is who I am", "No more hiding out"],
+    ["Finally breaking free", "Just the real me"],
+  ],
+  night: [
+    ["City never sleeps", "Secrets in the dark"],
+    ["Neon on my face", "Midnight is my place"],
+  ],
+  good_vibes: [
+    ["Good vibes all night long", "Feel the joy in every song"],
+    ["We glow when we're together", "Sunshine lasts forever"],
+  ],
+  street: [
+    ["Speak the truth out loud", "They can't mute the block"],
+    ["Real cost, real pain", "Still standing on the block"],
+  ],
+};
+
+const CHORUS_FR: ThemeLinePools = {
+  love: [
+    ["Reste avec moi ce soir", "Avec toi je vais bien"],
+    ["Nos cœurs battent à l'unisson", "Ça commence pour nous"],
+  ],
+  loss: [
+    ["Tu es parti loin", "Les souvenirs restent"],
+    ["Silence où tu étais", "Rien à retenir"],
+  ],
+  hustle: [
+    ["Je grind jusqu'au bout", "Jamais je plie"],
+    ["Du sol vers l'or", "L'histoire continue"],
+  ],
+  party: [
+    ["Les mains en l'air ce soir", "On danse jusqu'au jour"],
+    ["Monte le son plus fort", "On vit chaque accord"],
+  ],
+  heartbreak: [
+    ["L'amour en poussière", "La confiance brisée"],
+    ["Les larmes comme pluie", "Rien à sauver"],
+  ],
+  nostalgia: [
+    ["Ramène-moi dans le temps", "Ces jours étaient si beaux"],
+    ["Heure dorée encore", "J'aimerais rembobiner"],
+  ],
+  identity: [
+    ["Voilà qui je suis", "Fini de me cacher"],
+    ["Je me libère enfin", "Le vrai moi"],
+  ],
+  night: [
+    ["La ville ne dort pas", "Secrets dans le noir"],
+    ["Néon sur ma peau", "Minuit m'appartient"],
+  ],
+  good_vibes: [
+    ["Bonnes ondes toute la nuit", "La joie dans chaque refrain"],
+    ["On brille ensemble", "Le soleil dure toujours"],
+  ],
+  street: [
+    ["Dis la vérité fort", "Ils peuvent pas taire le bloc"],
+    ["Vrai prix, vraie douleur", "Toujours debout ici"],
   ],
 };
 
@@ -143,6 +252,10 @@ const PRE_CHORUS_EN: ThemeLinePools = {
     ["Hands up, feel the joy", "Every worry destroyed"],
     ["Sunshine in my chest", "This day is the best"],
   ],
+  street: [
+    ["No filter on the truth", "Pressure on the youth"],
+    ["Cold world, steady breath", "Bars cut like a blade"],
+  ],
 };
 
 const PRE_CHORUS_FR: ThemeLinePools = {
@@ -181,6 +294,10 @@ const PRE_CHORUS_FR: ThemeLinePools = {
   good_vibes: [
     ["Les mains en l'air, joie", "Chaque souci s'efface"],
     ["Soleil dans ma poitrine", "Ce jour est le nôtre"],
+  ],
+  street: [
+    ["Pas de filtre sur le vrai", "Pression sur la jeunesse"],
+    ["Monde froid, souffle stable", "Les bars tranchent net"],
   ],
 };
 
@@ -221,6 +338,10 @@ const BRIDGE_EN: ThemeLinePools = {
     ["We made it through the week", "Dance like we are free"],
     ["Hold this golden light", "Everything feels right"],
   ],
+  street: [
+    ["Seen too much too young", "Still here, still strong"],
+    ["They watch from far away", "We live it every day"],
+  ],
 };
 
 const BRIDGE_FR: ThemeLinePools = {
@@ -260,6 +381,10 @@ const BRIDGE_FR: ThemeLinePools = {
     ["On a survécu la semaine", "Danse comme on est libres"],
     ["Garde cette lumière dorée", "Tout semble aligné"],
   ],
+  street: [
+    ["Trop vu trop jeune", "Toujours là, debout"],
+    ["Ils regardent de loin", "On vit ça chaque jour"],
+  ],
 };
 
 type ThemeOutroPools = Record<BankLyricsTheme, string[]>;
@@ -274,6 +399,7 @@ const OUTRO_EN: ThemeOutroPools = {
   identity: ["I know who I am", "Here I stand"],
   night: ["City fades away", "Till another day"],
   good_vibes: ["Keep the good vibes close", "Let the joy stay loud"],
+  street: ["Truth echo in the block", "Don't forget the cost"],
 };
 
 const OUTRO_FR: ThemeOutroPools = {
@@ -286,6 +412,7 @@ const OUTRO_FR: ThemeOutroPools = {
   identity: ["Je sais qui je suis", "Me voici debout"],
   night: ["La ville s'éloigne", "Jusqu'à demain"],
   good_vibes: ["Garde les bonnes ondes", "La joie reste forte"],
+  street: ["La vérité résonne", "N'oublie pas le prix"],
 };
 
 export function pickThemeLines(
@@ -303,6 +430,10 @@ export function themeVerseFillers(lang: "en" | "fr", theme: BankLyricsTheme, rng
 
 export function themePreChorusLines(lang: "en" | "fr", theme: BankLyricsTheme, rng: () => number): string[] {
   return pickThemeLines(lang === "fr" ? PRE_CHORUS_FR : PRE_CHORUS_EN, theme, rng);
+}
+
+export function themeChorusLines(lang: "en" | "fr", theme: BankLyricsTheme, rng: () => number): string[] {
+  return pickThemeLines(lang === "fr" ? CHORUS_FR : CHORUS_EN, theme, rng);
 }
 
 export function themeBridgeLines(lang: "en" | "fr", theme: BankLyricsTheme, rng: () => number): string[] {

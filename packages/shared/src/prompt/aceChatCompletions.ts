@@ -1,3 +1,5 @@
+import { isAiComposeSongRequest } from "../generation/aceGenreOnlyLyrics";
+
 /**
  * ACE chat/completions LM instruction builder — shared web + edge.
  */
@@ -16,6 +18,15 @@ export const ACE_SONG_LM_RULES = [
   "Repeat the chorus lyrics identically every time.",
   "Vocal delivery: controlled phrasing, clean studio vocal, steady pitch.",
   "Replace any parenthetical stage directions with real short singable lines.",
+  "When no user lyrics are provided: invent original song words that fit the genre mood.",
+  "**Caption:** must be a short prose musical description (instruments, groove, energy) — not a tag list.",
+  "## Lyrics must contain real singable words only — never copy Caption tags, BPM, vocal language, or production instructions.",
+].join(" ");
+
+export const ACE_AI_COMPOSE_SONG_LM_RULES = [
+  "CRITICAL: The singer performs the ## Lyrics you write — not the Caption metadata.",
+  "Never put comma-separated tags, technical directions, or the words \"vocal style\" / \"vocal language\" in ## Lyrics.",
+  "This is a vocal song with a lead singer — not instrumental, not a beat, not an arrangement sketch.",
 ].join(" ");
 
 export const ACE_BEAT_LM_RULES = [
@@ -39,6 +50,7 @@ export type BuildAceChatCompletionsInput = {
   scale: string;
   timeSignature: string;
   vocalLanguage?: string;
+  vocalStyle?: string;
 };
 
 function hashToIndex(seed: string, length: number): number {
@@ -90,6 +102,9 @@ export function buildAceChatCompletionsParts(input: BuildAceChatCompletionsInput
   } else {
     parts.push(baseCaption);
     parts.push(ACE_SONG_LM_RULES);
+    if (isAiComposeSongRequest({ instrumental: false, lyrics: input.lyrics })) {
+      parts.push(ACE_AI_COMPOSE_SONG_LM_RULES);
+    }
     const effectiveLyrics = input.lyrics.trim();
     if (effectiveLyrics) {
       if (lyricsNeedsLmExpansion(effectiveLyrics)) {
@@ -102,13 +117,31 @@ export function buildAceChatCompletionsParts(input: BuildAceChatCompletionsInput
     }
     const vocalLanguage = (input.vocalLanguage || "").trim();
     if (vocalLanguage) parts.push(`Vocal language: ${vocalLanguage}.`);
+    const vocalStyle = (input.vocalStyle || "").trim();
+    if (vocalStyle) parts.push(`Vocal delivery style: ${vocalStyle}.`);
   }
 
   if (!input.autoMeta && input.bpm && input.bpm > 0) parts.push(`BPM: ${input.bpm}.`);
+  if (input.autoMeta) {
+    const bankBpm = input.baseCaption.match(/(\d{2,3})\s*bpm/i)?.[1];
+    if (bankBpm) {
+      parts.push(`Target BPM: ${bankBpm} — keep drill/trap tempo, do not slow down into mid-tempo pop.`);
+    }
+  }
   if (!input.autoMeta && input.key && input.scale) parts.push(`Key: ${input.key} ${input.scale}.`);
   if (input.timeSignature.trim()) parts.push(`Time signature: ${input.timeSignature.trim()}.`);
   if (input.genre) {
     parts.push(`In the generated Metadata caption, explicitly include the genre: "${input.genre}".`);
+  }
+  if (/\bdrill\b/i.test(input.genre)) {
+    parts.push(
+      "Music MUST be drill (sliding 808, dark minor melody, syncopated hi-hats, sparse piano or strings) — NOT dance-pop, NOT four-on-the-floor house, NOT bright euphoric pop synths.",
+    );
+  }
+  if (/\btrapsoul\b/i.test(input.genre)) {
+    parts.push(
+      "Music MUST be trap soul (808 bass, trap hi-hats, R&B vocal pocket) — NOT acoustic pop ballad, NOT music-box arpeggios, NOT brushed jazz drums or upright bass singer-songwriter.",
+    );
   }
   if (input.genre === "Dancehall") {
     parts.push('In the generated Metadata caption, explicitly include the words: "dancehall" and "riddim".');

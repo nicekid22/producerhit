@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { resolveGenerationCaptionContext } from "@producerhit/shared";
+import { buildAceSampleQuery, resolveGenerationCaptionContext } from "@producerhit/shared";
 import type { AppLocale } from "@producerhit/shared";
 import { t } from "@/lib/i18n/catalog";
 import { useTheme } from "@/theme/ThemeProvider";
@@ -41,7 +41,9 @@ export function MobileAceCaptionPreview({ locale, displayIdea, formGenre, mode, 
       uiLocale: locale,
       diceAceOverride,
     });
-    return ctx.captionOverride?.trim() ?? "";
+    return ctx.captionOverride?.trim() ?? (mode === "song" && debouncedIdea.trim()
+      ? buildAceSampleQuery({ genre: formGenre, idea: debouncedIdea })
+      : "");
   }, [enabled, debouncedIdea, formGenre, mode, locale, diceAceOverride]);
 
   const toggleEnabled = () => {
