@@ -2,6 +2,10 @@ import type { AppLocale } from "@/i18n/config";
 
 import { isLaunchOfferActive } from "@/lib/launchOffer";
 
+import { PLAN_MONTHLY_USD } from "@/lib/planPricing";
+
+import { PLAN_LIMITS } from "@/lib/planLimits";
+
 import { LaunchOfferChips } from "@/components/marketing/LaunchOfferChips";
 
 import { LaunchPriceDisplay } from "@/components/marketing/LaunchPriceDisplay";
@@ -20,7 +24,19 @@ type Props = {
 
   className?: string;
 
+  showPerTrack?: boolean;
+
 };
+
+
+
+function perTrackHint(locale: AppLocale): string {
+
+  const per = PLAN_MONTHLY_USD.pro / PLAN_LIMITS.pro;
+
+  return locale === "fr" ? `≈ $${per.toFixed(2)} / track` : `≈ $${per.toFixed(2)} / track`;
+
+}
 
 
 
@@ -33,6 +49,8 @@ export function LaunchProOfferBlock({
   align = "left",
 
   className,
+
+  showPerTrack = true,
 
 }: Props) {
 

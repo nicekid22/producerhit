@@ -63,7 +63,7 @@ export function getPricingPlans(locale: AppLocale): PricingPlanContent[] {
         gen(PLAN_LIMITS.pro),
         s.wavSpotify,
         s.commercialIncluded,
-        hostedAudioRetentionDaysLabel(locale, "pro"),
+        s.proMasteringPreview,
         s.modesAll,
         s.cloudPublicLinks,
       ],

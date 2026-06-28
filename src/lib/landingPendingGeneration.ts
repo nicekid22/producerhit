@@ -7,6 +7,7 @@ export type LandingPendingGeneration = {
   acePrompt?: string;
   /** Déduit du prompt si absent : rempli → depuis l'idée, vide → aléatoire. */
   genreStrategy?: LandingGenreStrategy;
+  sampleMode?: boolean;
 };
 
 const STORAGE_KEY = "producerhit_pending_landing";

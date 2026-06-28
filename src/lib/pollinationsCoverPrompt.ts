@@ -16,11 +16,16 @@ export {
 export type { StructuredCoverPromptInput };
 
 const STYLE_TAILS = [
-  "museum-grade contemporary installation, sculptural composition, luxury gallery aesthetic, subtle imperfections, tactile materials, soft architectural light, no text",
-  "hand-carved translucent resin artwork, floating geometry, premium collectible design, monochromatic palette, refined shadows, no text",
-  "editorial still life with impossible objects, luxury product photography, soft bloom, elegant composition, muted palette, no text",
-  "liquid chrome sculpture emerging from velvet darkness, museum lighting, refined reflections, premium aesthetic, no text",
-  "minimal brutalist composition with handcrafted textures, gallery exhibition atmosphere, sophisticated color harmony, no text",
+  "anime key visual, expressive manga composition, vibrant cel shading, dramatic lighting, premium illustration, no text",
+  "kawaii dreamcore, pastel palette, plush aesthetic, cute floating objects, magical sparkle, soft gradients, premium artwork, no text",
+  "glitchcore anime, digital corruption, RGB split, CRT scanlines, holographic distortion, cyber aesthetic, dark background, no text",
+  "retro 90s manga cover, vintage print texture, halftone shading, bold ink lines, nostalgic Japanese magazine aesthetic, no text",
+  "anime street fashion editorial, Harajuku inspired, colorful accessories, glossy finish, dynamic pose, premium illustration, no text",
+  "vaporwave anime, neon sunset, chrome reflections, retro grid horizon, dreamy atmosphere, high contrast, no text",
+  "dark anime fantasy, cursed symbols, crimson moonlight, cinematic composition, gothic elegance, premium artwork, no text",
+  "chibi kawaii chaos, oversized expressions, candy colors, playful composition, adorable mascot energy, polished illustration, no text",
+  "cyber anime heroine, holographic armor, neon rain, futuristic Tokyo nightlife, cinematic lighting, premium concept art, no text",
+  "surreal manga dreamscape, impossible architecture, floating sakura petals, ethereal lighting, emotional atmosphere, no text",
 ] as const;
 
 /** Legacy free-form suggestions (dé). */

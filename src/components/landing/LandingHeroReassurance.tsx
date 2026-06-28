@@ -14,8 +14,7 @@ export function LandingHeroReassurance({ text, className, tailOnly = false }: Pr
   const tail = parts.slice(1);
 
   if (tailOnly) {
-    const tailText = tail.length > 0 ? tail.join(" · ") : text;
-    return <p className={className}>{tailText}</p>;
+    return <p className={className}>&nbsp;</p>;
   }
 
   return (

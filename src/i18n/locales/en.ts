@@ -60,7 +60,7 @@ export const en: BaseMessageCatalog = {
   landing: {
     heroTagline: "AI studio · Songs & type beats",
     heroLead: "Type a vibe → hear a finished track in under a minute. MP3 free, WAV on Pro.",
-    heroReassurance: "10 free tracks/mo · No credit card · No commitment",
+    heroReassurance: "10 free tracks/mo",
     heroScrollCue: "Try it now — no signup to preview",
     heroCtaPrimary: "Create my first track free",
     heroCtaDashboard: "Open my studio →",

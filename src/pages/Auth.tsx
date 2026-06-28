@@ -376,7 +376,6 @@ export default function Auth() {
             </button>
           </form>
 
-          <ConversionTrustBar locale={locale} compact className="pk-auth-trust" />
         </div>
       </div>
     </MarketingPageShell>

@@ -26,10 +26,6 @@ import { getPricingPlans } from "@/lib/pricingContent";
 
 import { PricingPlanButton } from "@/components/pricing/PricingPlanButton";
 
-import { PLAN_MONTHLY_USD } from "@/lib/planPricing";
-
-import { PLAN_LIMITS } from "@/lib/planLimits";
-
 import { croPricingTeaser } from "@/lib/croTrustCopy";
 
 import { useT } from "@/i18n";
@@ -59,16 +55,6 @@ type Props = {
 
 
 const TEASER_TIERS: PlanTier[] = ["pro", "free"];
-
-
-
-function perGenerationHint(locale: AppLocale): string {
-
-  const per = PLAN_MONTHLY_USD.pro / PLAN_LIMITS.pro;
-
-  return locale === "fr" ? `≈ $${per.toFixed(2)} / track` : `≈ $${per.toFixed(2)} / track`;
-
-}
 
 
 
@@ -259,12 +245,6 @@ export function LandingPricingTeaser({ locale, user, currentPlan }: Props) {
                 </div>
 
 
-
-                {isPro ? (
-
-                  <p className="pk-landing-pricing-teaser__value">{perGenerationHint(locale)}</p>
-
-                ) : null}
 
               </div>
 
