@@ -17,6 +17,7 @@ import { coverDetailsPatch, coverUrlFromLoop, loopWithCoverFallback, persistLoop
 import { readAceCoverFromStems } from "@/lib/stemsAceMerge";
 import { resolveLoopDisplayLyrics } from "@producerhit/shared";
 import {
+  assignLoopCoverOnce,
   scheduleLoopCoverBackfill,
   scheduleMissingCoverRepair,
 } from "@/lib/loopCoverBackfill";

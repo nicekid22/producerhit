@@ -235,6 +235,8 @@ type GenerateLoopAceOptions = {
   /** Profil vocal sauvegardé — ACE reference_audio (timbre clone). */
   voiceProfileId?: string;
   voiceCloneStrength?: number;
+  /** Style de livraison vocal (Singer, Rapper, etc.). */
+  vocalStyle?: string;
 };
 
 
