@@ -17,7 +17,6 @@ import { coverDetailsPatch, coverUrlFromLoop, loopWithCoverFallback, persistLoop
 import { readAceCoverFromStems } from "@/lib/stemsAceMerge";
 import { resolveLoopDisplayLyrics } from "@producerhit/shared";
 import {
-  assignLoopCoverOnce,
   scheduleLoopCoverBackfill,
   scheduleMissingCoverRepair,
 } from "@/lib/loopCoverBackfill";
@@ -1456,5 +1455,6 @@ export async function fetchCachedLoopAudioBlob(loopId: string): Promise<Blob | n
   if (!rec?.blob || rec.blob.size <= 0) return null;
   return rec.blob;
 }
+
 
 

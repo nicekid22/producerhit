@@ -98,7 +98,7 @@ async function mixBeatAndTag(opts: {
   ]);
 }
 
-async function readBodyBuffer(req: import("@vercel/node").VercelRequest): Promise<Buffer> {
+async function readBodyBuffer(req: import("node:http").IncomingMessage): Promise<Buffer> {
   const chunks: Buffer[] = [];
   for await (const chunk of req) {
     chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
@@ -129,7 +129,7 @@ function parseMultipart(raw: Buffer, boundary: string): Map<string, Buffer | str
   return parts;
 }
 
-export default async function handler(req: import("@vercel/node").VercelRequest, res: import("@vercel/node").VercelResponse) {
+export default async function handler(req: import("node:http").IncomingMessage & { method?: string }, res: import("node:http").ServerResponse) {
   if (req.method !== "POST") {
     res.status(405).json({ error: "method_not_allowed" });
     return;
@@ -237,3 +237,5 @@ export default async function handler(req: import("@vercel/node").VercelRequest,
     await fs.rm(dir, { recursive: true, force: true }).catch(() => undefined);
   }
 }
+
+
