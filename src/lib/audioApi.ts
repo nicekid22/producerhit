@@ -1358,3 +1358,4 @@ export async function remixLoopAce(input: import("@/lib/aceRemix").AceRemixInput
   if (!data.audioUrl) throw new Error("No audio URL returned");
   return { audioUrl: data.audioUrl, meta: data.meta ?? null };
 }
+

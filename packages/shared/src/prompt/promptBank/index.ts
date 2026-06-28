@@ -129,7 +129,7 @@ function rollFromEntry(entry: PromptBankEntry, uiLocale: AppLocale): PromptBankR
   };
 }
 
-function pickFromEntries(entries: PromptBankEntry[], uiLocale: AppLocale, seed?: number): PromptBankRoll {
+function pickFromEntries(entries: readonly PromptBankEntry[], uiLocale: AppLocale, seed?: number): PromptBankRoll {
   const idx =
     typeof seed === "number"
       ? Math.abs(Math.floor(seed)) % entries.length
@@ -168,3 +168,4 @@ export function findPromptBankByDisplay(display: string, uiLocale: AppLocale): P
   if (!hit) return null;
   return rollFromEntry(hit, uiLocale);
 }
+
