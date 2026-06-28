@@ -16,10 +16,11 @@ export {
 export type { StructuredCoverPromptInput };
 
 const STYLE_TAILS = [
-  "album cover, no text, cinematic lighting, high contrast, sharp focus",
-  "minimal artwork, bold shapes, glossy studio lighting, premium look",
-  "abstract art, moody haze, dramatic shadows, rich colors",
-  "streetwear aesthetic, neon accents, dark background, editorial photo",
+  "museum-grade contemporary installation, sculptural composition, luxury gallery aesthetic, subtle imperfections, tactile materials, soft architectural light, no text",
+  "hand-carved translucent resin artwork, floating geometry, premium collectible design, monochromatic palette, refined shadows, no text",
+  "editorial still life with impossible objects, luxury product photography, soft bloom, elegant composition, muted palette, no text",
+  "liquid chrome sculpture emerging from velvet darkness, museum lighting, refined reflections, premium aesthetic, no text",
+  "minimal brutalist composition with handcrafted textures, gallery exhibition atmosphere, sophisticated color harmony, no text",
 ] as const;
 
 /** Legacy free-form suggestions (dé). */
