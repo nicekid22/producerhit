@@ -75,12 +75,10 @@ async function downloadPollinationsJpeg(
   return bytes;
 }
 
-async function uploadCoverAndUpdateLoop(
+async function uploadCoverToStorage(
   admin: AdminClient,
   userId: string,
   loopId: string,
-  stemsUrl: unknown,
-  coverPrompt: string,
   bytes: Uint8Array,
   fileVariant?: string,
 ): Promise<{ coverUrl: string } | { error: string; status: number }> {
@@ -100,6 +98,21 @@ async function uploadCoverAndUpdateLoop(
   const { data: publicUrl } = admin.storage.from(BUCKET).getPublicUrl(storagePath);
   const coverUrl = publicUrl?.publicUrl?.trim();
   if (!coverUrl) return { error: "public_url_failed", status: 500 };
+  return { coverUrl };
+}
+
+async function uploadCoverAndUpdateLoop(
+  admin: AdminClient,
+  userId: string,
+  loopId: string,
+  stemsUrl: unknown,
+  coverPrompt: string,
+  bytes: Uint8Array,
+  fileVariant?: string,
+): Promise<{ coverUrl: string } | { error: string; status: number }> {
+  const uploadResult = await uploadCoverToStorage(admin, userId, loopId, bytes, fileVariant);
+  if ("error" in uploadResult) return uploadResult;
+  const coverUrl = uploadResult.coverUrl;
 
   const nextStems = mergeCoverIntoStems(stemsUrl, coverUrl, coverPrompt);
   if (!nextStems) return { error: "stems_merge_failed", status: 500 };
@@ -155,6 +168,7 @@ serve(async (req) => {
       seed?: unknown;
       idempotencyKey?: unknown;
       purpose?: unknown;
+      previewMode?: unknown;
     };
 
     const loopId = typeof body.loopId === "string" ? body.loopId.trim() : "";
@@ -162,12 +176,36 @@ serve(async (req) => {
     const seed = normalizeSeed(body.seed);
     const idempotencyRaw = typeof body.idempotencyKey === "string" ? body.idempotencyKey.trim() : "";
     const purpose = body.purpose === "card" ? "card" : "distribution";
+    const previewMode = body.previewMode === true;
 
     if (!loopId || !prompt) {
       return new Response(JSON.stringify({ error: "loopId and prompt required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // ── Preview mode: download + upload Storage only, no DB row needed ──
+    if (previewMode) {
+      const bytes = await downloadPollinationsJpeg(prompt, seed, 768, 768);
+      if (!bytes) {
+        return new Response(JSON.stringify({ error: "pollinations_failed" }), {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const variant = promptStorageVariant(prompt, seed);
+      const saved = await uploadCoverToStorage(admin, user.id, loopId, bytes, variant);
+      if ("error" in saved) {
+        return new Response(JSON.stringify({ error: saved.error }), {
+          status: saved.status,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(
+        JSON.stringify({ coverUrl: saved.coverUrl, coverKind: "image", source: "pollinations", preview: true }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });

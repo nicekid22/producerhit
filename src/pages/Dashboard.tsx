@@ -128,6 +128,7 @@ import { RemixStudioPanel } from "@/components/dashboard/RemixStudioPanel";
 import { CoverStudioPanel } from "@/components/dashboard/CoverStudioPanel";
 import { coverResultTitle, prepareCoverGeneration } from "@/lib/coverGeneration";
 import { generateBeat, generateBeatDualBatch, remixLoopAce } from "@/lib/audioApi";
+import { startCoverPrefetch, consumeCoverPrefetch } from "@/lib/earlyCoverPrefetch";
 import { ACE_REMIX_UNAVAILABLE_COPY, AceRemixUnavailableError } from "@/lib/aceRemix";
 import { buildAceCaption, type GenerateParams } from "@/lib/promptBuilder";
 import { resolveGenerationCaptionContext } from "@/lib/promptEnhancer";
@@ -1945,6 +1946,13 @@ export default function Dashboard() {
 
         const loop = await persistDraft(draft, audioUrl, value.engine, previewId);
         persistCompleted = true;
+
+        // Applique la cover pré-générée si elle est prête (sinon le repair normal prendra le relais)
+        void consumeCoverPrefetch(generationKey).then((coverUrl) => {
+          if (coverUrl?.startsWith("http")) {
+            applyLoopCoverUrl(loop.id, coverUrl, "image");
+          }
+        });
         if (mode === "song" && voiceCloneConfigRef.current.profileId) {
           const voiceToast = voiceCloneToastMessage(value.meta, locale);
           if (voiceToast?.type === "success") toast.success(voiceToast.message, { id: `voice-clone-${loop.id}` });
@@ -2004,6 +2012,16 @@ export default function Dashboard() {
           previewReady: false,
           generationKey,
           progressPct: 0,
+        });
+
+        // Pré-génère la cover Pollinations en parallèle de l'audio (image prête à la fin)
+        startCoverPrefetch(generationKey, {
+          genre: displayGenre,
+          mood: runAsSong ? "" : form.mood,
+          influence: form.influence,
+          prompt: storedPrompt,
+          name: title,
+          seed,
         });
 
         progressTick = window.setInterval(() => {

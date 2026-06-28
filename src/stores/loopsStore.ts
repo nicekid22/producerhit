@@ -1118,7 +1118,7 @@ export const useLoopsStore = create<LoopsState>((set, get) => ({
     void (async () => {
       try {
         if (needsCoverAssign) {
-          void scheduleLoopCoverBackfill([{ ...finalLoop, stemsUrl: stemsUrlForDb }]);
+          void scheduleMissingCoverRepair([{ ...finalLoop, stemsUrl: stemsUrlForDb }]);
         }
 
         if (LOOP_ACE_PERSIST) {
@@ -1233,7 +1233,7 @@ export const useLoopsStore = create<LoopsState>((set, get) => ({
     persistMyLoopsCache(user.id, useLoopsStore.getState().loops);
     void cacheLoopAudioFromSrc(row.id, finalLoop.audioUrl ?? trimmedAudioUrl);
     if (!LOOP_ACE_PERSIST && needsCoverAssign) {
-      void scheduleLoopCoverBackfill([{ ...finalLoop, stemsUrl: stemsUrlForDb }]);
+      void scheduleMissingCoverRepair([{ ...finalLoop, stemsUrl: stemsUrlForDb }]);
     }
 
     const player = usePlayerStore.getState();
