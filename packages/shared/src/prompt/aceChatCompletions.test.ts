@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildAceChatCompletionsParts } from "./aceChatCompletions";
+import { buildAceChatCompletionsParts, buildAceSampleModeUserMessage } from "./aceChatCompletions";
 
 describe("buildAceChatCompletionsParts", () => {
   const base = {
@@ -34,6 +34,7 @@ describe("buildAceChatCompletionsParts", () => {
     });
     expect(parts.join("\n")).toContain("4-8 syllables");
     expect(parts.join("\n")).toContain("Vocal language: fr");
+    expect(parts.join("\n")).toContain("written entirely in French");
     expect(parts.join("\n")).toContain("Lyrics:\n[Chorus]");
   });
 
@@ -66,6 +67,7 @@ describe("buildAceChatCompletionsParts", () => {
     const joined = parts.join("\n");
     expect(joined).toContain("lead singer");
     expect(joined).toContain("Vocal language: fr");
+    expect(joined).toContain("written entirely in French");
     expect(joined).toContain("Vocal delivery style: Singer");
     expect(joined).not.toContain("expand every section");
     expect(joined).not.toContain("vocal style Singer");
@@ -97,5 +99,17 @@ describe("buildAceChatCompletionsParts", () => {
     const joined = parts.join("\n");
     expect(joined).toMatch(/NOT acoustic pop ballad|trap soul/);
     expect(joined).toContain("Target BPM: 95");
+  });
+
+  it("sample_mode message appends catalog tags and French lyrics rule without duplicating idea", () => {
+    const message = buildAceSampleModeUserMessage({
+      sampleQuery: "Une chanson opium style sur des retrouvailles, Opium Style song, Singer vocal style",
+      captionOverride: "opium style, dark synths, sliding 808, 140 bpm, clean studio vocal, vocal language fr",
+      vocalLanguage: "fr",
+    });
+    expect(message).toContain("retrouvailles");
+    expect(message).toContain("Production style tags");
+    expect(message).toContain("opium style, dark synths");
+    expect(message).toContain("written entirely in French");
   });
 });

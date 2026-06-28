@@ -8,7 +8,7 @@ import type { GenerateLoopAceOptions, GenerateParams } from "./types";
 
 /**
  * `sample_mode` = mode ACE « Simple / Song Description » (description naturelle → chanson complète).
- * Activé automatiquement quand il n'y a pas de paroles manuelles ni captionOverride banque.
+ * Activé automatiquement quand il n'y a pas de paroles manuelles (captionOverride catalogue inclus).
  */
 export { resolveAceSampleMode, buildAceSampleQuery } from "./aceSampleMode";
 
@@ -56,6 +56,7 @@ export function buildAceRequestBody(
   const effectiveSampleMode = resolveAceSampleMode({
     captionOverride,
     instrumental,
+    melodyComposition,
     explicitSampleMode: options?.sampleMode,
     lyricsTrimmed: lyricsTrimmed,
   });

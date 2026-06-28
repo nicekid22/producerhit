@@ -78,6 +78,46 @@ function lyricsNeedsLmExpansion(lyrics: string): boolean {
 
 const LYRICS_PLACEHOLDER_LINE_RE = /^\([^)]*\)\s*$/;
 
+const VOCAL_LANGUAGE_LYRIC_LABEL: Record<string, string> = {
+  fr: "French",
+  es: "Spanish",
+  pt: "Portuguese",
+  it: "Italian",
+  de: "German",
+  ja: "Japanese",
+  ko: "Korean",
+  zh: "Chinese",
+  ar: "Arabic",
+  ru: "Russian",
+};
+
+export function lyricsLanguageInstruction(vocalLanguage: string): string | null {
+  const code = vocalLanguage.trim().toLowerCase();
+  if (!code || code === "en") return null;
+  const label = VOCAL_LANGUAGE_LYRIC_LABEL[code] ?? code.toUpperCase();
+  return `All ## Lyrics must be written entirely in ${label} (native words, not English).`;
+}
+
+/** Message utilisateur en sample_mode — idée naturelle + tags genre (sans les chanter). */
+export function buildAceSampleModeUserMessage(args: {
+  sampleQuery: string;
+  captionOverride?: string;
+  vocalLanguage?: string;
+}): string {
+  const sq = args.sampleQuery.trim();
+  const tags = (args.captionOverride || "").trim();
+  let message = sq;
+  if (tags && tags !== sq) {
+    const head = tags.slice(0, Math.min(40, tags.length)).toLowerCase();
+    if (!sq.toLowerCase().includes(head)) {
+      message = `${sq}\n\nProduction style tags (sound design only — the singer must NOT recite these words in lyrics): ${tags}`;
+    }
+  }
+  const langRule = lyricsLanguageInstruction(args.vocalLanguage || "");
+  if (langRule) message = `${message}\n\n${langRule}`;
+  return message;
+}
+
 export function buildAceChatCompletionsParts(input: BuildAceChatCompletionsInput): string[] {
   const parts: string[] = [];
   const baseCaption = input.baseCaption.trim() || input.prompt.trim();
@@ -119,6 +159,8 @@ export function buildAceChatCompletionsParts(input: BuildAceChatCompletionsInput
     }
     const vocalLanguage = (input.vocalLanguage || "").trim();
     if (vocalLanguage) parts.push(`Vocal language: ${vocalLanguage}.`);
+    const lyricsLangRule = lyricsLanguageInstruction(vocalLanguage);
+    if (lyricsLangRule) parts.push(lyricsLangRule);
     const vocalStyle = (input.vocalStyle || "").trim();
     if (vocalStyle) parts.push(`Vocal delivery style: ${vocalStyle}.`);
   }

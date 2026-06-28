@@ -109,8 +109,51 @@ export function looksLikeSingableLyrics(lyrics: string): boolean {
   return /[a-zàâäéèêëïîôùûüç]{3,}/i.test(body);
 }
 
+/** Texte vocal phonétique ACE parfois renvoyé dans caption au lieu de lyrics. */
+export function looksLikeAceVocalPhoneticCaption(text: string): boolean {
+  const t = text.trim();
+  if (!t) return false;
+  if (/^\(spoken/i.test(t)) return true;
+  if (/^\([^)]*\brap\s+tamil\b/i.test(t)) return true;
+  if (t.startsWith("(") && (t.match(/,/g)?.length ?? 0) >= 2 && !/\bbpm\b/i.test(t)) return true;
+  return false;
+}
+
+/** Extrait les paroles du texte markdown renvoyé par ACE chat/completions. */
+export function extractLyricsFromAceResponseContent(content: string): string {
+  const text = content.trim();
+  if (!text) return "";
+  const idx = text.toLowerCase().indexOf("## lyrics");
+  if (idx >= 0) return text.slice(idx + "## lyrics".length).trim();
+  const sectionMatch = text.match(/\[(?:Verse|Chorus|Bridge|Intro|Outro|Hook|Pre-Chorus|Pre Chorus)/i);
+  if (sectionMatch?.index != null) return text.slice(sectionMatch.index).trim();
+  return "";
+}
+
 /** Paroles à persister / afficher dans « Paroles » (jamais le prompt genre ni la structure ACE). */
 export function resolveAceLyricsForMeta(args: {
+  parsedLyrics?: string | null;
+  userLyrics: string;
+  caption: string;
+  /** ACE peut mettre les phonétiques vocales dans prompt/caption au lieu de lyrics. */
+  parsedPrompt?: string | null;
+}): string {
+  const user = args.userLyrics.trim();
+  if (user && looksLikeSingableLyrics(user)) return user;
+
+  const filtered = resolveAceLyricsForMetaInner(args);
+  if (filtered) return filtered;
+
+  const cap = args.caption.trim();
+  if (cap && looksLikeAceVocalPhoneticCaption(cap)) return cap;
+
+  const prompt = (args.parsedPrompt ?? "").trim();
+  if (prompt && looksLikeAceVocalPhoneticCaption(prompt)) return prompt;
+
+  return "";
+}
+
+function resolveAceLyricsForMetaInner(args: {
   parsedLyrics?: string | null;
   userLyrics: string;
   caption: string;

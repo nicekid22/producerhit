@@ -12,6 +12,7 @@ import {
   resolveAceLyricsApiFieldForRequest,
   resolveAceLyricsForMeta,
   resolveAceSampleMode,
+  extractLyricsFromAceResponseContent,
 } from "@producerhit/shared";
 import { appendAceQualityToParamObj, ACE_RELEASE_MODEL, ACE_QUALITY_DEFAULTS, isAceReleaseTaskEnabled, resolveAceQualityFlags } from "@/lib/aceQuality";
 import { parseAceChatCompletionsResponse, parseAllAceChatCompletionsAudios } from "@/lib/aceChatCompletions";
@@ -347,6 +348,7 @@ async function generateLoopAceDirect(
   const effectiveSampleMode = resolveAceSampleMode({
     captionOverride,
     instrumental,
+    melodyComposition,
     explicitSampleMode: options?.sampleMode,
     lyricsTrimmed: userLyricsTrimmed,
   });
@@ -387,9 +389,7 @@ async function generateLoopAceDirect(
     const bpmNum = bpmStr ? Number(bpmStr) : null;
     const durationNum = durationStr ? Number(durationStr) : null;
 
-    let extractedLyrics = "";
-    const idx = content.toLowerCase().indexOf("## lyrics");
-    if (idx >= 0) extractedLyrics = content.slice(idx + "## lyrics".length).trim();
+    let extractedLyrics = extractLyricsFromAceResponseContent(content);
 
     const fallbackBpmMatch = content.match(/(^|[\s,])([0-9]{2,3})\s*bpm\b/i);
     const fallbackBpm = fallbackBpmMatch?.[2] ? Number(fallbackBpmMatch[2]) : null;
@@ -435,6 +435,7 @@ async function generateLoopAceDirect(
       vocalStyle: options?.vocalStyle?.trim() || undefined,
       sampleMode: effectiveSampleMode,
       sampleQuery: effectiveSampleQuery,
+      captionOverride,
     });
 
     const lyricsField = resolveAceLyricsApiFieldForRequest({
@@ -873,10 +874,7 @@ function metaFromAceChatJson(
           content.match(/\*\*(?:Key|Key Scale|KeyScale):\*\*\s*([^\n]+)/i) ?? content.match(/\*\*Key:\*\*\s*([^\n]+)/i);
         return {
           prompt: pick(/\*\*Caption:\*\*\s*([^\n]+)/i) || undefined,
-          lyrics: (() => {
-            const idx = content.toLowerCase().indexOf("## lyrics");
-            return idx >= 0 ? content.slice(idx + "## lyrics".length).trim() : undefined;
-          })(),
+          lyrics: extractLyricsFromAceResponseContent(content) || undefined,
           bpm: bpmStr ? Number(bpmStr) : null,
           duration: durationStr ? Number(durationStr) : null,
           keyScale: keyScaleMatch?.[1]?.trim() || undefined,
@@ -963,6 +961,7 @@ export async function generateLoopAceDualBatch(
     const effectiveSampleMode = resolveAceSampleMode({
       captionOverride,
       instrumental,
+      melodyComposition,
       explicitSampleMode: options?.sampleMode,
       lyricsTrimmed: batchUserLyrics,
     });
@@ -1015,6 +1014,7 @@ export async function generateLoopAceDualBatch(
       vocalStyle: options?.vocalStyle?.trim() || undefined,
       sampleMode: effectiveSampleMode,
       sampleQuery: effectiveSampleQuery,
+      captionOverride,
     });
 
     const batchLyricsField = resolveAceLyricsApiFieldForRequest({

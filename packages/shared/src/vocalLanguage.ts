@@ -1,5 +1,5 @@
 import type { AppLocale } from "./i18n/locales";
-import { vocalCodeToPromptLocale } from "./i18n/locales";
+import { UI_LOCALES, vocalCodeToPromptLocale } from "./i18n/locales";
 import { looksLikeStructuredDisplayIdea } from "./displayPromptPatterns";
 
 /** Langues vocales ACE (génération chanson). */
@@ -18,6 +18,20 @@ export const VOCAL_LANGUAGES: { value: string; en: string; fr: string }[] = [
 ];
 
 const ACE_VOCAL_CODE_SET = new Set(VOCAL_LANGUAGES.map((l) => l.value));
+
+export type VocalLanguagePreference = {
+  mode: "auto" | "manual";
+  manualCode: string;
+};
+
+/** UI locale ∈ intersection(UI_LOCALES, ACE vocal codes) → manual explicite ; sinon auto. */
+export function defaultVocalLanguagePreference(uiLocale: AppLocale): VocalLanguagePreference {
+  const code = uiLocale.trim().toLowerCase();
+  if (ACE_VOCAL_CODE_SET.has(code) && (UI_LOCALES as readonly string[]).includes(code)) {
+    return { mode: "manual", manualCode: code };
+  }
+  return { mode: "auto", manualCode: "en" };
+}
 
 /** Langue vocale ACE supportée — mappe les locales UI sans voix dédiée (nl, tr, hi, th). */
 export function uiLocaleToAceVocalLanguage(uiLocale: AppLocale): string {

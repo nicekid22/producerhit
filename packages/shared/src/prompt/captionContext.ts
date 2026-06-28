@@ -21,7 +21,27 @@ import { isCatalogGenreSelection } from "../genres/genrePickMode";
 
 import { matchGenreFromPrompt } from "../genres/matchGenreFromPrompt";
 
+import { SONG_CATALOG_CAPTION_TAGS_ENABLED } from "./songCatalogCaptionMode";
+
 export type PromptMode = "beat" | "song";
+
+export { SONG_CATALOG_CAPTION_TAGS_ENABLED } from "./songCatalogCaptionMode";
+
+function usesSongCatalogCaptionTags(formGenre: string): boolean {
+  return (
+    SONG_CATALOG_CAPTION_TAGS_ENABLED &&
+    isCatalogGenreSelection(formGenre) &&
+    formGenre !== "Auto"
+  );
+}
+
+function finishSongOrBeatCaption(ace: string, mode: PromptMode, formGenre: string): GenerationCaptionContext {
+  const trimmed = ace.trim();
+  if (!trimmed) return { melodyComposition: false };
+  if (mode === "beat") return captionFromOverride(trimmed, mode);
+  if (usesSongCatalogCaptionTags(formGenre)) return captionFromOverride(trimmed, mode);
+  return { melodyComposition: false };
+}
 
 export type GenerationCaptionContext = {
   captionOverride?: string;
@@ -76,10 +96,16 @@ export function resolveGenerationCaptionContext(args: {
   const isSong = args.mode === "song";
 
   const dice = args.diceAceOverride?.trim();
-  if (dice && !isSong) return captionFromOverride(dice, args.mode);
+  if (dice) {
+    if (!isSong) return captionFromOverride(dice, args.mode);
+    if (usesSongCatalogCaptionTags(args.formGenre)) return captionFromOverride(dice, args.mode);
+  }
 
   const landing = args.landingAceOverride?.trim();
-  if (landing && !isSong) return captionFromOverride(landing, args.mode);
+  if (landing) {
+    if (!isSong) return captionFromOverride(landing, args.mode);
+    if (usesSongCatalogCaptionTags(args.formGenre)) return captionFromOverride(landing, args.mode);
+  }
 
   const idea = args.displayIdea.trim();
   if (!idea) {
@@ -108,7 +134,7 @@ export function resolveGenerationCaptionContext(args: {
   }
 
   if (looksLikeAceProsePrompt(idea)) {
-    if (isSong) return { melodyComposition: false };
+    if (isSong && !usesSongCatalogCaptionTags(args.formGenre)) return { melodyComposition: false };
     return {
       captionOverride: optimizeAceProsePrompt(idea, { mode: args.mode }),
       melodyComposition: false,
@@ -119,28 +145,19 @@ export function resolveGenerationCaptionContext(args: {
     const matched = findGenreDiceItemByDisplay(idea, args.mode, args.uiLocale);
     if (matched) {
       const ace = resolveRichCaption(idea, args.uiLocale, args.mode, matched.genre);
-      if (ace.trim()) {
-        if (isSong) return { melodyComposition: false };
-        return captionFromOverride(ace.trim(), args.mode);
-      }
+      if (ace.trim()) return finishSongOrBeatCaption(ace, args.mode, args.formGenre);
     }
   }
 
   if (looksLikeStructuredDisplayIdea(idea) && args.uiLocale) {
     const genre = resolveGenreForStructured(idea, args.formGenre);
     const ace = resolveRichCaption(idea, args.uiLocale, args.mode, genre);
-    if (ace.trim()) {
-      if (isSong) return { melodyComposition: false };
-      return captionFromOverride(ace.trim(), args.mode);
-    }
+    if (ace.trim()) return finishSongOrBeatCaption(ace, args.mode, args.formGenre);
   }
 
   if (args.uiLocale && looksLikeNaturalUserIdea(idea)) {
     const ace = resolveRichCaption(idea, args.uiLocale, args.mode, args.formGenre);
-    if (ace.trim()) {
-      if (isSong) return { melodyComposition: false };
-      return captionFromOverride(ace.trim(), args.mode);
-    }
+    if (ace.trim()) return finishSongOrBeatCaption(ace, args.mode, args.formGenre);
   }
 
   return { melodyComposition: false };

@@ -75,7 +75,7 @@ export function LoopDetailsSheet({
         </div>
         <div
           ref={scrollRef}
-          className="pk-loop-details-sheet-scroll relative z-[1] min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4 [-webkit-overflow-scrolling:touch]"
+          className="pk-loop-details-sheet-scroll relative z-[1] min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(1.75rem,env(safe-area-inset-bottom,0px)+0.75rem)] pt-1 [-webkit-overflow-scrolling:touch]"
         >
           {children}
         </div>
@@ -94,7 +94,6 @@ export function LoopDetailsSheet({
 /** Header for inline desktop detail panel (not the mobile sheet). */
 export function LoopDetailsSheetHeader({
   title,
-  subtitle,
   onClose,
   closeLabel,
 }: {
@@ -107,7 +106,6 @@ export function LoopDetailsSheetHeader({
     <div className="flex items-start justify-between gap-3 px-5 pt-2">
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-semibold text-pk-text">{title}</div>
-        {subtitle ? <div className="mt-1 text-xs text-pk-muted">{subtitle}</div> : null}
       </div>
       <button
         type="button"

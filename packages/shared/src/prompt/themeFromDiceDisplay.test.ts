@@ -51,14 +51,15 @@ describe("ACE dice caption quality", () => {
     expect((ace.match(/,/g) ?? []).length).toBeGreaterThanOrEqual(4);
   });
 
-  it("resolveGenerationCaptionContext for neo soul dice uses sample_mode path", () => {
+  it("resolveGenerationCaptionContext for neo soul dice + catalog genre → tag caption", () => {
     const ctx = resolveGenerationCaptionContext({
       displayIdea: NEO_SOUL_DICE,
       formGenre: "Neo Soul Future",
       mode: "song",
       uiLocale: "fr",
     });
-    expect(ctx.captionOverride).toBeUndefined();
+    expect(ctx.captionOverride).toBeDefined();
+    expect(ctx.captionOverride!.toLowerCase()).toMatch(/neo soul/);
     expect(ctx.lyricsStructure).toBeUndefined();
   });
 });

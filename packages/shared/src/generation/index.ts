@@ -21,9 +21,11 @@ export {
   ACE_AI_COMPOSE_LYRICS_PLACEHOLDER,
   looksLikeAceCaptionEchoLyrics,
   looksLikeAceStructuralLyrics,
+  looksLikeAceVocalPhoneticCaption,
   looksLikeSingableLyrics,
   resolveAceLyricsApiField,
   resolveAceLyricsForMeta,
+  extractLyricsFromAceResponseContent,
 } from "./aceLyricsApi";
 export {
   normalizeAceCaption,

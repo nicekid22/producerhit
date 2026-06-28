@@ -3,6 +3,7 @@ import { buildAceRequestBody } from "./aceRequest";
 import { buildAceCaption } from "./promptAce";
 import { normalizeAceGenerationPayload } from "../prompt/acePromptContract";
 import { resolveGenerationCaptionContext } from "../prompt/captionContext";
+import { defaultVocalLanguagePreference, resolveSongVocalLanguage } from "../vocalLanguage";
 import type { GenerateParams } from "./types";
 
 const BASE_PARAMS: GenerateParams = {
@@ -99,7 +100,7 @@ describe("buildAceRequestBody", () => {
     expect(body.captionOverride).toBe("trap, dark piano, 140 bpm");
   });
 
-  it("idée utilisateur + paroles vides → sample_mode ACE", () => {
+  it("idée utilisateur + paroles vides sans captionOverride → sample_mode ACE", () => {
     const body = buildAceRequestBody(
       {
         ...BASE_PARAMS,
@@ -124,6 +125,55 @@ describe("buildAceRequestBody", () => {
     expect(body.useFormat).toBe(false);
     expect(body.caption).toBe("");
     expect(String(body.sampleQuery).toLowerCase()).toContain("learning to live");
+  });
+
+  it("catalog song + captionOverride from context → sample_mode with style tags (not tag-only LM path)", () => {
+    const ctx = resolveGenerationCaptionContext({
+      displayIdea: "Une chanson opium style sur des retrouvailles qui font du bien",
+      formGenre: "Opium Style",
+      mode: "song",
+      uiLocale: "fr",
+    });
+    expect(ctx.captionOverride).toBeDefined();
+
+    const vocalPref = defaultVocalLanguagePreference("fr");
+    expect(
+      resolveSongVocalLanguage({
+        mode: vocalPref.mode,
+        manualCode: vocalPref.manualCode,
+        lyricsMode: "ai",
+        lyrics: "",
+        songDescription: "Une chanson opium style sur des retrouvailles qui font du bien",
+        uiLocale: "fr",
+      }),
+    ).toBe("fr");
+
+    const body = buildAceRequestBody(
+      {
+        ...BASE_PARAMS,
+        genre: "Opium Style",
+        prompt: "Une chanson opium style sur des retrouvailles qui font du bien",
+        bpm: 0,
+        key: "",
+        scale: "",
+        mood: "",
+        energyLevel: "",
+      },
+      {
+        isSong: true,
+        instrumental: false,
+        vocalLanguage: "fr",
+        autoMeta: true,
+        lyrics: "",
+        captionOverride: ctx.captionOverride,
+        melodyComposition: ctx.melodyComposition,
+      },
+    );
+    expect(body.sampleMode).toBe(true);
+    expect(body.useFormat).toBe(false);
+    expect(body.caption).toBe("");
+    expect(body.captionOverride).toBeDefined();
+    expect(String(body.sampleQuery).toLowerCase()).toContain("retrouvailles");
   });
 
   it("idée vide + genre catalogue → sample_mode ACE (description naturelle, pas tags LM)", () => {

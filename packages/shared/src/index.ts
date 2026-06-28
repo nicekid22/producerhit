@@ -340,3 +340,4 @@ export {
   type LoopProducerTagMeta,
   type ProducerTagRecord,
 } from "./producerTag";
+export { resolveLoopDisplayLyrics, type LoopLyricsSource } from "./lyrics/resolveLoopDisplayLyrics";

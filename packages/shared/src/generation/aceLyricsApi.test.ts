@@ -51,4 +51,11 @@ describe("aceLyricsApi", () => {
     const parsed = "[Verse]\nNeon lights on my mind\nCity never sleeps tonight";
     expect(resolveAceLyricsForMeta({ parsedLyrics: parsed, userLyrics: "", caption: "trap" })).toBe(parsed);
   });
+
+  it("persists ACE vocal phonetic caption when lyrics field is empty", () => {
+    const phonetic = "(spokenZNptazard,rap tamil,idhi,ukkoli,ukkoli,ukkoli.";
+    expect(
+      resolveAceLyricsForMeta({ parsedLyrics: "", userLyrics: "", caption: phonetic }),
+    ).toBe(phonetic);
+  });
 });

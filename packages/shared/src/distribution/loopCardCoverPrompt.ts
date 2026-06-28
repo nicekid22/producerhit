@@ -1,8 +1,10 @@
 import { buildStructuredCoverPrompt } from "./coverPrompt";
+import { enrichLoopCardCoverForFuturRetro } from "./loopCardCoverFuturRetro";
 import { pickCoverSurpriseSuggestion } from "./coverSurpriseLibrary";
 
 const CARD_STYLE_SUFFIX = "no faces, no text, no logo";
 const LOOP_CARD_PROMPT_MAX = 220;
+const LOOP_CARD_CORE_PROMPT_MAX = 168;
 
 /**
  * Prompt Pollinations pour les cartes audio (workspace / bibliothèque).
@@ -25,18 +27,30 @@ export function buildLoopCardCoverPrompt(
     (typeof loop.seed === "number" && Number.isFinite(loop.seed) ? loop.seed : undefined) ??
     hashLoopSeed(loop.id ?? loop.genre ?? "loop");
 
-  const structured = pickCoverSurpriseSuggestion(loop, { seed: seedBase, favorGenre: true });
-  const core = buildStructuredCoverPrompt({
-    ...structured,
-    style: `${structured.style}, ${CARD_STYLE_SUFFIX}`,
-  });
+  const structured = enrichLoopCardCoverForFuturRetro(
+    pickCoverSurpriseSuggestion(loop, { seed: seedBase, favorGenre: true }),
+    seedBase,
+  );
+  const core = buildStructuredCoverPrompt(
+    {
+      ...structured,
+      style: structured.style,
+    },
+    { maxLength: LOOP_CARD_CORE_PROMPT_MAX },
+  );
   const genreTag = loop.genre?.trim() ? `${loop.genre} music vibe` : "";
   const moodTag = loop.mood?.trim() ? `${loop.mood} mood` : "";
 
-  const combined = [genreTag, moodTag, core]
+  let combined = [genreTag, moodTag, core]
     .filter((p) => p.length > 0)
     .join(", ")
     .replace(/\s+/g, " ");
+
+  const guardSuffix = `, ${CARD_STYLE_SUFFIX}`;
+  if (combined.length + guardSuffix.length > LOOP_CARD_PROMPT_MAX) {
+    combined = combined.slice(0, LOOP_CARD_PROMPT_MAX - guardSuffix.length).replace(/,\s*$/, "");
+  }
+  combined += guardSuffix;
 
   return combined.slice(0, LOOP_CARD_PROMPT_MAX);
 }

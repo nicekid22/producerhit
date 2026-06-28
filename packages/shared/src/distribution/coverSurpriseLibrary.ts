@@ -1,5 +1,6 @@
 import type { StructuredCoverPromptInput } from "./coverPrompt";
 import { COVER_LIGHTING_PRESETS, COVER_STYLE_PRESETS } from "./coverPrompt";
+import { LOOP_CARD_COVER_FUTUR_RETRO_ENABLED } from "./loopCardCoverFuturRetro";
 
 /** Expanded pools for surprise combinations (album-art oriented, not portrait-heavy). */
 export const COVER_SURPRISE_LIGHTING = [
@@ -10,6 +11,9 @@ export const COVER_SURPRISE_LIGHTING = [
   "colored gel wash",
   "overcast softbox",
   "underwater caustics",
+  "hologram projection spill",
+  "CRT scanline phosphor bloom",
+  "analog light leak streak",
 ] as const;
 
 export const COVER_SURPRISE_STYLES = [
@@ -22,6 +26,13 @@ export const COVER_SURPRISE_STYLES = [
   "brutalist poster design",
   "vaporwave aesthetic",
   "ink wash illustration",
+  "retro-future synthwave album art",
+  "holographic foil with film grain",
+  "CRT phosphor glow aesthetic",
+  "degraded gradient mesh poster",
+  "anime cel-shade with film grain",
+  "manga halftone screentone poster",
+  "glitch RGB split artwork",
 ] as const;
 
 const MOODS = [
@@ -58,6 +69,9 @@ const PALETTES = [
   "sunset peach and violet",
   "forest green and copper",
   "ice blue and silver",
+  "holographic cyan magenta shift",
+  "laser amber on midnight purple",
+  "iridescent oil slick on deep navy",
 ] as const;
 
 type SurpriseCategory =
@@ -74,7 +88,8 @@ type SurpriseCategory =
   | "flora"
   | "architecture"
   | "aquatic"
-  | "vehicles";
+  | "vehicles"
+  | "futurRetro";
 
 const CATEGORY_SUBJECTS: Record<SurpriseCategory, readonly string[]> = {
   abstract: [
@@ -220,6 +235,9 @@ const CATEGORY_SUBJECTS: Record<SurpriseCategory, readonly string[]> = {
     "ascii texture field",
     "hologram wire statue",
     "cyber grid floor infinity",
+    "anime cel-shaded geometric symbol",
+    "manga halftone screentone texture field",
+    "glitch tear on retro pixel landscape",
   ],
   cosmic: [
     "spiral galaxy core vibrant",
@@ -322,22 +340,56 @@ const CATEGORY_SUBJECTS: Record<SurpriseCategory, readonly string[]> = {
     "bicycle wheel spin abstract",
     "hot rod flame paint close-up",
   ],
+  futurRetro: [
+    "holographic rain on wet asphalt",
+    "chrome monolith in purple fog",
+    "retro sunset grid horizon glow",
+    "floating wireframe pyramid in void",
+    "VHS static over neon city bokeh",
+    "cassette futurism gradient bleed",
+    "laser grid floor with low mist",
+    "iridescent disc floating in darkness",
+    "analog clock dial glitching glow",
+    "CRT ghost image double exposure",
+    "retro terminal green glow on concrete",
+    "hologram statue dissolving into particles",
+    "synthwave palm silhouette scanlines",
+    "degraded mesh gradient portal shape",
+    "film grain tunnel of neon arches",
+    "retro joystick silhouette in fog",
+    "prismatic light leak on black void",
+    "orbiting rings around matte sphere",
+    "broken mirror shards with cyan flare",
+    "retro radar sweep on starfield",
+    "manga speed lines burst on dark void",
+    "cel-shaded moon over glitch horizon",
+    "RGB split torii gate in neon rain",
+    "anime sky gradient with datamosh tear",
+    "manga screentone halftone on chrome orb",
+    "glitch corrupted retro sunset grid",
+    "cel-shaded floating crystals in fog",
+    "manga panel frames collage abstract",
+    "anime lens flare on wireframe pyramid",
+    "pixel glitch halo over cassette stack",
+    "datamosh smear on laser grid floor",
+    "ink manga crosshatch on hologram rain",
+  ],
 };
 
 /** Genre keywords → preferred surprise categories (still mixes in others sometimes). */
 const GENRE_CATEGORY_BOOST: Record<string, SurpriseCategory[]> = {
-  trap: ["urban", "objects", "digital", "texture", "surreal"],
-  drill: ["urban", "texture", "objects", "vehicles"],
-  "hip hop": ["urban", "objects", "retro", "texture"],
-  "hip-hop": ["urban", "objects", "retro", "texture"],
-  rap: ["urban", "objects", "texture", "vehicles"],
-  "lo-fi": ["retro", "objects", "minimal", "aquatic", "nature"],
-  lofi: ["retro", "objects", "minimal", "aquatic", "nature"],
-  "lo fi": ["retro", "objects", "minimal", "aquatic"],
-  ambient: ["cosmic", "nature", "minimal", "abstract", "aquatic"],
-  house: ["digital", "abstract", "retro", "urban"],
-  techno: ["digital", "abstract", "urban", "texture"],
-  edm: ["digital", "abstract", "cosmic", "retro"],
+  trap: ["urban", "futurRetro", "objects", "digital", "texture", "surreal"],
+  drill: ["urban", "futurRetro", "texture", "objects", "vehicles"],
+  "hip hop": ["urban", "futurRetro", "objects", "retro", "texture"],
+  "hip-hop": ["urban", "futurRetro", "objects", "retro", "texture"],
+  rap: ["urban", "futurRetro", "objects", "texture", "vehicles"],
+  "lo-fi": ["retro", "futurRetro", "objects", "minimal", "aquatic", "nature"],
+  lofi: ["retro", "futurRetro", "objects", "minimal", "aquatic", "nature"],
+  "lo fi": ["retro", "futurRetro", "objects", "minimal", "aquatic"],
+  ambient: ["cosmic", "futurRetro", "nature", "minimal", "abstract", "aquatic"],
+  house: ["digital", "futurRetro", "abstract", "retro", "urban"],
+  techno: ["digital", "futurRetro", "abstract", "urban", "texture"],
+  edm: ["digital", "futurRetro", "abstract", "cosmic", "retro"],
   jazz: ["objects", "minimal", "architecture", "texture"],
   rock: ["objects", "nature", "vehicles", "texture"],
   metal: ["texture", "surreal", "architecture", "cosmic"],
@@ -354,9 +406,11 @@ const GENRE_CATEGORY_BOOST: Record<string, SurpriseCategory[]> = {
   punk: ["urban", "texture", "objects", "surreal"],
   emo: ["surreal", "urban", "nature", "texture"],
   indie: ["nature", "retro", "minimal", "flora"],
-  phonk: ["vehicles", "urban", "retro", "texture"],
-  wave: ["cosmic", "digital", "surreal", "abstract"],
-  synth: ["retro", "digital", "cosmic", "abstract"],
+  phonk: ["vehicles", "urban", "futurRetro", "retro", "texture"],
+  wave: ["cosmic", "futurRetro", "digital", "surreal", "abstract"],
+  synth: ["retro", "futurRetro", "digital", "cosmic", "abstract"],
+  trapsoul: ["futurRetro", "abstract", "retro", "minimal", "objects"],
+  amapiano: ["futurRetro", "abstract", "flora", "texture", "retro"],
 };
 
 type TaggedSurprise = StructuredCoverPromptInput & { category: SurpriseCategory };
@@ -442,6 +496,13 @@ export function pickCoverSurpriseSuggestion(
     if (biased.length >= 24) {
       // ~70% genre-aligned, ~30% wildcard for discovery
       pool = hashPick(seed, 10) < 7 ? biased : cachedLibrary;
+    }
+  }
+
+  if (LOOP_CARD_COVER_FUTUR_RETRO_ENABLED && hashPick(seed + 13, 10) < 8) {
+    const retroPool = cachedLibrary.filter((e) => e.category === "futurRetro");
+    if (retroPool.length > 0) {
+      pool = hashPick(seed + 17, 10) < 6 ? retroPool : pool;
     }
   }
 

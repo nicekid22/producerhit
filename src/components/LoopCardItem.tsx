@@ -301,6 +301,15 @@ export const LoopCardItem = memo(function LoopCardItem({
         const result = await generateBeat(inputParams, engine, { ...generateOptions, generationKey });
 
         audioUrl = result.audioUrl;
+        const variantCaption = result.meta?.prompt ?? variantPrompt;
+        const variantParsedLyrics = result.meta?.lyrics ?? "";
+        const variantUserLyrics = loop.details?.lyrics?.trim() ?? "";
+        const variantResolvedLyrics = resolveAceLyricsForMeta({
+          parsedLyrics: variantParsedLyrics,
+          userLyrics: variantUserLyrics,
+          caption: variantCaption,
+          parsedPrompt: variantPrompt,
+        });
         const draft: Omit<Loop, "id" | "createdAt" | "userId"> = {
           engine: result.engine,
           name: variantResultTitle(loop, kind),
@@ -319,12 +328,8 @@ export const LoopCardItem = memo(function LoopCardItem({
           seed: typeof result.meta?.seed === "number" && Number.isFinite(result.meta.seed) ? result.meta.seed : nextSeed,
           details: result.meta
             ? {
-                caption: result.meta.prompt ?? variantPrompt,
-                lyrics: resolveAceLyricsForMeta({
-                  parsedLyrics: result.meta.lyrics,
-                  userLyrics: "",
-                  caption: result.meta.prompt ?? variantPrompt,
-                }),
+                caption: variantCaption,
+                lyrics: variantResolvedLyrics,
                 bpm: result.meta.bpm ?? null,
                 duration: result.meta.duration ?? null,
                 keyScale: result.meta.keyScale ?? "",
@@ -349,6 +354,8 @@ export const LoopCardItem = memo(function LoopCardItem({
                     : {}),
                   isSong: isSongLike,
                   ...(isSongLike ? { vocalLanguage: parentVocalLang } : {}),
+                  ...(variantParsedLyrics ? { parsedLyrics: variantParsedLyrics } : {}),
+                  ...(variantUserLyrics ? { userLyrics: variantUserLyrics } : {}),
                 },
               } as Record<string, unknown>)
             : null,

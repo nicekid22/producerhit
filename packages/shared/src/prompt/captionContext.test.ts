@@ -27,7 +27,7 @@ describe("resolveGenerationCaptionContext", () => {
     expect(ctx.melodyComposition).toBe(false);
   });
 
-  it("song dice override does not block sample_mode (no captionOverride)", () => {
+  it("song dice override + catalog genre → tag caption (not sample_mode)", () => {
     const ctx = resolveGenerationCaptionContext({
       diceAceOverride: "neo soul, electric piano, 70 bpm, clean studio vocal",
       displayIdea: "A totally custom song about coffee on Tuesday — indie pop, 88 bpm",
@@ -35,12 +35,13 @@ describe("resolveGenerationCaptionContext", () => {
       mode: "song",
       uiLocale: "en",
     });
-    expect(ctx.captionOverride).toBeUndefined();
+    expect(ctx.captionOverride).toBeDefined();
+    expect(ctx.captionOverride!.toLowerCase()).toMatch(/neo soul|indie pop/);
     expect(ctx.lyricsStructure).toBeUndefined();
     expect(ctx.melodyComposition).toBe(false);
   });
 
-  it("prompt bank dice with skipPromptBankPipeline uses sample_mode (no bank injection)", () => {
+  it("prompt bank dice skip + catalog genre keeps dice tag caption (no bank lyrics)", () => {
     const ctx = resolveGenerationCaptionContext({
       diceAceOverride: "melodic trap, raw, Rhodes piano, 70 bpm",
       displayIdea: "Learning to live in a world without you — neo soul, 70 bpm",
@@ -49,13 +50,14 @@ describe("resolveGenerationCaptionContext", () => {
       uiLocale: "en",
       skipPromptBankPipeline: true,
     });
-    expect(ctx.captionOverride).toBeUndefined();
+    expect(ctx.captionOverride).toBeDefined();
+    expect(ctx.captionOverride!.toLowerCase()).toMatch(/melodic trap|neo soul/);
     expect(ctx.lyricsStructure).toBeUndefined();
     expect(ctx.bankGenre).toBeUndefined();
     expect(ctx.melodyComposition).toBe(false);
   });
 
-  it("FR bank dice skip keeps Style genre (Trapsoul) without love lyrics", () => {
+  it("FR bank dice skip + catalog genre → tag caption without love lyrics", () => {
     const ctx = resolveGenerationCaptionContext({
       displayIdea: "Accro à ton énergie — trapsoul, 95 bpm",
       formGenre: "Trapsoul",
@@ -63,7 +65,8 @@ describe("resolveGenerationCaptionContext", () => {
       uiLocale: "fr",
       skipPromptBankPipeline: true,
     });
-    expect(ctx.captionOverride).toBeUndefined();
+    expect(ctx.captionOverride).toBeDefined();
+    expect(ctx.captionOverride!.toLowerCase()).toMatch(/trap soul|trapsoul/);
     expect(ctx.lyricsStructure).toBeUndefined();
     expect(ctx.bankGenre).toBeUndefined();
     expect(ctx.melodyComposition).toBe(false);
@@ -146,7 +149,7 @@ describe("resolveGenerationCaptionContext", () => {
     expect(ctx.captionOverride).not.toMatch(/\b(male|female) vocal\b/i);
   });
 
-  it("ACE prose song display → sample_mode path (no tag captionOverride)", () => {
+  it("ACE prose song + catalog genre → optimized tag caption (not sample_mode)", () => {
     const prose = generateAceProsePrompt("song", 4242, "en");
     const ctx = resolveGenerationCaptionContext({
       displayIdea: prose,
@@ -155,7 +158,8 @@ describe("resolveGenerationCaptionContext", () => {
       uiLocale: "en",
     });
     expect(ctx.melodyComposition).toBe(false);
-    expect(ctx.captionOverride).toBeUndefined();
+    expect(ctx.captionOverride).toBeDefined();
+    expect(ctx.captionOverride).toContain(",");
   });
 
   it("returns empty context when display idea is blank and genre is Auto", () => {
@@ -181,15 +185,43 @@ describe("resolveGenerationCaptionContext", () => {
     expect(ctx.lyricsStructure).toBeUndefined();
   });
 
-  it("user idea / dice display → sample_mode (no captionOverride)", () => {
+  it("user idea + catalog genre → tag caption (not sample_mode)", () => {
     const ctx = resolveGenerationCaptionContext({
       displayIdea: CURATED_EN_SAMPLE,
       formGenre: "Orchestral Drill",
       mode: "song",
       uiLocale: "en",
     });
-    expect(ctx.captionOverride).toBeUndefined();
+    expect(ctx.captionOverride).toBeDefined();
+    expect(ctx.captionOverride!.toLowerCase()).toMatch(/orchestral drill|drill/);
     expect(ctx.melodyComposition).toBe(false);
+  });
+
+  it("FR Opium Style user idea → tag caption with opium (not French chanson sample_mode)", () => {
+    const ctx = resolveGenerationCaptionContext({
+      displayIdea: "Une chanson opium style sur des retrouvailles qui font du bien",
+      formGenre: "Opium Style",
+      mode: "song",
+      uiLocale: "fr",
+    });
+    expect(ctx.captionOverride).toBeDefined();
+    expect(ctx.captionOverride!.toLowerCase()).toMatch(/opium/);
+    expect(ctx.lyricsStructure).toBeUndefined();
+    expect(ctx.melodyComposition).toBe(false);
+  });
+
+  it("FR amapiano bank dice skip → amapiano tags via dice override", () => {
+    const ctx = resolveGenerationCaptionContext({
+      diceAceOverride: "amapiano, relieved, log drum, 114 bpm, clean studio vocal",
+      displayIdea: "Accroche-toi on y est presque — amapiano, 114 bpm",
+      formGenre: "Amapiano",
+      mode: "song",
+      uiLocale: "fr",
+      skipPromptBankPipeline: true,
+    });
+    expect(ctx.captionOverride).toBeDefined();
+    expect(ctx.captionOverride!.toLowerCase()).toMatch(/amapiano/);
+    expect(ctx.lyricsStructure).toBeUndefined();
   });
 
   it("beat user idea → rich captionOverride with instrumental tags (not sample_mode)", () => {

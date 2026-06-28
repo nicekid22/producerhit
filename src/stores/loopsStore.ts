@@ -15,7 +15,7 @@ import { removeLoopAudioStorage, SUPABASE_LOOP_AUDIO_UPLOAD } from "@/lib/storag
 import { mergeCoverIntoStems, needsLoopCardCover, preloadCoverImage } from "@/lib/coverArt";
 import { coverDetailsPatch, coverUrlFromLoop, loopWithCoverFallback, persistLoopCover } from "@/lib/loopCoverUrl";
 import { readAceCoverFromStems } from "@/lib/stemsAceMerge";
-import { assignLoopCoverOnce } from "@/lib/assignLoopCover";
+import { resolveLoopDisplayLyrics } from "@producerhit/shared";
 import {
   scheduleLoopCoverBackfill,
   scheduleMissingCoverRepair,
@@ -426,11 +426,18 @@ function toLoop(row: DbLoop): Loop {
   const coverAce = typeof aceObj?.coverUrl === "string" ? aceObj.coverUrl.trim() : "";
   const resolvedCover =
     coverCol.startsWith("http") ? coverCol : coverAce.startsWith("http") ? coverAce : undefined;
+  const aceCaption = typeof aceObj?.caption === "string" ? aceObj.caption : undefined;
+  const aceLyricsRaw = typeof aceObj?.lyrics === "string" ? aceObj.lyrics : undefined;
+  const resolvedLyrics = resolveLoopDisplayLyrics({
+    prompt: row.prompt,
+    details: aceCaption || aceLyricsRaw ? { caption: aceCaption, lyrics: aceLyricsRaw } : null,
+    stemsUrl: stemsObj,
+  });
   const details =
     aceObj || resolvedCover
       ? {
-          caption: typeof aceObj?.caption === "string" ? aceObj.caption : undefined,
-          lyrics: typeof aceObj?.lyrics === "string" ? aceObj.lyrics : undefined,
+          caption: aceCaption,
+          lyrics: resolvedLyrics || aceLyricsRaw,
           bpm: typeof aceObj?.bpm === "number" ? aceObj.bpm : null,
           duration: typeof aceObj?.duration === "number" ? aceObj.duration : null,
           keyScale: typeof aceObj?.keyScale === "string" ? aceObj.keyScale : undefined,

@@ -16,7 +16,7 @@ import {
   scheduleRunJob,
   updateGenerationJob,
 } from "../_shared/generationJobUtils.ts";
-import { resolveAceLyricsForMeta } from "../_shared/aceLyricsApi.ts";
+import { resolveAceLyricsForMeta, extractLyricsFromAceResponseContent } from "../_shared/aceLyricsApi.ts";
 import {
   buildAceChatCompletionsHttpBody,
   buildAceChatCompletionsMessage,
@@ -164,6 +164,7 @@ function resolveAceQualityFlags(input: {
 function resolveEdgeSampleMode(args: {
   action: string;
   instrumental: boolean;
+  melodyComposition?: boolean;
   lyricsUserTrimmed: string;
   captionOverride: string;
   bodySampleMode?: boolean;
@@ -173,6 +174,7 @@ function resolveEdgeSampleMode(args: {
   return resolveAceSampleMode({
     captionOverride: args.captionOverride,
     instrumental: args.instrumental,
+    melodyComposition: args.melodyComposition,
     explicitSampleMode: explicit,
     lyricsTrimmed: args.lyricsUserTrimmed,
   });
@@ -888,9 +890,7 @@ function parseAceChatContent(content: string) {
   const bpmNum = bpmStr ? Number(bpmStr) : null;
   const durationNum = durationStr ? Number(durationStr) : null;
 
-  let extractedLyrics = "";
-  const idx = content.toLowerCase().indexOf("## lyrics");
-  if (idx >= 0) extractedLyrics = content.slice(idx + "## lyrics".length).trim();
+    let extractedLyrics = extractLyricsFromAceResponseContent(content);
 
   const fallbackBpmMatch = content.match(/(^|[\s,])([0-9]{2,3})\s*bpm\b/i);
   const fallbackBpm = fallbackBpmMatch?.[2] ? Number(fallbackBpmMatch[2]) : null;
@@ -934,6 +934,7 @@ async function generateViaChatCompletionsAce(input: {
   vocalStyle?: string;
   sampleMode?: boolean;
   sampleQuery?: string;
+  captionOverride?: string;
   audioFormat: string;
   thinking: boolean;
   useFormat: boolean;
@@ -971,6 +972,7 @@ async function generateViaChatCompletionsAce(input: {
     vocalStyle: input.vocalStyle,
     sampleMode,
     sampleQuery,
+    captionOverride: input.captionOverride,
   });
   const lyricsField = resolveAceLyricsApiFieldForRequest({
     instrumental: input.instrumental,
@@ -1467,6 +1469,7 @@ serve(async (req) => {
       const sampleMode = resolveEdgeSampleMode({
         action: "generate",
         instrumental,
+        melodyComposition,
         lyricsUserTrimmed: lyricsRaw.trim(),
         captionOverride: asString(p.captionOverride).trim(),
         bodySampleMode: typeof p.sampleMode === "boolean" ? p.sampleMode : undefined,
@@ -1615,6 +1618,7 @@ serve(async (req) => {
           useFormat: quality.useFormat,
           sampleMode,
           sampleQuery: effectiveSampleQuery,
+          captionOverride: asString(p.captionOverride).trim(),
         };
         for (const t of aceTargets) {
           try {
@@ -2028,6 +2032,7 @@ serve(async (req) => {
     const sampleMode = resolveEdgeSampleMode({
       action,
       instrumental,
+      melodyComposition,
       lyricsUserTrimmed: lyricsRaw.trim(),
       captionOverride,
       bodySampleMode: typeof body?.sampleMode === "boolean" ? body.sampleMode : undefined,
@@ -2259,6 +2264,7 @@ serve(async (req) => {
         useFormat: resolveAceQualityFlags({ thinking, useFormat, sampleMode }).useFormat,
         sampleMode,
         sampleQuery: effectiveSampleQuery,
+        captionOverride,
       };
 
       const controller = new AbortController();
@@ -2298,6 +2304,7 @@ serve(async (req) => {
               vocalStyle: chatAceArgs.vocalStyle,
               sampleMode: batchSampleMode,
               sampleQuery: batchSampleQuery,
+              captionOverride: chatAceArgs.captionOverride,
             });
             const batchLyricsField = resolveAceLyricsApiFieldForRequest({
               instrumental,
@@ -2456,6 +2463,7 @@ serve(async (req) => {
       useFormat: quality.useFormat,
       sampleMode,
       sampleQuery: effectiveSampleQuery,
+      captionOverride,
     };
 
     const runChatCompletions = async (signal: AbortSignal) => {

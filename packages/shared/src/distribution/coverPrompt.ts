@@ -1,8 +1,10 @@
+import { extractDiceThemePhrase, extractPromptBankSubject } from "../prompt/themeFromDiceDisplay";
+import { extractHookFromDisplay } from "../prompt/promptBank/buildBankLyrics";
+
 /** Max recommended prompt length for Pollinations album covers. */
 export const COVER_PROMPT_MAX_LENGTH = 150;
 
-export type StructuredCoverPromptInput = {
-  subject: string;
+export type StructuredCoverPromptInput = {  subject: string;
   mood: string;
   palette: string;
   lighting: string;
@@ -25,7 +27,11 @@ export const COVER_STYLE_PRESETS = [
   "hand-painted watercolor",
 ] as const;
 
-export function buildStructuredCoverPrompt(input: StructuredCoverPromptInput): string {
+export function buildStructuredCoverPrompt(
+  input: StructuredCoverPromptInput,
+  options?: { maxLength?: number },
+): string {
+  const maxLen = options?.maxLength ?? COVER_PROMPT_MAX_LENGTH;
   const subject = input.subject.trim();
   const mood = input.mood.trim();
   const palette = input.palette.trim();
@@ -41,7 +47,34 @@ export function buildStructuredCoverPrompt(input: StructuredCoverPromptInput): s
     "album cover, no text, square composition",
   ].filter((p) => p.length > 0);
 
-  return parts.join(", ").replace(/\s+/g, " ").slice(0, COVER_PROMPT_MAX_LENGTH);
+  return parts.join(", ").replace(/\s+/g, " ").slice(0, maxLen);
+}
+
+/**
+ * Idée narrative du prompt aléatoire (dé / banque) — sans genre, BPM ni tags ACE.
+ * Ex. « Monte le son ouvre ton cœur — afrobeat, 110 bpm » → « Monte le son ouvre ton cœur ».
+ */
+export function extractCoverVisualIdeaFromPrompt(prompt: string): string {
+  const t = prompt.trim();
+  if (!t) return "";
+
+  const bankHead = extractPromptBankSubject(t);
+  if (bankHead.length >= 3) {
+    return bankHead.replace(/,?\s*\d+\s*bpm$/i, "").trim();
+  }
+
+  if (/\s[—–-]\s/.test(t)) {
+    const head = extractHookFromDisplay(t);
+    if (head.length >= 3) return head;
+  }
+
+  const diceTheme = extractDiceThemePhrase(t);
+  if (diceTheme.length >= 3) return diceTheme;
+
+  const first = t.split(/[,.]/)[0]?.trim() ?? t;
+  const stripped = first.replace(/,?\s*\d+\s*bpm$/i, "").trim();
+  if ((t.match(/,/g)?.length ?? 0) >= 3) return "";
+  return stripped.length >= 3 ? stripped : "";
 }
 
 export function parseStructuredCoverPromptFromText(text: string): StructuredCoverPromptInput {
@@ -67,7 +100,7 @@ export function buildCoverPromptSuggestionsFromLoop(loop: {
   const mood = (loop.mood ?? "").trim();
   const influence = (loop.influence ?? "").trim();
   const name = (loop.name ?? "").trim();
-  const fromPrompt = (typeof loop.prompt === "string" ? loop.prompt : "").trim().split(/[,.]/)[0]?.trim() ?? "";
+  const fromPrompt = extractCoverVisualIdeaFromPrompt(typeof loop.prompt === "string" ? loop.prompt : "");
 
   const subjects = [
     fromPrompt || `${genre} artist silhouette`,

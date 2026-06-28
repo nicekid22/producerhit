@@ -1733,6 +1733,20 @@ export default function Dashboard() {
         const usedKey = autoMetaEnabled ? realKey : effectiveKey || form.key;
         const usedScale = autoMetaEnabled ? realScale : effectiveScale || form.scale;
 
+        const captionForMeta = result.meta?.prompt ?? storedPrompt;
+        const parsedLyricsFromAce = result.meta?.lyrics ?? "";
+        const userLyricsForMeta =
+          runAsSong && effectiveLyricsMode === "manual" ? effectiveSongLyrics.trim() : "";
+        const resolvedLyrics =
+          runAsSong && effectiveLyricsMode === "manual" && userLyricsForMeta
+            ? userLyricsForMeta
+            : resolveAceLyricsForMeta({
+                parsedLyrics: parsedLyricsFromAce,
+                userLyrics: userLyricsForMeta,
+                caption: captionForMeta,
+                parsedPrompt: storedPrompt,
+              });
+
         const draft: Omit<Loop, "id" | "createdAt" | "userId"> = {
           engine: result.engine,
           name: "",
@@ -1751,15 +1765,8 @@ export default function Dashboard() {
           seed: typeof result.meta?.seed === "number" && Number.isFinite(result.meta.seed) ? result.meta.seed : null,
           details: result.meta
             ? {
-                caption: result.meta.prompt ?? storedPrompt,
-                lyrics:
-                  runAsSong && effectiveLyricsMode === "manual" && effectiveSongLyrics
-                    ? effectiveSongLyrics
-                    : resolveAceLyricsForMeta({
-                        parsedLyrics: result.meta?.lyrics,
-                        userLyrics: "",
-                        caption: result.meta?.prompt ?? storedPrompt,
-                      }),
+                caption: captionForMeta,
+                lyrics: resolvedLyrics,
                 bpm: result.meta.bpm ?? null,
                 duration: result.meta.duration ?? null,
                 keyScale: result.meta.keyScale ?? "",
@@ -1795,6 +1802,8 @@ export default function Dashboard() {
                   : {}),
                 isSong: runAsSong,
                 ...(runAsSong ? { vocalLanguage: detectedLang } : {}),
+                ...(parsedLyricsFromAce ? { parsedLyrics: parsedLyricsFromAce } : {}),
+                ...(userLyricsForMeta ? { userLyrics: userLyricsForMeta } : {}),
                 ...(voiceFields ?? {}),
               },
             } as Record<string, unknown>;
@@ -2602,8 +2611,9 @@ export default function Dashboard() {
                 lyrics:
                   resolveAceLyricsForMeta({
                     parsedLyrics: result.meta.lyrics,
-                    userLyrics: "",
+                    userLyrics: input.sourceLoop.details?.lyrics ?? "",
                     caption: result.meta.prompt ?? variantPrompt,
+                    parsedPrompt: variantPrompt,
                   }) ||
                   resolveAceLyricsForMeta({
                     parsedLyrics: input.sourceLoop.details?.lyrics,
@@ -2661,8 +2671,9 @@ export default function Dashboard() {
                 lyrics:
                   resolveAceLyricsForMeta({
                     parsedLyrics: result.meta.lyrics,
-                    userLyrics: "",
+                    userLyrics: input.sourceLoop.details?.lyrics ?? "",
                     caption: result.meta.prompt ?? variantPrompt,
+                    parsedPrompt: variantPrompt,
                   }) ||
                   resolveAceLyricsForMeta({
                     parsedLyrics: input.sourceLoop.details?.lyrics,

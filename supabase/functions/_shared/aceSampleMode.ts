@@ -1,14 +1,19 @@
-import { buildAceChatCompletionsParts, type BuildAceChatCompletionsInput } from "./aceChatCompletions.ts";
+import {
+  buildAceChatCompletionsParts,
+  buildAceSampleModeUserMessage,
+  type BuildAceChatCompletionsInput,
+} from "./aceChatCompletions.ts";
 import { resolveAceLyricsApiField } from "./aceLyricsApi.ts";
 
 export function resolveAceSampleMode(args: {
   captionOverride: string;
   instrumental: boolean;
+  melodyComposition?: boolean;
   explicitSampleMode?: boolean;
   lyricsTrimmed?: string;
 }): boolean {
   if (args.instrumental) return false;
-  if (args.captionOverride.trim()) return false;
+  if (args.melodyComposition) return false;
   if (args.explicitSampleMode === false) return false;
   if (args.explicitSampleMode === true) return true;
   return !(args.lyricsTrimmed || "").trim();
@@ -30,10 +35,18 @@ export function buildAceSampleQuery(args: { genre?: string; idea?: string; vocal
 }
 
 export function buildAceChatCompletionsMessage(
-  input: BuildAceChatCompletionsInput & { sampleMode?: boolean; sampleQuery?: string },
+  input: BuildAceChatCompletionsInput & {
+    sampleMode?: boolean;
+    sampleQuery?: string;
+    captionOverride?: string;
+  },
 ): string {
   if (input.sampleMode) {
-    return (input.sampleQuery || input.baseCaption || input.prompt || "").trim();
+    return buildAceSampleModeUserMessage({
+      sampleQuery: input.sampleQuery || input.baseCaption || input.prompt || "",
+      captionOverride: input.captionOverride,
+      vocalLanguage: input.vocalLanguage,
+    });
   }
   return buildAceChatCompletionsParts(input).join("\n\n");
 }
