@@ -1950,7 +1950,7 @@ export default function Dashboard() {
         // Applique la cover pré-générée si elle est prête (sinon le repair normal prendra le relais)
         void consumeCoverPrefetch(generationKey).then((coverUrl) => {
           if (coverUrl?.startsWith("http")) {
-            applyLoopCoverUrl(loop.id, coverUrl, "image");
+            useLoopsStore.getState().applyLoopCoverUrl(loop.id, coverUrl, "image");
           }
         });
         if (mode === "song" && voiceCloneConfigRef.current.profileId) {
