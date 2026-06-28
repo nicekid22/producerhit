@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { AudioRetentionCloudModal } from "@/components/growth/AudioRetentionCloudModal";
 import { PlanUpsellModal } from "@/components/growth/PlanUpsellModal";
 import { useAuthStore } from "@/stores/authStore";
 import { useLocaleStore } from "@/stores/localeStore";
@@ -44,16 +45,19 @@ export function GrowthUpsellHost() {
   }, [location.pathname, location.search, navigate, openUpsell, authPlan, profileRemaining]);
 
   return (
-    <PlanUpsellModal
-      open={open}
-      reason={reason}
-      locale={locale}
-      plan={plan}
-      source={ctx?.source ?? "app"}
-      remaining={ctx?.remaining ?? profileRemaining}
-      totalLimit={ctx?.totalLimit}
-      usedThisMonth={ctx?.usedThisMonth ?? profile?.loops_used_this_month}
-      onClose={closeUpsell}
-    />
+    <>
+      <AudioRetentionCloudModal locale={locale} />
+      <PlanUpsellModal
+        open={open}
+        reason={reason}
+        locale={locale}
+        plan={plan}
+        source={ctx?.source ?? "app"}
+        remaining={ctx?.remaining ?? profileRemaining}
+        totalLimit={ctx?.totalLimit}
+        usedThisMonth={ctx?.usedThisMonth ?? profile?.loops_used_this_month}
+        onClose={closeUpsell}
+      />
+    </>
   );
 }

@@ -1,7 +1,4 @@
-import type { AppLocale } from "@/i18n/config";
-import { buildDashboardSection } from "@/i18n/dashboardCatalog";
-import { toast, toastNotice } from "@/lib/appToast";
-import type { Toast } from "react-hot-toast";
+import { useAudioRetentionModalStore } from "@/stores/audioRetentionModalStore";
 
 const STORAGE_PREFIX = "pk.audioRetentionDaily.";
 
@@ -34,48 +31,17 @@ export function markAudioRetentionDailyNoticeShown(userId: string, dateKey = loc
   }
 }
 
-function formatTitle(template: string, count: number): string {
-  return template.replace(/\{\{count\}\}/g, String(count));
-}
-
 type ShowOpts = {
-  locale: AppLocale;
   expiredCount: number;
-  onSecure: () => void;
+  plan: string;
+  source: string;
 };
 
-export function showAudioRetentionDailyNotice({ locale, expiredCount, onSecure }: ShowOpts): void {
-  const copy = buildDashboardSection(locale);
-  const title = formatTitle(copy.audioRetentionDailyTitle, expiredCount);
-  const cta = copy.audioRetentionDailyCta;
-
-  toastNotice(
-    title,
-    (t: Toast) => (
-      <div
-        className={`pk-toast pk-toast--notice flex max-w-[min(360px,calc(100vw-2rem))] flex-col gap-2 rounded-[14px] border border-amber-400/30 bg-[rgba(8,8,14,0.94)] p-3 shadow-lg backdrop-blur-xl ${
-          t.visible ? "animate-enter" : "animate-leave"
-        }`}
-        role="status"
-      >
-        <div className="flex items-start gap-2">
-          <span className="text-base leading-none" aria-hidden>
-            ⚠️
-          </span>
-          <p className="text-sm font-semibold leading-snug text-white/92">{title}</p>
-        </div>
-        <button
-          type="button"
-          className="self-start rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-violet-500"
-          onClick={() => {
-            onSecure();
-            toast.dismiss(t.id);
-          }}
-        >
-          {cta}
-        </button>
-      </div>
-    ),
-    { id: "audio-retention-daily" },
-  );
+/** Ouvre le modal cloud Plus (1×/jour max — voir hook). */
+export function showAudioRetentionDailyNotice({ expiredCount, plan, source }: ShowOpts): void {
+  useAudioRetentionModalStore.getState().openModal({
+    expiredCount,
+    plan,
+    source,
+  });
 }

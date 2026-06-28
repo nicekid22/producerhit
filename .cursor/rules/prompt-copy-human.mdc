@@ -1,0 +1,19 @@
+---
+description: Prompts inspiration (dé, placeholders) — écriture humaine obligatoire
+globs:
+  - packages/shared/src/prompt/**
+  - apps/mobile/lib/useRotatingPlaceholder.ts
+  - apps/mobile/components/PromptDiceButton.tsx
+alwaysApply: false
+---
+
+# Prompts inspiration — ton humain
+
+Avant d'éditer les pools de prompts (dé, placeholders, curated) :
+
+1. **Lire** `.cursor/skills/human-prompts/SKILL.md`
+2. Sujets **concrets de la vie** (travail, crush, studio, famille, transport…) — jamais de formules vagues type « vibe nocturne », « histoire nocturne », « émotion brute »
+3. Varier les moods/thèmes ; éviter la répétition « nocturne + pluie + drive »
+4. Après modif des thèmes ACE : `npx tsx scripts/generate-ace-prose-locale-pools.ts`
+
+Le merge dé/placeholder utilise `interleaveDisplayPrompts` — ne pas remettre 500 prompts ACE en tête du pool.

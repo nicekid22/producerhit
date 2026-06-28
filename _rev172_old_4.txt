@@ -1,0 +1,61 @@
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !currentBeat?.audioUrl) return;
+    setHasError(false);
+    errorToastShownRef.current = false;
+    audioGraphFailedRef.current = false;
+
+    const targetUrl = currentBeat.audioUrl.trim();
+    const sameSrc = audio.src === targetUrl || audio.src.endsWith(targetUrl);
+
+    const playNow = () => {
+      ensureAudioGraph();
+      const ctx = audioCtxRef.current;
+      if (ctx && ctx.state === "suspended") void ctx.resume().catch(() => undefined);
+      void audio.play().catch(() => {
+        if (audio.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) return;
+        setIsPlaying(false);
+        setPlaying(false);
+      });
+    };
+
+    if (!sameSrc) {
+      audio.src = targetUrl;
+      audio.load();
+      audio.muted = false;
+      audio.volume = volume;
+      setIsLoading(true);
+      setProgress(0);
+      setProgressStore(0);
+      setCurrentTimeSec(0);
+      setCurrentTimeStore(0);
+      setDurationSec(0);
+      setDurationStore(0);
+    }
+
+    if (storeIsPlaying) {
+      if (audio.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
+        playNow();
+        return;
+      }
+
+      const onCanPlayOnce = () => {
+        audio.removeEventListener("canplay", onCanPlayOnce);
+        if (usePlayerStore.getState().isPlaying) playNow();
+      };
+      audio.addEventListener("canplay", onCanPlayOnce);
+      return () => {
+        audio.removeEventListener("canplay", onCanPlayOnce);
+      };
+    }
+  }, [
+    currentBeat?.audioUrl,
+    currentBeat?.id,
+    setCurrentTimeStore,
+    setDurationStore,
+    setPlaying,
+    setProgressStore,
+    storeIsPlaying,
+    ensureAudioGraph,
+    volume,
+  ]);

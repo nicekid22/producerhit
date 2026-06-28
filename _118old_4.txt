@@ -1,0 +1,18 @@
+  if (!currentBeat) return <audio ref={audioRef} id="pk-audio" preload="metadata" />;
+
+  return (
+    <div
+      className="fixed bottom-[var(--pk-bottom-nav)] left-0 right-0 z-50 border-t border-pk-border bg-[radial-gradient(1200px_120px_at_50%_0%,rgba(124,58,237,0.28),transparent_60%),linear-gradient(90deg,rgba(15,16,25,0.65),rgba(15,16,25,0.35),rgba(15,16,25,0.65))] pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:bottom-0 md:pb-0"
+      aria-busy={isLoading}
+    >
+      <div className="mx-auto flex max-w-[1440px] items-center gap-4 px-4 py-3">
+        <div className="min-w-0">
+          <div className="truncate text-sm font-semibold">{currentBeat.name}</div>
+          <div className="mt-0.5 flex flex-wrap gap-2 text-xs text-pk-muted">
+            <span className="rounded-full bg-white/5 px-2 py-0.5">{currentBeat.genre}</span>
+            <span className="rounded-full bg-white/5 px-2 py-0.5">
+              {currentBeat.key} {currentBeat.scale}
+            </span>
+            <span className="rounded-full bg-white/5 px-2 py-0.5">{currentBeat.bpm} BPM</span>
+          </div>
+        </div>

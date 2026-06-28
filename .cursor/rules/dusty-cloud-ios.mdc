@@ -1,0 +1,36 @@
+---
+description: Redesign iOS ProducerHit — direction Dusty Cloud (premium, anti-slop). Prioritaire sur l'ancien Prism mesh.
+globs:
+  - "apps/mobile/**"
+alwaysApply: false
+---
+
+# iOS — Dusty Cloud (redesign actif)
+
+Avant toute modification UI dans `apps/mobile/` :
+
+1. Lire `apps/mobile/design-system/DUSTY-CLOUD.md` (spec complète)
+2. Lire `apps/mobile/design-system/EXECUTION-IOS.md` (phase en cours — **une phase à la fois**)
+3. Respecter l'ordre : AppBackground → GenreChip → SongCard → MiniPlayer → PlayerCard → GenerateButton → TabBar
+
+## Palette (hex exacts)
+
+- Void `#1A1220` · Surface `#221729` · Elevated `#2C1F35` · Highlight `#38273F`
+- CTA rose `#C4687A` · Brand mauve `#8B6FA8` · Lavande `#C4AEDE`
+- Texte `#F5EEF8` · secondary `rgba(245,238,248,0.6)` · tertiary `0.3`
+- **Rose et mauve jamais sur le même composant**
+
+## Interdit
+
+- `MeshAtmosphere`, blobs, radial gradients décoratifs, glass sur cartes liste
+- `glow.iris` sur chips / tab ordinaire
+- Gradients `LinearGradient` sur cards entières ou CTA (CTA = couleur plate)
+- Nouveau travail style Prism néon sans alignement dusty
+
+## Fond app
+
+Uniquement void `#1A1220` — pas de grain overlay (pixelisé sur iOS).
+
+## Hors scope redesign
+
+i18n, prompts ACE, Supabase, IAP, agents — ne pas mélanger dans les PR UI.

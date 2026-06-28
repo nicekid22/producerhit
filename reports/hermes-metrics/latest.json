@@ -1,0 +1,70 @@
+{
+  "days": 30,
+  "since": "2026-05-22T14:55:56.871743+00:00",
+  "users": {
+    "total": 19,
+    "by_plan": {
+      "pro": 1,
+      "free": 14,
+      "plus": 1,
+      "studio": 3
+    },
+    "active_7d": 2,
+    "signups_7d": 2,
+    "signups_24h": 0,
+    "paid_subscriptions": 0
+  },
+  "funnel": {
+    "landing": 88,
+    "signups": 3,
+    "sessions": 1094,
+    "checkouts": 4,
+    "first_play": 8,
+    "generations": 18,
+    "subscriptions": 0,
+    "signup_to_gen_pct": 600,
+    "gen_to_checkout_pct": 22.2,
+    "checkout_to_paid_pct": 0
+  },
+  "revenue": {
+    "events_24h": 0,
+    "activations_7d": 0,
+    "cancellations_7d": 0,
+    "churn_rate_7d_pct": 0,
+    "arr_cents_estimate": 0,
+    "mrr_cents_estimate": 0,
+    "free_to_paid_pct_7d": 0,
+    "invoice_paid_cents_7d": 0
+  },
+  "channels": [
+    {
+      "count": 13332,
+      "source": "direct"
+    },
+    {
+      "count": 528,
+      "source": "reddit"
+    },
+    {
+      "count": 127,
+      "source": "youtube"
+    },
+    {
+      "count": 3,
+      "source": "ig"
+    },
+    {
+      "count": 2,
+      "source": "copilot.com"
+    }
+  ],
+  "retention": {
+    "d1_pct": 8.3,
+    "d7_pct": 8.3
+  },
+  "generated_at": "2026-06-21T14:55:56.871743+00:00",
+  "stripe_cross_check": {
+    "mrr_cents": 2700,
+    "active_subscriptions": 3
+  }
+}

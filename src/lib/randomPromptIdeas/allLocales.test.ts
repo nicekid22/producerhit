@@ -11,7 +11,7 @@ import { looksLikeAceTechnicalPrompt, resolveGenerationCaptionContext } from "@/
 import { resolveRandomPromptLocale } from "@/lib/resolveRandomPromptLocale";
 import { resolveSongVocalLanguage } from "@/lib/vocalLanguages";
 import { getCuratedDisplayPromptPool, getDisplayPromptPool, getAceProseCuratedPool, looksLikeAceProsePrompt, normalizeAceCaption, resolveCuratedPromptLocale } from "@producerhit/shared";
-import { uiLocaleToAceVocalLanguage } from "@producerhit/shared";
+import { uiLocaleToAceVocalLanguage, defaultVocalLanguagePreference } from "@producerhit/shared";
 
 const NON_EN_FR = UI_LOCALES.filter((l) => l !== "en" && l !== "fr");
 const ROMANCE_DICE_LOCALES = ["es", "pt", "de", "it", "nl"] as const;
@@ -156,6 +156,30 @@ describe("all 14 UI locales — prompt locale resolution", () => {
 });
 
 describe("all 14 UI locales — vocal language", () => {
+  it.each(UI_LOCALES)("defaultVocalLanguagePreference(%s) matches ACE UI policy", (locale) => {
+    const pref = defaultVocalLanguagePreference(locale);
+    const autoOnly = locale === "nl" || locale === "tr" || locale === "hi" || locale === "th";
+    if (autoOnly) {
+      expect(pref).toEqual({ mode: "auto", manualCode: "en" });
+    } else {
+      expect(pref).toEqual({ mode: "manual", manualCode: locale });
+    }
+  });
+
+  it("FR dashboard sync → resolveSongVocalLanguage manual fr", () => {
+    const pref = defaultVocalLanguagePreference("fr");
+    expect(
+      resolveSongVocalLanguage({
+        mode: pref.mode,
+        manualCode: pref.manualCode,
+        lyricsMode: "ai",
+        lyrics: "",
+        songDescription: "Une chanson opium style sur des retrouvailles qui font du bien",
+        uiLocale: "fr",
+      }),
+    ).toBe("fr");
+  });
+
   it.each(UI_LOCALES)("uiLocaleToAceVocalLanguage(%s) is ACE-supported", (locale) => {
     const code = uiLocaleToAceVocalLanguage(locale);
     expect(["en", "fr", "es", "pt", "it", "de", "ja", "zh", "ko", "ar", "ru"]).toContain(code);

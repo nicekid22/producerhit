@@ -313,6 +313,52 @@ html.pk-cloud-active .pk-audio-retention-banner--urgent {
   --pk-retention-icon: #c45a20;
 }
 
+/* Audio retention cloud modal */
+.pk-audio-retention-modal__header-band {
+  pointer-events: none;
+  position: absolute;
+  inset: 0 0 auto;
+  height: 7rem;
+  background: linear-gradient(
+    165deg,
+    var(--pk-paywall-header-from) 0%,
+    var(--pk-paywall-header-to) 55%,
+    transparent 100%
+  );
+}
+
+.pk-audio-retention-modal__icon-stack {
+  width: 3.5rem;
+  height: 3.5rem;
+}
+
+.pk-audio-retention-modal__icon-badge {
+  border: 1px solid var(--pk-paywall-border);
+  background: color-mix(in srgb, var(--pk-paywall-bg) 82%, var(--pk-paywall-accent) 18%);
+  color: var(--pk-paywall-accent);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--pk-paywall-accent) 22%, transparent);
+}
+
+.pk-audio-retention-modal__title {
+  color: var(--pk-paywall-text);
+}
+
+.pk-audio-retention-modal__lead {
+  color: var(--pk-paywall-text-muted);
+}
+
+.pk-audio-retention-modal__cta-primary {
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--pk-paywall-accent) 35%, transparent);
+}
+
+html.pk-warm-glass-active .pk-audio-retention-modal__icon-badge {
+  box-shadow: 0 6px 18px rgba(232, 149, 106, 0.28);
+}
+
+html.pk-cloud-active .pk-audio-retention-modal__icon-badge {
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--cloud-accent, #8a9cff) 24%, transparent);
+}
+
 /* Modal backdrop (shared Modal.tsx) */
 .pk-modal-backdrop {
   background: rgba(4, 3, 10, 0.7);

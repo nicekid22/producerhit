@@ -2,6 +2,7 @@ import { useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Check, ChevronLeft, ChevronRight, Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { loadDistributionCss } from "@/lib/perf/defer";
 import type { DistributionStudioCopy } from "@/i18n/distributionStudioCatalog";
 
 export type DistributionStudioStep = 1 | 2 | 3;
@@ -51,6 +52,7 @@ export function DistributionStudioShell({
 }: Props) {
   useEffect(() => {
     if (!open) return;
+    void loadDistributionCss();
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const onKey = (e: KeyboardEvent) => {

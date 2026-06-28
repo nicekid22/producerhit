@@ -2416,7 +2416,6 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
         clearTimeout(timer);
       }
     }
-    const genre = asString(body?.genre);
     const mood = asString(body?.mood);
     const energyLevel = asString(body?.energyLevel);
     const autoMeta = body?.autoMeta === true;

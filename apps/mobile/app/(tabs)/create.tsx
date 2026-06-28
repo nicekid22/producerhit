@@ -25,6 +25,7 @@ import {
   getInspirationChipsForGenre,
   resolveGenerationCaptionContext,
   resolveSongVocalLanguage,
+  defaultVocalLanguagePreference,
   type GenerationJobStatus,
   type LoopLength,
   type MobileVocalStyle,
@@ -143,7 +144,11 @@ export default function CreateScreen() {
     songLyricsOverrideRef.current = null;
     songBankDiceRef.current = false;
     beatAceOverrideRef.current = null;
-  }, [locale]);
+
+    if (!prefsHydrated) return;
+    const vocalPref = defaultVocalLanguagePreference(locale);
+    void setVocalLanguage(vocalPref.mode, vocalPref.manualCode);
+  }, [locale, prefsHydrated, setVocalLanguage]);
   const onboardingPrefsAppliedRef = useRef(false);
   const pendingPlaybackLoopIdRef = useRef<string | null>(null);
 
@@ -457,7 +462,7 @@ export default function CreateScreen() {
               lyrics: runLyrics,
               lyricsMode: runLyricsMode,
               vocalStyle,
-              captionOverride: songCaptionCtx.lyricsStructure?.trim()
+              captionOverride: songCaptionCtx.captionOverride?.trim()
                 ? songCaptionCtx.captionOverride
                 : undefined,
               melodyComposition: songCaptionCtx.melodyComposition,

@@ -8,7 +8,6 @@ import {
 import { summarizeHostedAudioRetention } from "@/lib/loopAudioRetention";
 import { hasPermanentHostedAudio } from "@/lib/planEntitlements";
 import { useAuthStore } from "@/stores/authStore";
-import { useGrowthUpsellStore } from "@/stores/growthUpsellStore";
 import type { Loop } from "@/types/loop";
 
 type Options = {
@@ -20,7 +19,7 @@ type Options = {
   hostedAudioExpiresAt?: string | null;
 };
 
-/** Toast 1×/jour si des tracks hébergées sont expirées (plan sans audio permanent). */
+/** Modal cloud Plus 1×/jour si des tracks hébergées sont expirées (plan sans audio permanent). */
 export function useAudioRetentionDailyNotice({
   locale,
   loops,
@@ -30,7 +29,6 @@ export function useAudioRetentionDailyNotice({
   hostedAudioExpiresAt = null,
 }: Options): void {
   const userId = useAuthStore((s) => s.user?.id);
-  const openUpsell = useGrowthUpsellStore((s) => s.openUpsell);
   const shownRef = useRef(false);
 
   useEffect(() => {
@@ -45,14 +43,9 @@ export function useAudioRetentionDailyNotice({
     shownRef.current = true;
     markAudioRetentionDailyNoticeShown(userId);
     showAudioRetentionDailyNotice({
-      locale,
       expiredCount: summary.expired,
-      onSecure: () => {
-        openUpsell("feature_permanent_audio", {
-          source: "audio_retention_daily",
-          plan,
-        });
-      },
+      plan,
+      source: "audio_retention_daily",
     });
-  }, [hostedAudioExpiresAt, locale, loops, loopsReady, openUpsell, plan, planReady, userId]);
+  }, [hostedAudioExpiresAt, locale, loops, loopsReady, plan, planReady, userId]);
 }

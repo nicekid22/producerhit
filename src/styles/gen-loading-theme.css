@@ -52,3 +52,12 @@ html.pk-cloud-active .pk-gen-loading-card .pk-icon-loader__icon,
     animation: none !important;
   }
 }
+
+/* Bandeau compact — aligné hauteur Mon espace / toolbar mobile */
+.pk-gen-loading-card--compact {
+  min-height: 0;
+}
+
+.pk-gen-loading-card--compact .pk-gen-loading-shimmer {
+  opacity: 0.28;
+}

@@ -1,0 +1,3 @@
+  if (!currentBeat) return <audio ref={audioRef} id="pk-audio" preload="metadata" />;
+
+  const coverBg = coverGradient(currentBeat);

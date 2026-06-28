@@ -1,0 +1,5 @@
+      const t = barCount === 1 ? 0 : i / (barCount - 1);
+      const r = Math.round(203 + (103 - 203) * t);
+      const g = Math.round(213 + (195 - 213) * t);
+      const b = Math.round(225 + (255 - 225) * t);
+      ctx2d.fillStyle = `rgb(${r}, ${g}, ${b})`;

@@ -1,0 +1,60 @@
+        <div className="flex min-w-0 flex-1 flex-col items-center">
+          <div className="flex items-center gap-3">
+            <Button variant="secondary" size="sm" onClick={prev} disabled={!canPrev} aria-label="Previous">
+              <SkipBack className="h-4 w-4" />
+            </Button>
+            <Button variant="secondary" size="sm" onClick={togglePlay} aria-label={isPlaying ? "Pause" : "Play"}>
+              {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+            </Button>
+            <Button variant="secondary" size="sm" onClick={next} disabled={!canNext} aria-label="Next">
+              <SkipForward className="h-4 w-4" />
+            </Button>
+            {hasError ? (
+              <Button variant="secondary" size="sm" onClick={retryPlayback} aria-label="Retry">
+                Retry
+              </Button>
+            ) : null}
+            <div className="text-xs text-pk-muted">
+              {formatTime(currentTimeSec)} / {durationSec > 0 ? formatTime(durationSec) : "--:--"}
+              {queueLen > 0 ? ` · ${queueIndex + 1}/${queueLen}` : ""}
+            </div>
+          </div>
+          <canvas ref={vizCanvasRef} className="mt-2 h-8 w-full" aria-hidden />
+          <div
+            className={`relative mt-2 flex h-3 w-full items-center group ${durationSec > 0 ? "cursor-pointer" : "cursor-default"}`}
+            onClick={durationSec > 0 ? handleSeek : undefined}
+          >
+            <div className="relative h-[2px] w-full overflow-hidden rounded-[2px] bg-white/10">
+              {durationSec > 0 ? (
+                <div className="h-full bg-pk-accent transition-none" style={{ width: `${progress * 100}%` }} />
+              ) : isLoading ? (
+                <div className="absolute inset-0">
+                  <div
+                    className="absolute left-0 top-0 h-full w-[42%] bg-gradient-to-r from-transparent via-[#7c3aed]/70 to-transparent"
+                    style={{ animation: "pkShimmer 1.1s ease-in-out infinite" }}
+                  />
+                </div>
+              ) : (
+                <div className="h-full w-full bg-transparent" />
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="hidden items-center gap-3 sm:flex">
+          <div className="flex items-center gap-2 text-pk-muted">
+            <Volume2 className="h-4 w-4" />
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
+              value={volume}
+              onChange={handleVolumeChange}
+              className="h-1 w-28 cursor-pointer accent-[#7c3aed]"
+            />
+          </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            aria-label="Download"

@@ -1,0 +1,17 @@
+    if (storeIsPlaying === true) {
+      if (audio.paused) {
+        ensureAudioGraph();
+        const ctx = audioCtxRef.current;
+        if (ctx && ctx.state === "suspended") void ctx.resume().catch(() => undefined);
+        void audio.play().catch(() => {
+          setIsPlaying(false);
+          setPlaying(false);
+        });
+      }
+      return;
+    }
+
+    if (storeIsPlaying === false) {
+      if (!audio.paused) audio.pause();
+    }
+  }, [ensureAudioGraph, setPlaying, storeIsPlaying]);

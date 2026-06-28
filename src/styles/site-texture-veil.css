@@ -590,7 +590,6 @@ body[data-pk-theme="app"] .pk-prism-page-hero,
 body[data-pk-theme="app"] .pk-prism-stat,
 body[data-pk-theme="app"] .pk-prism-section-card,
 body[data-pk-theme="app"] .pk-loop-details-sheet,
-body[data-pk-theme="app"] .pk-loop-details-panel,
 body[data-pk-theme="app"] .pk-gaming-panel-shell,
 body[data-pk-theme="app"] .pk-mobile-gen-notice,
 body[data-pk-theme="app"] .pk-dashboard-spotlight-banner,
@@ -610,8 +609,7 @@ body[data-pk-theme="app"] .pk-hub-nav {
 
 body[data-pk-theme="app"] .pk-hub-hero__card,
 body[data-pk-theme="app"] .pk-prism-page-hero,
-body[data-pk-theme="app"] .pk-prism-section-card,
-body[data-pk-theme="app"] .pk-loop-details-panel {
+body[data-pk-theme="app"] .pk-prism-section-card {
   position: relative;
   background-color: rgba(8, 7, 14, 0.52) !important;
   background-image: linear-gradient(
@@ -666,7 +664,6 @@ body[data-pk-theme="app"] .pk-prism-page-hero::after,
 body[data-pk-theme="app"] .pk-prism-stat::after,
 body[data-pk-theme="app"] .pk-prism-section-card::after,
 body[data-pk-theme="app"] .pk-loop-details-sheet::after,
-body[data-pk-theme="app"] .pk-loop-details-panel::after,
 body[data-pk-theme="app"] .pk-gaming-panel-shell::after,
 body[data-pk-theme="app"] .pk-studio-rail::after,
 body[data-pk-theme="app"] .pk-mobile-dashboard-chrome::after,
@@ -720,7 +717,6 @@ body[data-pk-theme="app"] .pk-prism-page-hero > *,
 body[data-pk-theme="app"] .pk-prism-stat > *,
 body[data-pk-theme="app"] .pk-prism-section-card > *,
 body[data-pk-theme="app"] .pk-loop-details-sheet > *,
-body[data-pk-theme="app"] .pk-loop-details-panel > *,
 body[data-pk-theme="app"] .pk-studio-rail > *,
 body[data-pk-theme="app"] .pk-mobile-dashboard-chrome > *,
 body[data-pk-theme="app"] .pk-dashboard-spotlight-banner > *,
@@ -764,7 +760,6 @@ body[data-pk-theme="app"] .pk-studio-generate-dock > * {
     .pk-prism-section-card,
     .pk-blog-card,
     .pk-blog-listen,
-    .pk-loop-details-panel,
     body[data-pk-theme="marketing"] .pk-landing-gen__shell,
     body[data-pk-theme="app"] .pk-studio-workspace,
     body[data-pk-theme="app"] .pk-hub-hero__card,
@@ -933,8 +928,7 @@ body[data-pk-theme="app"] .pk-app-shell.pk-warm-glass-stage :is(
     .pk-studio-workspace,
     .pk-prism-page-hero,
     .pk-prism-section-card,
-    .pk-hub-hero__card,
-    .pk-loop-details-panel
+    .pk-hub-hero__card
   ) {
   background-color: color-mix(in srgb, rgba(36, 18, 10, 0.22) 82%, transparent) !important;
 }
@@ -965,8 +959,7 @@ body[data-pk-theme="app"] .pk-app-shell.pk-warm-glass-stage.pk-prism-dashboard:h
     .pk-studio-workspace,
     .pk-prism-page-hero,
     .pk-prism-section-card,
-    .pk-hub-hero__card,
-    .pk-loop-details-panel
+    .pk-hub-hero__card
   ) {
   background-color: color-mix(in srgb, rgba(24, 22, 30, 0.26) 82%, transparent) !important;
 }

@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { extractCoverVisualIdeaFromPrompt } from "@producerhit/shared"
 import type { Loop } from "@/types/loop"
 
 export function cn(...inputs: ClassValue[]) {
@@ -24,7 +25,7 @@ export function hashString(input: string) {
 
 /** Snapshot cover prompt when a track is created (uses live prompt once). */
 export function buildCoverPromptSnapshot(loop: Pick<Loop, "prompt" | "genre" | "mood" | "influence">): string {
-  const fromPrompt = (typeof loop.prompt === "string" ? loop.prompt : "").trim()
+  const fromPrompt = extractCoverVisualIdeaFromPrompt(typeof loop.prompt === "string" ? loop.prompt : "")
   const base = fromPrompt || `${loop.genre || ""} ${loop.mood || ""} ${loop.influence || ""}`.trim()
   const trimmed = base.length > 160 ? base.slice(0, 160) : base
   return trimmed || "dreamy beat"

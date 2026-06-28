@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <title>Hermes — Jobs &amp; Status</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #0f1117; color: #e6e6e6; margin: 0; padding: 24px; }
+    h1 { color: #7dd3fc; margin-bottom: 8px; }
+    .meta { color: #888; margin-bottom: 24px; font-size: 14px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #2a2d3a; }
+    th { color: #94a3b8; font-weight: 600; }
+    tr:hover { background: #1a1d27; }
+    .active { color: #4ade80; }
+    .err { color: #f87171; font-size: 12px; max-width: 400px; overflow: hidden; text-overflow: ellipsis; }
+    a { color: #7dd3fc; }
+    .badge { background: #1e3a5f; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h1>Hermes Growth Dashboard</h1>
+  <p class="meta">Jobs planifies — recharge la page pour actualiser. Gateway: <code>hermes gateway status</code></p>
+  <div id="root">Chargement...</div>
+  <script>
+    const JOBS_URL = '/api/jobs';
+    fetch(JOBS_URL).then(r => r.json()).then(data => {
+      const jobs = data.jobs || [];
+      if (!jobs.length) { document.getElementById('root').innerHTML = '<p>Aucun job.</p>'; return; }
+      let html = '<table><tr><th>Nom</th><th>Skill</th><th>Schedule</th><th>Prochain run</th><th>Dernier run</th></tr>';
+      for (const j of jobs) {
+        const st = j.state || {};
+        html += `<tr>
+          <td><strong>${j.name || j.id}</strong><br><span class="badge">${j.enabled !== false ? 'active' : 'off'}</span></td>
+          <td>${(j.skills||[]).join(', ') || '-'}</td>
+          <td>${j.schedule || '-'}</td>
+          <td>${st.next_run || '-'}</td>
+          <td class="err">${st.last_run || '-'} ${st.last_error ? ' — ' + st.last_error : ''}</td>
+        </tr>`;
+      }
+      html += '</table>';
+      document.getElementById('root').innerHTML = html;
+    }).catch(e => {
+      document.getElementById('root').innerHTML = '<p style="color:#f87171">Erreur: ' + e + '</p>';
+    });
+  </script>
+</body>
+</html>

@@ -3801,8 +3801,11 @@ html.pk-warm-glass-active:has(.pk-dashboard-generator) .pk-prism-player.pk-warm-
   border-color: var(--warm-dash-chrome-border) !important;
 }
 
-.pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-loop-details-panel .rounded-xl.border,
-.pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-studio-detail-panel .rounded-xl.border {
+.pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-loop-details-panel .pk-loop-stat-pill,
+.pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-loop-details-panel .pk-loop-lyrics-empty,
+.pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-loop-details-panel input.bg-pk-input,
+.pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-studio-detail-panel .pk-loop-stat-pill,
+.pk-warm-glass-stage.pk-prism-dashboard:has(.pk-dashboard-generator) .pk-studio-detail-panel input.bg-pk-input {
   background: rgba(255, 255, 255, 0.035) !important;
   border-color: rgba(255, 255, 255, 0.09) !important;
 }

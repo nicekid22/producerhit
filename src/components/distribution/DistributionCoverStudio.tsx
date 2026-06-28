@@ -5,6 +5,7 @@ import {
   buildCoverPromptSuggestionsFromLoop,
   buildStructuredCoverPrompt,
   COVER_PROMPT_MAX_LENGTH,
+  extractCoverVisualIdeaFromPrompt,
 } from "@producerhit/shared";
 import type { Loop } from "@/types/loop";
 import type { DistributionStudioCopy } from "@/i18n/distributionStudioCatalog";
@@ -30,11 +31,16 @@ type Props = {
 };
 
 function resolveInitialPrompt(loop: Loop): string {
+  const visualIdea = extractCoverVisualIdeaFromPrompt(loop.prompt ?? "");
+  const fromTrack = buildCoverPromptSuggestionsFromLoop(loop)[0];
+  if (visualIdea.length >= 6 && fromTrack) {
+    return buildStructuredCoverPrompt(fromTrack);
+  }
+
   const saved = loop.details?.coverPrompt?.trim();
   if (saved && saved.length >= 6) {
     return saved.slice(0, COVER_PROMPT_MAX_LENGTH);
   }
-  const fromTrack = buildCoverPromptSuggestionsFromLoop(loop)[0];
   if (fromTrack) {
     return buildStructuredCoverPrompt(fromTrack);
   }

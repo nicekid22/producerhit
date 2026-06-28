@@ -20,6 +20,17 @@ serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
-  const { handleGenerateLoopAceRequest } = await loadHandler();
-  return handleGenerateLoopAceRequest(req);
+  try {
+    const { handleGenerateLoopAceRequest } = await loadHandler();
+    return await handleGenerateLoopAceRequest(req);
+  } catch (err) {
+    console.error("[generate-loop-ace] boot error:", err);
+    return new Response(
+      JSON.stringify({ error: err instanceof Error ? err.message : String(err) }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
+  }
 });

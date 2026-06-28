@@ -1,0 +1,18 @@
+{
+  "guildId": "948917664124903434",
+  "inviteUrl": "https://discord.gg/74GX6rwsE2",
+  "channels": {
+    "welcome": "1514721529181503670",
+    "rules": "1514721524295143585",
+    "announcements": "1514721526082044115",
+    "general": "1514721531291500615",
+    "challenges": "1514721534218997881",
+    "showcase": "1514721532398538753"
+  },
+  "locale": "en-US-international",
+  "languageLounges": {
+    "french": "1514728643434119329",
+    "spanish": "1514728646332518420",
+    "portuguese": "1514728648714752195"
+  }
+}

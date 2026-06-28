@@ -1,0 +1,4 @@
+    const onPause = () => {
+      setIsPlaying(false);
+      setPlaying(false);
+    };

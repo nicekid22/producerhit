@@ -1,0 +1,25 @@
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (storeIsPlaying === true) {
+      if (audio.paused) {
+        ensureAudioGraph();
+        const ctx = audioCtxRef.current;
+        if (ctx && ctx.state === "suspended") void ctx.resume().catch(() => undefined);
+        if (!currentBeat?.audioUrl?.trim()) return;
+        if (audio.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
+          void audio.play().catch(() => {
+            if (audio.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) return;
+            setIsPlaying(false);
+            setPlaying(false);
+          });
+        }
+      }
+      return;
+    }
+
+    if (storeIsPlaying === false) {
+      if (!audio.paused) audio.pause();
+    }
+  }, [currentBeat?.audioUrl, ensureAudioGraph, setPlaying, storeIsPlaying]);

@@ -1,0 +1,28 @@
+  if (!currentBeat) return <audio ref={audioRef} id="pk-audio" preload="metadata" />;
+
+  if (isLandingRoute) return <audio ref={audioRef} id="pk-audio" preload="metadata" />;
+
+  const coverBg = coverGradient(currentBeat);
+  const coverUrl = coverImageUrl(currentBeat);
+
+  return (
+    <div
+      className="pk-prism-player pk-prism-player--dock fixed bottom-[var(--pk-bottom-nav)] left-0 right-0 z-50 pb-[env(safe-area-inset-bottom)] md:bottom-0 md:pb-0"
+      aria-busy={isLoading}
+    >
+      <div className="mx-auto flex max-w-[1440px] items-center gap-4 px-4 py-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="pk-prism-cover relative hidden h-11 w-11 shrink-0 overflow-hidden rounded-xl sm:block" style={{ background: coverBg }}>
+            <img src={coverUrl} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" decoding="async" referrerPolicy="no-referrer" />
+          </div>
+          <div className="min-w-0">
+            <div className="truncate text-sm font-semibold text-white">{currentBeat.name}</div>
+            <div className="mt-0.5 flex flex-wrap gap-2 text-xs text-white/50">
+              <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5">{currentBeat.genre}</span>
+              <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5">
+                {currentBeat.key} {currentBeat.scale}
+              </span>
+              <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5">{currentBeat.bpm} BPM</span>
+            </div>
+          </div>
+        </div>

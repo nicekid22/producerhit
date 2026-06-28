@@ -1,0 +1,2 @@
+  const canPrev = queueLen > 0 && queueIndex > 0;
+  const canNext = queueLen > 0 && queueIndex < queueLen - 1;

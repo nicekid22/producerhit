@@ -1,0 +1,89 @@
+name: Reddit growth cron
+
+on:
+  schedule:
+    # Toutes les 20 min — scout + action seulement si quotas REDDIT_MAX_* OK
+    - cron: "*/20 * * * *"
+  workflow_dispatch:
+    inputs:
+      run_live:
+        description: "Poster commentaires (--run)"
+        type: boolean
+        default: true
+      include_post:
+        description: "Inclure post hebdo (--post)"
+        type: boolean
+        default: true
+
+jobs:
+  reddit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Restore quota state
+        uses: actions/cache@v4
+        with:
+          path: reports/automation/reddit-cron-state.json
+          key: reddit-cron-state-v1-${{ github.repository }}
+          restore-keys: |
+            reddit-cron-state-v1-
+
+      - name: Quota status
+        env:
+          REDDIT_MAX_COMMENTS_PER_DAY: "3"
+          REDDIT_MAX_POSTS_PER_DAY: "1"
+          REDDIT_MAX_POSTS_PER_WEEK: "3"
+          REDDIT_MIN_MINUTES_BETWEEN_COMMENTS: "120"
+          REDDIT_MIN_MINUTES_BETWEEN_POSTS: "360"
+          REDDIT_CRON_INTERVAL_MINUTES: "20"
+          REDDIT_MAX_COMMENTS_PER_RUN: "1"
+        run: node scripts/reddit-cron.mjs --status || true
+
+      - name: Reddit cron (scout + quota)
+        env:
+          REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+          REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+          REDDIT_REFRESH_TOKEN: ${{ secrets.REDDIT_REFRESH_TOKEN }}
+          REDDIT_MAX_COMMENTS_PER_DAY: "3"
+          REDDIT_MAX_POSTS_PER_DAY: "1"
+          REDDIT_MAX_POSTS_PER_WEEK: "3"
+          REDDIT_MIN_MINUTES_BETWEEN_COMMENTS: "120"
+          REDDIT_MIN_MINUTES_BETWEEN_POSTS: "360"
+          REDDIT_CRON_INTERVAL_MINUTES: "20"
+          REDDIT_MAX_COMMENTS_PER_RUN: "1"
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          ARGS="--run --post"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            ARGS=""
+            if [ "${{ github.event.inputs.run_live }}" = "true" ]; then ARGS="--run"; fi
+            if [ "${{ github.event.inputs.include_post }}" = "true" ]; then ARGS="$ARGS --post"; fi
+            ARGS=$(echo "$ARGS" | xargs)
+          fi
+          if [ -n "$ARGS" ]; then
+            node scripts/reddit-cron.mjs $ARGS
+          else
+            node scripts/reddit-cron.mjs
+          fi
+
+      - name: Upload cron report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reddit-cron-report-${{ github.run_id }}
+          path: reports/automation/reddit-cron-*.md
+          retention-days: 14
+
+      - name: Persist quota state
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reddit-cron-state-${{ github.run_id }}
+          path: reports/automation/reddit-cron-state.json
+          retention-days: 30

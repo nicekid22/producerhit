@@ -1,0 +1,10 @@
+  if (!currentBeat) return <audio ref={audioRef} id="pk-audio" preload="metadata" />;
+
+  const coverBg = coverGradient(currentBeat);
+  const coverUrl = coverImageUrl(currentBeat);
+
+  return (
+    <div
+      className="pk-prism-player pk-prism-player--dock fixed bottom-[var(--pk-bottom-nav)] left-0 right-0 z-50 pb-[env(safe-area-inset-bottom)] md:bottom-0 md:pb-0"
+      aria-busy={isLoading}
+    >

@@ -1,0 +1,59 @@
+---
+description: Utiliser le plugin Supabase MCP pour vérifier la DB directement (ProducerKit)
+alwaysApply: true
+---
+
+# Supabase — plugin Cursor (MCP)
+
+Ce projet est lié à Supabase via le **plugin Supabase** dans Cursor (`plugin-supabase-supabase`). Tu as accès à la base **sans demander à l’utilisateur** d’ouvrir le dashboard.
+
+## Projet
+
+- **Nom** : ProducerKit  
+- **project_id** : `pmfnzenqemnonpglmjqx`  
+- **Région** : us-west-1  
+
+Avant toute requête MCP : `CallMcpTool` avec `server: "plugin-supabase-supabase"`.
+
+## Quand l’utiliser (prioritaire)
+
+Préfère le plugin plutôt que de deviner ou de dire « vérifie dans le Table Editor » :
+
+- Colonnes / migrations appliquées (`cover_url`, `stems_url`, RLS)
+- Données réelles après génération (ex. `loops.cover_url`, `stems_url->'ace'->>'coverUrl'`)
+- Logs edge (`get_logs`) si Pinterest / ACE échoue
+- Advisors sécurité / perf (`get_advisors`) avant changements sensibles
+- Liste des migrations distantes (`list_migrations`) vs `supabase/migrations/`
+
+## Outils MCP utiles
+
+| Besoin | Outil |
+|--------|--------|
+| SQL lecture / diagnostic | `execute_sql` (SELECT) — **pas** pour du DDL ad hoc |
+| Schéma | `list_tables` |
+| DDL / migration | `apply_migration` (aligné avec `supabase/migrations/`) |
+| Edge functions | `list_edge_functions`, `get_edge_function`, `deploy_edge_function` |
+| Debug prod | `get_logs` |
+| Types TS | `generate_typescript_types` |
+
+## Exemples SQL (covers / loops)
+
+```sql
+-- Dernières loops avec cover
+select id, name, cover_url,
+       stems_url->'ace'->>'coverUrl' as ace_cover
+from loops
+order by created_at desc
+limit 10;
+
+-- Loops sans cover
+select count(*) from loops
+where coalesce(cover_url, '') = ''
+  and coalesce(stems_url->'ace'->>'coverUrl', '') = '';
+```
+
+## Rappels
+
+- Ne pas inventer l’état de la DB : **interroger** via `execute_sql` ou `list_tables`.
+- DDL : fichier dans `supabase/migrations/` + `apply_migration`, pas seulement du SQL manuel.
+- Le CLI local (`supabase db push`) reste utile côté dev ; le MCP sert surtout à **vérifier la prod** pendant le debug dans Cursor.

@@ -1,0 +1,55 @@
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !currentBeat?.audioUrl) return;
+    setHasError(false);
+    errorToastShownRef.current = false;
+    audioGraphFailedRef.current = false;
+    if (audio.src !== currentBeat.audioUrl) {
+      audio.src = currentBeat.audioUrl;
+      audio.load();
+      audio.muted = false;
+      audio.volume = volume;
+      setIsLoading(true);
+      setProgress(0);
+      setProgressStore(0);
+      setCurrentTimeSec(0);
+      setCurrentTimeStore(0);
+      setDurationSec(0);
+      setDurationStore(0);
+
+      if (storeIsPlaying) {
+        const playNow = () => {
+            ensureAudioGraph();
+            const ctx = audioCtxRef.current;
+            if (ctx && ctx.state === "suspended") void ctx.resume().catch(() => undefined);
+          void audio.play().catch(() => {
+            setIsPlaying(false);
+            setPlaying(false);
+          });
+        };
+
+        if (audio.readyState >= 3) {
+          playNow();
+          return;
+        }
+
+        const onCanPlayOnce = () => {
+          audio.removeEventListener("canplay", onCanPlayOnce);
+          playNow();
+        };
+        audio.addEventListener("canplay", onCanPlayOnce);
+        return () => {
+          audio.removeEventListener("canplay", onCanPlayOnce);
+        };
+      }
+    }
+  }, [
+    currentBeat?.audioUrl,
+    setCurrentTimeStore,
+    setDurationStore,
+    setPlaying,
+    setProgressStore,
+    storeIsPlaying,
+    ensureAudioGraph,
+    volume,
+  ]);
