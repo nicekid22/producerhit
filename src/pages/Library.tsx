@@ -31,6 +31,8 @@ import { LibraryDistributionBanner } from "@/components/distribution/LibraryDist
 import { DistributionWizard } from "@/components/distribution/DistributionWizard";
 import { useResolvedPlan } from "@/hooks/useResolvedPlan";
 import { useAudioRetentionDailyNotice } from "@/hooks/useAudioRetentionDailyNotice";
+import { getRemainingBeats } from "@/lib/planLimits";
+import { useGrowthUpsellStore } from "@/stores/growthUpsellStore";
 import type { Loop } from "@/types/loop";
 
 type Filter = "all" | "genre" | "key" | "bpm";
@@ -42,6 +44,24 @@ export default function Library() {
   const profile = useAuthStore((s) => s.profile);
   const profileReady = useAuthStore((s) => s.profileReady);
   const { plan: userPlan, ready: planReady, bannersReady } = useResolvedPlan();
+  const refreshProfile = useAuthStore((s) => s.refreshProfile);
+  const openUpsell = useGrowthUpsellStore((s) => s.openUpsell);
+  const remaining = useMemo(
+    () =>
+      getRemainingBeats(
+        userPlan,
+        profile?.loops_used_this_month ?? 0,
+        profile?.referral_bonus ?? 0,
+        profile?.level_bonus ?? 0,
+        profile?.daily_bonus_month ?? 0,
+        profile?.purchased_bonus ?? 0,
+      ),
+    [profile, userPlan],
+  );
+  const handleNeedCredits = useCallback(() => openUpsell("credits_exhausted"), [openUpsell]);
+  const handleProducerTagCreditUsed = useCallback(() => {
+    void refreshProfile();
+  }, [refreshProfile]);
   const lb = buildLibrarySection(locale);
   const common = buildCommonSection(locale);
   const loops = useLoopsStore((s) => s.loops);
@@ -185,6 +205,9 @@ export default function Library() {
             : setDetailsId(loop.id)
         }
         onDistribute={openDistribution}
+        creditsRemaining={remaining}
+        onNeedCredits={handleNeedCredits}
+        onProducerTagCreditUsed={handleProducerTagCreditUsed}
       />
     ),
     [detailsLoop, filtered, mobileUiV2, openDistribution],
@@ -420,7 +443,6 @@ export default function Library() {
                     <div className="pk-prism-panel-glow" />
                     <LoopDetailsSheetHeader
                       title={detailsLoop.name}
-                      subtitle={detailsLoop.genre}
                       onClose={() => setDetailsId(null)}
                       closeLabel={common.close}
                     />
@@ -433,6 +455,9 @@ export default function Library() {
                       onSaveTitle={saveDetailsTitle}
                       durationSec={durationsSecById[detailsLoop.id]}
                       onOpenDistribution={openDistribution}
+                      creditsRemaining={remaining}
+                      onNeedCredits={handleNeedCredits}
+                      onProducerTagCreditUsed={handleProducerTagCreditUsed}
                     />
                   </div>
                 </div>
@@ -449,7 +474,6 @@ export default function Library() {
           open
           onClose={() => setDetailsId(null)}
           title={detailsLoop.name}
-          subtitle={detailsLoop.genre}
           closeLabel={common.close}
         >
           <LoopDetailsPanel
@@ -462,6 +486,9 @@ export default function Library() {
             durationSec={durationsSecById[detailsLoop.id]}
             compact
             onOpenDistribution={openDistribution}
+            creditsRemaining={remaining}
+            onNeedCredits={handleNeedCredits}
+            onProducerTagCreditUsed={handleProducerTagCreditUsed}
           />
         </LoopDetailsSheet>
       ) : null}

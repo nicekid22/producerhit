@@ -83,6 +83,10 @@
     "api/youtube-render.ts": {
       "maxDuration": 120,
       "memory": 1024
+    },
+    "api/producer-tag-mix.ts": {
+      "maxDuration": 120,
+      "memory": 1024
     }
   },
   "redirects": [

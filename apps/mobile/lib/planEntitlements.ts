@@ -40,6 +40,26 @@ export function canDistribute(plan: string | null | undefined): boolean {
   return PLAN_RANK[normalizePlanId(plan)] >= PLAN_RANK.studio;
 }
 
+export function canUseProducerTag(plan: string | null | undefined): boolean {
+  return PLAN_RANK[normalizePlanId(plan)] >= PLAN_RANK.pro;
+}
+
+export function producerTagMaxCount(plan: string | null | undefined): number {
+  const id = normalizePlanId(plan);
+  if (id === "plus") return 10;
+  if (id === "studio") return 5;
+  if (id === "pro") return 2;
+  return 0;
+}
+
+export function canUseProducerTagFx(plan: string | null | undefined): boolean {
+  return PLAN_RANK[normalizePlanId(plan)] >= PLAN_RANK.studio;
+}
+
+export function canUseExtendedProducerTagPlacement(plan: string | null | undefined): boolean {
+  return canUseProducerTagFx(plan);
+}
+
 export function distributionMonthlyQuota(plan: string | null | undefined): number {
   const id = normalizePlanId(plan);
   if (id === "plus") return 5;

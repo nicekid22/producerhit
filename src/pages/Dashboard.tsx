@@ -34,7 +34,7 @@ import {
 } from "@/lib/generationStrategy";
 import { estimateGenerationDurationMs, simulatedGenerationPercent } from "@/lib/generationProgress";
 import { estimateSongDurationFromLyrics } from "@/lib/aceDuration";
-import { resolveAceLyricsForMeta } from "@producerhit/shared";
+import { resolveAceLyricsForMeta, defaultVocalLanguagePreference } from "@producerhit/shared";
 import {
   formatGenerationErrorMessage,
   generationRetryDelayMs,
@@ -143,6 +143,7 @@ import { MobileResultsToolbar } from "@/components/dashboard/MobileResultsToolba
 import { GeneratorSection, generatorSectionPad } from "@/components/dashboard/GeneratorSection";
 import { LoopDetailsPanel } from "@/components/dashboard/LoopDetailsPanel";
 import { LoopDetailsSheet, LoopDetailsSheetHeader } from "@/components/dashboard/LoopDetailsSheet";
+import { DistributionWizard } from "@/components/distribution/DistributionWizard";
 import { MasteringPanel } from "@/components/mastering/MasteringPanel";
 import { DashboardGenerateButton } from "@/components/dashboard/DashboardGenerateButton";
 import type { PanelGenerateBridge } from "@/components/dashboard/panelGenerateBridge";
@@ -486,6 +487,12 @@ export default function Dashboard() {
     }
   });
   const [detailsId, setDetailsId] = useState<string | null>(null);
+  const [distributionLoop, setDistributionLoop] = useState<Loop | null>(null);
+
+  const openDistribution = useCallback((loop: Loop) => {
+    setDetailsId(loop.id);
+    setDistributionLoop(loop);
+  }, []);
   const [mode, setMode] = useState<"beat" | "song" | "remix" | "cover">(() => {
     const saved = typeof window !== "undefined" ? window.localStorage.getItem("producerhit_mode") : null;
     if (saved === "remix") return "remix";
@@ -534,6 +541,10 @@ export default function Dashboard() {
     beatAceOverrideRef.current = null;
     songAceOverrideRef.current = null;
     songBankDiceRef.current = false;
+
+    const vocalPref = defaultVocalLanguagePreference(locale);
+    setSongVocalLanguageMode(vocalPref.mode);
+    setManualVocalLanguage(vocalPref.manualCode);
   }, [locale]);
   const songRotatingPlaceholderRef = useRef("");
   const beatRotatingPlaceholderRef = useRef("");
@@ -1657,19 +1668,12 @@ export default function Dashboard() {
               audioFormat: effectiveAudioFormat,
               seed,
             };
-        const captionOpts = runAsSong
-          ? captionCtx.lyricsStructure?.trim()
-            ? {
-                captionOverride: captionCtx.captionOverride,
-                melodyComposition: captionCtx.melodyComposition,
-              }
-            : {}
-          : captionCtx.captionOverride
-            ? {
-                captionOverride: captionCtx.captionOverride,
-                melodyComposition: captionCtx.melodyComposition,
-              }
-            : {};
+        const captionOpts = captionCtx.captionOverride?.trim()
+          ? {
+              captionOverride: captionCtx.captionOverride,
+              melodyComposition: captionCtx.melodyComposition,
+            }
+          : {};
         return aceKeyPreferIndex !== undefined
           ? {
               ...base,
@@ -3442,14 +3446,6 @@ export default function Dashboard() {
                       onChange={(v) => setField("energyLevel", v)}
                       options={energyDropdownOptions}
                     />
-
-                    <Dropdown
-                      label={d.influence}
-                      menuTitle={d.producerInfluence}
-                      value={form.influence}
-                      onChange={(v) => setField("influence", v)}
-                      options={influenceDropdownOptions}
-                    />
                   </div>
                 </GeneratorSection>
 
@@ -3669,6 +3665,13 @@ export default function Dashboard() {
                   <div className={cn("pk-studio-section min-w-0 max-w-full overflow-x-clip border-b border-pk-border bg-pk-bg/30", generatorSectionPad)}>
                     <div className="text-sm font-semibold">{d.advanced}</div>
                     <div className="mt-4 grid min-w-0 max-w-full gap-4">
+                      <Dropdown
+                        label={d.influence}
+                        menuTitle={d.producerInfluence}
+                        value={form.influence}
+                        onChange={(v) => setField("influence", v)}
+                        options={influenceDropdownOptions}
+                      />
                       <GeneratorAdvancedOutputControls
                         locale={locale}
                         versions={versions}
@@ -4623,7 +4626,7 @@ export default function Dashboard() {
         </div>
         )}
 
-        <div ref={mobileGenerationsAnchorRef} className="mt-5 space-y-4 scroll-mt-3">
+        <div ref={mobileGenerationsAnchorRef} className="mt-3 space-y-2 scroll-mt-3">
           {workspaceJobs.length ? (
             <div className="space-y-2">
               {workspaceJobs.map((j) => (
@@ -4669,8 +4672,11 @@ export default function Dashboard() {
                   }
                   if (slot.visible && slot.status === "error") {
                     return (
-                      <div key={slot.idx} className="flex items-center gap-3 rounded-pk border border-rose-500/25 bg-pk-panel p-4">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-black/25">
+                      <div
+                        key={slot.idx}
+                        className="flex items-center gap-2.5 rounded-xl border border-rose-500/25 bg-pk-panel px-3 py-2.5"
+                      >
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-black/25">
                           <AlertTriangle className="h-4 w-4 text-rose-400" />
                         </div>
                         <div className="min-w-0 flex-1">
@@ -4775,6 +4781,7 @@ export default function Dashboard() {
                       onOpenDetails={handleLoopOpenDetails}
                       onGenerationUsed={consumeCredit}
                       onCoverRerollUsed={consumeCredit}
+                      onProducerTagCreditUsed={consumeCredit}
                       creditsRemaining={remaining}
                       onNeedCredits={handleNeedCredits}
                       onStartWorkspaceJob={startWorkspaceJob}
@@ -4790,7 +4797,6 @@ export default function Dashboard() {
                     <div className="pk-prism-panel-glow" />
                     <LoopDetailsSheetHeader
                       title={detailsLoop.name}
-                      subtitle={detailsLoop.genre}
                       onClose={() => setDetailsId(null)}
                       closeLabel={d.close}
                     />
@@ -4803,6 +4809,10 @@ export default function Dashboard() {
                       onSaveTitle={saveDetailsTitle}
                       durationSec={durationsSecById[detailsLoop.id]}
                       className="px-0"
+                      onOpenDistribution={openDistribution}
+                      creditsRemaining={remaining}
+                      onNeedCredits={handleNeedCredits}
+                      onProducerTagCreditUsed={consumeCredit}
                     />
                   </div>
                 </div>
@@ -4820,6 +4830,7 @@ export default function Dashboard() {
                     onOpenDetails={handleLoopOpenDetails}
                     onGenerationUsed={consumeCredit}
                     onCoverRerollUsed={consumeCredit}
+                    onProducerTagCreditUsed={consumeCredit}
                     creditsRemaining={remaining}
                     onNeedCredits={handleNeedCredits}
                     onStartWorkspaceJob={startWorkspaceJob}
@@ -4838,7 +4849,6 @@ export default function Dashboard() {
           open
           onClose={() => setDetailsId(null)}
           title={detailsLoop.name}
-          subtitle={detailsLoop.genre}
           closeLabel={d.close}
         >
           <LoopDetailsPanel
@@ -4851,9 +4861,19 @@ export default function Dashboard() {
             durationSec={durationsSecById[detailsLoop.id]}
             className="px-0"
             compact
+            onOpenDistribution={openDistribution}
+            creditsRemaining={remaining}
+            onNeedCredits={handleNeedCredits}
+            onProducerTagCreditUsed={consumeCredit}
           />
         </LoopDetailsSheet>
       ) : null}
+      <DistributionWizard
+        open={Boolean(distributionLoop)}
+        loop={distributionLoop}
+        profile={authProfile}
+        onClose={() => setDistributionLoop(null)}
+      />
       <ShareMomentModal
         open={!!shareMomentLoop}
         loop={shareMomentLoop}

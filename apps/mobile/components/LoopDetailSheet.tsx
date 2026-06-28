@@ -17,10 +17,9 @@ import { PhTextField } from "@/components/PhTextField";
 import { SheetHeroArt } from "@/components/SheetHeroArt";
 import { deleteLoop, generateLoopVariant, setLoopPublic, updateLoop } from "@/lib/loopsApi";
 import { DistributionSubmitSheet } from "@/components/DistributionSubmitSheet";
-import { canDistribute } from "@/lib/planEntitlements";
-import { downloadLoopAudio, promptUpgradeForDownload } from "@/lib/downloadAudio";
-import { paywallHref } from "@/lib/iapCatalog";
-import { canExportWav } from "@/lib/planEntitlements";
+import { canDistribute, canExportWav, canUseProducerTag } from "@/lib/planEntitlements";
+import { applyProducerTagToLoop, listProducerTags, removeProducerTagFromLoop } from "@/lib/producerTag";
+import { mergeProducerTagIntoStems, readLoopProducerTagMeta, clearProducerTagFromStems } from "@producerhit/shared";
 import { loopKindLabel, resolveLoopCoverUrl, shareLoopUrl } from "@/lib/loopDisplay";
 import { useI18n } from "@/stores/localeStore";
 import { useAuthStore } from "@/stores/authStore";
@@ -139,6 +138,79 @@ export function LoopDetailSheet({ loop, visible, onClose, onUpdated, onDeleted, 
     })();
   };
 
+  const tagMeta = readLoopProducerTagMeta(loop.stemsUrl);
+  const canTag = canUseProducerTag(profile?.plan) && Boolean(loop.audioUrl);
+
+  const applyProducerTag = (tagId: string, placement: "intro" | "outro") => {
+    void (async () => {
+      setBusy(true);
+      try {
+        const result = await applyProducerTagToLoop({ loopId: loop.id, tagId, placement });
+        onUpdated?.({
+          ...loop,
+          audioUrl: result.audioUrl,
+          stemsUrl: mergeProducerTagIntoStems(loop.stemsUrl, result.producerTag),
+        });
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Failed";
+        if (msg === "no_credits") router.push(paywallHref("pro"));
+        else Alert.alert(t("error"), msg);
+      } finally {
+        setBusy(false);
+      }
+    })();
+  };
+
+  const openProducerTagPicker = () => {
+    void (async () => {
+      setBusy(true);
+      try {
+        const { tags } = await listProducerTags();
+        if (!tags.length) {
+          Alert.alert("Producer tag", locale === "fr" ? "Crée un tag dans Tag Studio." : "Create a tag in Tag Studio.", [
+            { text: locale === "fr" ? "Tag Studio" : "Tag Studio", onPress: () => router.push("/tag-studio") },
+            { text: t("cancel"), style: "cancel" },
+          ]);
+          return;
+        }
+        const first = tags[0]!;
+        Alert.alert(
+          locale === "fr" ? "Appliquer mon tag" : "Apply producer tag",
+          locale === "fr" ? "Placement sur le morceau (1 crédit max)." : "Placement on track (1 credit max).",
+          [
+            { text: "Intro", onPress: () => applyProducerTag(first.id, "intro") },
+            { text: "Outro", onPress: () => applyProducerTag(first.id, "outro") },
+            { text: t("cancel"), style: "cancel" },
+          ],
+        );
+      } catch (e) {
+        Alert.alert(t("error"), e instanceof Error ? e.message : "Failed");
+      } finally {
+        setBusy(false);
+      }
+    })();
+  };
+
+  const removeTag = () => {
+    void (async () => {
+      setBusy(true);
+      try {
+        const audioUrl = await removeProducerTagFromLoop(loop.id);
+        onUpdated?.({
+          ...loop,
+          audioUrl,
+          stemsUrl: clearProducerTagFromStems(loop.stemsUrl) ?? loop.stemsUrl,
+        });
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } catch (e) {
+        Alert.alert(t("error"), e instanceof Error ? e.message : "Failed");
+      } finally {
+        setBusy(false);
+      }
+    })();
+  };
+
   const confirmDelete = () => {
     Alert.alert(t("deleteConfirmTitle"), t("deleteConfirmBody"), [
       { text: t("cancel"), style: "cancel" },
@@ -223,6 +295,22 @@ export function LoopDetailSheet({ loop, visible, onClose, onUpdated, onDeleted, 
           disabled={busy}
         />
         <PhButton label={t("shareLink")} variant="ghost" onPress={() => void share()} />
+        {canTag ? (
+          <PhButton
+            label={tagMeta ? (locale === "fr" ? "Modifier le tag" : "Update tag") : (locale === "fr" ? "Appliquer mon tag" : "Apply producer tag")}
+            variant="ghost"
+            onPress={openProducerTagPicker}
+            disabled={busy}
+          />
+        ) : null}
+        {tagMeta ? (
+          <PhButton
+            label={locale === "fr" ? "Retirer le tag" : "Remove tag"}
+            variant="ghost"
+            onPress={removeTag}
+            disabled={busy}
+          />
+        ) : null}
         {canDistribute(profile?.plan) ? (
           <PhButton label="Pack distribution" variant="ghost" onPress={() => setDistributeOpen(true)} disabled={busy} />
         ) : null}

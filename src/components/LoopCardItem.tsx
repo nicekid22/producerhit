@@ -29,7 +29,11 @@ import { prepareLoopVariantGeneration, variantResultTitle } from "@/lib/loopVari
 import { extractLoopVocalLanguage, formatVocalLanguageLabel, isSongLoop } from "@/lib/vocalLanguages";
 import { resolveLoopVoiceCloneInfo } from "@/lib/voiceCloneMeta";
 import { resolveStemsDownloadUrl } from "@/lib/stemsDownload";
-import { canDownloadStems, hasCommercialUseRights } from "@/lib/planEntitlements";
+import { canDownloadStems, canUseProducerTag, hasCommercialUseRights } from "@/lib/planEntitlements";
+import { readLoopProducerTagMeta } from "@/lib/producerTag";
+import { clearProducerTagFromStems, mergeProducerTagIntoStems } from "@producerhit/shared";
+import { ProducerTagApplyModal } from "@/components/producerTag/ProducerTagApplyModal";
+import { trackClientEvent } from "@/lib/supabaseClient";
 import { runCheckoutWithAuth } from "@/lib/billing";
 import { downloadCommercialBeat, openTrackLicenseModal } from "@/lib/commercialBeatDownload";
 import { useGrowthUpsellStore } from "@/stores/growthUpsellStore";
@@ -54,6 +58,7 @@ import {
   Share2,
   ShieldCheck,
   Sparkles,
+  Tag,
   Trash2,
   X,
 } from "lucide-react";
@@ -71,6 +76,7 @@ export const LoopCardItem = memo(function LoopCardItem({
   onOpenDetails,
   onGenerationUsed,
   onCoverRerollUsed,
+  onProducerTagCreditUsed,
   creditsRemaining,
   onNeedCredits,
   onStartWorkspaceJob,
@@ -88,6 +94,8 @@ export const LoopCardItem = memo(function LoopCardItem({
   onGenerationUsed?: () => void;
   /** Appelé après reroll cover réussi (1 crédit). */
   onCoverRerollUsed?: () => void;
+  /** Appelé après apply tag (1 crédit si première fois sur ce morceau). */
+  onProducerTagCreditUsed?: () => void;
   creditsRemaining?: number;
   onNeedCredits?: () => void;
   onStartWorkspaceJob?: (title: string, sub: string) => (() => void) | void;
@@ -132,6 +140,7 @@ export const LoopCardItem = memo(function LoopCardItem({
   const shareLoop = useLoopsStore((s) => s.loops.find((l) => l.id === loop.id) ?? loop);
   const renameLoopRemote = useLoopsStore((s) => s.renameLoopRemote);
   const applyLoopCoverUrl = useLoopsStore((s) => s.applyLoopCoverUrl);
+  const applyLoopProducerTagResult = useLoopsStore((s) => s.applyLoopProducerTagResult);
   const createLoop = useLoopsStore((s) => s.createLoop);
   const upsertLoop = useLoopsStore((s) => s.upsertLoop);
   const enqueuePendingSave = useLoopsStore((s) => s.enqueuePendingSave);
@@ -145,6 +154,7 @@ export const LoopCardItem = memo(function LoopCardItem({
   const [savingTitle, setSavingTitle] = useState(false);
   const [isVarying, setIsVarying] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [tagModalOpen, setTagModalOpen] = useState(false);
   const [isRerollingCover, setIsRerollingCover] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -180,6 +190,13 @@ export const LoopCardItem = memo(function LoopCardItem({
   const canRerollCover =
     USE_POLLINATIONS_CARD_COVERS &&
     isOwnLoop &&
+    !loop.id.startsWith("local-") &&
+    !loop.id.startsWith("preview-");
+  const tagMeta = useMemo(() => readLoopProducerTagMeta(loop.stemsUrl), [loop.stemsUrl]);
+  const canApplyProducerTag =
+    canUseProducerTag(plan) &&
+    isOwnLoop &&
+    Boolean(loop.audioUrl?.startsWith("http")) &&
     !loop.id.startsWith("local-") &&
     !loop.id.startsWith("preview-");
 
@@ -507,10 +524,6 @@ export const LoopCardItem = memo(function LoopCardItem({
           onClick={(e) => {
             e.stopPropagation();
             setMenuOpen(false);
-            if (loop.isSaved === false) {
-              toast.error(lc.distributionSaveFirst);
-              return;
-            }
             onDistribute(loop);
           }}
         >
@@ -558,6 +571,20 @@ export const LoopCardItem = memo(function LoopCardItem({
         >
           {isDownloadingStems ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Layers className="h-3.5 w-3.5" />}
           Stems
+        </button>
+      ) : null}
+      {canApplyProducerTag ? (
+        <button
+          type="button"
+          className="pk-library-card__menu-item"
+          onClick={(e) => {
+            e.stopPropagation();
+            setMenuOpen(false);
+            setTagModalOpen(true);
+          }}
+        >
+          <Tag className="h-3.5 w-3.5" />
+          {lc.producerTagApply}
         </button>
       ) : null}
       {canRerollCover ? (
@@ -630,6 +657,33 @@ export const LoopCardItem = memo(function LoopCardItem({
         </button>
       ) : null}
     </>
+  );
+
+  const producerTagModal = (
+    <ProducerTagApplyModal
+      open={tagModalOpen}
+      onClose={() => setTagModalOpen(false)}
+      loop={loop}
+      locale={locale}
+      plan={plan}
+      creditsRemaining={creditsRemaining}
+      onNeedCredits={onNeedCredits}
+      onApplied={({ audioUrl, creditConsumed, producerTag }) => {
+        applyLoopProducerTagResult(loop.id, {
+          audioUrl,
+          stemsUrl: mergeProducerTagIntoStems(loop.stemsUrl, producerTag),
+        });
+        if (creditConsumed) onProducerTagCreditUsed?.();
+        trackClientEvent("producer_tag_apply", { loopId: loop.id, creditConsumed });
+      }}
+      onRemoved={(audioUrl) => {
+        applyLoopProducerTagResult(loop.id, {
+          audioUrl,
+          stemsUrl: clearProducerTagFromStems(loop.stemsUrl),
+        });
+        trackClientEvent("producer_tag_remove", { loopId: loop.id });
+      }}
+    />
   );
 
   if (isLibraryCard) {
@@ -779,6 +833,7 @@ export const LoopCardItem = memo(function LoopCardItem({
               : undefined
           }
         />
+        {producerTagModal}
       </div>
     );
   }
@@ -1000,6 +1055,12 @@ export const LoopCardItem = memo(function LoopCardItem({
                 }
               >
                 {voiceCloneLabel}
+              </Badge>
+            ) : null}
+            {tagMeta ? (
+              <Badge variant="muted" className="gap-1 border-violet-400/30 bg-violet-500/10 text-violet-200">
+                <Tag className="h-3 w-3 shrink-0 opacity-80" aria-hidden />
+                {lc.producerTagBadge}
               </Badge>
             ) : null}
             {!songCard && loop.mood ? <Badge variant="muted">{loop.mood}</Badge> : null}
@@ -1433,6 +1494,7 @@ export const LoopCardItem = memo(function LoopCardItem({
             : undefined
         }
       />
+      {producerTagModal}
     </div>
   );
 });

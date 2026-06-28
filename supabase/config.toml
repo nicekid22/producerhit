@@ -23,6 +23,12 @@ verify_jwt = true
 [functions.fetch-pinterest-cover]
 verify_jwt = false
 
+[functions.producer-tag]
+verify_jwt = true
+
+[functions.apply-producer-tag]
+verify_jwt = true
+
 # Discord — webhooks sans JWT Supabase (signature Discord / cron secret)
 [functions.discord-interactions]
 verify_jwt = false

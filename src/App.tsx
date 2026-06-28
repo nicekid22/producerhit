@@ -70,6 +70,7 @@ const DistributionAcademyLandingPage = lazy(() => import("@/pages/DistributionAc
 const DistributionAcademyPage = lazy(() => import("@/pages/DistributionAcademy"));
 const SampleLabPage = lazy(() => import("@/pages/SampleLab"));
 const VoiceStudioPage = lazy(() => import("@/pages/VoiceStudio"));
+const TagStudioPage = lazy(() => import("@/pages/TagStudio"));
 const CloudThemePreviewPage = lazy(() => import("@/pages/CloudThemePreview"));
 const NotFoundPage = lazy(() => import("@/pages/NotFound"));
 
@@ -135,6 +136,7 @@ export default function App() {
                     <Route path="/library" element={<LibraryPage />} />
                     {isSampleLabEnabled() ? <Route path="/sample-lab" element={<SampleLabPage />} /> : null}
                     <Route path="/voice-studio" element={<VoiceStudioPage />} />
+                    <Route path="/tag-studio" element={<TagStudioPage />} />
                     <Route path="/settings" element={<SettingsPage />} />
                     <Route path="/distribution" element={<DistributionPage />} />
                     <Route path="/academy/distribution" element={<DistributionAcademyPage />} />

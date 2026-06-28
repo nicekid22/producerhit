@@ -35,6 +35,7 @@ function routeCssKind(pathname: string): RouteCssKind {
   if (
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/voice-studio") ||
+    pathname.startsWith("/tag-studio") ||
     pathname.startsWith("/sample-lab")
   ) {
     return "dashboard";
@@ -64,8 +65,14 @@ export function RouteStylesBootstrap() {
     deferUntilIdle(() => {
       void loadSharedUiCss();
       if (kind === "marketing") void loadMarketingCss();
-      if (kind === "dashboard") void loadDashboardCss();
-      if (kind === "library") void loadLibraryCss();
+      if (kind === "dashboard") {
+        void loadDashboardCss();
+        void loadDistributionCss();
+      }
+      if (kind === "library") {
+        void loadLibraryCss();
+        void loadDistributionCss();
+      }
       if (kind === "community") void loadCommunityCss();
       if (kind === "distribution") void loadDistributionCss();
     });

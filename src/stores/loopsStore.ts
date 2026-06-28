@@ -574,6 +574,10 @@ type LoopsState = {
     coverKind?: "image" | "video",
     options?: { bumpRevision?: boolean },
   ) => void;
+  applyLoopProducerTagResult: (
+    loopId: string,
+    patch: { audioUrl: string; stemsUrl?: Record<string, unknown> | null },
+  ) => void;
 };
 
 async function asPlayableLoopUrl(loopId: string, url: string): Promise<string> {
@@ -584,6 +588,23 @@ async function asPlayableLoopUrl(loopId: string, url: string): Promise<string> {
 
 export const useLoopsStore = create<LoopsState>((set, get) => ({
   loopsTotalCount: null,
+  applyLoopProducerTagResult: (loopId, patch) => {
+    const trimmed = patch.audioUrl.trim();
+    if (!trimmed.startsWith("http")) return;
+    set((s) => ({
+      loops: s.loops.map((l) => {
+        if (l.id !== loopId) return l;
+        return {
+          ...l,
+          audioUrl: trimmed,
+          ...(patch.stemsUrl ? { stemsUrl: patch.stemsUrl } : {}),
+        };
+      }),
+    }));
+    const userId = useAuthStore.getState().user?.id;
+    if (userId) persistMyLoopsCache(userId, get().loops);
+    void cacheLoopAudioFromSrc(loopId, trimmed);
+  },
   applyLoopCoverUrl: (loopId, coverUrl, coverKind = "image", options) => {
     const trimmed = coverUrl.trim();
     if (!trimmed.startsWith("http")) return;

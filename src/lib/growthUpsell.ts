@@ -6,6 +6,7 @@ import {
   hasCommercialUseRights,
   hasFullMastering,
   hasPriorityGeneration,
+  canUseProducerTag,
   normalizePlanId,
   type PaidPlanId,
 } from "@/lib/planEntitlements";
@@ -23,7 +24,8 @@ export type UpsellReason =
   | "feature_stems"
   | "feature_no_watermark"
   | "feature_permanent_audio"
-  | "feature_commercial_download";
+  | "feature_commercial_download"
+  | "feature_producer_tag";
 
 export type UpsellContext = {
   source: string;
@@ -69,6 +71,8 @@ export function shouldShowPlanUpsell(
       return !hasFullMastering(plan);
     case "feature_wav_format":
       return !canExportWav(plan);
+    case "feature_producer_tag":
+      return !canUseProducerTag(plan);
     case "credits_exhausted":
     case "limit_reached":
       return remaining < 1;

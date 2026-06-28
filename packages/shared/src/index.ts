@@ -181,7 +181,7 @@ export {
   ACE_BEAT_LM_RULES,
   type BuildAceChatCompletionsInput,
 } from "./prompt/aceChatCompletions";
-export { resolveGenerationCaptionContext, type GenerationCaptionContext } from "./prompt/captionContext";
+export { resolveGenerationCaptionContext, type GenerationCaptionContext, SONG_CATALOG_CAPTION_TAGS_ENABLED } from "./prompt/captionContext";
 export {
   buildRichAceCaption,
   dedupeGenreInCaption,
@@ -242,7 +242,13 @@ export {
   vocalCodeToPromptLocale,
   type AppLocale,
 } from "./i18n/locales";
-export { VOCAL_LANGUAGES, vocalLanguageLabel, uiLocaleToAceVocalLanguage } from "./vocalLanguage";
+export {
+  VOCAL_LANGUAGES,
+  vocalLanguageLabel,
+  uiLocaleToAceVocalLanguage,
+  defaultVocalLanguagePreference,
+  type VocalLanguagePreference,
+} from "./vocalLanguage";
 export { looksLikeStructuredDisplayIdea } from "./displayPromptPatterns";
 export type {
   DistributionReleaseType,
@@ -279,6 +285,7 @@ export {
   buildCoverPromptSuggestionsFromLoop,
   buildStructuredCoverPrompt,
   canAccessDistributionAcademy,
+  extractCoverVisualIdeaFromPrompt,
   parseStructuredCoverPromptFromText,
   type StructuredCoverPromptInput,
 } from "./distribution/coverPrompt";
@@ -290,6 +297,13 @@ export {
   pickCoverSurpriseSuggestion,
 } from "./distribution/coverSurpriseLibrary";
 export { buildLoopCardCoverPrompt } from "./distribution/loopCardCoverPrompt";
+export {
+  LOOP_CARD_COVER_AESTHETIC,
+  LOOP_CARD_COVER_FUTUR_RETRO_ENABLED,
+  enrichLoopCardCoverForFuturRetro,
+  pickFuturRetroFinish,
+  type LoopCardCoverAesthetic,
+} from "./distribution/loopCardCoverFuturRetro";
 export {
   DISTRIBUTION_ACADEMY_MODULES,
   DISTRIBUTION_ACADEMY_VALUE_USD,
@@ -306,3 +320,23 @@ export {
   type LicenseProfile,
   type TrackLicenseDocument,
 } from "./commercialLicense";
+export {
+  PRODUCER_TAG_CREDIT_COST,
+  PRODUCER_TAG_MAX_DURATION_SEC,
+  canUseProducerTag,
+  canUseProducerTagFx,
+  canUseExtendedProducerTagPlacement,
+  producerTagMaxCount,
+  producerTagUsageKey,
+  computeTagOffsetSec,
+  detectSmartIntroSkipSec,
+  readLoopProducerTagMeta,
+  mergeProducerTagIntoStems,
+  clearProducerTagFromStems,
+  type ProducerTagPlacement,
+  type ProducerTagFxPreset,
+  type ProducerTagSettings,
+  type ProducerTagVariant,
+  type LoopProducerTagMeta,
+  type ProducerTagRecord,
+} from "./producerTag";
