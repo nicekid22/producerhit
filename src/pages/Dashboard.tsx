@@ -129,6 +129,7 @@ import { CoverStudioPanel } from "@/components/dashboard/CoverStudioPanel";
 import { coverResultTitle, prepareCoverGeneration } from "@/lib/coverGeneration";
 import { generateBeat, generateBeatDualBatch, remixLoopAce } from "@/lib/audioApi";
 import { startCoverPrefetch, consumeCoverPrefetch } from "@/lib/earlyCoverPrefetch";
+import { persistPollinationsCardCoverForLoop } from "@/lib/pollinationsCardCoverPersist";
 import { ACE_REMIX_UNAVAILABLE_COPY, AceRemixUnavailableError } from "@/lib/aceRemix";
 import { buildAceCaption, type GenerateParams } from "@/lib/promptBuilder";
 import { resolveGenerationCaptionContext } from "@/lib/promptEnhancer";
@@ -1947,12 +1948,18 @@ export default function Dashboard() {
         const loop = await persistDraft(draft, audioUrl, value.engine, previewId);
         persistCompleted = true;
 
-        // Applique la cover pré-générée si elle est prête (sinon le repair normal prendra le relais)
-        void consumeCoverPrefetch(generationKey).then((coverUrl) => {
-          if (coverUrl?.startsWith("http")) {
-            useLoopsStore.getState().applyLoopCoverUrl(loop.id, coverUrl, "image");
-          }
-        });
+        // Applique la cover pré-générée si elle est prête (sinon on relance une fois directement)
+        void consumeCoverPrefetch(generationKey)
+          .then(async (coverUrl) => {
+            const finalUrl = coverUrl?.startsWith("http")
+              ? coverUrl
+              : (await persistPollinationsCardCoverForLoop(loop.id, loop).catch(() => null))?.coverUrl;
+
+            if (finalUrl?.startsWith("http")) {
+              useLoopsStore.getState().applyLoopCoverUrl(loop.id, finalUrl, "image");
+            }
+          })
+          .catch(() => undefined);
         if (mode === "song" && voiceCloneConfigRef.current.profileId) {
           const voiceToast = voiceCloneToastMessage(value.meta, locale);
           if (voiceToast?.type === "success") toast.success(voiceToast.message, { id: `voice-clone-${loop.id}` });
