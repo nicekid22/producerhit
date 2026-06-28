@@ -1118,11 +1118,7 @@ export const useLoopsStore = create<LoopsState>((set, get) => ({
     void (async () => {
       try {
         if (needsCoverAssign) {
-          const pin = await assignLoopCoverOnce(row.id, { ...finalLoop, stemsUrl: stemsUrlForDb }, {
-            stemsUrl: stemsUrlForDb,
-            onLateCover: (late) => applyCoverToLoop(late.coverUrl, late.coverKind ?? "image"),
-          });
-          if (pin?.coverUrl) applyCoverToLoop(pin.coverUrl, pin.coverKind ?? "image");
+          void scheduleLoopCoverBackfill([{ ...finalLoop, stemsUrl: stemsUrlForDb }]);
         }
 
         if (LOOP_ACE_PERSIST) {
@@ -1237,12 +1233,7 @@ export const useLoopsStore = create<LoopsState>((set, get) => ({
     persistMyLoopsCache(user.id, useLoopsStore.getState().loops);
     void cacheLoopAudioFromSrc(row.id, finalLoop.audioUrl ?? trimmedAudioUrl);
     if (!LOOP_ACE_PERSIST && needsCoverAssign) {
-      void assignLoopCoverOnce(row.id, { ...finalLoop, stemsUrl: stemsUrlForDb }, {
-        stemsUrl: stemsUrlForDb,
-        onLateCover: (late) => applyCoverToLoop(late.coverUrl, late.coverKind ?? "image"),
-      }).then((pin) => {
-        if (pin?.coverUrl) applyCoverToLoop(pin.coverUrl, pin.coverKind ?? "image");
-      });
+      void scheduleLoopCoverBackfill([{ ...finalLoop, stemsUrl: stemsUrlForDb }]);
     }
 
     const player = usePlayerStore.getState();
@@ -1455,6 +1446,8 @@ export async function fetchCachedLoopAudioBlob(loopId: string): Promise<Blob | n
   if (!rec?.blob || rec.blob.size <= 0) return null;
   return rec.blob;
 }
+
+
 
 
 
