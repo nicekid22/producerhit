@@ -216,7 +216,7 @@ const DREAM_BY_LOCALE: Partial<Record<AppLocale, DreamCopy>> = {
 
     headlines: LANDING_HERO_DREAM_FR,
 
-    subline: "Décris ta vibe — On s'occupe du reste. Gratuit. Aucune carte requise.",
+    subline: "Décris ta vibe, On s'occupe du reste.",
 
     seoTitle: "Créateur de chansons IA — type beats, Song Mode, export royalty-free",
 

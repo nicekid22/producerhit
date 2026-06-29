@@ -310,6 +310,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       throw error;
     }
   },
+  signInWithApple: async (nextPath = "/dashboard") => {
+    set({ lastError: null });
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "apple",
+      options: {
+        redirectTo: authCallbackUrl(nextPath),
+        queryParams: { prompt: "login" },
+      },
+    });
+    if (error) {
+      set({ lastError: error.message });
+      throw error;
+    }
+  },
   linkGoogle: async (nextPath = "/settings") => {
     set({ lastError: null });
     const { error } = await supabase.auth.linkIdentity({

@@ -2572,7 +2572,7 @@ html.pk-warm-glass-active .pk-icon-loader__sublabel {
   color: rgba(255, 248, 240, 0.72) !important;
 }
 
-.pk-warm-glass-stage .pk-prism-card .text-\[\#6b7280\],
+.pk-warm-glass-stage .pk-prism-card .text-white\/45,
 .pk-warm-glass-stage .pk-pricing-card .text-white\/45,
 .pk-warm-glass-stage .pk-pricing-card .text-white\/55 {
   color: rgba(255, 248, 240, 0.58) !important;
