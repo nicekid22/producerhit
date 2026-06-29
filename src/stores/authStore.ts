@@ -28,6 +28,7 @@ type AuthState = {
   signUp: (email: string, password: string, redirectPath?: string) => Promise<{ needsEmailConfirm: boolean }>;
   resendSignupConfirmation: (email: string, redirectPath?: string) => Promise<void>;
   signInWithGoogle: (emailHint?: string, nextPath?: string) => Promise<void>;
+  signInWithApple: (nextPath?: string) => Promise<void>;
   linkGoogle: (nextPath?: string) => Promise<void>;
   setPassword: (password: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
