@@ -3030,8 +3030,20 @@ export default function Dashboard() {
     setMode(landingMode);
     setField("genre", handoffGenre);
 
+    // Force les métadonnées manuelles (BPM/key/scale/mood/energyLevel) issues du form
+    // au lieu du mode "auto" par défaut → même comportement que le générateur principal.
     if (landingMode === "song") {
-      setSongUiMode("simple");
+      setSongUiMode("custom");
+      setSongTempoMode("manual");
+      setSongKeyMode("manual");
+    } else {
+      setAdvancedOpen(true);
+      setBeatTempoMode("manual");
+      setBeatKeyMode("manual");
+    }
+
+    if (landingMode === "song") {
+      setSongUiMode("custom");
       setLyricsMode("ai");
       setSongDescription(prompt);
       setField("prompt", prompt);
@@ -3044,7 +3056,7 @@ export default function Dashboard() {
 
     clearLandingPendingGeneration();
     setPendingLandingRequest(null);
-  }, [pendingLandingRequest, setField, setLyricsMode, setMode, setSongDescription, setSongUiMode]);
+  }, [pendingLandingRequest, setAdvancedOpen, setBeatKeyMode, setBeatTempoMode, setField, setLyricsMode, setMode, setSongDescription, setSongKeyMode, setSongTempoMode, setSongUiMode]);
 
   useEffect(() => {
     if (!landingAutoGenQueued) return;

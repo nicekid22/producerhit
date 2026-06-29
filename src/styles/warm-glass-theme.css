@@ -1505,6 +1505,21 @@ html.pk-warm-glass-active .pk-auth-tabs,
   background: rgba(255, 255, 255, 0.04) !important;
 }
 
+/* Auth — labels + placeholders lisibles (texte gris trop clair sinon) */
+html.pk-warm-glass-active .pk-auth-panel .text-pk-muted,
+.pk-warm-glass-stage .pk-auth-panel .text-pk-muted {
+  color: rgba(255, 248, 240, 0.92) !important;
+  text-shadow: 0 1px 10px rgba(40, 16, 8, 0.3);
+}
+
+html.pk-warm-glass-active .pk-auth-panel input::placeholder,
+html.pk-warm-glass-active .pk-auth-panel textarea::placeholder,
+.pk-warm-glass-stage .pk-auth-panel input::placeholder,
+.pk-warm-glass-stage .pk-auth-panel textarea::placeholder {
+  color: rgba(255, 232, 200, 0.7) !important;
+  opacity: 1 !important;
+}
+
 /* En-tête workspace + panneau détail */
 .pk-warm-glass-stage .pk-studio-workspace-header {
   border-color: var(--warm-glass-border) !important;

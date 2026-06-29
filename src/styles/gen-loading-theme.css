@@ -53,6 +53,75 @@ html.pk-cloud-active .pk-gen-loading-card .pk-icon-loader__icon,
   }
 }
 
+/**
+ * Lueur néon électrique sur le logo de la carte de génération.
+ * Pulsation smooth + visible, donne une impression "electric/neon glow".
+ */
+@keyframes pkGenNeonPulse {
+  0%,
+  100% {
+    filter:
+      drop-shadow(0 0 6px rgba(167, 139, 250, 0.55))
+      drop-shadow(0 0 14px rgba(103, 195, 255, 0.35));
+  }
+  50% {
+    filter:
+      drop-shadow(0 0 12px rgba(167, 139, 250, 0.9))
+      drop-shadow(0 0 28px rgba(103, 195, 255, 0.65));
+  }
+}
+
+@keyframes pkGenNeonPulseWarm {
+  0%,
+  100% {
+    filter:
+      drop-shadow(0 0 6px rgba(240, 192, 64, 0.55))
+      drop-shadow(0 0 14px rgba(255, 168, 92, 0.35));
+  }
+  50% {
+    filter:
+      drop-shadow(0 0 12px rgba(240, 192, 64, 0.9))
+      drop-shadow(0 0 28px rgba(255, 168, 92, 0.65));
+  }
+}
+
+@keyframes pkGenNeonPulseCloud {
+  0%,
+  100% {
+    filter:
+      drop-shadow(0 0 6px rgba(200, 180, 255, 0.55))
+      drop-shadow(0 0 14px rgba(168, 212, 255, 0.35));
+  }
+  50% {
+    filter:
+      drop-shadow(0 0 12px rgba(200, 180, 255, 0.9))
+      drop-shadow(0 0 28px rgba(168, 212, 255, 0.65));
+  }
+}
+
+/* Prism — néon violet/bleu électrique */
+html:not(.pk-warm-glass-active):not(.pk-cloud-active) .pk-gen-loading-icon-box .pk-icon-loader__icon {
+  animation: pkGenNeonPulse 1.8s ease-in-out infinite !important;
+}
+
+/* Warm glass — néon miel/ambre */
+html.pk-warm-glass-active .pk-gen-loading-icon-box .pk-icon-loader__icon,
+.pk-warm-glass-stage .pk-gen-loading-icon-box .pk-icon-loader__icon {
+  animation: pkGenNeonPulseWarm 1.8s ease-in-out infinite !important;
+}
+
+/* Cloud — néon bleu/violet */
+html.pk-cloud-active .pk-gen-loading-icon-box .pk-icon-loader__icon,
+.pk-cloud-stage .pk-gen-loading-icon-box .pk-icon-loader__icon {
+  animation: pkGenNeonPulseCloud 1.8s ease-in-out infinite !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pk-gen-loading-icon-box .pk-icon-loader__icon {
+    animation: none !important;
+  }
+}
+
 /* Bandeau compact — aligné hauteur Mon espace / toolbar mobile */
 .pk-gen-loading-card--compact {
   min-height: 0;
