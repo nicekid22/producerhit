@@ -846,7 +846,7 @@ export function buildCommonSection(locale: AppLocale) {
 export function mapAuthError(
   error: unknown,
   locale: AppLocale,
-  context: "login" | "signup" | "google" | "link" | "password",
+  context: "login" | "signup" | "google" | "apple" | "link" | "password",
 ): string {
   const s = buildAuthSection(locale);
   const raw = extractErrorMessage(error).toLowerCase();
