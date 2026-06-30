@@ -112,14 +112,32 @@ export const LoopCardItem = memo(function LoopCardItem({
   const locale = useLocaleStore((s) => s.locale);
   const d = buildDashboardSection(locale);
   const lc = buildLoopCardSection(locale);
-  const plan = (() => {
+  // PERF: was an IIFE re-reading window.localStorage on every single render
+  // of every card (synchronous storage access × N cards × every re-render).
+  // The plan doesn't change mid-session outside of an explicit billing
+  // event, so we read it once per mount and refresh on cross-tab/storage
+  // changes instead of on every render.
+  const [plan, setPlan] = useState<"pro" | "studio" | "plus" | "free">(() => {
     try {
       const raw = window.localStorage.getItem("producerhit_plan");
       return raw === "pro" || raw === "studio" || raw === "plus" || raw === "free" ? raw : "free";
     } catch {
       return "free";
     }
-  })();
+  });
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== "producerhit_plan" && e.key !== null) return;
+      try {
+        const raw = window.localStorage.getItem("producerhit_plan");
+        setPlan(raw === "pro" || raw === "studio" || raw === "plus" || raw === "free" ? raw : "free");
+      } catch {
+        setPlan("free");
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
   const active = usePlayerStore((s) => s.current?.id === loop.id);
   const activePlaying = usePlayerStore((s) => s.current?.id === loop.id && s.isPlaying);
   const progress = usePlayerStore((s) => (s.current?.id === loop.id ? s.progress : 0));

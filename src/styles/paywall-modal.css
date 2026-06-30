@@ -1,375 +1,404 @@
-/* Paywall / growth modals — Prism · Warm Glass · Cloud */
+/**
+ * Paywall / Plan Upsell Modal — design premium 2026, conversion-first.
+ * S'appuie sur les vrais tokens du système (--prism-*, --cloud-*, --warm-*),
+ * donc elle hérite automatiquement de tous les thèmes (Prism, Warm Glass, Cloud, …)
+ * exactement comme .pk-veil-modal-panel ailleurs dans l'app — rien n'est codé en dur
+ * en dehors des fallbacks Prism (thème par défaut).
+ */
 
-.pk-paywall-backdrop,
-.pk-growth-modal-backdrop {
-  background: rgba(4, 3, 10, 0.76);
-  backdrop-filter: blur(14px) saturate(1.15);
-  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+@keyframes pkPaywallIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
-html.pk-warm-glass-active .pk-paywall-backdrop,
-html.pk-warm-glass-active .pk-growth-modal-backdrop {
-  background: rgba(20, 8, 4, 0.78);
+@keyframes pkPaywallBackdropIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
-html.pk-cloud-active .pk-paywall-backdrop,
-html.pk-cloud-active .pk-growth-modal-backdrop {
-  background: rgba(12, 12, 16, 0.38);
+@keyframes pkPaywallGlowDrift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: translate(2%, -3%) scale(1.06);
+    opacity: 1;
+  }
 }
 
-.pk-paywall,
-.pk-growth-modal {
-  --pk-paywall-bg: #0a0812;
-  --pk-paywall-border: rgba(255, 255, 255, 0.1);
-  --pk-paywall-accent: var(--prism-violet, #9d7cff);
-  --pk-paywall-accent-soft: color-mix(in srgb, var(--pk-paywall-accent) 18%, transparent);
-  --pk-paywall-accent-icon: color-mix(in srgb, var(--pk-paywall-accent) 28%, transparent);
-  --pk-paywall-text: rgba(255, 255, 255, 0.92);
-  --pk-paywall-text-muted: rgba(255, 255, 255, 0.58);
-  --pk-paywall-text-faint: rgba(255, 255, 255, 0.42);
-  --pk-paywall-text-eyebrow: rgba(255, 255, 255, 0.42);
-  --pk-paywall-check-bg: rgba(52, 211, 153, 0.12);
-  --pk-paywall-check-fg: #6ee7b7;
-  --pk-paywall-urgent-border: rgba(251, 191, 36, 0.3);
-  --pk-paywall-urgent-bg: rgba(245, 158, 11, 0.15);
-  --pk-paywall-urgent-fg: #fde68a;
-  --pk-paywall-glow-a: color-mix(in srgb, var(--pk-paywall-accent) 22%, transparent);
-  --pk-paywall-glow-b: rgba(103, 195, 255, 0.12);
-  --pk-paywall-shadow: 0 32px 100px rgba(0, 0, 0, 0.72);
-  --pk-paywall-close-bg: rgba(255, 255, 255, 0.04);
-  --pk-paywall-header-from: color-mix(in srgb, var(--pk-paywall-accent) 25%, transparent);
-  --pk-paywall-header-to: rgba(103, 195, 255, 0.15);
-
-  position: relative;
-  overflow: hidden;
-  border: 1px solid var(--pk-paywall-border);
-  background: var(--pk-paywall-bg);
-  color: var(--pk-paywall-text);
-  box-shadow: var(--pk-paywall-shadow);
+@keyframes pkPaywallPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--prism-violet) 38%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--prism-violet) 0%, transparent);
+  }
 }
 
-html.pk-warm-glass-active .pk-paywall,
-html.pk-warm-glass-active .pk-growth-modal,
-.pk-paywall--theme-warm-glass,
-.pk-growth-modal--theme-warm-glass {
-  --pk-paywall-bg: #1a0c08;
-  --pk-paywall-border: rgba(255, 195, 150, 0.22);
-  --pk-paywall-accent: #e8956a;
-  --pk-paywall-text: rgba(255, 248, 240, 0.94);
-  --pk-paywall-text-muted: rgba(255, 220, 180, 0.62);
-  --pk-paywall-text-faint: rgba(255, 200, 160, 0.45);
-  --pk-paywall-text-eyebrow: rgba(255, 200, 160, 0.55);
-  --pk-paywall-check-bg: rgba(232, 149, 106, 0.18);
-  --pk-paywall-check-fg: #ffc9a8;
-  --pk-paywall-urgent-border: rgba(255, 180, 100, 0.35);
-  --pk-paywall-urgent-bg: rgba(255, 140, 60, 0.18);
-  --pk-paywall-urgent-fg: #ffd4a8;
-  --pk-paywall-glow-a: rgba(232, 149, 106, 0.22);
-  --pk-paywall-glow-b: rgba(255, 160, 100, 0.1);
-  --pk-paywall-shadow: 0 32px 100px rgba(0, 0, 0, 0.55), 0 0 60px rgba(232, 149, 106, 0.12);
-  --pk-paywall-close-bg: rgba(255, 200, 150, 0.08);
-  --pk-paywall-header-from: rgba(232, 149, 106, 0.28);
-  --pk-paywall-header-to: rgba(255, 160, 100, 0.12);
+/* ——— Backdrop ——— */
+.pk-paywall-backdrop {
+  background: color-mix(in srgb, #030308 78%, transparent);
+  backdrop-filter: blur(6px) saturate(1.1);
+  -webkit-backdrop-filter: blur(6px) saturate(1.1);
+  animation: pkPaywallBackdropIn 220ms ease-out both;
 }
 
-html.pk-cloud-active .pk-paywall,
-html.pk-cloud-active .pk-growth-modal,
-.pk-paywall--theme-cloud,
-.pk-growth-modal--theme-cloud {
-  --pk-paywall-bg: rgba(255, 255, 255, 0.94);
-  --pk-paywall-border: var(--cloud-glass-border, rgba(0, 0, 0, 0.08));
-  --pk-paywall-accent: var(--cloud-accent, #8a9cff);
-  --pk-paywall-text: var(--cloud-text, #1c1c20);
-  --pk-paywall-text-muted: var(--cloud-text-muted, rgba(28, 28, 32, 0.56));
-  --pk-paywall-text-faint: rgba(28, 28, 32, 0.4);
-  --pk-paywall-text-eyebrow: rgba(28, 28, 32, 0.45);
-  --pk-paywall-check-bg: color-mix(in srgb, var(--cloud-accent, #8a9cff) 14%, transparent);
-  --pk-paywall-check-fg: var(--cloud-accent, #6b7ee8);
-  --pk-paywall-urgent-border: rgba(230, 140, 60, 0.35);
-  --pk-paywall-urgent-bg: rgba(255, 180, 80, 0.14);
-  --pk-paywall-urgent-fg: #c45a20;
-  --pk-paywall-glow-a: color-mix(in srgb, var(--cloud-accent-soft, rgba(138, 156, 255, 0.2)) 80%, transparent);
-  --pk-paywall-glow-b: rgba(255, 255, 255, 0.5);
-  --pk-paywall-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.65) inset,
-    0 28px 80px rgba(0, 0, 0, 0.14);
-  --pk-paywall-close-bg: rgba(0, 0, 0, 0.04);
-  --pk-paywall-header-from: color-mix(in srgb, var(--cloud-accent, #8a9cff) 18%, transparent);
-  --pk-paywall-header-to: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(40px) saturate(1.25);
-  -webkit-backdrop-filter: blur(40px) saturate(1.25);
-}
-
-.pk-paywall__glow {
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
+/* ——— Panel ——— */
+.pk-paywall {
+  isolation: isolate;
+  border: 1px solid var(--prism-border, rgba(255, 255, 255, 0.12));
   background:
-    radial-gradient(ellipse 90% 60% at 50% -10%, var(--pk-paywall-glow-a), transparent 58%),
-    radial-gradient(ellipse 70% 50% at 100% 100%, var(--pk-paywall-glow-b), transparent 55%);
+    radial-gradient(560px circle at 12% -8%, color-mix(in srgb, var(--prism-violet) 16%, transparent), transparent 56%),
+    radial-gradient(420px circle at 100% 110%, color-mix(in srgb, var(--prism-cyan) 12%, transparent), transparent 54%),
+    linear-gradient(180deg, color-mix(in srgb, #100d1c 96%, transparent) 0%, color-mix(in srgb, #07060d 98%, transparent) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 32px 88px rgba(0, 0, 0, 0.5),
+    0 8px 24px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(22px) saturate(1.3);
+  -webkit-backdrop-filter: blur(22px) saturate(1.3);
+  animation: pkPaywallIn 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+@media (min-width: 640px) {
+  .pk-paywall {
+    border-radius: 1.5rem;
+  }
+}
+
+/* Variante "launch" (offre pro / lancement) — glow plus riche, accent tri-couleur */
+.pk-paywall--launch {
+  border-color: color-mix(in srgb, var(--prism-violet) 42%, var(--prism-border));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 0 1px color-mix(in srgb, var(--prism-violet) 14%, transparent),
+    0 36px 96px color-mix(in srgb, var(--prism-violet) 18%, rgba(0, 0, 0, 0.5)),
+    0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+/* Halo ambiant animé, derrière le contenu */
+.pk-paywall__glow {
+  position: absolute !important;
+  inset: -40% -20% auto -20%;
+  height: 65%;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(closest-side, color-mix(in srgb, var(--prism-violet) 30%, transparent), transparent 72%),
+    radial-gradient(closest-side at 75% 30%, color-mix(in srgb, var(--prism-cyan) 22%, transparent), transparent 70%);
+  filter: blur(36px);
+  animation: pkPaywallGlowDrift 9s ease-in-out infinite;
+}
+
+.pk-paywall--launch .pk-paywall__glow {
+  background:
+    radial-gradient(closest-side, color-mix(in srgb, var(--prism-violet) 36%, transparent), transparent 72%),
+    radial-gradient(closest-side at 80% 20%, color-mix(in srgb, var(--prism-cyan) 28%, transparent), transparent 68%),
+    radial-gradient(closest-side at 20% 70%, color-mix(in srgb, var(--prism-accent, var(--prism-violet)) 22%, transparent), transparent 65%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pk-paywall,
+  .pk-paywall-backdrop,
+  .pk-paywall__glow {
+    animation: none !important;
+  }
+}
+
+/* ——— Bouton fermer ——— */
+/* Ancré franchement à l'intérieur du panel (jamais à cheval sur le bord
+   arrondi), avec sa propre surface pour rester lisible quel que soit le thème. */
 .pk-paywall__close {
-  border: 1px solid var(--pk-paywall-border);
-  background: var(--pk-paywall-close-bg);
-  color: var(--pk-paywall-text-faint);
+  position: absolute !important;
+  top: 1rem;
+  right: 1rem;
+  left: auto;
+  bottom: auto;
+  z-index: 20;
+  background: color-mix(in srgb, #ffffff 9%, transparent);
+  border: 1px solid color-mix(in srgb, #ffffff 13%, transparent);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  color: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
 }
 
 .pk-paywall__close:hover {
-  color: var(--pk-paywall-text);
+  background: color-mix(in srgb, #ffffff 14%, transparent);
+  border-color: color-mix(in srgb, #ffffff 22%, transparent);
+  color: rgba(255, 255, 255, 0.98);
+  transform: scale(1.06);
 }
 
-.pk-paywall__eyebrow {
-  color: var(--pk-paywall-text-eyebrow);
+.pk-paywall__close:active {
+  transform: scale(0.96);
 }
 
-.pk-paywall__price {
-  color: var(--pk-paywall-text);
+.pk-paywall__close:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--prism-cyan) 70%, transparent);
+  outline-offset: 2px;
 }
 
-.pk-paywall__price-note {
-  color: var(--pk-paywall-text-faint);
-}
-
-.pk-paywall__title {
-  color: var(--pk-paywall-text);
-}
-
-.pk-paywall__desc {
-  color: var(--pk-paywall-text-muted);
-}
-
-.pk-paywall__bullet {
-  color: color-mix(in srgb, var(--pk-paywall-text) 78%, transparent);
-}
-
-.pk-paywall__check {
-  background: var(--pk-paywall-check-bg);
-  color: var(--pk-paywall-check-fg);
-}
-
+/* ——— Icône badge (urgence / sparkle) ——— */
 .pk-paywall__icon {
-  border: 1px solid var(--pk-paywall-accent-icon);
-  background: var(--pk-paywall-accent-soft);
-  color: color-mix(in srgb, var(--pk-paywall-accent) 70%, white);
+  position: relative;
+  z-index: 1;
+  color: #fff;
+  background:
+    linear-gradient(150deg, color-mix(in srgb, var(--prism-violet) 88%, transparent), color-mix(in srgb, var(--prism-cyan) 70%, transparent));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 8px 20px color-mix(in srgb, var(--prism-violet) 32%, transparent);
 }
 
 .pk-paywall__icon--urgent {
-  border-color: var(--pk-paywall-urgent-border);
-  background: var(--pk-paywall-urgent-bg);
-  color: var(--pk-paywall-urgent-fg);
+  background: linear-gradient(150deg, #ff7a59 0%, #f5455c 55%, #c0407c 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    0 8px 20px rgba(245, 69, 92, 0.36);
+  animation: pkPaywallPulse 2.2s ease-out infinite;
 }
 
-.pk-paywall__secondary {
-  color: var(--pk-paywall-text-faint);
+/* ——— Texte ——— */
+.pk-paywall__eyebrow {
+  position: relative;
+  z-index: 1;
+  color: color-mix(in srgb, var(--prism-cyan) 78%, white 22%);
 }
 
-.pk-paywall__secondary:hover {
-  color: var(--pk-paywall-text-muted);
+.pk-paywall__price {
+  position: relative;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.92);
 }
 
-.pk-paywall__footer {
-  color: var(--pk-paywall-text-faint);
+.pk-paywall__price-note {
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 500;
 }
 
-/* Growth modal (referral, loot) */
-.pk-growth-modal__header {
-  border-bottom: 1px solid var(--pk-paywall-border);
-  background: linear-gradient(
-    to bottom right,
-    var(--pk-paywall-header-from),
-    var(--pk-paywall-bg) 45%,
-    var(--pk-paywall-header-to)
-  );
-}
-
-.pk-growth-modal__eyebrow {
-  color: color-mix(in srgb, var(--pk-paywall-accent) 75%, var(--pk-paywall-text-muted));
-}
-
-.pk-growth-modal__title {
-  color: var(--pk-paywall-text);
-}
-
-.pk-growth-modal__subtitle {
-  color: var(--pk-paywall-text-muted);
-}
-
-.pk-growth-modal__card {
-  border: 1px solid var(--pk-paywall-border);
-  background: color-mix(in srgb, var(--pk-paywall-bg) 88%, var(--pk-paywall-accent) 12%);
-  color: color-mix(in srgb, var(--pk-paywall-text) 80%, transparent);
-}
-
-.pk-growth-modal__card strong {
-  color: var(--pk-paywall-text);
-}
-
-.pk-growth-modal__card-muted {
-  color: var(--pk-paywall-text-muted);
-}
-
-.pk-growth-modal__footer {
-  border-top: 1px solid var(--pk-paywall-border);
-  background: color-mix(in srgb, var(--pk-paywall-bg) 75%, black 25%);
-}
-
-html.pk-cloud-active .pk-growth-modal__footer {
-  background: color-mix(in srgb, var(--pk-paywall-bg) 92%, var(--pk-paywall-accent) 8%);
-}
-
-.pk-growth-modal__dismiss {
-  color: var(--pk-paywall-text-faint);
-}
-
-.pk-growth-modal__dismiss:hover {
-  color: var(--pk-paywall-text-muted);
-}
-
-/* Audio retention banner */
-.pk-audio-retention-banner {
-  --pk-retention-border: rgba(34, 211, 238, 0.2);
-  --pk-retention-bg: rgba(34, 211, 238, 0.1);
-  --pk-retention-icon: #67e8f9;
-  --pk-retention-title: rgba(255, 255, 255, 0.92);
-  --pk-retention-body: rgba(255, 255, 255, 0.65);
-  --pk-retention-btn-border: rgba(255, 255, 255, 0.15);
-  --pk-retention-btn-bg: rgba(255, 255, 255, 0.05);
-  --pk-retention-btn-text: rgba(255, 255, 255, 0.92);
-  --pk-retention-cta-bg: #7c3aed;
-  --pk-retention-cta-hover: #8b5cf6;
-
-  border-color: var(--pk-retention-border);
-  background: var(--pk-retention-bg);
-}
-
-.pk-audio-retention-banner--urgent {
-  --pk-retention-border: rgba(251, 191, 36, 0.3);
-  --pk-retention-bg: rgba(245, 158, 11, 0.1);
-  --pk-retention-icon: #fde68a;
-}
-
-.pk-audio-retention-banner__title {
-  color: var(--pk-retention-title);
-}
-
-.pk-audio-retention-banner__body {
-  color: var(--pk-retention-body);
-}
-
-.pk-audio-retention-banner__icon {
-  color: var(--pk-retention-icon);
-}
-
-.pk-audio-retention-banner__btn {
-  border: 1px solid var(--pk-retention-btn-border);
-  background: var(--pk-retention-btn-bg);
-  color: var(--pk-retention-btn-text);
-}
-
-.pk-audio-retention-banner__cta {
-  background: var(--pk-retention-cta-bg);
+.pk-paywall__title {
+  position: relative;
+  z-index: 1;
   color: #fff;
 }
 
-.pk-audio-retention-banner__cta:hover {
-  background: var(--pk-retention-cta-hover);
+.pk-paywall__desc {
+  position: relative;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.66);
 }
 
-html.pk-warm-glass-active .pk-audio-retention-banner {
-  --pk-retention-border: rgba(232, 149, 106, 0.28);
-  --pk-retention-bg: rgba(232, 149, 106, 0.1);
-  --pk-retention-icon: #ffc9a8;
-  --pk-retention-title: rgba(255, 248, 240, 0.94);
-  --pk-retention-body: rgba(255, 220, 180, 0.68);
-  --pk-retention-btn-border: rgba(255, 195, 150, 0.22);
-  --pk-retention-btn-bg: rgba(255, 200, 150, 0.08);
-  --pk-retention-cta-bg: #d4845a;
-  --pk-retention-cta-hover: #e8956a;
+/* ——— Hero prix (variante launch) ——— */
+.pk-paywall__price-hero {
+  position: relative;
+  z-index: 1;
+  margin-top: 0.875rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.625rem;
 }
 
-html.pk-warm-glass-active .pk-audio-retention-banner--urgent {
-  --pk-retention-border: rgba(255, 160, 80, 0.35);
-  --pk-retention-bg: rgba(255, 140, 60, 0.12);
-  --pk-retention-icon: #ffd4a8;
+.pk-paywall__legend-foot {
+  position: relative;
+  z-index: 1;
+  margin-top: 0.75rem;
+  text-align: center;
+  font-size: 0.75rem;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.42);
+  line-height: 1.4;
 }
 
-html.pk-cloud-active .pk-audio-retention-banner {
-  --pk-retention-border: color-mix(in srgb, var(--cloud-accent, #8a9cff) 28%, transparent);
-  --pk-retention-bg: color-mix(in srgb, var(--cloud-accent, #8a9cff) 10%, white);
-  --pk-retention-icon: var(--cloud-accent, #6b7ee8);
-  --pk-retention-title: var(--cloud-text, #1c1c20);
-  --pk-retention-body: var(--cloud-text-muted, rgba(28, 28, 32, 0.56));
-  --pk-retention-btn-border: var(--cloud-glass-border, rgba(0, 0, 0, 0.1));
-  --pk-retention-btn-bg: rgba(0, 0, 0, 0.03);
-  --pk-retention-btn-text: var(--cloud-text, #1c1c20);
-  --pk-retention-cta-bg: var(--cloud-accent, #8a9cff);
-  --pk-retention-cta-hover: color-mix(in srgb, var(--cloud-accent, #8a9cff) 85%, black);
+/* ——— Bullets / bénéfices ——— */
+.pk-paywall__bullet {
+  position: relative;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.82);
+  animation: pkPaywallIn 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-html.pk-cloud-active .pk-audio-retention-banner--urgent {
-  --pk-retention-border: rgba(230, 140, 60, 0.35);
-  --pk-retention-bg: rgba(255, 180, 80, 0.14);
-  --pk-retention-icon: #c45a20;
+.pk-paywall__bullet:nth-child(1) {
+  animation-delay: 60ms;
+}
+.pk-paywall__bullet:nth-child(2) {
+  animation-delay: 110ms;
+}
+.pk-paywall__bullet:nth-child(3) {
+  animation-delay: 160ms;
+}
+.pk-paywall__bullet:nth-child(4) {
+  animation-delay: 210ms;
 }
 
-/* Audio retention cloud modal */
-.pk-audio-retention-modal__header-band {
-  pointer-events: none;
-  position: absolute;
-  inset: 0 0 auto;
-  height: 7rem;
+.pk-paywall__check {
+  color: #050508;
+  background: linear-gradient(135deg, var(--prism-chrome, #e2e8f0), var(--prism-cyan));
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--prism-cyan) 35%, transparent);
+}
+
+/* ——— CTA primaire — signature "crystal glass" du système Prism ——— */
+.pk-paywall__cta-primary {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+  overflow: hidden;
+  border: 0;
+  color: #fff;
   background: linear-gradient(
-    165deg,
-    var(--pk-paywall-header-from) 0%,
-    var(--pk-paywall-header-to) 55%,
-    transparent 100%
+    132deg,
+    color-mix(in srgb, var(--prism-violet) 92%, transparent) 0%,
+    color-mix(in srgb, var(--prism-cyan) 78%, transparent) 50%,
+    color-mix(in srgb, var(--prism-violet) 92%, transparent) 100%
+  );
+  background-size: 220% 100%;
+  background-position: 0% 50%;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 10px 28px color-mix(in srgb, var(--prism-violet) 36%, transparent),
+    0 4px 14px color-mix(in srgb, var(--prism-cyan) 24%, transparent);
+  transition:
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 220ms ease,
+    background-position 480ms ease;
+}
+
+.pk-paywall__cta-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background-position: 100% 50%;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.46),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.16),
+    0 14px 34px color-mix(in srgb, var(--prism-violet) 42%, transparent),
+    0 6px 18px color-mix(in srgb, var(--prism-cyan) 28%, transparent);
+}
+
+.pk-paywall__cta-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.pk-paywall__cta-primary:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.pk-paywall__cta-primary:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--prism-cyan) 80%, transparent);
+  outline-offset: 2px;
+}
+
+/* ——— CTA secondaire (credit pack) — discret, ne concurrence pas le primaire ——— */
+.pk-paywall__cta-secondary {
+  position: relative;
+  z-index: 1;
+  border: 1px solid color-mix(in srgb, #ffffff 14%, transparent);
+  background: color-mix(in srgb, #ffffff 4%, transparent);
+  color: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
+}
+
+.pk-paywall__cta-secondary:hover:not(:disabled) {
+  background: color-mix(in srgb, #ffffff 7%, transparent);
+  border-color: color-mix(in srgb, #ffffff 22%, transparent);
+  color: #fff;
+}
+
+.pk-paywall__cta-secondary:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--prism-cyan) 70%, transparent);
+  outline-offset: 2px;
+}
+
+/* ——— Lien "non merci" — une seule voie de sortie texte, vraiment discrète ——— */
+.pk-paywall__secondary {
+  position: relative;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.pk-paywall__secondary:hover {
+  color: rgba(255, 255, 255, 0.64);
+}
+
+.pk-paywall__secondary:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--prism-cyan) 60%, transparent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ——— Footer confiance (paiement sécurisé) ——— */
+.pk-paywall__footer {
+  position: relative;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.36);
+}
+
+/* ——— Adaptation thème Warm Glass ——— */
+/* .pk-warm-glass-stage réécrit déjà --prism-violet/--prism-cyan/--prism-chrome
+   plus haut dans la cascade : le panel hérite donc automatiquement de la
+   palette jaune/orange/rose. On ajuste seulement le fond très sombre, qui lui
+   reste codé en dur côté Prism, pour rester cohérent avec l'ambiance chaude. */
+.pk-warm-glass-stage .pk-paywall {
+  background:
+    radial-gradient(560px circle at 12% -8%, color-mix(in srgb, var(--prism-violet) 22%, transparent), transparent 58%),
+    radial-gradient(420px circle at 100% 110%, color-mix(in srgb, var(--prism-cyan) 18%, transparent), transparent 56%),
+    linear-gradient(180deg, color-mix(in srgb, #2a140c 96%, transparent) 0%, color-mix(in srgb, #160a06 98%, transparent) 100%);
+  border-color: var(--warm-glass-border, var(--prism-border));
+}
+
+.pk-warm-glass-stage .pk-paywall__close {
+  background: color-mix(in srgb, var(--warm-glass-surface-elevated, #301c16) 70%, transparent);
+  border-color: var(--warm-glass-border, rgba(255, 255, 255, 0.14));
+}
+
+/* ——— Adaptation thème Cloud ——— */
+/* Le système Cloud cible déjà .pk-veil-modal-panel globalement avec !important
+   (cloud-theme-site.css), donc le fond/border/blur sont pris en charge par
+   le thème lui-même. On retire seulement le glow violet codé en dur, qui
+   jurerait avec une ambiance Cloud plus claire/neutre, et on adapte le check. */
+.pk-cloud-stage .pk-paywall__glow {
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--cloud-accent, var(--prism-violet)) 22%, transparent),
+    transparent 72%
   );
 }
 
-.pk-audio-retention-modal__icon-stack {
-  width: 3.5rem;
-  height: 3.5rem;
+.pk-cloud-stage .pk-paywall__title,
+.pk-cloud-stage .pk-paywall__price {
+  color: var(--cloud-text, #fff);
 }
 
-.pk-audio-retention-modal__icon-badge {
-  border: 1px solid var(--pk-paywall-border);
-  background: color-mix(in srgb, var(--pk-paywall-bg) 82%, var(--pk-paywall-accent) 18%);
-  color: var(--pk-paywall-accent);
-  box-shadow: 0 6px 18px color-mix(in srgb, var(--pk-paywall-accent) 22%, transparent);
+.pk-cloud-stage .pk-paywall__desc,
+.pk-cloud-stage .pk-paywall__legend-foot {
+  color: var(--cloud-text-muted, rgba(255, 255, 255, 0.66));
 }
 
-.pk-audio-retention-modal__title {
-  color: var(--pk-paywall-text);
-}
-
-.pk-audio-retention-modal__lead {
-  color: var(--pk-paywall-text-muted);
-}
-
-.pk-audio-retention-modal__cta-primary {
-  box-shadow: 0 10px 28px color-mix(in srgb, var(--pk-paywall-accent) 35%, transparent);
-}
-
-html.pk-warm-glass-active .pk-audio-retention-modal__icon-badge {
-  box-shadow: 0 6px 18px rgba(232, 149, 106, 0.28);
-}
-
-html.pk-cloud-active .pk-audio-retention-modal__icon-badge {
-  box-shadow: 0 6px 16px color-mix(in srgb, var(--cloud-accent, #8a9cff) 24%, transparent);
-}
-
-/* Modal backdrop (shared Modal.tsx) */
-.pk-modal-backdrop {
-  background: rgba(4, 3, 10, 0.7);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-html.pk-warm-glass-active .pk-modal-backdrop {
-  background: rgba(20, 8, 4, 0.72);
-}
-
-html.pk-cloud-active .pk-modal-backdrop {
-  background: rgba(12, 12, 16, 0.35);
+.pk-cloud-stage .pk-paywall__close {
+  background: color-mix(in srgb, var(--cloud-glass-bg-elevated, #ffffff) 60%, transparent);
+  border-color: var(--cloud-glass-border, rgba(255, 255, 255, 0.14));
 }

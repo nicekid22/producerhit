@@ -1165,6 +1165,27 @@ export default function Dashboard() {
     () => buildWorkspacePlaybackQueue(loops, { query, savedOnly }),
     [loops, query, savedOnly],
   );
+
+  // PERF: `displayedLoops` gets a brand-new array reference any time a single
+  // loop in the store mutates (progress polling, cover arriving, duration
+  // load...), even when the actual list of ids/order shown to the user hasn't
+  // changed. Since this array is passed as `queueLoops` to every
+  // <LoopCardItem memo>, a new reference there breaks React.memo's shallow
+  // prop comparison and forces a re-render of EVERY card in the workspace on
+  // every unrelated store update — this is the main source of perceived lag
+  // during active generation. We only swap the reference when the visible
+  // id sequence actually changes; otherwise we keep handing out the same
+  // array object so memo'd children skip re-rendering.
+  const displayedLoopsSignature = useMemo(
+    () => displayedLoops.map((l) => l.id).join("|"),
+    [displayedLoops],
+  );
+  const stableDisplayedLoopsRef = useRef(displayedLoops);
+  const stableDisplayedLoops = useMemo(() => {
+    stableDisplayedLoopsRef.current = displayedLoops;
+    return stableDisplayedLoopsRef.current;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayedLoopsSignature]);
   const totalMatches = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     return loops.filter((l) => {
@@ -4828,7 +4849,7 @@ export default function Dashboard() {
                       loop={l}
                       slotIndex={loopIdx}
                       compact={mobileV2}
-                      queueLoops={displayedLoops}
+                      queueLoops={stableDisplayedLoops}
                       onOpenDetails={handleLoopOpenDetails}
                       onGenerationUsed={consumeCredit}
                       onCoverRerollUsed={consumeCredit}
@@ -4877,7 +4898,7 @@ export default function Dashboard() {
                     loop={l}
                     slotIndex={loopIdx}
                     compact={mobileV2}
-                    queueLoops={displayedLoops}
+                    queueLoops={stableDisplayedLoops}
                     onOpenDetails={handleLoopOpenDetails}
                     onGenerationUsed={consumeCredit}
                     onCoverRerollUsed={consumeCredit}

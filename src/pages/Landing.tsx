@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ensureLandingMobileStyles } from "@/lib/themeStyles";
-import { useEffect, useMemo, useRef, useState, useCallback, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback, type MouseEvent as ReactMouseEvent, type ReactNode, type RefObject } from "react";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/stores/authStore";
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
@@ -19,7 +19,7 @@ import {
   playPublicRowsInQueue,
 } from "@/lib/communityPlaybackQueue";
 import { isPersistedStorageCoverUrl, publicRowToCoverLoop, resolvePublicRowCoverUrl } from "@/lib/coverArt";
-import { UNIFIED_STORED_COVERS, CLOUD_THEME_ENABLED } from "@/lib/featureFlags";
+import { UNIFIED_STORED_COVERS } from "@/lib/featureFlags";
 import {
   consumeJustAuthenticated,
   hasOAuthCallbackParams,
@@ -52,7 +52,6 @@ import { LandingMobileMenuFooter } from "@/components/landing/LandingMobileMenuF
 import { HeroCtaButton } from "@/components/landing/HeroCtaButton";
 import { HeroDreamHeadline } from "@/components/landing/HeroDreamHeadline";
 import { LandingHeroReassurance } from "@/components/landing/LandingHeroReassurance";
-import { LandingHeroMoodStrip } from "@/components/landing/LandingHeroMoodStrip";
 import { ThemeAndAccentPicker } from "@/components/ThemeAndAccentPicker";
 import { WarmGlassBackdrop } from "@/components/WarmGlassBackdrop";
 import { CloudBackdrop } from "@/components/CloudBackdrop";
@@ -84,6 +83,44 @@ type CreateMode = "song" | "beat";
 const SIDE_CARD_POOL_LIMIT = 24;
 const SIDE_CARD_ROTATE_MIN_MS = 48_000;
 const SIDE_CARD_ROTATE_MAX_MS = 92_000;
+
+/**
+ * Les side cards du générateur et le rail "trending" appellent tous les deux
+ * fetchPublicLoops({ limit: 48, playableOnly: true }) — même endpoint, même
+ * filtre, juste mappés différemment en sortie. Sans ce cache, les deux
+ * useEffect déclenchaient deux requêtes réseau quasi-identiques à quelques
+ * centaines de ms d'écart dès qu'un visiteur desktop scrollait un peu vite.
+ * Fenêtre de fraîcheur volontairement courte (déduplication de requêtes
+ * concurrentes, pas un cache longue durée — celui-là existe déjà via
+ * sessionStorage plus bas). Le timeoutMs passé ne s'applique qu'à l'appel qui
+ * déclenche réellement la requête réseau ; un appelant qui arrive pendant
+ * qu'une requête est déjà en vol, ou juste après qu'elle a abouti, récupère
+ * le résultat directement sans jamais attendre son propre timeout.
+ */
+const PUBLIC_LOOPS_DEDUPE_MS = 12_000;
+let publicLoopsInFlight: Promise<PublicLoopRow[]> | null = null;
+let publicLoopsCachedAt = 0;
+let publicLoopsCachedRows: PublicLoopRow[] | null = null;
+
+function fetchPublicLoopsDeduped(timeoutMs: number): Promise<PublicLoopRow[]> {
+  const fresh = publicLoopsCachedRows && Date.now() - publicLoopsCachedAt < PUBLIC_LOOPS_DEDUPE_MS;
+  if (fresh && publicLoopsCachedRows) {
+    return Promise.resolve(publicLoopsCachedRows);
+  }
+  if (publicLoopsInFlight) {
+    return publicLoopsInFlight;
+  }
+  publicLoopsInFlight = fetchPublicLoops({ limit: 48, timeoutMs, playableOnly: true })
+    .then((rows) => {
+      publicLoopsCachedRows = rows;
+      publicLoopsCachedAt = Date.now();
+      return rows;
+    })
+    .finally(() => {
+      publicLoopsInFlight = null;
+    });
+  return publicLoopsInFlight;
+}
 
 function mergeSideCardPool(existing: GeneratorSideCard[], incoming: GeneratorSideCard[]): GeneratorSideCard[] {
   const byId = new Map<string, GeneratorSideCard>();
@@ -133,6 +170,63 @@ function RevealSection({
       {children}
     </section>
   );
+}
+
+/**
+ * Isole le tracking de la souris (spot du LandingPrismScene) dans son propre
+ * composant. Sans ça, chaque mouvement de souris dans le hero déclenchait un
+ * setState sur Landing — le composant racine de toute la page — et re-rendait
+ * l'intégralité de l'arbre (header, generator, et les ~12 sections sous le
+ * pli) à chaque frame tant que la souris bougeait. Ici, le re-render reste
+ * cantonné à ce petit composant.
+ */
+function HeroPrismSpot({
+  heroRef,
+  reduceMotion,
+}: {
+  heroRef: RefObject<HTMLDivElement | null>;
+  reduceMotion: boolean;
+}) {
+  const [spot, setSpot] = useState<{ x: number; y: number }>({ x: 56, y: 32 });
+  const rafRef = useRef<number | null>(null);
+  const lastRef = useRef<{ x: number; y: number } | null>(null);
+  const allowPointer = useMemo(() => {
+    try {
+      return window.matchMedia("(pointer: fine)").matches;
+    } catch {
+      return true;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (reduceMotion || !allowPointer) return;
+    const el = heroRef.current;
+    if (!el) return;
+
+    const onMove = (e: PointerEvent) => {
+      const rect = el.getBoundingClientRect();
+      const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / Math.max(1, rect.width)));
+      const y = Math.max(0, Math.min(1, (e.clientY - rect.top) / Math.max(1, rect.height)));
+      lastRef.current = { x, y };
+      if (rafRef.current) return;
+      rafRef.current = window.requestAnimationFrame(() => {
+        rafRef.current = null;
+        const v = lastRef.current;
+        if (!v) return;
+        setSpot({ x: Math.round(v.x * 1000) / 10, y: Math.round(v.y * 1000) / 10 });
+      });
+    };
+
+    el.addEventListener("pointermove", onMove, { passive: true });
+    return () => {
+      el.removeEventListener("pointermove", onMove);
+      if (rafRef.current) window.cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+      lastRef.current = null;
+    };
+  }, [allowPointer, reduceMotion, heroRef]);
+
+  return <LandingPrismScene spot={spot} reduceMotion={reduceMotion} />;
 }
 
 export default function Landing() {
@@ -217,37 +311,6 @@ export default function Landing() {
       return true;
     }
   }, []);
-  const [spot, setSpot] = useState<{ x: number; y: number }>({ x: 56, y: 32 });
-  const rafRef = useRef<number | null>(null);
-  const lastRef = useRef<{ x: number; y: number } | null>(null);
-
-  useEffect(() => {
-    if (reduceMotion || !allowPointer) return;
-    const el = heroRef.current;
-    if (!el) return;
-
-    const onMove = (e: PointerEvent) => {
-      const rect = el.getBoundingClientRect();
-      const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / Math.max(1, rect.width)));
-      const y = Math.max(0, Math.min(1, (e.clientY - rect.top) / Math.max(1, rect.height)));
-      lastRef.current = { x, y };
-      if (rafRef.current) return;
-      rafRef.current = window.requestAnimationFrame(() => {
-        rafRef.current = null;
-        const v = lastRef.current;
-        if (!v) return;
-        setSpot({ x: Math.round(v.x * 1000) / 10, y: Math.round(v.y * 1000) / 10 });
-      });
-    };
-
-    el.addEventListener("pointermove", onMove, { passive: true });
-    return () => {
-      el.removeEventListener("pointermove", onMove);
-      if (rafRef.current) window.cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
-      lastRef.current = null;
-    };
-  }, [allowPointer, reduceMotion]);
 
   const attachMagnetic = (strength: number) => {
     if (reduceMotion || !allowPointer) return {};
@@ -370,15 +433,10 @@ export default function Landing() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  useEffect(() => {
-    try {
-      if (window.matchMedia("(pointer: coarse)").matches) return;
-    } catch {
-      return;
-    }
-    const t = window.setTimeout(() => inputRef.current?.focus(), 180);
-    return () => window.clearTimeout(t);
-  }, []);
+  // Auto-focus retiré volontairement : voler le focus clavier avant que la
+  // personne ait lu le headline ajoute de la friction sans bénéfice mesuré.
+  // Si on veut le réintroduire, le faire uniquement après une intention
+  // claire (ex: clic sur le tagline) plutôt qu'au chargement.
 
   const toggleGenre = (g: string) => {
     setBeatGenres((prev) => (prev.includes(g) ? prev.filter((x) => x !== g) : [g, ...prev].slice(0, 3)));
@@ -608,7 +666,7 @@ export default function Landing() {
       if (cancelled) return;
       void (async () => {
         try {
-          const rows = await fetchPublicLoops({ limit: 48, timeoutMs: 8000, playableOnly: true });
+          const rows = await fetchPublicLoopsDeduped(8000);
           if (cancelled) return;
 
           const pool = rows
@@ -921,7 +979,7 @@ export default function Landing() {
       if (cancelled) return;
       void (async () => {
         try {
-          const rows = await fetchPublicLoops({ limit: 48, timeoutMs: 6500, playableOnly: true });
+          const rows = await fetchPublicLoopsDeduped(6500);
         if (cancelled) return;
         window.clearTimeout(slowTimer);
         setTrendingTimedOut(false);
@@ -1206,7 +1264,7 @@ export default function Landing() {
       <main ref={heroRef} className="relative z-10">
         {!warmGlass && !cloud ? (
           <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-            <LandingPrismScene spot={spot} reduceMotion={reduceMotion} />
+            <HeroPrismSpot heroRef={heroRef} reduceMotion={reduceMotion} />
           </div>
         ) : null}
         <RevealSection className={landingFlowSectionClass()}>
@@ -1241,9 +1299,6 @@ export default function Landing() {
               ) : null}
               {!mobileLandingFocus ? (
                 <ConversionTrustBar locale={locale} compact variant="landing" className="pk-landing-hero-trust" />
-              ) : null}
-              {CLOUD_THEME_ENABLED && !mobileLandingFocus ? (
-                <LandingHeroMoodStrip locale={locale} cloudActive={cloud} compact minimal />
               ) : null}
             </div>
 
@@ -1319,6 +1374,10 @@ export default function Landing() {
         ) : null}
 
         <RevealSection className={`${landingSectionClass()} pk-landing-below-fold${mobileLandingFocus ? " hidden lg:block" : ""}`}>
+          <LandingBenefits locale={locale} />
+        </RevealSection>
+
+        <RevealSection className={`${landingSectionClass()} pk-landing-below-fold${mobileLandingFocus ? " hidden lg:block" : ""}`}>
           <DailySpotlightSection locale={locale} className="mb-8" />
           <LandingTrafficStrip locale={locale} className="mb-6" />
           <LandingCommunityRail
@@ -1367,10 +1426,6 @@ export default function Landing() {
               ) : null
             }
           />
-        </RevealSection>
-
-        <RevealSection id="features" className={`${landingSectionClass()} pk-landing-below-fold${mobileLandingFocus ? " hidden lg:block" : ""}`}>
-          <LandingBenefits locale={locale} />
         </RevealSection>
 
         <RevealSection className={`${landingSectionClass()} pk-landing-below-fold${mobileLandingFocus ? " hidden lg:block" : ""}`}>

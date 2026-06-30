@@ -152,15 +152,15 @@ export function PlanUpsellModal({
 
         <button
           type="button"
-          className="pk-paywall__close absolute right-4 top-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full transition"
+          className="pk-paywall__close absolute z-20 inline-flex h-9 w-9 items-center justify-center rounded-full transition"
           aria-label={ui.close}
           onClick={trackDismiss}
         >
           <X className="h-4 w-4" aria-hidden />
         </button>
 
-        <div className="relative px-6 pb-6 pt-8 sm:px-7 sm:pb-7">
-          <div className="flex items-center gap-3">
+        <div className="relative px-6 pb-6 pt-9 sm:px-7 sm:pb-7 sm:pt-9">
+          <div className="flex items-center gap-3 pr-9">
             <div
               className={cn(
                 "pk-paywall__icon flex h-12 w-12 items-center justify-center rounded-2xl",
@@ -220,7 +220,7 @@ export function PlanUpsellModal({
             <Button
               variant="primary"
               size="md"
-              className="h-12 w-full rounded-full text-sm font-bold"
+              className="pk-paywall__cta-primary h-12 w-full rounded-full text-sm font-bold"
               disabled={busy}
               onClick={() => void primaryAction()}
             >
@@ -230,7 +230,7 @@ export function PlanUpsellModal({
               <Button
                 variant="secondary"
                 size="md"
-                className="h-11 w-full rounded-full text-sm font-semibold"
+                className="pk-paywall__cta-secondary h-11 w-full rounded-full text-sm font-semibold"
                 disabled={busy}
                 onClick={() => void startCreditPack()}
               >
