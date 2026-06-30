@@ -4,6 +4,7 @@ import { getWaveformColors } from "@/lib/waveformThemeColors";
 import { fetchCachedLoopAudioBlob } from "@/stores/loopsStore";
 import { useCloudAccentStore } from "@/stores/cloudAccentStore";
 import { useVisualThemeStore } from "@/stores/visualThemeStore";
+import { cn } from "@/lib/utils";
 
 const PEAK_POINTS = 256;
 const DECODE_TIMEOUT_MS = 10_000;
@@ -372,6 +373,7 @@ export function AudioWaveform({
   height = 28,
   color,
   unplayedColor,
+  className,
 }: {
   audioUrl: string | null;
   loopId?: string;
@@ -381,6 +383,7 @@ export function AudioWaveform({
   height?: number;
   color?: string;
   unplayedColor?: string;
+  className?: string;
 }) {
   const visualTheme = useVisualThemeStore((s) => s.theme);
   const cloudAccent = useCloudAccentStore((s) => s.accent);
@@ -532,7 +535,7 @@ export function AudioWaveform({
   if (liteWaveform) {
     return (
       <div
-        className="w-full overflow-hidden rounded-md border border-white/10 bg-white/[0.03]"
+        className={cn("w-full overflow-hidden rounded-md border border-white/10 bg-white/[0.03]", className)}
         style={{ height }}
         aria-hidden
       >

@@ -1622,11 +1622,8 @@ export default function Dashboard() {
             .join(", ")
         : (runFormPrompt?.trim() ?? "");
 
-      const userIdea = effectiveRunUiPrompt || runUiPrompt || "";
-      const isRandomPrompt = runAsSong ? !!songAceOverrideRef.current : !!beatAceOverrideRef.current;
-
       const aceInputPrompt =
-        runAsSong && !runSongDescription.trim() ? "" : userIdea;
+        runAsSong && !runSongDescription.trim() ? "" : effectiveRunUiPrompt || runUiPrompt;
 
       const inputParams = {
         genre: genreForAce,
@@ -1673,23 +1670,23 @@ export default function Dashboard() {
               audioFormat: effectiveAudioFormat,
               seed,
             };
-        const captionOpts = (() => {
-          const base = (captionCtx.captionOverride?.trim() ? { captionOverride: captionCtx.captionOverride, melodyComposition: captionCtx.melodyComposition } : {}) as { captionOverride?: string; melodyComposition?: boolean };
-          return base;
-        })();
+        const captionOpts = captionCtx.captionOverride?.trim()
+          ? {
+              captionOverride: captionCtx.captionOverride,
+              melodyComposition: captionCtx.melodyComposition,
+            }
+          : {};
         return aceKeyPreferIndex !== undefined
           ? {
               ...base,
               aceKeyPreferIndex,
               ...captionOpts,
               ...(runAsSong && songVocalStyle.trim() ? { vocalStyle: songVocalStyle.trim() } : {}),
-              ...(runAsSong && !isRandomPrompt && userIdea.trim() ? { sampleMode: true, sampleQuery: userIdea } : {}),
             }
           : {
               ...base,
               ...captionOpts,
               ...(runAsSong && songVocalStyle.trim() ? { vocalStyle: songVocalStyle.trim() } : {}),
-              ...(runAsSong && !isRandomPrompt && userIdea.trim() ? { sampleMode: true, sampleQuery: userIdea } : {}),
             };
       };
 

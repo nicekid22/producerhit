@@ -850,9 +850,9 @@ export const LoopCardItem = memo(function LoopCardItem({
       data-loop-card
       ref={cardRef}
       className={cn(
-        "relative rounded-pk border border-pk-border bg-pk-panel p-4",
+        "relative rounded-pk border border-pk-border bg-pk-panel p-3",
         isLibraryCard ? "pk-loop-card--library" : "",
-        onOpenDetails ? "pr-14" : "",
+        onOpenDetails ? "pr-12" : "",
         loopCardClass(active, activePlaying),
       )}
       onClick={() => {
@@ -871,7 +871,7 @@ export const LoopCardItem = memo(function LoopCardItem({
       {onOpenDetails ? (
         <button
           type="button"
-          className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-pk text-pk-muted transition-colors hover:bg-white/5 hover:text-pk-text"
+          className="absolute right-1.5 top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-pk text-pk-muted transition-colors hover:bg-white/5 hover:text-pk-text"
           onClick={(e) => {
             e.stopPropagation();
             onOpenDetails(loop, computeAnchorTop());
@@ -879,13 +879,13 @@ export const LoopCardItem = memo(function LoopCardItem({
           aria-label={lc.infoDetails}
           title={lc.infoDetails}
         >
-          <Info className="h-3.5 w-3.5" />
+          <Info className="h-3 w-3" />
         </button>
       ) : null}
       {showWorkspaceCoverPeek ? (
         <div
           className={cn(
-            "pk-loop-cover-banner mb-2 rounded-xl p-[2px]",
+            "pk-loop-cover-banner mb-1.5 rounded-lg p-[1.5px]",
             loopCoverClass(active, activePlaying),
           )}
         >
@@ -893,22 +893,22 @@ export const LoopCardItem = memo(function LoopCardItem({
             key={`${coverKey}:${bannerCoverUrl}`}
             coverUrl={bannerCoverUrl}
             className={cn(
-              "w-full rounded-[10px]",
-              isLibraryCard ? "pk-loop-card--library-cover aspect-[5/4] min-h-[9.5rem]" : "h-32",
+              "w-full rounded-[8px]",
+              isLibraryCard ? "pk-loop-card--library-cover aspect-[5/4] min-h-[9.5rem]" : "h-20",
             )}
             loading="lazy"
           />
         </div>
       ) : null}
-      <div className="flex gap-3">
+      <div className="flex gap-2.5">
         {!showWorkspaceCoverPeek ? (
           <div
             className={cn(
-              "relative h-12 w-12 shrink-0 rounded-pk p-[2px] pk-loop-cover-thumb",
+              "relative h-10 w-10 shrink-0 rounded-pk p-[1.5px] pk-loop-cover-thumb",
               loopCoverClass(active, activePlaying),
             )}
           >
-            <div className={cn("relative h-full w-full overflow-hidden rounded-[6px]", COVER_SURFACE_CLASS)}>
+            <div className={cn("relative h-full w-full overflow-hidden rounded-[5px]", COVER_SURFACE_CLASS)}>
               <CoverMedia
                 loop={loop}
                 coverUrl={bannerCoverUrl || coverUrl}
@@ -935,15 +935,15 @@ export const LoopCardItem = memo(function LoopCardItem({
           </div>
         ) : null}
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <div className="min-w-0 flex flex-1 items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            <div className="min-w-0 flex flex-1 items-center gap-1.5">
               {isEditingTitle ? (
                 <>
                   <input
                     value={draftTitle}
                     onChange={(e) => setDraftTitle(e.target.value)}
                     autoFocus
-                    className="w-full min-w-0 rounded-pk border border-pk-border bg-pk-input px-2 py-1 text-sm font-semibold text-pk-text outline-none placeholder:text-pk-muted focus:border-pk-accent"
+                    className="w-full min-w-0 rounded-pk border border-pk-border bg-pk-input px-2 py-0.5 text-sm font-semibold text-pk-text outline-none placeholder:text-pk-muted focus:border-pk-accent"
                     placeholder={d.titleInputPlaceholder}
                     onClick={(e) => e.stopPropagation()}
                     onKeyDown={(e) => {
@@ -964,7 +964,7 @@ export const LoopCardItem = memo(function LoopCardItem({
                   <Button
                     variant="secondary"
                     size="sm"
-                    className="px-2 py-1"
+                    className="px-1.5 py-0.5"
                     disabled={savingTitle}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -973,12 +973,12 @@ export const LoopCardItem = memo(function LoopCardItem({
                     aria-label={lc.validate}
                     title={lc.validate}
                   >
-                    {savingTitle ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                    {savingTitle ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="px-2 py-1"
+                    className="px-1.5 py-0.5"
                     disabled={savingTitle}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -988,7 +988,7 @@ export const LoopCardItem = memo(function LoopCardItem({
                     aria-label={lc.cancel}
                     title={lc.cancel}
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-3.5 w-3.5" />
                   </Button>
                 </>
               ) : (
@@ -997,7 +997,7 @@ export const LoopCardItem = memo(function LoopCardItem({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="px-2 py-1"
+                    className="px-1.5 py-0.5"
                     onClick={(e) => {
                       e.stopPropagation();
                       setIsEditingTitle(true);
@@ -1005,7 +1005,7 @@ export const LoopCardItem = memo(function LoopCardItem({
                     aria-label={lc.editTitle}
                     title={lc.editTitle}
                   >
-                    <Pencil className="h-4 w-4" />
+                    <Pencil className="h-3.5 w-3.5" />
                   </Button>
                 </>
               )}
@@ -1014,7 +1014,7 @@ export const LoopCardItem = memo(function LoopCardItem({
               <button
                 type="button"
                 className={cn(
-                  "inline-flex shrink-0 items-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-2 py-0.5",
+                  "inline-flex shrink-0 items-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-1.5 py-0.5",
                   "text-[10px] font-medium tracking-wide text-pk-muted backdrop-blur-sm",
                   "transition-colors hover:border-white/[0.14] hover:bg-white/[0.06] hover:text-pk-text",
                   "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-pk-accent/80",
@@ -1028,9 +1028,9 @@ export const LoopCardItem = memo(function LoopCardItem({
                 aria-label={loopCardCoverRerollAria(locale, LOOP_COVER_REROLL_CREDIT_COST)}
               >
                 {isRerollingCover ? (
-                  <Loader2 className="h-3 w-3 shrink-0 animate-spin" aria-hidden />
+                  <Loader2 className="h-2.5 w-2.5 shrink-0 animate-spin" aria-hidden />
                 ) : (
-                  <RefreshCcw className="h-3 w-3 shrink-0 opacity-75" aria-hidden />
+                  <RefreshCcw className="h-2.5 w-2.5 shrink-0 opacity-75" aria-hidden />
                 )}
                 <span className="inline-flex items-center gap-1 max-[380px]:hidden">
                   <span>{lc.newInspo}</span>
@@ -1044,11 +1044,11 @@ export const LoopCardItem = memo(function LoopCardItem({
               </button>
             ) : null}
           </div>
-          <div className="mt-2 flex flex-wrap gap-2">
-            <Badge>{loop.genre}</Badge>
+          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+            <Badge className="text-[11px]">{loop.genre}</Badge>
             {songCard && vocalLangLabel ? (
-              <Badge variant="muted" className="gap-1">
-                <Languages className="h-3 w-3 shrink-0 opacity-80" aria-hidden />
+              <Badge variant="muted" className="gap-1 text-[11px]">
+                <Languages className="h-2.5 w-2.5 shrink-0 opacity-80" aria-hidden />
                 {vocalLangLabel}
               </Badge>
             ) : null}
@@ -1057,39 +1057,40 @@ export const LoopCardItem = memo(function LoopCardItem({
                 variant="muted"
                 className={
                   voiceCloneInfo?.applied && !voiceCloneInfo.fallback
-                    ? "gap-1 border-emerald-400/30 bg-emerald-500/10 text-emerald-200"
-                    : "gap-1 border-amber-400/25 bg-amber-500/10 text-amber-100"
+                    ? "gap-1 border-emerald-400/30 bg-emerald-500/10 text-emerald-200 text-[11px]"
+                    : "gap-1 border-amber-400/25 bg-amber-500/10 text-amber-100 text-[11px]"
                 }
               >
                 {voiceCloneLabel}
               </Badge>
             ) : null}
             {tagMeta ? (
-              <Badge variant="muted" className="gap-1 border-violet-400/30 bg-violet-500/10 text-violet-200">
-                <Tag className="h-3 w-3 shrink-0 opacity-80" aria-hidden />
+              <Badge variant="muted" className="gap-1 border-violet-400/30 bg-violet-500/10 text-violet-200 text-[11px]">
+                <Tag className="h-2.5 w-2.5 shrink-0 opacity-80" aria-hidden />
                 {lc.producerTagBadge}
               </Badge>
             ) : null}
-            {!songCard && loop.mood ? <Badge variant="muted">{loop.mood}</Badge> : null}
+            {!songCard && loop.mood ? <Badge variant="muted" className="text-[11px]">{loop.mood}</Badge> : null}
             {loop.bpm && loop.bpm > 0 ? (
-              <Badge variant="muted">{loop.bpm} BPM</Badge>
+              <Badge variant="muted" className="text-[11px]">{loop.bpm} BPM</Badge>
             ) : (
-              <Badge variant="muted">Auto BPM</Badge>
+              <Badge variant="muted" className="text-[11px]">Auto BPM</Badge>
             )}
-          </div>
-          <div className="mt-2 text-xs text-pk-muted">
-            {loop.key || loop.scale ? `${loop.key} ${loop.scale}` : "Auto Key"}
+            <span className="text-[11px] text-pk-muted">
+              {loop.key || loop.scale ? `${loop.key} ${loop.scale}` : "Auto Key"}
+            </span>
           </div>
         </div>
       </div>
 
-      <div className={cn("mt-3", canPlay ? "" : "opacity-60")}>
+      <div className={cn("mt-2 flex items-center gap-2", canPlay ? "" : "opacity-60")}>
         <AudioWaveform
           audioUrl={loop.audioUrl ?? null}
           loopId={loop.id}
           isPlaying={activePlaying}
           progress={active ? progress : 0}
-          height={28}
+          height={22}
+          className="flex-1"
           onSeek={
             canPlay
               ? (pct) => {
@@ -1099,27 +1100,8 @@ export const LoopCardItem = memo(function LoopCardItem({
               : undefined
           }
         />
-      </div>
-
-      <div className="mt-2 flex items-center justify-between gap-2 text-xs text-pk-muted">
-        <div>{loop.loopLength}</div>
-        <div className="flex shrink-0 items-center gap-2">
-          {(() => {
-            const hint = getLoopCardFooterHint(loop, locale);
-            if (!hint) return null;
-            return (
-              <span
-                className={cn(
-                  "pk-loop-card-hint text-[10px] font-medium",
-                  hint.variant === "public" && "pk-loop-card-hint--public",
-                  hint.variant === "stems" && "pk-loop-card-hint--stems",
-                )}
-              >
-                {hint.label}
-              </span>
-            );
-          })()}
-          <div>{durationLabel}</div>
+        <div className="shrink-0 text-[11px] tabular-nums text-pk-muted">
+          {durationLabel}
         </div>
       </div>
 
