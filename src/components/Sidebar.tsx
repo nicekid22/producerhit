@@ -11,6 +11,7 @@ import {
   LogOut,
   Mic,
   Settings,
+  Tag,
   Users,
   type LucideProps,
 } from "lucide-react";
@@ -60,6 +61,11 @@ export function Sidebar() {
       to: "/voice-studio",
       label: m.app.voiceStudio,
       icon: <SidebarIcon icon={Mic} />,
+    },
+    {
+      to: "/tag-studio",
+      label: m.app.tagStudio,
+      icon: <SidebarIcon icon={Tag} />,
     },
     ...(isSampleLabEnabled()
       ? [

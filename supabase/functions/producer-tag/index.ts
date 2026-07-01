@@ -35,8 +35,17 @@ async function callMixApi(form: FormData, mode: string): Promise<Response> {
   });
 }
 
+function json(payload: unknown, status = 200) {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 200, headers: corsHeaders });
+  }
 
   try {
     const authHeader = req.headers.get("Authorization") ?? req.headers.get("authorization");

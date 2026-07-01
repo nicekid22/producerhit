@@ -12,7 +12,27 @@ export type PromptCategoryId =
   | "electronic"
   | "impressive"
   | "ace_prose"
-  | "genre_menu";
+  | "genre_menu"
+  | "fun_urban"
+  | "fun_rnb"
+  | "fun_latino"
+  | "fun_electronic"
+  | "fun_pop"
+  | "content_creator"
+  | "gaming"
+  | "fitness_sports"
+  | "food_culinary"
+  | "travel_adventure"
+  | "mental_health_selfcare"
+  | "family_parenting"
+  | "career_business"
+  | "pets_animals"
+  | "memes_internet"
+  | "nostalgia_throwbacks"
+  | "seasonal_holidays"
+  | "urban_raw"
+  | "urban_beats"
+  | "rb_soul_specific";
 
 export type PromptCategory = {
   id: PromptCategoryId;

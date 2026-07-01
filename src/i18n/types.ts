@@ -19,6 +19,7 @@ export type MessageCatalog = {
     generator: string;
     library: string;
     voiceStudio: string;
+    tagStudio: string;
     sampleLab: string;
     settings: string;
     website: string;

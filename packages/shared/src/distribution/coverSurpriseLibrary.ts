@@ -2,6 +2,15 @@ import type { StructuredCoverPromptInput } from "./coverPrompt";
 import { COVER_LIGHTING_PRESETS, COVER_STYLE_PRESETS } from "./coverPrompt";
 import { LOOP_CARD_COVER_FUTUR_RETRO_ENABLED } from "./loopCardCoverFuturRetro";
 
+/**
+ * TEST MODE — tout pousser dans l'univers anime/manga/glitch.
+ * Passer à `false` pour revenir au mix normal (sans supprimer la catégorie/library).
+ * Pas de fichier séparé : un seul flag à toucher pour rollback.
+ */
+const LOOP_CARD_COVER_ANIME_MANGA_GLITCH_ENABLED = true;
+/** 0-10 : agressivité du bias. 10 = quasi 100% anime. */
+const ANIME_MANGA_GLITCH_BIAS = 10;
+
 /** Expanded pools for surprise combinations (album-art oriented, not portrait-heavy). */
 export const COVER_SURPRISE_LIGHTING = [
   ...COVER_LIGHTING_PRESETS,
@@ -14,6 +23,65 @@ export const COVER_SURPRISE_LIGHTING = [
   "hologram projection spill",
   "CRT scanline phosphor bloom",
   "analog light leak streak",
+  // --- Premium cel-shaded/ink/glitch lighting additions (style only, no characters) ---
+  "cel-shaded rim light glow",
+  "ink wash cover album contrast lighting",
+  "glitch scan flicker light",
+  "cel-shade key light with hard shadow break",
+  "neon backlight with chromatic bleed",
+  "studio cel-shaded three-point lighting",
+  "VHS tracking glow flicker",
+  "datamosh light smear",
+  "cel-shaded cover album rim light glow",
+  "cel-shaded cover album cinematic key light",
+  "cel-shaded cover album golden hour lighting",
+  "cel-shaded moonlight ambience",
+  "cel-shaded sunrise glow",
+  "cel-shaded sunset backlight",
+  "cel-shaded soft ambient light",
+  "cel-shaded volumetric light rays",
+  "cel-shaded dreamy bloom",
+  "cel-shaded ethereal glow",
+  "ink wash contrast lighting",
+  "ink wash dramatic shadows",
+  "ink wash noir lighting",
+  "crosshatch ink shadows",
+  "high contrast ink shading",
+  "cel-shade key light with hard shadow break",
+  "cel-shaded dramatic highlights",
+  "cel-shaded soft bounce light",
+  "stylized cel-shaded edge lighting",
+  "stylized cinematic rim light",
+  "neon backlight with chromatic bleed",
+  "cyberpunk neon reflections",
+  "electric blue neon glow",
+  "purple neon edge lighting",
+  "cyan magenta dual lighting",
+  "Tokyo neon night lighting",
+  "rain soaked neon reflections",
+  "holographic iridescent lighting",
+  "studio cel-shaded three-point lighting",
+  "professional softbox lighting",
+  "cinematic studio spotlight",
+  "high-key cel-shaded lighting",
+  "low-key cinematic lighting",
+  "volumetric god rays",
+  "volumetric fog lighting",
+  "misty atmospheric lighting",
+  "light scattering bloom",
+  "lens bloom highlights",
+  "glowing particle illumination",
+  "ambient occlusion lighting",
+  "glitch scan flicker light",
+  "VHS tracking glow flicker",
+  "datamosh light smear",
+  "CRT phosphor glow",
+  "analog light leak effect",
+  "RGB split lighting",
+  "chromatic aberration glow",
+  "prism light refraction",
+  "cinematic color grading",
+  "IMAX cinematic illumination",
 ] as const;
 
 export const COVER_SURPRISE_STYLES = [
@@ -30,9 +98,22 @@ export const COVER_SURPRISE_STYLES = [
   "holographic foil with film grain",
   "CRT phosphor glow aesthetic",
   "degraded gradient mesh poster",
-  "anime cel-shade with film grain",
-  "manga halftone screentone poster",
+  "cel-shaded illustration with film grain",
+  "halftone screentone poster",
   "glitch RGB split artwork",
+  // --- Premium cel-shaded/ink/glitch style additions (no people, background/object art only) ---
+  "premium cel-shaded key visual, no characters, ultra detailed linework",
+  "graphic novel cover illustration, no characters, polished inking",
+  "cel-shaded illustration, no people, studio production quality",
+  "cel-shaded poster illustration, no characters, dramatic rim light, 4K detail",
+  "screentone halftone, no characters, high contrast inking",
+  "digital cel-shaded painting, no people, soft shading, crisp linework",
+  "glitch-corrupted cel-shaded key visual, no characters, chromatic aberration",
+  "databend ink panel art, no characters, premium finish",
+  "retro cel-shaded VHS aesthetic, no people, high fidelity grain",
+  "cyber-glitch graphic novel cover, no characters, neon accent linework",
+  "cel-shaded novel cover album illustration, no people, refined detail",
+  "ink wash illustration with digital glitch overlay, no characters",
 ] as const;
 
 const MOODS = [
@@ -89,7 +170,8 @@ type SurpriseCategory =
   | "architecture"
   | "aquatic"
   | "vehicles"
-  | "futurRetro";
+  | "futurRetro"
+  | "animeMangaGlitch";
 
 const CATEGORY_SUBJECTS: Record<SurpriseCategory, readonly string[]> = {
   abstract: [
@@ -235,8 +317,8 @@ const CATEGORY_SUBJECTS: Record<SurpriseCategory, readonly string[]> = {
     "ascii texture field",
     "hologram wire statue",
     "cyber grid floor infinity",
-    "anime cel-shaded geometric symbol",
-    "manga halftone screentone texture field",
+    "cel-shaded geometric symbol, no characters",
+    "halftone screentone texture field, no characters",
     "glitch tear on retro pixel landscape",
   ],
   cosmic: [
@@ -361,25 +443,71 @@ const CATEGORY_SUBJECTS: Record<SurpriseCategory, readonly string[]> = {
     "orbiting rings around matte sphere",
     "broken mirror shards with cyan flare",
     "retro radar sweep on starfield",
-    "manga speed lines burst on dark void",
+    "ink speed lines burst on dark void, no characters",
     "cel-shaded moon over glitch horizon",
-    "RGB split torii gate in neon rain",
-    "anime sky gradient with datamosh tear",
-    "manga screentone halftone on chrome orb",
+    "RGB split torii gate in neon rain, no characters",
+    "cel-shaded sky gradient with datamosh tear",
+    "screentone halftone on chrome orb",
     "glitch corrupted retro sunset grid",
     "cel-shaded floating crystals in fog",
-    "manga panel frames collage abstract",
-    "anime lens flare on wireframe pyramid",
+    "ink panel frames collage abstract, no characters",
+    "cel-shaded lens flare on wireframe pyramid",
     "pixel glitch halo over cassette stack",
     "datamosh smear on laser grid floor",
-    "ink manga crosshatch on hologram rain",
+    "ink crosshatch on hologram rain, no characters",
+  ],
+  // NOTE: every entry below is background/object/landscape only — no people, no characters,
+  // no faces, no figures, no silhouettes of a person. Style words are technique-based
+  // (cel-shaded, ink, screentone, glitch) rather than the bare "anime"/"manga" tag to avoid
+  // pulling character-heavy training data into generation.
+  animeMangaGlitch: [
+    "cel-shaded lo-fi city rooftops at night, empty streets, no people",
+    "cel-shaded neon cityscape at night, empty streets, cinematic atmosphere, subtle RGB glitch, no people",
+    "cel-shaded floating islands above glowing clouds, digital distortion, no characters",
+    "cyberpunk alley with holographic signs, empty, datamosh glitch effects, no people",
+    "cel-shaded Japanese shrine courtyard under cherry blossoms, empty, chromatic aberration, no people",
+    "abandoned train station platform with neon reflections, no people, VHS glitch aesthetic",
+    "dreamlike celestial temple floating in space, no characters, pixel corruption",
+    "glowing torii gates disappearing into digital fog, empty path, cel-shaded lighting, no people",
+    "crystal cave illuminated by holographic light, no characters, RGB split distortion",
+    "cel-shaded skyline at sunset, empty horizon, databend effects, no people",
+    "futuristic rooftop overlooking a neon metropolis, empty, subtle VHS artifacts, no people",
+    "enchanted forest with glowing mushrooms and glitch particles, no characters",
+    "floating monoliths surrounded by digital static and cosmic sky, no characters",
+    "chrome katana resting on reflective stone, cel-shaded lighting, no characters, no hands",
+    "ancient pagoda under a galaxy sky, empty, pixel-glitch atmosphere, no people",
+    "retro arcade filled with neon lights and corrupted screens, empty, no people",
+    "cyber shrine with holographic lanterns and digital rain, no characters",
+    "moonlit bamboo forest with chromatic glitch trails, no people",
+    "glowing koi pond with holographic water reflections, no people",
+    "cel-shaded mountain landscape with aurora and RGB distortion, no characters",
+    "floating crystal cathedral surrounded by digital clouds, no characters",
+    "vinyl toy display shelf, cel-shaded lighting, dramatic speed lines, no characters, no faces",
+    "cel-shaded ink horizon over empty landscape, no people",
+    "cel-shaded cherry blossoms with RGB split glitch, no people",
+    "ink panel collage with torn glitch edges, no characters",
+    "glitch katana close-up reflection, cel-shaded chrome highlights, no characters, no hands",
+    "cel-shaded sunset gradient art, no people",
+    "cel-shaded geometric emblem, fully rendered, pixel-glitch overlay, no characters, no faces",
+    "ink-style city skyline, no characters, no people",
+    "cyberpunk cel-shaded alley, empty, glitch neon signage, no characters",
+    "cel-shaded mecha armor plating fragment on display stand, glitch chrome details, no characters, no pilot",
+    "screentone ink moon over corrupted skyline, no people",
+    "empty rooftop water tank scene, cel-shaded lighting, glitch light leak, no characters",
+    "databent ink cover art, premium linework intact, abstract symbol only, no characters",
+    "cel-shaded flame motif dissolving into glitch particles, no characters, no figures",
+    "ink volume spine art, glitch color separation, no characters",
+    "cel-shaded music instrument close-up, fully detailed engraved surface, VHS tracking glitch, no characters",
+    "cel-shaded rain umbrella close-up on empty street, no characters, chromatic glitch trails",
+    "ink sumi-e brushwork landscape with digital corruption, no people",
+    "cel-shaded galaxy backdrop, glitch starfield distortion, no characters",
   ],
 };
 
 /** Genre keywords → preferred surprise categories (still mixes in others sometimes). */
 const GENRE_CATEGORY_BOOST: Record<string, SurpriseCategory[]> = {
-  trap: ["urban", "futurRetro", "objects", "digital", "texture", "surreal"],
-  drill: ["urban", "futurRetro", "texture", "objects", "vehicles"],
+  trap: ["urban", "futurRetro", "animeMangaGlitch", "objects", "digital", "texture"],
+  drill: ["urban", "futurRetro", "animeMangaGlitch", "texture", "objects", "vehicles"],
   "hip hop": ["urban", "futurRetro", "objects", "retro", "texture"],
   "hip-hop": ["urban", "futurRetro", "objects", "retro", "texture"],
   rap: ["urban", "futurRetro", "objects", "texture", "vehicles"],
@@ -404,13 +532,19 @@ const GENRE_CATEGORY_BOOST: Record<string, SurpriseCategory[]> = {
   latin: ["flora", "urban", "objects", "retro"],
   afro: ["texture", "flora", "abstract", "urban"],
   punk: ["urban", "texture", "objects", "surreal"],
-  emo: ["surreal", "urban", "nature", "texture"],
+  emo: ["surreal", "urban", "nature", "texture", "animeMangaGlitch"],
   indie: ["nature", "retro", "minimal", "flora"],
-  phonk: ["vehicles", "urban", "futurRetro", "retro", "texture"],
-  wave: ["cosmic", "futurRetro", "digital", "surreal", "abstract"],
-  synth: ["retro", "futurRetro", "digital", "cosmic", "abstract"],
-  trapsoul: ["futurRetro", "abstract", "retro", "minimal", "objects"],
+  phonk: ["vehicles", "urban", "futurRetro", "animeMangaGlitch", "retro", "texture"],
+  wave: ["cosmic", "futurRetro", "animeMangaGlitch", "digital", "surreal", "abstract"],
+  synth: ["retro", "futurRetro", "animeMangaGlitch", "digital", "cosmic", "abstract"],
+  trapsoul: ["futurRetro", "animeMangaGlitch", "abstract", "retro", "minimal", "objects"],
   amapiano: ["futurRetro", "abstract", "flora", "texture", "retro"],
+  anime: ["animeMangaGlitch", "futurRetro", "digital"],
+  manga: ["animeMangaGlitch", "futurRetro", "digital"],
+  glitch: ["animeMangaGlitch", "digital", "futurRetro"],
+  cyberpunk: ["animeMangaGlitch", "futurRetro", "digital", "urban"],
+  vocaloid: ["animeMangaGlitch", "digital", "futurRetro"],
+  hyperpop: ["animeMangaGlitch", "digital", "futurRetro", "abstract"],
 };
 
 type TaggedSurprise = StructuredCoverPromptInput & { category: SurpriseCategory };
@@ -503,6 +637,13 @@ export function pickCoverSurpriseSuggestion(
     const retroPool = cachedLibrary.filter((e) => e.category === "futurRetro");
     if (retroPool.length > 0) {
       pool = hashPick(seed + 17, 10) < 6 ? retroPool : pool;
+    }
+  }
+
+  if (LOOP_CARD_COVER_ANIME_MANGA_GLITCH_ENABLED && hashPick(seed + 29, 10) < ANIME_MANGA_GLITCH_BIAS) {
+    const animePool = cachedLibrary.filter((e) => e.category === "animeMangaGlitch");
+    if (animePool.length > 0) {
+      pool = hashPick(seed + 31, 10) < ANIME_MANGA_GLITCH_BIAS ? animePool : pool;
     }
   }
 

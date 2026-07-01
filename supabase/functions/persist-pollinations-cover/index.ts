@@ -10,6 +10,14 @@ const corsHeaders = {
 const BUCKET = "loop-covers";
 const MAX_IMAGE_BYTES = 2_200_000;
 
+/**
+ * Flux n'a pas de negative_prompt natif, mais le wrapper Pollinations
+ * accepte ce paramètre et le transmet en amont — ça réduit nettement les
+ * visages anime mal finis / yeux manquants sur les covers cel-shaded.
+ */
+const FACE_QUALITY_NEGATIVE_PROMPT =
+  "unfinished face, missing eye, asymmetrical eyes, blank eyes, cropped face, deformed face, extra eyes, mutated face, bad anatomy, lowres, blurry, watermark, text, signature, jpeg artifacts";
+
 type AdminClient = ReturnType<typeof createClient>;
 
 function parseStemsUrl(stemsUrl: unknown): Record<string, unknown> | null {
@@ -63,7 +71,7 @@ async function downloadPollinationsJpeg(
 ): Promise<Uint8Array | null> {
   const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${encodeURIComponent(
     String(seed),
-  )}&nologo=true&model=flux&enhance=true`;
+  )}&nologo=true&model=flux&enhance=true&negative_prompt=${encodeURIComponent(FACE_QUALITY_NEGATIVE_PROMPT)}`;
 
   const res = await fetch(url, {
     headers: { Accept: "image/*" },
@@ -185,6 +193,8 @@ serve(async (req) => {
       });
     }
 
+    const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+
     // ── Preview mode: download + upload Storage only, no DB row needed ──
     if (previewMode) {
       const bytes = await downloadPollinationsJpeg(prompt, seed, 768, 768);
@@ -208,7 +218,6 @@ serve(async (req) => {
       );
     }
 
-    const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
     const { data: loopRow, error: loopErr } = await admin
       .from("loops")
       .select("id, stems_url, cover_url")
@@ -288,4 +297,3 @@ serve(async (req) => {
     });
   }
 });
-

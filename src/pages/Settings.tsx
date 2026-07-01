@@ -32,7 +32,7 @@ import { Button } from "@/components/ui/Button";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { Modal } from "@/components/ui/Modal";
 import { useLocaleStore } from "@/stores/localeStore";
-import { CreditCard, LogOut, Palette, Shield, Sparkles, UserRound, Users } from "lucide-react";
+import { CreditCard, LogOut, Palette, Shield, Sparkles, Tag, UserRound, Users } from "lucide-react";
 import { ThemeToggleButton } from "@/components/ThemeToggleButton";
 import { CloudThemeSettingsBlock, visualThemeDescription } from "@/components/CloudThemeSettingsBlock";
 import { CLOUD_THEME_ENABLED } from "@/lib/featureFlags";

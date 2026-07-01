@@ -53,6 +53,16 @@ function sanitizeFileName(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]+/g, "_").slice(0, 80) || "producer-tag.webm";
 }
 
+async function getSupabaseAccessToken(): Promise<string | undefined> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (import.meta.env.DEV) {
+    console.log("[ProducerTag] getSupabaseAccessToken session?", !!session, "token?", !!session?.access_token);
+  }
+  return session?.access_token;
+}
+
 export async function uploadProducerTagSample(userId: string, file: File): Promise<string> {
   const err = validateProducerTagFile(file);
   if (err) throw new Error(err);
@@ -81,7 +91,11 @@ async function extractInvokeErrorAsync(error: unknown): Promise<string> {
 }
 
 export async function listProducerTags(): Promise<{ tags: ProducerTag[]; maxTags: number; plan: string }> {
-  const { data, error } = await supabase.functions.invoke("producer-tag", { body: { action: "list" } });
+  const accessToken = await getSupabaseAccessToken();
+  const { data, error } = await supabase.functions.invoke("producer-tag", {
+    body: { action: "list" },
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+  });
   if (error) throw new Error(await extractInvokeErrorAsync(error));
   const payload = data as { tags?: ProducerTag[]; maxTags?: number; plan?: string; error?: string };
   if (payload?.error) throw new Error(payload.error);
@@ -98,6 +112,7 @@ export async function saveProducerTag(input: {
   durationSec?: number;
   settingsJson?: ProducerTagSettings;
 }): Promise<ProducerTag> {
+  const accessToken = await getSupabaseAccessToken();
   const { data, error } = await supabase.functions.invoke("producer-tag", {
     body: {
       action: "save",
@@ -106,6 +121,7 @@ export async function saveProducerTag(input: {
       durationSec: input.durationSec ?? null,
       settingsJson: input.settingsJson,
     },
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
   });
   if (error) throw new Error(await extractInvokeErrorAsync(error));
   const payload = data as { tag?: ProducerTag; error?: string };
@@ -115,7 +131,11 @@ export async function saveProducerTag(input: {
 }
 
 export async function deleteProducerTag(id: string): Promise<void> {
-  const { data, error } = await supabase.functions.invoke("producer-tag", { body: { action: "delete", id } });
+  const accessToken = await getSupabaseAccessToken();
+  const { data, error } = await supabase.functions.invoke("producer-tag", {
+    body: { action: "delete", id },
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+  });
   if (error) throw new Error(await extractInvokeErrorAsync(error));
   const payload = data as { error?: string };
   if (payload?.error) throw new Error(payload.error);
@@ -141,8 +161,10 @@ export type ApplyProducerTagResult = {
 };
 
 export async function applyProducerTagToLoop(input: ApplyProducerTagInput): Promise<ApplyProducerTagResult> {
+  const accessToken = await getSupabaseAccessToken();
   const { data, error } = await supabase.functions.invoke("apply-producer-tag", {
     body: { action: "apply", ...input },
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
   });
   if (error) {
     const code = await extractInvokeErrorAsync(error);
@@ -157,8 +179,10 @@ export async function applyProducerTagToLoop(input: ApplyProducerTagInput): Prom
 }
 
 export async function removeProducerTagFromLoop(loopId: string): Promise<string> {
+  const accessToken = await getSupabaseAccessToken();
   const { data, error } = await supabase.functions.invoke("apply-producer-tag", {
     body: { action: "remove", loopId },
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
   });
   if (error) throw new Error(await extractInvokeErrorAsync(error));
   const payload = data as { audioUrl?: string; error?: string };

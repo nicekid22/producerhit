@@ -324,7 +324,7 @@ serve(async (req) => {
       volumeDb,
       fxPreset,
       variantId: variantId || undefined,
-      creditConsumed: alreadyCounted || true,
+      creditConsumed: !alreadyCounted,
     };
 
     const nextStems = mergeProducerTagMeta(loopRow.stems_url, producerTagMeta);

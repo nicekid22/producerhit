@@ -76,9 +76,7 @@ import { buildAceVoiceCloneStemsFields, voiceCloneToastMessage } from "@/lib/voi
 import { AlertTriangle, Copy, Search, SlidersHorizontal, X } from "lucide-react";
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
 import { trackDashboardReady } from "@/lib/growthFunnelEvents";
-import { ShareMomentModal } from "@/components/growth/ShareMomentModal";
-import { ReferralInviteModal } from "@/components/growth/ReferralInviteModal";
-import { MasteringUpsellModal } from "@/components/growth/MasteringUpsellModal";
+import { DashboardGrowthModals } from "@/components/dashboard/DashboardGrowthModals";
 import { notifyGamificationGeneration } from "@/components/growth/GamificationStrip";
 import { DailyBonusBannerButton } from "@/components/growth/DailyBonusBannerButton";
 import { DashboardPromoBillboard } from "@/components/growth/DashboardPromoBillboard";
@@ -98,7 +96,6 @@ import {
 import { isRemixVibeRecreateEnabled, getRemixVibeCopy } from "@/lib/remixVibeFallback";
 import { prepareLoopVariantGeneration, variantResultTitle } from "@/lib/loopVariantGeneration";
 import { loopToRemixSource } from "@/lib/remixSourceLoop";
-import { WavFormatCoach } from "@/components/onboarding/WavFormatCoach";
 import { ensureGenerationCatalogExtensions } from "@/lib/generationCatalogBootstrap";
 import { completeOnboardingStepOnServer } from "@/lib/onboardingProgress";
 import { useWavFormatCoachStore } from "@/stores/wavFormatCoachStore";
@@ -145,7 +142,6 @@ import { MobileResultsToolbar } from "@/components/dashboard/MobileResultsToolba
 import { GeneratorSection, generatorSectionPad } from "@/components/dashboard/GeneratorSection";
 import { LoopDetailsPanel } from "@/components/dashboard/LoopDetailsPanel";
 import { LoopDetailsSheet, LoopDetailsSheetHeader } from "@/components/dashboard/LoopDetailsSheet";
-import { DistributionWizard } from "@/components/distribution/DistributionWizard";
 import { MasteringPanel } from "@/components/mastering/MasteringPanel";
 import { DashboardGenerateButton } from "@/components/dashboard/DashboardGenerateButton";
 import type { PanelGenerateBridge } from "@/components/dashboard/panelGenerateBridge";
@@ -3247,6 +3243,82 @@ export default function Dashboard() {
     setDetailsId((prev) => (prev === loop.id ? null : loop.id));
   }, []);
 
+  // PERF (patch 3/4): these used to be inline arrow functions created fresh
+  // on every Dashboard render and handed straight to modal JSX. Now that
+  // those modals live in the memoized <DashboardGrowthModals>, stabilizing
+  // these callbacks is what actually lets that subtree skip re-rendering —
+  // an inline arrow prop here would defeat the memo just as the old
+  // `queueLoops` reference did for LoopCardItem (patch 1).
+  const closeDistributionWizard = useCallback(() => setDistributionLoop(null), []);
+
+  const closeShareMomentModal = useCallback(() => {
+    setShareMomentLoop(null);
+    if (pendingReferralAfterShareRef.current) {
+      pendingReferralAfterShareRef.current = false;
+      scheduleReferralPrompt(1400);
+    }
+  }, [scheduleReferralPrompt]);
+
+  const makeShareMomentLoopPublic = useCallback(() => {
+    void (async () => {
+      const target = shareMomentLoop;
+      if (!target) return;
+      try {
+        await togglePublicRemote(target.id);
+        const updated = useLoopsStore.getState().loops.find((l) => l.id === target.id);
+        if (updated) setShareMomentLoop(updated);
+        toast.success(d.trackPublicLive);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : d.error);
+      }
+    })();
+  }, [d.error, d.trackPublicLive, shareMomentLoop, togglePublicRemote]);
+
+  const closeReferralPrompt = useCallback(() => setReferralPromptOpen(false), []);
+
+  const tryWavFormat = useCallback(() => setAudioFormatPref("wav"), []);
+
+  const upgradeProFromWavCoach = useCallback(() => promptPlanUpsell("feature_wav_format"), [promptPlanUpsell]);
+
+  const closeMasteringUpsell = useCallback(() => setMasteringUpsellLoop(null), []);
+
+  const tryMasteringFromUpsell = useCallback(() => {
+    const loop = masteringUpsellLoop;
+    setMasteringUpsellLoop(null);
+    if (loop) openMaster(loop);
+  }, [masteringUpsellLoop, openMaster]);
+
+  const upgradeFromMasteringUpsell = useCallback(() => {
+    setMasteringUpsellLoop(null);
+    openMasteringUpgrade();
+  }, [openMasteringUpgrade]);
+
+  // PERF (patch 4 — résultats): stabiliser les callbacks passés à MasteringPanel
+  // et LoopDetailsSheet/LoopCardItem. Chacun était recréé en closure inline à
+  // chaque render de Dashboard — même si MasteringPanel ou LoopCardItem sont
+  // mémoïsés, une nouvelle prop function invalide le memo à chaque fois.
+  const closeLoopDetails = useCallback(() => setDetailsId(null), []);
+
+  const onMasteringApplied = useCallback(() => {
+    setWorkspaceView("tracks");
+    if (mobileV2) setMobileTab("results");
+  }, [mobileV2]);
+
+  const onMasteringExit = useCallback(() => {
+    setWorkspaceView("tracks");
+    if (mobileV2) setMobileTab("results");
+  }, [mobileV2]);
+
+  const onMasteringGamificationRefresh = useCallback(
+    () => setGamificationRefreshKey((k) => k + 1),
+    [],
+  );
+
+  const openMasteringUpgradeFromPanel = useCallback(
+    () => openMasteringUpgrade(),
+    [openMasteringUpgrade],
+  );
+
   const showMasterWorkspace = mobileV2 ? mobileTab === "master" : workspaceView === "master";
 
   const [remixGenerateBridge, setRemixGenerateBridge] = useState<PanelGenerateBridge | null>(null);
@@ -4575,16 +4647,10 @@ export default function Dashboard() {
             selectedLoopId={masterLoopId}
             onSelectLoop={setMasterLoopId}
             plan={plan}
-            onUpgrade={openMasteringUpgrade}
-            gamificationRefresh={() => setGamificationRefreshKey((k) => k + 1)}
-            onApplied={() => {
-              setWorkspaceView("tracks");
-              if (mobileV2) setMobileTab("results");
-            }}
-            onExit={() => {
-              setWorkspaceView("tracks");
-              if (mobileV2) setMobileTab("results");
-            }}
+            onUpgrade={openMasteringUpgradeFromPanel}
+            gamificationRefresh={onMasteringGamificationRefresh}
+            onApplied={onMasteringApplied}
+            onExit={onMasteringExit}
           />
         ) : (
           <>
@@ -4869,7 +4935,7 @@ export default function Dashboard() {
                     <div className="pk-prism-panel-glow" />
                     <LoopDetailsSheetHeader
                       title={detailsLoop.name}
-                      onClose={() => setDetailsId(null)}
+                      onClose={closeLoopDetails}
                       closeLabel={d.close}
                     />
                     <LoopDetailsPanel
@@ -4919,7 +4985,7 @@ export default function Dashboard() {
       {mobileV2 && detailsLoop ? (
         <LoopDetailsSheet
           open
-          onClose={() => setDetailsId(null)}
+          onClose={closeLoopDetails}
           title={detailsLoop.name}
           closeLabel={d.close}
         >
@@ -4940,68 +5006,25 @@ export default function Dashboard() {
           />
         </LoopDetailsSheet>
       ) : null}
-      <DistributionWizard
-        open={Boolean(distributionLoop)}
-        loop={distributionLoop}
-        profile={authProfile}
-        onClose={() => setDistributionLoop(null)}
-      />
-      <ShareMomentModal
-        open={!!shareMomentLoop}
-        loop={shareMomentLoop}
+      <DashboardGrowthModals
         locale={locale}
         plan={plan}
-        onClose={() => {
-          setShareMomentLoop(null);
-          if (pendingReferralAfterShareRef.current) {
-            pendingReferralAfterShareRef.current = false;
-            scheduleReferralPrompt(1400);
-          }
-        }}
-        onMakePublic={
-          shareMomentLoop && !shareMomentLoop.isPublic
-            ? () => {
-                void (async () => {
-                  if (!shareMomentLoop) return;
-                  try {
-                    await togglePublicRemote(shareMomentLoop.id);
-                    const updated = useLoopsStore.getState().loops.find((l) => l.id === shareMomentLoop.id);
-                    if (updated) setShareMomentLoop(updated);
-                    toast.success(d.trackPublicLive);
-                  } catch (err) {
-                    toast.error(err instanceof Error ? err.message : d.error);
-                  }
-                })();
-              }
-            : undefined
-        }
-      />
-      <ReferralInviteModal
-        open={referralPromptOpen}
-        locale={locale}
-        referralCode={referralCodeForPrompt ?? authProfile?.referral_code ?? null}
-        onClose={() => setReferralPromptOpen(false)}
-      />
-      <WavFormatCoach
-        locale={locale}
-        onPrepareTarget={prepareWavCoachTarget}
-        onTryWav={() => setAudioFormatPref("wav")}
-        onUpgradePro={() => promptPlanUpsell("feature_wav_format")}
-      />
-      <MasteringUpsellModal
-        open={!!masteringUpsellLoop}
-        loop={masteringUpsellLoop}
-        locale={locale}
-        onClose={() => setMasteringUpsellLoop(null)}
-        onTryMastering={() => {
-          const loop = masteringUpsellLoop;
-          setMasteringUpsellLoop(null);
-          if (loop) openMaster(loop);
-        }}
-        onUpgrade={() => {
-          setMasteringUpsellLoop(null);
-          openMasteringUpgrade();
-        }}
+        distributionLoop={distributionLoop}
+        authProfile={authProfile}
+        onCloseDistribution={closeDistributionWizard}
+        shareMomentLoop={shareMomentLoop}
+        onCloseShareMoment={closeShareMomentModal}
+        onShareMomentMakePublic={makeShareMomentLoopPublic}
+        referralPromptOpen={referralPromptOpen}
+        referralCode={referralCodeForPrompt}
+        onCloseReferralPrompt={closeReferralPrompt}
+        onPrepareWavCoachTarget={prepareWavCoachTarget}
+        onTryWav={tryWavFormat}
+        onUpgradeProFromWavCoach={upgradeProFromWavCoach}
+        masteringUpsellLoop={masteringUpsellLoop}
+        onCloseMasteringUpsell={closeMasteringUpsell}
+        onTryMastering={tryMasteringFromUpsell}
+        onUpgradeFromMasteringUpsell={upgradeFromMasteringUpsell}
       />
     </AppShell>
   );

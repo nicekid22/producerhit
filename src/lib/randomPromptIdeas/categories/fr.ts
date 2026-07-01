@@ -519,6 +519,445 @@ const HERO = [
   "Chanson sur découvrir l'IA musicale à minuit",
 ] as const;
 
+const SONG_FUN_URBAN: PromptCategory = {
+  id: "fun_urban",
+  label: "Fun vibes urbaines",
+  mode: "song",
+  prompts: [
+    "trap mélodique sur ton chat qui marche sur le clavier MIDI à 3h du mat, ronrons inclus",
+    "hip-hop pour fêter ta première vente BeatStars à 29$, champagne budget étudiant",
+    "hymne trap pour quand le groupe de potes devient silencieux et tu sais qu'ils trament quelque chose",
+    "drill beat sur ton algo Spotify qui te comprend plus, il te propose de la polka maintenant",
+    "rap français mélancolique sur le café froid du matin, mais t'as le flow quand même",
+    "trap soul sur le ghosting après trois dates parfaites, mais version drôle pas dépressive",
+    "afrobeats pour l'after mariage qui part en danse totale, tonton Gérard en tête",
+    "jersey club pour une nuit new-yorkaise confiante, même si t'es dans ta chambre à Lyon",
+    "phonk pour le montage voiture de nuit, vitres baissées, basses qui font vibrer l'âme",
+    "corridos tumbados sur le family business qui se relève, fierté et résilience",
+  ],
+};
+
+const SONG_FUN_RNB: PromptCategory = {
+  id: "fun_rnb",
+  label: "R&B & soul feel-good",
+  mode: "song",
+  prompts: [
+    "slow jam R&B pour une demande en mariage rooftop, moderne pas cucul, larmes de joie",
+    "neo-soul sur un crush rencontré dans la file d'attente du concert, le destin fait bien les choses",
+    "R&B contemporain sur le retour de l'ex... mais toi t'as glow up et tu t'en fous",
+    "ballade pour ton meilleur ami qui se marie, fraternité pure, zéro cringe",
+    "gospel pop pour le dimanche après la block party, âmes lavées, cœurs légers",
+    "vapor soul sur une nuit néon pluvieuse, mais t'as ta playlist et ça va",
+    "afro R&B sensuel pour un slow dance improvisé dans la cuisine à minuit",
+    "French touch pop pour le chic parisien, filter house, talkbox, élégance",
+    "90s R&B new jack swing pour danser comme dans les clips, shoulder roll obligatoire",
+    "future R&B cyber romance, ton IA t'envoie des cœurs, c'est mignon quand même",
+  ],
+};
+
+const SONG_FUN_LATINO: PromptCategory = {
+  id: "fun_latino",
+  label: "Latino & afro good vibes",
+  mode: "song",
+  prompts: [
+    "reggaeton pour un EVG à Barcelone sans cliché, perreo respectueux, souvenirs pour la vie",
+    "bachata romantique pour un slow dance sous les palmiers, guitare nylon, cœurs synchronisés",
+    "amapiano vocal pour le sunrise à Ibiza, log drum, piano jazzy, vibes Pretoria deep club",
+    "cumbia electro pour la fiesta en club, accordéon synth, guiro, bounce latin contagieux",
+    "samba pop pour le carnaval, cuica, violon brésilien, joie pure, confettis dans l'âme",
+    "dancehall riddim pour la summer street party, bass heavy, skank guitar, tout le quartier danse",
+    "afro house pour l'after qui finit au lever du soleil, shekere, log drum, Pretoria vibes",
+    "latin trap soul pour une nuit madrilène, guitare flamenco, 808, passion à l'état pur",
+    "kompa pop pour danser en couple, guitare clean, synth brass, groove caribéen authentique",
+    "kizomba sensuelle pour le slow dance intime, pads chauds, connexion sans mots nécessaires",
+  ],
+};
+
+const SONG_FUN_ELECTRONIC: PromptCategory = {
+  id: "fun_electronic",
+  label: "Électro & club euphorique",
+  mode: "song",
+  prompts: [
+    "house vocale pour la terrasse d'été, piano chords, kick four-on-the-floor, spritz à la main",
+    "UK garage pour le 2-step dans le salon, vocal chopped, skippy drums, joie pure",
+    "trance vocal pour l'ascenseur émotionnel, supersaw, long build, drop qui libère tout",
+    "french touch pour le chic parisien, filter disco sample, vocoder, Daft Punk serait fier",
+    "synthwave pour le night drive rétro, neon arp, gated snare, 80s nostalgia mode activé",
+    "future bass pour le festival lift, chord stabs, wobble drop, mains en l'air, cœur ouvert",
+    "electro swing pour le charleston modern, brass samples, swing drums, joie vintage",
+    "deep house pour l'afterhours hypnotic, warm pads, bass groove, congas, 6am magic",
+    "amapiano pour le summer dancefloor, log drum bass, jazzy piano stabs, groove deep house",
+    "hyperpop club pour le chaos coloré, 808, glitch leads, fast BPM, internet aesthetic",
+  ],
+};
+
+const SONG_FUN_POP: PromptCategory = {
+  id: "fun_pop",
+  label: "Pop fun & catchy",
+  mode: "song",
+  prompts: [
+    "pop TikTok pour le hook qui reste en tête, glossy synths, Gen Z energy, viral ready",
+    "K-pop ballad pour le dramatic chorus rise, orchestra strings, piano, main character energy",
+    "disco pop moderne pour la glitter night, funky bass, strings, four-on-floor, Saturday fever",
+    "indie pop pour le small town theme, soft male vocal, synth arp, live drums, authenticity",
+    "Y2K pop pour la nostalgie futuriste, glossy 2000s synths, flip-phone era sparkle, catchy",
+    "bedroom pop pour l'introversion assumée, whisper vocal, clean guitar, lo-fi drums, ton safe space",
+    "gospel pop pour le spiritual rise, female choir, soprano lead, light organ, claps, amen",
+    "French pop chanson pour l'ex qui revient, piano, strings, mélancolie mais tu t'en fous",
+    "J-pop pour l'anime opening energy, bright layered synths, kawaii sparkle, determination",
+    "viral pop ironique sur les réunions Zoom qui auraient dû être un mail, relatable AF",
+  ],
+};
+
+const SONG_CONTENT_CREATOR: PromptCategory = {
+  id: "content_creator",
+  label: "Créateur de contenu & social",
+  mode: "song",
+  prompts: [
+    "audio viral TikTok pour une transition de 15 secondes, hook accrocheur, voix féminine",
+    "générique fin de vlog YouTube, pop acoustique upbeat, feel-good, énergie abo",
+    "audio pour un Reel Instagram, défi danse court, drums punchy, hook mémorable",
+    "jingle intro podcast, lo-fi hip-hop, doux, branding discret mais efficace",
+    "fanfare victoire streamer Twitch, électronique, 10 secondes, énergie hype",
+    "jingle pub sponsorisée, 30 secondes, catchy, produit-friendly, pas de lyrics explicites",
+    "musique de fond YouTube commentary, électronique subtil, n'écrase pas la voix",
+    "chanson tendance TikTok, dansable, paroles simples, refrain répétable, algorithm-friendly",
+    "musique trailer épique pour ta prochaine vidéo virale, 30 secondes, thumbnail-ready",
+    "track annonce collaboration, pop glossy, harmonie à deux voix, hype build",
+  ],
+};
+
+const SONG_GAMING: PromptCategory = {
+  id: "gaming",
+  label: "Gaming & esports",
+  mode: "song",
+  prompts: [
+    "hymne victoire royale, électronique, hybride orchestral, 30 secondes, énergie champion",
+    "loading screen lofi, chillhop, study beats, vibe session gaming",
+    "track hype esports, EDM agressif, build et drop, énergie foule, 2 minutes",
+    "thème quête RPG, guitare acoustique fantasy, cordes douces, aventure",
+    "mix drop battle royale, trap, synth sombre, tension tick-tock, chorus explosif",
+    "chiptune rétro 8-bit, nostalgie NES, mélodie catchy, énergie speedrun",
+    "hymne guilde MMO, chœur orchestral, cuivres héroïques, fierté communauté",
+    "musique speedrun, BPM élevé, électronique, précis, énergie concentrée",
+    "thème intro streamer, hyperpop, coloré, 15 secondes, capture l'attention",
+    "chanson victoire co-op, indie folk, célébratoire, thème amitié",
+  ],
+};
+
+const SONG_FITNESS_SPORTS: PromptCategory = {
+  id: "fitness_sports",
+  label: "Fitness, sports & motivation",
+  mode: "song",
+  prompts: [
+    "hymne PR salle de sport, hard rock, drums entraînants, énergie musculation, agressif",
+    "chanson matin run, EDM, 128 BPM, énergie sunrise, poumons ouverts",
+    "ballade comeback sportif, piano, cordes, émotion, victoire à retardement",
+    "musique entrée boxe, trap, 808 sombre, intimidant, marche champion",
+    "soundtrack yoga flow, ambient, pads doux, rythme respiratoire, ancrage",
+    "chanson ligne d'arrivée marathon, pop euphorique, énergie stade, larmes de joie",
+    "track edit sports extrêmes, rock, drums rapides, mood adrénaline junkie",
+    "motivation pré-match, hip-hop, bars confiants, énergie vestiaire",
+    "cool down post-workout, neo-soul, groove lent, appreciation du corps",
+    "thème documentaire sportif, hybride orchestral, cinématique, esprit humain",
+  ],
+};
+
+const SONG_FOOD_CULINARY: PromptCategory = {
+  id: "food_culinary",
+  label: "Food, cuisine & culinaire",
+  mode: "song",
+  prompts: [
+    "générique chaîne cuisine, acoustique upbeat, vibes cuisine, chaleureux et accueillant",
+    "intro émission pâtisserie, piano whimsical, sucré, nostalgie farine",
+    "chanson marché street food, percussions latines, festif, énergie faim",
+    "soirée dégustation vin, smooth jazz, intime, sophistiqué mais décontracté",
+    "brunch entre amis, indie pop, ensoleillé, énergie mimosa, zéro rush",
+    "run food nocturne, R&B, sensuel, romance drive-thru, néon cuisine",
+    "hymne farm to table, folk, instruments organiques, earthy, honnête",
+    "défi nourriture épicée, reggaeton, hot, qui transpire, énergie feu",
+    "esthétique coffee shop, lo-fi jazzhop, fenêtre pluvieuse, vapeur et vinyle",
+    "chanson recette familiale, soul, cuisine grand-mère, générations d'amour",
+  ],
+};
+
+const SONG_TRAVEL_ADVENTURE: PromptCategory = {
+  id: "travel_adventure",
+  label: "Voyage, road trips & exploration",
+  mode: "song",
+  prompts: [
+    "chanson road trip highway, indie rock, fenêtres ouvertes, nulle part où aller",
+    "jam auberge backpacker, guitare acoustique, chants voyageurs, vin pas cher",
+    "sunrise à la plage, tropical house, kick doux, air salin, nouveau jour",
+    "sommet randonnée montagne, ambient cinématique, reverb large, altitude",
+    "exploration city break, jazzy hip-hop, flânerie urbaine, se perdre",
+    "nuit feu de camp en forêt, folk, crépitement feu, étoiles et histoires",
+    "road trip désert, rock psychédélique, vagues de chaleur, beauté isolée",
+    "été island hopping, reggaeton, enceintes bateau, island time",
+    "voyage train en Europe, synthpop, reflets fenêtre, somewhere new",
+    "thème documentaire aventure, orchestral, paysages vastes, curiosité humaine",
+  ],
+};
+
+const SONG_MENTAL_HEALTH_SELFCARE: PromptCategory = {
+  id: "mental_health_selfcare",
+  label: "Santé mentale, self-care & croissance",
+  mode: "song",
+  prompts: [
+    "réflexion séance thérapie, piano doux, vulnérable, moment breakthrough",
+    "track calming anxiété, ambient, rythme respiratoire, safe space",
+    "hymne self-love, pop, empowerant, affirmations miroir, glow up",
+    "chanson healing deuil, violoncelle, cordes lentes, larmes et libération",
+    "méditation mindfulness, bols tibétains, drones doux, moment présent",
+    "track espoir dépression, build lent, lumière au bout, résilience",
+    "empowerment limites, R&B, confiant, detox toxic trait, fort",
+    "chanson recharge introvert, lo-fi, cozy, alone is okay, forteresse couverture",
+    "ballade recovery trauma, acoustique, raw, safe and sound, healing",
+    "self-care dimanche, bedroom pop, pyjama toute la journée, pas de culpabilité",
+  ],
+};
+
+const SONG_FAMILY_PARENTING: PromptCategory = {
+  id: "family_parenting",
+  label: "Famille, parentalité & êtres chers",
+  mode: "song",
+  prompts: [
+    "chanson merci maman, pop heartfelt, fête des mères, grandi de ton cœur",
+    "danse père-fille, country, moment mariage, grandit trop vite",
+    "hymne road trip fratrie, pop rock, blagues inside, lien éternel",
+    "berceuse nouveaux parents, piano doux, nouveau-né, petits doigts, amour infini",
+    "chanson réunion familiale, gospel-pop, multi-générationnel, mêmes racines",
+    "blues nid vide, country, maison trop silencieuse, fier mais le manque",
+    "sagesse grands-parents, folk, histoires table cuisine, héritage et valeurs",
+    "enfant adopté appartenance, orchestral, famille choisie, tu es chez toi",
+    "amour famille recomposée, indie pop, nouveaux chapitres, redéfinir famille",
+    "animal de compagnie membre famille, pop silly, chien est mon enfant, fur baby anthem",
+  ],
+};
+
+const SONG_CAREER_BUSINESS: PromptCategory = {
+  id: "career_business",
+  label: "Carrière, hustle & business",
+  mode: "song",
+  prompts: [
+    "hymne side hustle startup, hip-hop, grind mode, 17h à 5h du mat",
+    "fatigue corporate, art pop, réunions Zoom, lundis, menottes dorées",
+    "liberté freelance, indie folk, pas de boss, chaotique mais à toi",
+    "célébration promotion, disco pop, bureau coin, toast champagne",
+    "recovery burnout, R&B lent, déconnexion, forêts et pas de réseau",
+    "hustle creator economy, trap, vues et revenus, vie algorithme",
+    "petit business owner, country rock, shop local, communauté d'abord",
+    "confiance entretien job, pop, elevator pitch, fake it till you make it",
+    "lifestyle remote work, chill electronic, bureau maison, CEO en sweatpants",
+    "rêve retraite, yacht rock, 30 ans payés, cocktail île",
+  ],
+};
+
+const SONG_PETS_ANIMALS: PromptCategory = {
+  id: "pets_animals",
+  label: "Animaux, bêtes & créatures drôles",
+  mode: "song",
+  prompts: [
+    "chien qui te accueille porte, hyperpop, énergie queue wag, joie pure",
+    "chat qui te juge, Lounge jazz, complexe supériorité, élégance boule de poils",
+    "perroquet qui parle par-dessus, reggae, chœur cacardement, vibe pirate",
+    "hamster crise existentielle roue, indie rock, petites roues, grands rêves",
+    "blague poisson rouge mémoire, bubblegum pop, 3 secondes, oublieux mais heureux",
+    "lapin mode chaos, ska, zoomies 3h du mat, obsession carotte",
+    "transformation chien adopté, soul, sous-dog story, tail wags prove it",
+    "chat qui fait tomber objets, phonk, destruction avec purpose",
+    "tortue course confiance, slow jam, shell, slow and steady wins",
+    "cobra cochon d'Inde wheek chorus, musique enfants, cris adorables, cute overload",
+  ],
+};
+
+const SONG_MEMES_INTERNET: PromptCategory = {
+  id: "memes_internet",
+  label: "Mèmes, culture internet & viral",
+  mode: "song",
+  prompts: [
+    "thème Skibidi Toilet, électronique absurde, énergie meme, brain rot",
+    "audio trend NPC, vocal glitchy, jarring, bait algorithme TikTok",
+    "chanson rizz, R&B, one-liners smooth, ChatGPT wrote this",
+    "soundtrack sigma male, phonk, gym sombre, aesthetic loup solitaire",
+    "chanson gyatt, Jersey club, booty bass, internet slang expliqué",
+    "musique Ohio final boss, hyperpop, chaotique, pourquoi tout est si weird",
+    "IA a généré cette chanson, électronique, uncanny valley, meta commentary",
+    "chanson fanum tax, trap, vole tes fries, loyalty test",
+    "cuisine avec le Gas compartido, reggaeton, cuisine chaotique, épicé",
+    "hymne touch grass, acoustique, sortez dehors, nature is free",
+  ],
+};
+
+const SONG_NOSTALGIA_THROWBACKS: PromptCategory = {
+  id: "nostalgia_throwbacks",
+  label: "Nostalgie, rétro & throwbacks",
+  mode: "song",
+  prompts: [
+    "son démarrage Windows XP mais chanson complète, électronique nostalgique, era PC 2000s",
+    "vibe générique Disney Channel, pop rock, samedi matin, héros enfance",
+    "mémoire Tamagotchi, chiptune, amour pixélisé, deuil animal virtuel",
+    "bal de collège 2000s, teen pop, chanson lente awkward, retour collège",
+    "thème arcade Neo Geo, jeu de combat 90s, écran continue, quarter drop",
+    "ton SMS téléphone clapet, bubblegum pop, T9 texting, appels manqués",
+    "soundtrack construction Lego, orchestral, création enfance, briques plastique",
+    "dessin animé samedi matin, power pop, bien vs mal, énergie céréale sucrée",
+    "nostalgie mixtape, R&B, CD gravé, étiquette crayon, été 2003",
+    "chanson internet dial-up, industriel, connexion stridente, amis AOL",
+  ],
+};
+
+const SONG_SEASONAL_HOLIDAYS: PromptCategory = {
+  id: "seasonal_holidays",
+  label: "Saisons, fêtes & célébrations",
+  mode: "song",
+  prompts: [
+    "brise estivale nocturne, tropical pop, feu de plage, peau salée, liberté",
+    "fête Halloween sombre, pop dark, chaos costumes, envie bonbons",
+    "dîner Thanksgiving, folk, drame familial, tarte citrouille, gratitude",
+    "compte à rebours nouvel an, électronique, feux d'artifice, nouveaux débuts, champagne",
+    "anthem breakup Saint-Valentin, indie rock, single awareness, thérapie chocolat",
+    "renouveau printemps Pâques, indie pop, couleurs pastel, chasse œufs, renaissance",
+    "retour à l'école, hip-hop, nouvelles shoes, fresh start, anxiété septembre",
+    "matin Noël, gospel-pop, chaos familial, cadeaux, wonder enfance",
+    "première danse mariage, R&B, slow jam, forever commence ce soir",
+    "cérémonie diplôme, orchestral pop, toss cap, prochain chapitre commence",
+  ],
+};
+
+const SONG_URBAN_RAW: PromptCategory = {
+  id: "urban_raw",
+  label: "Urbain brut: trap, drill, rap, R&B",
+  mode: "song",
+  prompts: [
+    "melodic trap, nuit de pluie en ville, 808 glissant, piano mineur, vocal masculin émotionnel",
+    "UK drill, rap froid agressif, piano sparse, 808 glissant, hats drill, 140 BPM, tension rue",
+    "melodic rap, bars introspectifs, loop guitare mineure, pads aériens, 808 glides, hook space",
+    "trap soul, vocal vulnérable, rhodes chaud, 808 smooth, pads atmos, confessions 3am",
+    "phonk rap, vocal grave distordu, cowbell, Memphis 808, night drive, énergie agressive",
+    "dancehall, vocal patois, riddim bounce, basse lourde, summer street, énergie club",
+    "UK garage, vocal féminin chopped, drums skippy, basse bouncy, 2-step shuffle, late night",
+    "baile funk, énergie fête brésilienne, tamborzao pounding, vocal MC, chaos dancefloor",
+    "trapsoul, vocal féminin breathy, accords rhodes, 808 soft, vulnérabilité nocturne, mix chaleureux",
+    "drill, vocal masculin froid, piano staccato, 808 glissant, hats crisp, mood rue cinématique",
+    "melodic drill, bars storytelling, piano chromatique, 808 slide, tension froide, UK vibe",
+    "cloud rap, pads dreamy washed, 808 soft, vocal flottant, drums minimales, mix éthéré",
+    "rage rap, vocal agressif, 808 distordu, synth chaotique, énergie moshpit, mix loud",
+    "emo rap, vocal cracked, guitare palm mute, 808 lourde, thème anxiété, émotionnel",
+    "conscious rap, sample soul coupé, drums boom bap, basse upright, message social",
+    "French drill, rap froid, piano staccato, 808 glissant, mood Paris 3am, cinématique",
+    "French melodic rap, autotune léger, loop guitare nylon, 808, thème ambition, banlieue",
+    "sample drill, vocal grave, loop soul, 808 slide, texture gritty, mood film urbain",
+    "jersey club, vocal hooks chopped, kicks punchy, énergie bounce, vocal hype, club edit",
+    "jersey drill, kick clusters, vocal chops, drill 808, agressif NY bounce, énergique",
+  ],
+};
+
+const SONG_URBAN_BEATS: PromptCategory = {
+  id: "urban_beats",
+  label: "Beats instrumentaux urbains",
+  mode: "song",
+  prompts: [
+    "Travis Scott style melodic trap, plucks spacey, 808 psychédélique, reverb lourde, hook autotuné",
+    "Metro Boomin dark trap, strings ciné, 808 glissante, snare crisp, piano mineur, menaçant",
+    "Future x Southside melodic trap, mélodie mineure toxique, 808 bounce dure, drums punchy, dark",
+    "Drake x PARTYNEXTDOOR trap soul, rhodes moody, 808 smooth, hats serrés, R&B nocturne",
+    "Playboi Carti rage trap, 808 distordue, lead synth chaotique, hats agressifs, moshpit",
+    "21 Savage dark trap, stabs piano sinistres, slides 808, drums durs, basse menaçante",
+    "Central Cee UK drill, piano sparse froid, 808 glissante, hats syncopés, minimal 140 BPM",
+    "J Dilla boom bap, sample soul coupé, drums dusty, swing MPC, texture vinyle chaleureuse",
+    "Skread French trap, mélodie mineure glaciale, 808 slides durs, hats crisp, mood Paris froid",
+    "Kore melodic trap, pluck guitare ensoleillé, 808 bounce, mix chaud poli, optimiste",
+    "DJ Weedim cloud trap, pads dreamy washed, 808 soft, drums minimales, vibe flottante",
+    "Le Motif French drill, piano froid, 808 glissante, hats drill, tension ciné, Paris",
+    "M1OnTheBeat UK drill, motif piano froid, 808 glissante, snare sharp, 140 BPM, gritty",
+    "Memphis phonk, 808 distordue, cowbell hook, lead synth sombre, agressif mix raw",
+    "baile funk, tamborzao kick brésilien, vocal chop MC, énergie fête, groove Rio raw",
+  ],
+};
+
+const SONG_RB_SOUL_SPECIFIC: PromptCategory = {
+  id: "rb_soul_specific",
+  label: "R&B, soul & neo-soul spécifiques",
+  mode: "song",
+  prompts: [
+    "neo soul, vocal féminin smooth, rhodes jazzy, basse live pocket, synthés futuristes, mix intime",
+    "R&B contemporain, vocal masculin soyeux, accords rhodes, sub chaud, thème heartbreak",
+    "90s R&B, vocal masculin smooth, new jack swing, synth brass, slow dance, nostalgique",
+    "future R&B, vocal féminin processed, pads glitch, basse sub, mood cyber romance",
+    "lo-fi R&B, drums dusty, crackle vinyle, nuit étude, vocal masculin mellow, tape saturation",
+    "gospel trap soul, accords orgue, 808, claps, uplift spirituel, vibe dimanche matin",
+    "dark R&B, vocal masculin grave, pads mineurs, 808 soft, piano sparse, thème toxic love",
+    "afro R&B, vocal masculin, shaker percussion, accords chauds, groove sensuel, dansant",
+    "vapor soul, vocal féminin reverbed, rhodes, slow jam, nuit néon pluvieuse, nostalgique",
+    "French touch R&B, vocal féminin, accords filter house, talkbox, chic Parisian night",
+    "K-R&B, accords modernes sleek, drums trap serrés, synthés glossy, vibe Seoul night",
+    "trap soul, vocal masculin vulnérable, rhodes, 808 smooth, pads atmos, late night",
+    "quiet storm R&B, vocal soyeux, soft drums, basse chaude, mood romantique nocturne",
+    "new jack swing, swing drum machine, synth brass, vocal masculin, dancefloor 90s",
+    "soul ballad, vocal raw, piano, cordes, émotion, larmes et libération, intemporel",
+  ],
+};
+
+const BEAT_URBAN_RAW: PromptCategory = {
+  id: "urban_raw",
+  label: "Beats urbains bruts: trap, drill, phonk",
+  mode: "beat",
+  prompts: [
+    "melodic trap, 808 glissant, piano mineur, pads aériens, drums durs, vibe nuit pluvieuse",
+    "UK drill, piano sparse froid, 808 glissante, hats syncopés, 140 BPM, tension minimal",
+    "phonk, 808 distordu, pattern cowbell, lead synth sombre, énergie agressive raw",
+    "dark trap, strings ciné, 808 bass glissante, snare crisp, piano mineur, menaçant",
+    "rage trap, 808 distordu, lead synth chaotique, basse saturée, hats agressifs",
+    "sample drill, loop soul coupée, drill 808 slides, snare dure, texture gritty",
+    "jersey drill, kick clusters, vocal chops, drill 808, agressif NY bounce",
+    "French drill, piano froid, 808 glissante, hats drill, tension ciné, Paris 3am",
+    "cloud rap, pads reverb washed, 808 soft, trap drums minimales, plucks dreamy",
+    "emo rap, guitare palm mute, 808 lourde, pads sombres, mélodie mineure, mood anxiété",
+    "afrotrap, percussions afro, 808 trap, mélodie pentatonique, groove rue chaude",
+    "latin trap, dembow hints, plucks mineurs, 808, basse lourde, nuit latino",
+    "grime instrumental, wobble bass, synth minimal, drums skippy, froid londonien",
+    "Memphis phonk, cowbell hook, drums trap sombres, basse distordue, saturation tape",
+    "cinematic trap, short viral loop hook, 808 dure, hats crisp, tension build, TikTok",
+  ],
+};
+
+const BEAT_UK_GARAGE_DANCEHALL: PromptCategory = {
+  id: "uk_garage_dancehall",
+  label: "UK garage, dancehall & baile",
+  mode: "beat",
+  prompts: [
+    "UK garage, drums skippy, basse bouncy, chord stabs, 2-step shuffle, vocal chops",
+    "jersey club, bed-squeak sample, punchy kick clusters, vocal one-shots chopped, bounce",
+    "dancehall riddim, basse lourde, skank guitar, claps, énergie fête summer street",
+    "baile funk, tamborzao kick brésilien, vocal chop MC, énergie fête, groove Rio raw",
+    "dembow dominicano, raw dembow kick, 808, perreo minimal, énergie rue chaude",
+    "afrobeats, style Burna Boy, log drum groove, guitare rythmique, accords chauds, dansant",
+    "amapiano, basse log drum, stabs piano jazzy, shaker groove, deep house groove",
+    "afro house vocal, vocal féminin, log drum, piano chords, vibe Ibiza sunrise",
+    "reggaeton, style Bad Bunny, dembow kick, bright pluck, sub chaud, club summer",
+    "dancehall, vocal patois, riddim bounce, basse lourde, summer street, énergie club",
+  ],
+};
+
+const BEAT_RB_SOUL_BEATS: PromptCategory = {
+  id: "rb_soul_beats",
+  label: "Beats R&B, soul & trap soul",
+  mode: "beat",
+  prompts: [
+    "trap soul, style Drake, rhodes moody, 808 smooth, hi-hats serrés, R&B nocturne",
+    "contemporary R&B beat, rhodes, 808 glide, hats tight, hook chord lift, vocal-ready",
+    "neo soul beat, accords rhodes, basse live pocket, drums brossées, warm analog feel",
+    "future R&B beat, pads glitch, sub deep, pluck sparse, cyber soul, atmos",
+    "90s R&B instrumental, juno pads, swing drum machine, synth bass, slow jam",
+    "dark R&B instrumental, pads mineurs, 808 soft, piano sparse, toxic mood",
+    "gospel trap soul beat, accords orgue, 808, claps, uplift spirituel, chaleureux",
+    "lo-fi R&B beat, drums dusty, crackle vinyle, accords mellow, vibe nuit étude",
+    "bedroom pop beat, guitare clean, lo-fi drums, synth arp, intime, quiet",
+    "pluggnb, plucks brillants, 808 bounce soft, drums légers, pads airy, mood rêveur",
+  ],
+};
+
 const SONG_ACE_PROSE: PromptCategory = {
   id: "ace_prose",
   label: "ACE prose (optimisé)",
@@ -544,6 +983,26 @@ export const CATEGORIZED_FR: CategorizedLocalePools = {
     SONG_ROCK,
     SONG_ELECTRONIC,
     SONG_IMPRESSIVE,
+    SONG_FUN_URBAN,
+    SONG_FUN_RNB,
+    SONG_FUN_LATINO,
+    SONG_FUN_ELECTRONIC,
+    SONG_FUN_POP,
+    SONG_CONTENT_CREATOR,
+    SONG_GAMING,
+    SONG_FITNESS_SPORTS,
+    SONG_FOOD_CULINARY,
+    SONG_TRAVEL_ADVENTURE,
+    SONG_MENTAL_HEALTH_SELFCARE,
+    SONG_FAMILY_PARENTING,
+    SONG_CAREER_BUSINESS,
+    SONG_PETS_ANIMALS,
+    SONG_MEMES_INTERNET,
+    SONG_NOSTALGIA_THROWBACKS,
+    SONG_SEASONAL_HOLIDAYS,
+    SONG_URBAN_RAW,
+    SONG_URBAN_BEATS,
+    SONG_RB_SOUL_SPECIFIC,
     SONG_ACE_PROSE,
     buildGenreMenuCategory("song", "Tous les genres du menu", "fr"),
   ],
@@ -556,6 +1015,9 @@ export const CATEGORIZED_FR: CategorizedLocalePools = {
     BEAT_POP_RNB,
     BEAT_ROCK,
     BEAT_IMPRESSIVE,
+    BEAT_URBAN_RAW,
+    BEAT_UK_GARAGE_DANCEHALL,
+    BEAT_RB_SOUL_BEATS,
     BEAT_ACE_PROSE,
     buildGenreMenuCategory("beat", "Tous les genres du menu", "fr"),
   ],

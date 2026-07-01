@@ -97,14 +97,12 @@ export function resolveGenerationCaptionContext(args: {
 
   const dice = args.diceAceOverride?.trim();
   if (dice) {
-    if (!isSong) return captionFromOverride(dice, args.mode);
-    if (usesSongCatalogCaptionTags(args.formGenre)) return captionFromOverride(dice, args.mode);
+    return captionFromOverride(dice, args.mode);
   }
 
   const landing = args.landingAceOverride?.trim();
   if (landing) {
-    if (!isSong) return captionFromOverride(landing, args.mode);
-    if (usesSongCatalogCaptionTags(args.formGenre)) return captionFromOverride(landing, args.mode);
+    return captionFromOverride(landing, args.mode);
   }
 
   const idea = args.displayIdea.trim();
