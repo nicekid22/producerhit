@@ -64,7 +64,6 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { PublicProfileCard } from "@/lib/creatorProfile";
 import { getLaunchOfferCtaButton, isLaunchOfferActive } from "@/lib/launchOffer";
 import { useResolvedPlan } from "@/hooks/useResolvedPlan";
-import { deferUntilIdle, loadMarketingCss, loadMarketingBelowFoldCss } from "@/lib/perf/defer";
 
 /* ── Below-fold lazy imports (reduces initial JS bundle) ── */
 const LandingFooter = lazy(() => import("@/components/landing/LandingFooter").then((m) => ({ default: m.LandingFooter })));
@@ -235,9 +234,6 @@ export default function Landing() {
   useEffect(() => {
     void ensureLandingMobileStyles();
     void loadMarketingCss();
-    deferUntilIdle(() => {
-      void loadMarketingBelowFoldCss();
-    }, 2000);
   }, []);
 
   const navigate = useNavigate();
