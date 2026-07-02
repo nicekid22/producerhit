@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ensureLandingMobileStyles } from "@/lib/themeStyles";
-import { useEffect, useMemo, useRef, useState, useCallback, type MouseEvent as ReactMouseEvent, type ReactNode, type RefObject } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, useCallback, type MouseEvent as ReactMouseEvent, type ReactNode, type RefObject } from "react";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/stores/authStore";
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
@@ -35,15 +35,6 @@ import {
 } from "@/lib/publicLoops";
 import { LandingPrismScene } from "@/components/landing/LandingPrismScene";
 import { BrandLogo } from "@/components/landing/BrandLogo";
-import { LandingFooter } from "@/components/landing/LandingFooter";
-import { TestimonialsStrip } from "@/components/landing/TestimonialsStrip";
-import { LandingCommunityRail } from "@/components/landing/LandingCommunityRail";
-import { LandingTrafficStrip } from "@/components/landing/LandingTrafficStrip";
-import { DailySpotlightSection } from "@/components/marketing/DailySpotlightSection";
-import { LandingBenefits } from "@/components/landing/LandingBenefits";
-import { LandingPricingTeaser } from "@/components/landing/LandingPricingTeaser";
-import { ProducerLegendsSection } from "@/components/marketing/ProducerLegendsSection";
-import { MusicMoneyPlaybookSection } from "@/components/marketing/MusicMoneyPlaybookSection";
 import { LandingStickyCta } from "@/components/landing/LandingStickyCta";
 import { BackdropTextureVeil } from "@/components/BackdropTextureVeil";
 import { LandingMobileTrendingStrip } from "@/components/landing/LandingMobileTrendingStrip";
@@ -62,7 +53,6 @@ import { landingHeroDreamCopy } from "@/lib/landingHeroDreamCopy";
 import { useRotatingPromptPlaceholder } from "@/hooks/useRotatingPromptPlaceholder";
 import { resolveRandomPromptLocale } from "@/lib/resolveRandomPromptLocale";
 import { croLandingFaqs } from "@/lib/croTrustCopy";
-import { ConversionTrustBar } from "@/components/marketing/ConversionTrustBar";
 import { clearLandingPendingGeneration, saveLandingPendingGeneration } from "@/lib/landingPendingGeneration";
 import { handoffRemixToDashboard } from "@/lib/remixHandoff";
 import { buildAuthUrl, resolvePostAuthRedirect } from "@/lib/authRoutes";
@@ -72,12 +62,24 @@ import { landingCoreFaqs } from "@/i18n/landingFaqCatalog";
 import { LANDING_MOBILE_V2 } from "@/lib/featureFlags";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { PublicProfileCard } from "@/lib/creatorProfile";
-import { LaunchOfferBanner } from "@/components/marketing/LaunchOfferBanner";
-import { CheckoutRecoveryBanner } from "@/components/billing/CheckoutRecoveryBanner";
-import { FreeUpgradeStrip } from "@/components/billing/FreeUpgradeStrip";
-import { useResolvedPlan } from "@/hooks/useResolvedPlan";
 import { getLaunchOfferCtaButton, isLaunchOfferActive } from "@/lib/launchOffer";
+import { useResolvedPlan } from "@/hooks/useResolvedPlan";
+import { deferUntilIdle, loadMarketingCss, loadMarketingBelowFoldCss } from "@/lib/perf/defer";
 
+/* ── Below-fold lazy imports (reduces initial JS bundle) ── */
+const LandingFooter = lazy(() => import("@/components/landing/LandingFooter").then((m) => ({ default: m.LandingFooter })));
+const TestimonialsStrip = lazy(() => import("@/components/landing/TestimonialsStrip").then((m) => ({ default: m.TestimonialsStrip })));
+const LandingCommunityRail = lazy(() => import("@/components/landing/LandingCommunityRail").then((m) => ({ default: m.LandingCommunityRail })));
+const LandingTrafficStrip = lazy(() => import("@/components/landing/LandingTrafficStrip").then((m) => ({ default: m.LandingTrafficStrip })));
+const DailySpotlightSection = lazy(() => import("@/components/marketing/DailySpotlightSection").then((m) => ({ default: m.DailySpotlightSection })));
+const LandingBenefits = lazy(() => import("@/components/landing/LandingBenefits").then((m) => ({ default: m.LandingBenefits })));
+const LandingPricingTeaser = lazy(() => import("@/components/landing/LandingPricingTeaser").then((m) => ({ default: m.LandingPricingTeaser })));
+const ProducerLegendsSection = lazy(() => import("@/components/marketing/ProducerLegendsSection").then((m) => ({ default: m.ProducerLegendsSection })));
+const MusicMoneyPlaybookSection = lazy(() => import("@/components/marketing/MusicMoneyPlaybookSection").then((m) => ({ default: m.MusicMoneyPlaybookSection })));
+const ConversionTrustBar = lazy(() => import("@/components/marketing/ConversionTrustBar").then((m) => ({ default: m.ConversionTrustBar })));
+const LaunchOfferBanner = lazy(() => import("@/components/marketing/LaunchOfferBanner").then((m) => ({ default: m.LaunchOfferBanner })));
+const CheckoutRecoveryBanner = lazy(() => import("@/components/billing/CheckoutRecoveryBanner").then((m) => ({ default: m.CheckoutRecoveryBanner })));
+const FreeUpgradeStrip = lazy(() => import("@/components/billing/FreeUpgradeStrip").then((m) => ({ default: m.FreeUpgradeStrip })));
 type CreateMode = "song" | "beat";
 
 const SIDE_CARD_POOL_LIMIT = 24;
@@ -233,6 +235,9 @@ export default function Landing() {
   useEffect(() => {
     void ensureLandingMobileStyles();
     void loadMarketingCss();
+    deferUntilIdle(() => {
+      void loadMarketingBelowFoldCss();
+    }, 2000);
   }, []);
 
   const navigate = useNavigate();
@@ -908,8 +913,19 @@ export default function Landing() {
       return;
     }
 
+    // Fallback: si #trending n'existe pas, n'intersecte jamais, ou un bug empêche
+    // l'IO de se déclencher → on force le chargement après 4s.
+    // Le cleanup clear le timer si l'IO finit avant.
+    const fallback = window.setTimeout(() => {
+      setShouldLoadTrending((prev) => {
+        if (!prev) console.warn("[Landing] trending fallback triggered — #trending missing or never intersected");
+        return true;
+      });
+    }, 4000);
+
     const el = document.getElementById("trending");
     if (!el) return;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry?.isIntersecting) {
@@ -920,7 +936,11 @@ export default function Landing() {
       { rootMargin: "480px 0px", threshold: 0 },
     );
     observer.observe(el);
-    return () => observer.disconnect();
+
+    return () => {
+      observer.disconnect();
+      window.clearTimeout(fallback);
+    };
   }, [mobileLandingFocus]);
 
   /* Mobile v2 : hauteur hero = viewport réel (évite le débordement des stats) */
@@ -1298,7 +1318,9 @@ export default function Landing() {
                 </p>
               ) : null}
               {!mobileLandingFocus ? (
-                <ConversionTrustBar locale={locale} compact variant="landing" className="pk-landing-hero-trust" />
+                <Suspense>
+                  <ConversionTrustBar locale={locale} compact variant="landing" className="pk-landing-hero-trust" />
+                </Suspense>
               ) : null}
             </div>
 
@@ -1373,14 +1395,18 @@ export default function Landing() {
           </RevealSection>
         ) : null}
 
-        <RevealSection className={`${landingSectionClass()} pk-landing-below-fold${mobileLandingFocus ? " hidden lg:block" : ""}`}>
-          <LandingBenefits locale={locale} />
-        </RevealSection>
+        <Suspense>
+                  <RevealSection className={`${landingSectionClass()} pk-landing-below-fold${mobileLandingFocus ? " hidden lg:block" : ""}`}>
+                    <LandingBenefits locale={locale} />
+                  </RevealSection>
+                </Suspense>
 
-        <RevealSection className={`${landingSectionClass()} pk-landing-below-fold${mobileLandingFocus ? " hidden lg:block" : ""}`}>
-          <DailySpotlightSection locale={locale} className="mb-8" />
-          <LandingTrafficStrip locale={locale} className="mb-6" />
-          <LandingCommunityRail
+                <Suspense>
+                  <RevealSection className={`${landingSectionClass()} pk-landing-below-fold${mobileLandingFocus ? " hidden lg:block" : ""}`}>
+                    <DailySpotlightSection locale={locale} className="mb-8" />
+                    <LandingTrafficStrip locale={locale} className="mb-6" />
+                    <div id="trending" className="pk-landing-community" />
+                    <LandingCommunityRail
             locale={locale}
             title={copy.communityTitle}
             lead={mobileLandingFocus ? landingUi.communityLeadMobile : copy.communityLead}
@@ -1428,46 +1454,54 @@ export default function Landing() {
           />
         </RevealSection>
 
-        <RevealSection className={`${landingSectionClass()} pk-landing-below-fold${mobileLandingFocus ? " hidden lg:block" : ""}`}>
-          <ProducerLegendsSection locale={locale} />
-        </RevealSection>
+        <Suspense>
+          <RevealSection className={`${landingSectionClass()} pk-landing-below-fold${mobileLandingFocus ? " hidden lg:block" : ""}`}>
+            <ProducerLegendsSection locale={locale} />
+          </RevealSection>
+        </Suspense>
 
-        <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
-          <MusicMoneyPlaybookSection locale={locale} />
-        </RevealSection>
+        <Suspense>
+          <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
+            <MusicMoneyPlaybookSection locale={locale} />
+          </RevealSection>
+        </Suspense>
 
-        <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
-          <CheckoutRecoveryBanner
-            locale={locale}
-            location="landing"
-            currentPlan={user && bannersReady ? currentPlan : undefined}
-            planReady={!user || bannersReady}
-            className="mb-6"
-          />
-          {user && bannersReady && currentPlan === "free" ? (
-            <FreeUpgradeStrip
+        <Suspense>
+          <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
+            <CheckoutRecoveryBanner
               locale={locale}
-              location="landing_strip"
-              plan={currentPlan}
-              ready={bannersReady}
+              location="landing"
+              currentPlan={user && bannersReady ? currentPlan : undefined}
+              planReady={!user || bannersReady}
               className="mb-6"
             />
-          ) : null}
-          {isLaunchOfferActive() && showLaunchProCta ? (
-            <LaunchOfferBanner
-              locale={locale}
-              className="mb-8"
-              showCta
-              ctaLoading={launchCheckoutLoading}
-              onCtaClick={() => void handleLaunchProCheckout()}
-            />
-          ) : null}
-          <LandingPricingTeaser locale={locale} user={!!user} currentPlan={currentPlan} />
-        </RevealSection>
+            {user && bannersReady && currentPlan === "free" ? (
+              <FreeUpgradeStrip
+                locale={locale}
+                location="landing_strip"
+                plan={currentPlan}
+                ready={bannersReady}
+                className="mb-6"
+              />
+            ) : null}
+            {isLaunchOfferActive() && showLaunchProCta ? (
+              <LaunchOfferBanner
+                locale={locale}
+                className="mb-8"
+                showCta
+                ctaLoading={launchCheckoutLoading}
+                onCtaClick={() => void handleLaunchProCheckout()}
+              />
+            ) : null}
+            <LandingPricingTeaser locale={locale} user={!!user} currentPlan={currentPlan} />
+          </RevealSection>
+        </Suspense>
 
-        <RevealSection className={`${landingSectionClass()} pk-landing-below-fold${mobileLandingFocus ? " hidden lg:block" : ""}`}>
-          <TestimonialsStrip locale={locale} compact />
-        </RevealSection>
+        <Suspense>
+          <RevealSection className={`${landingSectionClass()} pk-landing-below-fold${mobileLandingFocus ? " hidden lg:block" : ""}`}>
+            <TestimonialsStrip locale={locale} compact />
+          </RevealSection>
+        </Suspense>
 
         <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
           <div className="pk-landing-apple-panel pk-landing-apple-surface relative overflow-hidden p-6 sm:p-10">
@@ -1527,7 +1561,9 @@ export default function Landing() {
           </div>
         </RevealSection>
 
-        <LandingFooter locale={locale} user={user} />
+        <Suspense>
+          <LandingFooter locale={locale} user={user} />
+        </Suspense>
       </main>
 
       <LandingStickyCta locale={locale} user={!!user} visible={!mobileLandingFocus} currentPlan={currentPlan} />
