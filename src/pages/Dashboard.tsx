@@ -77,6 +77,8 @@ import { AlertTriangle, Copy, Search, SlidersHorizontal, X } from "lucide-react"
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
 import { trackDashboardReady } from "@/lib/growthFunnelEvents";
 import { DashboardGrowthModals } from "@/components/dashboard/DashboardGrowthModals";
+import { MasteringModal } from "@/components/mastering/MasteringModal";
+import { TagStudioModal } from "@/components/tagStudio/TagStudioModal";
 import { notifyGamificationGeneration } from "@/components/growth/GamificationStrip";
 import { DailyBonusBannerButton } from "@/components/growth/DailyBonusBannerButton";
 import { DashboardPromoBillboard } from "@/components/growth/DashboardPromoBillboard";
@@ -486,10 +488,20 @@ export default function Dashboard() {
   });
   const [detailsId, setDetailsId] = useState<string | null>(null);
   const [distributionLoop, setDistributionLoop] = useState<Loop | null>(null);
+  const [activeTagLoopId, setActiveTagLoopId] = useState<string | null>(null);
+  const [masteringModalLoop, setMasteringModalLoop] = useState<Loop | null>(null);
 
   const openDistribution = useCallback((loop: Loop) => {
     setDetailsId(loop.id);
     setDistributionLoop(loop);
+  }, []);
+  const openTagStudio = useCallback((loop: Loop) => {
+    setDetailsId(loop.id);
+    setActiveTagLoopId(loop.id);
+  }, []);
+  const openMasteringModal = useCallback((loop: Loop) => {
+    setDetailsId(loop.id);
+    setMasteringModalLoop(loop);
   }, []);
   const [mode, setMode] = useState<"beat" | "song" | "remix" | "cover">(() => {
     const saved = typeof window !== "undefined" ? window.localStorage.getItem("producerhit_mode") : null;
@@ -4948,6 +4960,8 @@ export default function Dashboard() {
                       durationSec={durationsSecById[detailsLoop.id]}
                       className="px-0"
                       onOpenDistribution={openDistribution}
+                      onOpenTagStudio={openTagStudio}
+                      onOpenMastering={openMasteringModal}
                       creditsRemaining={remaining}
                       onNeedCredits={handleNeedCredits}
                       onProducerTagCreditUsed={consumeCredit}
@@ -5000,6 +5014,8 @@ export default function Dashboard() {
             className="px-0"
             compact
             onOpenDistribution={openDistribution}
+            onOpenTagStudio={openTagStudio}
+            onOpenMastering={openMasteringModal}
             creditsRemaining={remaining}
             onNeedCredits={handleNeedCredits}
             onProducerTagCreditUsed={consumeCredit}
@@ -5025,6 +5041,22 @@ export default function Dashboard() {
         onCloseMasteringUpsell={closeMasteringUpsell}
         onTryMastering={tryMasteringFromUpsell}
         onUpgradeFromMasteringUpsell={upgradeFromMasteringUpsell}
+      />
+      <TagStudioModal
+        open={Boolean(activeTagLoopId)}
+        loopName={activeTagLoopId ? loops.find((l) => l.id === activeTagLoopId)?.name : undefined}
+        onClose={() => setActiveTagLoopId(null)}
+      />
+      <MasteringModal
+        open={Boolean(masteringModalLoop)}
+        loop={masteringModalLoop}
+        onClose={() => setMasteringModalLoop(null)}
+        onApplied={(updated) => {
+          setWorkspaceView("tracks");
+          if (mobileV2) setMobileTab("results");
+        }}
+        onUpgrade={openMasteringUpgradeFromPanel}
+        locale={locale}
       />
     </AppShell>
   );

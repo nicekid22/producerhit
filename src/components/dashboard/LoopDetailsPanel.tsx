@@ -5,6 +5,8 @@ import { useMemo, useState } from "react";
 import { Clock, Copy, Gauge, KeyRound, Loader2, Mic2, Music2, Sigma, Tag, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { DistributionDistributeButton } from "@/components/distribution/DistributionWizard";
+import { MasteringModal } from "@/components/mastering/MasteringModal";
+import { TagStudioModal } from "@/components/tagStudio/TagStudioModal";
 import { useAuthStore } from "@/stores/authStore";
 import { Badge } from "@/components/ui/Badge";
 import { CoverMedia } from "@/components/CoverMedia";
@@ -16,11 +18,7 @@ import { cn, COVER_SURFACE_CLASS } from "@/lib/utils";
 import type { Loop } from "@/types/loop";
 import { canUseProducerTag } from "@/lib/planEntitlements";
 import { readLoopProducerTagMeta } from "@/lib/producerTag";
-import { mergeProducerTagIntoStems, clearProducerTagFromStems } from "@producerhit/shared";
-import { ProducerTagApplyModal } from "@/components/producerTag/ProducerTagApplyModal";
 import { useResolvedPlan } from "@/hooks/useResolvedPlan";
-import { useLoopsStore } from "@/stores/loopsStore";
-import { useGrowthUpsellStore } from "@/stores/growthUpsellStore";
 
 function formatTime(sec: number) {
   const s = Math.max(0, Math.floor(sec));
@@ -188,6 +186,8 @@ export function LoopDetailsPanel({
   isPlayingCover = false,
   compact = false,
   onOpenDistribution,
+  onOpenTagStudio,
+  onOpenMastering,
   creditsRemaining,
   onNeedCredits,
   onProducerTagCreditUsed,
@@ -203,6 +203,8 @@ export function LoopDetailsPanel({
   isPlayingCover?: boolean;
   compact?: boolean;
   onOpenDistribution?: (loop: Loop) => void;
+  onOpenTagStudio?: (loop: Loop) => void;
+  onOpenMastering?: (loop: Loop) => void;
   creditsRemaining?: number;
   onNeedCredits?: () => void;
   onProducerTagCreditUsed?: () => void;
@@ -210,9 +212,6 @@ export function LoopDetailsPanel({
   const d = buildDashboardSection(locale);
   const profile = useAuthStore((s) => s.profile);
   const { plan } = useResolvedPlan();
-  const openUpsell = useGrowthUpsellStore((s) => s.openUpsell);
-  const applyLoopProducerTagResult = useLoopsStore((s) => s.applyLoopProducerTagResult);
-  const [tagModalOpen, setTagModalOpen] = useState(false);
   const [tab, setTab] = useState<DetailTab>("info");
   const tagMeta = useMemo(() => readLoopProducerTagMeta(loop.stemsUrl), [loop.stemsUrl]);
   const canTag = canUseProducerTag(plan) && Boolean(loop.audioUrl?.startsWith("http"));
@@ -304,35 +303,21 @@ export function LoopDetailsPanel({
           variant="secondary"
           size="sm"
           className="w-full"
-          onClick={() => setTagModalOpen(true)}
+          onClick={() => onOpenTagStudio?.(loop)}
         >
           <Tag className="mr-2 h-4 w-4" />
           {tagMeta ? d.producerTagReapply : d.producerTagApply}
         </Button>
       ) : null}
 
-      <ProducerTagApplyModal
-        open={tagModalOpen}
-        onClose={() => setTagModalOpen(false)}
-        loop={loop}
-        locale={locale}
-        plan={plan}
-        creditsRemaining={creditsRemaining}
-        onNeedCredits={onNeedCredits ?? (() => openUpsell("credits_exhausted"))}
-        onApplied={({ audioUrl, creditConsumed, producerTag }) => {
-          applyLoopProducerTagResult(loop.id, {
-            audioUrl,
-            stemsUrl: mergeProducerTagIntoStems(loop.stemsUrl, producerTag),
-          });
-          if (creditConsumed) onProducerTagCreditUsed?.();
-        }}
-        onRemoved={(audioUrl) => {
-          applyLoopProducerTagResult(loop.id, {
-            audioUrl,
-            stemsUrl: clearProducerTagFromStems(loop.stemsUrl),
-          });
-        }}
-      />
+      <Button
+        variant="secondary"
+        size="sm"
+        className="w-full"
+        onClick={() => onOpenMastering?.(loop)}
+      >
+        {isFr ? "Mastering" : "Mastering"}
+      </Button>
 
       <DetailTabs
         active={tab}
