@@ -1407,52 +1407,53 @@ export default function Landing() {
                     <LandingTrafficStrip locale={locale} className="mb-6" />
                     <div id="trending" className="pk-landing-community" />
                     <LandingCommunityRail
-            locale={locale}
-            title={copy.communityTitle}
-            lead={mobileLandingFocus ? landingUi.communityLeadMobile : copy.communityLead}
-            tracks={homeTrendingCards}
-            loading={trendingLoading || !shouldLoadTrending}
-            activeTrackId={current?.id ?? null}
-            isPlaying={isPlaying}
-            onPlay={handlePlay}
-            onRemix={remixFromLandingTrack}
-            onRefresh={() => setTrendingRefreshKey((k) => k + 1)}
-            footer={
-              !trendingLoading && (trendingError || trendingTimedOut || typeof repairFixedCount === "number") ? (
-                <div className="pk-landing-apple-banner mt-4">
-                  <div className="pk-landing-apple-banner__text">
-                    {typeof repairFixedCount === "number"
-                      ? formatRepairFixedCount(repairFixedCount, locale)
-                      : trendingError
-                        ? trendingError
-                        : trendingTimedOut
-                          ? landingUi.slowLoad
-                          : ""}
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setTrendingRefreshKey((k) => k + 1)}
-                      className="pk-landing-apple-banner__btn"
-                    >
-                      {common.retry}
-                    </button>
-                    {user ? (
-                      <button
-                        type="button"
-                        onClick={() => void repairMyPublicAudioLinks()}
-                        disabled={repairingPublicLinks}
-                        className="pk-landing-apple-banner__btn"
-                      >
-                    {repairingPublicLinks ? landingUi.repairingPublic : landingUi.repairPublic}
-                      </button>
-                    ) : null}
-                  </div>
-                </div>
-              ) : null
-            }
-          />
-        </RevealSection>
+                      locale={locale}
+                      title={copy.communityTitle}
+                      lead={mobileLandingFocus ? landingUi.communityLeadMobile : copy.communityLead}
+                      tracks={homeTrendingCards}
+                      loading={trendingLoading || !shouldLoadTrending}
+                      activeTrackId={current?.id ?? null}
+                      isPlaying={isPlaying}
+                      onPlay={handlePlay}
+                      onRemix={remixFromLandingTrack}
+                      onRefresh={() => setTrendingRefreshKey((k) => k + 1)}
+                      footer={
+                        !trendingLoading && (trendingError || trendingTimedOut || typeof repairFixedCount === "number") ? (
+                          <div className="pk-landing-apple-banner mt-4">
+                            <div className="pk-landing-apple-banner__text">
+                              {typeof repairFixedCount === "number"
+                                ? formatRepairFixedCount(repairFixedCount, locale)
+                                : trendingError
+                                  ? trendingError
+                                  : trendingTimedOut
+                                    ? landingUi.slowLoad
+                                    : ""}
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setTrendingRefreshKey((k) => k + 1)}
+                                className="pk-landing-apple-banner__btn"
+                              >
+                                {common.retry}
+                              </button>
+                              {user ? (
+                                <button
+                                  type="button"
+                                  onClick={() => void repairMyPublicAudioLinks()}
+                                  disabled={repairingPublicLinks}
+                                  className="pk-landing-apple-banner__btn"
+                                >
+                                  {repairingPublicLinks ? landingUi.repairingPublic : landingUi.repairPublic}
+                                </button>
+                              ) : null}
+                            </div>
+                          </div>
+                        ) : null
+                      }
+                    />
+                  </RevealSection>
+                </Suspense>
 
         <Suspense>
           <RevealSection className={`${landingSectionClass()} pk-landing-below-fold${mobileLandingFocus ? " hidden lg:block" : ""}`}>
