@@ -66,7 +66,6 @@ export function StoredLoopCover({ coverUrl, className, loading = "lazy", imageCl
         loading={loading}
         decoding="async"
         referrerPolicy="no-referrer"
-        fetchPriority={loading === "eager" ? "high" : "low"}
         className={cn(
           "absolute inset-0 z-[1] h-full w-full object-cover transition-opacity duration-300 ease-out",
           loaded && !failed ? "opacity-100" : failed ? "opacity-0" : "opacity-0",

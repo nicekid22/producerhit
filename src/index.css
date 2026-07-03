@@ -7917,8 +7917,8 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
   position: relative;
   z-index: 1;
   scroll-snap-type: x mandatory;
-  scroll-padding-inline: max(1rem, calc(50% - min(41vw, 9.75rem)));
-  padding: 1.25rem max(1rem, calc(50% - min(41vw, 9.75rem))) 1.5rem;
+  scroll-padding-inline: 0.75rem;
+  padding: 1.25rem 0.75rem 1.5rem;
   gap: 1.15rem;
 }
 
@@ -7936,7 +7936,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 }
 
 .pk-landing-community__card {
-  flex: 0 0 min(82vw, 19.5rem);
+  flex: 0 0 min(78vw, 17.5rem);
   scroll-snap-align: start;
   border-radius: 1.25rem;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -7952,8 +7952,8 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 }
 
 .pk-landing-community__rail--cinema .pk-landing-community__card {
-  scroll-snap-align: center;
-  flex-basis: min(82vw, 19.5rem);
+  scroll-snap-align: start;
+  flex-basis: min(78vw, 17.5rem);
   transform: scale(0.88) translateY(8px);
   opacity: 0.5;
   filter: saturate(0.82);

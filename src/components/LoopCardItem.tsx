@@ -730,7 +730,7 @@ export const LoopCardItem = memo(function LoopCardItem({
           onOpenDetails(loop, computeAnchorTop());
         }}
       >
-        <div className={cn("pk-library-card__cover-wrap", loopCoverClass(active, activePlaying))}>
+        <div className={cn("pk-library-card__cover-wrap", loopCoverClass(active, activePlaying))} style={{ position: "relative" }}>
           <StoredLoopCover
             key={`${coverKey}:${bannerCoverUrl}`}
             coverUrl={bannerCoverUrl}
@@ -755,20 +755,78 @@ export const LoopCardItem = memo(function LoopCardItem({
               {footerHint.label}
             </span>
           ) : null}
-          <button
-            type="button"
-            className={cn("pk-library-card__play", loopPlayButtonClass(active, activePlaying))}
-            onClick={handlePlayToggle}
-            aria-label={activePlaying ? "Pause" : "Play"}
-            title={activePlaying ? "Pause" : "Play"}
-            disabled={!canPlay}
-          >
-            {activePlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-          </button>
+          <div className="absolute left-2 bottom-2 z-10">
+            {isEditingTitle ? (
+              <div className="flex items-center gap-1">
+                <input
+                  value={draftTitle}
+                  onChange={(e) => setDraftTitle(e.target.value)}
+                  autoFocus
+                  className="w-full min-w-0 rounded-lg border border-white/20 bg-black/70 px-2 py-1 text-xs font-semibold text-white outline-none placeholder:text-white/60 focus:border-white/40"
+                  placeholder={d.titleInputPlaceholder}
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (!savingTitle) commitTitle();
+                      return;
+                    }
+                    if (e.key === "Escape") {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setDraftTitle(loop.name);
+                      setIsEditingTitle(false);
+                    }
+                  }}
+                />
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="px-1.5 py-0.5"
+                  disabled={savingTitle}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!savingTitle) commitTitle();
+                  }}
+                  aria-label={lc.validate}
+                  title={lc.validate}
+                >
+                  {savingTitle ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="px-1.5 py-0.5"
+                  disabled={savingTitle}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDraftTitle(loop.name);
+                    setIsEditingTitle(false);
+                  }}
+                  aria-label={lc.cancel}
+                  title={lc.cancel}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="rounded-lg bg-black/60 px-2 py-1 text-xs font-semibold text-white backdrop-blur-sm transition-colors hover:bg-black/75"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEditingTitle(true);
+                }}
+                title={lc.editTitle}
+              >
+                {loop.name}
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="pk-library-card__body">
-          <h3 className="pk-library-card__title">{loop.name}</h3>
           <p className="pk-library-card__meta">
             {[
               loop.bpm && loop.bpm > 0 ? `${loop.bpm} BPM` : null,
@@ -906,6 +964,7 @@ export const LoopCardItem = memo(function LoopCardItem({
             "pk-loop-cover-banner mb-1.5 rounded-lg p-[1.5px]",
             loopCoverClass(active, activePlaying),
           )}
+          style={{ position: "relative" }}
         >
           <StoredLoopCover
             key={`${coverKey}:${bannerCoverUrl}`}
@@ -916,6 +975,75 @@ export const LoopCardItem = memo(function LoopCardItem({
             )}
             loading="lazy"
           />
+          <div className="absolute left-2 bottom-2 z-10">
+            {isEditingTitle ? (
+              <div className="flex items-center gap-1">
+                <input
+                  value={draftTitle}
+                  onChange={(e) => setDraftTitle(e.target.value)}
+                  autoFocus
+                  className="w-full min-w-0 rounded-lg border border-white/20 bg-black/70 px-2 py-1 text-xs font-semibold text-white outline-none placeholder:text-white/60 focus:border-white/40"
+                  placeholder={d.titleInputPlaceholder}
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (!savingTitle) commitTitle();
+                      return;
+                    }
+                    if (e.key === "Escape") {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setDraftTitle(loop.name);
+                      setIsEditingTitle(false);
+                    }
+                  }}
+                />
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="px-1.5 py-0.5"
+                  disabled={savingTitle}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!savingTitle) commitTitle();
+                  }}
+                  aria-label={lc.validate}
+                  title={lc.validate}
+                >
+                  {savingTitle ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="px-1.5 py-0.5"
+                  disabled={savingTitle}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDraftTitle(loop.name);
+                    setIsEditingTitle(false);
+                  }}
+                  aria-label={lc.cancel}
+                  title={lc.cancel}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="rounded-lg bg-black/60 px-2 py-1 text-xs font-semibold text-white backdrop-blur-sm transition-colors hover:bg-black/75"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEditingTitle(true);
+                }}
+                title={lc.editTitle}
+              >
+                {loop.name}
+              </button>
+            )}
+          </div>
         </div>
       ) : null}
       <div className="flex gap-2.5">
@@ -1009,24 +1137,7 @@ export const LoopCardItem = memo(function LoopCardItem({
                     <X className="h-3.5 w-3.5" />
                   </Button>
                 </>
-              ) : (
-                <>
-                  <div className="truncate text-sm font-semibold">{loop.name}</div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="px-1.5 py-0.5"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsEditingTitle(true);
-                    }}
-                    aria-label={lc.editTitle}
-                    title={lc.editTitle}
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </Button>
-                </>
-              )}
+              ) : null}
             </div>
             {showWorkspaceCoverPeek && canRerollCover && !isEditingTitle ? (
               <button

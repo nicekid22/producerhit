@@ -77,7 +77,6 @@ import { CheckoutRecoveryBanner } from "@/components/billing/CheckoutRecoveryBan
 import { FreeUpgradeStrip } from "@/components/billing/FreeUpgradeStrip";
 import { useResolvedPlan } from "@/hooks/useResolvedPlan";
 import { getLaunchOfferCtaButton, isLaunchOfferActive } from "@/lib/launchOffer";
-import { deferUntilIdle, loadMarketingCss } from "@/lib/perf/defer";
 
 type CreateMode = "song" | "beat";
 const SIDE_CARD_POOL_LIMIT = 24;
@@ -86,8 +85,8 @@ const SIDE_CARD_ROTATE_MAX_MS = 92_000;
 
 /**
  * Les side cards du générateur et le rail "trending" appellent tous les deux
- * fetchPublicLoops({ limit: 48, playableOnly: true }) — même endpoint, même
- * filtre, juste mappés différemment en sortie. Sans ce cache, les deux
+ * fetchPublicLoops({ limit: 48 }) — même endpoint, même
+ * sélection, juste mappés différemment en sortie. Sans ce cache, les deux
  * useEffect déclenchaient deux requêtes réseau quasi-identiques à quelques
  * centaines de ms d'écart dès qu'un visiteur desktop scrollait un peu vite.
  * Fenêtre de fraîcheur volontairement courte (déduplication de requêtes
@@ -110,7 +109,7 @@ function fetchPublicLoopsDeduped(timeoutMs: number): Promise<PublicLoopRow[]> {
   if (publicLoopsInFlight) {
     return publicLoopsInFlight;
   }
-  publicLoopsInFlight = fetchPublicLoops({ limit: 48, timeoutMs, playableOnly: true })
+  publicLoopsInFlight = fetchPublicLoops({ limit: 48, timeoutMs })
     .then((rows) => {
       publicLoopsCachedRows = rows;
       publicLoopsCachedAt = Date.now();
@@ -852,7 +851,11 @@ export default function Landing() {
   };
 
   const homeTrendingCards = useMemo(() => {
-    return trending.slice(0, 12);
+    const next = trending.slice(0, 12);
+    if (next.length !== trending.length) {
+      console.debug("[Landing] homeTrendingCards truncate", { trending: trending.length, cards: next.length });
+    }
+    return next;
   }, [trending]);
 
   const repairMyPublicAudioLinks = async () => {
@@ -902,6 +905,10 @@ export default function Landing() {
   const [shouldLoadTrending, setShouldLoadTrending] = useState(false);
 
   useEffect(() => {
+    console.debug("[Landing] shouldLoadTrending ->", shouldLoadTrending);
+  }, [shouldLoadTrending]);
+
+  useEffect(() => {
     /* Mobile v2 : strip visible dans le hero — le rail desktop (#trending) est hidden lg:block */
     if (mobileLandingFocus) {
       setShouldLoadTrending(true);
@@ -919,7 +926,10 @@ export default function Landing() {
     }, 4000);
 
     const el = document.getElementById("trending");
-    if (!el) return;
+    if (!el) {
+      // Pas d'élément #trending au montage : on garde le fallback actif.
+      return () => window.clearTimeout(fallback);
+    }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -994,75 +1004,84 @@ export default function Landing() {
       if (cancelled) return;
       void (async () => {
         try {
+          console.debug("[Landing] trending fetch start", { shouldLoadTrending, loadedFromCache, trendingLength: trending.length });
           const rows = await fetchPublicLoopsDeduped(6500);
-        if (cancelled) return;
-        window.clearTimeout(slowTimer);
-        setTrendingTimedOut(false);
-
-        const mapped: PublicTrack[] = rows
-          .filter((r) => typeof r.id === "string")
-          .map((r) => {
-            const name = (r.name ?? "Untitled").trim() || "Untitled";
-            const genre = (r.genre ?? "").trim();
-            const mood = (r.mood ?? "").trim();
-            const bpm = typeof r.bpm === "number" ? r.bpm : null;
-            const { kind, badge } = classifyTrack(genre, mood, name);
-            const tags = [genre, mood, bpm ? `${bpm} BPM` : ""].filter((x) => x.length > 0);
-            const color = getTrackGradient(r.id);
-            const prompt = (r.prompt ?? "").trim() || [name, genre, mood, bpm ? `${bpm} BPM` : ""].filter(Boolean).join(", ");
-            const audioUrlRaw = typeof r.audio_url === "string" ? r.audio_url.trim() : "";
-            const stemsUrlObj = (() => {
-              if (r.stems_url && typeof r.stems_url === "object") return r.stems_url as Record<string, unknown>;
-              if (typeof r.stems_url === "string") {
-                const raw = r.stems_url.trim();
-                if (!raw) return null;
-                try {
-                  const parsed = JSON.parse(raw) as unknown;
-                  return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
-                } catch {
-                  return null;
-                }
-              }
-              return null;
-            })();
-            const coverUrl = resolvePublicRowCoverUrl(r);
-            return {
-              id: r.id,
-              name,
-              genre: genre || null,
-              mood: mood || null,
-              bpm,
-              audioUrl: audioUrlRaw.length > 0 ? audioUrlRaw : null,
-              stemsUrl: stemsUrlObj,
-              createdAt: r.created_at ?? null,
-              seed: typeof r.seed === "number" ? r.seed : null,
-              kind,
-              badge,
-              tags,
-              color,
-              prompt,
-              coverUrl,
-              author: r.author ?? null,
-            };
-          });
-
-        const next = mapped.slice(0, 12);
-        setTrending(next);
-        setTrendingLoading(false);
-        try {
-          window.sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), items: next }));
-        } catch {
-          void 0;
-        }
-      } catch {
-        if (!cancelled) {
+          if (cancelled) return;
+          console.debug("[Landing] trending fetch result", rows.length, rows.slice(0,3));
           window.clearTimeout(slowTimer);
           setTrendingTimedOut(false);
-          setTrendingError(landingUi.communityLoadFailed);
-          if (!loadedFromCache) setTrending([]);
+
+          const mapped: PublicTrack[] = rows
+            .filter((r) => typeof r.id === "string")
+            .map((r) => {
+              const name = (r.name ?? "Untitled").trim() || "Untitled";
+              const genre = (r.genre ?? "").trim();
+              const mood = (r.mood ?? "").trim();
+              const bpm = typeof r.bpm === "number" ? r.bpm : null;
+              const { kind, badge } = classifyTrack(genre, mood, name);
+              const tags = [genre, mood, bpm ? `${bpm} BPM` : ""].filter((x) => x.length > 0);
+              const color = getTrackGradient(r.id);
+              const prompt = (r.prompt ?? "").trim() || [name, genre, mood, bpm ? `${bpm} BPM` : ""].filter(Boolean).join(", ");
+              const audioUrlRaw = typeof r.audio_url === "string" ? r.audio_url.trim() : "";
+              const stemsUrlObj = (() => {
+                if (r.stems_url && typeof r.stems_url === "object") return r.stems_url as Record<string, unknown>;
+                if (typeof r.stems_url === "string") {
+                  const raw = r.stems_url.trim();
+                  if (!raw) return null;
+                  try {
+                    const parsed = JSON.parse(raw) as unknown;
+                    return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
+                  } catch {
+                    return null;
+                  }
+                }
+                return null;
+              })();
+              const coverUrl = resolvePublicRowCoverUrl(r);
+              return {
+                id: r.id,
+                name,
+                genre: genre || null,
+                mood: mood || null,
+                bpm,
+                audioUrl: audioUrlRaw.length > 0 ? audioUrlRaw : null,
+                stemsUrl: stemsUrlObj,
+                createdAt: r.created_at ?? null,
+                seed: typeof r.seed === "number" ? r.seed : null,
+                kind,
+                badge,
+                tags,
+                color,
+                prompt,
+                coverUrl,
+                author: r.author ?? null,
+              };
+            });
+
+          const next = mapped.slice(0, 12);
+          console.debug("[Landing] trending mapped", next.length, next.slice(0,3));
+          setTrending(next);
           setTrendingLoading(false);
+          try {
+            window.sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), items: next }));
+          } catch {
+            void 0;
+          }
+        } catch (err) {
+          if (!cancelled) {
+            if (!loadedFromCache && !trending.length) {
+              setTrending([]);
+            }
+            const msg =
+              err instanceof Error && err.message === "timeout"
+                ? landingUi.slowLoad
+                : landingUi.communityLoadFailed;
+            setTrendingError(msg);
+            if (err instanceof Error && err.message === "timeout") toast.error(msg);
+          }
+        } finally {
+          if (!cancelled) setTrendingLoading(false);
         }
-      }
       })();
     }, 3200);
 
@@ -1476,11 +1495,11 @@ export default function Landing() {
               ctaLoading={launchCheckoutLoading}
               onCtaClick={() => void handleLaunchProCheckout()}
             />
-            />
-            </RevealSection>
-            <RevealSection className={`${landingSectionClass()} pk-landing-below-fold${mobileLandingFocus ? " hidden lg:block" : ""}`}>
-            <ProducerLegendsSection locale={locale} />
-            </RevealSection>
+          ) : null}
+        </RevealSection>
+        <RevealSection className={`${landingSectionClass()} pk-landing-below-fold${mobileLandingFocus ? " hidden lg:block" : ""}`}>
+          <ProducerLegendsSection locale={locale} />
+        </RevealSection>
 
         <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
           <div className="pk-landing-apple-panel pk-landing-apple-surface relative overflow-hidden p-6 sm:p-10">

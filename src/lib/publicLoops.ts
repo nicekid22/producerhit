@@ -231,6 +231,7 @@ export async function fetchPublicLoops(options?: {
     } catch {
       // feed OK sans auteurs
     }
+    console.debug("[community-debug] fetchPublicLoops pool", rows.length, rows.slice(0,3));
     return rows;
   };
 

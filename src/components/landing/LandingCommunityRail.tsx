@@ -45,7 +45,7 @@ type Props = {
   compactLead?: boolean;
 };
 
-const INITIAL_VISIBLE = 4;
+const INITIAL_VISIBLE = 3;
 const LOAD_BATCH = 3;
 
 function isNew(createdAt: string | null) {

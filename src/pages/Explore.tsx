@@ -185,7 +185,7 @@ export default function Explore() {
     setFetchError(null);
     void (async () => {
       try {
-        const mapped = await fetchPublicLoops({ limit: 48, timeoutMs: 12000, playableOnly: true });
+        const mapped = await fetchPublicLoops({ limit: 48, timeoutMs: 12000 });
         if (cancelled) return;
         setRows(mapped);
         try {
@@ -194,8 +194,10 @@ export default function Explore() {
           // ignore
         }
       } catch (err) {
-        if (!cancelled && !loadedFromCache) {
-          setRows([]);
+        if (!cancelled) {
+          if (!loadedFromCache && !rows.length) {
+            setRows([]);
+          }
           const msg =
             err instanceof Error && err.message === "timeout"
               ? hubCopy.loadTimeout

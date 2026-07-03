@@ -87,6 +87,7 @@ export default function CommunityTrending() {
       try {
         const pool = await fetchPublicLoops({ limit: 80, playableOnly: true, timeoutMs: 14000 });
         if (cancelled) return;
+        console.debug("[community-debug] fetchPublicLoops pool", pool.length, pool.slice(0,3));
         setRows(pool);
         const ids = pool.map((r) => r.id);
         const [plays, comments] = await Promise.all([

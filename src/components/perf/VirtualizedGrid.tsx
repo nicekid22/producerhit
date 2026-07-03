@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 
 function useColumnCount(breakpoints: { minWidth: number; columns: number }[], defaultColumns = 2) {
@@ -22,14 +22,27 @@ function useColumnCount(breakpoints: { minWidth: number; columns: number }[], de
 function useAppScrollElement(): HTMLElement | null {
   const [el, setEl] = useState<HTMLElement | null>(null);
 
-  useEffect(() => {
+  // useLayoutEffect (au lieu de useEffect + setTimeout) : s'exécute avant le
+  // paint du navigateur. Si l'AppShell est déjà monté (cas normal en SPA),
+  // le nœud existe dès le premier passage et on évite un re-render différé
+  // supplémentaire qui contribuait au flicker au moment de la bascule
+  // grid simple -> grid virtualisée.
+  useLayoutEffect(() => {
     const find = () => {
       const node =
         document.getElementById("pk-main-scroll") ??
         document.querySelector<HTMLElement>(".pk-studio-workspace-scroll");
-      setEl(node);
+      if (node) {
+        setEl(node);
+        return true;
+      }
+      return false;
     };
-    find();
+
+    if (find()) return;
+
+    // Fallback : si le scroll container n'est pas encore dans le DOM
+    // (premier montage très précoce), on retente une fois au tick suivant.
     const t = window.setTimeout(find, 0);
     return () => window.clearTimeout(t);
   }, []);
@@ -74,35 +87,36 @@ export function VirtualizedGrid<T>({
 
   const getScrollElement = useCallback(() => scrollElement, [scrollElement]);
 
+  const shouldVirtualize = Boolean(scrollElement) && items.length >= virtualizeThreshold;
+
   const virtualizer = useVirtualizer({
     count: rowCount,
     getScrollElement,
     estimateSize: () => estimateRowHeight,
     overscan: 2,
-    enabled: Boolean(scrollElement) && items.length >= virtualizeThreshold,
+    enabled: shouldVirtualize,
   });
 
-  if (items.length < virtualizeThreshold) {
-    return (
-      <div className={className ?? "grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4 xl:gap-4"}>
-        {items.map((item, index) => (
-          <div key={getKey(item, index)}>{renderItem(item, index)}</div>
-        ))}
-      </div>
-    );
-  }
-
-  if (!scrollElement) {
-    return (
-      <div className={className ?? "grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4 xl:gap-4"}>
-        {items.map((item, index) => (
-          <div key={getKey(item, index)}>{renderItem(item, index)}</div>
-        ))}
-      </div>
-    );
-  }
-
   const virtualRows = virtualizer.getVirtualItems();
+
+  // Fusion des anciennes conditions "items.length < threshold" et
+  // "!scrollElement" en une seule vérification : tant que le virtualizer
+  // n'a pas encore de lignes virtuelles calculées (première mesure du
+  // ResizeObserver pas encore faite), on reste sur le rendu complet.
+  // Ça évite de rendre un état intermédiaire vide/incomplet pendant la
+  // bascule grid simple -> grid virtualisée, qui causait le flicker
+  // ("les cartes apparaissent puis disparaissent").
+  const isVirtualizerReady = shouldVirtualize && virtualRows.length > 0;
+
+  if (!isVirtualizerReady) {
+    return (
+      <div className={className ?? "grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4 xl:gap-4"}>
+        {items.map((item, index) => (
+          <div key={getKey(item, index)}>{renderItem(item, index)}</div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className={className} style={{ height: virtualizer.getTotalSize(), position: "relative", width: "100%" }}>
