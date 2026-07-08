@@ -43,7 +43,7 @@ export function FreeUpgradeStrip({ locale, location, plan, className, ready = tr
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 rounded-xl border border-amber-400/25 bg-gradient-to-r from-amber-500/10 via-violet-500/10 to-cyan-500/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
+        "flex flex-col gap-3 rounded-xl border border-amber-400/25 bg-gradient-to-r from-amber-500/10 via-violet-500/10 to-fuchsia-500/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
         className,
       )}
     >
@@ -60,7 +60,7 @@ export function FreeUpgradeStrip({ locale, location, plan, className, ready = tr
         type="button"
         disabled={loading}
         onClick={() => void upgrade()}
-        className="shrink-0 rounded-lg bg-violet-600 px-4 py-2 text-xs font-bold text-white hover:bg-violet-500 disabled:opacity-60"
+        className="pk-pro-cta shrink-0 rounded-xl px-4 py-2 text-xs font-bold text-white disabled:opacity-60"
       >
         {loading ? (isFr ? "Chargement…" : "Loading…") : isFr ? "Passer Pro" : "Upgrade Pro"}
       </button>

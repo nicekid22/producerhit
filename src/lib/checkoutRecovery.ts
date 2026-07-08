@@ -1,3 +1,5 @@
+import { recordCheckoutAbandonLead } from "@/lib/emailCapture";
+
 const STORAGE_KEY = "producerhit_checkout_abandoned_v1";
 const LEGACY_SESSION_KEY = STORAGE_KEY;
 const TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -49,9 +51,7 @@ export function markCheckoutAbandoned(plan: string, location?: string): void {
 
 /** Sync abandon to marketing_leads for logged-in users (nurture J+1). */
 export function syncCheckoutAbandonNurture(plan: string, locale: string, location?: string): void {
-  void import("@/lib/emailCapture").then(({ recordCheckoutAbandonLead }) =>
-    recordCheckoutAbandonLead({ plan, locale, location }),
-  );
+  recordCheckoutAbandonLead({ plan, locale, location });
 }
 
 export function readCheckoutAbandoned(): CheckoutAbandoned | null {

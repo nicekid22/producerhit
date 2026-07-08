@@ -13,6 +13,7 @@ import { isLoopAudioPlayableByAge } from "@/lib/loopAudioRetention";
 import { isSupabaseLoopAudioUrl, SUPABASE_LOOP_AUDIO_UPLOAD, uploadPublicLoopAudio } from "@/lib/storageAudio";
 import { fetchLoopStemsAndCover, coverUrlFromStemsRow } from "@/lib/loopStemsSelect";
 import { supabase } from "@/lib/supabaseClient";
+import { mergeStemsPreservingAceCover } from "@/lib/stemsAceMerge";
 import {
   buildStemsUrlForDb as buildStemsUrlForDbShared,
   extractAceTaskId,
@@ -333,7 +334,6 @@ export async function persistLoopAceAudioRecord(args: {
 
   const freshRow = await fetchLoopStemsAndCover(args.loopId, args.userId);
 
-  const { mergeStemsPreservingAceCover } = await import("@/lib/stemsAceMerge");
   const { mergeCoverIntoStems } = await import("@/lib/coverArt");
   const dbStems = parseStemsUrl(freshRow?.stems_url ?? null);
   let stemsRecord = mergeStemsPreservingAceCover(incomingStems, dbStems) ?? incomingStems ?? dbStems;
@@ -414,7 +414,6 @@ export async function persistLoopAceAudioRecord(args: {
   if (updatePayload.stems_url) {
     const freshBeforeWrite = await fetchLoopStemsAndCover(args.loopId, args.userId);
 
-    const { mergeStemsPreservingAceCover } = await import("@/lib/stemsAceMerge");
     const { mergeCoverIntoStems } = await import("@/lib/coverArt");
     const dbStems = parseStemsUrl(freshBeforeWrite?.stems_url ?? null);
     const incoming = updatePayload.stems_url as Record<string, unknown>;

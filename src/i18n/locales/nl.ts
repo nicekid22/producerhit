@@ -78,6 +78,7 @@ export const nl: BaseMessageCatalog = {
     generator: "Generator",
     library: "Bibliotheek",
     voiceStudio: "Voice Studio",
+    tagStudio: "Tag Studio",
     sampleLab: "Sample Lab",
     settings: "Instellingen",
     website: "Website",

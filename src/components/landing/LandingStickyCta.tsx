@@ -74,7 +74,8 @@ export function LandingStickyCta({ locale, visible, user, currentPlan }: Props) 
             type="button"
             disabled={loading}
             onClick={() => void handleProUpgrade()}
-            className="shrink-0 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-xs font-bold text-white disabled:opacity-60"
+            className="shrink-0 rounded-xl px-4 py-2 text-xs font-bold text-white disabled:opacity-60"
+            style={{ background: "var(--prism-mesh)" }}
           >
             {loading ? "…" : (proSticky?.button ?? sticky.button)}
           </button>

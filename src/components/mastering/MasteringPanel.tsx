@@ -227,7 +227,7 @@ export function MasteringPanel({
     trackClientEvent("mastering_preview_start", { loop_id: selected.id, preset: presetId });
     try {
       const input = await loadMasteringSource(selected.id, selected.audioUrl, ensureAudioReady);
-      const output = await masterAudioBuffer(input, preset, setProgress);
+      const output = await masterAudioBuffer(input, presetId, setProgress);
       const { blob, url } = audioBufferToBlobUrl(output);
       previewUrlsRef.current.push(url);
       setMasteredBlob(blob);
@@ -285,7 +285,7 @@ export function MasteringPanel({
     }
     try {
       const input = await loadMasteringSource(selected.id, selected.audioUrl, ensureAudioReady);
-      const output = await masterAudioBuffer(input, preset);
+      const output = await masterAudioBuffer(input, presetId);
       const blob = encodeWavBlob(output, 24);
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
@@ -521,6 +521,6 @@ export async function quickMasterLoopBlob(
 ): Promise<Blob> {
   const preset = MASTER_PRESETS[presetId];
   const input = await loadMasteringSource(loop.id, loop.audioUrl, ensureAudioReady);
-  const output = await masterAudioBuffer(input, preset);
+  const output = await masterAudioBuffer(input, presetId);
   return encodeWavBlob(output, 24);
 }

@@ -32,7 +32,9 @@ export type PromptCategoryId =
   | "seasonal_holidays"
   | "urban_raw"
   | "urban_beats"
-  | "rb_soul_specific";
+  | "rb_soul_specific"
+  | "uk_garage_dancehall"
+  | "rb_soul_beats";
 
 export type PromptCategory = {
   id: PromptCategoryId;

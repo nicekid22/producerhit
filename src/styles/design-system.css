@@ -1,0 +1,774 @@
+/**
+ * ProducerKit AI — Design System 2026
+ * Premium · Moderne · Minimaliste · Élégant · Fluide · Cohérent
+ *
+ * Tokens, utilitaires et composants pour une identité visuelle premium.
+ */
+
+/* ═══════════════════════════════════════════════════════
+   1. DESIGN TOKENS — :root
+   ═══════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Palette ── */
+  --ds-violet: #8b5cf6;
+  --ds-violet-deep: #7c3aed;
+  --ds-violet-deeper: #6d28d9;
+  --ds-purple: #a855f7;
+  --ds-fuchsia: #d946ef;
+  --ds-fuchsia-deep: #c026d3;
+  --ds-indigo: #6366f1;
+  --ds-indigo-deep: #4f46e5;
+  --ds-rose: #f43f5e;
+  --ds-pink: #ec4899;
+
+  /* ── Surfaces ── */
+  --ds-bg-primary: #0a0a0f;
+  --ds-bg-secondary: rgba(255, 255, 255, 0.035);
+  --ds-bg-card: rgba(255, 255, 255, 0.04);
+  --ds-bg-card-hover: rgba(255, 255, 255, 0.065);
+  --ds-bg-glass: rgba(255, 255, 255, 0.05);
+  --ds-bg-elevated: rgba(255, 255, 255, 0.07);
+
+  /* ── Borders ── */
+  --ds-border: rgba(255, 255, 255, 0.1);
+  --ds-border-subtle: rgba(255, 255, 255, 0.06);
+  --ds-border-hover: rgba(255, 255, 255, 0.16);
+  --ds-border-active: rgba(168, 85, 247, 0.45);
+
+  /* ── Shadows — 4 niveaux ── */
+  --ds-shadow-sm:
+    0 1px 2px rgba(0, 0, 0, 0.2),
+    0 1px 3px rgba(0, 0, 0, 0.1);
+  --ds-shadow-md:
+    0 4px 6px rgba(0, 0, 0, 0.15),
+    0 10px 24px rgba(0, 0, 0, 0.2);
+  --ds-shadow-lg:
+    0 10px 25px rgba(0, 0, 0, 0.2),
+    0 20px 48px rgba(0, 0, 0, 0.25);
+  --ds-shadow-xl:
+    0 20px 40px rgba(0, 0, 0, 0.25),
+    0 32px 64px rgba(0, 0, 0, 0.3);
+
+  /* ── Glow — violet + rose double glow ── */
+  --ds-glow-violet: 0 0 20px rgba(168, 85, 247, 0.35);
+  --ds-glow-fuchsia: 0 0 20px rgba(236, 72, 153, 0.25);
+  --ds-glow-active:
+    0 0 20px rgba(168, 85, 247, 0.35),
+    0 8px 35px rgba(236, 72, 153, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+
+  /* ── Premium Gradient — riche violet→fuchsia→rose→indigo ── */
+  --ds-gradient-premium:
+    linear-gradient(135deg,
+      #582186 0%,
+      #7C3AED 22%,
+      #A855F7 45%,
+      #EC4899 68%,
+      #F43F5E 82%,
+      #6366F1 100%);
+
+  /* ── Warm Gradient — PRO button orange→rose→violet ── */
+  --ds-gradient-warm:
+    linear-gradient(135deg,
+      #f97316 0%,
+      #ec4899 40%,
+      #a855f7 100%);
+
+  /* ── Spacing ── */
+  --ds-gap-xs: 0.375rem;
+  --ds-gap-sm: 0.5rem;
+  --ds-gap-md: 0.75rem;
+  --ds-gap-lg: 1rem;
+  --ds-gap-xl: 1.5rem;
+  --ds-gap-2xl: 2rem;
+
+  /* ── Border radius ── */
+  --ds-radius-sm: 8px;
+  --ds-radius-md: 12px;
+  --ds-radius-lg: 16px;
+  --ds-radius-xl: 20px;
+  --ds-radius-2xl: 24px;
+
+  /* ── Transitions ── */
+  --ds-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ds-duration: 250ms;
+  --ds-transition: all var(--ds-duration) var(--ds-ease);
+
+  /* ── Typography ── */
+  --ds-text-primary: rgba(255, 255, 255, 0.95);
+  --ds-text-secondary: rgba(255, 255, 255, 0.65);
+  --ds-text-tertiary: rgba(255, 255, 255, 0.45);
+  --ds-text-muted: rgba(255, 255, 255, 0.35);
+
+  /* ── Mesh gradient (buttons premium) ── */
+  --ds-mesh:
+    radial-gradient(ellipse 140% 80% at 15% 20%, rgba(126, 34, 206, 0.92) 0%, transparent 55%),
+    radial-gradient(ellipse 120% 70% at 80% 10%, rgba(99, 102, 241, 0.88) 0%, transparent 50%),
+    radial-gradient(ellipse 90% 60% at 40% 85%, rgba(168, 85, 247, 0.38) 0%, transparent 50%),
+    radial-gradient(ellipse 70% 50% at 65% 45%, rgba(139, 92, 246, 0.22) 0%, transparent 50%),
+    linear-gradient(135deg, rgb(88, 28, 135) 0%, rgb(76, 29, 149) 60%, rgb(55, 48, 163) 100%);
+}
+
+/* ═══════════════════════════════════════════════════════
+   2. GLOBAL ANIMATION UTILITIES
+   ═══════════════════════════════════════════════════════ */
+
+@keyframes dsFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes dsPulseGlow {
+  0%, 100% { box-shadow: var(--ds-glow-active); }
+  50% { box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.4), 0 0 32px rgba(139, 92, 246, 0.25), 0 8px 32px rgba(0, 0, 0, 0.2); }
+}
+
+@keyframes dsShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.ds-animate-in {
+  animation: dsFadeIn 0.4s var(--ds-ease) both;
+}
+
+.ds-stagger-1 { animation-delay: 0.05s; }
+.ds-stagger-2 { animation-delay: 0.1s; }
+.ds-stagger-3 { animation-delay: 0.15s; }
+.ds-stagger-4 { animation-delay: 0.2s; }
+
+/* ═══════════════════════════════════════════════════════
+   3. CARDS — Premium glassmorphism
+   ═══════════════════════════════════════════════════════ */
+
+.ds-card {
+  position: relative;
+  border-radius: var(--ds-radius-xl);
+  border: 1px solid var(--ds-border);
+  background: var(--ds-bg-card);
+  backdrop-filter: blur(12px) saturate(1.15);
+  -webkit-backdrop-filter: blur(12px) saturate(1.15);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    var(--ds-shadow-md);
+  transition: var(--ds-transition);
+  overflow: hidden;
+}
+
+.ds-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 600px circle at 0% 0%, rgba(139, 92, 246, 0.06), transparent 50%),
+    radial-gradient(ellipse 500px circle at 100% 100%, rgba(168, 85, 247, 0.04), transparent 50%);
+  opacity: 0;
+  transition: opacity 0.35s var(--ds-ease);
+  z-index: 0;
+}
+
+@media (hover: hover) {
+  .ds-card:hover {
+    border-color: var(--ds-border-hover);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      0 0 0 1px rgba(168, 85, 247, 0.1),
+      0 0 20px rgba(168, 85, 247, 0.08),
+      0 8px 32px rgba(236, 72, 153, 0.05),
+      var(--ds-shadow-lg);
+    transform: translateY(-2px);
+  }
+
+  .ds-card:hover::before {
+    opacity: 1;
+  }
+}
+
+.ds-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Card sizes */
+.ds-card--compact {
+  padding: 0.75rem 1rem;
+}
+
+.ds-card--default {
+  padding: 1rem 1.25rem;
+}
+
+.ds-card--spacious {
+  padding: 1.5rem 1.75rem;
+}
+
+/* ═══════════════════════════════════════════════════════
+   4. BUTTONS — Premium mesh gradient
+   ═══════════════════════════════════════════════════════ */
+
+/* Reset glass button */
+.pk-glass-btn {
+  position: relative !important;
+  overflow: hidden !important;
+  isolation: isolate;
+}
+
+.pk-glass-btn::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+  border-radius: inherit !important;
+  opacity: 0.2 !important;
+  background:
+    radial-gradient(ellipse 120% 80% at 20% 10%, rgba(255, 255, 255, 0.5), transparent 60%),
+    radial-gradient(ellipse 80% 60% at 80% 90%, rgba(203, 213, 225, 0.15), transparent 50%) !important;
+  transition: opacity 0.3s var(--ds-ease) !important;
+}
+
+.pk-glass-btn::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+  border-radius: inherit !important;
+  opacity: 0.6 !important;
+  background:
+    radial-gradient(ellipse 70% 50% at 30% 20%, rgba(192, 38, 211, 0.12), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 70% 80%, rgba(99, 102, 241, 0.08), transparent 50%) !important;
+  transition: opacity 0.3s var(--ds-ease) !important;
+}
+
+.pk-glass-btn > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Primary button — premium mesh */
+.pk-glass-btn--primary {
+  background: var(--ds-gradient-premium) !important;
+  color: #fff !important;
+  font-weight: 600;
+  border: 0 !important;
+  border-radius: var(--ds-radius-md) !important;
+  box-shadow:
+    0 0 20px rgba(168, 85, 247, 0.35),
+    0 8px 35px rgba(236, 72, 153, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  transition: all 0.2s var(--ds-ease) !important;
+}
+
+@media (hover: hover) {
+  .pk-glass-btn--primary:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      0 0 24px rgba(168, 85, 247, 0.45),
+      0 10px 40px rgba(236, 72, 153, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+    filter: brightness(1.08);
+  }
+}
+
+.pk-glass-btn--primary:active {
+  transform: translateY(0) !important;
+  filter: brightness(0.97);
+}
+
+.pk-glass-btn--primary::before {
+  opacity: 0.2 !important;
+}
+
+.pk-glass-btn--primary::after {
+  opacity: 0.6 !important;
+}
+
+/* Ghost / secondary button */
+.pk-glass-btn--ghost {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid var(--ds-border) !important;
+  border-radius: var(--ds-radius-md) !important;
+  color: var(--ds-text-secondary) !important;
+  box-shadow: none !important;
+  transition: all 0.2s var(--ds-ease) !important;
+}
+
+@media (hover: hover) {
+  .pk-glass-btn--ghost:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: var(--ds-border-hover) !important;
+    color: var(--ds-text-primary) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.pk-glass-btn--ghost:active {
+  transform: translateY(0) !important;
+}
+
+.pk-glass-btn--ghost::before,
+.pk-glass-btn--ghost::after {
+  opacity: 0 !important;
+}
+
+/* PRO / upgrade CTA — warm gradient (orange → rose → violet) */
+.pk-pro-cta {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 0 !important;
+  color: #fff !important;
+  font-weight: 700;
+  background: var(--ds-gradient-warm) !important;
+  background-size: 200% 100% !important;
+  background-position: 0% 50% !important;
+  box-shadow:
+    0 0 20px rgba(244, 63, 94, 0.28),
+    0 8px 32px rgba(168, 85, 247, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+  transition: all 0.25s var(--ds-ease) !important;
+}
+
+@media (hover: hover) {
+  .pk-pro-cta:hover:not(:disabled) {
+    transform: translateY(-1px);
+    background-position: 100% 50% !important;
+    box-shadow:
+      0 0 26px rgba(244, 63, 94, 0.36),
+      0 10px 40px rgba(168, 85, 247, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.24) !important;
+    filter: brightness(1.06);
+  }
+}
+
+.pk-pro-cta:active:not(:disabled) {
+  transform: translateY(0) !important;
+  filter: brightness(0.97);
+}
+
+.pk-pro-cta:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+/* ═══════════════════════════════════════════════════════
+   5. BADGES / TAGS — Modern translucent
+   ═══════════════════════════════════════════════════════ */
+
+.ds-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.55rem;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ds-text-secondary);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all 0.2s var(--ds-ease);
+  white-space: nowrap;
+}
+
+.ds-badge:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: var(--ds-text-primary);
+}
+
+.ds-badge--accent {
+  background: rgba(168, 85, 247, 0.12);
+  border-color: rgba(168, 85, 247, 0.25);
+  color: rgba(196, 181, 253, 0.92);
+}
+
+.ds-badge--accent:hover {
+  background: rgba(168, 85, 247, 0.2);
+  border-color: rgba(168, 85, 247, 0.38);
+}
+
+.ds-badge--success {
+  background: rgba(52, 211, 153, 0.1);
+  border-color: rgba(52, 211, 153, 0.25);
+  color: rgba(110, 231, 183, 0.92);
+}
+
+.ds-badge--warning {
+  background: rgba(251, 191, 36, 0.1);
+  border-color: rgba(251, 191, 36, 0.25);
+  color: rgba(253, 224, 71, 0.92);
+}
+
+.ds-badge--error {
+  background: rgba(244, 63, 94, 0.1);
+  border-color: rgba(244, 63, 94, 0.25);
+  color: rgba(252, 165, 165, 0.92);
+}
+
+/* ═══════════════════════════════════════════════════════
+   6. INPUTS — Premium glass
+   ═══════════════════════════════════════════════════════ */
+
+.ds-input {
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  border-radius: var(--ds-radius-md);
+  border: 1px solid var(--ds-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ds-text-primary);
+  outline: none;
+  transition: all 0.2s var(--ds-ease);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.ds-input::placeholder {
+  color: var(--ds-text-tertiary);
+}
+
+.ds-input:focus {
+  border-color: rgba(168, 85, 247, 0.45);
+  box-shadow:
+    0 0 0 3px rgba(168, 85, 247, 0.1),
+    0 0 16px rgba(139, 92, 246, 0.08);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* ═══════════════════════════════════════════════════════
+   7. SIDEBAR — Modern rail
+   ═══════════════════════════════════════════════════════ */
+
+.ds-sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--ds-radius-sm);
+  color: var(--ds-text-tertiary);
+  transition: all 0.2s var(--ds-ease);
+  position: relative;
+}
+
+.ds-sidebar-nav-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ds-text-primary);
+}
+
+.ds-sidebar-nav-item--active {
+  background: rgba(168, 85, 247, 0.12);
+  color: var(--ds-text-primary);
+  box-shadow: inset 0 0 0 1px rgba(168, 85, 247, 0.2);
+}
+
+.ds-sidebar-nav-item--active::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--ds-purple);
+}
+
+/* ═══════════════════════════════════════════════════════
+   8. HOVER LIFT UTILITY
+   ═══════════════════════════════════════════════════════ */
+
+@media (hover: hover) {
+  .ds-lift {
+    transition: transform 0.25s var(--ds-ease), box-shadow 0.25s var(--ds-ease), filter 0.25s var(--ds-ease);
+  }
+
+  .ds-lift:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.03);
+  }
+
+  .ds-lift-lg:hover {
+    transform: translateY(-3px);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   9. PLAYER — Glow when playing
+   ═══════════════════════════════════════════════════════ */
+
+.ds-player-active {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(168, 85, 247, 0.2),
+    0 0 24px rgba(139, 92, 246, 0.12),
+    0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+.ds-player-waveform-active .pk-waveform-bar {
+  animation: dsPulseBar 1.2s ease-in-out infinite;
+}
+
+@keyframes dsPulseBar {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* ═══════════════════════════════════════════════════════
+   10. BACKGROUND MESH — Subtle depth halos
+   ═══════════════════════════════════════════════════════ */
+
+.ds-bg-mesh {
+  position: relative;
+}
+
+.ds-bg-mesh::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 800px circle at 20% 30%, rgba(139, 92, 246, 0.06), transparent 50%),
+    radial-gradient(ellipse 600px circle at 80% 20%, rgba(217, 70, 239, 0.04), transparent 50%),
+    radial-gradient(ellipse 700px circle at 50% 80%, rgba(99, 102, 241, 0.05), transparent 50%);
+}
+
+/* ═══════════════════════════════════════════════════════
+   11. TYPOGRAPHY HIERARCHY
+   ═══════════════════════════════════════════════════════ */
+
+.ds-heading-xl {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  color: var(--ds-text-primary);
+}
+
+.ds-heading-lg {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--ds-text-primary);
+}
+
+.ds-heading-md {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+  color: var(--ds-text-primary);
+}
+
+.ds-body {
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--ds-text-secondary);
+}
+
+.ds-caption {
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--ds-text-tertiary);
+}
+
+.ds-overline {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ds-text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════
+   12. SEPARATOR
+   ═══════════════════════════════════════════════════════ */
+
+.ds-separator {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--ds-border-subtle) 20%,
+    var(--ds-border) 50%,
+    var(--ds-border-subtle) 80%,
+    transparent 100%
+  );
+}
+
+/* ═══════════════════════════════════════════════════════
+   13. STATES — Visual feedback
+   ═══════════════════════════════════════════════════════ */
+
+.ds-state-loading {
+  opacity: 0.6;
+  pointer-events: none;
+  position: relative;
+}
+
+.ds-state-loading::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent 25%, rgba(255, 255, 255, 0.06) 50%, transparent 75%);
+  background-size: 200% 100%;
+  animation: dsShimmer 1.5s infinite;
+}
+
+.ds-state-disabled {
+  opacity: 0.4;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+.ds-state-success {
+  border-color: rgba(52, 211, 153, 0.3);
+  box-shadow: 0 0 12px rgba(52, 211, 153, 0.1);
+}
+
+.ds-state-error {
+  border-color: rgba(244, 63, 94, 0.3);
+  box-shadow: 0 0 12px rgba(244, 63, 94, 0.1);
+}
+
+/* ═══════════════════════════════════════════════════════
+   14. SCROLLBAR
+   ═══════════════════════════════════════════════════════ */
+
+.ds-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ds-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ds-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+}
+
+.ds-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* ═══════════════════════════════════════════════════════
+   15. LOOP CARD PREMIUM (extends existing .pk-loop-card)
+   ═══════════════════════════════════════════════════════ */
+
+.pk-loop-card {
+  border-radius: var(--ds-radius-xl) !important;
+  border: 1px solid var(--ds-border) !important;
+  background:
+    var(--ds-bg-card) !important;
+  backdrop-filter: blur(12px) saturate(1.15) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(1.15) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    var(--ds-shadow-md) !important;
+  transition: all 0.25s var(--ds-ease) !important;
+  overflow: hidden;
+}
+
+@media (hover: hover) {
+  .pk-loop-card:hover {
+    border-color: var(--ds-border-hover) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      0 0 0 1px rgba(168, 85, 247, 0.1),
+      0 0 20px rgba(168, 85, 247, 0.08),
+      0 8px 32px rgba(236, 72, 153, 0.05),
+      var(--ds-shadow-lg) !important;
+    transform: translateY(-2px) !important;
+  }
+}
+
+/* Active card — deeper glow */
+.pk-loop-card--active {
+  border-color: rgba(168, 85, 247, 0.35) !important;
+  background:
+    radial-gradient(520px circle at 0% 0%, rgba(139, 92, 246, 0.08), transparent 52%),
+    radial-gradient(480px circle at 100% 100%, rgba(168, 85, 247, 0.06), transparent 50%),
+    rgba(255, 255, 255, 0.04) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 0 1px rgba(168, 85, 247, 0.18),
+    0 0 20px rgba(168, 85, 247, 0.12),
+    0 0 35px rgba(236, 72, 153, 0.08),
+    0 16px 48px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Playing card — pulse glow */
+.pk-loop-card--playing {
+  border-color: rgba(168, 85, 247, 0.42) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 0 1px rgba(168, 85, 247, 0.22),
+    0 0 24px rgba(168, 85, 247, 0.16),
+    0 0 40px rgba(236, 72, 153, 0.1),
+    0 16px 48px rgba(168, 85, 247, 0.1),
+    0 24px 56px rgba(0, 0, 0, 0.32) !important;
+  animation: dsPulseGlow 3s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════════════════
+   16. GENERATOR SECTION — More breathing room
+   ═══════════════════════════════════════════════════════ */
+
+.pk-dashboard-generator .pk-generator-section {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.pk-dashboard-generator .pk-generator-section + .pk-generator-section {
+  margin-top: 0.5rem;
+}
+
+/* ═══════════════════════════════════════════════════════
+   17. RESPONSIVE — Spacing adjustments
+   ═══════════════════════════════════════════════════════ */
+
+@media (max-width: 767px) {
+  :root {
+    --ds-radius-xl: 16px;
+    --ds-radius-2xl: 20px;
+    --ds-gap-xl: 1.25rem;
+    --ds-gap-2xl: 1.5rem;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   18. REDUCED MOTION
+   ═══════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-card:hover,
+  .ds-lift:hover {
+    transform: none !important;
+  }
+
+  .pk-loop-card--playing {
+    animation: none !important;
+  }
+
+  .pk-glass-btn--primary:hover {
+    transform: none !important;
+  }
+
+  .ds-animate-in {
+    animation: none !important;
+  }
+}

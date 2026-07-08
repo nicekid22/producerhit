@@ -68,7 +68,7 @@ export function PricingPlanButton({ tier, cta, busy = false, disabled = false, o
         <span className="pk-landing-gen__cta-field" aria-hidden />
         {renderAction(
           cn(
-            "pk-landing-gen__cta pk-pricing-gen-cta group flex w-full items-center justify-center rounded-full px-5",
+            "pk-landing-gen__cta pk-pricing-gen-cta group flex w-full items-center justify-center rounded-xl px-5",
             busy ? "is-generating" : "",
           ),
           <>

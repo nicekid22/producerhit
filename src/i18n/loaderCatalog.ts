@@ -11,7 +11,7 @@ export type PkLoaderIcon =
   | "pricing"
   | "default";
 
-type LoaderPair = { label: Record<AppLocale, string>; sublabel: Record<AppLocale, string> };
+type LoaderPair = { label: Partial<Record<AppLocale, string>>; sublabel: Partial<Record<AppLocale, string>> };
 
 function pair(label: ReturnType<typeof L>, sublabel: ReturnType<typeof L>): LoaderPair {
   return { label, sublabel };

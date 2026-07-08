@@ -2,14 +2,15 @@
 
 @media (max-width: 767px) {
   .pk-landing--mobile-focus {
-    --pk-apple-accent-from: var(--prism-cyan, #67c3ff);
-    --pk-apple-accent-to: var(--prism-violet, #9d7cff);
+    --pk-apple-accent-from: var(--prism-violet, #9d7cff);
+    --pk-apple-accent-to: var(--prism-pink, var(--prism-pink));
     --pk-apple-cta-gradient: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--pk-apple-accent-from) 92%, white) 0%,
-      color-mix(in srgb, var(--pk-apple-accent-to) 88%, #4a3a8a) 100%
+      135deg,
+      var(--prism-violet, #9d7cff) 0%,
+      var(--prism-accent) 50%,
+      var(--prism-pink) 100%
     );
-    --pk-apple-cta-shadow: 0 6px 28px color-mix(in srgb, var(--pk-apple-accent-to) 32%, transparent);
+    --pk-apple-cta-shadow: 0 6px 28px rgba(139, 92, 246, 0.35);
     --pk-apple-segment-active: linear-gradient(
       135deg,
       color-mix(in srgb, var(--pk-apple-accent-from) 24%, transparent) 0%,

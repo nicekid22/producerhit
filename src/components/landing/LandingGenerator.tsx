@@ -448,7 +448,7 @@ export function LandingGenerator({
                         onClick={() => void onGenerate()}
                         disabled={generating}
                         className={cn(
-                          "pk-landing-gen__cta pk-landing-gen__cta--mobile group inline-flex h-12 w-full items-center justify-center rounded-full px-6",
+                          "pk-landing-gen__cta pk-landing-gen__cta--mobile group inline-flex h-12 w-full items-center justify-center rounded-xl px-6",
                           generating && "is-generating",
                         )}
                       >
@@ -619,7 +619,7 @@ export function LandingGenerator({
                       type="button"
                       onClick={() => void onGenerate()}
                       disabled={generating}
-                      className={`pk-landing-gen__cta group inline-flex h-12 w-full items-center justify-center rounded-full px-6 sm:w-auto sm:min-w-[148px]${generating ? " is-generating" : ""}`}
+                       className={`pk-landing-gen__cta group inline-flex h-12 w-full items-center justify-center rounded-xl px-6 sm:w-auto sm:min-w-[148px]${generating ? " is-generating" : ""}`}
                     >
                       <span className="pk-landing-gen__cta-rim" aria-hidden />
                       <span className="pk-landing-gen__cta-spark" aria-hidden />

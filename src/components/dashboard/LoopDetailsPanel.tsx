@@ -316,7 +316,7 @@ export function LoopDetailsPanel({
         className="w-full"
         onClick={() => onOpenMastering?.(loop)}
       >
-        {isFr ? "Mastering" : "Mastering"}
+        {"Mastering"}
       </Button>
 
       <DetailTabs

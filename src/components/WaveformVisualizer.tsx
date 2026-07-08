@@ -198,6 +198,12 @@ function drawWaveform({
   const bars = Math.max(8, Math.floor(w / stride));
   const playedBars = Math.max(0, Math.min(bars, Math.round(progress * bars)));
 
+  const playedGrad = ctx.createLinearGradient(0, h, 0, 0);
+  playedGrad.addColorStop(0, "rgb(236, 72, 153)");
+  playedGrad.addColorStop(0.3, "rgb(217, 70, 239)");
+  playedGrad.addColorStop(0.6, "rgb(168, 85, 247)");
+  playedGrad.addColorStop(1, "rgb(99, 102, 241)");
+
   for (let i = 0; i < bars; i++) {
     const t = bars === 1 ? 0 : i / (bars - 1);
     const idx = Math.min(peaks.length - 1, Math.floor(t * (peaks.length - 1)));
@@ -205,7 +211,7 @@ function drawWaveform({
     const barH = Math.max(1, Math.floor(amp * (h - 2)));
     const x = i * stride;
     const y = Math.floor((h - barH) / 2);
-    ctx.fillStyle = i < playedBars ? playedColor : unplayedColor;
+    ctx.fillStyle = i < playedBars ? playedGrad : unplayedColor;
     ctx.fillRect(x, y, barW, barH);
   }
 }
@@ -242,7 +248,10 @@ function WaveformStaticPlaceholder({
               className="flex-1 rounded-full"
               style={{
                 height: barH,
-                backgroundColor: played ? playedColor : idleColor,
+                background: played
+                  ? "linear-gradient(to top, rgb(192, 38, 211), rgb(139, 92, 246), rgb(99, 102, 241))"
+                  : undefined,
+                backgroundColor: played ? undefined : idleColor,
                 opacity: played ? 0.95 : 0.55,
               }}
             />
@@ -338,7 +347,7 @@ export function WaveformVisualizer({
           const h = Math.min(40, getBarHeight(i) * 2);
           const prismGradient =
             variant === "prism"
-              ? `linear-gradient(to top, ${waveColors.gradientStart}, ${waveColors.gradientEnd})`
+              ? `linear-gradient(to top, rgb(236, 72, 153), rgb(217, 70, 239), rgb(168, 85, 247), rgb(99, 102, 241))`
               : undefined;
           return (
             <div
@@ -549,7 +558,10 @@ export function AudioWaveform({
                 className="flex-1 rounded-full"
                 style={{
                   height: barH,
-                  backgroundColor: played ? playedColor : idleColor,
+                  background: played
+                    ? "linear-gradient(to top, rgb(236, 72, 153), rgb(168, 85, 247), rgb(99, 102, 241))"
+                    : undefined,
+                  backgroundColor: played ? undefined : idleColor,
                   opacity: played ? 1 : 0.85,
                 }}
               />

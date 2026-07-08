@@ -1,16 +1,17 @@
 /**
- * Sidebar rail (desktop) — grille unique : nav + footer (cloche, thème, mood, langue, logout).
- * Une taille, un gap, un shell bouton. Thèmes = couleurs actif/hover seulement.
+ * Sidebar rail (desktop) — Premium 2026
+ * Modern · Élégant · Animations fluides
  */
 
 @media (min-width: 768px) {
   .pk-sidebar-root {
-    --pk-sidebar-rail-btn-size: 40px;
+    --pk-sidebar-rail-btn-size: 38px;
     --pk-sidebar-rail-gap: 6px;
-    --pk-sidebar-rail-icon: rgba(255, 255, 255, 0.88);
+    --pk-sidebar-rail-icon: rgba(255, 255, 255, 0.55);
+    --pk-sidebar-rail-icon-hover: rgba(255, 255, 255, 0.92);
     --cloud-nav-size: var(--pk-sidebar-rail-btn-size);
-    padding-top: 0.5rem !important;
-    padding-bottom: 0.5rem !important;
+    padding-top: 0.625rem !important;
+    padding-bottom: 0.625rem !important;
   }
 
   .pk-sidebar-root .pk-sidebar-rail-nav {
@@ -30,6 +31,7 @@
     width: 100%;
     margin-top: var(--pk-sidebar-rail-gap) !important;
     padding-top: var(--pk-sidebar-rail-gap) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
     gap: var(--pk-sidebar-rail-gap) !important;
     overflow: visible;
   }
@@ -50,7 +52,7 @@
     line-height: 0;
   }
 
-  /* Shell commun — cloche, logout, cycle thème (base) */
+  /* Shell commun — cloche, logout, cycle thème */
   .pk-sidebar-root .pk-sidebar-ctrl-btn {
     position: relative;
     display: inline-flex;
@@ -63,45 +65,45 @@
     min-height: var(--pk-sidebar-rail-btn-size);
     padding: 0;
     margin: 0;
-    border: 2px solid transparent;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.04);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: transparent;
     color: var(--pk-sidebar-rail-icon);
     cursor: pointer;
     line-height: 0;
     vertical-align: middle;
     transition:
-      transform 0.15s ease,
-      border-color 0.15s ease,
-      box-shadow 0.15s ease,
-      background 0.15s ease,
-      color 0.15s ease;
+      transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+      background 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+      color 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.2s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .pk-sidebar-root .pk-sidebar-ctrl-btn:disabled {
-    opacity: 0.55;
+    opacity: 0.4;
     cursor: not-allowed;
   }
 
   .pk-sidebar-root .pk-sidebar-ctrl-btn:hover:not(:disabled):not(.pk-sidebar-ctrl-btn--open) {
-    border-color: rgba(255, 255, 255, 0.1);
     background: rgba(255, 255, 255, 0.07);
-    color: rgba(255, 255, 255, 0.96);
+    color: var(--pk-sidebar-rail-icon-hover);
+    border-color: rgba(255, 255, 255, 0.08);
   }
 
   .pk-sidebar-root .pk-sidebar-ctrl-btn:active:not(:disabled) {
-    transform: scale(0.96);
+    transform: scale(0.93);
   }
 
   .pk-sidebar-root .pk-sidebar-ctrl-btn:focus-visible {
-    outline: 2px solid rgba(103, 195, 255, 0.45);
+    outline: 2px solid rgba(168, 85, 247, 0.45);
     outline-offset: 2px;
   }
 
   .pk-sidebar-root .pk-sidebar-ctrl-btn svg {
     color: inherit;
     flex-shrink: 0;
+    transition: filter 0.2s ease;
   }
 
   /* Nav links — même boîte que les contrôles */
@@ -110,8 +112,9 @@
     height: var(--pk-sidebar-rail-btn-size) !important;
     min-width: var(--pk-sidebar-rail-btn-size) !important;
     min-height: var(--pk-sidebar-rail-btn-size) !important;
-    border-radius: 12px !important;
+    border-radius: 10px !important;
     padding: 0 !important;
+    transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1) !important;
   }
 
   .pk-sidebar-root .pk-studio-nav-link > a {
@@ -122,6 +125,14 @@
     height: 100%;
   }
 
+  .pk-sidebar-root .pk-studio-nav-link:hover {
+    background: rgba(255, 255, 255, 0.07) !important;
+  }
+
+  .pk-sidebar-root .pk-studio-nav-link:active {
+    transform: scale(0.93) !important;
+  }
+
   /* Mood stack — aligné sur la grille */
   .pk-sidebar-root .pk-cloud-accent-elements--sidebar {
     gap: var(--pk-sidebar-rail-gap) !important;
@@ -129,10 +140,6 @@
     width: 100%;
   }
 
-  /*
-   * Mood Cloud (4 éléments) — styles de base toujours chargés.
-   * cloud-theme.css (lazy) ajoute les dégradés quand le skin Cloud est actif.
-   */
   .pk-sidebar-root .pk-cloud-accent-element--nav {
     position: relative;
     display: inline-flex;
@@ -145,85 +152,86 @@
     min-height: var(--pk-sidebar-rail-btn-size);
     padding: 0;
     margin: 0;
-    border: 2px solid transparent;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.04);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: transparent;
     cursor: pointer;
     line-height: 0;
     overflow: hidden;
     transition:
-      transform 0.15s ease,
-      border-color 0.15s ease,
-      box-shadow 0.15s ease,
-      background 0.15s ease;
-  }
-
-  .pk-sidebar-root .pk-cloud-accent-element--nav::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.15s ease;
+      transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+      background 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 0.2s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .pk-sidebar-root .pk-cloud-accent-element--nav .pk-cloud-accent-element__icon {
     position: relative;
     z-index: 1;
-    color: rgba(255, 255, 255, 0.52);
+    color: var(--pk-sidebar-rail-icon);
     filter: none !important;
+    transition: color 0.2s ease;
   }
 
   .pk-sidebar-root .pk-cloud-accent-elements--dormant .pk-cloud-accent-element--nav,
   .pk-sidebar-root .pk-cloud-accent-elements--sidebar .pk-cloud-accent-element--nav:not(.pk-cloud-accent-element--active) {
-    background: rgba(255, 255, 255, 0.04) !important;
+    background: transparent !important;
     border-color: transparent !important;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
     transform: none;
-  }
-
-  .pk-sidebar-root .pk-cloud-accent-elements--dormant .pk-cloud-accent-element--nav::before,
-  .pk-sidebar-root .pk-cloud-accent-elements--sidebar .pk-cloud-accent-element--nav:not(.pk-cloud-accent-element--active)::before {
-    opacity: 0 !important;
   }
 
   .pk-sidebar-root .pk-cloud-accent-elements--dormant .pk-cloud-accent-element--nav:hover,
   .pk-sidebar-root .pk-cloud-accent-elements--sidebar .pk-cloud-accent-element--nav:not(.pk-cloud-accent-element--active):hover {
-    border-color: rgba(255, 255, 255, 0.1) !important;
     background: rgba(255, 255, 255, 0.07) !important;
-    transform: scale(1.03);
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    transform: scale(1.04);
   }
 
   .pk-sidebar-root .pk-cloud-accent-element--nav:active {
-    transform: scale(0.96);
+    transform: scale(0.93) !important;
   }
 
   .pk-sidebar-root .pk-cloud-accent-element--nav:focus-visible {
-    outline: 2px solid rgba(103, 195, 255, 0.45);
+    outline: 2px solid rgba(168, 85, 247, 0.45);
     outline-offset: 2px;
   }
 
-  /* Langue — même shell plat que cloche / logout sur Prism */
+  /* Active nav — glow violet subtil */
+  .pk-sidebar-root .pk-cloud-accent-element--active,
+  .pk-sidebar-root .pk-studio-nav-link--active {
+    background: rgba(168, 85, 247, 0.1) !important;
+    border-color: rgba(168, 85, 247, 0.18) !important;
+    box-shadow:
+      0 0 12px rgba(139, 92, 246, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  .pk-sidebar-root .pk-cloud-accent-element--active .pk-cloud-accent-element__icon,
+  .pk-sidebar-root .pk-studio-nav-link--active a {
+    color: rgba(196, 181, 253, 0.95) !important;
+  }
+
+  /* Langue */
   .pk-sidebar-root .pk-language-btn--sidebar::before {
     opacity: 0;
   }
 
   .pk-sidebar-root .pk-language-btn--sidebar {
-    border: 2px solid transparent;
-    background: rgba(255, 255, 255, 0.04);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    border: 1px solid transparent;
+    background: transparent;
   }
 
   .pk-sidebar-root .pk-language-btn--sidebar:hover:not(.pk-language-btn--open) {
-    transform: scale(1.03);
-    border-color: rgba(255, 255, 255, 0.1);
+    transform: scale(1.04);
     background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .pk-sidebar-root .pk-language-btn--sidebar:active {
+    transform: scale(0.93);
   }
 }
 
-/* Cloud — icônes footer blanches (cloche / logout), nav inactive = muted existant */
+/* Cloud — icônes footer blanches */
 html.pk-cloud-active .pk-sidebar-root .pk-sidebar-ctrl-btn,
 .pk-cloud-stage .pk-sidebar-root .pk-sidebar-ctrl-btn {
   color: rgba(255, 255, 255, 0.92);

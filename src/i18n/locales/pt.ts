@@ -78,6 +78,7 @@ export const pt: BaseMessageCatalog = {
     generator: "Gerador",
     library: "Biblioteca",
     voiceStudio: "Voice Studio",
+    tagStudio: "Tag Studio",
     sampleLab: "Sample Lab",
     settings: "Configurações",
     website: "Site",

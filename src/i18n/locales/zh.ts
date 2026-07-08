@@ -74,6 +74,7 @@ export const zh: BaseMessageCatalog = {
     generator: "生成器",
     library: "曲库",
     voiceStudio: "Voice Studio",
+    tagStudio: "Tag Studio",
     sampleLab: "Sample Lab",
     settings: "设置",
     website: "网站",

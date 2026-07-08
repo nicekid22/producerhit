@@ -813,7 +813,7 @@ export const LoopCardItem = memo(function LoopCardItem({
             ) : (
               <button
                 type="button"
-                className="rounded-lg bg-black/60 px-2 py-1 text-xs font-semibold text-white backdrop-blur-sm transition-colors hover:bg-black/75"
+                className="rounded-xl bg-black/50 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-md transition-all duration-200 hover:bg-black/65 hover:shadow-[0_4px_12px_rgba(0,0,0,0.2)]"
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsEditingTitle(true);
@@ -926,7 +926,9 @@ export const LoopCardItem = memo(function LoopCardItem({
       data-loop-card
       ref={cardRef}
       className={cn(
-        "relative rounded-pk border border-pk-border bg-pk-panel p-3",
+        "relative rounded-[1.25rem] border border-white/[0.08] bg-white/[0.035] p-3 backdrop-blur-xl transition-all duration-[250ms] [cubic-bezier(0.22,1,0.36,1)]",
+        "shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_4px_8px_rgba(0,0,0,0.18),0_12px_28px_rgba(0,0,0,0.22)]",
+        "hover:border-white/[0.14] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_0_0_1px_rgba(124,58,237,0.12),0_0_24px_rgba(124,58,237,0.1),0_0_40px rgba(236,72,153,0.06),0_12px_32px_rgba(0,0,0,0.22),0_24px_56px_rgba(0,0,0,0.28)] hover:-translate-y-0.5",
         isLibraryCard ? "pk-loop-card--library" : "",
         onOpenDetails ? "pr-12" : "",
         loopCardClass(active, activePlaying),
@@ -947,7 +949,7 @@ export const LoopCardItem = memo(function LoopCardItem({
       {onOpenDetails ? (
         <button
           type="button"
-          className="absolute right-1.5 top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-pk text-pk-muted transition-colors hover:bg-white/5 hover:text-pk-text"
+          className="absolute right-1.5 top-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-lg text-white/35 transition-all duration-200 hover:bg-white/[0.08] hover:text-white/80 hover:shadow-[0_2px_8px_rgba(0,0,0,0.15)]"
           onClick={(e) => {
             e.stopPropagation();
             onOpenDetails(loop, computeAnchorTop());
@@ -959,23 +961,23 @@ export const LoopCardItem = memo(function LoopCardItem({
         </button>
       ) : null}
       {showWorkspaceCoverPeek ? (
-        <div
+          <div
           className={cn(
-            "pk-loop-cover-banner mb-1.5 rounded-lg p-[1.5px]",
+            "pk-loop-cover-banner mb-1.5 rounded-xl overflow-hidden",
             loopCoverClass(active, activePlaying),
           )}
           style={{ position: "relative" }}
         >
-          <StoredLoopCover
-            key={`${coverKey}:${bannerCoverUrl}`}
-            coverUrl={bannerCoverUrl}
-            className={cn(
-              "w-full rounded-[8px]",
-              isLibraryCard ? "pk-loop-card--library-cover aspect-[5/4] min-h-[9.5rem]" : "h-20",
-            )}
-            loading="lazy"
-          />
-          <div className="absolute left-2 bottom-2 z-10">
+            <StoredLoopCover
+              key={`${coverKey}:${bannerCoverUrl}`}
+              coverUrl={bannerCoverUrl}
+              className={cn(
+                "w-full rounded-[10px] transition-transform duration-[420ms] [cubic-bezier(0.22,1,0.36,1)] hover:scale-[1.02]",
+                isLibraryCard ? "pk-loop-card--library-cover aspect-[5/4] min-h-[9.5rem]" : "h-20",
+              )}
+              loading="lazy"
+            />
+          <div className="absolute inset-x-2 bottom-2 z-10 flex items-end justify-between gap-2">
             {isEditingTitle ? (
               <div className="flex items-center gap-1">
                 <input
@@ -1033,7 +1035,7 @@ export const LoopCardItem = memo(function LoopCardItem({
             ) : (
               <button
                 type="button"
-                className="rounded-lg bg-black/60 px-2 py-1 text-xs font-semibold text-white backdrop-blur-sm transition-colors hover:bg-black/75"
+                className="rounded-xl bg-black/50 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-md transition-all duration-200 hover:bg-black/65 hover:shadow-[0_4px_12px_rgba(0,0,0,0.2)]"
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsEditingTitle(true);
@@ -1043,18 +1045,53 @@ export const LoopCardItem = memo(function LoopCardItem({
                 {loop.name}
               </button>
             )}
+
+            {/* New Cover CTA (moved from info row) */}
+            {showWorkspaceCoverPeek && canRerollCover && !isEditingTitle ? (
+              <button
+                type="button"
+                className={cn(
+                  "inline-flex shrink-0 items-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-1.5 py-0.5",
+                  "text-[10px] font-medium tracking-wide text-pk-muted backdrop-blur-sm",
+                  "transition-colors hover:border-white/[0.14] hover:bg-white/[0.06] hover:text-pk-text",
+                  "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-pk-accent/80",
+                  "disabled:pointer-events-none disabled:opacity-50",
+                )}
+                disabled={isRerollingCover}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRerollCover();
+                }}
+                aria-label={loopCardCoverRerollAria(locale, LOOP_COVER_REROLL_CREDIT_COST)}
+              >
+                {isRerollingCover ? (
+                  <Loader2 className="h-2.5 w-2.5 shrink-0 animate-spin" aria-hidden />
+                ) : (
+                  <RefreshCcw className="h-2.5 w-2.5 shrink-0 opacity-75" aria-hidden />
+                )}
+                <span className="inline-flex items-center gap-1 max-[380px]:hidden">
+                  <span>{lc.newInspo}</span>
+                  <GenerationCreditAmount
+                    amount={LOOP_COVER_REROLL_CREDIT_COST}
+                    showPlus
+                    className="opacity-90"
+                    iconClassName="h-2.5 w-2.5"
+                  />
+                </span>
+              </button>
+            ) : null}
           </div>
         </div>
       ) : null}
       <div className="flex gap-2.5">
         {!showWorkspaceCoverPeek ? (
-          <div
+            <div
             className={cn(
-              "relative h-10 w-10 shrink-0 rounded-pk p-[1.5px] pk-loop-cover-thumb",
+              "relative h-10 w-10 shrink-0 rounded-xl p-[1.5px] pk-loop-cover-thumb",
               loopCoverClass(active, activePlaying),
             )}
           >
-            <div className={cn("relative h-full w-full overflow-hidden rounded-[5px]", COVER_SURFACE_CLASS)}>
+            <div className={cn("relative h-full w-full overflow-hidden rounded-[8px]", COVER_SURFACE_CLASS)}>
               <CoverMedia
                 loop={loop}
                 coverUrl={bannerCoverUrl || coverUrl}
@@ -1081,7 +1118,7 @@ export const LoopCardItem = memo(function LoopCardItem({
           </div>
         ) : null}
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5">
             <div className="min-w-0 flex flex-1 items-center gap-1.5">
               {isEditingTitle ? (
                 <>
@@ -1139,11 +1176,47 @@ export const LoopCardItem = memo(function LoopCardItem({
                 </>
               ) : null}
             </div>
+
+            <Badge className="shrink-0 text-[10px]">{loop.genre}</Badge>
+            {songCard && vocalLangLabel ? (
+              <Badge variant="muted" className="shrink-0 gap-1 text-[10px]">
+                <Languages className="h-2.5 w-2.5 shrink-0 opacity-80" aria-hidden />
+                {vocalLangLabel}
+              </Badge>
+            ) : null}
+            {voiceCloneLabel ? (
+              <Badge
+                variant="muted"
+                className={
+                  voiceCloneInfo?.applied && !voiceCloneInfo.fallback
+                    ? "shrink-0 gap-1 border-emerald-400/30 bg-emerald-500/10 text-emerald-200 text-[10px]"
+                    : "shrink-0 gap-1 border-amber-400/25 bg-amber-500/10 text-amber-100 text-[10px]"
+                }
+              >
+                {voiceCloneLabel}
+              </Badge>
+            ) : null}
+            {tagMeta ? (
+              <Badge variant="muted" className="shrink-0 gap-1 border-violet-400/30 bg-violet-500/10 text-violet-200 text-[10px]">
+                <Tag className="h-2.5 w-2.5 shrink-0 opacity-80" aria-hidden />
+                {lc.producerTagBadge}
+              </Badge>
+            ) : null}
+            {!songCard && loop.mood ? <Badge variant="muted" className="shrink-0 text-[10px]">{loop.mood}</Badge> : null}
+            {loop.bpm && loop.bpm > 0 ? (
+              <Badge variant="muted" className="shrink-0 text-[10px]">{loop.bpm} BPM</Badge>
+            ) : (
+              <Badge variant="muted" className="shrink-0 text-[10px]">Auto BPM</Badge>
+            )}
+            <span className="shrink-0 text-[10px] text-pk-muted">
+              {loop.key || loop.scale ? `${loop.key} ${loop.scale}` : "Auto Key"}
+            </span>
+
             {showWorkspaceCoverPeek && canRerollCover && !isEditingTitle ? (
               <button
                 type="button"
                 className={cn(
-                  "inline-flex shrink-0 items-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-1.5 py-0.5",
+                  "ml-auto inline-flex shrink-0 items-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-1.5 py-0.5",
                   "text-[10px] font-medium tracking-wide text-pk-muted backdrop-blur-sm",
                   "transition-colors hover:border-white/[0.14] hover:bg-white/[0.06] hover:text-pk-text",
                   "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-pk-accent/80",
@@ -1173,46 +1246,10 @@ export const LoopCardItem = memo(function LoopCardItem({
               </button>
             ) : null}
           </div>
-          <div className="mt-1 flex flex-wrap items-center gap-1.5">
-            <Badge className="text-[11px]">{loop.genre}</Badge>
-            {songCard && vocalLangLabel ? (
-              <Badge variant="muted" className="gap-1 text-[11px]">
-                <Languages className="h-2.5 w-2.5 shrink-0 opacity-80" aria-hidden />
-                {vocalLangLabel}
-              </Badge>
-            ) : null}
-            {voiceCloneLabel ? (
-              <Badge
-                variant="muted"
-                className={
-                  voiceCloneInfo?.applied && !voiceCloneInfo.fallback
-                    ? "gap-1 border-emerald-400/30 bg-emerald-500/10 text-emerald-200 text-[11px]"
-                    : "gap-1 border-amber-400/25 bg-amber-500/10 text-amber-100 text-[11px]"
-                }
-              >
-                {voiceCloneLabel}
-              </Badge>
-            ) : null}
-            {tagMeta ? (
-              <Badge variant="muted" className="gap-1 border-violet-400/30 bg-violet-500/10 text-violet-200 text-[11px]">
-                <Tag className="h-2.5 w-2.5 shrink-0 opacity-80" aria-hidden />
-                {lc.producerTagBadge}
-              </Badge>
-            ) : null}
-            {!songCard && loop.mood ? <Badge variant="muted" className="text-[11px]">{loop.mood}</Badge> : null}
-            {loop.bpm && loop.bpm > 0 ? (
-              <Badge variant="muted" className="text-[11px]">{loop.bpm} BPM</Badge>
-            ) : (
-              <Badge variant="muted" className="text-[11px]">Auto BPM</Badge>
-            )}
-            <span className="text-[11px] text-pk-muted">
-              {loop.key || loop.scale ? `${loop.key} ${loop.scale}` : "Auto Key"}
-            </span>
-          </div>
         </div>
       </div>
 
-      <div className={cn("mt-2 flex items-center gap-2", canPlay ? "" : "opacity-60")}>
+      <div className={cn("mt-2.5 flex items-center gap-2.5", canPlay ? "" : "opacity-60")}>
         <AudioWaveform
           audioUrl={loop.audioUrl ?? null}
           loopId={loop.id}
@@ -1229,7 +1266,7 @@ export const LoopCardItem = memo(function LoopCardItem({
               : undefined
           }
         />
-        <div className="shrink-0 text-[11px] tabular-nums text-pk-muted">
+        <div className="shrink-0 text-[10px] tabular-nums text-pk-muted">
           {durationLabel}
         </div>
       </div>
@@ -1308,10 +1345,10 @@ export const LoopCardItem = memo(function LoopCardItem({
               <MoreHorizontal className="h-4 w-4" />
             </Button>
             {menuOpen ? (
-              <div className="absolute bottom-full right-0 z-30 mb-2 w-44 overflow-hidden rounded-xl border border-pk-border bg-pk-panel py-1 shadow-xl">
+              <div className="absolute bottom-full right-0 z-30 mb-2 w-44 overflow-hidden rounded-xl border border-white/10 bg-[rgba(12,12,20,0.92)] py-1 shadow-[0_20px_40px_rgba(0,0,0,0.35),0_0_0_1px_rgba(255,255,255,0.04)_inset] backdrop-blur-xl">
                 <button
                   type="button"
-                  className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs font-semibold text-pk-text hover:bg-white/5 disabled:opacity-40"
+                  className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-xs font-semibold text-white/80 transition-colors duration-150 hover:bg-white/[0.07] hover:text-white disabled:opacity-40"
                   disabled={!loop.audioUrl || isDownloading}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -1324,7 +1361,7 @@ export const LoopCardItem = memo(function LoopCardItem({
                 </button>
                 <button
                   type="button"
-                  className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs font-semibold text-pk-text hover:bg-white/5"
+                  className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-xs font-semibold text-white/80 transition-colors duration-150 hover:bg-white/[0.07] hover:text-white"
                   onClick={(e) => {
                     e.stopPropagation();
                     setMenuOpen(false);
@@ -1337,7 +1374,7 @@ export const LoopCardItem = memo(function LoopCardItem({
                 {onOpenMaster ? (
                   <button
                     type="button"
-                    className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs font-semibold text-pk-text hover:bg-white/5"
+                    className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-xs font-semibold text-white/80 transition-colors duration-150 hover:bg-white/[0.07] hover:text-white"
                     onClick={(e) => {
                       e.stopPropagation();
                       setMenuOpen(false);
@@ -1350,7 +1387,7 @@ export const LoopCardItem = memo(function LoopCardItem({
                 ) : null}
                 <button
                   type="button"
-                  className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs font-semibold text-pk-text hover:bg-white/5 disabled:opacity-40"
+                  className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-xs font-semibold text-white/80 transition-colors duration-150 hover:bg-white/[0.07] hover:text-white disabled:opacity-40"
                   disabled={isVarying}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -1363,7 +1400,7 @@ export const LoopCardItem = memo(function LoopCardItem({
                 </button>
                 <button
                   type="button"
-                  className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs font-semibold text-pk-text hover:bg-white/5 disabled:opacity-40"
+                  className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-xs font-semibold text-white/80 transition-colors duration-150 hover:bg-white/[0.07] hover:text-white disabled:opacity-40"
                   disabled={isVarying}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -1377,7 +1414,7 @@ export const LoopCardItem = memo(function LoopCardItem({
                 {onDelete ? (
                   <button
                     type="button"
-                    className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs font-semibold text-rose-300 hover:bg-rose-500/10"
+                    className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-xs font-semibold text-rose-300/90 transition-colors duration-150 hover:bg-rose-500/10 hover:text-rose-200"
                     onClick={(e) => {
                       e.stopPropagation();
                       setMenuOpen(false);

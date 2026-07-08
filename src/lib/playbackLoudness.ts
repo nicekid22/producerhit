@@ -4,6 +4,7 @@
  */
 
 import { analyzeBuffer } from "@/lib/mastering/analyze";
+import { fetchCachedLoopAudioBlob } from "@/stores/loopsStore";
 
 const TARGET_PEAK_DB = -1.2;
 const TARGET_PEAK = 10 ** (TARGET_PEAK_DB / 20);
@@ -69,7 +70,6 @@ export async function measurePlaybackMakeupLinear(
 
   if (cacheKey?.trim() && !cacheKey.includes(":")) {
     try {
-      const { fetchCachedLoopAudioBlob } = await import("@/stores/loopsStore");
       const blob = await fetchCachedLoopAudioBlob(cacheKey.trim());
       if (blob?.size) arrayBuffer = await blob.arrayBuffer();
     } catch {

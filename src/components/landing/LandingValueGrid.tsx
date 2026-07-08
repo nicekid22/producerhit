@@ -44,7 +44,7 @@ export function LandingValueGrid({ locale, user }: Props) {
             </div>
           </div>
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-pink-300/75">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[rgb(232,121,249)]/75">
               {isFr ? "Plan Free" : "Free plan"}
             </p>
             <h2 className="mt-2 text-balance text-[clamp(1.35rem,3.2vw,2rem)] font-bold tracking-tight text-white">

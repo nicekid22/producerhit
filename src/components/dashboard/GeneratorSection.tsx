@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { DiscreetInfoTip } from "@/components/dashboard/DiscreetInfoTip";
 
 /** Padding horizontal du contenu générateur (Style & Vibe, L'idée…) — pas le header ni le footer */
-export const generatorSectionPad = "px-5 py-4 md:px-6 md:py-4";
+export const generatorSectionPad = "px-5 py-5 md:px-6 md:py-5";
 
 function GeneratorSectionHeading({ title, hint }: { title: string; hint?: string }) {
   return (
@@ -35,10 +35,10 @@ export function GeneratorSection({
   if (!collapsible) {
     return (
       <div className={cn("pk-studio-section min-w-0 max-w-full border-b border-pk-border", generatorSectionPad, className)}>
-        <div className="text-sm font-semibold pk-studio-section__title md:text-inherit">
+        <div className="text-sm font-bold pk-studio-section__title md:text-inherit tracking-tight">
           <GeneratorSectionHeading title={title} hint={hint} />
         </div>
-        <div className="mt-4 min-w-0 md:mt-5">{children}</div>
+        <div className="mt-5 min-w-0 md:mt-6">{children}</div>
       </div>
     );
   }
@@ -58,7 +58,7 @@ export function GeneratorSection({
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
       >
-        <span className="pk-studio-section__title min-w-0 text-[13px] font-semibold text-left tracking-tight md:text-inherit">
+        <span className="pk-studio-section__title min-w-0 text-[13px] font-bold text-left tracking-tight md:text-inherit">
           <GeneratorSectionHeading title={title} hint={hint} />
         </span>
         <ChevronDown

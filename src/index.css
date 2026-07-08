@@ -139,21 +139,29 @@ body {
 /* ── Prism universe (landing premium 2026) ── */
 
 :root {
-  --prism-violet: #9d7cff;
-  --prism-cyan: #67c3ff;
-  --prism-silver: #cbd5e1;
-  --prism-chrome: #e2e8f0;
-  --prism-accent: #c084fc;
-  --prism-glass: rgba(255, 255, 255, 0.05);
-  --prism-border: rgba(255, 255, 255, 0.12);
-  --ph-mark-0: #e2e8f0;
-  --ph-mark-1: #67c3ff;
-  --ph-mark-2: #9d7cff;
-  --ph-mark-3: #cbd5e1;
+  /* ── Prism 2026 — direction artistique premium Apple-like ── */
+  --prism-violet: #7C3AED;  /* violet-600 — violet premium profond */
+  --prism-cyan: #A855F7;    /* violet-500 — accent lumineux — NOTE: c'est du violet/pas du cyan. Le nom "cyan" est conservé pour la compatibilité avec le code existant. */
+  --prism-pink: #EC4899;    /* pink-500 — rose premium élégant */
+  --prism-silver: #CBD5E1;
+  --prism-chrome: #E2E8F0;
+  --prism-accent: #A855F7;  /* violet-500 — accent lumineux premium */
+  --prism-glass: rgba(255, 255, 255, 0.06);
+  --prism-border: rgba(255, 255, 255, 0.10);
+  --prism-mesh:
+    radial-gradient(ellipse 140% 80% at 15% 20%, rgba(124, 58, 237, 0.92) 0%, transparent 55%),
+    radial-gradient(ellipse 120% 70% at 80% 10%, rgba(99, 102, 241, 0.88) 0%, transparent 50%),
+    radial-gradient(ellipse 90% 60% at 40% 85%, rgba(168, 85, 247, 0.38) 0%, transparent 50%),
+    radial-gradient(ellipse 70% 50% at 65% 45%, rgba(139, 92, 246, 0.22) 0%, transparent 50%),
+    linear-gradient(135deg, rgb(88, 28, 135) 0%, rgb(76, 29, 149) 60%, rgb(55, 48, 163) 100%);
+  --ph-mark-0: #E2E8F0;
+  --ph-mark-1: #EC4899;
+  --ph-mark-2: #7C3AED;
+  --ph-mark-3: #CBD5E1;
   --ph-mark-bg-0: rgba(255, 255, 255, 0.72);
   --ph-mark-bg-1: rgba(255, 255, 255, 0.08);
   --ph-mark-border-0: rgba(255, 255, 255, 0.72);
-  --ph-mark-border-1: rgba(200, 184, 255, 0.45);
+  --ph-mark-border-1: rgba(236, 72, 153, 0.45);
   --ph-mark-border-2: rgba(255, 255, 255, 0.28);
 }
 
@@ -241,7 +249,7 @@ body {
 
 .pk-waveform-loader--idle[role="button"]:hover {
   opacity: 0.78;
-  border-color: rgba(103, 195, 255, 0.28);
+  border-color: rgba(168, 85, 247, 0.3);
 }
 
 .pk-waveform-loader__grid {
@@ -266,9 +274,9 @@ body {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(103, 195, 255, 0.12) 12%,
-    rgba(157, 124, 255, 0.38) 50%,
-    rgba(103, 195, 255, 0.12) 88%,
+    rgba(168, 85, 247, 0.15) 12%,
+    rgba(236, 72, 153, 0.35) 50%,
+    rgba(168, 85, 247, 0.15) 88%,
     transparent 100%
   );
 }
@@ -283,14 +291,14 @@ body {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(103, 195, 255, 0.06) 28%,
-    rgba(157, 124, 255, 0.22) 50%,
-    rgba(103, 195, 255, 0.06) 72%,
+    rgba(168, 85, 247, 0.08) 28%,
+    rgba(236, 72, 153, 0.2) 50%,
+    rgba(168, 85, 247, 0.08) 72%,
     transparent 100%
   );
   box-shadow:
-    inset 0 0 0 1px rgba(103, 195, 255, 0.08),
-    0 0 18px rgba(103, 195, 255, 0.12);
+    inset 0 0 0 1px rgba(168, 85, 247, 0.1),
+    0 0 18px rgba(168, 85, 247, 0.12);
 }
 
 .pk-waveform-loader--active .pk-waveform-loader__scan {
@@ -316,8 +324,8 @@ body {
   transform-origin: center center;
   background: linear-gradient(
     to top,
-    rgba(157, 124, 255, 0.35) 0%,
-    rgba(103, 195, 255, 0.75) 100%
+    rgba(168, 85, 247, 0.4) 0%,
+    rgba(236, 72, 153, 0.75) 100%
   );
   opacity: 0.25;
 }
@@ -334,7 +342,7 @@ body {
   transform: translateY(-50%);
   font-size: 11px;
   line-height: 1;
-  color: rgba(103, 195, 255, 0.55);
+  color: rgba(168, 85, 247, 0.6);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -360,9 +368,9 @@ body {
   z-index: 1;
   isolation: isolate;
   background:
-    radial-gradient(1100px circle at 18% 6%, rgba(157, 124, 255, 0.12), transparent 50%),
-    radial-gradient(900px circle at 82% 10%, rgba(103, 195, 255, 0.08), transparent 52%),
-    radial-gradient(800px circle at 50% 100%, rgba(148, 163, 184, 0.06), transparent 55%),
+    radial-gradient(1100px circle at 18% 6%, rgba(192, 38, 211, 0.12), transparent 50%),
+    radial-gradient(900px circle at 82% 10%, rgba(217, 70, 239, 0.08), transparent 52%),
+    radial-gradient(800px circle at 50% 100%, rgba(232, 121, 249, 0.06), transparent 55%),
     linear-gradient(180deg, #020108 0%, #06050f 42%, #090812 100%);
 }
 
@@ -401,11 +409,11 @@ body {
 
 /* Landing — header transparent sans bande violette en haut */
 .pk-prism-stage--landing {
-  background:
-    radial-gradient(900px circle at 20% 72%, rgba(157, 124, 255, 0.1), transparent 52%),
-    radial-gradient(800px circle at 84% 68%, rgba(103, 195, 255, 0.07), transparent 50%),
-    linear-gradient(180deg, #020108 0%, #06050f 48%, #090812 100%);
-}
+    background:
+      radial-gradient(900px circle at 20% 72%, rgba(192, 38, 211, 0.1), transparent 52%),
+      radial-gradient(800px circle at 84% 68%, rgba(217, 70, 239, 0.07), transparent 50%),
+      linear-gradient(180deg, #020108 0%, #06050f 48%, #090812 100%);
+  }
 
 /* Voile texture site — voir SiteTextureVeil + src/lib/SITE_TEXTURE_VEIL.md */
 
@@ -484,17 +492,17 @@ body {
     --prism-desktop-base-2: #0b0a18;
     --prism-desktop-base-3: #0f0e1c;
     background:
-      radial-gradient(1100px circle at 18% 6%, rgba(157, 124, 255, 0.17), transparent 52%),
-      radial-gradient(900px circle at 82% 10%, rgba(103, 195, 255, 0.12), transparent 54%),
-      radial-gradient(800px circle at 50% 100%, rgba(148, 163, 184, 0.085), transparent 58%),
+      radial-gradient(1100px circle at 18% 6%, rgba(192, 38, 211, 0.17), transparent 52%),
+      radial-gradient(900px circle at 82% 10%, rgba(217, 70, 239, 0.12), transparent 54%),
+      radial-gradient(800px circle at 50% 100%, rgba(232, 121, 249, 0.085), transparent 58%),
       linear-gradient(180deg, var(--prism-desktop-base-1) 0%, var(--prism-desktop-base-2) 42%, var(--prism-desktop-base-3) 100%);
   }
 
   .pk-prism-stage--landing:not(.pk-warm-glass-stage):not(.pk-cloud-stage) {
     background:
-      radial-gradient(940px circle at 20% 72%, rgba(157, 124, 255, 0.15), transparent 54%),
-      radial-gradient(840px circle at 84% 68%, rgba(103, 195, 255, 0.11), transparent 52%),
-      radial-gradient(720px circle at 48% 12%, rgba(124, 58, 237, 0.07), transparent 58%),
+      radial-gradient(940px circle at 20% 72%, rgba(192, 38, 211, 0.15), transparent 54%),
+      radial-gradient(840px circle at 84% 68%, rgba(217, 70, 239, 0.11), transparent 52%),
+      radial-gradient(720px circle at 48% 12%, rgba(232, 121, 249, 0.07), transparent 58%),
       linear-gradient(180deg, var(--prism-desktop-base-1) 0%, var(--prism-desktop-base-2) 48%, var(--prism-desktop-base-3) 100%);
   }
 
@@ -511,11 +519,11 @@ body {
   }
 
   .pk-prism-dashboard:not(.pk-warm-glass-stage):not(.pk-cloud-stage) .pk-prism-fx-orb:first-of-type {
-    background-color: rgba(157, 124, 255, 0.14) !important;
+    background-color: rgba(192, 38, 211, 0.14) !important;
   }
 
   .pk-prism-dashboard:not(.pk-warm-glass-stage):not(.pk-cloud-stage) .pk-prism-fx-orb:last-of-type {
-    background-color: rgba(103, 195, 255, 0.09) !important;
+    background-color: rgba(217, 70, 239, 0.09) !important;
   }
 }
 
@@ -531,11 +539,11 @@ body {
     --prism-landing-mobile-base-2: #160a32;
     --prism-landing-mobile-base-3: #070510;
     background:
-      radial-gradient(ellipse 130% 72% at -8% -12%, rgba(157, 124, 255, 0.58), transparent 54%),
-      radial-gradient(ellipse 110% 68% at 108% 4%, rgba(103, 195, 255, 0.4), transparent 52%),
-      radial-gradient(ellipse 88% 58% at 52% 36%, rgba(236, 72, 153, 0.1), transparent 60%),
-      radial-gradient(ellipse 120% 72% at 6% 102%, rgba(124, 58, 237, 0.34), transparent 56%),
-      radial-gradient(ellipse 100% 64% at 94% 96%, rgba(34, 211, 238, 0.22), transparent 54%),
+      radial-gradient(ellipse 130% 72% at -8% -12%, rgba(192, 38, 211, 0.58), transparent 54%),
+      radial-gradient(ellipse 110% 68% at 108% 4%, rgba(217, 70, 239, 0.4), transparent 52%),
+      radial-gradient(ellipse 88% 58% at 52% 36%, rgba(232, 121, 249, 0.1), transparent 60%),
+      radial-gradient(ellipse 120% 72% at 6% 102%, rgba(192, 38, 211, 0.34), transparent 56%),
+      radial-gradient(ellipse 100% 64% at 94% 96%, rgba(217, 70, 239, 0.22), transparent 54%),
       linear-gradient(
         172deg,
         var(--prism-landing-mobile-base-1) 0%,
@@ -550,8 +558,8 @@ body {
     inset: -28%;
     filter: blur(28px);
     background:
-      radial-gradient(circle at 18% 14%, rgba(157, 124, 255, 0.22), transparent 46%),
-      radial-gradient(circle at 82% 10%, rgba(103, 195, 255, 0.16), transparent 44%),
+      radial-gradient(circle at 18% 14%, rgba(168, 85, 247, 0.22), transparent 46%),
+      radial-gradient(circle at 82% 10%, rgba(192, 38, 211, 0.16), transparent 44%),
       radial-gradient(circle at 50% 72%, rgba(168, 85, 247, 0.1), transparent 50%);
   }
 
@@ -590,8 +598,8 @@ body {
     --prism-mobile-base-2: #160a32;
     --prism-mobile-base-3: #070510;
     background:
-      radial-gradient(ellipse 130% 72% at -8% -12%, rgba(157, 124, 255, 0.58), transparent 54%),
-      radial-gradient(ellipse 110% 68% at 108% 4%, rgba(103, 195, 255, 0.4), transparent 52%),
+      radial-gradient(ellipse 130% 72% at -8% -12%, rgba(168, 85, 247, 0.58), transparent 54%),
+      radial-gradient(ellipse 110% 68% at 108% 4%, rgba(192, 38, 211, 0.4), transparent 52%),
       radial-gradient(ellipse 88% 58% at 52% 36%, rgba(236, 72, 153, 0.1), transparent 60%),
       radial-gradient(ellipse 120% 72% at 6% 102%, rgba(124, 58, 237, 0.34), transparent 56%),
       radial-gradient(ellipse 100% 64% at 94% 96%, rgba(34, 211, 238, 0.22), transparent 54%),
@@ -620,13 +628,13 @@ body {
       conic-gradient(
         from 205deg at 48% 32%,
         transparent 0deg,
-        rgba(157, 124, 255, 0.18) 52deg,
+        rgba(168, 85, 247, 0.18) 52deg,
         transparent 108deg,
-        rgba(103, 195, 255, 0.14) 196deg,
+        rgba(192, 38, 211, 0.14) 196deg,
         transparent 268deg
       ),
-      radial-gradient(circle at 22% 18%, rgba(157, 124, 255, 0.48), transparent 40%),
-      radial-gradient(circle at 78% 22%, rgba(103, 195, 255, 0.34), transparent 38%),
+      radial-gradient(circle at 22% 18%, rgba(168, 85, 247, 0.48), transparent 40%),
+      radial-gradient(circle at 78% 22%, rgba(192, 38, 211, 0.34), transparent 38%),
       radial-gradient(circle at 50% 88%, rgba(168, 85, 247, 0.22), transparent 42%);
     animation: pkPrismMobileMesh 24s ease-in-out infinite alternate;
     will-change: transform, opacity;
@@ -657,8 +665,8 @@ body {
     opacity: 0.95;
     background: radial-gradient(
       circle,
-      rgba(157, 124, 255, 0.44) 0%,
-      rgba(157, 124, 255, 0.14) 44%,
+      rgba(168, 85, 247, 0.44) 0%,
+      rgba(168, 85, 247, 0.14) 44%,
       transparent 68%
     ) !important;
   }
@@ -674,8 +682,8 @@ body {
     opacity: 0.88;
     background: radial-gradient(
       circle,
-      rgba(103, 195, 255, 0.36) 0%,
-      rgba(103, 195, 255, 0.1) 46%,
+      rgba(192, 38, 211, 0.36) 0%,
+      rgba(192, 38, 211, 0.1) 46%,
       transparent 70%
     ) !important;
   }
@@ -684,17 +692,17 @@ body {
   .pk-prism-dashboard:not(.pk-warm-glass-stage):not(.pk-cloud-stage) .pk-studio-console.pk-prism-glass,
   .pk-prism-dashboard:not(.pk-warm-glass-stage):not(.pk-cloud-stage) .pk-studio-workspace.pk-prism-glass {
     background:
-      radial-gradient(680px circle at 100% 0%, rgba(103, 195, 255, 0.1), transparent 58%),
-      radial-gradient(520px circle at 0% 100%, rgba(157, 124, 255, 0.08), transparent 52%),
+      radial-gradient(680px circle at 100% 0%, rgba(192, 38, 211, 0.1), transparent 58%),
+      radial-gradient(520px circle at 0% 100%, rgba(168, 85, 247, 0.08), transparent 52%),
       linear-gradient(165deg, rgba(16, 12, 34, 0.78), rgba(8, 6, 20, 0.86)) !important;
-    border-color: rgba(157, 124, 255, 0.14) !important;
+    border-color: rgba(168, 85, 247, 0.14) !important;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.09),
       0 12px 40px rgba(0, 0, 0, 0.28) !important;
   }
 
   .pk-prism-dashboard:not(.pk-warm-glass-stage):not(.pk-cloud-stage) .pk-app-shell-mobile-nav {
-    border-top-color: rgba(157, 124, 255, 0.16) !important;
+    border-top-color: rgba(168, 85, 247, 0.16) !important;
     background: linear-gradient(
       180deg,
       rgba(14, 10, 32, 0.92) 0%,
@@ -709,14 +717,14 @@ body {
 
   .pk-prism-dashboard:not(.pk-warm-glass-stage):not(.pk-cloud-stage) .pk-dashboard-mobile-tabs {
     background: rgba(12, 10, 28, 0.82) !important;
-    box-shadow: inset 0 0 0 1px rgba(157, 124, 255, 0.12) !important;
-    --tw-ring-color: rgba(157, 124, 255, 0.1) !important;
+    box-shadow: inset 0 0 0 1px rgba(168, 85, 247, 0.12) !important;
+    --tw-ring-color: rgba(168, 85, 247, 0.1) !important;
   }
 
   .pk-prism-dashboard:not(.pk-warm-glass-stage):not(.pk-cloud-stage) .pk-mobile-gen-notice {
-    border-color: rgba(157, 124, 255, 0.14) !important;
+    border-color: rgba(168, 85, 247, 0.14) !important;
     background:
-      radial-gradient(360px circle at 0% 0%, rgba(157, 124, 255, 0.1), transparent 58%),
+      radial-gradient(360px circle at 0% 0%, rgba(168, 85, 247, 0.1), transparent 58%),
       linear-gradient(165deg, rgba(12, 10, 28, 0.9), rgba(8, 6, 20, 0.94)) !important;
   }
 
@@ -726,10 +734,10 @@ body {
   .pk-prism-dashboard:not(.pk-warm-glass-stage):not(.pk-cloud-stage) .bg-pk-panel\/40,
   .pk-prism-dashboard:not(.pk-warm-glass-stage):not(.pk-cloud-stage) .bg-pk-panel\/30 {
     background:
-      radial-gradient(420px circle at 0% 0%, rgba(157, 124, 255, 0.09), transparent 55%),
-      radial-gradient(380px circle at 100% 100%, rgba(103, 195, 255, 0.06), transparent 52%),
+      radial-gradient(420px circle at 0% 0%, rgba(168, 85, 247, 0.09), transparent 55%),
+      radial-gradient(380px circle at 100% 100%, rgba(192, 38, 211, 0.06), transparent 52%),
       linear-gradient(165deg, rgba(12, 10, 28, 0.9), rgba(8, 6, 20, 0.94)) !important;
-    border-color: rgba(157, 124, 255, 0.12) !important;
+    border-color: rgba(168, 85, 247, 0.12) !important;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07) !important;
   }
 }
@@ -747,7 +755,7 @@ body {
   height: 36vh;
   opacity: calc(0.22 - var(--pk-scroll, 0) * 0.1);
   background:
-    linear-gradient(to top, rgba(157, 124, 255, 0.05), transparent 60%),
+    linear-gradient(to top, rgba(168, 85, 247, 0.05), transparent 60%),
     repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.028) 0 1px, transparent 1px 80px),
     repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.022) 0 1px, transparent 1px 80px);
   transform: perspective(1000px) rotateX(72deg);
@@ -761,9 +769,9 @@ body {
   pointer-events: none;
   opacity: calc(0.38 - var(--pk-scroll, 0) * 0.12);
   background:
-    radial-gradient(circle at 28% 36%, rgba(157, 124, 255, 0.1), transparent 44%),
-    radial-gradient(circle at 72% 28%, rgba(103, 195, 255, 0.08), transparent 40%);
-  filter: blur(36px);
+    radial-gradient(circle at 28% 36%, rgba(168, 85, 247, 0.1), transparent 44%),
+    radial-gradient(circle at 72% 28%, rgba(192, 38, 211, 0.08), transparent 40%);
+  filter: blur(20px);
   animation: prismAurora 28s ease-in-out infinite;
   mix-blend-mode: screen;
 }
@@ -786,12 +794,12 @@ body {
 .pk-prism-glass {
   border-color: rgba(255, 255, 255, 0.12) !important;
   background:
-    radial-gradient(900px circle at 16% 0%, rgba(157, 124, 255, 0.08), transparent 50%),
-    radial-gradient(700px circle at 94% 8%, rgba(103, 195, 255, 0.06), transparent 48%),
+    radial-gradient(900px circle at 16% 0%, rgba(168, 85, 247, 0.08), transparent 50%),
+    radial-gradient(700px circle at 94% 8%, rgba(192, 38, 211, 0.06), transparent 48%),
     linear-gradient(155deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.02)) !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.11),
-    0 0 0 1px rgba(157, 124, 255, 0.08),
+    0 0 0 1px rgba(168, 85, 247, 0.08),
     0 28px 80px rgba(0, 0, 0, 0.5) !important;
 }
 
@@ -805,7 +813,7 @@ body {
   border-color: rgba(203, 213, 225, 0.35) !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 0 36px rgba(157, 124, 255, 0.1);
+    0 0 36px rgba(168, 85, 247, 0.1);
 }
 
 .pk-prism-nav {
@@ -831,19 +839,19 @@ body {
   text-decoration: none;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.94) !important;
-  background: rgba(255, 255, 255, 0.058) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
   background-size: auto !important;
   animation: none !important;
-  backdrop-filter: blur(10px) saturate(1.42) brightness(1.04);
-  -webkit-backdrop-filter: blur(10px) saturate(1.42) brightness(1.04);
+  backdrop-filter: blur(12px) saturate(1.5) brightness(1.05);
+  -webkit-backdrop-filter: blur(12px) saturate(1.5) brightness(1.05);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.4),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
-    inset 2px 0 8px rgba(103, 195, 255, 0.07),
-    inset -2px 0 8px rgba(157, 124, 255, 0.06),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
-    0 1px 2px rgba(0, 0, 0, 0.16),
-    0 8px 22px rgba(0, 0, 0, 0.26);
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.22),
+    inset 2px 0 8px rgba(124, 58, 237, 0.08),
+    inset -2px 0 8px rgba(236, 72, 153, 0.06),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 1px 2px rgba(0, 0, 0, 0.18),
+    0 8px 24px rgba(0, 0, 0, 0.28);
   transition:
     transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 280ms ease,
@@ -860,13 +868,13 @@ body {
   padding: 1px;
   background: conic-gradient(
     from 208deg at 50% 50%,
-    rgba(255, 255, 255, 0.62) 0deg,
-    rgba(103, 195, 255, 0.42) 52deg,
-    rgba(157, 124, 255, 0.38) 118deg,
-    rgba(251, 191, 36, 0.24) 178deg,
-    rgba(103, 195, 255, 0.34) 248deg,
-    rgba(255, 255, 255, 0.52) 312deg,
-    rgba(255, 255, 255, 0.62) 360deg
+    rgba(255, 255, 255, 0.65) 0deg,
+    rgba(236, 72, 153, 0.45) 52deg,
+    rgba(124, 58, 237, 0.42) 118deg,
+    rgba(168, 85, 247, 0.28) 178deg,
+    rgba(236, 72, 153, 0.38) 248deg,
+    rgba(255, 255, 255, 0.55) 312deg,
+    rgba(255, 255, 255, 0.65) 360deg
   );
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,
@@ -876,7 +884,7 @@ body {
     linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  opacity: 0.7;
+  opacity: 0.72;
   pointer-events: none;
   z-index: 0;
 }
@@ -888,11 +896,11 @@ body {
   inset: 0;
   border-radius: inherit;
   background:
-    radial-gradient(ellipse 78% 58% at 16% 8%, rgba(255, 255, 255, 0.38), transparent 52%),
-    radial-gradient(ellipse 52% 40% at 86% 94%, rgba(103, 195, 255, 0.2), transparent 54%),
-    radial-gradient(ellipse 40% 30% at 68% 16%, rgba(157, 124, 255, 0.14), transparent 48%);
+    radial-gradient(ellipse 78% 58% at 16% 8%, rgba(255, 255, 255, 0.42), transparent 52%),
+    radial-gradient(ellipse 52% 40% at 86% 94%, rgba(124, 58, 237, 0.24), transparent 54%),
+    radial-gradient(ellipse 40% 30% at 68% 16%, rgba(168, 85, 247, 0.18), transparent 48%);
   mix-blend-mode: screen;
-  opacity: 0.76;
+  opacity: 0.78;
   pointer-events: none;
   z-index: 1;
   animation: pkGlassBtnSheen 11s ease-in-out infinite;
@@ -906,15 +914,26 @@ body {
 
 .pk-glass-btn--primary,
 .pk-prism-btn {
-  background: rgba(255, 255, 255, 0.072) !important;
+  background: linear-gradient(135deg, #5B21B6 0%, #7C3AED 22%, #A855F7 45%, #EC4899 68%, #F43F5E 82%, #6366F1 100%) !important;
+  color: #fff !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.46),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.18),
-    inset 3px 0 10px rgba(103, 195, 255, 0.1),
-    inset -3px 0 10px rgba(157, 124, 255, 0.08),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.11),
-    0 1px 2px rgba(0, 0, 0, 0.14),
-    0 10px 28px rgba(0, 0, 0, 0.28);
+    0 0 26px rgba(168, 85, 247, 0.35),
+    0 8px 35px rgba(236, 72, 153, 0.25),
+    inset 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.pk-glass-btn--primary::before,
+.pk-prism-btn::before {
+  opacity: 0.2;
+}
+
+.pk-glass-btn--primary::after,
+.pk-prism-btn::after {
+  background:
+    radial-gradient(ellipse 72% 54% at 18% 10%, rgba(255, 255, 255, 0.22), transparent 50%),
+    radial-gradient(ellipse 48% 38% at 84% 92%, rgba(168, 85, 247, 0.18), transparent 52%),
+    radial-gradient(ellipse 38% 28% at 66% 18%, rgba(139, 92, 246, 0.14), transparent 46%);
+  opacity: 0.62;
 }
 
 .pk-glass-btn--ghost {
@@ -942,18 +961,24 @@ body {
   transform: translateY(-1px);
   filter: brightness(1.07) saturate(1.06);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.52),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.16),
-    inset 3px 0 12px rgba(103, 195, 255, 0.12),
-    inset -3px 0 12px rgba(157, 124, 255, 0.1),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.13),
-    0 2px 4px rgba(0, 0, 0, 0.12),
-    0 12px 32px rgba(0, 0, 0, 0.3);
+    0 0 36px rgba(168, 85, 247, 0.45),
+    0 12px 45px rgba(236, 72, 153, 0.35),
+    inset 0 1px rgba(255, 255, 255, 0.15);
 }
 
 .pk-glass-btn:active:not(:disabled),
 .pk-prism-btn:active {
   transform: translateY(0) scale(0.985);
+}
+
+.pk-glass-btn:focus-visible,
+.pk-prism-btn:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 26px rgba(168, 85, 247, 0.35),
+    0 8px 35px rgba(236, 72, 153, 0.25),
+    inset 0 1px rgba(255, 255, 255, 0.12),
+    0 0 0 2px rgba(168, 85, 247, 0.5);
 }
 
 .pk-glass-btn:disabled,
@@ -990,8 +1015,8 @@ body {
   background:
     linear-gradient(
       132deg,
-      rgba(157, 124, 255, 0.18) 0%,
-      rgba(103, 195, 255, 0.12) 36%,
+      rgba(168, 85, 247, 0.18) 0%,
+      rgba(192, 38, 211, 0.12) 36%,
       rgba(236, 72, 153, 0.14) 68%,
       rgba(124, 92, 255, 0.16) 100%
     );
@@ -1001,10 +1026,10 @@ body {
     inset 0 1px 0 rgba(255, 255, 255, 0.58),
     inset 0 -1px 0 rgba(80, 40, 160, 0.22),
     inset 0 0 0 1px rgba(186, 148, 255, 0.22),
-    inset 0 8px 22px rgba(103, 195, 255, 0.1),
+    inset 0 8px 22px rgba(192, 38, 211, 0.1),
     inset 0 -10px 18px rgba(236, 72, 153, 0.08),
-    0 6px 22px rgba(103, 195, 255, 0.14),
-    0 10px 32px rgba(157, 124, 255, 0.12);
+    0 6px 22px rgba(192, 38, 211, 0.14),
+    0 10px 32px rgba(168, 85, 247, 0.12);
   transition:
     transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 320ms ease,
@@ -1065,8 +1090,8 @@ body {
   pointer-events: none;
   background:
     radial-gradient(ellipse 72% 52% at 18% 8%, rgba(255, 255, 255, 0.34), transparent 52%),
-    radial-gradient(ellipse 58% 44% at 88% 92%, rgba(103, 195, 255, 0.32), transparent 54%),
-    radial-gradient(ellipse 46% 36% at 72% 22%, rgba(157, 124, 255, 0.28), transparent 50%),
+    radial-gradient(ellipse 58% 44% at 88% 92%, rgba(192, 38, 211, 0.32), transparent 54%),
+    radial-gradient(ellipse 46% 36% at 72% 22%, rgba(168, 85, 247, 0.28), transparent 50%),
     radial-gradient(ellipse 42% 38% at 28% 78%, rgba(236, 72, 153, 0.26), transparent 48%);
   mix-blend-mode: screen;
   opacity: 0.88;
@@ -1076,7 +1101,7 @@ body {
   position: relative;
   z-index: 3;
   text-shadow:
-    0 0 18px rgba(103, 195, 255, 0.28),
+    0 0 18px rgba(192, 38, 211, 0.28),
     0 1px 2px rgba(0, 0, 0, 0.32);
 }
 
@@ -1086,10 +1111,10 @@ body {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.68),
     inset 0 0 0 1px rgba(200, 168, 255, 0.32),
-    inset 0 10px 26px rgba(103, 195, 255, 0.14),
+    inset 0 10px 26px rgba(192, 38, 211, 0.14),
     inset 0 -10px 20px rgba(236, 72, 153, 0.1),
-    0 8px 28px rgba(103, 195, 255, 0.2),
-    0 14px 40px rgba(157, 124, 255, 0.18),
+    0 8px 28px rgba(192, 38, 211, 0.2),
+    0 14px 40px rgba(168, 85, 247, 0.18),
     0 0 24px rgba(236, 72, 153, 0.1);
 }
 
@@ -1122,7 +1147,7 @@ body {
 .pk-hero-cta--orbit .pk-hero-cta__fx {
   background:
     radial-gradient(ellipse 80% 60% at 30% 20%, rgba(216, 180, 254, 0.42), transparent 52%),
-    radial-gradient(ellipse 65% 50% at 78% 75%, rgba(103, 195, 255, 0.38), transparent 54%),
+    radial-gradient(ellipse 65% 50% at 78% 75%, rgba(192, 38, 211, 0.38), transparent 54%),
     radial-gradient(ellipse 55% 42% at 50% 50%, rgba(236, 72, 153, 0.28), transparent 56%);
   animation: pkHeroCtaPrismBreath 5.5s ease-in-out infinite;
 }
@@ -1195,7 +1220,7 @@ body {
 .pk-hero-cta--beam .pk-hero-cta__fx {
   background:
     radial-gradient(ellipse 85% 58% at 12% 0%, rgba(255, 255, 255, 0.42), transparent 54%),
-    radial-gradient(ellipse 62% 48% at 92% 100%, rgba(157, 124, 255, 0.34), transparent 56%),
+    radial-gradient(ellipse 62% 48% at 92% 100%, rgba(168, 85, 247, 0.34), transparent 56%),
     radial-gradient(ellipse 50% 40% at 48% 100%, rgba(236, 72, 153, 0.22), transparent 52%);
 }
 
@@ -1208,7 +1233,7 @@ body {
     112deg,
     transparent 36%,
     rgba(255, 255, 255, 0.5) 48%,
-    rgba(103, 195, 255, 0.28) 52%,
+    rgba(192, 38, 211, 0.28) 52%,
     rgba(236, 72, 153, 0.18) 55%,
     transparent 64%
   );
@@ -1240,8 +1265,8 @@ body {
 .pk-hero-cta--spark .pk-hero-cta__fx {
   background: linear-gradient(
     118deg,
-    rgba(103, 195, 255, 0.28) 0%,
-    rgba(157, 124, 255, 0.24) 42%,
+    rgba(192, 38, 211, 0.28) 0%,
+    rgba(168, 85, 247, 0.24) 42%,
     rgba(236, 72, 153, 0.22) 100%
   );
   background-size: 240% 100%;
@@ -1287,15 +1312,15 @@ body {
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   background:
-    radial-gradient(420px circle at 0% 0%, rgba(157, 124, 255, 0.06), transparent 52%),
+    radial-gradient(420px circle at 0% 0%, rgba(168, 85, 247, 0.06), transparent 52%),
     linear-gradient(165deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012));
   transition: border-color 320ms ease, box-shadow 320ms ease;
 }
 
 .pk-pricing-card--popular {
   background:
-    radial-gradient(480px circle at 100% 0%, rgba(157, 124, 255, 0.12), transparent 55%),
-    radial-gradient(360px circle at 0% 100%, rgba(103, 195, 255, 0.08), transparent 50%),
+    radial-gradient(480px circle at 100% 0%, rgba(168, 85, 247, 0.12), transparent 55%),
+    radial-gradient(360px circle at 0% 100%, rgba(192, 38, 211, 0.08), transparent 50%),
     linear-gradient(165deg, rgba(255, 255, 255, 0.055), rgba(124, 58, 237, 0.06));
 }
 
@@ -1451,7 +1476,7 @@ a.pk-pricing-plan-btn {
 .pk-pricing-tier__badge {
   z-index: 4;
   border: 1px solid var(--pk-pricing-accent-border);
-  background: linear-gradient(120deg, rgba(124, 58, 237, 0.22), rgba(103, 195, 255, 0.12));
+  background: linear-gradient(120deg, rgba(124, 58, 237, 0.22), rgba(192, 38, 211, 0.12));
   color: #ddd6fe;
   box-shadow: 0 8px 24px rgba(124, 58, 237, 0.2);
   white-space: nowrap;
@@ -1502,9 +1527,11 @@ a.pk-pricing-plan-btn {
 }
 
 .pk-prism-pill-active {
-  background: linear-gradient(120deg, var(--prism-chrome) 0%, var(--prism-cyan) 42%, var(--prism-violet) 100%) !important;
-  color: #050508 !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  background: var(--prism-mesh) !important;
+  color: #fff !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 0 18px rgba(147, 51, 234, 0.3);
 }
 
 .pk-prism-card {
@@ -1513,7 +1540,7 @@ a.pk-pricing-plan-btn {
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background:
-    radial-gradient(560px circle at 18% 0%, rgba(157, 124, 255, 0.08), transparent 54%),
+    radial-gradient(560px circle at 18% 0%, rgba(168, 85, 247, 0.08), transparent 54%),
     linear-gradient(165deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015));
   backdrop-filter: blur(18px);
   box-shadow:
@@ -1537,7 +1564,7 @@ a.pk-pricing-plan-btn {
   border-color: rgba(203, 213, 225, 0.28);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 0 0 1px rgba(157, 124, 255, 0.12),
+    0 0 0 1px rgba(168, 85, 247, 0.12),
     0 28px 70px rgba(0, 0, 0, 0.48);
 }
 
@@ -1551,7 +1578,7 @@ a.pk-pricing-plan-btn {
   border-radius: 12px;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 0 16px rgba(157, 124, 255, 0.12);
+    0 0 16px rgba(168, 85, 247, 0.12);
 }
 
 .pk-prism-cover::after {
@@ -1568,7 +1595,6 @@ a.pk-pricing-plan-btn {
 .pk-prism-reveal {
   opacity: 0;
   transform-origin: center;
-  will-change: transform, opacity, filter, clip-path;
   transition:
     opacity .9s cubic-bezier(.22,1,.36,1),
     transform .9s cubic-bezier(.22,1,.36,1),
@@ -1586,6 +1612,31 @@ a.pk-pricing-plan-btn {
   filter: none;
   clip-path: inset(0);
 }
+
+/* Card reveal animation for dashboard cards */
+.pk-card-reveal {
+  opacity: 0;
+  transform: translateY(24px) scale(0.97);
+  filter: blur(8px);
+  transition:
+    opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.pk-card-reveal.pk-card-revealed {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+}
+
+.pk-stagger > .pk-card-reveal.pk-card-revealed:nth-child(1) { transition-delay: 0ms; }
+.pk-stagger > .pk-card-reveal.pk-card-revealed:nth-child(2) { transition-delay: 60ms; }
+.pk-stagger > .pk-card-reveal.pk-card-revealed:nth-child(3) { transition-delay: 120ms; }
+.pk-stagger > .pk-card-reveal.pk-card-revealed:nth-child(4) { transition-delay: 180ms; }
+.pk-stagger > .pk-card-reveal.pk-card-revealed:nth-child(5) { transition-delay: 240ms; }
+.pk-stagger > .pk-card-reveal.pk-card-revealed:nth-child(6) { transition-delay: 300ms; }
+.pk-stagger > .pk-card-reveal.pk-card-revealed:nth-child(n+7) { transition-delay: 360ms; }
 
 /* Variantes directionnelles */
 .pk-reveal-left {
@@ -1779,7 +1830,7 @@ a.pk-pricing-plan-btn {
   position: absolute;
   inset: -8px;
   border-radius: 9999px;
-  background: radial-gradient(circle, rgba(157, 124, 255, 0.22), rgba(103, 195, 255, 0.08) 55%, transparent 72%);
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.22), rgba(192, 38, 211, 0.08) 55%, transparent 72%);
   filter: blur(6px);
   opacity: 0.85;
   transition: opacity 300ms ease;
@@ -1793,7 +1844,7 @@ a.pk-pricing-plan-btn {
   position: relative;
   z-index: 1;
   object-fit: contain;
-  filter: drop-shadow(0 6px 18px rgba(103, 195, 255, 0.18));
+  filter: drop-shadow(0 6px 18px rgba(192, 38, 211, 0.18));
 }
 
 .pk-mascot--xs {
@@ -1946,13 +1997,13 @@ a.pk-pricing-plan-btn {
 .pk-prism-player-card {
   border: 1px solid rgba(255, 255, 255, 0.1);
   background:
-    radial-gradient(900px circle at 12% 0%, rgba(157, 124, 255, 0.08), transparent 52%),
-    radial-gradient(700px circle at 92% 0%, rgba(103, 195, 255, 0.06), transparent 48%),
+    radial-gradient(900px circle at 12% 0%, rgba(168, 85, 247, 0.08), transparent 52%),
+    radial-gradient(700px circle at 92% 0%, rgba(192, 38, 211, 0.06), transparent 48%),
     linear-gradient(165deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
   backdrop-filter: blur(20px);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 0 0 1px rgba(157, 124, 255, 0.06),
+    0 0 0 1px rgba(168, 85, 247, 0.06),
     0 20px 60px rgba(0, 0, 0, 0.38);
 }
 
@@ -1994,7 +2045,7 @@ a.pk-pricing-plan-btn {
     overflow: hidden;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.1),
-      0 0 0 1px rgba(157, 124, 255, 0.08),
+      0 0 0 1px rgba(168, 85, 247, 0.08),
       0 16px 48px rgba(0, 0, 0, 0.42),
       0 4px 20px rgba(0, 0, 0, 0.28);
   }
@@ -2002,7 +2053,7 @@ a.pk-pricing-plan-btn {
   .pk-prism-player--dock-modern.pk-prism-player--collapsed {
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      0 0 0 1px rgba(157, 124, 255, 0.06),
+      0 0 0 1px rgba(168, 85, 247, 0.06),
       0 12px 36px rgba(0, 0, 0, 0.38),
       0 4px 16px rgba(0, 0, 0, 0.22);
   }
@@ -2140,13 +2191,13 @@ a.pk-pricing-plan-btn {
 }
 
 .pk-mobile-gen-notice--busy {
-  border-color: rgba(103, 195, 255, 0.22);
+  border-color: rgba(192, 38, 211, 0.22);
   background: rgba(8, 12, 22, 0.92);
-  box-shadow: 0 0 24px rgba(103, 195, 255, 0.12);
+  box-shadow: 0 0 24px rgba(192, 38, 211, 0.12);
 }
 
 .pk-mobile-gen-notice__icon-box {
-  box-shadow: inset 0 0 0 1px rgba(103, 195, 255, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(192, 38, 211, 0.35);
 }
 
 .pk-mobile-gen-notice__icon {
@@ -2154,21 +2205,21 @@ a.pk-pricing-plan-btn {
 }
 
 .pk-mobile-gen-notice__badge {
-  background: rgba(103, 195, 255, 0.2);
+  background: rgba(192, 38, 211, 0.2);
   color: #8fd4ff;
 }
 
 /* Bonus header + rétention audio — accents Prism (dashboard) */
 .pk-daily-bonus-btn--ready {
-  border-color: rgba(103, 195, 255, 0.38) !important;
-  background: rgba(103, 195, 255, 0.14) !important;
+  border-color: rgba(192, 38, 211, 0.38) !important;
+  background: rgba(192, 38, 211, 0.14) !important;
   color: #c8e8ff !important;
-  box-shadow: 0 0 14px rgba(103, 195, 255, 0.22) !important;
+  box-shadow: 0 0 14px rgba(192, 38, 211, 0.22) !important;
 }
 
 .pk-daily-bonus-btn--ready:hover {
-  background: rgba(103, 195, 255, 0.22) !important;
-  border-color: rgba(157, 124, 255, 0.42) !important;
+  background: rgba(192, 38, 211, 0.22) !important;
+  border-color: rgba(168, 85, 247, 0.42) !important;
 }
 
 .pk-daily-bonus-btn__icon {
@@ -2177,7 +2228,7 @@ a.pk-pricing-plan-btn {
 
 .pk-daily-bonus-btn__pill {
   border-radius: 9999px;
-  background: rgba(103, 195, 255, 0.22);
+  background: rgba(192, 38, 211, 0.22);
   padding: 0 0.25rem;
   font-size: 9px;
   font-weight: 700;
@@ -2205,12 +2256,12 @@ a.pk-pricing-plan-btn {
 }
 
 .pk-mobile-tab-badge {
-  background: rgba(103, 195, 255, 0.28);
+  background: rgba(192, 38, 211, 0.28);
   color: #8fd4ff;
 }
 
 .pk-dashboard-mobile-tabs .pk-mobile-tab-active {
-  box-shadow: 0 0 20px rgba(157, 124, 255, 0.22);
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.22);
 }
 
 .pk-loop-details-stat-label {
@@ -2222,7 +2273,7 @@ a.pk-pricing-plan-btn {
 }
 
 .pk-mobile-onboarding-icon-box--0 .pk-mobile-onboarding-icon {
-  color: #c4b5fd;
+  color: #f0abfc;
 }
 
 .pk-mobile-onboarding-icon-box--1 .pk-mobile-onboarding-icon {
@@ -2718,7 +2769,7 @@ a.pk-pricing-plan-btn {
 
   .pk-dashboard-mobile-tabs button:focus-visible,
   .pk-studio-mode-rail button:focus-visible {
-    outline: 2px solid rgba(103, 195, 255, 0.5);
+    outline: 2px solid rgba(192, 38, 211, 0.5);
     outline-offset: 2px;
   }
 
@@ -2733,7 +2784,7 @@ a.pk-pricing-plan-btn {
 
   .pk-prism-dashboard:not(.pk-warm-glass-stage):not(.pk-cloud-stage):has(.pk-dashboard-generator) .pk-mobile-create-scroll .pk-studio-section {
     background: rgba(16, 14, 32, 0.96) !important;
-    border-color: rgba(157, 124, 255, 0.14) !important;
+    border-color: rgba(168, 85, 247, 0.14) !important;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.08),
       0 4px 16px rgba(0, 0, 0, 0.2) !important;
@@ -2750,12 +2801,12 @@ a.pk-pricing-plan-btn {
 
   .pk-prism-dashboard:not(.pk-warm-glass-stage):not(.pk-cloud-stage):has(.pk-dashboard-generator) .pk-mobile-dashboard-chrome {
     background: rgba(12, 10, 28, 0.96) !important;
-    border-color: rgba(157, 124, 255, 0.14) !important;
+    border-color: rgba(168, 85, 247, 0.14) !important;
   }
 
   .pk-prism-dashboard:not(.pk-warm-glass-stage):not(.pk-cloud-stage):has(.pk-dashboard-generator) .pk-studio-console {
     background: rgba(12, 10, 28, 0.94) !important;
-    border-color: rgba(157, 124, 255, 0.12) !important;
+    border-color: rgba(168, 85, 247, 0.12) !important;
   }
 
   .pk-prism-dashboard:has(.pk-dashboard-generator) .pk-dashboard-mobile-footer__quota-row,
@@ -2925,7 +2976,7 @@ a.pk-pricing-plan-btn {
 .pk-landing-sticky-player .pk-prism-player {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 0 0 1px rgba(157, 124, 255, 0.08),
+    0 0 0 1px rgba(168, 85, 247, 0.08),
     0 16px 48px rgba(0, 0, 0, 0.42);
 }
 
@@ -2954,7 +3005,7 @@ a.pk-pricing-plan-btn {
   height: 7px;
   border-radius: 9999px;
   background: var(--prism-cyan);
-  box-shadow: 0 0 14px rgba(103, 195, 255, 0.45);
+  box-shadow: 0 0 14px rgba(192, 38, 211, 0.45);
 }
 
 .pk-prism-player-btn {
@@ -2971,10 +3022,10 @@ a.pk-pricing-plan-btn {
 }
 
 .pk-prism-player-btn--primary {
-  border-color: rgba(203, 213, 225, 0.22);
-  background: linear-gradient(135deg, rgba(226, 232, 240, 0.95), rgba(103, 195, 255, 0.92) 52%, rgba(157, 124, 255, 0.9));
-  color: #050508;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 0 24px rgba(157, 124, 255, 0.18);
+  border-color: rgba(147, 51, 234, 0.35);
+  background: var(--prism-mesh);
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 0 24px rgba(147,51,234,0.28);
 }
 
 /* Dashboard — alignement visuel landing Prism (UI only) */
@@ -3011,8 +3062,8 @@ a.pk-pricing-plan-btn {
 }
 
 .pk-prism-dashboard .bg-pk-accent {
-  background: linear-gradient(120deg, #e2e8f0 0%, var(--prism-cyan) 42%, var(--prism-violet) 100%);
-  color: #050508;
+  background: linear-gradient(118deg, var(--prism-violet) 0%, var(--prism-accent) 50%, var(--prism-pink) 100%);
+  color: #fff;
 }
 
 .pk-prism-dashboard .text-pk-accent {
@@ -3020,28 +3071,28 @@ a.pk-pricing-plan-btn {
 }
 
 .pk-prism-dashboard .border-pk-accent\/40 {
-  border-color: rgba(157, 124, 255, 0.32);
+  border-color: rgba(168, 85, 247, 0.32);
 }
 
 .pk-prism-dashboard .bg-pk-accent\/15 {
-  background-color: rgba(157, 124, 255, 0.1);
+  background-color: rgba(168, 85, 247, 0.1);
 }
 
 .pk-prism-dashboard .bg-pk-accent\/11 {
-  background-color: rgba(157, 124, 255, 0.08);
+  background-color: rgba(168, 85, 247, 0.08);
 }
 
 .pk-prism-dashboard .shadow-glow {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 0 0 1px rgba(157, 124, 255, 0.1),
+    0 0 0 1px rgba(168, 85, 247, 0.1),
     0 16px 48px rgba(0, 0, 0, 0.35);
 }
 
 .pk-prism-dashboard .pk-prism-card-soft {
   border: 1px solid rgba(255, 255, 255, 0.1);
   background:
-    radial-gradient(560px circle at 18% 0%, rgba(157, 124, 255, 0.07), transparent 54%),
+    radial-gradient(560px circle at 18% 0%, rgba(168, 85, 247, 0.07), transparent 54%),
     linear-gradient(165deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015));
   backdrop-filter: blur(16px);
 }
@@ -3056,8 +3107,8 @@ a.pk-pricing-plan-btn {
 .pk-prism-dashboard .pk-prism-progress-fill {
   height: 0.5rem;
   border-radius: 9999px;
-  background: linear-gradient(120deg, #e2e8f0 0%, var(--prism-cyan) 42%, var(--prism-violet) 100%);
-  box-shadow: 0 0 16px rgba(157, 124, 255, 0.22);
+  background: linear-gradient(90deg, var(--prism-violet) 0%, var(--prism-accent) 50%, var(--prism-pink) 100%);
+  box-shadow: 0 0 16px rgba(139, 92, 246, 0.28);
 }
 
 .pk-prism-dashboard .pk-prism-panel-glow {
@@ -3066,7 +3117,7 @@ a.pk-pricing-plan-btn {
   inset-inline: 0;
   top: 0;
   height: 6rem;
-  background: linear-gradient(to bottom, rgba(157, 124, 255, 0.16), transparent);
+  background: linear-gradient(to bottom, rgba(168, 85, 247, 0.16), transparent);
 }
 
 .pk-prism-dashboard .absolute.rounded-full.bg-pk-accent {
@@ -3075,31 +3126,33 @@ a.pk-pricing-plan-btn {
 
 /* Mon espace — recherche (base Prism, tous viewports) */
 .pk-prism-dashboard .pk-workspace-search-field {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
   color: #f1f0f5;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   transition:
-    border-color 180ms ease,
-    box-shadow 180ms ease,
-    background 180ms ease;
+    border-color 250ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 250ms cubic-bezier(0.22, 1, 0.36, 1),
+    background 250ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .pk-prism-dashboard .pk-workspace-search-field::placeholder {
-  color: rgba(255, 255, 255, 0.42);
+  color: rgba(255, 255, 255, 0.38);
 }
 
 .pk-prism-dashboard .pk-workspace-search-field:focus {
-  background: rgba(255, 255, 255, 0.09);
-  border-color: rgba(103, 195, 255, 0.42);
-  box-shadow: 0 0 0 3px rgba(157, 124, 255, 0.12);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(168, 85, 247, 0.45);
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1), 0 0 16px rgba(139, 92, 246, 0.06);
   outline: none;
 }
 
 @media (min-width: 768px) {
   .pk-prism-dashboard {
     background:
-      radial-gradient(1200px circle at 12% 6%, rgba(157, 124, 255, 0.12), transparent 48%),
-      radial-gradient(960px circle at 90% 8%, rgba(103, 195, 255, 0.08), transparent 50%),
+      radial-gradient(1200px circle at 12% 6%, rgba(168, 85, 247, 0.12), transparent 48%),
+      radial-gradient(960px circle at 90% 8%, rgba(192, 38, 211, 0.08), transparent 50%),
       radial-gradient(720px circle at 48% 100%, rgba(148, 163, 184, 0.05), transparent 58%),
       linear-gradient(180deg, #020108 0%, #05050c 46%, #080812 100%);
   }
@@ -3114,7 +3167,7 @@ a.pk-pricing-plan-btn {
     max-height: 100%;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      0 0 0 1px rgba(157, 124, 255, 0.06),
+      0 0 0 1px rgba(168, 85, 247, 0.06),
       0 20px 56px rgba(0, 0, 0, 0.38);
   }
 
@@ -3141,7 +3194,7 @@ a.pk-pricing-plan-btn {
   }
 
   .pk-studio-nav-link:focus-visible {
-    outline: 2px solid rgba(103, 195, 255, 0.5);
+    outline: 2px solid rgba(192, 38, 211, 0.5);
     outline-offset: 2px;
   }
 
@@ -3150,17 +3203,17 @@ a.pk-pricing-plan-btn {
   }
 
   .pk-studio-nav-link--active {
-    border-color: rgba(157, 124, 255, 0.35) !important;
-    background: linear-gradient(145deg, rgba(157, 124, 255, 0.16), rgba(103, 195, 255, 0.08)) !important;
-    color: #e8e4ff !important;
+    border-color: rgba(139, 92, 246, 0.38) !important;
+    background: linear-gradient(145deg, rgba(139, 92, 246, 0.18), rgba(236, 72, 153, 0.1)) !important;
+    color: #f3e8ff !important;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.12),
-      0 0 28px rgba(157, 124, 255, 0.18);
+      0 0 28px rgba(139, 92, 246, 0.22);
   }
 
   .pk-studio-nav-link--active .pk-studio-nav-indicator {
     opacity: 1;
-    box-shadow: 0 0 12px rgba(103, 195, 255, 0.65);
+    box-shadow: 0 0 12px rgba(192, 38, 211, 0.65);
   }
 
   .pk-studio-nav-indicator {
@@ -3221,8 +3274,8 @@ a.pk-pricing-plan-btn {
 
   .pk-studio-workspace {
     background:
-      radial-gradient(680px circle at 100% 0%, rgba(103, 195, 255, 0.06), transparent 58%),
-      radial-gradient(520px circle at 0% 100%, rgba(157, 124, 255, 0.04), transparent 52%),
+      radial-gradient(680px circle at 100% 0%, rgba(192, 38, 211, 0.06), transparent 58%),
+      radial-gradient(520px circle at 0% 100%, rgba(168, 85, 247, 0.04), transparent 52%),
       linear-gradient(165deg, rgba(255, 255, 255, 0.028), rgba(255, 255, 255, 0.006)) !important;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.05),
@@ -3240,8 +3293,8 @@ a.pk-pricing-plan-btn {
 
   .pk-studio-mode-rail .pk-prism-pill-active {
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.32),
-      0 0 24px rgba(157, 124, 255, 0.22);
+      inset 0 1px 0 rgba(255, 255, 255, 0.28),
+      0 0 24px rgba(139, 92, 246, 0.28);
   }
 
   /* Dashboard — logo → mode (Chanson / Beat / Recréer) */
@@ -3315,7 +3368,7 @@ a.pk-pricing-plan-btn {
     font-weight: 700;
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: rgba(103, 195, 255, 0.85);
+    color: rgba(192, 38, 211, 0.85);
   }
 
   .pk-gen-hint {
@@ -3340,7 +3393,7 @@ a.pk-pricing-plan-btn {
   .pk-dashboard-bonus-meta {
     font-weight: 500;
     letter-spacing: 0.01em;
-    color: color-mix(in srgb, var(--prism-cyan, #67c3ff) 80%, white);
+    color: color-mix(in srgb, var(--prism-cyan, #e879f9) 80%, white);
   }
 
   .pk-dashboard-bonus-meta__amount {
@@ -3382,7 +3435,7 @@ a.pk-pricing-plan-btn {
     border-radius: 1.15rem;
     border: 1px solid rgba(255, 255, 255, 0.08);
     background:
-      radial-gradient(480px circle at 0% 0%, rgba(157, 124, 255, 0.1), transparent 55%),
+      radial-gradient(480px circle at 0% 0%, rgba(168, 85, 247, 0.1), transparent 55%),
       linear-gradient(135deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }
@@ -3396,11 +3449,11 @@ a.pk-pricing-plan-btn {
   .pk-studio-detail-panel {
     border: 1px solid rgba(255, 255, 255, 0.11) !important;
     background:
-      radial-gradient(560px circle at 18% 0%, rgba(157, 124, 255, 0.1), transparent 54%),
+      radial-gradient(560px circle at 18% 0%, rgba(168, 85, 247, 0.1), transparent 54%),
       linear-gradient(165deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015)) !important;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.1),
-      0 0 0 1px rgba(157, 124, 255, 0.08),
+      0 0 0 1px rgba(168, 85, 247, 0.08),
       0 24px 64px rgba(0, 0, 0, 0.42);
   }
 
@@ -3478,11 +3531,11 @@ a.pk-pricing-plan-btn {
 
 /* Carré icône — carte génération */
 .pk-gen-loading-icon-box {
-  border: 1px solid rgba(103, 195, 255, 0.28);
-  background: linear-gradient(145deg, rgba(103, 195, 255, 0.12), rgba(157, 124, 255, 0.14));
+  border: 1px solid rgba(192, 38, 211, 0.28);
+  background: linear-gradient(145deg, rgba(192, 38, 211, 0.12), rgba(168, 85, 247, 0.14));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 0 16px rgba(103, 195, 255, 0.08);
+    0 0 16px rgba(192, 38, 211, 0.08);
 }
 
 .pk-gen-loading-icon-box::before {
@@ -3491,7 +3544,7 @@ a.pk-pricing-plan-btn {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: radial-gradient(circle at 50% 50%, rgba(157, 124, 255, 0.38), transparent 62%);
+  background: radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.38), transparent 62%);
   opacity: 0.65;
 }
 
@@ -3502,16 +3555,16 @@ a.pk-pricing-plan-btn {
 
 .pk-gen-loading-icon-box .pk-icon-loader__ring {
   inset: -22%;
-  background: radial-gradient(circle at 50% 50%, rgba(157, 124, 255, 0.28), rgba(103, 195, 255, 0.1) 58%, transparent 72%);
+  background: radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.28), rgba(192, 38, 211, 0.1) 58%, transparent 72%);
 }
 
 .pk-gen-loading-shimmer {
   background: linear-gradient(
     105deg,
     transparent 0%,
-    rgba(103, 195, 255, 0.12) 42%,
-    rgba(157, 124, 255, 0.22) 50%,
-    rgba(103, 195, 255, 0.12) 58%,
+    rgba(192, 38, 211, 0.12) 42%,
+    rgba(168, 85, 247, 0.22) 50%,
+    rgba(192, 38, 211, 0.12) 58%,
     transparent 100%
   );
 }
@@ -3525,7 +3578,7 @@ a.pk-pricing-plan-btn {
 }
 
 .pk-loop-cover-thumb {
-  background: linear-gradient(135deg, rgba(103, 195, 255, 0.85), rgba(157, 124, 255, 0.9)) !important;
+  background: linear-gradient(135deg, var(--prism-violet) 0%, var(--prism-accent) 50%, var(--prism-pink) 100%) !important;
 }
 
 /* Lecteur dock — cadre gradient + image : mêmes coins arrondis */
@@ -3591,8 +3644,8 @@ a.pk-pricing-plan-btn {
   border: 1px solid rgba(255, 255, 255, 0.11);
   padding: 1.25rem 1.5rem;
   background:
-    radial-gradient(640px circle at 12% -10%, rgba(157, 124, 255, 0.14), transparent 58%),
-    radial-gradient(520px circle at 92% 110%, rgba(103, 195, 255, 0.1), transparent 52%),
+    radial-gradient(640px circle at 12% -10%, rgba(168, 85, 247, 0.14), transparent 58%),
+    radial-gradient(520px circle at 92% 110%, rgba(192, 38, 211, 0.1), transparent 52%),
     linear-gradient(165deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.018));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.09),
@@ -3609,7 +3662,7 @@ a.pk-pricing-plan-btn {
   pointer-events: none;
   position: absolute;
   border-radius: 9999px;
-  filter: blur(48px);
+  filter: blur(28px);
 }
 
 .pk-prism-hero-orb--a {
@@ -3617,7 +3670,7 @@ a.pk-pricing-plan-btn {
   right: -2rem;
   height: 10rem;
   width: 10rem;
-  background: rgba(157, 124, 255, 0.22);
+  background: rgba(168, 85, 247, 0.22);
 }
 
 .pk-prism-hero-orb--b {
@@ -3625,7 +3678,7 @@ a.pk-pricing-plan-btn {
   left: 20%;
   height: 8rem;
   width: 8rem;
-  background: rgba(103, 195, 255, 0.14);
+  background: rgba(192, 38, 211, 0.14);
 }
 
 .pk-prism-eyebrow {
@@ -3661,8 +3714,8 @@ a.pk-pricing-plan-btn {
   border: 1px solid rgba(255, 255, 255, 0.11);
   padding: 1.35rem 1.25rem 1rem;
   background:
-    radial-gradient(560px circle at 0% 0%, rgba(157, 124, 255, 0.12), transparent 55%),
-    radial-gradient(480px circle at 100% 100%, rgba(103, 195, 255, 0.08), transparent 52%),
+    radial-gradient(560px circle at 0% 0%, rgba(168, 85, 247, 0.12), transparent 55%),
+    radial-gradient(480px circle at 100% 100%, rgba(192, 38, 211, 0.08), transparent 52%),
     linear-gradient(168deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.012));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
@@ -3691,7 +3744,7 @@ a.pk-pricing-plan-btn {
   pointer-events: none;
   position: absolute;
   border-radius: 9999px;
-  filter: blur(52px);
+  filter: blur(32px);
 }
 
 .pk-settings-hero__orb--a {
@@ -3699,7 +3752,7 @@ a.pk-pricing-plan-btn {
   right: -1rem;
   height: 9rem;
   width: 9rem;
-  background: rgba(157, 124, 255, 0.2);
+  background: rgba(168, 85, 247, 0.2);
 }
 
 .pk-settings-hero__orb--b {
@@ -3707,7 +3760,7 @@ a.pk-pricing-plan-btn {
   left: 8%;
   height: 7rem;
   width: 7rem;
-  background: rgba(103, 195, 255, 0.12);
+  background: rgba(192, 38, 211, 0.12);
 }
 
 .pk-settings-hero__top {
@@ -3743,7 +3796,7 @@ a.pk-pricing-plan-btn {
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background:
-    linear-gradient(145deg, rgba(103, 195, 255, 0.18), rgba(157, 124, 255, 0.12)),
+    linear-gradient(145deg, rgba(192, 38, 211, 0.18), rgba(168, 85, 247, 0.12)),
     rgba(255, 255, 255, 0.04);
   font-size: 1.05rem;
   font-weight: 800;
@@ -3817,7 +3870,7 @@ a.pk-pricing-plan-btn {
     var(--prism-cyan) calc(var(--pk-quota-pct) * 1),
     rgba(255, 255, 255, 0.07) 0
   );
-  box-shadow: 0 0 24px rgba(103, 195, 255, 0.12);
+  box-shadow: 0 0 24px rgba(192, 38, 211, 0.12);
 }
 
 .pk-settings-quota-ring__inner {
@@ -3861,8 +3914,8 @@ a.pk-pricing-plan-btn {
   justify-content: center;
   width: fit-content;
   border-radius: 9999px;
-  border: 1px solid rgba(103, 195, 255, 0.28);
-  background: rgba(103, 195, 255, 0.08);
+  border: 1px solid rgba(192, 38, 211, 0.28);
+  background: rgba(192, 38, 211, 0.08);
   padding: 0.35rem 0.85rem;
   font-size: 0.72rem;
   font-weight: 700;
@@ -3871,8 +3924,8 @@ a.pk-pricing-plan-btn {
 }
 
 .pk-settings-hero__upgrade:hover {
-  background: rgba(103, 195, 255, 0.14);
-  border-color: rgba(103, 195, 255, 0.4);
+  background: rgba(192, 38, 211, 0.14);
+  border-color: rgba(192, 38, 211, 0.4);
 }
 
 .pk-settings-nav {
@@ -3913,8 +3966,8 @@ a.pk-pricing-plan-btn {
 }
 
 .pk-settings-nav__pill--active {
-  border-color: rgba(103, 195, 255, 0.32);
-  background: rgba(103, 195, 255, 0.1);
+  border-color: rgba(192, 38, 211, 0.32);
+  background: rgba(192, 38, 211, 0.1);
   color: rgba(186, 230, 253, 0.98);
 }
 
@@ -3973,8 +4026,8 @@ a.pk-pricing-plan-btn {
 .pk-settings-referral-highlight {
   margin-top: 1rem;
   border-radius: 16px;
-  border: 1px solid rgba(157, 124, 255, 0.18);
-  background: linear-gradient(145deg, rgba(157, 124, 255, 0.07), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(168, 85, 247, 0.18);
+  background: linear-gradient(145deg, rgba(168, 85, 247, 0.07), rgba(255, 255, 255, 0.02));
   padding: 1rem 1.1rem;
 }
 
@@ -3982,20 +4035,26 @@ a.pk-pricing-plan-btn {
   position: relative;
   overflow: hidden;
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   padding: 0.875rem 1rem;
-  background: rgba(255, 255, 255, 0.035);
-  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
 }
 
 .pk-prism-stat--cyan {
-  border-color: rgba(103, 195, 255, 0.22);
-  background: linear-gradient(145deg, rgba(103, 195, 255, 0.08), rgba(255, 255, 255, 0.02));
+  border-color: rgba(124, 58, 237, 0.28);
+  background: linear-gradient(145deg, rgba(124, 58, 237, 0.1), rgba(255, 255, 255, 0.03));
 }
 
 .pk-prism-stat--violet {
-  border-color: rgba(157, 124, 255, 0.24);
-  background: linear-gradient(145deg, rgba(157, 124, 255, 0.1), rgba(255, 255, 255, 0.02));
+  border-color: rgba(168, 85, 247, 0.28);
+  background: linear-gradient(145deg, rgba(168, 85, 247, 0.12), rgba(255, 255, 255, 0.03));
+}
+
+.pk-prism-stat--chrome {
+  border-color: rgba(226, 232, 240, 0.2);
+  background: linear-gradient(145deg, rgba(226, 232, 240, 0.08), rgba(255, 255, 255, 0.03));
 }
 
 .pk-prism-stat__icon {
@@ -4009,6 +4068,7 @@ a.pk-pricing-plan-btn {
   line-height: 1.1;
   letter-spacing: -0.02em;
   color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
 .pk-prism-stat__label {
@@ -4017,7 +4077,7 @@ a.pk-pricing-plan-btn {
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.48);
+  color: rgba(255, 255, 255, 0.52);
 }
 
 .pk-prism-aside-icon {
@@ -4027,10 +4087,10 @@ a.pk-pricing-plan-btn {
   align-items: center;
   justify-content: center;
   border-radius: 14px;
-  border: 1px solid rgba(103, 195, 255, 0.28);
-  background: linear-gradient(145deg, rgba(103, 195, 255, 0.12), rgba(157, 124, 255, 0.08));
+  border: 1px solid rgba(124, 58, 237, 0.32);
+  background: linear-gradient(145deg, rgba(124, 58, 237, 0.14), rgba(168, 85, 247, 0.1));
   color: var(--prism-cyan);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 
 .pk-prism-aside-avatar {
@@ -4040,26 +4100,28 @@ a.pk-pricing-plan-btn {
   align-items: center;
   justify-content: center;
   border-radius: 9999px;
-  border: 1px solid rgba(157, 124, 255, 0.35);
-  background: linear-gradient(145deg, rgba(157, 124, 255, 0.18), rgba(103, 195, 255, 0.1));
+  border: 1px solid rgba(168, 85, 247, 0.38);
+  background: linear-gradient(145deg, rgba(168, 85, 247, 0.2), rgba(124, 58, 237, 0.12));
   font-size: 0.8rem;
   font-weight: 800;
   letter-spacing: 0.06em;
   color: #fff;
-  box-shadow: 0 0 24px rgba(157, 124, 255, 0.18);
+  box-shadow: 0 0 28px rgba(168, 85, 247, 0.22);
 }
 
 .pk-prism-aside-stat {
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 0.65rem 0.75rem;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
 }
 
 .pk-prism-aside-stat__value {
   font-size: 1.1rem;
   font-weight: 700;
   color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
 }
 
 .pk-prism-aside-stat__label {
@@ -4068,7 +4130,7 @@ a.pk-pricing-plan-btn {
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.48);
 }
 
 .pk-prism-chip-cloud {
@@ -4094,7 +4156,7 @@ a.pk-pricing-plan-btn {
   border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 1.5rem;
   background:
-    radial-gradient(480px circle at 0% 0%, rgba(157, 124, 255, 0.06), transparent 50%),
+    radial-gradient(480px circle at 0% 0%, rgba(168, 85, 247, 0.06), transparent 50%),
     linear-gradient(165deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012));
   backdrop-filter: blur(14px);
 }
@@ -4126,7 +4188,7 @@ a.pk-pricing-plan-btn {
 .pk-prism-rail-head__line {
   height: 1px;
   flex: 1;
-  background: linear-gradient(90deg, rgba(103, 195, 255, 0.45), rgba(157, 124, 255, 0.08), transparent);
+  background: linear-gradient(90deg, rgba(192, 38, 211, 0.45), rgba(168, 85, 247, 0.08), transparent);
 }
 
 .pk-prism-live-badge {
@@ -4184,16 +4246,16 @@ a.pk-pricing-plan-btn {
 }
 
 .pk-prism-tier-badge--pro {
-  color: #050508;
-  border-color: rgba(103, 195, 255, 0.35);
-  background: linear-gradient(120deg, #e2e8f0, var(--prism-cyan) 55%, var(--prism-violet));
+  color: #fff;
+  border-color: rgba(139, 92, 246, 0.45);
+  background: linear-gradient(120deg, var(--prism-violet), var(--prism-accent) 55%, var(--prism-pink));
 }
 
 .pk-prism-tier-badge--studio {
   color: #fff;
-  border-color: rgba(157, 124, 255, 0.45);
-  background: linear-gradient(120deg, rgba(157, 124, 255, 0.85), rgba(103, 195, 255, 0.55));
-  box-shadow: 0 0 24px rgba(157, 124, 255, 0.25);
+  border-color: rgba(168, 85, 247, 0.45);
+  background: linear-gradient(120deg, rgba(168, 85, 247, 0.85), rgba(192, 38, 211, 0.55));
+  box-shadow: 0 0 24px rgba(168, 85, 247, 0.25);
 }
 
 .pk-prism-tier-badge--plus {
@@ -4221,8 +4283,8 @@ a.pk-pricing-plan-btn {
 }
 
 .pk-prism-input-shell input:focus {
-  border-color: rgba(103, 195, 255, 0.42);
-  box-shadow: 0 0 0 3px rgba(157, 124, 255, 0.12);
+  border-color: rgba(192, 38, 211, 0.42);
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.12);
 }
 
 .pk-prism-input-shell svg {
@@ -4240,10 +4302,10 @@ a.pk-pricing-plan-btn {
   position: relative;
   overflow: hidden;
   border-radius: 18px;
-  border: 1px solid rgba(157, 124, 255, 0.22);
+  border: 1px solid rgba(168, 85, 247, 0.22);
   padding: 1rem;
   background:
-    radial-gradient(420px circle at 0% 0%, rgba(157, 124, 255, 0.16), transparent 55%),
+    radial-gradient(420px circle at 0% 0%, rgba(168, 85, 247, 0.16), transparent 55%),
     linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
 }
 
@@ -4271,14 +4333,14 @@ a.pk-pricing-plan-btn {
   width: min(100%, 6rem);
   pointer-events: none;
   opacity: 0.22;
-  background: linear-gradient(180deg, transparent, rgba(157, 124, 255, 0.1), transparent);
+  background: linear-gradient(180deg, transparent, rgba(168, 85, 247, 0.1), transparent);
 }
 
 .pk-landing-flow .pk-landing-gen__shell {
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.07),
     0 28px 80px rgba(0, 0, 0, 0.52),
-    0 0 100px rgba(157, 124, 255, 0.12);
+    0 0 100px rgba(168, 85, 247, 0.12);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -4385,7 +4447,7 @@ a.pk-pricing-plan-btn {
   height: 100%;
   width: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, rgba(157, 124, 255, 0.35), rgba(103, 195, 255, 0.85), rgba(236, 72, 153, 0.55));
+  background: linear-gradient(90deg, rgba(168, 85, 247, 0.35), rgba(192, 38, 211, 0.85), rgba(236, 72, 153, 0.55));
   transform: scaleX(0);
   transform-origin: left center;
   animation: pkHeroPromptProgress 5.4s linear forwards;
@@ -4473,7 +4535,7 @@ a.pk-pricing-plan-btn {
   border-radius: 1.25rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background:
-    radial-gradient(520px circle at 12% 0%, rgba(157, 124, 255, 0.12), transparent 58%),
+    radial-gradient(520px circle at 12% 0%, rgba(168, 85, 247, 0.12), transparent 58%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
   backdrop-filter: blur(18px);
   box-shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
@@ -4533,12 +4595,12 @@ a.pk-pricing-plan-btn {
 .pk-landing-gen__cta-field {
   position: absolute;
   inset: -26px -18px;
-  border-radius: 999px;
+  border-radius: 18px;
   pointer-events: none;
   z-index: 0;
   background:
-    radial-gradient(ellipse 72% 88% at 28% 50%, rgba(103, 195, 255, 0.42), transparent 56%),
-    radial-gradient(ellipse 68% 82% at 74% 48%, rgba(157, 124, 255, 0.36), transparent 54%),
+    radial-gradient(ellipse 72% 88% at 28% 50%, rgba(192, 38, 211, 0.42), transparent 56%),
+    radial-gradient(ellipse 68% 82% at 74% 48%, rgba(168, 85, 247, 0.36), transparent 54%),
     radial-gradient(ellipse 54% 64% at 50% 88%, rgba(192, 132, 252, 0.22), transparent 52%);
   filter: blur(20px);
   opacity: 0.72;
@@ -4551,14 +4613,14 @@ a.pk-pricing-plan-btn {
   position: absolute;
   inset: 18%;
   border-radius: inherit;
-  border: 1px solid rgba(103, 195, 255, 0.22);
+  border: 1px solid rgba(192, 38, 211, 0.22);
   opacity: 0;
   animation: pkGenCtaRipple 4.6s ease-out infinite;
 }
 
 .pk-landing-gen__cta-field::after {
   animation-delay: 2.3s;
-  border-color: rgba(157, 124, 255, 0.18);
+  border-color: rgba(168, 85, 247, 0.18);
 }
 
 .pk-landing-gen__cta {
@@ -4574,13 +4636,13 @@ a.pk-pricing-plan-btn {
   box-shadow:
     inset 0 2px 4px rgba(255, 255, 255, 0.52),
     inset 0 -5px 14px rgba(0, 0, 0, 0.38),
-    inset 4px 0 10px rgba(103, 195, 255, 0.14),
-    inset -4px 0 10px rgba(157, 124, 255, 0.12),
+    inset 4px 0 10px rgba(192, 38, 211, 0.14),
+    inset -4px 0 10px rgba(168, 85, 247, 0.12),
     inset 0 0 0 1px rgba(255, 255, 255, 0.1),
     0 0 0 1px rgba(255, 255, 255, 0.06),
     0 10px 36px rgba(0, 0, 0, 0.42),
-    0 0 52px rgba(103, 195, 255, 0.18),
-    0 0 80px rgba(157, 124, 255, 0.12);
+    0 0 52px rgba(192, 38, 211, 0.18),
+    0 0 80px rgba(168, 85, 247, 0.12);
   transition:
     transform 380ms cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 380ms ease,
@@ -4666,8 +4728,8 @@ a.pk-pricing-plan-btn {
   pointer-events: none;
   background:
     radial-gradient(ellipse 88% 68% at 16% 8%, rgba(255, 255, 255, 0.5), transparent 52%),
-    radial-gradient(ellipse 58% 46% at 86% 94%, rgba(103, 195, 255, 0.38), transparent 54%),
-    radial-gradient(ellipse 46% 38% at 70% 16%, rgba(157, 124, 255, 0.3), transparent 50%),
+    radial-gradient(ellipse 58% 46% at 86% 94%, rgba(192, 38, 211, 0.38), transparent 54%),
+    radial-gradient(ellipse 46% 38% at 70% 16%, rgba(168, 85, 247, 0.3), transparent 50%),
     radial-gradient(ellipse 38% 32% at 44% 82%, rgba(251, 191, 36, 0.16), transparent 46%);
   mix-blend-mode: screen;
   opacity: 0.82;
@@ -4697,7 +4759,7 @@ a.pk-pricing-plan-btn {
   z-index: 4;
   font-weight: 700;
   text-shadow:
-    0 0 22px rgba(103, 195, 255, 0.32),
+    0 0 22px rgba(192, 38, 211, 0.32),
     0 1px 3px rgba(0, 0, 0, 0.45);
 }
 
@@ -4713,13 +4775,13 @@ a.pk-pricing-plan-btn {
   box-shadow:
     inset 0 2px 5px rgba(255, 255, 255, 0.62),
     inset 0 -5px 16px rgba(0, 0, 0, 0.32),
-    inset 4px 0 12px rgba(103, 195, 255, 0.2),
-    inset -4px 0 12px rgba(157, 124, 255, 0.16),
+    inset 4px 0 12px rgba(192, 38, 211, 0.2),
+    inset -4px 0 12px rgba(168, 85, 247, 0.16),
     inset 0 0 0 1px rgba(255, 255, 255, 0.14),
-    0 0 0 1px rgba(103, 195, 255, 0.28),
+    0 0 0 1px rgba(192, 38, 211, 0.28),
     0 14px 44px rgba(0, 0, 0, 0.38),
-    0 0 64px rgba(103, 195, 255, 0.28),
-    0 0 96px rgba(157, 124, 255, 0.22),
+    0 0 64px rgba(192, 38, 211, 0.28),
+    0 0 96px rgba(168, 85, 247, 0.22),
     0 0 128px rgba(192, 132, 252, 0.14);
 }
 
@@ -4868,8 +4930,8 @@ a.pk-pricing-plan-btn {
   border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 1.25rem 1.35rem 1rem;
   background:
-    radial-gradient(560px circle at 8% -20%, rgba(103, 195, 255, 0.16), transparent 55%),
-    radial-gradient(480px circle at 96% 120%, rgba(157, 124, 255, 0.12), transparent 50%),
+    radial-gradient(560px circle at 8% -20%, rgba(192, 38, 211, 0.16), transparent 55%),
+    radial-gradient(480px circle at 96% 120%, rgba(168, 85, 247, 0.12), transparent 50%),
     linear-gradient(165deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.015));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 20px 48px rgba(0, 0, 0, 0.28);
 }
@@ -4887,7 +4949,7 @@ a.pk-pricing-plan-btn {
   pointer-events: none;
   position: absolute;
   border-radius: 9999px;
-  filter: blur(52px);
+  filter: blur(32px);
 }
 
 .pk-voice-studio-hero__orb--a {
@@ -4895,7 +4957,7 @@ a.pk-pricing-plan-btn {
   right: 8%;
   width: 9rem;
   height: 9rem;
-  background: rgba(103, 195, 255, 0.2);
+  background: rgba(192, 38, 211, 0.2);
 }
 
 .pk-voice-studio-hero__orb--b {
@@ -4903,7 +4965,7 @@ a.pk-pricing-plan-btn {
   left: 12%;
   width: 7rem;
   height: 7rem;
-  background: rgba(157, 124, 255, 0.16);
+  background: rgba(168, 85, 247, 0.16);
 }
 
 .pk-voice-studio-hero__top {
@@ -4997,14 +5059,14 @@ a.pk-pricing-plan-btn {
   font-size: 0.78rem;
   font-weight: 700;
   color: #fff;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--prism-cyan) 75%, #6366f1), color-mix(in srgb, var(--prism-cyan) 55%, #8b5cf6));
-  box-shadow: 0 8px 24px rgba(103, 195, 255, 0.22);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--prism-cyan) 75%, #6366f1), color-mix(in srgb, var(--prism-cyan) 55%, var(--prism-violet)));
+  box-shadow: 0 8px 24px rgba(192, 38, 211, 0.22);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .pk-voice-studio-hero__cta:hover {
   transform: translateY(-1px);
-  box-shadow: 0 12px 28px rgba(103, 195, 255, 0.28);
+  box-shadow: 0 12px 28px rgba(192, 38, 211, 0.28);
 }
 
 .pk-voice-studio-hero__footer {
@@ -5187,8 +5249,8 @@ a.pk-pricing-plan-btn {
   font-weight: 800;
   letter-spacing: 0.02em;
   color: #fff;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--prism-cyan) 70%, #6366f1), #8b5cf6);
-  box-shadow: 0 6px 18px rgba(103, 195, 255, 0.22);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--prism-cyan) 70%, #6366f1), var(--prism-violet));
+  box-shadow: 0 6px 18px rgba(192, 38, 211, 0.22);
 }
 
 .pk-voice-card.is-active .pk-voice-card__avatar {
@@ -5236,7 +5298,7 @@ a.pk-pricing-plan-btn {
   min-width: 2px;
   max-width: 4px;
   border-radius: 9999px;
-  background: linear-gradient(to top, var(--voice-accent), rgba(157, 124, 255, 0.65));
+  background: linear-gradient(to top, var(--voice-accent), rgba(168, 85, 247, 0.65));
   animation: pkVoiceBar 1.4s ease-in-out infinite alternate;
   height: 35%;
 }
@@ -5283,7 +5345,7 @@ a.pk-pricing-plan-btn {
   justify-content: center;
   min-width: 9rem;
   color: #fff;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--prism-cyan) 65%, #6366f1), color-mix(in srgb, var(--prism-cyan) 45%, #8b5cf6));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--prism-cyan) 65%, #6366f1), color-mix(in srgb, var(--prism-cyan) 45%, var(--prism-violet)));
   border-color: transparent;
 }
 
@@ -5482,7 +5544,7 @@ a.pk-pricing-plan-btn {
 
 .pk-voice-create__record {
   color: #fff;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--prism-cyan) 70%, #6366f1), #8b5cf6);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--prism-cyan) 70%, #6366f1), var(--prism-violet));
 }
 
 .pk-voice-create__record.is-recording {
@@ -5541,7 +5603,7 @@ a.pk-pricing-plan-btn {
 
 .pk-voice-create__primary {
   color: #fff;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--prism-cyan) 70%, #6366f1), #8b5cf6);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--prism-cyan) 70%, #6366f1), var(--prism-violet));
 }
 
 .pk-voice-create__ghost {
@@ -5732,13 +5794,13 @@ a.pk-pricing-plan-btn {
   box-shadow:
     inset 0 2px 4px rgba(255, 255, 255, 0.52),
     inset 0 -5px 14px rgba(0, 0, 0, 0.32),
-    inset 4px 0 12px rgba(103, 195, 255, 0.18),
-    inset -4px 0 12px rgba(157, 124, 255, 0.14),
+    inset 4px 0 12px rgba(192, 38, 211, 0.18),
+    inset -4px 0 12px rgba(168, 85, 247, 0.14),
     inset 0 0 0 1px rgba(255, 255, 255, 0.12),
-    0 0 calc(6px + var(--pk-gen-power) * 26px) rgba(103, 195, 255, calc(0.22 + var(--pk-gen-power) * 0.42)),
+    0 0 calc(6px + var(--pk-gen-power) * 26px) rgba(192, 38, 211, calc(0.22 + var(--pk-gen-power) * 0.42)),
     0 0 calc(2px + var(--pk-gen-power) * 14px) rgba(167, 139, 250, calc(0.16 + var(--pk-gen-power) * 0.38)),
-    0 0 64px rgba(103, 195, 255, 0.24),
-    0 0 96px rgba(157, 124, 255, 0.18);
+    0 0 64px rgba(192, 38, 211, 0.24),
+    0 0 96px rgba(168, 85, 247, 0.18);
 }
 
 @keyframes pkGenCtaFieldBreath {
@@ -5822,7 +5884,7 @@ a.pk-pricing-plan-btn {
 }
 
 .pk-landing-gen-card__btn:focus-visible .pk-landing-gen-card__frame {
-  box-shadow: 0 0 0 3px rgba(103, 195, 255, 0.22), 0 24px 80px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 0 0 3px rgba(192, 38, 211, 0.22), 0 24px 80px rgba(0, 0, 0, 0.45);
 }
 
 @keyframes pk-landing-gen-card-swap-in {
@@ -6038,8 +6100,8 @@ a.pk-pricing-plan-btn {
 /* Landing live generations — Suite créateur */
 .pk-landing-live-gen__glow {
   background:
-    radial-gradient(ellipse 80% 60% at 80% 10%, rgba(157, 124, 255, 0.18), transparent 55%),
-    radial-gradient(ellipse 60% 50% at 20% 90%, rgba(103, 195, 255, 0.1), transparent 50%);
+    radial-gradient(ellipse 80% 60% at 80% 10%, rgba(168, 85, 247, 0.18), transparent 55%),
+    radial-gradient(ellipse 60% 50% at 20% 90%, rgba(192, 38, 211, 0.1), transparent 50%);
   animation: pkLiveGenGlow 8s ease-in-out infinite;
 }
 
@@ -6074,11 +6136,11 @@ a.pk-pricing-plan-btn {
 .pk-landing-live-gen__cover--ready {
   transform: scale(1);
   opacity: 1;
-  box-shadow: 0 0 24px rgba(157, 124, 255, 0.35);
+  box-shadow: 0 0 24px rgba(168, 85, 247, 0.35);
 }
 
 .pk-landing-live-gen__bar {
-  box-shadow: 0 0 12px rgba(103, 195, 255, 0.35);
+  box-shadow: 0 0 12px rgba(192, 38, 211, 0.35);
 }
 
 .pk-landing-live-gen__wave-bar {
@@ -6104,10 +6166,10 @@ a.pk-pricing-plan-btn {
 }
 
 .pk-landing-live-gen__pill--lit {
-  border-color: rgba(103, 195, 255, 0.35);
-  background: rgba(103, 195, 255, 0.08);
+  border-color: rgba(192, 38, 211, 0.35);
+  background: rgba(192, 38, 211, 0.08);
   color: rgba(255, 255, 255, 0.88);
-  box-shadow: 0 0 20px rgba(157, 124, 255, 0.12);
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.12);
 }
 
 /* Landing pitch sections — motion */
@@ -6121,9 +6183,9 @@ a.pk-pricing-plan-btn {
   background:
     linear-gradient(
       145deg,
-      rgba(157, 124, 255, 0.08) 0%,
+      rgba(168, 85, 247, 0.08) 0%,
       rgba(255, 255, 255, 0.025) 38%,
-      rgba(103, 195, 255, 0.06) 72%,
+      rgba(192, 38, 211, 0.06) 72%,
       rgba(236, 72, 153, 0.05) 100%
     );
   backdrop-filter: blur(16px) saturate(1.5);
@@ -6138,8 +6200,8 @@ a.pk-pricing-plan-btn {
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(560px circle at 12% 20%, rgba(103, 195, 255, 0.12), transparent 58%),
-    radial-gradient(520px circle at 88% 18%, rgba(157, 124, 255, 0.1), transparent 56%),
+    radial-gradient(560px circle at 12% 20%, rgba(192, 38, 211, 0.12), transparent 58%),
+    radial-gradient(520px circle at 88% 18%, rgba(168, 85, 247, 0.1), transparent 56%),
     radial-gradient(480px circle at 72% 92%, rgba(236, 72, 153, 0.08), transparent 54%);
   opacity: 0.85;
   animation: pkWorkflowAura 12s ease-in-out infinite;
@@ -6198,13 +6260,13 @@ a.pk-pricing-plan-btn {
 }
 
 .pk-landing-workflow__node--cyan.is-lit {
-  border-color: rgba(103, 195, 255, 0.35);
-  box-shadow: 0 0 24px rgba(103, 195, 255, 0.16);
+  border-color: rgba(192, 38, 211, 0.35);
+  box-shadow: 0 0 24px rgba(192, 38, 211, 0.16);
 }
 
 .pk-landing-workflow__node--violet.is-lit {
-  border-color: rgba(157, 124, 255, 0.38);
-  box-shadow: 0 0 24px rgba(157, 124, 255, 0.16);
+  border-color: rgba(168, 85, 247, 0.38);
+  box-shadow: 0 0 24px rgba(168, 85, 247, 0.16);
 }
 
 .pk-landing-workflow__node--pink.is-lit {
@@ -6222,8 +6284,8 @@ a.pk-pricing-plan-btn {
 }
 
 .pk-landing-workflow__connector.is-lit {
-  background: linear-gradient(180deg, rgba(103, 195, 255, 0.55), rgba(157, 124, 255, 0.35));
-  box-shadow: 0 0 12px rgba(103, 195, 255, 0.2);
+  background: linear-gradient(180deg, rgba(192, 38, 211, 0.55), rgba(168, 85, 247, 0.35));
+  box-shadow: 0 0 12px rgba(192, 38, 211, 0.2);
 }
 
 .pk-landing-workflow__mobile-bar {
@@ -6269,14 +6331,14 @@ a.pk-pricing-plan-btn {
 
 .pk-landing-workflow-step--cyan.pk-landing-workflow-step--active .pk-landing-workflow-step__liquid {
   background:
-    radial-gradient(circle at 18% 20%, rgba(103, 195, 255, 0.28), transparent 48%),
-    radial-gradient(circle at 88% 80%, rgba(103, 195, 255, 0.12), transparent 52%);
+    radial-gradient(circle at 18% 20%, rgba(192, 38, 211, 0.28), transparent 48%),
+    radial-gradient(circle at 88% 80%, rgba(192, 38, 211, 0.12), transparent 52%);
 }
 
 .pk-landing-workflow-step--violet.pk-landing-workflow-step--active .pk-landing-workflow-step__liquid {
   background:
-    radial-gradient(circle at 16% 18%, rgba(157, 124, 255, 0.3), transparent 48%),
-    radial-gradient(circle at 84% 78%, rgba(157, 124, 255, 0.14), transparent 52%);
+    radial-gradient(circle at 16% 18%, rgba(168, 85, 247, 0.3), transparent 48%),
+    radial-gradient(circle at 84% 78%, rgba(168, 85, 247, 0.14), transparent 52%);
 }
 
 .pk-landing-workflow-step--pink.pk-landing-workflow-step--active .pk-landing-workflow-step__liquid {
@@ -6302,15 +6364,15 @@ a.pk-pricing-plan-btn {
 .pk-landing-workflow-step--cyan.pk-landing-workflow-step--active {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    0 0 0 1px rgba(103, 195, 255, 0.12),
-    0 16px 44px rgba(103, 195, 255, 0.1);
+    0 0 0 1px rgba(192, 38, 211, 0.12),
+    0 16px 44px rgba(192, 38, 211, 0.1);
 }
 
 .pk-landing-workflow-step--violet.pk-landing-workflow-step--active {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    0 0 0 1px rgba(157, 124, 255, 0.14),
-    0 16px 44px rgba(157, 124, 255, 0.11);
+    0 0 0 1px rgba(168, 85, 247, 0.14),
+    0 16px 44px rgba(168, 85, 247, 0.11);
 }
 
 .pk-landing-workflow-step--pink.pk-landing-workflow-step--active {
@@ -6358,11 +6420,11 @@ a.pk-pricing-plan-btn {
 }
 
 .pk-landing-workflow-step__orb--cyan::before {
-  background: radial-gradient(circle at 30% 20%, rgba(103, 195, 255, 0.45), transparent 62%);
+  background: radial-gradient(circle at 30% 20%, rgba(192, 38, 211, 0.45), transparent 62%);
 }
 
 .pk-landing-workflow-step__orb--violet::before {
-  background: radial-gradient(circle at 30% 20%, rgba(157, 124, 255, 0.42), transparent 62%);
+  background: radial-gradient(circle at 30% 20%, rgba(168, 85, 247, 0.42), transparent 62%);
 }
 
 .pk-landing-workflow-step__orb--pink::before {
@@ -6375,11 +6437,11 @@ a.pk-pricing-plan-btn {
 }
 
 .pk-landing-workflow-step__orb--cyan.is-active {
-  box-shadow: 0 0 28px rgba(103, 195, 255, 0.22);
+  box-shadow: 0 0 28px rgba(192, 38, 211, 0.22);
 }
 
 .pk-landing-workflow-step__orb--violet.is-active {
-  box-shadow: 0 0 28px rgba(157, 124, 255, 0.22);
+  box-shadow: 0 0 28px rgba(168, 85, 247, 0.22);
 }
 
 .pk-landing-workflow-step__orb--pink.is-active {
@@ -6403,8 +6465,8 @@ a.pk-pricing-plan-btn {
 
 .pk-landing-pitch-dream__orb {
   background:
-    radial-gradient(circle at 50% 40%, rgba(157, 124, 255, 0.14), transparent 58%),
-    radial-gradient(circle at 20% 80%, rgba(103, 195, 255, 0.08), transparent 50%);
+    radial-gradient(circle at 50% 40%, rgba(168, 85, 247, 0.14), transparent 58%),
+    radial-gradient(circle at 20% 80%, rgba(192, 38, 211, 0.08), transparent 50%);
   animation: pkPitchDreamOrb 10s ease-in-out infinite;
 }
 
@@ -6424,9 +6486,9 @@ a.pk-pricing-plan-btn {
 
 .pk-landing-pitch-quality__card:hover {
   transform: translateY(-3px);
-  border-color: rgba(103, 195, 255, 0.22);
-  background: rgba(103, 195, 255, 0.05);
-  box-shadow: 0 12px 32px rgba(103, 195, 255, 0.1);
+  border-color: rgba(192, 38, 211, 0.22);
+  background: rgba(192, 38, 211, 0.05);
+  box-shadow: 0 12px 32px rgba(192, 38, 211, 0.1);
 }
 
 @keyframes pkLiveGenGlow {
@@ -6814,8 +6876,8 @@ html.pk-warm-glass-active .pk-theme-accent-menu__moods {
 .pk-language-btn--open {
   border-color: rgba(255, 255, 255, 0.55);
   box-shadow:
-    0 0 0 2px color-mix(in srgb, var(--prism-violet, #9d7cff) 32%, transparent),
-    0 0 16px color-mix(in srgb, var(--prism-violet, #9d7cff) 18%, transparent);
+    0 0 0 2px color-mix(in srgb, var(--prism-violet, #c026d3) 32%, transparent),
+    0 0 16px color-mix(in srgb, var(--prism-violet, #c026d3) 18%, transparent);
   transform: scale(1.04);
 }
 
@@ -6870,7 +6932,7 @@ html.pk-warm-glass-active .pk-language-btn--warm .pk-language-btn__icon {
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.04),
     0 18px 48px rgba(0, 0, 0, 0.55),
-    0 0 32px color-mix(in srgb, var(--prism-violet, #9d7cff) 12%, transparent);
+    0 0 32px color-mix(in srgb, var(--prism-violet, #c026d3) 12%, transparent);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   max-height: min(70vh, 320px);
@@ -6932,7 +6994,7 @@ html.pk-cloud-active .pk-language-menu {
 }
 
 .pk-language-menu__item--active {
-  background: color-mix(in srgb, var(--prism-violet, #9d7cff) 22%, transparent);
+  background: color-mix(in srgb, var(--prism-violet, #c026d3) 22%, transparent);
   color: #fff;
   font-weight: 600;
 }
@@ -7109,8 +7171,8 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
   border-radius: 1.75rem;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background:
-    radial-gradient(900px circle at 18% 0%, rgba(157, 124, 255, 0.14), transparent 55%),
-    radial-gradient(700px circle at 88% 12%, rgba(103, 195, 255, 0.1), transparent 50%),
+    radial-gradient(900px circle at 18% 0%, rgba(168, 85, 247, 0.14), transparent 55%),
+    radial-gradient(700px circle at 88% 12%, rgba(192, 38, 211, 0.1), transparent 50%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.06),
@@ -7124,7 +7186,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
   position: absolute;
   inset: -20% 0 auto 0;
   height: 55%;
-  background: radial-gradient(ellipse at 50% 0%, rgba(157, 124, 255, 0.2), transparent 68%);
+  background: radial-gradient(ellipse at 50% 0%, rgba(168, 85, 247, 0.2), transparent 68%);
   opacity: 0.7;
   z-index: 0;
 }
@@ -7286,8 +7348,8 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
   inset: 0;
   z-index: 1;
   background:
-    linear-gradient(165deg, rgba(157, 124, 255, 0.14) 0%, transparent 42%),
-    linear-gradient(340deg, rgba(103, 195, 255, 0.1) 0%, transparent 38%),
+    linear-gradient(165deg, rgba(168, 85, 247, 0.14) 0%, transparent 42%),
+    linear-gradient(340deg, rgba(192, 38, 211, 0.1) 0%, transparent 38%),
     linear-gradient(180deg, rgba(6, 5, 15, 0.08) 0%, rgba(6, 5, 15, 0.42) 100%);
   mix-blend-mode: soft-light;
 }
@@ -7308,7 +7370,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
   position: absolute;
   inset: 0;
   z-index: 3;
-  background: linear-gradient(125deg, rgba(255, 255, 255, 0.12), transparent 42%, transparent 68%, rgba(103, 195, 255, 0.1));
+  background: linear-gradient(125deg, rgba(255, 255, 255, 0.12), transparent 42%, transparent 68%, rgba(192, 38, 211, 0.1));
   opacity: 0.4;
   mix-blend-mode: soft-light;
 }
@@ -7343,10 +7405,10 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 @media (hover: hover) and (pointer: fine) {
   .pk-landing-gallery__tile-frame:hover {
     transform: translateY(-4px) scale(1.02);
-    border-color: rgba(103, 195, 255, 0.28);
+    border-color: rgba(192, 38, 211, 0.28);
     box-shadow:
       0 24px 64px rgba(0, 0, 0, 0.5),
-      0 0 0 1px rgba(103, 195, 255, 0.12);
+      0 0 0 1px rgba(192, 38, 211, 0.12);
   }
 
   .pk-landing-gallery__tile-frame:hover .pk-landing-gallery__img {
@@ -7521,7 +7583,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 }
 
 .pk-landing-social__card--tt:hover {
-  box-shadow: 0 0 40px rgba(103, 195, 255, 0.12);
+  box-shadow: 0 0 40px rgba(192, 38, 211, 0.12);
 }
 
 @media (min-width: 640px) {
@@ -7579,7 +7641,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 }
 
 .pk-landing-stat:hover {
-  border-color: rgba(157, 124, 255, 0.28);
+  border-color: rgba(168, 85, 247, 0.28);
   background: rgba(255, 255, 255, 0.05);
 }
 
@@ -7660,12 +7722,12 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 }
 
 .pk-footer-social__link--tt::before {
-  background: linear-gradient(135deg, rgba(103, 195, 255, 0.14), rgba(255, 255, 255, 0.06));
+  background: linear-gradient(135deg, rgba(192, 38, 211, 0.14), rgba(255, 255, 255, 0.06));
 }
 
 .pk-footer-social__link--tt:hover {
-  border-color: rgba(103, 195, 255, 0.32);
-  box-shadow: 0 8px 28px rgba(103, 195, 255, 0.1);
+  border-color: rgba(192, 38, 211, 0.32);
+  box-shadow: 0 8px 28px rgba(192, 38, 211, 0.1);
 }
 
 .pk-footer-social__link--tt:hover::before {
@@ -7794,10 +7856,10 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 @keyframes pkCommunityPlayingRing {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(103, 195, 255, 0.35), 0 20px 60px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 0 0 0 rgba(192, 38, 211, 0.35), 0 20px 60px rgba(0, 0, 0, 0.35);
   }
   50% {
-    box-shadow: 0 0 0 3px rgba(157, 124, 255, 0.28), 0 24px 70px rgba(103, 195, 255, 0.12);
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.28), 0 24px 70px rgba(192, 38, 211, 0.12);
   }
 }
 
@@ -7812,7 +7874,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
   padding: 0.15rem 0.25rem 0.5rem;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
-  scrollbar-color: rgba(103, 195, 255, 0.28) transparent;
+  scrollbar-color: rgba(192, 38, 211, 0.28) transparent;
 }
 
 .pk-remix-library-rail::-webkit-scrollbar {
@@ -7821,7 +7883,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 
 .pk-remix-library-rail::-webkit-scrollbar-thumb {
   border-radius: 999px;
-  background: rgba(103, 195, 255, 0.28);
+  background: rgba(192, 38, 211, 0.28);
 }
 
 .pk-remix-library-pill {
@@ -7843,9 +7905,9 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 }
 
 .pk-remix-library-pill--selected {
-  border-color: rgba(103, 195, 255, 0.4);
-  background: rgba(103, 195, 255, 0.12);
-  box-shadow: 0 0 0 1px rgba(103, 195, 255, 0.1);
+  border-color: rgba(192, 38, 211, 0.4);
+  background: rgba(192, 38, 211, 0.12);
+  box-shadow: 0 0 0 1px rgba(192, 38, 211, 0.1);
 }
 
 .pk-remix-library-pill__thumb {
@@ -8290,7 +8352,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 }
 
 .pk-workspace-cover-stack--playing .pk-workspace-cover-stack__inner {
-  animation: pkVhsTapeJitter 0.14s steps(2) infinite;
+  animation: pkVhsTapeJitter 0.3s steps(2) infinite;
 }
 
 .pk-workspace-cover-stack--playing .pk-workspace-cover-stack__layer.is-loaded {
@@ -8330,7 +8392,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
   background:
     linear-gradient(90deg, rgba(255, 40, 60, 0.07) 0%, transparent 38%),
     linear-gradient(90deg, transparent 62%, rgba(40, 220, 255, 0.06) 100%);
-  animation: pkVhsChromaWobble 0.11s steps(3) infinite;
+  animation: pkVhsChromaWobble 0.25s steps(3) infinite;
 }
 
 .pk-cover-vhs-fx__bleed {
@@ -8354,12 +8416,12 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 
 .pk-cover-vintage-fx__grain {
   position: absolute;
-  inset: -25%;
-  opacity: 0.18;
+  inset: -10%;
+  opacity: 0.15;
   mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 96px 96px;
-  animation: pkVhsGrainFlicker 0.08s steps(4) infinite;
+  animation: pkVhsGrainFlicker 0.2s steps(4) infinite;
 }
 
 .pk-cover-vintage-fx__scanlines {
@@ -8757,7 +8819,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 }
 
 .pk-toast--success {
-  background-image: linear-gradient(135deg, rgba(103, 195, 255, 0.08), transparent 55%) !important;
+  background-image: linear-gradient(135deg, rgba(192, 38, 211, 0.08), transparent 55%) !important;
 }
 
 .pk-toast--error {
@@ -8765,11 +8827,11 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 }
 
 .pk-toast--loading {
-  background-image: linear-gradient(135deg, rgba(157, 124, 255, 0.08), transparent 55%) !important;
+  background-image: linear-gradient(135deg, rgba(168, 85, 247, 0.08), transparent 55%) !important;
 }
 
 .pk-toast:not(.pk-toast--success):not(.pk-toast--error):not(.pk-toast--loading) {
-  background-image: linear-gradient(135deg, rgba(157, 124, 255, 0.06), transparent 50%) !important;
+  background-image: linear-gradient(135deg, rgba(168, 85, 247, 0.06), transparent 50%) !important;
 }
 
 /* ——— Delight / Wow moments ——— */
@@ -8869,11 +8931,11 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
   font-weight: 900;
   letter-spacing: 0.08em;
   line-height: 1.05;
-  background: linear-gradient(135deg, #fff 0%, #c4b5fd 45%, #67c3ff 100%);
+  background: linear-gradient(135deg, #fff 0%, #f0abfc 45%, #e879f9 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  text-shadow: 0 0 40px rgba(103, 195, 255, 0.25);
+  text-shadow: 0 0 40px rgba(192, 38, 211, 0.25);
 }
 
 .pk-wow-banner--gold .pk-wow-banner__title {
@@ -8883,7 +8945,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 }
 
 .pk-wow-banner--cyan .pk-wow-banner__title {
-  background: linear-gradient(135deg, #ecfeff 0%, #22d3ee 45%, #a78bfa 100%);
+  background: linear-gradient(135deg, #ecfeff 0%, #22d3ee 45%, #d946ef 100%);
   -webkit-background-clip: text;
   background-clip: text;
 }
@@ -8946,9 +9008,9 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
   isolation: isolate;
   animation: pkGenBtnPowerRamp 48s ease-in forwards;
   box-shadow:
-    0 0 calc(6px + var(--pk-gen-power) * 26px) rgba(103, 195, 255, calc(0.18 + var(--pk-gen-power) * 0.42)),
+    0 0 calc(6px + var(--pk-gen-power) * 26px) rgba(192, 38, 211, calc(0.18 + var(--pk-gen-power) * 0.42)),
     0 0 calc(2px + var(--pk-gen-power) * 14px) rgba(167, 139, 250, calc(0.12 + var(--pk-gen-power) * 0.38)),
-    inset 0 0 calc(10px + var(--pk-gen-power) * 24px) rgba(103, 195, 255, calc(0.04 + var(--pk-gen-power) * 0.12));
+    inset 0 0 calc(10px + var(--pk-gen-power) * 24px) rgba(192, 38, 211, calc(0.04 + var(--pk-gen-power) * 0.12));
 }
 
 .pk-gen-btn-electric__sheen {
@@ -8958,7 +9020,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
   background: linear-gradient(
     105deg,
     transparent 0%,
-    rgba(103, 195, 255, calc(0.05 + var(--pk-gen-power) * 0.18)) 42%,
+    rgba(192, 38, 211, calc(0.05 + var(--pk-gen-power) * 0.18)) 42%,
     rgba(236, 72, 153, calc(0.04 + var(--pk-gen-power) * 0.14)) 58%,
     transparent 100%
   );
@@ -8980,7 +9042,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 
 .pk-gen-btn-electric__arc--left {
   left: -8%;
-  background: radial-gradient(circle, rgba(103, 195, 255, 0.85) 0%, transparent 68%);
+  background: radial-gradient(circle, rgba(192, 38, 211, 0.85) 0%, transparent 68%);
   animation: pkGenArcLeft 1.1s ease-in-out infinite;
 }
 
@@ -9009,11 +9071,11 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
   font-size: 0.82rem;
   font-weight: 700;
   letter-spacing: -0.03em;
-  background: linear-gradient(120deg, #67c3ff 0%, #c4b5fd 45%, #f472b6 100%);
+  background: linear-gradient(120deg, #e879f9 0%, #f0abfc 45%, #f472b6 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  filter: drop-shadow(0 0 calc(4px + var(--pk-gen-power, 0.5) * 10px) rgba(103, 195, 255, 0.65));
+  filter: drop-shadow(0 0 calc(4px + var(--pk-gen-power, 0.5) * 10px) rgba(192, 38, 211, 0.65));
   animation: pkGenMarkPulse 1.4s ease-in-out infinite;
 }
 
@@ -9024,8 +9086,8 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
   height: 0.55rem;
   border-radius: 9999px;
   transform: translateY(-50%);
-  background: rgba(103, 195, 255, 0.9);
-  box-shadow: 0 0 8px rgba(103, 195, 255, 0.8);
+  background: rgba(192, 38, 211, 0.9);
+  box-shadow: 0 0 8px rgba(192, 38, 211, 0.8);
   opacity: calc(0.2 + var(--pk-gen-power, 0.4) * 0.8);
   animation: pkGenBolt 0.85s ease-in-out infinite;
 }
@@ -9131,12 +9193,12 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
   pointer-events: none;
   background:
     radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.42), transparent 46%),
-    radial-gradient(circle at 68% 78%, rgba(103, 195, 255, 0.32), transparent 52%),
-    linear-gradient(145deg, rgba(157, 124, 255, 0.38), rgba(103, 195, 255, 0.28));
+    radial-gradient(circle at 68% 78%, rgba(192, 38, 211, 0.32), transparent 52%),
+    linear-gradient(145deg, rgba(168, 85, 247, 0.38), rgba(192, 38, 211, 0.28));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.38),
-    0 10px 36px rgba(103, 195, 255, 0.22),
-    0 0 48px rgba(157, 124, 255, 0.18);
+    0 10px 36px rgba(192, 38, 211, 0.22),
+    0 0 48px rgba(168, 85, 247, 0.18);
   animation: pkIconLoaderPlateBreath 3.2s ease-in-out infinite;
 }
 
@@ -9200,16 +9262,16 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
   position: absolute;
   inset: -35%;
   border-radius: 9999px;
-  background: radial-gradient(circle, rgba(157, 124, 255, 0.22), rgba(103, 195, 255, 0.08) 58%, transparent 72%);
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.22), rgba(192, 38, 211, 0.08) 58%, transparent 72%);
   animation: pkIconLoaderGlow 2.1s ease-in-out infinite;
 }
 
 .pk-icon-loader__icon {
   position: relative;
   z-index: 1;
-  color: #67c3ff;
+  color: #e879f9;
   animation: pkIconLoaderColor 2.4s ease-in-out infinite;
-  filter: drop-shadow(0 0 10px rgba(103, 195, 255, 0.35));
+  filter: drop-shadow(0 0 10px rgba(192, 38, 211, 0.35));
 }
 
 .pk-icon-loader--xs .pk-icon-loader__ring {
@@ -9217,7 +9279,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 }
 
 .pk-icon-loader--sm .pk-icon-loader__icon {
-  filter: drop-shadow(0 0 8px rgba(103, 195, 255, 0.28));
+  filter: drop-shadow(0 0 8px rgba(192, 38, 211, 0.28));
 }
 
 .pk-icon-loader__label {
@@ -9246,12 +9308,12 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 @keyframes pkIconLoaderColor {
   0%,
   100% {
-    color: #67c3ff;
-    filter: drop-shadow(0 0 10px rgba(103, 195, 255, 0.35));
+    color: #e879f9;
+    filter: drop-shadow(0 0 10px rgba(192, 38, 211, 0.35));
   }
   50% {
     color: #b794ff;
-    filter: drop-shadow(0 0 14px rgba(157, 124, 255, 0.45));
+    filter: drop-shadow(0 0 14px rgba(168, 85, 247, 0.45));
   }
 }
 
@@ -9294,8 +9356,8 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
   border-radius: 1.25rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background:
-    radial-gradient(520px circle at 12% 0%, rgba(103, 195, 255, 0.12), transparent 52%),
-    radial-gradient(420px circle at 88% 100%, rgba(157, 124, 255, 0.14), transparent 50%),
+    radial-gradient(520px circle at 12% 0%, rgba(192, 38, 211, 0.12), transparent 52%),
+    radial-gradient(420px circle at 88% 100%, rgba(168, 85, 247, 0.14), transparent 50%),
     rgba(255, 255, 255, 0.03);
   padding: 1.25rem;
 }
@@ -9304,7 +9366,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
   pointer-events: none;
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 70% 20%, rgba(157, 124, 255, 0.12), transparent 45%);
+  background: radial-gradient(circle at 70% 20%, rgba(168, 85, 247, 0.12), transparent 45%);
 }
 
 .pk-community-featured__cover {
@@ -9371,13 +9433,13 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 }
 
 .pk-community-card:hover {
-  border-color: rgba(103, 195, 255, 0.28);
-  box-shadow: 0 0 40px rgba(157, 124, 255, 0.12);
+  border-color: rgba(192, 38, 211, 0.28);
+  box-shadow: 0 0 40px rgba(168, 85, 247, 0.12);
 }
 
 .pk-community-card--playing {
-  border-color: rgba(103, 195, 255, 0.4);
-  box-shadow: 0 0 48px rgba(103, 195, 255, 0.16);
+  border-color: rgba(192, 38, 211, 0.4);
+  box-shadow: 0 0 48px rgba(192, 38, 211, 0.16);
 }
 
 .pk-accent-link {
@@ -9390,7 +9452,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 }
 
 .pk-accent-link--bright {
-  color: rgba(103, 195, 255, 0.9);
+  color: rgba(192, 38, 211, 0.9);
 }
 
 .pk-accent-link--bright:hover {
@@ -9398,8 +9460,8 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 }
 
 .pk-accent-badge {
-  border: 1px solid rgba(103, 195, 255, 0.35);
-  background: rgba(103, 195, 255, 0.2);
+  border: 1px solid rgba(192, 38, 211, 0.35);
+  background: rgba(192, 38, 211, 0.2);
   color: #cffafe;
 }
 
@@ -9410,7 +9472,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 }
 
 .pk-community-card__remix-btn:hover {
-  border-color: rgba(103, 195, 255, 0.3);
+  border-color: rgba(192, 38, 211, 0.3);
 }
 
 .pk-community-card__remix-icon {
@@ -9439,7 +9501,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 }
 
 .pk-community-card__play {
-  --pk-community-play-ring: rgba(103, 195, 255, 0.95);
+  --pk-community-play-ring: rgba(192, 38, 211, 0.95);
   position: relative;
   display: flex;
   height: 2.85rem;
@@ -9468,11 +9530,11 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 .pk-community-card--playing .pk-community-card__play {
   transform: scale(1.06);
   border-color: rgba(255, 255, 255, 0.45);
-  box-shadow: 0 0 32px rgba(103, 195, 255, 0.28);
+  box-shadow: 0 0 32px rgba(192, 38, 211, 0.28);
 }
 
 .pk-community-card__play--active {
-  border-color: rgba(103, 195, 255, 0.55);
+  border-color: rgba(192, 38, 211, 0.55);
   background: rgba(0, 0, 0, 0.58);
 }
 
@@ -9519,7 +9581,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 .pk-hub-hero {
   --pk-hub-surface: rgba(255, 255, 255, 0.07);
   --pk-hub-border: rgba(255, 255, 255, 0.14);
-  --pk-hub-accent: rgba(103, 195, 255, 0.75);
+  --pk-hub-accent: rgba(192, 38, 211, 0.75);
   --pk-hub-accent-soft: rgba(236, 72, 153, 0.2);
   position: relative;
   overflow: hidden;
@@ -9529,7 +9591,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
     linear-gradient(135deg, rgba(14, 22, 48, 0.96) 0%, rgba(36, 14, 52, 0.92) 42%, rgba(10, 28, 38, 0.96) 100%);
   padding: 1.15rem 1.15rem 1.2rem;
   box-shadow:
-    0 24px 80px rgba(103, 195, 255, 0.08),
+    0 24px 80px rgba(192, 38, 211, 0.08),
     0 8px 32px rgba(236, 72, 153, 0.06),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
@@ -9545,7 +9607,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(620px circle at 8% 12%, rgba(103, 195, 255, 0.22), transparent 58%),
+    radial-gradient(620px circle at 8% 12%, rgba(192, 38, 211, 0.22), transparent 58%),
     radial-gradient(520px circle at 92% 88%, rgba(236, 72, 153, 0.18), transparent 55%),
     radial-gradient(480px circle at 50% 110%, rgba(167, 139, 250, 0.14), transparent 52%);
   animation: pk-hub-aurora 16s ease-in-out infinite alternate;
@@ -9555,7 +9617,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
   pointer-events: none;
   position: absolute;
   border-radius: 50%;
-  filter: blur(40px);
+  filter: blur(24px);
   opacity: 0.55;
   animation: pk-hub-orb-float 12s ease-in-out infinite alternate;
 }
@@ -9565,7 +9627,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
   height: 140px;
   top: -30px;
   right: 12%;
-  background: rgba(103, 195, 255, 0.35);
+  background: rgba(192, 38, 211, 0.35);
 }
 
 .pk-hub-hero__orb--b {
@@ -9635,7 +9697,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 }
 
 .pk-hub-hero .pk-prism-holo-text {
-  background: linear-gradient(92deg, #67c3ff 0%, #c084fc 38%, #fb7185 72%, #67c3ff 100%);
+  background: linear-gradient(92deg, #e879f9 0%, #c084fc 38%, #fb7185 72%, #e879f9 100%);
   background-size: 220% auto;
   -webkit-background-clip: text;
   background-clip: text;
@@ -9658,7 +9720,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(103, 195, 255, 0.92);
+  color: rgba(192, 38, 211, 0.92);
 }
 
 .pk-hub-hero__tagline {
@@ -9715,16 +9777,16 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 }
 
 .pk-hub-hero__btn-primary {
-  border: 1px solid rgba(103, 195, 255, 0.45);
-  background: linear-gradient(135deg, rgba(103, 195, 255, 0.95), rgba(167, 139, 250, 0.9));
+  border: 1px solid rgba(192, 38, 211, 0.45);
+  background: linear-gradient(135deg, rgba(192, 38, 211, 0.95), rgba(167, 139, 250, 0.9));
   color: #061018;
-  box-shadow: 0 8px 28px rgba(103, 195, 255, 0.25);
+  box-shadow: 0 8px 28px rgba(192, 38, 211, 0.25);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .pk-hub-hero__btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 12px 32px rgba(103, 195, 255, 0.32);
+  box-shadow: 0 12px 32px rgba(192, 38, 211, 0.32);
 }
 
 .pk-hub-hero__btn-ghost {
@@ -9736,7 +9798,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 }
 
 .pk-hub-hero__btn-ghost:hover {
-  border-color: rgba(103, 195, 255, 0.35);
+  border-color: rgba(192, 38, 211, 0.35);
   background: rgba(255, 255, 255, 0.08);
 }
 
@@ -9786,7 +9848,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 
 .pk-hub-hero__card {
   border-radius: 1rem;
-  border: 1px solid rgba(103, 195, 255, 0.22);
+  border: 1px solid rgba(192, 38, 211, 0.22);
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
   padding: 0.65rem 0.75rem 0.75rem;
   backdrop-filter: blur(14px);
@@ -9810,7 +9872,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 .pk-hub-hero__card-cover {
   display: block;
   max-height: 11rem;
-  box-shadow: 0 12px 40px rgba(103, 195, 255, 0.12);
+  box-shadow: 0 12px 40px rgba(192, 38, 211, 0.12);
 }
 
 .pk-hub-hero__card-cover-img {
@@ -9855,20 +9917,20 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
   align-items: center;
   justify-content: center;
   border-style: dashed;
-  border-color: rgba(103, 195, 255, 0.25);
-  background: rgba(103, 195, 255, 0.06);
+  border-color: rgba(192, 38, 211, 0.25);
+  background: rgba(192, 38, 211, 0.06);
   text-align: center;
 }
 
 .pk-hub-hero__card--empty-icon {
-  color: rgba(103, 195, 255, 0.6);
+  color: rgba(192, 38, 211, 0.6);
 }
 
 .pk-hub-pulse {
   margin-top: 0.65rem;
   border-radius: 9999px;
-  border: 1px solid rgba(103, 195, 255, 0.18);
-  background: linear-gradient(90deg, rgba(103, 195, 255, 0.08), rgba(236, 72, 153, 0.06));
+  border: 1px solid rgba(192, 38, 211, 0.18);
+  background: linear-gradient(90deg, rgba(192, 38, 211, 0.08), rgba(236, 72, 153, 0.06));
   overflow: hidden;
 }
 
@@ -9935,8 +9997,8 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 }
 
 .pk-hub-pulse__dots span.is-active {
-  background: rgba(103, 195, 255, 0.95);
-  box-shadow: 0 0 8px rgba(103, 195, 255, 0.6);
+  background: rgba(192, 38, 211, 0.95);
+  box-shadow: 0 0 8px rgba(192, 38, 211, 0.6);
 }
 
 .pk-hub-nav__vibes {
@@ -10202,26 +10264,28 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 
 /* Loop card — track sélectionnée / en lecture */
 .pk-loop-card--active {
-  border-color: rgba(103, 195, 255, 0.32) !important;
+  border-color: rgba(168, 85, 247, 0.35) !important;
   background:
-    radial-gradient(520px circle at 0% 0%, rgba(103, 195, 255, 0.08), transparent 52%),
-    radial-gradient(480px circle at 100% 100%, rgba(157, 124, 255, 0.06), transparent 50%),
-    rgba(255, 255, 255, 0.035) !important;
+    radial-gradient(520px circle at 0% 0%, rgba(139, 92, 246, 0.08), transparent 52%),
+    radial-gradient(480px circle at 100% 100%, rgba(168, 85, 247, 0.06), transparent 50%),
+    rgba(255, 255, 255, 0.04) !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 0 0 1px rgba(103, 195, 255, 0.14),
-    0 12px 40px rgba(103, 195, 255, 0.1),
-    0 20px 48px rgba(0, 0, 0, 0.32) !important;
+    0 0 0 1px rgba(168, 85, 247, 0.18),
+    0 0 20px rgba(168, 85, 247, 0.12),
+    0 0 35px rgba(236, 72, 153, 0.08),
+    0 16px 48px rgba(0, 0, 0, 0.3) !important;
 }
 
 .pk-loop-card--playing {
-  border-color: rgba(157, 124, 255, 0.42) !important;
+  border-color: rgba(168, 85, 247, 0.42) !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 0 0 1px rgba(157, 124, 255, 0.2),
-    0 0 28px rgba(103, 195, 255, 0.14),
-    0 16px 48px rgba(157, 124, 255, 0.12),
-    0 24px 56px rgba(0, 0, 0, 0.34) !important;
+    0 0 0 1px rgba(168, 85, 247, 0.22),
+    0 0 24px rgba(168, 85, 247, 0.16),
+    0 0 40px rgba(236, 72, 153, 0.1),
+    0 16px 48px rgba(168, 85, 247, 0.1),
+    0 24px 56px rgba(0, 0, 0, 0.32) !important;
 }
 
 .pk-loop-cover--selected,
@@ -10241,52 +10305,42 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 
 .pk-loop-cover--selected::after {
   box-shadow:
-    inset 0 0 0 2px rgba(103, 195, 255, 0.55),
-    0 0 14px rgba(103, 195, 255, 0.25);
+    inset 0 0 0 2px rgba(168, 85, 247, 0.55),
+    0 0 14px rgba(168, 85, 247, 0.3),
+    0 0 24px rgba(236, 72, 153, 0.15);
 }
 
 .pk-loop-cover--playing::after {
   box-shadow:
     inset 0 0 0 2px rgba(226, 232, 240, 0.75),
-    0 0 18px rgba(103, 195, 255, 0.35),
-    0 0 28px rgba(157, 124, 255, 0.22);
+    0 0 18px rgba(168, 85, 247, 0.4),
+    0 0 32px rgba(236, 72, 153, 0.25);
   animation: pkLoopCoverPulse 2.2s ease-in-out infinite;
 }
 
 .pk-loop-play-btn--selected {
-  color: rgba(226, 240, 255, 0.98) !important;
-  background:
-    linear-gradient(
-      135deg,
-      rgba(103, 195, 255, 0.22) 0%,
-      rgba(157, 124, 255, 0.16) 100%
-    ) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.42),
-    inset 0 0 0 1px rgba(103, 195, 255, 0.38),
-    0 0 18px rgba(103, 195, 255, 0.18),
-    0 6px 20px rgba(157, 124, 255, 0.12) !important;
+  color: #fff !important;
+  background: var(--ds-gradient-premium) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 0 20px rgba(168,85,247,0.35), 0 0 35px rgba(236,72,153,0.2) !important;
 }
 
 .pk-loop-play-btn--selected::before {
-  opacity: 0.55 !important;
+  opacity: 0.15 !important;
+}
+
+.pk-loop-play-btn--selected::after {
+  opacity: 0 !important;
 }
 
 .pk-loop-play-btn--playing {
-  color: #050508 !important;
-  background: linear-gradient(
-    120deg,
-    var(--prism-chrome) 0%,
-    var(--prism-cyan) 44%,
-    var(--prism-violet) 100%
-  ) !important;
+  color: #fff !important;
+  background: var(--ds-gradient-premium) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.45),
-    inset 0 -1px 0 rgba(80, 40, 160, 0.18),
-    0 0 0 1px rgba(203, 213, 225, 0.28),
-    0 0 22px rgba(103, 195, 255, 0.32),
-    0 0 36px rgba(157, 124, 255, 0.2) !important;
-  animation: pkLoopPlayPulse 2.4s ease-in-out infinite;
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 0 0 1px rgba(203, 213, 225, 0.15),
+    0 0 24px rgba(168, 85, 247, 0.4),
+    0 0 40px rgba(236, 72, 153, 0.25) !important;
+  animation: pkLoopPlayPulse 3s ease-in-out infinite;
 }
 
 .pk-loop-play-btn--playing::before,
@@ -10300,19 +10354,9 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 
 /* Toggle loop card — Save / Public (reste allumé) */
 .pk-loop-toggle-btn--on {
-  color: #050508 !important;
-  background: linear-gradient(
-    120deg,
-    var(--prism-chrome) 0%,
-    var(--prism-cyan) 44%,
-    var(--prism-violet) 100%
-  ) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.45),
-    inset 0 -1px 0 rgba(80, 40, 160, 0.18),
-    0 0 0 1px rgba(203, 213, 225, 0.28),
-    0 0 20px rgba(103, 195, 255, 0.28),
-    0 0 32px rgba(157, 124, 255, 0.16) !important;
+  color: #fff !important;
+  background: var(--ds-gradient-premium) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 0 20px rgba(168,85,247,0.35), 0 0 35px rgba(236,72,153,0.2) !important;
 }
 
 .pk-loop-toggle-btn--on::before,
@@ -10325,18 +10369,9 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 }
 
 .pk-loop-toggle-btn--public {
-  color: #050508 !important;
-  background: linear-gradient(
-    120deg,
-    rgba(226, 232, 240, 0.98) 0%,
-    rgba(103, 195, 255, 0.95) 38%,
-    rgba(52, 211, 153, 0.88) 100%
-  ) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.45),
-    0 0 0 1px rgba(103, 195, 255, 0.32),
-    0 0 20px rgba(52, 211, 153, 0.22),
-    0 0 28px rgba(103, 195, 255, 0.18) !important;
+  color: #fff !important;
+  background: var(--ds-gradient-premium) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 0 20px rgba(168,85,247,0.35), 0 0 35px rgba(236,72,153,0.2) !important;
 }
 
 .pk-loop-toggle-btn--public::before,
@@ -10355,8 +10390,8 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
     transform: translateY(0);
   }
   50% {
-    filter: brightness(1.06);
-    transform: translateY(-0.5px);
+    filter: brightness(1.03);
+    transform: translateY(-0.3px);
   }
 }
 
@@ -10396,8 +10431,8 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
   border: 1px solid rgba(255, 255, 255, 0.11);
   padding: 1.35rem 1.25rem 1rem;
   background:
-    radial-gradient(560px circle at 0% 0%, rgba(103, 195, 255, 0.1), transparent 55%),
-    radial-gradient(480px circle at 100% 100%, rgba(157, 124, 255, 0.08), transparent 52%),
+    radial-gradient(560px circle at 0% 0%, rgba(192, 38, 211, 0.1), transparent 55%),
+    radial-gradient(480px circle at 100% 100%, rgba(168, 85, 247, 0.08), transparent 52%),
     linear-gradient(168deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.012));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
@@ -10426,7 +10461,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
   pointer-events: none;
   position: absolute;
   border-radius: 9999px;
-  filter: blur(52px);
+  filter: blur(32px);
 }
 
 .pk-library-hero__orb--a {
@@ -10434,7 +10469,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
   right: -1rem;
   height: 9rem;
   width: 9rem;
-  background: rgba(103, 195, 255, 0.18);
+  background: rgba(192, 38, 211, 0.18);
 }
 
 .pk-library-hero__orb--b {
@@ -10442,7 +10477,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
   left: 8%;
   height: 7rem;
   width: 7rem;
-  background: rgba(157, 124, 255, 0.12);
+  background: rgba(168, 85, 247, 0.12);
 }
 
 .pk-library-hero__top {
@@ -10555,21 +10590,21 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
   justify-content: center;
   gap: 0.45rem;
   border-radius: 9999px;
-  border: 1px solid rgba(103, 195, 255, 0.28);
-  background: linear-gradient(135deg, rgba(103, 195, 255, 0.18), rgba(157, 124, 255, 0.12));
+  border: 1px solid rgba(192, 38, 211, 0.28);
+  background: linear-gradient(135deg, rgba(192, 38, 211, 0.18), rgba(168, 85, 247, 0.12));
   padding: 0.65rem 1.15rem;
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   color: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 8px 28px rgba(103, 195, 255, 0.12);
+  box-shadow: 0 8px 28px rgba(192, 38, 211, 0.12);
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
 .pk-library-hero__cta:hover {
   transform: translateY(-1px);
-  border-color: rgba(103, 195, 255, 0.42);
-  box-shadow: 0 12px 36px rgba(103, 195, 255, 0.18);
+  border-color: rgba(192, 38, 211, 0.42);
+  box-shadow: 0 12px 36px rgba(192, 38, 211, 0.18);
 }
 
 .pk-library-hero__genres {
@@ -10636,8 +10671,8 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 }
 
 .pk-library-genre-pill--active {
-  border-color: rgba(103, 195, 255, 0.32);
-  background: rgba(103, 195, 255, 0.1);
+  border-color: rgba(192, 38, 211, 0.32);
+  background: rgba(192, 38, 211, 0.1);
   color: rgba(186, 230, 253, 0.98);
 }
 
@@ -10653,7 +10688,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 }
 
 .pk-library-page .pk-library-hero {
-  border-color: rgba(103, 195, 255, 0.14);
+  border-color: rgba(192, 38, 211, 0.14);
 }
 
 .pk-library-genre-banners {
@@ -10687,13 +10722,13 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 }
 
 .pk-library-genre-tile:hover {
-  border-color: rgba(103, 195, 255, 0.28);
+  border-color: rgba(192, 38, 211, 0.28);
   transform: translateY(-2px);
 }
 
 .pk-library-genre-tile--active {
-  border-color: rgba(103, 195, 255, 0.45);
-  box-shadow: 0 0 28px rgba(103, 195, 255, 0.14);
+  border-color: rgba(192, 38, 211, 0.45);
+  box-shadow: 0 0 28px rgba(192, 38, 211, 0.14);
 }
 
 .pk-library-genre-tile__icon {
@@ -10724,8 +10759,8 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
   gap: 0.75rem;
   padding: 0.55rem 0.85rem;
   border-radius: 0.75rem;
-  border: 1px solid rgba(103, 195, 255, 0.22);
-  background: rgba(103, 195, 255, 0.06);
+  border: 1px solid rgba(192, 38, 211, 0.22);
+  background: rgba(192, 38, 211, 0.06);
   font-size: 0.8rem;
   color: rgba(255, 255, 255, 0.7);
 }
@@ -10759,14 +10794,14 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 }
 
 .pk-library-card:hover {
-  border-color: rgba(103, 195, 255, 0.24);
-  box-shadow: 0 18px 52px rgba(103, 195, 255, 0.1);
+  border-color: rgba(192, 38, 211, 0.24);
+  box-shadow: 0 18px 52px rgba(192, 38, 211, 0.1);
   transform: translateY(-2px);
 }
 
 .pk-library-card--active,
 .pk-library-card.pk-loop-card--active {
-  border-color: rgba(103, 195, 255, 0.32);
+  border-color: rgba(192, 38, 211, 0.32);
 }
 
 .pk-library-card__cover-wrap {
@@ -10853,7 +10888,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 }
 
 .pk-library-card__hint--stems {
-  border-color: rgba(103, 195, 255, 0.28);
+  border-color: rgba(192, 38, 211, 0.28);
   color: rgba(186, 230, 253, 0.92);
 }
 
@@ -10927,7 +10962,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 .pk-library-card__progress-fill {
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--prism-cyan), rgba(157, 124, 255, 0.9));
+  background: linear-gradient(90deg, var(--prism-cyan), rgba(168, 85, 247, 0.9));
   transition: width 0.12s linear;
 }
 
@@ -11024,8 +11059,8 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 }
 
 .pk-loop-card--library:hover {
-  border-color: rgba(103, 195, 255, 0.22);
-  box-shadow: 0 16px 48px rgba(103, 195, 255, 0.08);
+  border-color: rgba(192, 38, 211, 0.22);
+  box-shadow: 0 16px 48px rgba(192, 38, 211, 0.08);
 }
 
 .pk-loop-card--library-cover {
@@ -11033,7 +11068,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 }
 
 .pk-library-detail-panel {
-  border: 1px solid rgba(103, 195, 255, 0.16);
+  border: 1px solid rgba(192, 38, 211, 0.16);
   background: rgba(6, 8, 16, 0.92);
 }
 
@@ -11055,7 +11090,7 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 .pk-gen-activity-pill__card {
   display: block;
   border-radius: 1rem;
-  border: 1px solid rgba(103, 195, 255, 0.28);
+  border: 1px solid rgba(192, 38, 211, 0.28);
   background: linear-gradient(145deg, rgba(12, 18, 36, 0.94), rgba(24, 12, 40, 0.92));
   padding: 0.75rem 0.85rem;
   box-shadow:
@@ -11067,15 +11102,15 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 
 .pk-gen-activity-pill__card:hover {
   transform: translateY(-2px);
-  border-color: rgba(103, 195, 255, 0.45);
+  border-color: rgba(192, 38, 211, 0.45);
   box-shadow:
-    0 20px 56px rgba(103, 195, 255, 0.12),
+    0 20px 56px rgba(192, 38, 211, 0.12),
     0 0 0 1px rgba(255, 255, 255, 0.06) inset;
 }
 
 .pk-gen-activity-pill__icon {
-  border-color: rgba(103, 195, 255, 0.35);
-  background: rgba(103, 195, 255, 0.12);
+  border-color: rgba(192, 38, 211, 0.35);
+  background: rgba(192, 38, 211, 0.12);
   color: #a5f3fc;
 }
 
@@ -11102,8 +11137,8 @@ html.pk-cloud-active .pk-sidebar-root .pk-theme-cycle-btn--cloud svg {
 }
 
 .pk-gen-activity-pill__progress-fill {
-  background: linear-gradient(90deg, #67c3ff, #a78bfa);
-  box-shadow: 0 0 10px rgba(103, 195, 255, 0.35);
+  background: linear-gradient(90deg, #a855f7, #ec4899, #f43f5e);
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.4), 0 0 20px rgba(236, 72, 153, 0.25);
 }
 
 .pk-gen-activity-pill__ready {

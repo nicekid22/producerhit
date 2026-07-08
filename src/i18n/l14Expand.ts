@@ -4,7 +4,7 @@ import { L, type LocalizedString } from "./localized";
 /** Complète une entrée en/fr/es/de avec les marchés restants (pt←es, it←es, nl←de si absent). */
 export function L14(
   base: LocalizedString & { en: string; fr: string; es: string; de: string },
-): Record<AppLocale, string> {
+): Partial<Record<AppLocale, string>> {
   const pt = base.pt ?? base.es;
   const it = base.it ?? base.es;
   const nl = base.nl ?? base.de;

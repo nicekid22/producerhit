@@ -30,7 +30,7 @@ export function LandingPitchSections({ locale, user }: Props) {
     <>
       <section id="suite" className="grid gap-8 lg:grid-cols-2 lg:items-center">
         <div className="pk-landing-pitch-copy">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-pink-300/75">{copy.trustEyebrow}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[rgb(232,121,249)]/75">{copy.trustEyebrow}</p>
           <h2 className="mt-3 text-balance text-[clamp(1.5rem,3.5vw,2.35rem)] font-bold tracking-tight text-white">{copy.suiteTitle}</h2>
           <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/60">{copy.suiteLead}</p>
           <ul className="mt-6 grid gap-2.5">

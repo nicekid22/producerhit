@@ -1,0 +1,416 @@
+/**
+ * Dashboard V2 — Apple Style (thème Prism)
+ * Isolé sous .pk-dashboard-v2 — zéro impact sur le reste du site.
+ */
+
+/* ─── Tokens ─────────────────────────────────────────────────────────────── */
+.pk-dashboard-v2 {
+  --dv2-accent-from:     var(--prism-violet, #c026d3);
+  --dv2-accent-to:       var(--prism-pink, #d946ef);
+  --dv2-accent-mid:      var(--prism-accent, #e879f9);
+  --dv2-accent-glow:     rgba(192, 38, 211, 0.30);
+  --dv2-accent-glow-hot: rgba(217, 70, 239, 0.22);
+  --dv2-cyan:            #e879f9;
+  --dv2-violet:          #c026d3;
+  --dv2-border:          rgba(255, 255, 255, 0.08);
+  --dv2-border-strong:   rgba(255, 255, 255, 0.16);
+  --dv2-bg-card:         rgba(255, 255, 255, 0.045);
+  --dv2-bg-input:        rgba(255, 255, 255, 0.06);
+  --dv2-text:            rgba(255, 255, 255, 0.92);
+  --dv2-text-muted:      rgba(255, 255, 255, 0.45);
+  --dv2-text-subtle:     rgba(255, 255, 255, 0.26);
+  --dv2-radius-pill:     999px;
+  --dv2-radius-md:       14px;
+  --dv2-radius-sm:       10px;
+  --dv2-transition:      180ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Mode rail pills (Song / Beat / Cover / Remix) ──────────────────────── */
+
+/* Conteneur du rail */
+.pk-dashboard-v2 [data-coach="mode-rail"],
+.pk-dashboard-v2 .pk-studio-mode-rail {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid var(--dv2-border) !important;
+  border-radius: var(--dv2-radius-pill) !important;
+  padding: 3px !important;
+  gap: 2px !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+/* Tous les boutons du rail */
+.pk-dashboard-v2 [data-coach="mode-rail"] button,
+.pk-dashboard-v2 .pk-studio-mode-rail button {
+  border-radius: var(--dv2-radius-pill) !important;
+  padding: 6px 14px !important;
+  font-size: 11.5px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.02em !important;
+  transition: all var(--dv2-transition) !important;
+  background: transparent !important;
+  border: none !important;
+  color: var(--dv2-text-muted) !important;
+}
+
+.pk-dashboard-v2 [data-coach="mode-rail"] button:hover,
+.pk-dashboard-v2 .pk-studio-mode-rail button:hover {
+  color: var(--dv2-text) !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+}
+
+/* Pill active — gradient cyan→violet→rose */
+.pk-dashboard-v2 .pk-prism-pill-active {
+  background: linear-gradient(118deg, var(--dv2-cyan) 0%, var(--dv2-violet) 55%, var(--dv2-accent-to) 100%) !important;
+  color: #06060c !important;
+  font-weight: 700 !important;
+  border: none !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 0 18px var(--dv2-accent-glow),
+    0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* ─── Bouton Advanced (pill à droite du rail) ────────────────────────────── */
+.pk-dashboard-v2 .rounded-full.bg-white\/5 {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-radius: var(--dv2-radius-pill) !important;
+  color: var(--dv2-text-muted) !important;
+  transition: all var(--dv2-transition) !important;
+}
+
+/* ─── Inputs & Textarea ──────────────────────────────────────────────────── */
+.pk-dashboard-v2 .bg-pk-input,
+.pk-dashboard-v2 input.bg-pk-input,
+.pk-dashboard-v2 textarea.bg-pk-input,
+.pk-dashboard-v2 .pk-dashboard-text-field__control {
+  background: var(--dv2-bg-input) !important;
+  border-color: var(--dv2-border) !important;
+  border-radius: var(--dv2-radius-md) !important;
+  color: var(--dv2-text) !important;
+  transition: border-color var(--dv2-transition), box-shadow var(--dv2-transition) !important;
+}
+
+.pk-dashboard-v2 .bg-pk-input:focus,
+.pk-dashboard-v2 .pk-dashboard-text-field__control:focus {
+  border-color: var(--dv2-accent-from) !important;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15) !important;
+  outline: none !important;
+}
+
+.pk-dashboard-v2 .focus\:border-pk-accent:focus {
+  border-color: var(--dv2-accent-from) !important;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15) !important;
+}
+
+.pk-dashboard-v2 .placeholder\:text-pk-muted::placeholder {
+  color: var(--dv2-text-subtle) !important;
+}
+
+/* ─── Séparateurs de section ─────────────────────────────────────────────── */
+.pk-dashboard-v2 .border-pk-border,
+.pk-dashboard-v2 .border-b.border-pk-border,
+.pk-dashboard-v2 .border-t.border-pk-border {
+  border-color: var(--dv2-border) !important;
+}
+
+.pk-dashboard-v2 .border-pk-border\/80 {
+  border-color: rgba(255, 255, 255, 0.065) !important;
+}
+
+/* ─── Textes utilitaires ─────────────────────────────────────────────────── */
+.pk-dashboard-v2 .text-pk-muted {
+  color: var(--dv2-text-muted) !important;
+}
+
+.pk-dashboard-v2 .text-pk-text {
+  color: var(--dv2-text) !important;
+}
+
+.pk-dashboard-v2 .text-pk-accent {
+  color: var(--dv2-accent-from) !important;
+}
+
+.pk-dashboard-v2 .text-gray-500 {
+  color: var(--dv2-text-muted) !important;
+}
+
+.pk-dashboard-v2 .text-gray-600 {
+  color: var(--dv2-text-muted) !important;
+}
+
+.pk-dashboard-v2 .italic.text-pk-muted {
+  color: var(--dv2-text-subtle) !important;
+  font-size: 11px !important;
+}
+
+/* ─── Boutons toggle Auto/Man, MP3/WAV ───────────────────────────────────── */
+
+/* Conteneur pill toggle */
+.pk-dashboard-v2 .flex.items-center.rounded-full.border.border-pk-border.bg-pk-bg,
+.pk-dashboard-v2 .flex.shrink-0.items-center.rounded-full.border.border-pk-border.bg-pk-bg {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: var(--dv2-border) !important;
+  border-radius: var(--dv2-radius-pill) !important;
+}
+
+/* Bouton inactif dans le toggle */
+.pk-dashboard-v2 .flex.items-center.rounded-full.border.border-pk-border.bg-pk-bg button,
+.pk-dashboard-v2 .flex.shrink-0.items-center.rounded-full.border.border-pk-border.bg-pk-bg button {
+  color: var(--dv2-text-muted) !important;
+  border-radius: var(--dv2-radius-pill) !important;
+  transition: all var(--dv2-transition) !important;
+}
+
+/* Bouton actif bg-pk-accent dans le toggle */
+.pk-dashboard-v2 .bg-pk-accent.text-white {
+  background: linear-gradient(118deg, var(--dv2-accent-from), var(--dv2-accent-to)) !important;
+  color: #fff !important;
+  box-shadow: 0 0 8px var(--dv2-accent-glow) !important;
+}
+
+/* ─── Boutons preset / longueur / BPM / durée ────────────────────────────── */
+
+/* Bouton inactif */
+.pk-dashboard-v2 .rounded-pk.border.border-pk-border.bg-pk-bg {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-color: var(--dv2-border) !important;
+  border-radius: var(--dv2-radius-sm) !important;
+  color: var(--dv2-text-muted) !important;
+  transition: all var(--dv2-transition) !important;
+}
+
+.pk-dashboard-v2 .rounded-pk.border.border-pk-border.bg-pk-bg:hover {
+  background: rgba(255, 255, 255, 0.07) !important;
+  color: var(--dv2-text) !important;
+  border-color: var(--dv2-border-strong) !important;
+}
+
+/* Bouton actif accent */
+.pk-dashboard-v2 .border-pk-accent\/40.bg-pk-accent\/15.text-pk-accent {
+  background: rgba(139, 92, 246, 0.14) !important;
+  border-color: rgba(139, 92, 246, 0.38) !important;
+  color: var(--dv2-accent-from) !important;
+}
+
+/* ─── Sections générateur ────────────────────────────────────────────────── */
+.pk-dashboard-v2 .bg-pk-bg\/30 {
+  background: rgba(255, 255, 255, 0.015) !important;
+}
+
+.pk-dashboard-v2 .bg-pk-bg\/50 {
+  background: rgba(255, 255, 255, 0.025) !important;
+}
+
+/* ─── Bloc inspiration chips ─────────────────────────────────────────────── */
+.pk-dashboard-v2 .bg-pk-bg\/50.rounded-pk.p-3.border {
+  background: rgba(255, 255, 255, 0.025) !important;
+  border-color: var(--dv2-border) !important;
+  border-radius: var(--dv2-radius-md) !important;
+}
+
+/* ─── Presets quick list ─────────────────────────────────────────────────── */
+.pk-dashboard-v2 details summary {
+  color: var(--dv2-text-muted) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+}
+
+.pk-dashboard-v2 details summary:hover {
+  color: var(--dv2-text) !important;
+}
+
+.pk-dashboard-v2 .rounded-pk.border.border-pk-border.bg-pk-bg.px-3.py-2 {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-color: var(--dv2-border) !important;
+  border-radius: var(--dv2-radius-sm) !important;
+  transition: background var(--dv2-transition) !important;
+}
+
+.pk-dashboard-v2 .rounded-pk.border.border-pk-border.bg-pk-bg.px-3.py-2:hover {
+  background: rgba(255, 255, 255, 0.07) !important;
+}
+
+/* ─── Bouton Generate principal ──────────────────────────────────────────── */
+.pk-dashboard-v2 [data-coach="generate-btn"] {
+  padding: 16px !important;
+}
+
+/* DashboardGenerateButton — le vrai bouton rendu */
+.pk-dashboard-v2 [data-coach="generate-btn"] button,
+.pk-dashboard-v2 .pk-studio-generate-dock button {
+  width: 100% !important;
+  border-radius: var(--dv2-radius-pill) !important;
+  padding: 15px 24px !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.01em !important;
+  background: linear-gradient(118deg, var(--dv2-accent-from) 0%, var(--dv2-accent-mid) 50%, var(--dv2-accent-to) 100%) !important;
+  color: #fff !important;
+  border: none !important;
+  box-shadow:
+    0 0 28px var(--dv2-accent-glow),
+    0 0 14px var(--dv2-accent-glow-hot),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+  transition: all var(--dv2-transition) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.pk-dashboard-v2 [data-coach="generate-btn"] button:hover,
+.pk-dashboard-v2 .pk-studio-generate-dock button:hover {
+  box-shadow:
+    0 0 40px var(--dv2-accent-glow),
+    0 0 20px var(--dv2-accent-glow-hot),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28) !important;
+  transform: translateY(-1px) !important;
+}
+
+.pk-dashboard-v2 [data-coach="generate-btn"] button:active,
+.pk-dashboard-v2 .pk-studio-generate-dock button:active {
+  transform: scale(0.98) !important;
+}
+
+.pk-dashboard-v2 [data-coach="generate-btn"] button:disabled,
+.pk-dashboard-v2 .pk-studio-generate-dock button:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+/* Shimmer animé */
+.pk-dashboard-v2 [data-coach="generate-btn"] button::after,
+.pk-dashboard-v2 .pk-studio-generate-dock button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.13) 50%, transparent 60%);
+  background-size: 200% 100%;
+  animation: dv2-shimmer 2.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes dv2-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ─── Bouton Play/Pause actif sur les cartes ────────────────────────────── */
+.pk-dashboard-v2 .pk-loop-play-btn--playing,
+.pk-dashboard-v2 .pk-loop-play-btn--selected {
+  background: linear-gradient(118deg, var(--dv2-accent-from), var(--dv2-accent-mid), var(--dv2-accent-to)) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  box-shadow: 0 0 14px var(--dv2-accent-glow) !important;
+}
+
+/* ─── Bouton Public/Private actif ───────────────────────────────────────── */
+.pk-dashboard-v2 .pk-loop-toggle-btn--public {
+  background: linear-gradient(118deg, var(--dv2-accent-from), var(--dv2-accent-to)) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  box-shadow: 0 0 10px var(--dv2-accent-glow) !important;
+}
+
+/* ─── Bordure cover active/playing ──────────────────────────────────────── */
+.pk-dashboard-v2 .pk-loop-cover--playing,
+.pk-dashboard-v2 .pk-loop-cover--selected {
+  background: linear-gradient(118deg, var(--dv2-accent-from), var(--dv2-accent-mid), var(--dv2-accent-to)) !important;
+}
+
+/* ─── Barre de progression dans les cartes ──────────────────────────────── */
+.pk-dashboard-v2 .pk-library-card__progress-fill {
+  background: linear-gradient(90deg, var(--dv2-accent-from), var(--dv2-accent-to)) !important;
+}
+
+/* ─── Pill Tracks / Mastering Studio ────────────────────────────────────── */
+.pk-dashboard-v2 .pk-prism-pill-active {
+  background: linear-gradient(118deg, var(--dv2-cyan) 0%, var(--dv2-violet) 55%, var(--dv2-accent-to) 100%) !important;
+  color: #06060c !important;
+  font-weight: 700 !important;
+  border: none !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.35),
+    0 0 18px var(--dv2-accent-glow),
+    0 2px 8px rgba(0,0,0,0.3) !important;
+}
+
+/* ─── Petit bouton Generate > dans le header ─────────────────────────────── */
+.pk-dashboard-v2 [data-coach="mini-generate"] button,
+.pk-dashboard-v2 .pk-studio-mini-generate {
+  background: linear-gradient(118deg, var(--dv2-accent-from), var(--dv2-accent-to)) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  box-shadow: 0 0 10px var(--dv2-accent-glow) !important;
+}
+
+/* ─── Quota / crédits ────────────────────────────────────────────────────── */
+.pk-dashboard-v2 .pk-dashboard-bonus-meta {
+  color: var(--dv2-accent-from) !important;
+}
+
+/* ─── Loop cards ─────────────────────────────────────────────────────────── */
+.pk-dashboard-v2 .pk-loop-card,
+.pk-dashboard-v2 [class*="loop-card"] {
+  background: var(--dv2-bg-card) !important;
+  border-color: var(--dv2-border) !important;
+  border-radius: 20px !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  transition: border-color var(--dv2-transition), box-shadow var(--dv2-transition) !important;
+}
+
+.pk-dashboard-v2 .pk-loop-card:hover,
+.pk-dashboard-v2 [class*="loop-card"]:hover {
+  border-color: var(--dv2-border-strong) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* ─── Skeleton loading ───────────────────────────────────────────────────── */
+.pk-dashboard-v2 [class*="skeleton"],
+.pk-dashboard-v2 [class*="Skeleton"] {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.04) 25%,
+    rgba(255,255,255,0.09) 50%,
+    rgba(255,255,255,0.04) 75%
+  ) !important;
+  background-size: 200% 100% !important;
+  animation: dv2-skeleton 1.6s ease-in-out infinite !important;
+  border-radius: var(--dv2-radius-sm) !important;
+}
+
+@keyframes dv2-skeleton {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ─── Progress bar ───────────────────────────────────────────────────────── */
+.pk-dashboard-v2 .pk-prism-progress-fill {
+  background: linear-gradient(90deg, var(--dv2-accent-from), var(--dv2-accent-to)) !important;
+  border-radius: var(--dv2-radius-pill) !important;
+}
+
+.pk-dashboard-v2 .pk-prism-player-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent) !important;
+}
+
+/* ─── Slider ─────────────────────────────────────────────────────────────── */
+.pk-dashboard-v2 input[type="range"] {
+  accent-color: var(--dv2-accent-from) !important;
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────────────────────── */
+.pk-dashboard-v2 ::-webkit-scrollbar { width: 4px; }
+.pk-dashboard-v2 ::-webkit-scrollbar-track { background: transparent; }
+.pk-dashboard-v2 ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+.pk-dashboard-v2 ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.18);
+}

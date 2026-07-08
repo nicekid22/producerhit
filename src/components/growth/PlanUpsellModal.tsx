@@ -220,7 +220,10 @@ export function PlanUpsellModal({
             <Button
               variant="primary"
               size="md"
-              className="pk-paywall__cta-primary h-12 w-full rounded-full text-sm font-bold"
+              className={cn(
+                "pk-paywall__cta-primary h-12 w-full rounded-full text-sm font-bold",
+                showLaunch && "pk-pro-cta",
+              )}
               disabled={busy}
               onClick={() => void primaryAction()}
             >

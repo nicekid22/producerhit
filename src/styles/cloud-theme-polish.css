@@ -138,8 +138,8 @@ html.pk-cloud-active .pk-dropdown-panel::after,
 html.pk-cloud-active .pk-dropdown-panel,
 .pk-cloud-stage .pk-dropdown-panel {
   border-color: var(--cloud-glass-border) !important;
-  backdrop-filter: blur(28px) saturate(1.4);
-  -webkit-backdrop-filter: blur(28px) saturate(1.4);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
   border-radius: var(--cloud-radius-lg) !important;
   background:
     linear-gradient(165deg, var(--cloud-glass-bg-elevated), var(--cloud-glass-bg)),
@@ -481,8 +481,8 @@ html.pk-cloud-active .pk-landing-mobile-nav__panel,
       color-mix(in srgb, var(--cloud-glass-bg-elevated) 88%, transparent),
       color-mix(in srgb, var(--cloud-glass-bg) 72%, transparent)
     ) !important;
-  backdrop-filter: blur(28px) saturate(1.45) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(1.45) !important;
+  backdrop-filter: blur(16px) saturate(1.45) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.45) !important;
   box-shadow: inset 0 1px 0 var(--cloud-glass-highlight) !important;
 }
 
@@ -930,8 +930,8 @@ html.pk-cloud-active .pk-empty-state__icon,
 html.pk-cloud-active .pk-landing-header--scrolled,
 .pk-cloud-stage .pk-landing-header--scrolled {
   background: color-mix(in srgb, var(--cloud-glass-bg) 78%, rgba(8, 8, 16, 0.42)) !important;
-  backdrop-filter: blur(22px) saturate(1.45);
-  -webkit-backdrop-filter: blur(22px) saturate(1.45);
+  backdrop-filter: blur(14px) saturate(1.45);
+  -webkit-backdrop-filter: blur(14px) saturate(1.45);
   box-shadow:
     inset 0 -1px 0 var(--cloud-glass-border),
     0 8px 32px color-mix(in srgb, #000 12%, transparent) !important;

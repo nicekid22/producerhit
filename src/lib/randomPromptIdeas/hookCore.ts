@@ -1,6 +1,7 @@
 import type { AppLocale } from "@/i18n/config";
+import type { PromptMode } from "@/lib/randomPromptIdeas";
 import { shuffleArray } from "@/lib/utils";
-import { getLocaleDisplayPromptPool, type PromptMode } from "@/lib/randomPromptIdeas/localeDisplayPool";
+import { getLocaleDisplayPromptPool } from "@/lib/randomPromptIdeas/localeDisplayPool";
 import { mergeUniqueDisplayPrompts } from "@/lib/randomPromptIdeas/curatedDisplayPrompts";
 
 export type { PromptMode };

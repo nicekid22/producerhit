@@ -12,7 +12,7 @@ function i(template: string, vars: Record<string, string | number>): string {
   return template.replace(/\{\{(\w+)\}\}/g, (_, key: string) => String(vars[key] ?? ""));
 }
 
-function t(map: Record<AppLocale, string>, locale: AppLocale): string {
+function t(map: Partial<Record<AppLocale, string>>, locale: AppLocale): string {
   return pickL(map, locale);
 }
 

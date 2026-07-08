@@ -78,6 +78,7 @@ export const tr: BaseMessageCatalog = {
     generator: "Generator",
     library: "Kütüphane",
     voiceStudio: "Voice Studio",
+    tagStudio: "Tag Studio",
     sampleLab: "Sample Lab",
     settings: "Ayarlar",
     website: "Web sitesi",

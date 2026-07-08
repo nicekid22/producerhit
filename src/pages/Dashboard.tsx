@@ -1188,6 +1188,44 @@ export default function Dashboard() {
     () => displayedLoops.map((l) => l.id).join("|"),
     [displayedLoops],
   );
+
+  // Card reveal animation: add pk-card-revealed class when cards enter viewport
+  // Also reveal cards already visible on initial render (fixes cards staying invisible in grid view)
+  const cardRevealRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const container = cardRevealRef.current;
+    if (!container) return;
+
+    const cards = container.querySelectorAll<HTMLElement>(".pk-card-reveal");
+    if (!cards.length) return;
+
+    // Reveal cards already visible in the viewport on initial render
+    cards.forEach((card) => {
+      if (card.getBoundingClientRect().top < window.innerHeight) {
+        card.classList.add("pk-card-revealed");
+      }
+    });
+
+    // Then observe any remaining cards that scroll into view
+    const unseen = Array.from(cards).filter((c) => !c.classList.contains("pk-card-revealed"));
+    if (!unseen.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("pk-card-revealed");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { rootMargin: "100px", threshold: 0.01 },
+    );
+
+    unseen.forEach((card) => observer.observe(card));
+    return () => observer.disconnect();
+  }, [displayedLoopsSignature, detailsLoop]);
+
   const stableDisplayedLoopsRef = useRef(displayedLoops);
   const stableDisplayedLoops = useMemo(() => {
     stableDisplayedLoopsRef.current = displayedLoops;
@@ -3442,7 +3480,7 @@ export default function Dashboard() {
                   type="button"
                   onClick={() => setMode("song")}
                   className={cn(
-                    "rounded-xl px-2.5 py-2 text-[11px] font-semibold transition-all active:scale-[0.98] sm:px-3 sm:text-xs",
+                    "rounded-xl px-2.5 py-2 text-[10px] font-medium transition-all active:scale-[0.98] sm:px-3 sm:text-xs",
                     mobileV2 && "min-h-11 min-w-0 flex-1 text-center",
                     mode === "song"
                       ? "pk-prism-pill-active"
@@ -3457,7 +3495,7 @@ export default function Dashboard() {
                   type="button"
                   onClick={() => setMode("beat")}
                   className={cn(
-                    "rounded-xl px-2.5 py-2 text-[11px] font-semibold transition-all active:scale-[0.98] sm:px-3 sm:text-xs",
+                    "rounded-xl px-2.5 py-2 text-[10px] font-medium transition-all active:scale-[0.98] sm:px-3 sm:text-xs",
                     mobileV2 && "min-h-11 min-w-0 flex-1 text-center",
                     mode === "beat"
                       ? "pk-prism-pill-active"
@@ -3472,7 +3510,7 @@ export default function Dashboard() {
                   type="button"
                   onClick={() => setMode("cover")}
                   className={cn(
-                    "rounded-xl px-2.5 py-2 text-[11px] font-semibold transition-all active:scale-[0.98] sm:px-3 sm:text-xs",
+                    "rounded-xl px-2.5 py-2 text-[10px] font-medium transition-all active:scale-[0.98] sm:px-3 sm:text-xs",
                     mobileV2 && "min-h-11 min-w-0 flex-1 text-center",
                     mode === "cover"
                       ? "pk-prism-pill-active"
@@ -3487,7 +3525,7 @@ export default function Dashboard() {
                   type="button"
                   onClick={() => setMode("remix")}
                   className={cn(
-                    "rounded-xl px-2.5 py-2 text-[11px] font-semibold transition-all active:scale-[0.98] sm:px-3 sm:text-xs",
+                    "rounded-xl px-2.5 py-2 text-[10px] font-medium transition-all active:scale-[0.98] sm:px-3 sm:text-xs",
                     mobileV2 && "min-h-11 min-w-0 flex-1 text-center",
                     mode === "remix"
                       ? "pk-prism-pill-active"
@@ -3526,7 +3564,7 @@ export default function Dashboard() {
                     else setAdvancedOpen((v) => !v);
                   }}
                   className={cn(
-                    "rounded-full px-3 py-1.5 text-[11px] font-semibold transition-colors",
+                    "rounded-full px-3 py-1.5 text-[10px] font-medium transition-colors",
                     (mode === "song" ? songUiMode === "custom" : advancedOpen)
                       ? "pk-prism-pill-active"
                       : "bg-white/5 text-white/55 hover:text-white",
@@ -3635,7 +3673,7 @@ export default function Dashboard() {
                   <input
                     value={requestedTitle}
                     onChange={(e) => setRequestedTitle(e.target.value)}
-                    className="w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2 text-sm outline-none placeholder:text-pk-muted focus:border-pk-accent"
+                    className="w-full rounded-xl border border-white/[0.1] bg-white/[0.05] px-3 py-2.5 text-sm text-white/90 outline-none placeholder:text-white/35 focus:border-purple-400/45 focus:shadow-[0_0_0_3px_rgba(168,85,247,0.1),0_0_12px_rgba(139,92,246,0.06)] backdrop-blur-sm transition-all duration-200"
                     placeholder={d.titlePlaceholder}
                   />
                 </GeneratorSection>
@@ -3937,7 +3975,7 @@ export default function Dashboard() {
                             setField("key", p.key);
                             setField("scale", p.scale);
                           }}
-                          className="flex items-center justify-between rounded-pk border border-pk-border bg-pk-bg px-3 py-2 text-left text-[11px] text-pk-text hover:bg-white/5"
+                          className="flex items-center justify-between rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2.5 text-left text-[11px] text-white/80 backdrop-blur-sm transition-all duration-200 hover:bg-white/[0.08] hover:border-white/[0.14] hover:text-white hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.15)]"
                         >
                           <span className="font-semibold">{p.name}</span>
                           <span className="text-pk-muted">{p.bpm} BPM</span>
@@ -4022,8 +4060,8 @@ export default function Dashboard() {
                     <button
                       type="button"
                       onClick={() => setLyricsMode("manual")}
-                      className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${
-                        lyricsMode === "manual" ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
+                      className={`rounded-full px-3.5 py-1.5 text-[10px] font-semibold transition-all duration-200 ${
+                        lyricsMode === "manual" ? "pk-prism-pill-active" : "bg-white/[0.05] text-white/50 hover:text-white/80 hover:bg-white/[0.08]"
                       }`}
                     >
                       {d.iWrite}
@@ -4031,8 +4069,8 @@ export default function Dashboard() {
                     <button
                       type="button"
                       onClick={() => setLyricsMode("ai")}
-                      className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${
-                        lyricsMode === "ai" ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
+                      className={`rounded-full px-3.5 py-1.5 text-[10px] font-semibold transition-all duration-200 ${
+                        lyricsMode === "ai" ? "pk-prism-pill-active" : "bg-white/[0.05] text-white/50 hover:text-white/80 hover:bg-white/[0.08]"
                       }`}
                     >
                       {d.aiWrites}
@@ -4063,14 +4101,14 @@ export default function Dashboard() {
                           rows={DASHBOARD_PROMPT_ROWS}
                           micPlacement="inside"
                           wrapperClassName="pk-dashboard-text-field-wrap"
-                          className="pk-dashboard-text-field__control bg-pk-input border border-pk-border text-sm text-pk-text placeholder:text-pk-muted focus:border-pk-accent"
+                          className="pk-dashboard-text-field__control bg-white/[0.05] border border-white/[0.1] text-sm text-white/90 placeholder:text-white/35 focus:border-purple-400/45 backdrop-blur-sm"
                           placeholder={d.lyricsPlaceholder}
                           showStatus={false}
                         />
                       </div>
                     </>
                   ) : (
-                    <div className="mt-3 rounded-pk border border-pk-border bg-pk-bg p-4 text-center">
+                    <div className="mt-3 rounded-xl border border-white/[0.08] bg-white/[0.04] p-4 text-center backdrop-blur-sm">
                       <p className="text-[11px] italic text-pk-muted leading-relaxed">
                         {d.aiWritesLyricsHint}
                       </p>
@@ -4114,7 +4152,7 @@ export default function Dashboard() {
                   <input
                     value={requestedTitle}
                     onChange={(e) => setRequestedTitle(e.target.value)}
-                    className="w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2 text-sm outline-none placeholder:text-pk-muted focus:border-pk-accent"
+                    className="w-full rounded-xl border border-white/[0.1] bg-white/[0.05] px-3 py-2.5 text-sm text-white/90 outline-none placeholder:text-white/35 focus:border-purple-400/45 focus:shadow-[0_0_0_3px_rgba(168,85,247,0.1),0_0_12px_rgba(139,92,246,0.06)] backdrop-blur-sm transition-all duration-200"
                     placeholder={d.titlePlaceholder}
                   />
                 </GeneratorSection>
@@ -4646,8 +4684,8 @@ export default function Dashboard() {
     >
       <div
         className={cn(
-          "mx-auto w-full max-w-[1120px] px-4 md:px-6",
-          mobileV2 && mobileTab === "results" ? "pt-2" : "pt-4 md:pt-5",
+          "mx-auto w-full max-w-[1120px] px-4 md:px-6 lg:px-8",
+          mobileV2 && mobileTab === "results" ? "pt-2" : "pt-5 md:pt-6",
           mobileResultsScrollClass,
         )}
       >
@@ -4687,14 +4725,14 @@ export default function Dashboard() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={d.searchCreations}
-                className="pk-workspace-search-field w-full rounded-xl border border-pk-border py-2.5 pl-9 pr-3 text-sm outline-none placeholder:text-pk-muted focus:border-pk-accent"
+                className="pk-workspace-search-field w-full rounded-xl border border-white/[0.1] bg-white/[0.05] py-2.5 pl-9 pr-3 text-sm text-white/90 outline-none placeholder:text-white/35 focus:border-purple-400/45 focus:shadow-[0_0_0_3px_rgba(168,85,247,0.1)] backdrop-blur-sm transition-all duration-200"
               />
             </div>
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => setSavedOnly(false)}
-                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                   !savedOnly ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
                 }`}
               >
@@ -4703,7 +4741,7 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={() => setSavedOnly(true)}
-                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                   savedOnly ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
                 }`}
               >
@@ -4714,7 +4752,7 @@ export default function Dashboard() {
         ) : (
         <div className="pk-studio-workspace-header flex min-w-0 flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div className="pk-studio-workspace-header__intro min-w-0">
-            <div className="pk-studio-workspace-header__title text-lg font-semibold">{d.myWorkspace}</div>
+            <div className="pk-studio-workspace-header__title text-lg font-medium">{d.myWorkspace}</div>
             <div className="mt-1 text-sm text-pk-muted">
               {`${d.showingOfPrefix}${workspaceVisibleCount}${d.showingOfMid}${hasWorkspaceFilters ? workspaceFilteredTotal : libraryTotalCount}`}
             </div>
@@ -4724,7 +4762,7 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={() => setWorkspaceView("tracks")}
-                className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                   workspaceView === "tracks" ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
                 }`}
               >
@@ -4736,7 +4774,7 @@ export default function Dashboard() {
                   setWorkspaceView("master");
                   goMaster();
                 }}
-                className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                   workspaceView === "master" ? "pk-prism-pill-active" : "bg-white/5 text-white/50 hover:text-white"
                 }`}
               >
@@ -4824,9 +4862,9 @@ export default function Dashboard() {
                     return (
                       <div
                         key={slot.idx}
-                        className="flex items-center gap-2.5 rounded-xl border border-rose-500/25 bg-pk-panel px-3 py-2.5"
+                        className="flex items-center gap-2.5 rounded-[1.25rem] border border-white/10 bg-white/[0.04] px-3 py-2.5 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_4px_6px_rgba(0,0,0,0.15),0_10px_24px_rgba(0,0,0,0.2)]"
                       >
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-black/25">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-rose-500/15 border border-rose-500/20">
                           <AlertTriangle className="h-4 w-4 text-rose-400" />
                         </div>
                         <div className="min-w-0 flex-1">
@@ -4835,7 +4873,7 @@ export default function Dashboard() {
                         </div>
                         <button
                           type="button"
-                          className="shrink-0 rounded-lg px-2 py-1 text-xs font-semibold text-white/50 hover:bg-white/10 hover:text-white"
+                          className="shrink-0 rounded-xl px-2.5 py-1 text-xs font-semibold text-white/50 transition-all duration-200 hover:bg-white/[0.08] hover:text-white/80"
                           onClick={() => {
                             setGenerationSlots((prev) => {
                               if (!prev) return null;
@@ -4871,7 +4909,7 @@ export default function Dashboard() {
           ) : displayedLoops.length === 0 ? (
             loopsSyncError ? (
               <div className="rounded-pk bg-gradient-to-br from-[rgba(157,124,255,0.22)] via-transparent to-[rgba(103,195,255,0.08)] p-[1px] shadow-[0_0_0_1px_rgba(157,124,255,0.08),0_0_24px_rgba(157,124,255,0.10)]">
-                <div className="flex flex-col items-center justify-center rounded-pk border border-dashed border-pk-border bg-pk-panel p-10 text-center">
+                  <div className="flex flex-col items-center justify-center rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-10 text-center backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_10px_25px_rgba(0,0,0,0.2),0_20px_48px_rgba(0,0,0,0.25)]">
                   <div className="mt-2 text-sm font-semibold text-pk-text">
                     {d.failedLoadCreations}
                   </div>
@@ -4919,8 +4957,8 @@ export default function Dashboard() {
               </div>
             )
           ) : detailsLoop && !mobileV2 ? (
-            <div className="md:grid md:grid-cols-[minmax(0,1fr)_420px] md:gap-4">
-              <div className="space-y-4">
+            <div className="md:grid md:grid-cols-[minmax(0,1fr)_420px] md:gap-5">
+              <div className="space-y-5">
                 {displayedLoops.map((l, loopIdx) => (
                   <div key={l.id}>
                     <LoopCardItem
@@ -4943,7 +4981,7 @@ export default function Dashboard() {
 
               <div className="hidden md:block">
                 <div className="sticky top-6 max-h-[calc(100vh-32px)] overflow-y-auto">
-                  <div className="pk-studio-detail-panel relative overflow-hidden rounded-2xl p-5 backdrop-blur">
+                  <div className="pk-studio-detail-panel relative overflow-hidden rounded-[1.5rem] p-5 backdrop-blur-xl border border-white/10 bg-white/[0.03] shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_10px_25px_rgba(0,0,0,0.2),0_20px_48px_rgba(0,0,0,0.25)]">
                     <div className="pk-prism-panel-glow" />
                     <LoopDetailsSheetHeader
                       title={detailsLoop.name}
@@ -4971,9 +5009,9 @@ export default function Dashboard() {
               </div>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div ref={cardRevealRef} className="pk-stagger space-y-5">
               {displayedLoops.map((l, loopIdx) => (
-                <div key={l.id}>
+                <div key={l.id} className="pk-card-reveal" style={{ transitionDelay: `${Math.min(loopIdx * 60, 360)}ms` }}>
                   <LoopCardItem
                     loop={l}
                     slotIndex={loopIdx}

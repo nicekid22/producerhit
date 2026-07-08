@@ -1,6 +1,7 @@
-import { adaptPresetForInput } from "@/lib/mastering/presets";
+import { adaptPresetForInput, MASTER_PRESETS } from "@/lib/mastering/presets";
 import { analyzeBuffer, applyGainDb, computeMasterOutputGainDb } from "@/lib/mastering/analyze";
-import type { MasterPreset } from "@/lib/mastering/presets";
+import { fetchCachedLoopAudioBlob } from "@/stores/loopsStore";
+import type { MasterPreset, MasterPresetId } from "@/lib/mastering/presets";
 
 function getAudioContextCtor(): typeof AudioContext {
   const w = window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
@@ -32,7 +33,6 @@ async function decodeArrayBuffer(arrayBuffer: ArrayBuffer): Promise<AudioBuffer>
 }
 
 export async function loadMasteringSource(loopId: string, audioUrl: string | null, ensureAudioReady: (id: string) => Promise<string>): Promise<AudioBuffer> {
-  const { fetchCachedLoopAudioBlob } = await import("@/stores/loopsStore");
   const cached = await fetchCachedLoopAudioBlob(loopId).catch(() => null);
   if (cached?.size) return decodeArrayBuffer(await cached.arrayBuffer());
 
@@ -105,10 +105,12 @@ function connectChain(
 
 export async function masterAudioBuffer(
   input: AudioBuffer,
-  preset: MasterPreset,
+  presetId: MasterPresetId,
   onProgress?: (value: number) => void,
 ): Promise<AudioBuffer> {
   onProgress?.(0.05);
+  const preset = MASTER_PRESETS[presetId];
+  if (!preset) throw new Error("Unknown mastering preset: " + presetId);
 
   const inputAnalysis = analyzeBuffer(input);
   const adapted = adaptPresetForInput(preset, inputAnalysis);

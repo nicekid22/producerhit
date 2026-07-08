@@ -74,6 +74,7 @@ export const th: BaseMessageCatalog = {
     generator: "เครื่องมือสร้าง",
     library: "ไลบรารี",
     voiceStudio: "Voice Studio",
+    tagStudio: "Tag Studio",
     sampleLab: "Sample Lab",
     settings: "การตั้งค่า",
     website: "เว็บไซต์",

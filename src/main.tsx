@@ -1,6 +1,8 @@
 import { Component, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
+import "./styles/design-system.css";
+import "./styles/design-system-v2.css";
 import App from "./App";
 
 function ErrorScreen({ title, message }: { title: string; message?: string }) {

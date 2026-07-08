@@ -29,7 +29,7 @@ function parseHexColor(hex: string): [number, number, number] | null {
 
 function rgbaFromHex(hex: string, alpha: number): string {
   const rgb = parseHexColor(hex);
-  if (!rgb) return `rgba(103, 195, 255, ${alpha})`;
+  if (!rgb) return `rgba(192, 38, 211, ${alpha})`;
   return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${alpha})`;
 }
 
@@ -63,10 +63,10 @@ export function getWaveformColors(theme: VisualTheme, cloudAccent?: CloudAccent)
   }
 
   return {
-    played: "rgba(103, 195, 255, 0.92)",
+    played: "rgba(236, 72, 153, 0.95)",
     unplayed: "rgba(255, 255, 255, 0.14)",
-    gradientStart: "rgba(157, 124, 255, 0.55)",
-    gradientEnd: "rgba(103, 195, 255, 0.95)",
+    gradientStart: "rgba(168, 85, 247, 0.95)",
+    gradientEnd: "rgba(244, 63, 94, 0.95)",
   };
 }
 
@@ -90,8 +90,17 @@ export function getPlayerVisualizerRgb(theme: VisualTheme, t: number, cloudAccen
     }
   }
 
-  const r = Math.round(203 + (103 - 203) * t);
-  const g = Math.round(213 + (195 - 213) * t);
-  const b = Math.round(225 + (255 - 225) * t);
+  /* Prism default: violet → fuchsia → rose across the bar */
+  if (t < 0.5) {
+    const k = t / 0.5;
+    const r = Math.round(168 + (236 - 168) * k);
+    const g = Math.round(85 + (72 - 85) * k);
+    const b = Math.round(247 + (153 - 247) * k);
+    return [r, g, b];
+  }
+  const k = (t - 0.5) / 0.5;
+  const r = Math.round(236 + (244 - 236) * k);
+  const g = Math.round(72 + (63 - 72) * k);
+  const b = Math.round(153 + (94 - 153) * k);
   return [r, g, b];
 }

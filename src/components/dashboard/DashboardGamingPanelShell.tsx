@@ -47,7 +47,7 @@ export const DashboardGamingPanelShell = forwardRef<DashboardGamingPanelHandle, 
         className,
       )}
     >
-      <div className="pk-gaming-panel-shell__glow pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/[0.12] via-transparent to-cyan-500/[0.08]" />
+      <div className="pk-gaming-panel-shell__glow pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/[0.12] via-transparent to-rose-500/[0.08]" />
       <div className="pk-gaming-panel-shell__body relative rounded-[15px] bg-[#0a0a0f]/90">
         <div className="flex items-center justify-between gap-3 border-b border-white/[0.06] px-3 py-2.5 sm:px-4">
           <div className="min-w-0">

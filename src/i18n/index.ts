@@ -16,6 +16,7 @@ export {
   hreflangUrl,
 } from "./config";
 export { getMessages } from "./locales";
+export { getDashboardMessages, useDashboardT } from "./useDashboardT";
 export { pickLocalized } from "./resolve";
 export { formatDate, formatNumber, formatReadingTime, formatPlanPrice, planMonthlySuffix } from "./format";
 

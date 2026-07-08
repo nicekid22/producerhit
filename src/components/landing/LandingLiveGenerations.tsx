@@ -16,10 +16,10 @@ type DemoItem = {
 };
 
 const GRADIENTS = [
-  "linear-gradient(145deg, #67c3ff 0%, #9d7cff 52%, #c084fc 100%)",
-  "linear-gradient(145deg, #5eead4 0%, #67c3ff 45%, #9d7cff 100%)",
-  "linear-gradient(145deg, #fbbf24 0%, #fb7185 38%, #9d7cff 100%)",
-  "linear-gradient(145deg, #e2e8f0 0%, #67c3ff 40%, #7c3aed 100%)",
+  "linear-gradient(145deg, #d946ef 0%, #a855f7 52%, #818cf8 100%)",
+  "linear-gradient(145deg, #a855f7 0%, #c026d3 45%, #818cf8 100%)",
+  "linear-gradient(145deg, #e879f9 0%, #c026d3 38%, #a855f7 100%)",
+  "linear-gradient(145deg, #818cf8 0%, #a855f7 40%, #c026d3 100%)",
 ];
 
 const FEATURES = {
@@ -167,7 +167,7 @@ export function LandingLiveGenerations({ locale }: Props) {
           <Sparkles className="h-4 w-4 text-[var(--prism-violet)]" />
           {isFr ? "Suite créateur 2026" : "2026 creator suite"}
         </div>
-        <div className="pk-landing-live-gen__live inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-300">
+        <div className="pk-landing-live-gen__live inline-flex items-center gap-2 rounded-full border border-[rgb(192,38,211)]/20 bg-[rgb(192,38,211)]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[rgb(232,121,249)]">
           <span className="pk-landing-live-gen__live-dot" aria-hidden />
           Live
         </div>

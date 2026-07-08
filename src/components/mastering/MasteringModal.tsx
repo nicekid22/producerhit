@@ -1,3 +1,4 @@
+import type { AppLocale } from "@/i18n/config";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ArrowLeft, Loader2, Lock, Pause, Play, Search, Sparkles, Wand2, X } from "lucide-react";
@@ -21,13 +22,14 @@ type Props = {
   onClose: () => void;
   onApplied?: (loop: Loop) => void;
   onUpgrade?: () => void;
-  locale: string;
+  locale: AppLocale;
+  plan?: string;
 };
 
-export function MasteringModal({ open, loop, onClose, onApplied, onUpgrade, locale }: Props) {
+export function MasteringModal({ open, loop, onClose, onApplied, onUpgrade, locale, plan = "free" }: Props) {
   const isFr = locale === "fr";
-  const canApply = canApplyMastering();
-  const canExport = canExportMastering();
+  const canApply = canApplyMastering(plan);
+  const canExport = canExportMastering(plan);
   const previewOnly = !canApply || !canExport;
   const ensureAudioReady = useLoopsStore((s) => s.ensureAudioReady);
   const replaceLoopAudioRemote = useLoopsStore((s) => s.replaceLoopAudioRemote);
@@ -198,7 +200,7 @@ export function MasteringModal({ open, loop, onClose, onApplied, onUpgrade, loca
     trackClientEvent("mastering_preview_start", { loop_id: loop.id, preset: presetId });
     try {
       const input = await loadMasteringSource(loop.id, loop.audioUrl, ensureAudioReady);
-      const output = await masterAudioBuffer(input, preset, setProgress);
+      const output = await masterAudioBuffer(input, presetId, setProgress);
       const { blob, url } = audioBufferToBlobUrl(output);
       previewUrlsRef.current.push(url);
       setMasteredBlob(blob);
@@ -253,7 +255,7 @@ export function MasteringModal({ open, loop, onClose, onApplied, onUpgrade, loca
     }
     try {
       const input = await loadMasteringSource(loop.id, loop.audioUrl, ensureAudioReady);
-      const output = await masterAudioBuffer(input, preset);
+      const output = await masterAudioBuffer(input, presetId);
       const blob = encodeWavBlob(output, 24);
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);

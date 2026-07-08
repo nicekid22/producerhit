@@ -74,6 +74,7 @@ export const ja: BaseMessageCatalog = {
     generator: "ジェネレーター",
     library: "ライブラリ",
     voiceStudio: "Voice Studio",
+    tagStudio: "Tag Studio",
     sampleLab: "Sample Lab",
     settings: "設定",
     website: "サイト",

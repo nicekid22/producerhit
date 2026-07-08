@@ -62,7 +62,7 @@ export function BlogPagination({ locale, page, totalPages, basePath }: Props) {
 
       {page > 1 ? (
 
-        <Link to={linkFor(page - 1)} className="rounded-xl border border-white/10 px-4 py-2 text-sm font-semibold text-white/70 hover:bg-white/5">
+        <Link to={linkFor(page - 1)} className="rounded-xl border border-white/[0.08] bg-white/[0.035] px-4 py-2 text-sm font-semibold text-white/70 backdrop-blur-sm transition-all duration-200 hover:border-white/[0.14] hover:bg-white/[0.06] hover:text-white/90">
 
           ← {b.previous}
 
@@ -86,9 +86,13 @@ export function BlogPagination({ locale, page, totalPages, basePath }: Props) {
 
               to={linkFor(p)}
 
-              className={`min-w-[2.5rem] rounded-xl px-3 py-2 text-center text-sm font-semibold ${
+              className={`min-w-[2.5rem] rounded-xl px-3 py-2 text-center text-sm font-semibold backdrop-blur-sm transition-all duration-200 ${
 
-                p === page ? "bg-violet-600 text-white" : "border border-white/10 text-white/60 hover:bg-white/5"
+                p === page
+
+                  ? "bg-gradient-to-r from-violet-600 via-purple-500 to-pink-500 text-white shadow-[0_0_20px_rgba(124,58,237,0.35),0_4px_12px_rgba(236,72,153,0.25)]"
+
+                  : "border border-white/[0.08] bg-white/[0.035] text-white/60 hover:border-white/[0.14] hover:bg-white/[0.06] hover:text-white/90"
 
               }`}
 
@@ -108,7 +112,7 @@ export function BlogPagination({ locale, page, totalPages, basePath }: Props) {
 
       {page < totalPages ? (
 
-        <Link to={linkFor(page + 1)} className="rounded-xl border border-white/10 px-4 py-2 text-sm font-semibold text-white/70 hover:bg-white/5">
+        <Link to={linkFor(page + 1)} className="rounded-xl border border-white/[0.08] bg-white/[0.035] px-4 py-2 text-sm font-semibold text-white/70 backdrop-blur-sm transition-all duration-200 hover:border-white/[0.14] hover:bg-white/[0.06] hover:text-white/90">
 
           {b.next} →
 
@@ -121,4 +125,3 @@ export function BlogPagination({ locale, page, totalPages, basePath }: Props) {
   );
 
 }
-

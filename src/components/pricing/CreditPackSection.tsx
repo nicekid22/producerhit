@@ -58,7 +58,7 @@ export function CreditPackSection({ locale, location = "pricing" }: Props) {
             type="button"
             disabled={loading}
             onClick={() => void handleBuy()}
-            className="rounded-full bg-gradient-to-r from-cyan-600 to-violet-600 px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60"
+            className="rounded-full bg-gradient-to-r from-fuchsia-600 to-rose-500 px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60"
           >
             {loading ? "…" : copy.cta}
           </button>

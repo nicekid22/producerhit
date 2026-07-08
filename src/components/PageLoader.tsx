@@ -15,8 +15,8 @@ type Props = {
   className?: string;
 };
 
-/** Évite le flash « Studio… » quand le chunk lazy est déjà en cache (< ~220ms). */
-const SHOW_CONTENT_MS = 220;
+/** Évite le flash « Studio… » quand le chunk lazy est déjà en cache (< ~180ms). */
+const SHOW_CONTENT_MS = 180;
 
 export function PageLoader({ variant = "full", className }: Props) {
   const { pathname } = useLocation();

@@ -525,8 +525,8 @@
     background:
       radial-gradient(120% 80% at 50% -20%, rgba(103, 195, 255, 0.1), transparent 55%),
       rgba(8, 10, 20, 0.94);
-    backdrop-filter: blur(22px) saturate(1.15);
-    -webkit-backdrop-filter: blur(22px) saturate(1.15);
+    backdrop-filter: blur(14px) saturate(1.15);
+    -webkit-backdrop-filter: blur(14px) saturate(1.15);
   }
 
   .pk-landing-mobile-nav__list {

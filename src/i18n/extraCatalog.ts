@@ -1,6 +1,6 @@
 import type { AppLocale } from "./config";
-import { buildDashboardSection } from "./dashboardCatalog";
 import { L, resolveSection } from "./localized";
+import { buildDashboardSection } from "./dashboardCatalog";
 import type { MessageCatalog } from "./types";
 
 const COMMON = {

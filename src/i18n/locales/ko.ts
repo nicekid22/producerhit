@@ -74,6 +74,7 @@ export const ko: BaseMessageCatalog = {
     generator: "생성기",
     library: "라이브러리",
     voiceStudio: "Voice Studio",
+    tagStudio: "Tag Studio",
     sampleLab: "Sample Lab",
     settings: "설정",
     website: "웹사이트",

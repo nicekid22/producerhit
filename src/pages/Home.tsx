@@ -90,8 +90,8 @@ export default function Home() {
         </div>
 
         {page.promptHint ? (
-          <div className="mt-8 rounded-2xl border border-cyan-400/20 bg-cyan-500/[0.06] p-5">
-            <div className="text-xs font-bold uppercase tracking-widest text-cyan-200/70">{ui.suggestedPrompt}</div>
+          <div className="mt-8 rounded-2xl border border-[rgb(192,38,211)]/20 bg-[rgb(192,38,211)]/[0.06] p-5">
+            <div className="text-xs font-bold uppercase tracking-widest text-[rgb(232,121,249)]/70">{ui.suggestedPrompt}</div>
             <p className="mt-2 font-mono text-sm leading-relaxed text-white/85">{page.promptHint}</p>
           </div>
         ) : null}

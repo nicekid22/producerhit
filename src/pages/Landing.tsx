@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ensureLandingMobileStyles } from "@/lib/themeStyles";
-import { useEffect, useMemo, useRef, useState, useCallback, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback, type MouseEvent as ReactMouseEvent, type ReactNode, type RefObject } from "react";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/stores/authStore";
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
@@ -610,7 +610,7 @@ export default function Landing() {
   const [repairFixedCount, setRepairFixedCount] = useState<number | null>(null);
 
   const getTrackGradient = (id: string) => {
-    const gradients = ["from-violet-900 to-blue-900", "from-purple-900 to-pink-900", "from-blue-900 to-cyan-900", "from-rose-900 to-orange-900", "from-green-900 to-teal-900", "from-yellow-900 to-red-900"];
+    const gradients = ["from-violet-900 to-blue-900", "from-fuchsia-900 to-violet-900", "from-indigo-900 to-blue-900", "from-violet-900 to-purple-900", "from-blue-900 to-violet-900", "from-fuchsia-900 to-indigo-900"];
     const index = id.charCodeAt(0) % gradients.length;
     return gradients[index] ?? gradients[0];
   };
@@ -1497,9 +1497,6 @@ export default function Landing() {
             />
           ) : null}
         </RevealSection>
-        <RevealSection className={`${landingSectionClass()} pk-landing-below-fold${mobileLandingFocus ? " hidden lg:block" : ""}`}>
-          <ProducerLegendsSection locale={locale} />
-        </RevealSection>
 
         <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
           <div className="pk-landing-apple-panel pk-landing-apple-surface relative overflow-hidden p-6 sm:p-10">
@@ -1517,7 +1514,7 @@ export default function Landing() {
                     type="button"
                     disabled={launchCheckoutLoading}
                     onClick={() => void handleLaunchProCheckout()}
-                    className="pk-landing-gen__cta inline-flex items-center justify-center rounded-full px-8 py-3.5 text-sm font-bold text-white disabled:opacity-60"
+                    className="pk-landing-gen__cta inline-flex items-center justify-center rounded-xl px-8 py-3.5 text-sm font-bold text-white disabled:opacity-60"
                   >
                     {launchCheckoutLoading ? "…" : getLaunchOfferCtaButton(locale)}
                   </button>

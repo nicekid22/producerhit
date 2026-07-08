@@ -186,7 +186,7 @@ export type MessageCatalog = {
     startFree: string;
     legalPage: string;
   };
-  dashboard: DashboardMessages;
+  dashboard?: DashboardMessages;
 };
 
 /** Contenu par locale dans locales/*.ts (sections extra fusionnées dans getMessages). */

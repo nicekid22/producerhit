@@ -67,11 +67,11 @@ const ACCENT_STYLES: Record<
   { pill: string; iconWrap: string; icon: string; dot: string; cta: string }
 > = {
   cyan: {
-    pill: "border-cyan-400/15 bg-cyan-500/[0.08] text-cyan-200/70",
-    iconWrap: "border-cyan-400/15 bg-cyan-500/[0.1]",
-    icon: "text-cyan-200",
-    dot: "bg-cyan-300 shadow-[0_0_6px_rgba(103,195,255,0.45)]",
-    cta: "text-cyan-200/90 hover:text-cyan-100",
+    pill: "border-fuchsia-400/15 bg-fuchsia-500/[0.08] text-fuchsia-200/70",
+    iconWrap: "border-fuchsia-400/15 bg-fuchsia-500/[0.1]",
+    icon: "text-fuchsia-200",
+    dot: "bg-fuchsia-300 shadow-[0_0_6px_rgba(236,72,153,0.45)]",
+    cta: "text-fuchsia-200/90 hover:text-fuchsia-100",
   },
   violet: {
     pill: "border-violet-400/15 bg-violet-500/[0.08] text-violet-200/70",
@@ -317,7 +317,7 @@ export function DashboardPromoBillboard({
 
   return (
     <div
-      className="pk-dashboard-spotlight-banner mb-3 overflow-hidden rounded-xl border border-white/[0.08] bg-gradient-to-r from-violet-500/[0.06] via-black/20 to-cyan-500/[0.05] px-2 py-1 sm:px-3"
+      className="pk-dashboard-spotlight-banner mb-3 overflow-hidden rounded-xl border border-white/[0.08] bg-gradient-to-r from-violet-500/[0.06] via-black/20 to-fuchsia-500/[0.05] px-2 py-1 sm:px-3"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)}

@@ -76,11 +76,15 @@ export function AppShell({
                 aria-hidden
               />
               <div
-                className="pk-prism-fx-orb absolute -top-48 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-[rgba(157,124,255,0.10)] blur-3xl"
+                className="pk-prism-fx-orb absolute -top-40 left-0 h-[480px] w-[520px] rounded-full bg-[rgba(139,92,246,0.12)] blur-3xl"
                 aria-hidden
               />
               <div
-                className="pk-prism-fx-orb absolute -bottom-56 left-12 h-[520px] w-[520px] rounded-full bg-[rgba(103,195,255,0.06)] blur-3xl"
+                className="pk-prism-fx-orb absolute top-[30%] -right-24 h-[480px] w-[480px] rounded-full bg-[rgba(236,72,153,0.07)] blur-3xl"
+                aria-hidden
+              />
+              <div
+                className="pk-prism-fx-orb absolute -bottom-48 left-1/2 h-[460px] w-[620px] -translate-x-1/2 rounded-full bg-[rgba(99,102,241,0.06)] blur-3xl"
                 aria-hidden
               />
               <div className="pk-prism-grid hidden md:block" aria-hidden />
@@ -88,9 +92,9 @@ export function AppShell({
           )
         ) : (
           <>
-            <div className="pk-prism-fx-orb absolute -top-48 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-[#7c3aed]/15 blur-3xl" aria-hidden />
+            <div className="pk-prism-fx-orb absolute -top-48 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-[rgb(192,38,211)]/15 blur-3xl" aria-hidden />
             <div className="pk-prism-fx-orb absolute -bottom-56 left-12 h-[520px] w-[520px] rounded-full bg-fuchsia-500/10 blur-3xl" aria-hidden />
-            <div className="pk-prism-fx-orb absolute -top-56 -right-24 h-[520px] w-[520px] rounded-full bg-cyan-500/10 blur-3xl" aria-hidden />
+            <div className="pk-prism-fx-orb absolute -top-56 -right-24 h-[520px] w-[520px] rounded-full bg-[rgb(232,121,249)]/10 blur-3xl" aria-hidden />
           </>
         )}
         {!cloud ? <BackdropTextureVeil variant="dashboard" /> : null}

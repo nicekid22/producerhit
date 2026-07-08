@@ -62,6 +62,7 @@ const LegalPage = lazy(() => import("@/pages/Legal"));
 const CommercialLicensePage = lazy(() => import("@/pages/CommercialLicense"));
 const CommercialLicenseExamplePage = lazy(() => import("@/pages/CommercialLicenseExample"));
 const DashboardPage = lazy(() => import("@/pages/Dashboard"));
+const DashboardV2Page = lazy(() => import("@/pages/DashboardV2"));
 const LibraryPage = lazy(() => import("@/pages/Library"));
 const SettingsPage = lazy(() => import("@/pages/Settings"));
 const GrowthAdminPage = lazy(() => import("@/pages/GrowthAdmin"));
@@ -133,6 +134,7 @@ export default function App() {
 
                   <Route element={<ProtectedRoute />}>
                     <Route path="/dashboard" element={<DashboardPage />} />
+                    <Route path="/dashboard-v2" element={<DashboardV2Page />} />
                     <Route path="/library" element={<LibraryPage />} />
                     {isSampleLabEnabled() ? <Route path="/sample-lab" element={<SampleLabPage />} /> : null}
                     <Route path="/voice-studio" element={<VoiceStudioPage />} />

@@ -202,8 +202,8 @@ export function GamificationStrip({
     <>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-4">
           <div className="flex min-w-0 flex-1 items-center gap-3">
-            <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500/25 to-cyan-500/15 text-base font-bold text-white ring-1 ring-white/15">
-              <span className="absolute inset-0 rounded-2xl bg-gradient-to-br from-violet-400/20 to-cyan-400/10 blur-md" aria-hidden />
+            <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500/25 to-rose-500/15 text-base font-bold text-white ring-1 ring-white/15">
+              <span className="absolute inset-0 rounded-2xl bg-gradient-to-br from-fuchsia-400/20 to-rose-400/10 blur-md" aria-hidden />
               <span className="relative">{progress.level}</span>
             </div>
 
@@ -228,8 +228,8 @@ export function GamificationStrip({
                   className={cn(
                     "h-full rounded-full transition-all duration-500",
                     progress.isMax
-                      ? "bg-gradient-to-r from-violet-300 via-cyan-300 to-violet-300"
-                      : "bg-gradient-to-r from-violet-400 to-cyan-400",
+                      ? "bg-gradient-to-r from-fuchsia-300 via-rose-300 to-fuchsia-300"
+                      : "bg-gradient-to-r from-rose-500 to-fuchsia-500",
                   )}
                   style={{ width: `${progress.pct}%` }}
                 />

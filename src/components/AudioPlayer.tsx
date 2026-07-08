@@ -242,18 +242,18 @@ export function AudioPlayer() {
     const totalW = barCount * barW + (barCount - 1) * gap;
     const startX = Math.max(0, Math.floor((w - totalW) / 2));
 
+    const vizGrad = ctx2d.createLinearGradient(0, h, 0, 0);
+    vizGrad.addColorStop(0, "rgb(236, 72, 153)");
+    vizGrad.addColorStop(0.3, "rgb(217, 70, 239)");
+    vizGrad.addColorStop(0.6, "rgb(168, 85, 247)");
+    vizGrad.addColorStop(1, "rgb(99, 102, 241)");
+    ctx2d.fillStyle = vizGrad;
+
     for (let i = 0; i < barCount; i++) {
       const v = Math.max(0, Math.min(1, bars[i] ?? 0));
       const barH = Math.max(1, Math.floor(v * h));
       const x = startX + i * (barW + gap);
       const y = Math.floor(h - barH);
-      const t = barCount === 1 ? 0 : i / (barCount - 1);
-      const [r, g, b] = getPlayerVisualizerRgb(
-        visualTheme,
-        t,
-        visualTheme === "cloud" ? cloudAccent : undefined,
-      );
-      ctx2d.fillStyle = `rgb(${r}, ${g}, ${b})`;
       ctx2d.fillRect(x, y, barW, barH);
     }
   }, [visualTheme, cloudAccent]);
@@ -784,6 +784,7 @@ export function AudioPlayer() {
         visualTheme === "warm-glass" && "pk-warm-glass-player",
         visualTheme === "cloud" && "pk-cloud-player",
         miniLayout && "pk-prism-player--collapsed",
+        isPlaying && "ds-player-active",
       )}
       aria-busy={isLoading}
     >
@@ -897,14 +898,14 @@ export function AudioPlayer() {
                 <div className="pk-prism-progress-track relative h-[3px] w-full overflow-hidden rounded-full bg-white/10">
                   {durationSec > 0 ? (
                     <div
-                      className="pk-prism-progress-fill h-full bg-[linear-gradient(90deg,var(--prism-chrome),var(--prism-cyan),var(--prism-violet))] transition-none"
+                      className="pk-prism-progress-fill h-full bg-[linear-gradient(90deg,rgb(236,72,153),rgb(168,85,247),rgb(99,102,241))] transition-none"
                       style={{ width: `${progress * 100}%` }}
                     />
                   ) : isLoading ? (
                     <div className="absolute inset-0">
                       <div
-                        className="pk-prism-player-shimmer absolute left-0 top-0 h-full w-[42%] bg-gradient-to-r from-transparent via-[rgba(157,124,255,0.55)] to-transparent"
-                        style={{ animation: "pkShimmer 1.1s ease-in-out infinite" }}
+                        className="pk-prism-player-shimmer absolute left-0 top-0 h-full w-[40%] bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                        style={{ animation: "pkShimmer 1.4s ease-in-out infinite" }}
                       />
                     </div>
                   ) : (

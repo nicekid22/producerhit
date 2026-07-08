@@ -1,6 +1,9 @@
 import { supabase } from "@/lib/supabaseClient";
 import { loadGamification } from "@/lib/gamification";
 import { useAuthStore } from "@/stores/authStore";
+import { useNotificationStore } from "@/stores/notificationStore";
+import { ensureActivationNudge } from "@/lib/notifications";
+import { useLocaleStore } from "@/stores/localeStore";
 
 export async function fetchOnboardingStepsFromServer(): Promise<Set<string>> {
   try {
@@ -16,16 +19,14 @@ export async function fetchOnboardingStepsFromServer(): Promise<Set<string>> {
 
 async function refreshNotificationsIfNeeded(created: boolean): Promise<void> {
   if (!created) return;
-  const { useNotificationStore } = await import("@/stores/notificationStore");
-  const { ensureActivationNudge } = await import("@/lib/notifications");
-  const locale = (await import("@/stores/localeStore")).useLocaleStore.getState().locale;
+  const locale = useLocaleStore.getState().locale;
   await ensureActivationNudge(locale);
   await useNotificationStore.getState().refresh();
 }
 
 export async function completeOnboardingStepOnServer(stepId: string): Promise<boolean> {
   try {
-    const locale = (await import("@/stores/localeStore")).useLocaleStore.getState().locale;
+    const locale = useLocaleStore.getState().locale;
     const { data, error } = await supabase.rpc("complete_onboarding_step", {
       p_step_id: stepId,
       p_locale: locale === "fr" ? "fr" : "en",

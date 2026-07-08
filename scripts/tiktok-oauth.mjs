@@ -28,8 +28,13 @@ function loadDotEnv() {
 
 loadDotEnv();
 
-const CLIENT_KEY = (process.env.TIKTOK_CLIENT_KEY ?? process.env.TIKTOK_CLIENT_ID ?? "").trim();
-const CLIENT_SECRET = (process.env.TIKTOK_CLIENT_SECRET ?? "").trim();
+const SANDBOX = (process.env.TIKTOK_SANDBOX ?? "").trim() === "1" || process.argv.includes("--sandbox");
+const CLIENT_KEY = SANDBOX
+  ? (process.env.TIKTOK_CLIENT_KEY_SANDBOX ?? process.env.TIKTOK_CLIENT_KEY ?? process.env.TIKTOK_CLIENT_ID ?? "").trim()
+  : (process.env.TIKTOK_CLIENT_KEY ?? process.env.TIKTOK_CLIENT_ID ?? "").trim();
+const CLIENT_SECRET = SANDBOX
+  ? (process.env.TIKTOK_CLIENT_SECRET_SANDBOX ?? process.env.TIKTOK_CLIENT_SECRET ?? "").trim()
+  : (process.env.TIKTOK_CLIENT_SECRET ?? "").trim();
 /** TikTok exige souvent le slash final (sinon erreur trompeuse « client_key »). */
 function normalizeRedirectUri(uri) {
   const u = uri.trim();
@@ -40,7 +45,6 @@ function normalizeRedirectUri(uri) {
 const REDIRECT_URI = normalizeRedirectUri(
   process.env.TIKTOK_REDIRECT_URI ?? "https://www.producerhit.com/api/tiktok-oauth-callback/",
 );
-const SANDBOX = process.env.TIKTOK_SANDBOX === "1" || process.argv.includes("--sandbox");
 const SCOPES = (process.env.TIKTOK_SCOPES ?? (SANDBOX ? "user.info.basic" : "user.info.basic,video.upload")).trim();
 const SCOPES_FULL = "user.info.basic,video.upload,video.publish";
 

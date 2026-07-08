@@ -78,6 +78,7 @@ export const ar: BaseMessageCatalog = {
     generator: "المولّد",
     library: "المكتبة",
     voiceStudio: "Voice Studio",
+    tagStudio: "Tag Studio",
     sampleLab: "Sample Lab",
     settings: "الإعدادات",
     website: "الموقع",

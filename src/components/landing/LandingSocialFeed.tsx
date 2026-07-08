@@ -96,16 +96,16 @@ export function LandingSocialFeed({ locale }: Props) {
             href={getSocialProfile("instagram").href}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white/80 transition-colors hover:border-pink-400/30 hover:text-white"
+            className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white/80 transition-colors hover:border-[rgb(217,70,239)]/30 hover:text-white"
           >
-            <Instagram className="h-4 w-4 text-pink-300" />
+            <Instagram className="h-4 w-4 text-[rgb(232,121,249)]" />
             @producerhit_com
           </a>
           <a
             href={getSocialProfile("tiktok").href}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white/80 transition-colors hover:border-cyan-400/30 hover:text-white"
+            className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white/80 transition-colors hover:border-[rgb(168,85,247)]/30 hover:text-white"
           >
             <TikTokIcon className="h-4 w-4" />
             @producerhit.com

@@ -78,6 +78,7 @@ export const hi: BaseMessageCatalog = {
     generator: "जनरेटर",
     library: "लाइब्रेरी",
     voiceStudio: "Voice Studio",
+    tagStudio: "Tag Studio",
     sampleLab: "Sample Lab",
     settings: "सेटिंग्स",
     website: "वेबसाइट",

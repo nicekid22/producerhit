@@ -100,7 +100,7 @@ html.pk-warm-glass-active .pk-distribution-studio,
 
 .pk-prism-dashboard .pk-distribution-studio__footer-btn--primary,
 .pk-prism-dashboard .pk-cover-studio__dock-btn--primary {
-  background: var(--pk-prism-btn-bg, linear-gradient(128deg, #7c3aed, #ec4899));
+  background: var(--pk-prism-btn-bg, var(--prism-mesh));
 }
 
 /* Neutralise glass-btn hérités si utilisés dans le studio */

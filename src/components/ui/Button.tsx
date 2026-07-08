@@ -18,9 +18,9 @@ export function Button({
         "inline-flex items-center justify-center gap-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60",
         size === "sm" ? "px-3 py-2" : "px-4 py-2",
         variant === "primary" &&
-          "pk-glass-btn pk-glass-btn--primary rounded-full border-0 text-white shadow-none hover:bg-transparent",
+          "pk-glass-btn pk-glass-btn--primary rounded-xl border-0 text-white shadow-none hover:bg-transparent",
         variant === "secondary" &&
-          "pk-glass-btn pk-glass-btn--ghost rounded-full border-0 bg-transparent text-white/84 shadow-none hover:bg-transparent",
+          "pk-glass-btn pk-glass-btn--ghost rounded-xl border-0 bg-transparent text-white/84 shadow-none hover:bg-transparent",
         variant === "ghost" && "bg-transparent text-pk-text hover:bg-white/5",
         variant === "danger" && "border border-pk-danger/50 bg-pk-danger/15 text-pk-text hover:bg-pk-danger/25",
         className,

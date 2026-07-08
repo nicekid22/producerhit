@@ -40,7 +40,7 @@ export function DashboardGenerateButton({
         aria-valuetext={generating && typeof progressPct === "number" ? `${progressPct}%` : undefined}
         onClick={() => void onClick()}
         className={cn(
-          "pk-landing-gen__cta pk-dashboard-gen__cta group inline-flex h-12 w-full items-center justify-center rounded-full px-6",
+          "pk-landing-gen__cta pk-dashboard-gen__cta group inline-flex h-12 w-full items-center justify-center rounded-xl px-6",
           generating && "is-generating pk-gen-btn-electric is-active",
           creditBlocked && !generating && "opacity-75 saturate-75",
         )}
