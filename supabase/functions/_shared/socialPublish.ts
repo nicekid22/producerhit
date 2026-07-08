@@ -423,15 +423,47 @@ type TikTokApiEnvelope<T> = {
   error?: { code?: string; message?: string; log_id?: string };
 };
 
-async function getTikTokAccessToken(): Promise<string | null> {
-  const now = Date.now();
-  if (tiktokAccessCache && tiktokAccessCache.expires > now + 60_000) {
-    return tiktokAccessCache.token;
-  }
+type TikTokAccountRow = {
+  id: string;
+  username: string;
+  client_key: string;
+  client_secret: string;
+  refresh_token: string;
+  open_id: string | null;
+  privacy_level_options: string[] | null;
+  post_mode: string;
+  is_active: boolean;
+};
 
-  const clientKey = (Deno.env.get("TIKTOK_CLIENT_KEY") ?? Deno.env.get("TIKTOK_CLIENT_ID") ?? "").trim();
-  const clientSecret = (Deno.env.get("TIKTOK_CLIENT_SECRET") ?? "").trim();
-  const refreshToken = (Deno.env.get("TIKTOK_REFRESH_TOKEN") ?? "").trim();
+async function fetchActiveTikTokAccounts(db: SupabaseClient): Promise<TikTokAccountRow[]> {
+  const { data, error } = await db
+    .from("tiktok_accounts")
+    .select("id,username,client_key,client_secret,refresh_token,open_id,privacy_level_options,post_mode,is_active")
+    .eq("is_active", true)
+    .order("created_at", { ascending: true });
+  if (error || !data || data.length === 0) return [];
+  return data as TikTokAccountRow[];
+}
+
+async function getTikTokAccessToken(account?: TikTokAccountRow): Promise<string | null> {
+  const cacheKey = account?.id ?? "env";
+  const now = Date.now();
+  const cached = tiktokAccessCache.get(cacheKey);
+  if (cached && cached.expires > now + 60_000) return cached.token;
+
+  let clientKey: string;
+  let clientSecret: string;
+  let refreshToken: string;
+
+  if (account) {
+    clientKey = account.client_key.trim();
+    clientSecret = account.client_secret.trim();
+    refreshToken = account.refresh_token.trim();
+  } else {
+    clientKey = (Deno.env.get("TIKTOK_CLIENT_KEY") ?? Deno.env.get("TIKTOK_CLIENT_ID") ?? "").trim();
+    clientSecret = (Deno.env.get("TIKTOK_CLIENT_SECRET") ?? "").trim();
+    refreshToken = (Deno.env.get("TIKTOK_REFRESH_TOKEN") ?? "").trim();
+  }
   if (!clientKey || !clientSecret || !refreshToken) return null;
 
   const body = new URLSearchParams({
@@ -453,10 +485,10 @@ async function getTikTokAccessToken(): Promise<string | null> {
     error_description?: string;
   };
   if (!res.ok || !json.access_token) return null;
-  tiktokAccessCache = {
+  tiktokAccessCache.set(cacheKey, {
     token: json.access_token,
     expires: now + (json.expires_in ?? 86400) * 1000,
-  };
+  });
   return json.access_token;
 }
 
@@ -506,8 +538,9 @@ export async function postTikTok(
   db: SupabaseClient,
   loop: SocialLoopRow,
   payload: SocialPayload,
+  account?: TikTokAccountRow,
 ): Promise<{ ok: boolean; id?: string; error?: string; mode?: string }> {
-  const accessToken = await getTikTokAccessToken();
+  const accessToken = await getTikTokAccessToken(account);
   if (!accessToken) return { ok: false, error: "missing_tiktok_credentials" };
 
   const videoUrl = await getStoredSocialVideoPublicUrl(db, loop);
@@ -515,16 +548,20 @@ export async function postTikTok(
 
   if (!videoUrl && !photoUrl) return { ok: false, error: "missing_cover_image" };
 
-  const creator = await tiktokPostJson<{
-    privacy_level_options?: string[];
-    creator_username?: string;
-  }>(accessToken, "/v2/post/publish/creator_info/query/", {});
-  if (creator.error?.code && creator.error.code !== "ok") {
-    return { ok: false, error: `creator_info:${creator.error.code}` };
+  let privacy: string;
+  if (account?.privacy_level_options && account.privacy_level_options.length > 0) {
+    privacy = pickTikTokPrivacy(account.privacy_level_options);
+  } else {
+    const creator = await tiktokPostJson<{
+      privacy_level_options?: string[];
+      creator_username?: string;
+    }>(accessToken, "/v2/post/publish/creator_info/query/", {});
+    if (creator.error?.code && creator.error.code !== "ok") {
+      return { ok: false, error: `creator_info:${creator.error.code}` };
+    }
+    privacy = pickTikTokPrivacy(creator.data?.privacy_level_options);
   }
-
-  const privacy = pickTikTokPrivacy(creator.data?.privacy_level_options);
-  const postMode = (Deno.env.get("TIKTOK_POST_MODE") ?? "MEDIA_UPLOAD").trim();
+  const postMode = (account?.post_mode?.trim() || Deno.env.get("TIKTOK_POST_MODE") || "MEDIA_UPLOAD").trim();
   const title = payload.name.slice(0, 90);
   const description = payload.captions.tiktok.slice(0, 4000);
 
@@ -1288,11 +1325,17 @@ export async function publishLoopToPlatforms(
       }
 
       if (platform === "tiktok") {
-        const res = await postTikTok(db, loop, payload);
+        const tiktokAccounts = await fetchActiveTikTokAccounts(db);
+        const tiktokAccount = tiktokAccounts[0] ?? undefined;
+        const res = await postTikTok(db, loop, payload, tiktokAccount);
         if (res.ok) {
           await logPublish(db, loop.id, platform, "posted", {
             external_id: res.id,
-            payload: { mode: res.mode ?? Deno.env.get("TIKTOK_POST_MODE") ?? "MEDIA_UPLOAD", viral: payload.viral_meta?.series ?? null },
+            payload: {
+              mode: res.mode ?? Deno.env.get("TIKTOK_POST_MODE") ?? "MEDIA_UPLOAD",
+              viral: payload.viral_meta?.series ?? null,
+              tiktok_account: tiktokAccount?.username ?? null,
+            },
           });
           results[platform] = { ok: true, id: res.id };
         } else if (res.error === "missing_tiktok_credentials") {
