@@ -18,14 +18,20 @@ function retentionDays(): number {
 }
 
 function isAuthorized(req: Request): boolean {
-  const cronSecret = (Deno.env.get("CRON_SECRET") ?? "").trim();
-  if (cronSecret) {
-    const header = req.headers.get("x-cron-secret")?.trim();
-    if (header === cronSecret) return true;
+  // Check cron secret (CRON_SECRET or PURGE_CRON_SECRET)
+  for (const envName of ["CRON_SECRET", "PURGE_CRON_SECRET"]) {
+    const secret = (Deno.env.get(envName) ?? "").trim();
+    if (secret) {
+      const header = req.headers.get("x-cron-secret")?.trim();
+      if (header === secret) return true;
+    }
   }
+  // Check service role key (SUPABASE_SERVICE_ROLE_KEY or PURGE_SERVICE_KEY)
   const auth = req.headers.get("authorization") ?? "";
-  const serviceKey = (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "").trim();
-  if (serviceKey && auth === `Bearer ${serviceKey}`) return true;
+  for (const envName of ["SUPABASE_SERVICE_ROLE_KEY", "PURGE_SERVICE_KEY", "SERVICE_ROLE_KEY"]) {
+    const key = (Deno.env.get(envName) ?? "").trim();
+    if (key && auth === `Bearer ${key}`) return true;
+  }
   return false;
 }
 
