@@ -5,6 +5,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { RouteFade } from "@/components/RouteFade";
 import { LoopsBootstrap } from "@/components/LoopsBootstrap";
 import { ThemeBootstrap } from "@/components/ThemeBootstrap";
+import { SupabaseStatusBanner } from "@/components/SupabaseStatusBanner";
 import { AppToaster } from "@/components/AppToaster";
 import { ReferralReferrerWatcher } from "@/components/growth/ReferralReferrerWatcher";
 import { SeoBootstrap } from "@/components/SeoBootstrap";
@@ -43,6 +44,7 @@ const GenerationActivityPill = lazy(() =>
 );
 
 const LandingPage = lazy(() => import("@/pages/Landing"));
+const RefonteLandingPage = lazy(() => import("@/pages/RefonteLanding"));
 const HomePage = lazy(() => import("@/pages/Home"));
 const ComparePage = lazy(() => import("@/pages/ComparePage"));
 const ForAiPage = lazy(() => import("@/pages/ForAiPage"));
@@ -74,6 +76,8 @@ const VoiceStudioPage = lazy(() => import("@/pages/VoiceStudio"));
 const TagStudioPage = lazy(() => import("@/pages/TagStudio"));
 const CloudThemePreviewPage = lazy(() => import("@/pages/CloudThemePreview"));
 const NotFoundPage = lazy(() => import("@/pages/NotFound"));
+// DEBUG — à supprimer après diagnostic
+import DebugAuth from "@/pages/DebugAuth";
 
 export default function App() {
   return (
@@ -81,6 +85,7 @@ export default function App() {
       <AuthBootstrap>
         <ThemeBootstrap>
           <LoopsBootstrap>
+            <SupabaseStatusBanner />
             <AppToaster />
             <Suspense fallback={null}>
               <LootRevealModal />
@@ -98,6 +103,7 @@ export default function App() {
                 <Routes>
                   <Route path="/" element={<LandingPage />} />
                   <Route path="/home" element={<Navigate to="/" replace />} />
+                  <Route path="/refonte" element={<RefonteLandingPage />} />
                   <Route path="/explore" element={<ExplorePage />} />
                   <Route path="/community/vibe/:vibeId" element={<ExplorePage />} />
                   <Route path="/community" element={<ExplorePage />} />
@@ -124,6 +130,7 @@ export default function App() {
                   <Route path="/best-ai-music-generator" element={<Navigate to="/ai-music-generator" replace />} />
                   <Route path="/auth" element={<AuthPage />} />
                   <Route path="/auth/callback" element={<AuthCallbackPage />} />
+                  <Route path="/debug-auth" element={<DebugAuth />} />
                   <Route path="/pricing" element={<PricingPage />} />
                   <Route path="/learn/distribute-ai-music" element={<DistributionAcademyLandingPage />} />
                   <Route path="/fr/apprendre/distribuer-musique-ia" element={<DistributionAcademyLandingPage />} />

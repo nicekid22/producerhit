@@ -32,3 +32,32 @@ supabase/.temp/
 
 # GCP service account keys (never commit)
 gg json/
+
+# Test outputs (large, not needed in repo)
+test-output-*/
+
+# Local agent / dev tools
+.hermes/
+.cursor/
+tmp_*/
+.tmp_*
+.tmp_diag_*
+.tmp_patch_*
+
+# Pipeline dev scripts (not production)
+scripts/pipeline-*
+scripts/test-*
+scripts/diagnose-*
+
+# Local data / config / fonts
+data/
+config/
+fonts/
+
+# Misc
+nul
+.scene-history.json
+.idea.md
+README-PIPELINE.md
+reports/
+ace_gen_*.mjs

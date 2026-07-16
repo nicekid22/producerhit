@@ -4,6 +4,7 @@ import { sendServerConversion } from "@/lib/conversionApi";
 import { supabaseAuthStorage } from "@/lib/authStorage";
 import { getAttributionProps } from "@/lib/attribution";
 import { getOrCreateSessionId } from "@/lib/sessionId";
+import { startHealthCheck, getSupabaseHealth } from "@/lib/supabaseHealth";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
@@ -22,6 +23,16 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     storage: supabaseAuthStorage,
   },
 });
+
+// ---------------------------------------------------------------------------
+// Health check — démarré dès la création du client.
+// ---------------------------------------------------------------------------
+
+if (typeof window !== "undefined") {
+  startHealthCheck();
+}
+
+export { getSupabaseHealth };
 
 type ClientEventPayload = {
   name: string;
