@@ -90,6 +90,13 @@ function setStatus(next: HealthStatus): void {
   } catch {
     /* SSR / non-browser */
   }
+  // Auto-switch Supabase client on status change
+  if (next === "down" && prev !== "down") {
+    // Lazy import to avoid circular dependency
+    import("@/lib/supabaseClient").then((m) => m.switchToBackup()).catch(() => {});
+  } else if (next === "up" && prev === "down") {
+    import("@/lib/supabaseClient").then((m) => m.switchToPrimary()).catch(() => {});
+  }
 }
 
 // ---------------------------------------------------------------------------

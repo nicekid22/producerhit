@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { mirrorEventToAdPixels, shouldMirrorToServer } from "@/lib/adPixels";
 import { sendServerConversion } from "@/lib/conversionApi";
 import { supabaseAuthStorage } from "@/lib/authStorage";
@@ -8,21 +8,67 @@ import { startHealthCheck, getSupabaseHealth } from "@/lib/supabaseHealth";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+const backupUrl = import.meta.env.VITE_SUPABASE_BACKUP_URL as string | undefined;
+const backupAnonKey = import.meta.env.VITE_SUPABASE_BACKUP_ANON_KEY as string | undefined;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error("Missing Supabase env: VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY");
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    // OAuth PKCE exchange is handled only in /auth/callback — avoids double exchange races.
-    detectSessionInUrl: false,
-    persistSession: true,
-    autoRefreshToken: true,
-    flowType: "pkce",
-    storage: supabaseAuthStorage,
-  },
-});
+function createSupabaseClient(url: string, key: string): SupabaseClient {
+  return createClient(url, key, {
+    auth: {
+      detectSessionInUrl: false,
+      persistSession: true,
+      autoRefreshToken: true,
+      flowType: "pkce",
+      storage: supabaseAuthStorage,
+    },
+  });
+}
+
+// Primary client — mutable so we can swap on outage.
+export let supabase: SupabaseClient = createSupabaseClient(supabaseUrl, supabaseAnonKey);
+
+// Backup client — lazy-created only when backup env vars are configured.
+let backupClient: SupabaseClient | null = null;
+function getBackupClient(): SupabaseClient | null {
+  if (!backupUrl || !backupAnonKey) return null;
+  if (!backupClient) {
+    backupClient = createSupabaseClient(backupUrl, backupAnonKey);
+  }
+  return backupClient;
+}
+
+/** True when currently using the backup Supabase project. */
+let _usingBackup = false;
+export function isUsingBackup(): boolean {
+  return _usingBackup;
+}
+
+/**
+ * Switch the active Supabase client to the backup project.
+ * Called automatically when health check detects primary is down.
+ */
+export function switchToBackup(): void {
+  if (_usingBackup) return;
+  const backup = getBackupClient();
+  if (!backup) return;
+  supabase = backup;
+  _usingBackup = true;
+  console.warn("[supabaseClient] ⚠️ Switched to backup Supabase project");
+}
+
+/**
+ * Switch back to the primary Supabase project.
+ * Called automatically when health check detects primary is back.
+ */
+export function switchToPrimary(): void {
+  if (!_usingBackup) return;
+  supabase = createSupabaseClient(supabaseUrl!, supabaseAnonKey!);
+  _usingBackup = false;
+  console.info("[supabaseClient] ✅ Switched back to primary Supabase project");
+}
 
 // ---------------------------------------------------------------------------
 // Health check — démarré dès la création du client.

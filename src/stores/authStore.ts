@@ -9,6 +9,7 @@ import {
   type UserProfileRow,
 } from "@/lib/profileBootstrap";
 import { clearReferralBonusTracking, notifyReferrerReferralBonusIfIncreased } from "@/lib/referralReferrerLoot";
+import { cacheAuthSession, clearCachedAuth } from "@/lib/offlineAuth";
 import { resetClientSessionStores } from "@/lib/resetClientSession";
 import { useLocaleStore } from "@/stores/localeStore";
 import { sanitizePostAuthPath } from "@/lib/postAuthRedirect";
@@ -137,6 +138,8 @@ async function syncProfileForSession(
       row.referral_bonus,
       useLocaleStore.getState().locale,
     );
+    // Cache auth session for offline fallback (in case Supabase goes down)
+    cacheAuthSession(session.user, row);
     return row;
   };
 
@@ -182,6 +185,7 @@ async function syncProfileForSession(
 function clearAuthState(): void {
   profileSyncToken += 1;
   clearProfileLoadCache();
+  clearCachedAuth();
   const userId = useAuthStore.getState().user?.id;
   useAuthStore.setState({
     session: null,
