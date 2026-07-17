@@ -65,7 +65,11 @@ serve(async (req) => {
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  // SUPABASE_ prefix is reserved by platform — fall back to custom secrets
+  const serviceKey =
+    (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "").trim() ||
+    (Deno.env.get("PURGE_SERVICE_KEY") ?? "").trim() ||
+    (Deno.env.get("SERVICE_ROLE_KEY") ?? "").trim();
   if (!supabaseUrl || !serviceKey) {
     return new Response(JSON.stringify({ error: "Missing Supabase env" }), {
       status: 500,
