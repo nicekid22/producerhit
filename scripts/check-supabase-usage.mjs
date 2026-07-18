@@ -67,10 +67,12 @@ async function countBucket(bucket) {
 
   // Storage buckets
   let totalStorageBytes = 0;
+  let loopAudioFiles = 0, loopAudioBytes = 0;
   for (const bucket of ["loop-audio", "loop-covers", "social-videos", "producer-tags", "voice-uploads", "distribution-assets"]) {
     try {
       const r = await countBucket(bucket);
       totalStorageBytes += r.bytes;
+      if (bucket === "loop-audio") { loopAudioFiles = r.files; loopAudioBytes = r.bytes; }
       if (r.files > 0) {
         console.log(`${bucket}: ${r.files} files, ${formatBytes(r.bytes)} (${r.folders} folders)`);
       }
@@ -101,8 +103,8 @@ async function countBucket(bucket) {
   // Egress estimate (rough)
   // Each audio file served = ~3-5 MB avg
   // If each loop is played once per day: files * avg_size * 30 days
-  const avgAudioSize = totalStorageBytes / Math.max(1, (await countBucket("loop-audio")).files);
-  const audioFiles = (await countBucket("loop-audio")).files;
+  const avgAudioSize = loopAudioFiles > 0 ? loopAudioBytes / loopAudioFiles : 0;
+  const audioFiles = loopAudioFiles;
   const estimatedDailyEgress = audioFiles * avgAudioSize; // if each file served once
   const estimatedMonthlyEgress = estimatedDailyEgress * 30;
   console.log("\n--- Egress Estimate ---");

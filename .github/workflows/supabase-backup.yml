@@ -3,8 +3,8 @@ name: Supabase Backup
 
 on:
   schedule:
-    # Every day at 02:00 UTC (sync before purge at 03:00)
-    - cron: '0 2 * * *'
+    # Réduit à tous les 3 jours sur Nano free (au lieu de daily). Réactiver daily quand Pro est activé.
+    - cron: '0 2 */3 * *'
   workflow_dispatch: # Allow manual trigger
 
 permissions:
@@ -116,3 +116,26 @@ jobs:
           VITE_SUPABASE_BACKUP_URL: ${{ secrets.VITE_SUPABASE_BACKUP_URL }}
           VITE_SUPABASE_BACKUP_SERVICE_KEY: ${{ secrets.VITE_SUPABASE_BACKUP_SERVICE_KEY }}
         run: node scripts/sync-backup-supabase.mjs
+
+  sync-firebase:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Sync primary → Firebase Firestore
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: node scripts/sync-firebase.mjs

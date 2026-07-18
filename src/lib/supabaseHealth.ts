@@ -17,7 +17,7 @@ async function getSupabase() {
 }
 
 const HEALTH_STORAGE_KEY = "producerhit_supabase_health_v1";
-const PING_INTERVAL_MS = 60_000; // 60 s
+const PING_INTERVAL_MS = 300_000; // 5 min — 5x moins de requêtes qu'avant (60s)
 const FAILURES_BEFORE_DOWN = 3;
 
 export type HealthStatus = "up" | "down" | "unknown";
@@ -104,17 +104,31 @@ function setStatus(next: HealthStatus): void {
 // ---------------------------------------------------------------------------
 
 async function ping(): Promise<void> {
+  // Skip ping when tab is hidden — no point wasting DB cycles on background tabs.
+  if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
   try {
     const supabase = await getSupabase();
     const { error } = await supabase.from("profiles").select("id").limit(1);
     if (error) throw error;
     consecutiveFailures = 0;
+    // If we were in Firebase fallback, at least one Supabase is back.
+    const client = await import("@/lib/supabaseClient");
+    if (client.isUsingFirebase()) {
+      client.exitFirebaseFallback();
+    }
     setStatus("up");
   } catch {
     consecutiveFailures += 1;
     persistHealth();
     if (consecutiveFailures >= FAILURES_BEFORE_DOWN) {
       setStatus("down");
+      // After switching to backup (in setStatus), check if backup is also down.
+      // The next ping will hit the backup. If it also fails, we enter Firebase mode.
+      // We detect this by checking if we're already on backup + still failing.
+      const client = await import("@/lib/supabaseClient");
+      if (client.isUsingBackup() && consecutiveFailures >= FAILURES_BEFORE_DOWN * 2) {
+        client.switchToFirebase();
+      }
     }
   }
 }
@@ -157,6 +171,13 @@ export function startHealthCheck(): void {
   // Immediate first ping, then every PING_INTERVAL_MS.
   void ping();
   intervalId = setInterval(() => void ping(), PING_INTERVAL_MS);
+
+  // Re-ping immediately when tab becomes visible (skipped pings during hidden).
+  if (typeof document !== "undefined") {
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") void ping();
+    });
+  }
 }
 
 /** Stop periodic health pinging. */

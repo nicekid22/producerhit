@@ -105,18 +105,38 @@ export function createGenerationJobsClient(deps: GenerationJobsDeps) {
     const pollMs = options?.pollMs ?? pollIntervalMs(config);
     const startedAt = Date.now();
     let settled = false;
+    let settledResolvers: Array<() => void> = [];
     let completedResult: GenerationJobResult | null = null;
     let lastStatus: GenerationJobStatus = "pending";
+
+    /** Notify all pending sleepers that settled became true. */
+    const notifySettled = () => {
+      for (const r of settledResolvers) r();
+      settledResolvers = [];
+    };
+
+    /** Sleep that resolves early when settled becomes true (Realtime won the race). */
+    const sleepUnlessSettled = (ms: number): Promise<void> =>
+      new Promise((resolve) => {
+        if (settled) return resolve();
+        const timer = setTimeout(resolve, ms);
+        settledResolvers.push(() => {
+          clearTimeout(timer);
+          resolve();
+        });
+      });
 
     const finish = (result: GenerationJobResult): GenerationJobResult => {
       settled = true;
       completedResult = result;
+      notifySettled();
       deps.onJobCompleted?.(jobId, Date.now() - startedAt);
       return result;
     };
 
     const fail = (message: string): never => {
       settled = true;
+      notifySettled();
       deps.onJobFailed?.(jobId, message.slice(0, 200));
       throw new Error(message);
     };
@@ -197,7 +217,8 @@ export function createGenerationJobsClient(deps: GenerationJobsDeps) {
         if (polled.status === "failed") {
           fail(polled.error ?? "Generation job failed");
         }
-        await new Promise((r) => setTimeout(r, pollMs));
+        // Sleep that exits early if Realtime fires during the wait.
+        await sleepUnlessSettled(pollMs);
       }
     } finally {
       unsubscribe();

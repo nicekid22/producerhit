@@ -46,6 +46,12 @@ export function isUsingBackup(): boolean {
   return _usingBackup;
 }
 
+/** True when Supabase primary + backup are both down — consumers should read from Firebase. */
+let _usingFirebase = false;
+export function isUsingFirebase(): boolean {
+  return _usingFirebase;
+}
+
 /**
  * Switch the active Supabase client to the backup project.
  * Called automatically when health check detects primary is down.
@@ -56,7 +62,25 @@ export function switchToBackup(): void {
   if (!backup) return;
   supabase = backup;
   _usingBackup = true;
+  _usingFirebase = false;
   console.warn("[supabaseClient] ⚠️ Switched to backup Supabase project");
+}
+
+/**
+ * Enter Firebase fallback mode — both Supabase instances are down.
+ * Consumers should check isUsingFirebase() and read from Firebase directly.
+ * The `supabase` variable still points to the backup client for auth attempts.
+ */
+export function switchToFirebase(): void {
+  _usingFirebase = true;
+  console.warn("[supabaseClient] 🔥 Entered Firebase fallback mode — both Supabase instances down");
+}
+
+/**
+ * Exit Firebase fallback mode — at least one Supabase instance is back.
+ */
+export function exitFirebaseFallback(): void {
+  _usingFirebase = false;
 }
 
 /**
@@ -64,9 +88,10 @@ export function switchToBackup(): void {
  * Called automatically when health check detects primary is back.
  */
 export function switchToPrimary(): void {
-  if (!_usingBackup) return;
+  if (!_usingBackup && !_usingFirebase) return;
   supabase = createSupabaseClient(supabaseUrl!, supabaseAnonKey!);
   _usingBackup = false;
+  _usingFirebase = false;
   console.info("[supabaseClient] ✅ Switched back to primary Supabase project");
 }
 
@@ -139,7 +164,8 @@ export function trackClientEvent(name: string, props?: Record<string, unknown>) 
   }
 }
 
-/** Vide la file d'events vers growth_events (anonyme ou connecté). */
+/** Vide la file d'events vers growth_events (anonyme ou connecté).
+ *  Utilise un seul appel RPC batch au lieu de N appels séquentiels. */
 export async function flushEventQueue(): Promise<void> {
   if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
   const now = Date.now();
@@ -150,19 +176,24 @@ export async function flushEventQueue(): Promise<void> {
 
   lastFlushAt = now;
   const batch = q.slice(0, FLUSH_BATCH_SIZE);
-  let sent = 0;
-  for (const event of batch) {
-    const { error } = await supabase.rpc("log_growth_event", {
-      p_session_id: getOrCreateSessionId(),
-      p_name: event.name,
-      p_props: event.props ?? null,
-      p_path: event.path ?? null,
-      p_client_ts: new Date(event.ts).toISOString(),
-    });
-    if (error) break;
-    sent += 1;
+
+  // 1 seul RPC au lieu de 8 — réduit la charge DB de ~87%
+  const eventsPayload = batch.map((event) => ({
+    name: event.name,
+    props: event.props ?? null,
+    path: event.path ?? null,
+    client_ts: new Date(event.ts).toISOString(),
+  }));
+
+  const { error } = await supabase.rpc("log_growth_events_batch", {
+    p_session_id: getOrCreateSessionId(),
+    p_events: eventsPayload,
+  });
+
+  if (!error) {
+    writeQueue(q.slice(batch.length));
   }
-  if (sent > 0) writeQueue(q.slice(sent));
+  // On error, events stay in queue for next flush attempt.
 }
 
 /** @deprecated Utiliser flushEventQueue — conservé pour compat. */
