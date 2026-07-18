@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { AlertTriangle, CheckCircle2, Server, Flame } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Server, Flame, Zap } from "lucide-react";
 import { isSupabaseDown, startHealthCheck, type HealthStatus } from "@/lib/supabaseHealth";
-import { isUsingBackup, isUsingFirebase } from "@/lib/supabaseClient";
+import { isUsingBackup, isUsingFirebase, isBackupConfigured, switchToBackup, switchToPrimary } from "@/lib/supabaseClient";
 import { cn } from "@/lib/utils";
 
 /**
@@ -43,19 +43,21 @@ export function SupabaseStatusBanner() {
     };
   }, []);
 
-  // Don't show the banner if Supabase is up and we're not in the "reconnected" state.
-  if (status === "up" && !showReconnected) return null;
+  // Show banner when: degraded (backup/firebase) OR reconnecting OR reconnect flash
+  const inDegradedMode = isUsingBackup() || isUsingFirebase();
+  if (status === "up" && !showReconnected && !inDegradedMode) return null;
 
   const isDown = status === "down";
   const onBackup = isUsingBackup();
   const onFirebase = isUsingFirebase();
+  const backupConfigured = isBackupConfigured();
 
   return (
     <div
       role="status"
       aria-live="polite"
       className={cn(
-        "relative z-50 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium",
+        "relative z-50 flex flex-wrap items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium",
         onFirebase
           ? "bg-violet-600/90 text-white"
           : onBackup
@@ -68,17 +70,39 @@ export function SupabaseStatusBanner() {
       {onFirebase ? (
         <>
           <Flame className="h-4 w-4 shrink-0" aria-hidden />
-          <span>Mode Firebase — serveurs de secours indisponibles. Données en lecture seule.</span>
+          <span>Mode Firebase — serveurs indisponibles. Lecture seule.</span>
+          {backupConfigured && !onBackup && (
+            <button
+              onClick={switchToBackup}
+              className="ml-1 flex items-center gap-1 rounded bg-white/20 px-2 py-0.5 text-xs font-semibold hover:bg-white/30 transition-colors"
+            >
+              <Zap className="h-3 w-3" /> Essayer backup Supabase
+            </button>
+          )}
         </>
       ) : onBackup ? (
         <>
           <Server className="h-4 w-4 shrink-0" aria-hidden />
-          <span>Mode dégradé — connecté au serveur de secours. Générations musicales indisponibles.</span>
+          <span>Serveur de secours actif — Auth & données OK. Générations désactivées.</span>
+          <button
+            onClick={switchToPrimary}
+            className="ml-1 flex items-center gap-1 rounded bg-white/20 px-2 py-0.5 text-xs font-semibold hover:bg-white/30 transition-colors"
+          >
+            <CheckCircle2 className="h-3 w-3" /> Retour au principal
+          </button>
         </>
       ) : isDown ? (
         <>
           <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
-          <span>Mode hors-ligne — tentative de reconnexion au serveur principal…</span>
+          <span>Serveur en panne. Connexion en cours…</span>
+          {backupConfigured && (
+            <button
+              onClick={switchToBackup}
+              className="ml-1 flex items-center gap-1 rounded bg-white/20 px-2 py-0.5 text-xs font-semibold hover:bg-white/30 transition-colors"
+            >
+              <Zap className="h-3 w-3" /> Forcer mode backup
+            </button>
+          )}
         </>
       ) : (
         <>

@@ -40,6 +40,11 @@ function getBackupClient(): SupabaseClient | null {
   return backupClient;
 }
 
+/** True when a backup Supabase project is configured. */
+export function isBackupConfigured(): boolean {
+  return !!(backupUrl && backupAnonKey);
+}
+
 /** True when currently using the backup Supabase project. */
 let _usingBackup = false;
 export function isUsingBackup(): boolean {
@@ -54,7 +59,8 @@ export function isUsingFirebase(): boolean {
 
 /**
  * Switch the active Supabase client to the backup project.
- * Called automatically when health check detects primary is down.
+ * Called automatically when health check detects primary is down,
+ * OR manually from the UI banner.
  */
 export function switchToBackup(): void {
   if (_usingBackup) return;
