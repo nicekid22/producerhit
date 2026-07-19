@@ -1,0 +1,37 @@
+# Retry pending migrations on primary Supabase.
+# Runs every 30 min until all 3 migrations (088, 089, 090) succeed.
+# Primary must be accessible (not 57P03) for migrations to apply.
+# After successful run, manually disable this workflow in GitHub Actions.
+
+name: Retry Supabase Migrations
+
+on:
+  schedule:
+    # Every 30 minutes — automatically stops retrying once primary is back and migrations applied
+    - cron: "*/30 * * * *"
+  workflow_dispatch:  # Manual trigger anytime
+
+permissions:
+  contents: write
+
+jobs:
+  retry-migrations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Check primary + apply pending migrations
+        env:
+          SUPABASE_PAT: ${{ secrets.SUPABASE_PAT }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: node scripts/retry-migrations.mjs
