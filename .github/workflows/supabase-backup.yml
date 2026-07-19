@@ -114,8 +114,32 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           VITE_SUPABASE_BACKUP_URL: ${{ secrets.VITE_SUPABASE_BACKUP_URL }}
+          VITE_SUPABASE_BACKUP_ANON_KEY: ${{ secrets.VITE_SUPABASE_BACKUP_ANON_KEY }}
           VITE_SUPABASE_BACKUP_SERVICE_KEY: ${{ secrets.VITE_SUPABASE_BACKUP_SERVICE_KEY }}
         run: node scripts/sync-backup-supabase.mjs
+
+  setup-backup-schema:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Run once manually after creating a new backup project to create tables
+    # Then sync-backup can populate the data
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Setup backup schema (create tables + RLS)
+        env:
+          VITE_SUPABASE_BACKUP_URL: ${{ secrets.VITE_SUPABASE_BACKUP_URL }}
+          VITE_SUPABASE_BACKUP_SERVICE_KEY: ${{ secrets.VITE_SUPABASE_BACKUP_SERVICE_KEY }}
+        run: node scripts/setup-backup-schema.mjs
 
   sync-firebase:
     runs-on: ubuntu-latest
