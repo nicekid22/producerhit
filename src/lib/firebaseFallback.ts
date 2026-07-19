@@ -8,7 +8,7 @@
  * Ceci est un fallback en lecture seule — les écritures restent sur Supabase.
  */
 
-import { doc, getDoc, collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, orderBy, limit, getDocs, setDoc, updateDoc } from "firebase/firestore";
 import { getFirebaseDb, isFirebaseConfigured } from "./firebaseClient";
 
 // ---------------------------------------------------------------------------
@@ -16,19 +16,29 @@ import { getFirebaseDb, isFirebaseConfigured } from "./firebaseClient";
 // ---------------------------------------------------------------------------
 
 export type FirebaseProfile = {
+  // Core fields (always present)
   id: string;
   plan: string;
   username: string | null;
-  avatar_id: number | null;
+  // Full UserProfileRow fields
+  legal_first_name: string | null;
+  legal_last_name: string | null;
+  avatar_id: number;
   creator_type: string | null;
   bio: string | null;
   loops_used_this_month: number;
+  voice_to_song_used_this_month: number;
+  voice_clone_used_this_month: number;
   referral_bonus: number;
   purchased_bonus: number;
+  referral_code: string | null;
   level_bonus: number;
   daily_bonus_month: number;
-  referral_code: string | null;
+  social: Record<string, string>;
+  hosted_audio_expires_at: string | null;
+  // Metadata
   updated_at: string | null;
+  email?: string | null;
 };
 
 export type FirebaseLoop = {
@@ -107,10 +117,108 @@ export async function getFirebasePublicLoops(pageLimit = 30): Promise<FirebaseLo
 }
 
 // ---------------------------------------------------------------------------
-// Écriture — utilisées par le sync script (server-side via firebase-admin)
-// Ces fonctions ne sont pas appelées côté client, mais sont exportées
-// pour que le sync script puisse réutiliser les types.
+// Écriture — création/update de profiles Firestore pour Firebase Auth users
 // ---------------------------------------------------------------------------
+
+function generateReferralCode(): string {
+  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+  let code = "";
+  for (let i = 0; i < 8; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
+
+const DEFAULT_FIREBASE_PROFILE = {
+  plan: "free",
+  username: null,
+  legal_first_name: null,
+  legal_last_name: null,
+  avatar_id: 1,
+  creator_type: null,
+  bio: null,
+  loops_used_this_month: 0,
+  voice_to_song_used_this_month: 0,
+  voice_clone_used_this_month: 0,
+  referral_bonus: 0,
+  purchased_bonus: 0,
+  referral_code: null,
+  level_bonus: 0,
+  daily_bonus_month: 0,
+  social: {},
+  hosted_audio_expires_at: null,
+  updated_at: null,
+};
+
+/** Crée un profil Firestore par défaut pour un utilisateur Firebase Auth.
+ *  Idempotent — si le profil existe déjà, ne fait rien. */
+export async function ensureFirebaseProfile(
+  userId: string,
+  email?: string | null,
+): Promise<FirebaseProfile | null> {
+  const db = getFirebaseDb();
+  if (!db) return null;
+
+  try {
+    const docRef = doc(db, "profiles", userId);
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      return { id: snap.id, ...snap.data() } as FirebaseProfile;
+    }
+    // Créer le profil
+    const referralCode = generateReferralCode();
+    const profile: Omit<FirebaseProfile, "id"> = {
+      ...DEFAULT_FIREBASE_PROFILE,
+      referral_code: referralCode,
+      email: email ?? null,
+      updated_at: new Date().toISOString(),
+    };
+    await setDoc(docRef, profile, { merge: true });
+    return { id: userId, ...profile };
+  } catch {
+    return null;
+  }
+}
+
+/** Met à jour un profil existant dans Firestore.
+ *  Appelé par le sync script côté serveur. */
+export async function saveFirebaseProfile(
+  userId: string,
+  profile: Partial<FirebaseProfile>,
+): Promise<boolean> {
+  const db = getFirebaseDb();
+  if (!db) return false;
+  try {
+    const docRef = doc(db, "profiles", userId);
+    await updateDoc(docRef, {
+      ...profile,
+      updated_at: new Date().toISOString(),
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Charge un profil Firestore. Si absent, crée un profil par défaut (Firebase Auth user).
+ *  Retourne le profil ou null si Firebase non configuré. */
+export async function loadFirebaseProfile(
+  userId: string,
+  email?: string | null,
+): Promise<FirebaseProfile | null> {
+  const db = getFirebaseDb();
+  if (!db) return null;
+
+  const docRef = doc(db, "profiles", userId);
+  try {
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      return { id: snap.id, ...snap.data() } as FirebaseProfile;
+    }
+  } catch {
+    // Firestore down
+  }
+  // Profil absent — créer par défaut pour ce Firebase user
+  return ensureFirebaseProfile(userId, email);
+}
 
 export function isFirebaseAvailable(): boolean {
   return isFirebaseConfigured() && getFirebaseDb() !== null;

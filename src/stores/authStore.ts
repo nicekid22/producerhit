@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
+import { fbSignInWithPassword, fbSignUp, fbSignOut, fbOnAuthStateChange, fbGetSession, fbGetCurrentUser, fbResetPassword, fbUpdatePassword, fbSignInWithGoogle } from "@/lib/firebaseAuth";
+import { isFirebaseConfigured, getFirebaseDb } from "@/lib/firebaseClient";
 import {
   clearProfileLoadCache,
   extractErrorMessage,
@@ -219,6 +221,27 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (get().status !== "idle") return;
     set({ status: "loading" });
 
+    // Try Firebase auth first if configured (works even when Supabase is down)
+    const useFirebase = isFirebaseConfigured();
+    if (useFirebase && !authUnsub) {
+      const { data: sub } = fbOnAuthStateChange((event, session) => {
+        if (event === "SIGNED_OUT") {
+          clearAuthState();
+          return;
+        }
+        if (!session) return;
+        set({ session: session as unknown as Session, user: session.user });
+        scheduleProfileSync(session as unknown as Session);
+      });
+      authUnsub = () => sub.subscription.unsubscribe();
+      const { data } = await fbGetSession();
+      if (data.session) {
+        set({ session: data.session as unknown as Session, user: data.session.user });
+        scheduleProfileSync(data.session as unknown as Session);
+      }
+    }
+
+    // Supabase auth (may fail if Supabase is down)
     if (!authUnsub) {
       const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
         if (event === "TOKEN_REFRESHED" && session) {
@@ -238,47 +261,78 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       authUnsub = () => sub.subscription.unsubscribe();
     }
 
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    set({ session, user: session?.user ?? null });
-    if (session?.user) {
-      scheduleProfileSync(session);
+    // Try Supabase session (may fail)
+    if (!useFirebase) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          set({ session, user: session.user });
+          scheduleProfileSync(session);
+        }
+      } catch {
+        // Supabase down — Firebase auth already handled above
+      }
     }
 
     set({ status: "ready" });
   },
   signInWithPassword: async (email, password) => {
     set({ lastError: null });
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      set({ lastError: error.message });
-      throw error;
+    // Try Supabase first
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (!error && data.session) {
+        set({ session: data.session, user: data.session.user });
+        scheduleProfileSync(data.session);
+        return;
+      }
+      if (error) throw error;
+    } catch (supaErr) {
+      // Supabase failed — try Firebase
     }
-    if (data.session) {
-      set({ session: data.session, user: data.session.user });
-      scheduleProfileSync(data.session);
+    // Firebase fallback
+    const fbResult = await fbSignInWithPassword(email, password);
+    if (fbResult.error) {
+      set({ lastError: fbResult.error.message });
+      throw new Error(fbResult.error.message);
+    }
+    if (fbResult.data?.session) {
+      set({ session: fbResult.data.session as unknown as Session, user: fbResult.data.user });
+      scheduleProfileSync(fbResult.data.session as unknown as Session);
     }
   },
   signUp: async (email, password, redirectPath = "/dashboard") => {
     set({ lastError: null });
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: authCallbackUrl(redirectPath),
-      },
-    });
-    if (error) {
-      set({ lastError: error.message });
-      throw error;
+    // Try Supabase first
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: authCallbackUrl(redirectPath) },
+      });
+      if (!error) {
+        const needsEmailConfirm = !data.session;
+        if (data.session) {
+          set({ session: data.session, user: data.session.user });
+          scheduleProfileSync(data.session);
+        }
+        return { needsEmailConfirm };
+      }
+      if (error) throw error;
+    } catch {
+      // Supabase failed — try Firebase
     }
-    const needsEmailConfirm = !data.session;
-    if (data.session) {
-      set({ session: data.session, user: data.session.user });
-      scheduleProfileSync(data.session);
+    // Firebase fallback (no email confirmation required in Firebase by default)
+    const fbResult = await fbSignUp(email, password);
+    if (fbResult.error) {
+      set({ lastError: fbResult.error.message });
+      throw new Error(fbResult.error.message);
     }
-    return { needsEmailConfirm };
+    if (fbResult.data?.session) {
+      set({ session: fbResult.data.session as unknown as Session, user: fbResult.data.user });
+      scheduleProfileSync(fbResult.data.session as unknown as Session);
+    }
+    return { needsEmailConfirm: false }; // Firebase: email verified by Firebase settings
   },
   resendSignupConfirmation: async (email, redirectPath = "/dashboard") => {
     set({ lastError: null });
@@ -359,22 +413,28 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
   resetPassword: async (email) => {
     set({ lastError: null });
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth?mode=reset`,
-    });
-    if (error) {
-      set({ lastError: error.message });
-      throw error;
+    // Try Supabase first
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth?mode=reset`,
+      });
+      if (!error) return;
+      if (error) throw error;
+    } catch { /* Supabase failed — try Firebase */ }
+    // Firebase fallback
+    const result = await fbResetPassword(email);
+    if (result.error) {
+      set({ lastError: result.error.message });
+      throw new Error(result.error.message);
     }
   },
   signOut: async () => {
     clearAuthState();
     await resetClientSessionStores();
-    const { error } = await supabase.auth.signOut({ scope: "local" });
-    if (error) {
-      set({ lastError: error.message });
-      throw error;
-    }
+    // Sign out from Supabase
+    try { await supabase.auth.signOut({ scope: "local" }); } catch { /* ignore */ }
+    // Sign out from Firebase
+    try { await fbSignOut(); } catch { /* ignore */ }
   },
   completeAuthCallbackSession: async (session) => {
     set({ session, user: session.user, lastError: null });

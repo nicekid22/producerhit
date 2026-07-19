@@ -321,11 +321,13 @@ export function clearProfileLoadCache(): void {
   inflightProfilePromise = null;
 }
 
+
 export async function loadUserProfileWithRetry(
   userId: string,
   email?: string | null,
   attempts = 3,
 ): Promise<UserProfileRow> {
+  // Try Supabase first
   let lastError: unknown;
   for (let i = 0; i < attempts; i += 1) {
     try {
@@ -337,6 +339,20 @@ export async function loadUserProfileWithRetry(
       }
     }
   }
+
+  // Supabase failed — try Firebase Firestore as fallback
+  // (Firebase Auth users get their profile created on first login)
+  try {
+    const { loadFirebaseProfile } = await import("@/lib/firebaseFallback");
+    const fbProfile = await loadFirebaseProfile(userId, email ?? null);
+    if (fbProfile) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return fbProfile as unknown as UserProfileRow;
+    }
+  } catch {
+    // Firebase also failed
+  }
+
   throw lastError ?? new Error("profile_load_failed");
 }
 
