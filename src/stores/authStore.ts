@@ -350,23 +350,36 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
   signInWithGoogle: async (emailHint, nextPath = "/dashboard") => {
     set({ lastError: null });
-    const queryParams: Record<string, string> = {
-      prompt: "select_account",
-    };
-    if (emailHint?.trim()) {
-      queryParams.login_hint = emailHint.trim();
-    }
+    // Try Supabase OAuth first
+    try {
+      const queryParams: Record<string, string> = {
+        prompt: "select_account",
+      };
+      if (emailHint?.trim()) {
+        queryParams.login_hint = emailHint.trim();
+      }
 
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: authCallbackUrl(nextPath),
-        queryParams,
-      },
-    });
-    if (error) {
-      set({ lastError: error.message });
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: authCallbackUrl(nextPath),
+          queryParams,
+        },
+      });
+      if (!error) return;
       throw error;
+    } catch {
+      // Supabase failed — try Firebase
+    }
+    // Firebase fallback (popup-based, no redirect needed)
+    const fbResult = await fbSignInWithGoogle();
+    if (fbResult.error) {
+      set({ lastError: fbResult.error.message });
+      throw new Error(fbResult.error.message);
+    }
+    if (fbResult.data?.session) {
+      set({ session: fbResult.data.session as unknown as Session, user: fbResult.data.user });
+      scheduleProfileSync(fbResult.data.session as unknown as Session);
     }
   },
   signInWithApple: async (nextPath = "/dashboard") => {
