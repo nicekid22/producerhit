@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { Session, User } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase, isUsingFirebase } from "@/lib/supabaseClient";
 import { fbSignInWithPassword, fbSignUp, fbSignOut, fbOnAuthStateChange, fbGetSession, fbGetCurrentUser, fbResetPassword, fbUpdatePassword, fbSignInWithGoogle } from "@/lib/firebaseAuth";
 import { isFirebaseConfigured, getFirebaseDb } from "@/lib/firebaseClient";
 import {
@@ -350,7 +350,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
   signInWithGoogle: async (emailHint, nextPath = "/dashboard") => {
     set({ lastError: null });
-    // Try Supabase OAuth first
+
+    // If Supabase is known-down, go straight to Firebase popup (no redirect)
+    if (isUsingFirebase()) {
+      const fbResult = await fbSignInWithGoogle();
+      if (fbResult.error) {
+        set({ lastError: fbResult.error.message });
+        throw new Error(fbResult.error.message);
+      }
+      if (fbResult.data?.session) {
+        set({ session: fbResult.data.session as unknown as Session, user: fbResult.data.user });
+        scheduleProfileSync(fbResult.data.session as unknown as Session);
+      }
+      return;
+    }
+
+    // Supabase likely up — try OAuth redirect
     try {
       const queryParams: Record<string, string> = {
         prompt: "select_account",
@@ -369,9 +384,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (!error) return;
       throw error;
     } catch {
-      // Supabase failed — try Firebase
+      // Supabase OAuth failed (down mid-flight) — Firebase popup fallback
     }
-    // Firebase fallback (popup-based, no redirect needed)
     const fbResult = await fbSignInWithGoogle();
     if (fbResult.error) {
       set({ lastError: fbResult.error.message });
@@ -384,6 +398,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
   signInWithApple: async (nextPath = "/dashboard") => {
     set({ lastError: null });
+    // Apple OAuth requires Supabase — if down, show clear error instead of dead redirect
+    if (isUsingFirebase()) {
+      const msg = "Apple sign-in temporarily unavailable. Please use Google or email/password.";
+      set({ lastError: msg });
+      throw new Error(msg);
+    }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "apple",
       options: {
