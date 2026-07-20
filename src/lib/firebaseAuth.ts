@@ -20,10 +20,22 @@ import {
   sendPasswordResetEmail,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   type User as FirebaseUser,
   type UserCredential,
 } from "firebase/auth";
+import { getFirebaseApp } from "@/lib/firebaseSupabaseClient";
 
+/**
+ * Returns the Auth instance tied to the single Firebase app.
+ * All modules MUST use this instead of bare getAuth() to avoid
+ * creating separate Auth instances.
+ */
+function getFbAuth() {
+  const app = getFirebaseApp();
+  return app ? getAuth(app) : getAuth();
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function supabaseUserFromFirebase(fbUser: FirebaseUser): any {
@@ -66,7 +78,7 @@ export async function fbSignInWithPassword(
   password: string,
 ): Promise<{ data: { user: any; session: any } | null; error: { message: string } | null }> {
   try {
-    const auth = getAuth();
+    const auth = getFbAuth();
     const cred: UserCredential = await signInWithEmailAndPassword(auth, email, password);
     const { session, user } = supabaseSessionFromFirebase(cred.user);
     return { data: { user, session }, error: null };
@@ -85,7 +97,7 @@ export async function fbSignUp(
   password: string,
 ): Promise<{ data: { user: any; session: any } | null; error: { message: string } | null }> {
   try {
-    const auth = getAuth();
+    const auth = getFbAuth();
     const cred: UserCredential = await createUserWithEmailAndPassword(auth, email, password);
     const { session, user } = supabaseSessionFromFirebase(cred.user);
     return { data: { user, session }, error: null };
@@ -100,7 +112,7 @@ export async function fbSignUp(
  */
 export async function fbSignOut(): Promise<{ error: { message: string } | null }> {
   try {
-    const auth = getAuth();
+    const auth = getFbAuth();
     await firebaseSignOut(auth);
     return { error: null };
   } catch (e: unknown) {
@@ -113,7 +125,7 @@ export async function fbSignOut(): Promise<{ error: { message: string } | null }
  */
 export async function fbSendVerificationEmail(): Promise<{ error: { message: string } | null }> {
   try {
-    const auth = getAuth();
+    const auth = getFbAuth();
     if (!auth.currentUser) return { error: { message: "No user logged in" } };
     await sendEmailVerification(auth.currentUser);
     return { error: null };
@@ -127,7 +139,7 @@ export async function fbSendVerificationEmail(): Promise<{ error: { message: str
  */
 export async function fbResetPassword(email: string): Promise<{ error: { message: string } | null }> {
   try {
-    const auth = getAuth();
+    const auth = getFbAuth();
     await sendPasswordResetEmail(auth, email);
     return { error: null };
   } catch (e: unknown) {
@@ -143,7 +155,7 @@ export async function fbUpdateProfile(displayName: string): Promise<{
   error: { message: string } | null;
 }> {
   try {
-    const auth = getAuth();
+    const auth = getFbAuth();
     if (!auth.currentUser) return { data: null, error: { message: "No user" } };
     await updateProfile(auth.currentUser, { displayName });
     return { data: { user: supabaseUserFromFirebase(auth.currentUser) }, error: null };
@@ -153,20 +165,54 @@ export async function fbUpdateProfile(displayName: string): Promise<{
 }
 
 /**
- * Signe avec Google via popup.
+ * Signe avec Google via popup, avec fallback redirect en prod.
+ * Le redirect est nécessaire car les navigateurs bloquent les popups
+ * tierces (third-party cookies) en production.
  */
 export async function fbSignInWithGoogle(): Promise<{
   data: { user: any; session: any } | null;
   error: { message: string } | null;
 }> {
+  const auth = getFbAuth();
+  const provider = new GoogleAuthProvider();
+
+  // D'abord, vérifier s'il y a un résultat de redirect en cours
   try {
-    const auth = getAuth();
-    const provider = new GoogleAuthProvider();
+    const redirectResult = await getRedirectResult(auth);
+    if (redirectResult?.user) {
+      const { session, user } = supabaseSessionFromFirebase(redirectResult.user);
+      return { data: { user, session }, error: null };
+    }
+  } catch {
+    // Redirect result failed — continue with popup
+  }
+
+  // Essayer popup d'abord (fonctionne bien en local)
+  try {
     const cred: UserCredential = await signInWithPopup(auth, provider);
     const { session, user } = supabaseSessionFromFirebase(cred.user);
     return { data: { user, session }, error: null };
   } catch (e: unknown) {
-    return { data: null, error: { message: e instanceof Error ? e.message : "Google sign-in failed" } };
+    const msg = e instanceof Error ? e.message : "Google sign-in failed";
+
+    // Si popup bloquée ou échoue → fallback redirect (production)
+    const isPopupBlocked =
+      msg.includes("auth/popup-blocked") ||
+      msg.includes("auth/popup-closed-by-user") ||
+      msg.includes("auth/cancelled-popup-request") ||
+      msg.includes("Cross-Origin-Opener-Policy");
+
+    if (isPopupBlocked) {
+      try {
+        await signInWithRedirect(auth, provider);
+        // La page va se recharger — pas de retour possible ici
+        return { data: null, error: null };
+      } catch (redirectErr: unknown) {
+        return { data: null, error: { message: redirectErr instanceof Error ? redirectErr.message : "Redirect failed" } };
+      }
+    }
+
+    return { data: null, error: { message: msg } };
   }
 }
 
@@ -179,8 +225,8 @@ export async function fbSignInWithApple(): Promise<{
   data: { user: any; session: any } | null;
   error: { message: string } | null;
 }> {
+  const auth = getFbAuth();
   try {
-    const auth = getAuth();
     const { OAuthProvider } = await import("firebase/auth");
     const provider = new OAuthProvider("apple.com");
     provider.addScope("email");
@@ -205,7 +251,7 @@ export async function fbSignInWithApple(): Promise<{
 export function fbOnAuthStateChange(
   callback: (event: string, session: any | null) => void,
 ): { data: { subscription: { unsubscribe: () => void } } } {
-  const auth = getAuth();
+  const auth = getFbAuth();
   const unsub = onAuthStateChanged(auth, (user) => {
     if (user) {
       const { session } = supabaseSessionFromFirebase(user);
@@ -222,7 +268,7 @@ export function fbOnAuthStateChange(
  * Compatible avec supabase.auth.getSession().
  */
 export async function fbGetSession(): Promise<{ data: { session: any | null } }> {
-  const auth = getAuth();
+  const auth = getFbAuth();
   if (auth.currentUser) {
     const { session } = supabaseSessionFromFirebase(auth.currentUser);
     return { data: { session } };
@@ -234,7 +280,7 @@ export async function fbGetSession(): Promise<{ data: { session: any | null } }>
  * Renvoie l'utilisateur courant (ou null).
  */
 export function fbGetCurrentUser(): FirebaseUser | null {
-  return getAuth().currentUser;
+  return getFbAuth().currentUser;
 }
 
 /**
@@ -242,7 +288,7 @@ export function fbGetCurrentUser(): FirebaseUser | null {
  */
 export async function fbUpdatePassword(newPassword: string): Promise<{ error: { message: string } | null }> {
   try {
-    const auth = getAuth();
+    const auth = getFbAuth();
     if (!auth.currentUser) return { error: { message: "No user" } };
     const { getFirebaseDb } = await import("@/lib/firebaseClient");
     const db = getFirebaseDb();
