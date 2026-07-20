@@ -16,12 +16,15 @@ import {
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
   updateProfile,
+  updatePassword,
   sendEmailVerification,
   sendPasswordResetEmail,
   GoogleAuthProvider,
   signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
   type User as FirebaseUser,
   type UserCredential,
 } from "firebase/auth";
@@ -285,21 +288,42 @@ export function fbGetCurrentUser(): FirebaseUser | null {
 
 /**
  * Met à jour le mot de passe.
+ * Firebase nécessite une ré-authentification récente pour changer le mdp.
  */
 export async function fbUpdatePassword(newPassword: string): Promise<{ error: { message: string } | null }> {
   try {
     const auth = getFbAuth();
-    if (!auth.currentUser) return { error: { message: "No user" } };
+    const user = auth.currentUser;
+    if (!user) return { error: { message: "No user" } };
+
+    // Firebase exige une ré-authentification récente (5 min) pour updatePassword
+    // Si ça échoue, on tente quand même (l'utilisateur peut être récemment connecté)
+    try {
+      const credential = EmailAuthProvider.credential(user.email ?? "", newPassword);
+      await reauthenticateWithCredential(user, credential);
+    } catch {
+      // Ré-auth échoue si le mdp est différent — on continue quand même
+      // Firebase peut autoriser l'update si la session est récente
+    }
+
+    await updatePassword(user, newPassword);
+
+    // Marquer le changement dans Firestore
     const { getFirebaseDb } = await import("@/lib/firebaseClient");
     const db = getFirebaseDb();
     if (db) {
       const { doc, updateDoc } = await import("firebase/firestore");
-      await updateDoc(doc(db, "profiles", auth.currentUser.uid), {
+      await updateDoc(doc(db, "profiles", user.uid), {
         _password_updated_at: new Date().toISOString(),
       });
     }
     return { error: null };
   } catch (e: unknown) {
-    return { error: { message: e instanceof Error ? e.message : "Failed" } };
+    const msg = e instanceof Error ? e.message : "Failed to update password";
+    // Firebase error codes pour les cas courants
+    if (msg.includes("auth/requires-recent-login")) {
+      return { error: { message: "Please sign out and sign back in before changing your password." } };
+    }
+    return { error: { message: msg } };
   }
 }

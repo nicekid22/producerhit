@@ -192,28 +192,34 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
   init: async () => {
     if (authInitDone) return;
-    authInitDone = true;
     if (get().status !== "idle") return;
+    authInitDone = true;
     set({ status: "loading" });
 
-    const { data: sub } = fbOnAuthStateChange((event, session) => {
-      if (event === "SIGNED_OUT") {
-        clearAuthState();
-        return;
+    try {
+      const { data: sub } = fbOnAuthStateChange((event, session) => {
+        if (event === "SIGNED_OUT") {
+          clearAuthState();
+          return;
+        }
+        if (!session) return;
+        set({ session: session as unknown as Session, user: session.user as User });
+        scheduleProfileSync(session as unknown as Session);
+      });
+      authUnsub = () => sub.subscription.unsubscribe();
+
+      const { data } = await fbGetSession();
+      if (data.session) {
+        set({ session: data.session as unknown as Session, user: data.session.user as User });
+        scheduleProfileSync(data.session as unknown as Session);
       }
-      if (!session) return;
-      set({ session: session as unknown as Session, user: session.user as User });
-      scheduleProfileSync(session as unknown as Session);
-    });
-    authUnsub = () => sub.subscription.unsubscribe();
 
-    const { data } = await fbGetSession();
-    if (data.session) {
-      set({ session: data.session as unknown as Session, user: data.session.user as User });
-      scheduleProfileSync(data.session as unknown as Session);
+      set({ status: "ready" });
+    } catch {
+      // Init failed — allow retry by resetting flag
+      authInitDone = false;
+      set({ status: "idle", lastError: "Auth initialization failed" });
     }
-
-    set({ status: "ready" });
   },
   signInWithPassword: async (email, password) => {
     set({ lastError: null });

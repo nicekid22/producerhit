@@ -1113,18 +1113,21 @@ function firebaseStorageFrom(bucketName: string) {
 
 let _cachedSupabaseToken: string | null = null;
 let _cachedSupabaseTokenUid: string | null = null;
+let _cachedSupabaseTokenExpiry = 0;
 
 /**
  * Get a Supabase JWT by exchanging the current Firebase user's ID token
- * via Supabase's id_token grant. Cached per user UID.
+ * via Supabase's id_token grant. Cached per user UID, with 55min expiry.
  */
 async function getSupabaseTokenForFirebaseUser(): Promise<string | null> {
   const auth = fbAuth();
   const user = auth?.currentUser;
   if (!user) return null;
 
-  // Return cached token if still for same user
-  if (_cachedSupabaseToken && _cachedSupabaseTokenUid === user.uid) return _cachedSupabaseToken;
+  // Return cached token if still valid (same user + not expired)
+  if (_cachedSupabaseToken && _cachedSupabaseTokenUid === user.uid && Date.now() < _cachedSupabaseTokenExpiry) {
+    return _cachedSupabaseToken;
+  }
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
   const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
@@ -1143,6 +1146,7 @@ async function getSupabaseTokenForFirebaseUser(): Promise<string | null> {
     if (token) {
       _cachedSupabaseToken = token;
       _cachedSupabaseTokenUid = user.uid;
+      _cachedSupabaseTokenExpiry = Date.now() + 55 * 60 * 1000; // 55 min (Supabase JWTs last 1h)
     }
     return token;
   } catch {
@@ -1298,9 +1302,9 @@ const firebaseAuthCompat = {
       return fbSignInWithGoogle();
     }
     if (params.provider === "apple") {
-      return { data: null, error: new Error("Apple sign-in via Firebase requires configuration") };
+      return { data: null, error: { message: "Apple sign-in via Firebase requires configuration" } };
     }
-    return { data: null, error: new Error(`OAuth provider ${params.provider} not supported`) };
+    return { data: null, error: { message: `OAuth provider ${params.provider} not supported` } };
   },
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
