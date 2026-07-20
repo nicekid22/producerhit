@@ -135,6 +135,8 @@ export default function Auth() {
         trackClientEvent("signup_started", { method: "google", ...getAttributionProps() });
       }
       await signInWithGoogle(email.trim() || undefined, getPostAuthRedirect());
+      // Explicit redirect on success (useEffect backup may not fire in time)
+      finishAuthRedirect();
     } catch (err) {
       const message = mapAuthError(err, locale, "google");
       setInlineError(message);
@@ -151,6 +153,8 @@ export default function Auth() {
         trackClientEvent("signup_started", { method: "apple", ...getAttributionProps() });
       }
       await signInWithApple(getPostAuthRedirect());
+      // Explicit redirect on success (useEffect backup may not fire in time)
+      finishAuthRedirect();
     } catch (err) {
       const message = mapAuthError(err, locale, "apple");
       setInlineError(message);
