@@ -44,7 +44,7 @@ export async function claimReferralIfPending(locale: AppLocale = "en"): Promise<
   if (!ref || ref.length < 4) return false;
 
   try {
-    const { data, error } = await supabase.rpc("claim_referral", { p_ref_code: ref });
+    const { data, error } = await supabase.rpc("claim_referral", { p_code: ref });
     if (error) return false;
 
     const result = data as { ok?: boolean; error?: string; referee_bonus?: number } | null;

@@ -989,6 +989,35 @@ async function firebaseRpc(name: string, args?: Record<string, unknown>): Promis
         return { data, error: null };
       }
 
+      case "get_loop_comment_counts": {
+        const loopIds = (args?.p_loop_ids ?? []) as string[];
+        const results: { loop_id: string; comment_count: number }[] = [];
+        for (const id of loopIds) {
+          try {
+            const q = fbQuery(collection(db, "loop_comments"), where("loop_id", "==", id));
+            const snap = await getDocs(q);
+            results.push({ loop_id: id, comment_count: snap.size });
+          } catch {
+            results.push({ loop_id: id, comment_count: 0 });
+          }
+        }
+        return { data: results, error: null };
+      }
+
+      case "repair_missing_profile":
+      case "ensure_profile": {
+        const auth = fbAuth();
+        const user = auth?.currentUser;
+        if (!user) return { data: null, error: null };
+        const profileRef = doc(db, "profiles", user.uid);
+        const snap = await getDoc(profileRef);
+        if (snap.exists()) return { data: { ok: true, status: name }, error: null };
+        // Create default profile
+        const { ensureFirebaseProfile } = await import("@/lib/firebaseFallback");
+        await ensureFirebaseProfile(user.uid, user.email);
+        return { data: { ok: true, status: name }, error: null };
+      }
+
       // ── Distribution ─────────────────────────────────────────
       case "get_distribution_usage_summary": {
         return { data: { ok: true, used: 0, limit: 10 }, error: null };
