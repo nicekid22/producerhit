@@ -655,7 +655,13 @@ async function firebaseRpc(name: string, args?: Record<string, unknown>): Promis
           const p = snap.data();
           const used = (p.loops_used_this_month as number) ?? 0;
           const plan = (p.plan as string) ?? "free";
-          return { data: { used, limit: 10, plan }, error: null };
+          const PLAN_LIMITS: Record<string, number> = { free: 10, pro: 75, studio: 250, plus: 1000 };
+          const baseLimit = PLAN_LIMITS[plan] ?? 10;
+          const bonus = Math.max(0, (p.referral_bonus as number) ?? 0)
+            + Math.max(0, (p.level_bonus as number) ?? 0)
+            + Math.max(0, (p.daily_bonus_month as number) ?? 0)
+            + Math.max(0, (p.purchased_bonus as number) ?? 0);
+          return { data: { used, limit: baseLimit + bonus, plan }, error: null };
         } catch {
           return { data: null, error: null };
         }

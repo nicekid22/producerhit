@@ -229,21 +229,57 @@ export async function fbSignInWithApple(): Promise<{
   error: { message: string } | null;
 }> {
   const auth = getFbAuth();
+
+  // Check for pending redirect result first
+  try {
+    const { OAuthProvider } = await import("firebase/auth");
+    const redirectResult = await getRedirectResult(auth);
+    if (redirectResult?.user) {
+      const { session, user } = supabaseSessionFromFirebase(redirectResult.user);
+      return { data: { user, session }, error: null };
+    }
+  } catch {
+    // redirect failed — continue with popup
+  }
+
   try {
     const { OAuthProvider } = await import("firebase/auth");
     const provider = new OAuthProvider("apple.com");
     provider.addScope("email");
     provider.addScope("name");
-    const cred: UserCredential = await signInWithPopup(auth, provider);
-    const { session, user } = supabaseSessionFromFirebase(cred.user);
-    return { data: { user, session }, error: null };
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : "Apple sign-in failed";
-    // User cancelled — don't show as error
-    if (msg.includes("auth/popup-closed-by-user") || msg.includes("cancelled")) {
-      return { data: null, error: null };
+
+    // Try popup first
+    try {
+      const cred: UserCredential = await signInWithPopup(auth, provider);
+      const { session, user } = supabaseSessionFromFirebase(cred.user);
+      return { data: { user, session }, error: null };
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Apple sign-in failed";
+
+      // User cancelled — don't show as error
+      if (msg.includes("auth/popup-closed-by-user") || msg.includes("cancelled")) {
+        return { data: null, error: null };
+      }
+
+      // Popup blocked — fallback to redirect
+      const isPopupBlocked =
+        msg.includes("auth/popup-blocked") ||
+        msg.includes("auth/cancelled-popup-request") ||
+        msg.includes("Cross-Origin-Opener-Policy");
+
+      if (isPopupBlocked) {
+        try {
+          await signInWithRedirect(auth, provider);
+          return { data: null, error: null };
+        } catch (redirectErr: unknown) {
+          return { data: null, error: { message: redirectErr instanceof Error ? redirectErr.message : "Redirect failed" } };
+        }
+      }
+
+      return { data: null, error: { message: msg } };
     }
-    return { data: null, error: { message: msg } };
+  } catch (e: unknown) {
+    return { data: null, error: { message: e instanceof Error ? e.message : "Apple sign-in failed" } };
   }
 }
 
