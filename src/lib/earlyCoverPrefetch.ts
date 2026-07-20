@@ -1,5 +1,4 @@
 import { buildCoverGenerationSeed, buildLoopCardCoverPrompt } from "@producerhit/shared";
-import { supabase } from "@/lib/supabaseClient";
 import { preloadCoverImage } from "@/lib/coverArt";
 import { coverImageSeed, hashString } from "@/lib/utils";
 
@@ -34,32 +33,20 @@ function buildPromptAndSeed(data: PrefetchData, generationKey: string): { prompt
   return { prompt, seed };
 }
 
+function buildPollinationsUrl(prompt: string, seed: number, width = 768, height = 768): string {
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${encodeURIComponent(
+    String(seed),
+  )}&nologo=true&model=flux&enhance=true`;
+}
+
 async function fetchPreviewCover(
   generationKey: string,
   prompt: string,
   seed: number,
 ): Promise<string | null> {
   try {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session?.access_token) return null;
-
-    const { data, error } = await supabase.functions.invoke("persist-pollinations-cover", {
-      body: {
-        loopId: generationKey,
-        prompt,
-        seed,
-        previewMode: true,
-        purpose: "card",
-      },
-      headers: { Authorization: `Bearer ${session.access_token}` },
-    });
-
-    if (error) return null;
-    const coverUrl = typeof data?.coverUrl === "string" ? data.coverUrl.trim() : "";
+    const coverUrl = buildPollinationsUrl(prompt, seed, 768, 768);
     if (!coverUrl.startsWith("http")) return null;
-
     preloadCoverImage(coverUrl);
     return coverUrl;
   } catch {

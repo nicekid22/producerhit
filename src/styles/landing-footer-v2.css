@@ -1,7 +1,7 @@
 /* —— Footer landing · grille pro —— */
 .pk-landing-footer-v2__top {
   display: grid;
-  gap: 2.5rem;
+  gap: 1.5rem;
 }
 
 @media (min-width: 768px) {
@@ -13,8 +13,8 @@
 }
 
 .pk-landing-footer-v2__brand-lead {
-  margin-top: 1rem;
-  max-width: 18rem;
+  margin-top: 0.75rem;
+  max-width: 22rem;
   font-size: 0.8125rem;
   line-height: 1.6;
   color: rgba(255, 255, 255, 0.52);
@@ -76,8 +76,8 @@
 }
 
 .pk-landing-footer-v2__guides {
-  margin-top: 2.5rem;
-  padding-top: 2rem;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
   border-top: 1px solid rgba(255, 255, 255, 0.07);
 }
 
@@ -115,8 +115,8 @@
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.03);
-  padding: 0.35rem 0.75rem;
-  font-size: 0.6875rem;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.625rem;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.55);
   transition:

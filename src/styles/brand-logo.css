@@ -2,7 +2,7 @@
 
 .pk-brand-logo {
   --pk-logo-base: rgba(255, 255, 255, 0.72);
-  --pk-logo-accent: linear-gradient(90deg, #e879f9 0%, #c026d3 100%);
+  --pk-logo-accent: linear-gradient(90deg, var(--prism-violet) 0%, var(--prism-accent) 50%, #c026d3 100%);
   text-decoration: none;
   font-family:
     -apple-system,
@@ -68,7 +68,7 @@
 html:not(.pk-cloud-active):not(.pk-warm-glass-active) .pk-brand-logo,
 .pk-prism-stage:not(.pk-warm-glass-stage):not(.pk-cloud-stage) .pk-brand-logo {
   --pk-logo-base: rgba(255, 255, 255, 0.74);
-  --pk-logo-accent: linear-gradient(92deg, #f0abfc 0%, #e879f9 38%, #c026d3 100%);
+  --pk-logo-accent: linear-gradient(92deg, var(--prism-violet) 0%, var(--prism-accent) 42%, #c026d3 100%);
 }
 
 /* —— Cloud (fond clair + accents dynamiques) —— */

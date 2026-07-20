@@ -379,13 +379,18 @@
     opacity: 0.88;
   }
 
-  /* Prism — liquid glass visible sur mobile (hors overrides Cloud / Warm) */
-  .pk-prism-stage--landing.pk-landing--mobile-focus:not(.pk-cloud-stage):not(.pk-warm-glass-stage)
-    .pk-landing-gen__cta--mobile:not(.is-generating) {
-    background: rgba(255, 255, 255, 0.055);
-    backdrop-filter: blur(24px) saturate(1.9) brightness(1.06);
-    -webkit-backdrop-filter: blur(24px) saturate(1.9) brightness(1.06);
-  }
+	  /* Prism — solid gradient sur mobile (harmonisé avec les boutons landing) */
+	  .pk-prism-stage--landing.pk-landing--mobile-focus:not(.pk-cloud-stage):not(.pk-warm-glass-stage)
+	    .pk-landing-gen__cta--mobile:not(.is-generating) {
+	    background: linear-gradient(
+	      135deg,
+	      var(--prism-violet, #7C3AED) 0%,
+	      var(--prism-accent, #A855F7) 50%,
+	      #c026d3 100%
+	    );
+	    backdrop-filter: blur(12px) saturate(1.85) brightness(1.1);
+	    -webkit-backdrop-filter: blur(12px) saturate(1.85) brightness(1.1);
+	  }
 
   .pk-prism-stage--landing.pk-landing--mobile-focus:not(.pk-cloud-stage):not(.pk-warm-glass-stage)
     .pk-landing-gen__cta-shell--mobile

@@ -186,19 +186,17 @@ export function LandingFooter({ locale, user }: Props) {
 
     <footer className="pk-landing-footer pk-landing-footer-v2 relative z-[1]">
 
-      <div className="relative z-[1] mx-auto max-w-6xl px-4 py-12 pb-[calc(2rem+env(safe-area-inset-bottom,0px))] sm:py-14 md:py-16">
+	      <div className="relative z-[1] mx-auto max-w-6xl px-4 py-10 pb-[calc(2rem+env(safe-area-inset-bottom,0px))] sm:py-12 md:py-14">
 
-        <div className="pk-landing-footer-v2__top">
+	        <div className="pk-landing-footer-v2__top">
 
-          <div>
+	          <div>
 
-            <BrandLogo />
+	            <BrandLogo />
 
-            <p className="pk-landing-footer-v2__brand-lead">{f.brandLead}</p>
+	            <p className="pk-landing-footer-v2__brand-lead">{f.brandLead}</p>
 
-            <p className="pk-landing-footer-v2__ace">Powered by ACE-Step</p>
-
-            <p className="pk-landing-footer-v2__social-label">{copy.footerSocialLabel}</p>
+	            <p className="pk-landing-footer-v2__social-label">{copy.footerSocialLabel}</p>
 
             <SocialIconLinks locale={locale} variant="footer" className="mt-3" />
 
@@ -248,7 +246,7 @@ export function LandingFooter({ locale, user }: Props) {
 
 
 
-        <section className="pk-landing-footer-v2__newsletter px-4 py-8 sm:px-6">
+	        <section className="pk-landing-footer-v2__newsletter px-4 py-6 sm:px-4">
 
           <EmailCaptureSection locale={locale} source="landing_footer" className="mx-auto max-w-xl" />
 

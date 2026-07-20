@@ -179,15 +179,19 @@ export async function fbSignInWithGoogle(): Promise<{
   const auth = getFbAuth();
   const provider = new GoogleAuthProvider();
 
-  // D'abord, vérifier s'il y a un résultat de redirect en cours
-  try {
-    const redirectResult = await getRedirectResult(auth);
-    if (redirectResult?.user) {
-      const { session, user } = supabaseSessionFromFirebase(redirectResult.user);
-      return { data: { user, session }, error: null };
+  // Ne vérifier le redirect result que si un redirect a été initié
+  // (évite un appel réseau inutile à chaque tentative de popup)
+  if (sessionStorage.getItem("fb_google_redirect_pending") === "1") {
+    sessionStorage.removeItem("fb_google_redirect_pending");
+    try {
+      const redirectResult = await getRedirectResult(auth);
+      if (redirectResult?.user) {
+        const { session, user } = supabaseSessionFromFirebase(redirectResult.user);
+        return { data: { user, session }, error: null };
+      }
+    } catch {
+      // Redirect result failed — continue with popup
     }
-  } catch {
-    // Redirect result failed — continue with popup
   }
 
   // Essayer popup d'abord (fonctionne bien en local)
@@ -207,6 +211,7 @@ export async function fbSignInWithGoogle(): Promise<{
 
     if (isPopupBlocked) {
       try {
+        sessionStorage.setItem("fb_google_redirect_pending", "1");
         await signInWithRedirect(auth, provider);
         // La page va se recharger — pas de retour possible ici
         return { data: null, error: null };

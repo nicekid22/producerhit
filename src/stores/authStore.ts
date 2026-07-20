@@ -42,7 +42,7 @@ type AuthState = {
 let authUnsub: (() => void) | null = null;
 let profileSyncToken = 0;
 let authInitDone = false;
-const PROFILE_SYNC_TIMEOUT_MS = 12_000;
+const PROFILE_SYNC_TIMEOUT_MS = 5_000;
 
 function authUserId(): string | null {
   return useAuthStore.getState().user?.id ?? null;
@@ -139,7 +139,7 @@ async function syncProfileForSession(
     if (!isSessionStillActive(session)) return null;
 
     if (isBenignProfileSyncError(message) || message === "profile_load_timeout") {
-      await new Promise((r) => window.setTimeout(r, 700));
+      await new Promise((r) => window.setTimeout(r, 300));
       if (abortStaleProfileSync(token)) return null;
       if (!isSessionStillActive(session)) return null;
       try {

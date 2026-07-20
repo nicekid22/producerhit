@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabaseClient";
 import { extractErrorMessage, isBenignProfileSyncError } from "@/lib/errorMessage";
+import { isFirebaseReady } from "@/lib/firebaseSupabaseClient";
 type ReconcileResult = {
   ok?: boolean;
   status?: string;
@@ -155,13 +156,16 @@ function logProfileDebug(
   console.info("[profileBootstrap]", { userId, email, reconcile, plan });
 }
 
-async function waitForAuthSession(maxAttempts = 6): Promise<void> {
+async function waitForAuthSession(maxAttempts = 3): Promise<void> {
+  // In Firebase mode, auth is synchronous (auth.currentUser) — no polling needed
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.access_token) return;
+
+  // Fallback: brief polling for edge cases (redirect returning)
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (session?.access_token) return;
-    await new Promise((resolve) => window.setTimeout(resolve, 150 * (attempt + 1)));
+    await new Promise((resolve) => window.setTimeout(resolve, 100 * (attempt + 1)));
+    const { data: { session: s } } = await supabase.auth.getSession();
+    if (s?.access_token) return;
   }
   throw new Error("not_authenticated");
 }
@@ -272,28 +276,30 @@ export async function bootstrapUserProfile(userId: string, email?: string | null
 export async function loadUserProfile(userId: string, email?: string | null): Promise<UserProfileRow> {
   await waitForAuthSession();
 
-  await runOptionalRpc("repair_missing_profile");
+  // In Firebase mode, all RPCs are no-ops — skip them entirely for speed
+  if (!isFirebaseReady()) {
+    await runOptionalRpc("repair_missing_profile");
 
-  let reconcile: ReconcileResult | null = null;
-  try {
-    reconcile = await runOptionalRpc("load_session_profile");
-    if (reconcile?.ok === false && reconcile.error) {
-      if (import.meta.env.DEV) console.warn("[profileBootstrap] load_session_profile:", reconcile.error);
+    let reconcile: ReconcileResult | null = null;
+    try {
+      reconcile = await runOptionalRpc("load_session_profile");
+      if (reconcile?.ok === false && reconcile.error) {
+        if (import.meta.env.DEV) console.warn("[profileBootstrap] load_session_profile:", reconcile.error);
+        reconcile = await runOptionalRpc("reconcile_profile_by_email");
+      }
+    } catch {
       reconcile = await runOptionalRpc("reconcile_profile_by_email");
     }
-  } catch {
-    reconcile = await runOptionalRpc("reconcile_profile_by_email");
-  }
 
-  if (!reconcile) {
-    await runOptionalRpc("ensure_profile");
-    reconcile = await runOptionalRpc("reconcile_profile_by_email");
-  }
+    if (!reconcile) {
+      await runOptionalRpc("ensure_profile");
+      reconcile = await runOptionalRpc("reconcile_profile_by_email");
+    }
 
-  await resetProfileUsageIfNeeded().catch(() => undefined);
+    await resetProfileUsageIfNeeded().catch(() => undefined);
+  }
 
   const row = await fetchUserProfile(userId, email);
-  logProfileDebug(userId, email, reconcile ?? undefined, row.plan);
   return row;
 }
 
