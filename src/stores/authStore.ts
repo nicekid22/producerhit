@@ -3,7 +3,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
 import {
   fbSignInWithPassword, fbSignUp, fbSignOut, fbResetPassword,
-  fbUpdatePassword, fbSignInWithGoogle, fbOnAuthStateChange, fbGetSession,
+  fbUpdatePassword, fbSignInWithGoogle, fbSignInWithApple, fbOnAuthStateChange, fbGetSession,
   fbSendVerificationEmail,
 } from "@/lib/firebaseAuth";
 import {
@@ -262,9 +262,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
   signInWithApple: async () => {
     set({ lastError: null });
-    const msg = "Apple sign-in temporarily unavailable. Please use Google or email/password.";
-    set({ lastError: msg });
-    throw new Error(msg);
+    const fbResult = await fbSignInWithApple();
+    if (fbResult.error) {
+      set({ lastError: fbResult.error.message });
+      throw new Error(fbResult.error.message);
+    }
+    if (fbResult.data?.session) {
+      set({ session: fbResult.data.session as unknown as Session, user: fbResult.data.user as User });
+      scheduleProfileSync(fbResult.data.session as unknown as Session);
+    }
   },
   linkGoogle: async () => {
     set({ lastError: null });

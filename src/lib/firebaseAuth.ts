@@ -171,6 +171,34 @@ export async function fbSignInWithGoogle(): Promise<{
 }
 
 /**
+ * Signe avec Apple via popup.
+ * Requires Apple identity provider configured in Firebase Console:
+ * https://console.firebase.google.com/project/producerhit-ai/authentication/providers
+ */
+export async function fbSignInWithApple(): Promise<{
+  data: { user: any; session: any } | null;
+  error: { message: string } | null;
+}> {
+  try {
+    const auth = getAuth();
+    const { OAuthProvider } = await import("firebase/auth");
+    const provider = new OAuthProvider("apple.com");
+    provider.addScope("email");
+    provider.addScope("name");
+    const cred: UserCredential = await signInWithPopup(auth, provider);
+    const { session, user } = supabaseSessionFromFirebase(cred.user);
+    return { data: { user, session }, error: null };
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Apple sign-in failed";
+    // User cancelled — don't show as error
+    if (msg.includes("auth/popup-closed-by-user") || msg.includes("cancelled")) {
+      return { data: null, error: null };
+    }
+    return { data: null, error: { message: msg } };
+  }
+}
+
+/**
  * S'abonne aux changements d'état d'auth.
  * Retourne une fonction unsubscribe (compatible avec supabase.auth.onAuthStateChange).
  */

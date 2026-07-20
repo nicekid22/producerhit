@@ -112,6 +112,12 @@ export function isFirebaseReady(): boolean {
   return _db !== null && _auth !== null;
 }
 
+/** Expose the Firebase app instance so other modules don't call initializeApp again. */
+export function getFirebaseApp(): FirebaseApp | null {
+  ensureFirebase();
+  return _app;
+}
+
 // ---------------------------------------------------------------------------
 // Query Builder — Firebase-backed PostgREST-compatible chainable API
 // ---------------------------------------------------------------------------
@@ -613,9 +619,47 @@ async function firebaseRpc(name: string, args?: Record<string, unknown>): Promis
       }
 
       // ── Usage ────────────────────────────────────────────────
-      case "reset_loops_usage_if_needed":
-      case "check_loops_usage_idempotent":
-        return { data: null, error: null };
+      case "reset_loops_usage_if_needed": {
+        const auth = fbAuth();
+        const user = auth?.currentUser;
+        if (!user) return { data: null, error: null };
+        try {
+          const profileRef = doc(db, "profiles", user.uid);
+          const snap = await getDoc(profileRef);
+          if (!snap.exists()) return { data: null, error: null };
+          const profile = snap.data();
+          const now = new Date();
+          const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+          const lastReset = profile.loops_reset_at as string | undefined;
+          const lastResetMonth = lastReset ? new Date(lastReset).toISOString().slice(0, 7) : null;
+          if (lastResetMonth !== currentMonth) {
+            await updateDoc(profileRef, {
+              loops_used_this_month: 0,
+              loops_reset_at: now.toISOString(),
+            });
+          }
+          return { data: null, error: null };
+        } catch {
+          return { data: null, error: null };
+        }
+      }
+
+      case "check_loops_usage_idempotent": {
+        const auth = fbAuth();
+        const user = auth?.currentUser;
+        if (!user) return { data: null, error: null };
+        try {
+          const profileRef = doc(db, "profiles", user.uid);
+          const snap = await getDoc(profileRef);
+          if (!snap.exists()) return { data: null, error: null };
+          const p = snap.data();
+          const used = (p.loops_used_this_month as number) ?? 0;
+          const plan = (p.plan as string) ?? "free";
+          return { data: { used, limit: 10, plan }, error: null };
+        } catch {
+          return { data: null, error: null };
+        }
+      }
 
       // ── Referral ─────────────────────────────────────────────
       case "ensure_referral_code": {
@@ -692,27 +736,138 @@ async function firebaseRpc(name: string, args?: Record<string, unknown>): Promis
 
       // ── Billing ──────────────────────────────────────────────
       case "sync_profile_plan_from_billing": {
-        return { data: { ok: true }, error: null };
+        const auth = fbAuth();
+        const user = auth?.currentUser;
+        if (!user) return { data: { ok: true }, error: null };
+        try {
+          const profileRef = doc(db, "profiles", user.uid);
+          const snap = await getDoc(profileRef);
+          // Profile exists — plan is already synced via Stripe webhook
+          if (snap.exists()) return { data: { ok: true }, error: null };
+          // Profile doesn't exist yet — create with free plan
+          await setDoc(profileRef, {
+            id: user.uid,
+            plan: "free",
+            loops_used_this_month: 0,
+            loops_reset_at: new Date().toISOString(),
+            created_at: new Date().toISOString(),
+          }, { merge: true });
+          return { data: { ok: true }, error: null };
+        } catch {
+          return { data: { ok: true }, error: null };
+        }
       }
 
       // ── Gamification ─────────────────────────────────────────
       case "sync_gamification_state": {
-        return { data: { ok: true }, error: null };
+        const auth = fbAuth();
+        const user = auth?.currentUser;
+        if (!user) return { data: { ok: true }, error: null };
+        try {
+          const xp = (args?.p_xp as number) ?? 0;
+          const streak = (args?.p_streak as number) ?? 0;
+          await updateDoc(doc(db, "profiles", user.uid), {
+            gamification_xp: xp,
+            gamification_streak: streak,
+          }).catch(async () => {
+            // Profile may not exist yet — create it
+            await setDoc(doc(db, "profiles", user.uid), {
+              gamification_xp: xp,
+              gamification_streak: streak,
+            }, { merge: true });
+          });
+          return { data: { ok: true }, error: null };
+        } catch {
+          return { data: { ok: true }, error: null };
+        }
       }
 
       case "claim_level_rewards": {
-        return { data: { ok: true, rewards: { credits: 0 } }, error: null };
+        const auth = fbAuth();
+        const user = auth?.currentUser;
+        if (!user) return { data: { ok: true, rewards: { credits: 0 } }, error: null };
+        try {
+          const p_xp = (args?.p_xp as number) ?? 0;
+          const profileRef = doc(db, "profiles", user.uid);
+          const snap = await getDoc(profileRef);
+          if (!snap.exists()) return { data: { ok: true, rewards: { credits: 0 }, level: 1, level_bonus: 0, daily_bonus_month: 0, credits_granted: 0 }, error: null };
+          const profile = snap.data();
+          const currentLevelBonus = (profile.level_bonus as number) ?? 0;
+          const currentLevel = (profile.gamification_level as number) ?? 1;
+          // Calculate XP-based level (mirrors gamification.ts getLevel)
+          const LEVEL_XP = [0, 80, 180, 320, 500, 720, 980, 1280, 1620, 2000];
+          let newLevel = 1;
+          for (let i = LEVEL_XP.length - 1; i >= 0; i--) {
+            if (p_xp >= LEVEL_XP[i]) { newLevel = i + 1; break; }
+          }
+          if (p_xp >= 2000) newLevel = Math.min(25, 10 + Math.floor((p_xp - 2000) / 400));
+          // Calculate credits for unclaimed levels
+          function levelRewardCredits(lvl: number): number {
+            if (lvl <= 1) return 0;
+            if (lvl >= 2 && lvl <= 9) return 2;
+            if (lvl === 10) return 4;
+            if (lvl >= 11 && lvl <= 24) return lvl % 5 === 0 ? 2 : 1;
+            if (lvl === 25) return 3;
+            return 0;
+          }
+          let creditsGranted = 0;
+          for (let l = currentLevel + 1; l <= newLevel; l++) creditsGranted += levelRewardCredits(l);
+          if (creditsGranted > 0) {
+            await updateDoc(profileRef, {
+              level_bonus: increment(creditsGranted),
+              gamification_level: newLevel,
+            });
+          } else if (newLevel !== currentLevel) {
+            await updateDoc(profileRef, { gamification_level: newLevel });
+          }
+          return {
+            data: {
+              ok: true,
+              credits_granted: creditsGranted,
+              level: newLevel,
+              level_bonus: currentLevelBonus + creditsGranted,
+              daily_bonus_month: (profile.daily_bonus_month as number) ?? 0,
+              rewards: { credits: creditsGranted },
+            },
+            error: null,
+          };
+        } catch {
+          return { data: { ok: true, rewards: { credits: 0 } }, error: null };
+        }
       }
 
       case "claim_daily_generation_bonus": {
         const auth = fbAuth();
         const user = auth?.currentUser;
         if (!user) return { data: { ok: false, error: "not_authenticated" }, error: null };
-        const today = new Date().toISOString().slice(0, 10);
-        await updateDoc(doc(db, "profiles", user.uid), {
-          daily_bonus_month: increment(1),
-        });
-        return { data: { ok: true, bonus: 1, today }, error: null };
+        try {
+          const profileRef = doc(db, "profiles", user.uid);
+          const snap = await getDoc(profileRef);
+          if (!snap.exists()) return { data: { ok: false, error: "profile_not_found" }, error: null };
+          const profile = snap.data();
+          const today = new Date().toISOString().slice(0, 10);
+          const lastClaim = (profile.last_daily_gen_bonus as string) ?? "";
+          if (lastClaim === today) {
+            // Already claimed today
+            return { data: { ok: true, bonus: 0, credits_granted: 0, daily_bonus_month: (profile.daily_bonus_month as number) ?? 0, today }, error: null };
+          }
+          await updateDoc(profileRef, {
+            daily_bonus_month: increment(1),
+            last_daily_gen_bonus: today,
+          });
+          return {
+            data: {
+              ok: true,
+              bonus: 1,
+              credits_granted: 1,
+              daily_bonus_month: ((profile.daily_bonus_month as number) ?? 0) + 1,
+              today,
+            },
+            error: null,
+          };
+        } catch {
+          return { data: { ok: false, error: "write_failed" }, error: null };
+        }
       }
 
       // ── Growth ───────────────────────────────────────────────
@@ -956,20 +1111,62 @@ function firebaseStorageFrom(bucketName: string) {
 // Functions compatibility (HTTP fetch to Edge Functions)
 // ---------------------------------------------------------------------------
 
+let _cachedSupabaseToken: string | null = null;
+let _cachedSupabaseTokenUid: string | null = null;
+
+/**
+ * Get a Supabase JWT by exchanging the current Firebase user's ID token
+ * via Supabase's id_token grant. Cached per user UID.
+ */
+async function getSupabaseTokenForFirebaseUser(): Promise<string | null> {
+  const auth = fbAuth();
+  const user = auth?.currentUser;
+  if (!user) return null;
+
+  // Return cached token if still for same user
+  if (_cachedSupabaseToken && _cachedSupabaseTokenUid === user.uid) return _cachedSupabaseToken;
+
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+  if (!supabaseUrl || !anonKey) return null;
+
+  try {
+    const idToken = await user.getIdToken();
+    const res = await fetch(`${supabaseUrl.replace(/\/$/, "")}/auth/v1/token?grant_type=id_token`, {
+      method: "POST",
+      headers: { apikey: anonKey, "Content-Type": "application/json" },
+      body: JSON.stringify({ provider: "firebase", id_token: idToken, access_token: idToken }),
+    });
+    if (!res.ok) return null;
+    const json = await res.json() as { access_token?: string; session?: { access_token?: string } };
+    const token = json.access_token ?? json.session?.access_token ?? null;
+    if (token) {
+      _cachedSupabaseToken = token;
+      _cachedSupabaseTokenUid = user.uid;
+    }
+    return token;
+  } catch {
+    return null;
+  }
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function firebaseFunctionsInvoke(name: string, opts?: { body?: unknown; headers?: Record<string, string>; signal?: AbortSignal }): Promise<any> {
-  // Try to call the original Supabase Edge Function via HTTP (might still work)
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
   const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
   if (supabaseUrl && anonKey) {
     try {
+      // Try to get a real Supabase JWT for the Firebase user
+      const supabaseToken = await getSupabaseTokenForFirebaseUser();
+      const authToken = opts?.headers?.Authorization ?? (supabaseToken ? `Bearer ${supabaseToken}` : `Bearer ${anonKey}`);
+
       const url = `${supabaseUrl.replace(/\/$/, "")}/functions/v1/${name}`;
       const res = await fetch(url, {
         method: "POST",
         headers: {
           apikey: anonKey,
-          Authorization: opts?.headers?.Authorization ?? `Bearer ${anonKey}`,
+          Authorization: authToken,
           "Content-Type": "application/json",
           Accept: "application/json",
           ...opts?.headers,
@@ -1165,6 +1362,8 @@ const firebaseAuthCompat = {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   signOut: async (_params?: { scope?: string }): Promise<any> => {
+    _cachedSupabaseToken = null;
+    _cachedSupabaseTokenUid = null;
     return fbSignOut();
   },
 

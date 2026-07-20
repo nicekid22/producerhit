@@ -4339,16 +4339,26 @@ a.pk-pricing-plan-btn {
   align-items: stretch;
 }
 
+.pk-landing-flow__stack--hero-centered {
+  min-height: 100svh;
+  display: grid;
+  grid-template-rows: 1fr auto 1fr;
+  align-items: center;
+  padding-top: 4.5rem;
+  padding-bottom: 2rem;
+}
+
 .pk-landing-flow__intro {
   position: relative;
   z-index: 1;
   padding-inline: 0.25rem;
-  padding-top: clamp(0.5rem, 1.5vw, 1rem);
+  padding-top: clamp(0.25rem, 0.5vw, 0.5rem);
+  margin-top: 0;
 }
 
 .pk-landing-flow__handoff {
-  height: clamp(0.65rem, 1.8vw, 1.1rem);
-  margin: clamp(0.5rem, 1.5vw, 0.85rem) auto clamp(0.35rem, 1vw, 0.65rem);
+  height: 8px;
+  margin: clamp(0.35rem, 1vw, 0.6rem) auto clamp(0.25rem, 0.8vw, 0.5rem);
   width: min(100%, 6rem);
   pointer-events: none;
   opacity: 0.22;
@@ -4369,12 +4379,7 @@ a.pk-pricing-plan-btn {
       animation-timeline: view();
       animation-range: entry 0% exit 42%;
     }
-
-    .pk-landing-flow .pk-landing-gen__shell {
-      animation: pkLandingGenReveal linear both;
-      animation-timeline: view();
-      animation-range: entry 4% cover 48%;
-    }
+    /* Generator is now always fully visible — no scroll-driven reveal */
   }
 }
 
@@ -4532,6 +4537,19 @@ a.pk-pricing-plan-btn {
   }
 }
 
+/* ── Splash screen ── */
+@keyframes pkSplashPulse {
+  0% { transform: scale(0.88); opacity: 0; }
+  40% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pkSplashGlow {
+  0% { opacity: 0; transform: scale(0.5); }
+  50% { opacity: 0.35; transform: scale(1); }
+  100% { opacity: 0.15; transform: scale(1.15); }
+}
+
 /* —— Landing: generator (premium, épuré) —— */
 .pk-landing-gen {
   isolation: isolate;
@@ -4643,50 +4661,44 @@ a.pk-pricing-plan-btn {
 }
 
 .pk-landing-gen__cta {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  border: 0;
-  cursor: pointer;
-  color: rgba(255, 255, 255, 0.96);
-  background: rgba(255, 255, 255, 0.055);
-  backdrop-filter: blur(24px) saturate(1.9) brightness(1.06);
-  -webkit-backdrop-filter: blur(24px) saturate(1.9) brightness(1.06);
-  box-shadow:
-    inset 0 2px 4px rgba(255, 255, 255, 0.52),
-    inset 0 -5px 14px rgba(0, 0, 0, 0.38),
-    inset 4px 0 10px rgba(192, 38, 211, 0.14),
-    inset -4px 0 10px rgba(168, 85, 247, 0.12),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
-    0 0 0 1px rgba(255, 255, 255, 0.06),
-    0 10px 36px rgba(0, 0, 0, 0.42),
-    0 0 52px rgba(192, 38, 211, 0.18),
-    0 0 80px rgba(168, 85, 247, 0.12);
-  transition:
-    transform 380ms cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 380ms ease,
-    filter 380ms ease;
-}
+	  position: relative;
+	  isolation: isolate;
+	  overflow: hidden;
+	  border: 0;
+	  cursor: pointer;
+	  color: rgba(255, 255, 255, 0.96);
+	  background: linear-gradient(
+	    135deg,
+	    var(--prism-violet, #7C3AED) 0%,
+	    var(--prism-accent, #A855F7) 50%,
+	    #c026d3 100%
+	  );
+	  backdrop-filter: blur(12px) saturate(1.85) brightness(1.1);
+	  -webkit-backdrop-filter: blur(12px) saturate(1.85) brightness(1.1);
+	  box-shadow:
+	    inset 0 1px 0 rgba(255, 255, 255, 0.58),
+	    inset 0 -1px 0 rgba(80, 40, 160, 0.22),
+	    inset 0 0 0 1px rgba(186, 148, 255, 0.22),
+	    inset 0 8px 22px rgba(192, 38, 211, 0.1),
+	    0 6px 22px rgba(192, 38, 211, 0.2),
+	    0 10px 32px rgba(168, 85, 247, 0.18),
+	    0 0 52px rgba(192, 38, 211, 0.22);
+	  transition:
+	    transform 380ms cubic-bezier(0.22, 1, 0.36, 1),
+	    box-shadow 380ms ease,
+	    filter 380ms ease;
+	}
 
 .pk-landing-gen__cta-rim {
   position: absolute;
   inset: -3px;
   border-radius: inherit;
   padding: 3px;
-  background: conic-gradient(
-    from 205deg at 50% 50%,
-    rgba(255, 255, 255, 0.96) 0deg,
-    var(--prism-chrome) 22deg,
-    var(--prism-cyan) 48deg,
-    #5eead4 68deg,
-    var(--prism-violet) 102deg,
-    var(--prism-accent) 138deg,
-    #fbbf24 168deg,
-    #fb7185 198deg,
-    var(--prism-cyan) 232deg,
-    rgba(255, 255, 255, 0.9) 268deg,
-    var(--prism-violet) 304deg,
-    rgba(255, 255, 255, 0.96) 360deg
+  background: linear-gradient(
+    135deg,
+    var(--prism-violet) 0%,
+    var(--prism-accent) 50%,
+    #c026d3 100%
   );
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,
@@ -4710,7 +4722,7 @@ a.pk-pricing-plan-btn {
   background: rgba(255, 255, 255, 0.95);
   box-shadow:
     0 0 6px rgba(255, 255, 255, 0.95),
-    0 0 14px var(--prism-cyan),
+    0 0 14px var(--prism-accent),
     0 0 24px var(--prism-violet);
   offset-path: inset(0 round 999px);
   offset-anchor: center;
@@ -4725,7 +4737,7 @@ a.pk-pricing-plan-btn {
   height: 3px;
   box-shadow:
     0 0 5px var(--prism-accent),
-    0 0 12px var(--prism-cyan);
+    0 0 12px var(--prism-violet);
   animation-duration: 6.4s;
   animation-delay: -2.1s;
   opacity: 0.75;
@@ -4749,7 +4761,7 @@ a.pk-pricing-plan-btn {
     radial-gradient(ellipse 88% 68% at 16% 8%, rgba(255, 255, 255, 0.5), transparent 52%),
     radial-gradient(ellipse 58% 46% at 86% 94%, rgba(192, 38, 211, 0.38), transparent 54%),
     radial-gradient(ellipse 46% 38% at 70% 16%, rgba(168, 85, 247, 0.3), transparent 50%),
-    radial-gradient(ellipse 38% 32% at 44% 82%, rgba(251, 191, 36, 0.16), transparent 46%);
+    radial-gradient(ellipse 38% 32% at 44% 82%, rgba(192, 38, 211, 0.22), transparent 46%);
   mix-blend-mode: screen;
   opacity: 0.82;
   animation: pkGenCtaCaustic 9s ease-in-out infinite;
@@ -4789,20 +4801,17 @@ a.pk-pricing-plan-btn {
 }
 
 .pk-landing-gen__cta:hover:not(:disabled) {
-  transform: translateY(-2px) scale(1.025);
-  filter: brightness(1.1) saturate(1.18);
-  box-shadow:
-    inset 0 2px 5px rgba(255, 255, 255, 0.62),
-    inset 0 -5px 16px rgba(0, 0, 0, 0.32),
-    inset 4px 0 12px rgba(192, 38, 211, 0.2),
-    inset -4px 0 12px rgba(168, 85, 247, 0.16),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.14),
-    0 0 0 1px rgba(192, 38, 211, 0.28),
-    0 14px 44px rgba(0, 0, 0, 0.38),
-    0 0 64px rgba(192, 38, 211, 0.28),
-    0 0 96px rgba(168, 85, 247, 0.22),
-    0 0 128px rgba(192, 132, 252, 0.14);
-}
+	  transform: translateY(-2px) scale(1.025);
+	  filter: brightness(1.1) saturate(1.15);
+	  box-shadow:
+	    inset 0 1px 0 rgba(255, 255, 255, 0.68),
+	    inset 0 0 0 1px rgba(200, 168, 255, 0.32),
+	    inset 0 10px 26px rgba(192, 38, 211, 0.14),
+	    inset 0 -10px 20px rgba(236, 72, 153, 0.1),
+	    0 8px 28px rgba(192, 38, 211, 0.22),
+	    0 14px 44px rgba(168, 85, 247, 0.2),
+	    0 0 24px rgba(236, 72, 153, 0.12);
+	}
 
 .pk-landing-gen__cta:hover:not(:disabled) .pk-landing-gen__cta-shine {
   transform: skewX(-18deg) translateX(290%);

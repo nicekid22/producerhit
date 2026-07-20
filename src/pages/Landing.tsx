@@ -10,7 +10,7 @@ import { useT } from "@/i18n";
 import { buildLandingUiSection, formatRepairFixedCount } from "@/i18n/landingUiCatalog";
 import { buildCommonSection } from "@/i18n/systemCatalog";
 import { LanguagePicker } from "@/components/LanguagePicker";
-import { Menu, Mic2, X } from "lucide-react";
+import { CreditCard, Download, Menu, Mic2, Music2, X } from "lucide-react";
 import { usePlayerStore } from "@/stores/playerStore";
 import {
   findPublicRowIndex,
@@ -61,8 +61,8 @@ import { landingCopy, landingFlowSectionClass, landingSectionClass } from "@/lib
 import { landingHeroDreamCopy } from "@/lib/landingHeroDreamCopy";
 import { useRotatingPromptPlaceholder } from "@/hooks/useRotatingPromptPlaceholder";
 import { resolveRandomPromptLocale } from "@/lib/resolveRandomPromptLocale";
-import { croLandingFaqs } from "@/lib/croTrustCopy";
-import { ConversionTrustBar } from "@/components/marketing/ConversionTrustBar";
+import { croLandingFaqs, croLandingTrustBarItems } from "@/lib/croTrustCopy";
+import type { AppLocale } from "@/i18n/config";
 import { clearLandingPendingGeneration, saveLandingPendingGeneration } from "@/lib/landingPendingGeneration";
 import { handoffRemixToDashboard } from "@/lib/remixHandoff";
 import { buildAuthUrl, resolvePostAuthRedirect } from "@/lib/authRoutes";
@@ -74,9 +74,8 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { PublicProfileCard } from "@/lib/creatorProfile";
 import { LaunchOfferBanner } from "@/components/marketing/LaunchOfferBanner";
 import { CheckoutRecoveryBanner } from "@/components/billing/CheckoutRecoveryBanner";
-import { FreeUpgradeStrip } from "@/components/billing/FreeUpgradeStrip";
 import { useResolvedPlan } from "@/hooks/useResolvedPlan";
-import { getLaunchOfferCtaButton, isLaunchOfferActive } from "@/lib/launchOffer";
+import { isLaunchOfferActive } from "@/lib/launchOffer";
 
 type CreateMode = "song" | "beat";
 const SIDE_CARD_POOL_LIMIT = 24;
@@ -226,6 +225,25 @@ function HeroPrismSpot({
   }, [allowPointer, reduceMotion, heroRef]);
 
   return <LandingPrismScene spot={spot} reduceMotion={reduceMotion} />;
+}
+
+const TRUST_LINE_ICONS = { "no-card": CreditCard, studio: Music2, mp3: Download } as const;
+
+function HeroTrustLine({ locale }: { locale: AppLocale }) {
+  const items = croLandingTrustBarItems(locale);
+  return (
+    <div className="mx-auto mt-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-white/40">
+      {items.map((item) => {
+        const Icon = TRUST_LINE_ICONS[item.id as keyof typeof TRUST_LINE_ICONS] ?? CreditCard;
+        return (
+          <span key={item.id} className="inline-flex items-center gap-1.5">
+            <Icon className="h-3 w-3 shrink-0 opacity-70" aria-hidden />
+            {item.label}
+          </span>
+        );
+      })}
+    </div>
+  );
 }
 
 export default function Landing() {
@@ -1182,7 +1200,7 @@ export default function Landing() {
               <Link to="/community" className="pk-header-chrome__link">
                 {m.nav.community}
               </Link>
-              <Link to="#pricing" className="pk-header-chrome__link">
+              <Link to="/pricing" className="pk-header-chrome__link">
                 {m.nav.pricing}
               </Link>
             </div>
@@ -1256,7 +1274,7 @@ export default function Landing() {
                   {m.nav.community}
                 </Link>
                 <Link
-                  to="#pricing"
+                  to="/pricing"
                   className="pk-landing-mobile-nav__item"
                   onClick={() => setMobileOpen(false)}
                 >
@@ -1306,6 +1324,7 @@ export default function Landing() {
             id="how"
             className={cn(
               "pk-landing-flow__stack w-full",
+              !mobileLandingFocus && "pk-landing-flow__stack--hero-centered",
               mobileLandingFocus && "pk-landing-flow__stack--mobile",
             )}
             aria-label="Hero"
@@ -1327,12 +1346,12 @@ export default function Landing() {
                 className={mobileLandingFocus ? "pk-hero-dream-wrap--mobile pk-hero-dream-wrap--mobile-apple" : "mt-2"}
               />
               {!mobileLandingFocus ? (
-                <p className="pk-landing-hero-dream-sub mx-auto mt-3 max-w-md text-pretty text-xs leading-relaxed text-white/55 sm:text-[13px]">
+                <p className="pk-landing-hero-dream-sub mx-auto mt-1.5 max-w-sm text-pretty text-xs leading-relaxed text-white/55 sm:text-[13px]">
                   {dreamCopy.subline}
                 </p>
               ) : null}
               {!mobileLandingFocus ? (
-                <ConversionTrustBar locale={locale} compact variant="landing" className="pk-landing-hero-trust" />
+                <HeroTrustLine locale={locale} />
               ) : null}
             </div>
 
@@ -1462,31 +1481,15 @@ export default function Landing() {
                     />
                   </RevealSection>
 
+        <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
+          <MusicMoneyPlaybookSection locale={locale} />
+        </RevealSection>
+
         <RevealSection className={`${landingSectionClass()} pk-landing-below-fold${mobileLandingFocus ? " hidden lg:block" : ""}`}>
           <ProducerLegendsSection locale={locale} />
         </RevealSection>
 
         <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
-          <MusicMoneyPlaybookSection locale={locale} />
-        </RevealSection>
-
-        <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
-          <CheckoutRecoveryBanner
-            locale={locale}
-            location="landing"
-            currentPlan={user && bannersReady ? currentPlan : undefined}
-            planReady={!user || bannersReady}
-            className="mb-6"
-          />
-          {user && bannersReady && currentPlan === "free" ? (
-            <FreeUpgradeStrip
-              locale={locale}
-              location="landing_strip"
-              plan={currentPlan}
-              ready={bannersReady}
-              className="mb-6"
-            />
-          ) : null}
           {isLaunchOfferActive() && showLaunchProCta ? (
             <LaunchOfferBanner
               locale={locale}
@@ -1495,7 +1498,15 @@ export default function Landing() {
               ctaLoading={launchCheckoutLoading}
               onCtaClick={() => void handleLaunchProCheckout()}
             />
-          ) : null}
+          ) : (
+            <CheckoutRecoveryBanner
+              locale={locale}
+              location="landing"
+              currentPlan={user && bannersReady ? currentPlan : undefined}
+              planReady={!user || bannersReady}
+              className="mb-6"
+            />
+          )}
         </RevealSection>
 
         <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
@@ -1509,20 +1520,9 @@ export default function Landing() {
                 {copy.ctaLead}
               </div>
               <div className="pk-landing-apple-panel__actions mt-8">
-                {user && currentPlan === "free" && isLaunchOfferActive() ? (
-                  <button
-                    type="button"
-                    disabled={launchCheckoutLoading}
-                    onClick={() => void handleLaunchProCheckout()}
-                    className="pk-landing-gen__cta inline-flex items-center justify-center rounded-xl px-8 py-3.5 text-sm font-bold text-white disabled:opacity-60"
-                  >
-                    {launchCheckoutLoading ? "…" : getLaunchOfferCtaButton(locale)}
-                  </button>
-                ) : (
-                  <HeroCtaButton to={buildAuthUrl()} variant="beam" size="lg">
-                    {copy.ctaButton}
-                  </HeroCtaButton>
-                )}
+                <HeroCtaButton to={buildAuthUrl()} variant="beam" size="lg">
+                  {copy.ctaButton}
+                </HeroCtaButton>
               </div>
             </div>
           </div>

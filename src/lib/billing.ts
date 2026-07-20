@@ -101,11 +101,22 @@ async function readCheckoutPayload(data: unknown, error: unknown): Promise<Check
     }
   }
 
+  // Handle Supabase FunctionsHttpError (legacy)
   if (error instanceof FunctionsHttpError) {
     try {
       return (await error.context.json()) as CheckoutPayload;
     } catch {
       return {};
+    }
+  }
+
+  // Handle plain Error from Firebase compat layer — try to parse JSON body from message
+  if (error instanceof Error && error.message) {
+    try {
+      const parsed = JSON.parse(error.message) as CheckoutPayload;
+      if (parsed && typeof parsed === "object") return parsed;
+    } catch {
+      // not JSON, fall through
     }
   }
 

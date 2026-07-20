@@ -8,12 +8,32 @@ export const LOOP_AUDIO_BUCKET = "loop-audio";
 export function isSupabaseLoopAudioUrl(url: unknown): boolean {
   const s = typeof url === "string" ? url.trim() : "";
   if (!s) return false;
-  return s.includes("/storage/v1/object/public/loop-audio/") || s.includes("/storage/v1/object/sign/loop-audio/");
+  // Supabase Storage URLs
+  if (s.includes("/storage/v1/object/public/loop-audio/")) return true;
+  if (s.includes("/storage/v1/object/sign/loop-audio/")) return true;
+  // Firebase Storage URLs (firebasestorage.googleapis.com or *.appspot.com)
+  if (s.includes("firebasestorage.googleapis.com") && s.includes("/loop-audio%2F")) return true;
+  if (s.includes(".appspot.com") && s.includes("/loop-audio%2F")) return true;
+  return false;
 }
 
 /** Chemin objet `{userId}/{loopId}.ext` depuis une URL publique loop-audio. */
 export function parseLoopAudioStoragePath(audioUrl: unknown): string | null {
   const s = typeof audioUrl === "string" ? audioUrl.trim() : "";
+  if (!s) return null;
+
+  // Firebase Storage URL — path is URL-encoded as /loop-audio%2F{userId}%2F{loopId}.ext
+  if (s.includes("firebasestorage.googleapis.com") || s.includes(".appspot.com")) {
+    const decoded = decodeURIComponent(s);
+    const marker = "/loop-audio/";
+    const idx = decoded.indexOf(marker);
+    if (idx < 0) return null;
+    const path = decoded.slice(idx + marker.length).split("?")[0]?.trim();
+    if (!path || !path.includes("/")) return null;
+    return path;
+  }
+
+  // Supabase Storage URL
   if (!isSupabaseLoopAudioUrl(s)) return null;
   const marker = "/loop-audio/";
   const idx = s.indexOf(marker);
