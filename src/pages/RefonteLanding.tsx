@@ -39,7 +39,7 @@ function useGSAP() {
     let cancelled = false;
     (async () => {
       try {
-        const [gsap, { ScrollTrigger }, Lenis] = await Promise.all([
+        const [gsap, { ScrollTrigger }, lenisModule] = await Promise.all([
           import("gsap"),
           import("gsap/ScrollTrigger"),
           import("lenis"),
@@ -48,7 +48,8 @@ function useGSAP() {
 
         gsap.gsap.registerPlugin(ScrollTrigger);
 
-        const lenis = new Lenis({ lerp: 0.1, smoothWheel: true });
+        const LenisCtor = (lenisModule as any).default ?? lenisModule;
+        const lenis = new LenisCtor({ lerp: 0.1, smoothWheel: true });
         lenisRef.current = lenis;
         lenis.on("scroll", ScrollTrigger.update);
         gsap.gsap.ticker.add((time: number) => lenis.raf(time * 1000));
@@ -162,7 +163,7 @@ const COPY = {
       contact: "Contact",
     },
   },
-} as const;
+};
 
 type Locale = "fr" | "en";
 
@@ -545,7 +546,7 @@ function SceneModes({
 function SceneSocial({ t }: { t: typeof COPY.fr.social }) {
   const [tracks, setTracks] = useState<PublicLoopRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const { setPlaying } = usePlayerStore();
+  const { setCurrent, setPlaying } = usePlayerStore();
 
   useEffect(() => {
     fetchPublicLoops({ limit: 16 })
@@ -556,9 +557,12 @@ function SceneSocial({ t }: { t: typeof COPY.fr.social }) {
 
   const handlePlay = async (row: PublicLoopRow) => {
     try {
-      const { resolveAceAudioUrl } = await import("@/lib/publicLoops");
-      const url = await resolveAceAudioUrl(row);
-      if (url) setPlaying({ id: row.id, name: row.name ?? "Untitled", audioUrl: url });
+      const { resolvePlayableCommunityAudio } = await import("@/lib/publicLoops");
+      const url = await resolvePlayableCommunityAudio(row);
+      if (url) {
+        setCurrent(row as any, true);
+        setPlaying(true);
+      }
     } catch (_) {}
   };
 
@@ -664,7 +668,7 @@ function SceneSocial({ t }: { t: typeof COPY.fr.social }) {
                 </div>
                 <div className="refonte-track-meta">
                   <p className="refonte-track-title">{row.name ?? "Untitled"}</p>
-                  <p className="refonte-track-author">{row.profiles?.username ?? "ProducerHit"}</p>
+                  <p className="refonte-track-author">{row.author?.username ?? "ProducerHit"}</p>
                 </div>
               </button>
             ))}
