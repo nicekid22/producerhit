@@ -1,8 +1,9 @@
 name: Auto publish blog
 
 on:
-  schedule:
-    - cron: "0 9 * * 1"
+  # DÉSACTIVÉ — ancien cron marketing. Garder les 3 crons YouTube actifs uniquement.
+  # schedule:
+  #   - cron: "0 9 * * 1"
   workflow_dispatch:
     inputs:
       topic:

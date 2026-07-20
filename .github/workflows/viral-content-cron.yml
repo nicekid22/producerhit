@@ -2,7 +2,7 @@ name: Viral Shorts automation
 
 on:
   schedule:
-    # 09:00 / 14:00 / 20:00 Paris (CET) ≈ 08 / 13 / 19 UTC
+    # Viral Shorts — gardé actif (cron YouTube récent)
     - cron: "0 8,13,19 * * *"
   workflow_dispatch:
     inputs:

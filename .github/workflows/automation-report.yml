@@ -2,8 +2,8 @@ name: Automation report
 
 on:
   schedule:
-    # 08:00 et 20:00 UTC — complement rapports locaux
-    - cron: "0 8,20 * * *"
+    # Réduit à 1x/day sur Nano free (au lieu de 2x).
+    - cron: "0 8 * * *"
   workflow_dispatch:
 
 jobs:

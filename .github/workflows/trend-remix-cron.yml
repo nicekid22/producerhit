@@ -2,7 +2,7 @@ name: Trend remix YouTube (landscape)
 
 on:
   schedule:
-    # 4 runs/day UTC — ~2 uploads per remix channel (remix1 + remix2)
+    # Trend remix YouTube — gardé actif (cron YouTube récent)
     - cron: "0 7 * * *"
     - cron: "0 11 * * *"
     - cron: "0 16 * * *"

@@ -194,26 +194,34 @@ async function closeWeekly(db: Db, cfg: DiscordConfig) {
   const rewards = [30, 15, 10];
   const winners: Array<{ userId: string; rank: number; credits: number }> = [];
 
+  // Build all grants in a single array for batch RPC — 1 call au lieu de N.
+  const grants: Array<{ user_id: string; credits: number; idempotency_key: string }> = [];
+
   for (let i = 0; i < (entries ?? []).length && i < 3; i++) {
     const entry = entries![i]!;
     const credits = rewards[i] ?? 0;
     winners.push({ userId: entry.user_id, rank: i + 1, credits });
     await db.from("discord_challenge_entries").update({ rank: i + 1, reward_credits: credits }).eq("id", entry.id);
-    await db.rpc("grant_discord_challenge_bonus", {
-      p_user_id: entry.user_id,
-      p_credits: credits,
-      p_idempotency_key: `challenge-${weekKey}-rank-${i + 1}`,
+    grants.push({
+      user_id: entry.user_id,
+      credits,
+      idempotency_key: `challenge-${weekKey}-rank-${i + 1}`,
     });
   }
 
   for (const entry of entries ?? []) {
     if (winners.some((w) => w.userId === entry.user_id)) continue;
-    await db.rpc("grant_discord_challenge_bonus", {
-      p_user_id: entry.user_id,
-      p_credits: 3,
-      p_idempotency_key: `challenge-${weekKey}-part-${entry.user_id}`,
-    });
     await db.from("discord_challenge_entries").update({ reward_credits: 3 }).eq("id", entry.id);
+    grants.push({
+      user_id: entry.user_id,
+      credits: 3,
+      idempotency_key: `challenge-${weekKey}-part-${entry.user_id}`,
+    });
+  }
+
+  // 1 seul appel RPC batch au lieu de ~23 appels individuels.
+  if (grants.length > 0) {
+    await db.rpc("grant_discord_challenge_bonus_batch", { p_grants: grants });
   }
 
   const podium =

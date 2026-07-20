@@ -163,6 +163,25 @@ body {
   --ph-mark-border-0: rgba(255, 255, 255, 0.72);
   --ph-mark-border-1: rgba(236, 72, 153, 0.45);
   --ph-mark-border-2: rgba(255, 255, 255, 0.28);
+
+  /* ── Cloud Drip — producerhit-refonte-prompt.md §6 ── */
+  --cd-ink: #16151B;
+  --cd-cloud: #F4F0E8;
+  --cd-coral: #FF5B35;
+  --cd-coral-soft: rgba(255, 91, 53, 0.18);
+  --cd-coral-glow: 0 0 32px rgba(255, 91, 53, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
+  --cd-periwinkle: #8EA2FF;
+  --cd-periwinkle-soft: rgba(142, 162, 255, 0.18);
+  --cd-concrete: #8B877E;
+  --cd-static: #2A2833;
+  /* Map cd-* → ph-mark (compat composants utilisant ces tokens) */
+  --cd-ph-bg: #16151B;
+  --cd-ph-surface: #2A2833;
+  --cd-ph-text: #F4F0E8;
+  --cd-ph-text-muted: #8B877E;
+  --cd-ph-accent: #FF5B35;
+  --cd-ph-border: rgba(255, 255, 255, 0.12);
+  --cd-ph-glow: rgba(255, 91, 53, 0.35);
 }
 
 @keyframes prismAurora {

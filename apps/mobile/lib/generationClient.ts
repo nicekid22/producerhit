@@ -119,7 +119,7 @@ export const mobileJobsClient = createGenerationJobsClient({
           table: "generation_jobs",
           filter: `id=eq.${jobId}`,
         },
-        (payload) => {
+        (payload: { new?: Record<string, unknown>; old?: Record<string, unknown>; eventType?: string }) => {
           onUpdate(
             payload.new as {
               status?: string;

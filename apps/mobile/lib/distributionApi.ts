@@ -59,7 +59,7 @@ export async function fetchDistributionReleases(): Promise<DistributionReleaseWi
     )
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return (data ?? []).map((r) => {
+  return (data ?? []).map((r: Record<string, unknown>) => {
     const loops = r.loops as { name?: string; cover_url?: string } | null;
     const mapped = mapReleaseRow(r as Record<string, unknown>);
     return {

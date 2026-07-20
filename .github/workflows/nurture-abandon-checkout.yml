@@ -1,8 +1,9 @@
 name: Nurture abandoned checkout
 
 on:
-  schedule:
-    - cron: "0 9 * * *"
+  # DÉSACTIVÉ — ancien cron marketing. Garder les 3 crons YouTube actifs uniquement.
+  # schedule:
+  #   - cron: "0 9 * * *"
   workflow_dispatch:
 
 jobs:

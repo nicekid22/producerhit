@@ -29,7 +29,7 @@ const sb = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false },
 });
 
-const pat = "sbp_b030ccc7f8b388a46f0af1993af352d0f2fa5520";
+const pat = env.SUPABASE_PAT; // Set in .env or GitHub Actions secrets
 const projectRef = "pmfnzenqemnonpglmjqx";
 
 async function truncateViaSQL() {

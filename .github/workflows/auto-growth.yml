@@ -1,8 +1,9 @@
 name: Auto growth sync
 
 on:
-  schedule:
-    - cron: "0 6 * * *"
+  # DÉSACTIVÉ — ancien cron marketing. Garder les 3 crons YouTube actifs uniquement.
+  # schedule:
+  #   - cron: "0 6 * * *"
   workflow_dispatch:
 
 permissions:

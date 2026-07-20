@@ -22,6 +22,15 @@ export default {
           success: "#10b981",
           danger: "#ef4444",
         },
+        // Cloud Drip palette — producerhit-refonte-prompt.md §6
+        cd: {
+          ink: "#16151B",
+          cloud: "#F4F0E8",
+          coral: "#FF5B35",
+          periwinkle: "#8EA2FF",
+          concrete: "#8B877E",
+          static: "#2A2833",
+        },
       },
       keyframes: {
         float: {

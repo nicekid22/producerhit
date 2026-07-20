@@ -93,9 +93,9 @@ export async function fetchCommunityLoops(limit = 48): Promise<CommunityLoop[]> 
   if (error) throw error;
 
   const playable = (data ?? [])
-    .filter((row) => isPlayableCommunityRow(row as PublicRow))
+    .filter((row: Record<string, unknown>) => isPlayableCommunityRow(row as PublicRow))
     .slice(0, limit)
-    .map((row) => mapPublicRow(row as PublicRow));
+    .map((row: Record<string, unknown>) => mapPublicRow(row as PublicRow));
 
   return attachAuthors(playable);
 }

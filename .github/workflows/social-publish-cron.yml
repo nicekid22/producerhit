@@ -1,8 +1,9 @@
 name: Social publish cron
 
 on:
-  schedule:
-    - cron: "*/15 * * * *"
+  # DÉSACTIVÉ — ancien cron marketing. Garder les 3 crons YouTube actifs uniquement.
+  # schedule:
+  #   - cron: "0 */2 * * *"
   workflow_dispatch:
 
 jobs:

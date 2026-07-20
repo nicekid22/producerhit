@@ -1,6 +1,21 @@
 import { create } from "zustand";
-import type { Session } from "@supabase/supabase-js";
 import type { UserProfile } from "@producerhit/shared";
+
+type Session = {
+  access_token: string;
+  refresh_token: string;
+  expires_in?: number;
+  expires_at?: number;
+  token_type?: string;
+  user: {
+    id: string;
+    email?: string | null;
+    user_metadata?: Record<string, unknown>;
+    app_metadata?: Record<string, unknown>;
+    aud?: string;
+    created_at?: string;
+  } | null;
+} | null;
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { fetchProfile } from "@/lib/loopsApi";
 import { clearProfileCache, loadProfileCache, saveProfileCache } from "@/lib/profileCache";

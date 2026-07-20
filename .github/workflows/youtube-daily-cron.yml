@@ -2,7 +2,7 @@ name: YouTube daily (49 videos)
 
 on:
   schedule:
-    # Every 2h UTC — throttling spreads ~49 uploads across the day
+    # YouTube daily — gardé actif (cron YouTube récent)
     - cron: "0 6,8,10,12,14,16,18,20,22 * * *"
   workflow_dispatch:
     inputs:

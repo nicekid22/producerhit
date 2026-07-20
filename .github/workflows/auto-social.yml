@@ -1,8 +1,9 @@
 name: Auto social post
 
 on:
-  schedule:
-    - cron: "30 14 * * 1,3,5"
+  # DÉSACTIVÉ — ancien cron marketing. Garder les 3 crons YouTube actifs uniquement.
+  # schedule:
+  #   - cron: "30 14 * * 1,3,5"
   workflow_dispatch:
 
 permissions:

@@ -1,14 +1,14 @@
 import { create } from "zustand";
 import type { Session, User } from "@supabase/supabase-js";
-import { supabase, isUsingFirebase } from "@/lib/supabaseClient";
-import { fbSignInWithPassword, fbSignUp, fbSignOut, fbOnAuthStateChange, fbGetSession, fbGetCurrentUser, fbResetPassword, fbUpdatePassword, fbSignInWithGoogle } from "@/lib/firebaseAuth";
-import { isFirebaseConfigured, getFirebaseDb } from "@/lib/firebaseClient";
+import { supabase } from "@/lib/supabaseClient";
 import {
-  clearProfileLoadCache,
-  extractErrorMessage,
-  loadUserProfileWithRetry,
-  readProfileCache,
-  type UserProfileRow,
+  fbSignInWithPassword, fbSignUp, fbSignOut, fbResetPassword,
+  fbUpdatePassword, fbSignInWithGoogle, fbOnAuthStateChange, fbGetSession,
+  fbSendVerificationEmail,
+} from "@/lib/firebaseAuth";
+import {
+  clearProfileLoadCache, extractErrorMessage,
+  loadUserProfileWithRetry, readProfileCache, type UserProfileRow,
 } from "@/lib/profileBootstrap";
 import { clearReferralBonusTracking, notifyReferrerReferralBonusIfIncreased } from "@/lib/referralReferrerLoot";
 import { cacheAuthSession, clearCachedAuth } from "@/lib/offlineAuth";
@@ -36,7 +36,6 @@ type AuthState = {
   setPassword: (password: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
-  /** Après OAuth Google / liaison — session + sync profil garanti (évite quota bloqué). */
   completeAuthCallbackSession: (session: Session) => Promise<UserProfileRow | null>;
 };
 
@@ -79,11 +78,6 @@ async function loadProfileWithTimeout(session: Session): Promise<UserProfileRow>
   }
 }
 
-function authCallbackUrl(nextPath = "/dashboard"): string {
-  return `${window.location.origin}/auth/callback?next=${encodeURIComponent(sanitizePostAuthPath(nextPath))}`;
-}
-
-/** Never call supabase.auth.* synchronously inside onAuthStateChange — defer to avoid deadlocks. */
 function scheduleProfileSync(session: Session): void {
   const userId = session.user.id;
   const hasProfile = !!useAuthStore.getState().profile && useAuthStore.getState().user?.id === userId;
@@ -96,12 +90,8 @@ function scheduleProfileSync(session: Session): void {
 function isBenignProfileSyncError(message: string): boolean {
   const raw = message.toLowerCase();
   return (
-    raw.includes("not authenticated") ||
-    raw.includes("jwt") ||
-    raw.includes("auth session missing") ||
-    raw.includes("pkce") ||
-    raw.includes("code verifier") ||
-    raw.includes("oauth_session_missing")
+    raw.includes("not authenticated") || raw.includes("jwt") ||
+    raw.includes("auth session missing") || raw.includes("profile not found")
   );
 }
 
@@ -120,10 +110,8 @@ async function syncProfileForSession(
   if (options?.soft && hasProfile) {
     useAuthStore.setState({ lastError: null });
   } else if (hasProfile && authUserId() === session.user.id) {
-    // Refresh en arrière-plan — ne pas masquer le quota / settings déjà affichés.
     useAuthStore.setState({ lastError: null });
   } else if (readProfileCache(session.user.id)) {
-    // Quota en cache local — évite le flash « Chargement du quota… » au refresh.
     useAuthStore.setState({ lastError: null });
   } else if (isSessionStillActive(session)) {
     useAuthStore.setState({ profileReady: false, lastError: null });
@@ -135,12 +123,9 @@ async function syncProfileForSession(
     const previousBonus = useAuthStore.getState().profile?.referral_bonus;
     useAuthStore.setState({ profile: row, profileReady: true, lastError: null });
     notifyReferrerReferralBonusIfIncreased(
-      session.user.id,
-      previousBonus,
-      row.referral_bonus,
+      session.user.id, previousBonus, row.referral_bonus,
       useLocaleStore.getState().locale,
     );
-    // Cache auth session for offline fallback (in case Supabase goes down)
     cacheAuthSession(session.user, row);
     return row;
   };
@@ -168,18 +153,12 @@ async function syncProfileForSession(
           useAuthStore.setState({ profileReady: true, lastError: null });
           return null;
         }
-        useAuthStore.setState({
-          profileReady: true,
-          lastError: retryMessage,
-        });
+        useAuthStore.setState({ profileReady: true, lastError: retryMessage });
         return null;
       }
     }
 
-    useAuthStore.setState({
-      profileReady: true,
-      lastError: message,
-    });
+    useAuthStore.setState({ profileReady: true, lastError: message });
     return null;
   }
 }
@@ -190,11 +169,7 @@ function clearAuthState(): void {
   clearCachedAuth();
   const userId = useAuthStore.getState().user?.id;
   useAuthStore.setState({
-    session: null,
-    user: null,
-    profile: null,
-    profileReady: true,
-    lastError: null,
+    session: null, user: null, profile: null, profileReady: true, lastError: null,
   });
   if (userId) clearReferralBonusTracking(userId);
 }
@@ -212,8 +187,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const { data } = await supabase.auth.getSession();
     if (!data.session?.access_token) return null;
     if (get().user?.id !== user.id) return null;
-    set({ session: data.session, user: data.session.user });
-    return syncProfileForSession(data.session, { soft: true });
+    set({ session: data.session as Session, user: data.session.user as User });
+    return syncProfileForSession(data.session as Session, { soft: true });
   },
   init: async () => {
     if (authInitDone) return;
@@ -221,240 +196,98 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (get().status !== "idle") return;
     set({ status: "loading" });
 
-    // Try Firebase auth first if configured (works even when Supabase is down)
-    const useFirebase = isFirebaseConfigured();
-    if (useFirebase && !authUnsub) {
-      const { data: sub } = fbOnAuthStateChange((event, session) => {
-        if (event === "SIGNED_OUT") {
-          clearAuthState();
-          return;
-        }
-        if (!session) return;
-        set({ session: session as unknown as Session, user: session.user });
-        scheduleProfileSync(session as unknown as Session);
-      });
-      authUnsub = () => sub.subscription.unsubscribe();
-      const { data } = await fbGetSession();
-      if (data.session) {
-        set({ session: data.session as unknown as Session, user: data.session.user });
-        scheduleProfileSync(data.session as unknown as Session);
+    const { data: sub } = fbOnAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") {
+        clearAuthState();
+        return;
       }
-    }
+      if (!session) return;
+      set({ session: session as unknown as Session, user: session.user as User });
+      scheduleProfileSync(session as unknown as Session);
+    });
+    authUnsub = () => sub.subscription.unsubscribe();
 
-    // Supabase auth (may fail if Supabase is down)
-    if (!authUnsub) {
-      const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
-        if (event === "TOKEN_REFRESHED" && session) {
-          if (authUserId()) set({ session });
-          return;
-        }
-        if (event === "SIGNED_OUT") {
-          clearAuthState();
-          return;
-        }
-        if (!session?.user) return;
-        set({ session, user: session.user });
-        if (event === "INITIAL_SESSION" || event === "SIGNED_IN" || event === "USER_UPDATED") {
-          scheduleProfileSync(session);
-        }
-      });
-      authUnsub = () => sub.subscription.unsubscribe();
-    }
-
-    // Try Supabase session (may fail)
-    if (!useFirebase) {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          set({ session, user: session.user });
-          scheduleProfileSync(session);
-        }
-      } catch {
-        // Supabase down — Firebase auth already handled above
-      }
+    const { data } = await fbGetSession();
+    if (data.session) {
+      set({ session: data.session as unknown as Session, user: data.session.user as User });
+      scheduleProfileSync(data.session as unknown as Session);
     }
 
     set({ status: "ready" });
   },
   signInWithPassword: async (email, password) => {
     set({ lastError: null });
-    // Try Supabase first
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (!error && data.session) {
-        set({ session: data.session, user: data.session.user });
-        scheduleProfileSync(data.session);
-        return;
-      }
-      if (error) throw error;
-    } catch (supaErr) {
-      // Supabase failed — try Firebase
-    }
-    // Firebase fallback
     const fbResult = await fbSignInWithPassword(email, password);
     if (fbResult.error) {
       set({ lastError: fbResult.error.message });
       throw new Error(fbResult.error.message);
     }
     if (fbResult.data?.session) {
-      set({ session: fbResult.data.session as unknown as Session, user: fbResult.data.user });
+      set({ session: fbResult.data.session as unknown as Session, user: fbResult.data.user as User });
       scheduleProfileSync(fbResult.data.session as unknown as Session);
     }
   },
-  signUp: async (email, password, redirectPath = "/dashboard") => {
+  signUp: async (email, password) => {
     set({ lastError: null });
-    // Try Supabase first
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: authCallbackUrl(redirectPath) },
-      });
-      if (!error) {
-        const needsEmailConfirm = !data.session;
-        if (data.session) {
-          set({ session: data.session, user: data.session.user });
-          scheduleProfileSync(data.session);
-        }
-        return { needsEmailConfirm };
-      }
-      if (error) throw error;
-    } catch {
-      // Supabase failed — try Firebase
-    }
-    // Firebase fallback (no email confirmation required in Firebase by default)
     const fbResult = await fbSignUp(email, password);
     if (fbResult.error) {
       set({ lastError: fbResult.error.message });
       throw new Error(fbResult.error.message);
     }
     if (fbResult.data?.session) {
-      set({ session: fbResult.data.session as unknown as Session, user: fbResult.data.user });
+      set({ session: fbResult.data.session as unknown as Session, user: fbResult.data.user as User });
       scheduleProfileSync(fbResult.data.session as unknown as Session);
     }
-    return { needsEmailConfirm: false }; // Firebase: email verified by Firebase settings
+    return { needsEmailConfirm: false };
   },
-  resendSignupConfirmation: async (email, redirectPath = "/dashboard") => {
+  resendSignupConfirmation: async (_email) => {
     set({ lastError: null });
-    const { error } = await supabase.auth.resend({
-      type: "signup",
-      email: email.trim(),
-      options: {
-        emailRedirectTo: authCallbackUrl(redirectPath),
-      },
-    });
+    const { error } = await fbSendVerificationEmail();
     if (error) {
       set({ lastError: error.message });
-      throw error;
+      throw new Error(error.message);
     }
   },
-  signInWithGoogle: async (emailHint, nextPath = "/dashboard") => {
+  signInWithGoogle: async (_emailHint, _nextPath) => {
     set({ lastError: null });
-
-    // If Supabase is known-down, go straight to Firebase popup (no redirect)
-    if (isUsingFirebase()) {
-      const fbResult = await fbSignInWithGoogle();
-      if (fbResult.error) {
-        set({ lastError: fbResult.error.message });
-        throw new Error(fbResult.error.message);
-      }
-      if (fbResult.data?.session) {
-        set({ session: fbResult.data.session as unknown as Session, user: fbResult.data.user });
-        scheduleProfileSync(fbResult.data.session as unknown as Session);
-      }
-      return;
-    }
-
-    // Supabase likely up — try OAuth redirect
-    try {
-      const queryParams: Record<string, string> = {
-        prompt: "select_account",
-      };
-      if (emailHint?.trim()) {
-        queryParams.login_hint = emailHint.trim();
-      }
-
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: authCallbackUrl(nextPath),
-          queryParams,
-        },
-      });
-      if (!error) return;
-      throw error;
-    } catch {
-      // Supabase OAuth failed (down mid-flight) — Firebase popup fallback
-    }
     const fbResult = await fbSignInWithGoogle();
     if (fbResult.error) {
       set({ lastError: fbResult.error.message });
       throw new Error(fbResult.error.message);
     }
     if (fbResult.data?.session) {
-      set({ session: fbResult.data.session as unknown as Session, user: fbResult.data.user });
+      set({ session: fbResult.data.session as unknown as Session, user: fbResult.data.user as User });
       scheduleProfileSync(fbResult.data.session as unknown as Session);
     }
   },
-  signInWithApple: async (nextPath = "/dashboard") => {
+  signInWithApple: async () => {
     set({ lastError: null });
-    // Apple OAuth requires Supabase — if down, show clear error instead of dead redirect
-    if (isUsingFirebase()) {
-      const msg = "Apple sign-in temporarily unavailable. Please use Google or email/password.";
-      set({ lastError: msg });
-      throw new Error(msg);
-    }
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "apple",
-      options: {
-        redirectTo: authCallbackUrl(nextPath),
-        queryParams: { prompt: "login" },
-      },
-    });
-    if (error) {
-      set({ lastError: error.message });
-      throw error;
-    }
+    const msg = "Apple sign-in temporarily unavailable. Please use Google or email/password.";
+    set({ lastError: msg });
+    throw new Error(msg);
   },
-  linkGoogle: async (nextPath = "/settings") => {
+  linkGoogle: async () => {
     set({ lastError: null });
-    const { error } = await supabase.auth.linkIdentity({
-      provider: "google",
-      options: {
-        redirectTo: authCallbackUrl(nextPath),
-        queryParams: { prompt: "select_account" },
-      },
-    });
-    if (error) {
-      set({ lastError: error.message });
-      throw error;
+    const fbResult = await fbSignInWithGoogle();
+    if (fbResult.error) {
+      set({ lastError: fbResult.error.message });
+      throw new Error(fbResult.error.message);
     }
   },
   setPassword: async (password) => {
     set({ lastError: null });
-    const { data, error } = await supabase.auth.updateUser({ password });
+    const { error } = await fbUpdatePassword(password);
     if (error) {
       set({ lastError: error.message });
-      throw error;
+      throw new Error(error.message);
     }
-    if (data.user) {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (sessionData.session) {
-        await syncProfileForSession(sessionData.session);
-      }
+    const { data } = await supabase.auth.getSession();
+    if (data.session) {
+      await syncProfileForSession(data.session as unknown as Session);
     }
   },
   resetPassword: async (email) => {
     set({ lastError: null });
-    // Try Supabase first
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth?mode=reset`,
-      });
-      if (!error) return;
-      if (error) throw error;
-    } catch { /* Supabase failed — try Firebase */ }
-    // Firebase fallback
     const result = await fbResetPassword(email);
     if (result.error) {
       set({ lastError: result.error.message });
@@ -464,9 +297,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signOut: async () => {
     clearAuthState();
     await resetClientSessionStores();
-    // Sign out from Supabase
-    try { await supabase.auth.signOut({ scope: "local" }); } catch { /* ignore */ }
-    // Sign out from Firebase
     try { await fbSignOut(); } catch { /* ignore */ }
   },
   completeAuthCallbackSession: async (session) => {

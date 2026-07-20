@@ -19,7 +19,7 @@ const retentionArg = process.argv.find((a) => a.startsWith("--retention-days="))
 const RETENTION_DAYS = retentionArg ? parseInt(retentionArg.split("=")[1], 10) : 3;
 
 const PROJECT_REF = "pmfnzenqemnonpglmjqx";
-const PAT = process.env.SUPABASE_PAT || "sbp_b030ccc7f8b388a46f0af1993af352d0f2fa5520";
+const PAT = process.env.SUPABASE_PAT; // Set in .env or GitHub Actions secrets
 
 function loadEnv() {
   const candidates = [resolve(process.cwd(), ".env"), resolve(process.cwd(), ".env.local")];

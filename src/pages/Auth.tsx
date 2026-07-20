@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { useAuthStore } from "@/stores/authStore";
 import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";
 import { Navbar } from "@/components/Navbar";
-import { ThemeBrandMark } from "@/components/ThemeBrandMark";
+import { WaveformBrandMark } from "@/components/WaveformBrandMark";
 import { trackClientEvent } from "@/lib/supabaseClient";
 import { getAttributionProps } from "@/lib/attribution";
 import { useLocaleStore } from "@/stores/localeStore";
@@ -258,7 +258,7 @@ export default function Auth() {
         <div className="pk-auth-panel rounded-2xl border border-pk-border bg-pk-panel/70 p-8 shadow-[0_24px_70px_rgba(0,0,0,0.55)] backdrop-blur-xl">
           <div className="text-center">
             <div className="flex flex-col items-center gap-2">
-              <ThemeBrandMark className="h-7 w-7" />
+              <WaveformBrandMark className="h-7 w-7" />
               <div className="text-2xl font-semibold tracking-tight">
                 <span className="lowercase text-pk-text/90">producer</span>
                 <span className="pk-prism-holo-text lowercase">hit</span>

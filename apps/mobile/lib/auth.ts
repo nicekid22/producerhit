@@ -1,8 +1,33 @@
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
-import type { Session, User } from "@supabase/supabase-js";
 import { useAuthStore } from "@/stores/authStore";
 import { supabase } from "./supabase";
+import { getAuth as getFirebaseAuth } from "firebase/auth";
+
+type Session = {
+  access_token: string;
+  refresh_token: string;
+  expires_in?: number;
+  expires_at?: number;
+  token_type?: string;
+  user: {
+    id: string;
+    email?: string | null;
+    user_metadata?: Record<string, unknown>;
+    app_metadata?: Record<string, unknown>;
+    aud?: string;
+    created_at?: string;
+  } | null;
+} | null;
+
+type User = {
+  id: string;
+  email?: string | null;
+  user_metadata?: Record<string, unknown>;
+  app_metadata?: Record<string, unknown>;
+  aud?: string;
+  created_at?: string;
+} | null;
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -37,22 +62,58 @@ export async function resetPassword(email: string) {
 
 export async function signInWithGoogle() {
   const redirectTo = getAuthRedirectUri();
+
+  // Try compatibility layer OAuth first
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
-    options: {
-      redirectTo,
-      skipBrowserRedirect: true,
-    },
+    options: { redirectTo, skipBrowserRedirect: true },
   });
-  if (error) throw error;
-  if (!data.url) throw new Error("OAuth URL missing");
 
-  const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+  // If session returned directly (Firebase popup worked), use it
+  if (data?.session) {
+    return { session: data.session, user: data.session.user };
+  }
+
+  // If URL returned (Supabase OAuth flow), use WebBrowser
+  if (data?.url) {
+    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+    if (result.type !== "success" || !result.url) {
+      throw new Error("Google sign-in cancelled");
+    }
+    return parseAuthCallbackUrl(result.url);
+  }
+
+  // Firebase fallback: Google OAuth via WebBrowser
+  return signInWithGoogleFirebase(redirectTo);
+}
+
+async function signInWithGoogleFirebase(redirectTo: string) {
+  const googleClientId = process.env.EXPO_PUBLIC_FIREBASE_GOOGLE_CLIENT_ID;
+  if (!googleClientId) {
+    throw new Error("EXPO_PUBLIC_FIREBASE_GOOGLE_CLIENT_ID not configured");
+  }
+
+  const oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&response_type=id_token&redirect_uri=${encodeURIComponent(redirectTo)}&scope=openid%20email%20profile`;
+
+  const result = await WebBrowser.openAuthSessionAsync(oauthUrl, redirectTo);
   if (result.type !== "success" || !result.url) {
     throw new Error("Google sign-in cancelled");
   }
 
-  return parseAuthCallbackUrl(result.url);
+  const hash = result.url.split("#")[1] ?? "";
+  const params = new URLSearchParams(hash);
+  const idToken = params.get("id_token");
+  if (!idToken) throw new Error("No id_token in Google callback");
+
+  const { GoogleAuthProvider, signInWithCredential } = await import("firebase/auth");
+  const auth = getFirebaseAuth();
+  const credential = GoogleAuthProvider.credential(idToken);
+  const authResult = await signInWithCredential(auth, credential);
+
+  const { supabaseSessionFromFirebase } = await import("@/lib/firebaseAuth");
+  const { session } = supabaseSessionFromFirebase(authResult.user);
+  useAuthStore.getState().setSession(session);
+  return { session, user: authResult.user };
 }
 
 export { signInWithApple, isAppleAuthAvailable } from "./appleAuth";
@@ -90,7 +151,7 @@ export async function signOut() {
 }
 
 export function onAuthStateChange(callback: (session: Session | null) => void) {
-  return supabase.auth.onAuthStateChange((_event, session) => {
-    callback(session);
+  return supabase.auth.onAuthStateChange((_event: string, session: unknown) => {
+    callback(session as Session | null);
   });
 }

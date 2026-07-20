@@ -1,9 +1,10 @@
 name: Reddit growth cron
 
 on:
-  schedule:
-    # Toutes les 20 min — scout + action seulement si quotas REDDIT_MAX_* OK
-    - cron: "*/20 * * * *"
+  # DÉSACTIVÉ — trop de charge sur Nano free (72 runs/day → 0).
+  # Réactiver quand le plan Pro est activé.
+  # schedule:
+  #   - cron: "*/20 * * * *"
   workflow_dispatch:
     inputs:
       run_live:

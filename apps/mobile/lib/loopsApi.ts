@@ -98,19 +98,20 @@ export async function fetchProfile(userId: string): Promise<UserProfile | null> 
     )
     .eq("id", userId)
     .maybeSingle()
-    .then(({ data, error }) => {
+    .then(({ data, error }: { data: Record<string, unknown> | null; error: unknown }) => {
       if (error || !data) return null;
+      const d = data as Record<string, unknown>;
       return {
-        id: data.id,
-        plan: normalizePlanId(data.plan),
-        loopsUsedThisMonth: data.loops_used_this_month ?? 0,
-        email: data.email,
-        referralBonus: data.referral_bonus ?? 0,
-        levelBonus: data.level_bonus ?? 0,
-        dailyBonusMonth: data.daily_bonus_month ?? 0,
-        purchasedBonus: data.purchased_bonus ?? 0,
-        referralCode: data.referral_code ?? null,
-        username: data.username ?? null,
+        id: d.id as string,
+        plan: normalizePlanId(d.plan as string),
+        loopsUsedThisMonth: (d.loops_used_this_month as number) ?? 0,
+        email: d.email as string,
+        referralBonus: (d.referral_bonus as number) ?? 0,
+        levelBonus: (d.level_bonus as number) ?? 0,
+        dailyBonusMonth: (d.daily_bonus_month as number) ?? 0,
+        purchasedBonus: (d.purchased_bonus as number) ?? 0,
+        referralCode: (d.referral_code as string) ?? null,
+        username: (d.username as string) ?? null,
       } satisfies UserProfile;
     });
 
@@ -201,7 +202,7 @@ export async function fetchUserLoops(userId: string, limit = 50): Promise<Loop[]
     .limit(limit);
 
   if (error) throw error;
-  return (data ?? []).map((row) => mapLoopRow(row as DbLoopRow));
+  return (data ?? []).map((row: Record<string, unknown>) => mapLoopRow(row as DbLoopRow));
 }
 
 export async function fetchUserLoopById(userId: string, loopId: string): Promise<Loop | null> {

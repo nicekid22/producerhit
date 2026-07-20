@@ -7,8 +7,8 @@ import App from "./App";
 
 function ErrorScreen({ title, message }: { title: string; message?: string }) {
   const missingEnv = [
-    !import.meta.env.VITE_SUPABASE_URL ? "VITE_SUPABASE_URL" : null,
-    !import.meta.env.VITE_SUPABASE_ANON_KEY ? "VITE_SUPABASE_ANON_KEY" : null,
+    !import.meta.env.VITE_FIREBASE_API_KEY ? "VITE_FIREBASE_API_KEY" : null,
+    !import.meta.env.VITE_FIREBASE_PROJECT_ID ? "VITE_FIREBASE_PROJECT_ID" : null,
   ].filter(Boolean);
 
   return (
