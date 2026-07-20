@@ -1,0 +1,822 @@
+/**
+ * Refonte Landing — CLOUD DRIP aesthetic
+ * producerhit-refonte-prompt.md §6 "Système de design (tokens)"
+ * Ce fichier est IMPORTÉ SEULEMENT par /refonte — ne touche PAS au CSS global.
+ */
+
+/* ─── Host class — applied to root of RefonteLanding ─── */
+.refonte-root {
+  --cd-ink: #16151B;
+  --cd-cloud: #F4F0E8;
+  --cd-coral: #FF5B35;
+  --cd-coral-soft: rgba(255, 91, 53, 0.14);
+  --cd-coral-glow: 0 0 40px rgba(255, 91, 53, 0.38), 0 8px 28px rgba(0, 0, 0, 0.35);
+  --cd-periwinkle: #8EA2FF;
+  --cd-periwinkle-soft: rgba(142, 162, 255, 0.14);
+  --cd-concrete: #8B877E;
+  --cd-static: #2A2833;
+  --cd-cloud-50: #F4F0E8;
+  --cd-cloud-80: rgba(244, 240, 232, 0.8);
+
+  background-color: var(--cd-ink);
+  color: var(--cd-cloud);
+  font-family: "Switzer", system-ui, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Grain overlay — §6 "grain/bruit léger 2-3%" */
+.refonte-root::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.028;
+  pointer-events: none;
+  z-index: 1;
+  mix-blend-mode: overlay;
+}
+
+/* ─── Typography — §6 ─── */
+.refonte-display {
+  font-family: "Clash Display", "General Sans", "Bebas Neue", system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 0.92;
+  text-transform: uppercase;
+}
+
+.refonte-mono {
+  font-family: "JetBrains Mono", "Space Mono", monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ─── Shared scene containers ─── */
+.refonte-scene {
+  min-height: 100vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 6rem 2rem;
+  z-index: 2;
+}
+
+@media (min-width: 768px) {
+  .refonte-scene {
+    padding: 8rem 4rem;
+  }
+}
+
+/* ─── CTA button — coral accent ─── */
+.refonte-cta {
+  background-color: var(--cd-coral);
+  color: var(--cd-cloud);
+  border: none;
+  border-radius: 14px;
+  font-family: "Switzer", system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0.875rem 2rem;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s ease;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.refonte-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--cd-coral-glow);
+}
+
+.refonte-cta:active {
+  transform: translateY(0px) scale(0.98);
+}
+
+.refonte-cta-outline {
+  background-color: transparent;
+  color: var(--cd-cloud);
+  border: 1.5px solid rgba(244, 240, 232, 0.28);
+  box-shadow: none;
+}
+
+.refonte-cta-outline:hover {
+  border-color: var(--cd-coral);
+  color: var(--cd-coral);
+  background-color: var(--cd-coral-soft);
+}
+
+/* ─── Sticky nav ─── */
+.refonte-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding: 1.25rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  background-color: rgba(22, 21, 27, 0.72);
+  border-bottom: 1px solid rgba(244, 240, 232, 0.08);
+  transition: padding 0.3s ease, background-color 0.3s ease;
+}
+
+.refonte-nav--scrolled {
+  padding: 0.75rem 2rem;
+  background-color: rgba(22, 21, 27, 0.9);
+}
+
+.refonte-nav-logo {
+  font-family: "Bebas Neue", "Clash Display", system-ui, sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--cd-cloud);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.refonte-nav-logo-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--cd-coral);
+  display: inline-block;
+}
+
+.refonte-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.refonte-nav-links a {
+  color: rgba(244, 240, 232, 0.62);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: color 0.2s ease;
+  letter-spacing: 0.02em;
+}
+
+.refonte-nav-links a:hover {
+  color: var(--cd-cloud);
+}
+
+/* ─── Scene 1 — Hero wordmark ─── */
+.refonte-hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 8rem 2rem 6rem;
+  overflow: hidden;
+}
+
+.refonte-hero-wordmark {
+  font-family: "Bebas Neue", "Clash Display", system-ui, sans-serif;
+  font-size: clamp(5rem, 18vw, 18rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 0.88;
+  text-transform: uppercase;
+  color: var(--cd-cloud);
+  margin: 0 0 2rem;
+  /* Initial: invisible, animated in by GSAP */
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.refonte-hero-wordmark .wordmark-char {
+  display: inline-block;
+}
+
+.refonte-hero-headline {
+  font-family: "Clash Display", system-ui, sans-serif;
+  font-size: clamp(1.25rem, 3vw, 2rem);
+  font-weight: 500;
+  color: rgba(244, 240, 232, 0.82);
+  letter-spacing: -0.02em;
+  max-width: 580px;
+  margin: 0 auto 2.5rem;
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+.refonte-hero-cta-wrap {
+  opacity: 0;
+  transform: translateY(12px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Coral dot accent under headline */
+.refonte-hero-coral-rule {
+  width: 48px;
+  height: 4px;
+  border-radius: 2px;
+  background-color: var(--cd-coral);
+  margin: 0 auto 2rem;
+}
+
+/* Sound wave decorative lines */
+.refonte-hero-wave {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  opacity: 0.12;
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  padding: 0 4rem;
+  overflow: hidden;
+}
+
+.refonte-hero-wave-bar {
+  flex: 1;
+  max-width: 6px;
+  background: linear-gradient(to top, var(--cd-coral), transparent);
+  border-radius: 3px 3px 0 0;
+  transform-origin: bottom;
+}
+
+/* Scroll indicator */
+.refonte-scroll-hint {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  opacity: 0;
+  color: rgba(244, 240, 232, 0.38);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  animation: refonte-scroll-hint 2s ease-in-out infinite;
+}
+
+@keyframes refonte-scroll-hint {
+  0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.38; }
+  50% { transform: translateX(-50%) translateY(6px); opacity: 0.6; }
+}
+
+/* ─── Scene 2 — Universe (mascot + parallax) ─── */
+.refonte-universe {
+  background-color: var(--cd-ink);
+  padding: 8rem 2rem;
+}
+
+.refonte-universe-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .refonte-universe-inner {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+}
+
+.refonte-universe-copy {
+  font-family: "Clash Display", system-ui, sans-serif;
+  font-size: clamp(1.8rem, 4vw, 3.2rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--cd-cloud);
+}
+
+.refonte-universe-copy em {
+  color: var(--cd-coral);
+  font-style: normal;
+}
+
+.refonte-universe-sub {
+  margin-top: 1.5rem;
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: rgba(244, 240, 232, 0.6);
+  max-width: 420px;
+}
+
+.refonte-universe-mascot {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+/* Vinyl toy placeholder — replaced by actual 3D mesh */
+.refonte-mascot-vinyl {
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #3d3b45 0%, #1e1c25 60%, #16151B 100%);
+  border: 2px solid rgba(255, 91, 53, 0.25);
+  box-shadow: 0 0 0 8px rgba(255, 91, 53, 0.08), 0 0 0 16px rgba(255, 91, 53, 0.04), 0 32px 80px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: transform 0.1s ease, box-shadow 0.3s ease;
+  cursor: grab;
+  user-select: none;
+}
+
+.refonte-mascot-vinyl:active { cursor: grabbing; }
+
+.refonte-mascot-vinyl::before {
+  content: "";
+  position: absolute;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #FF5B35 0%, rgba(255, 91, 53, 0.6) 40%, transparent 70%);
+  box-shadow: 0 0 24px rgba(255, 91, 53, 0.4);
+}
+
+.refonte-mascot-vinyl::after {
+  content: "";
+  position: absolute;
+  inset: 16px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 91, 53, 0.15);
+}
+
+.refonte-mascot-label {
+  position: absolute;
+  bottom: -2.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(244, 240, 232, 0.3);
+  white-space: nowrap;
+}
+
+/* ─── Scene 3 — Les 4 modes ─── */
+.refonte-modes {
+  background-color: var(--cd-static);
+  padding: 8rem 2rem;
+  position: relative;
+}
+
+.refonte-modes-header {
+  text-align: center;
+  margin-bottom: 5rem;
+}
+
+.refonte-modes-eyebrow {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cd-coral);
+  margin-bottom: 1rem;
+}
+
+.refonte-modes-title {
+  font-family: "Clash Display", system-ui, sans-serif;
+  font-size: clamp(2rem, 5vw, 4rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--cd-cloud);
+  margin: 0;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.refonte-modes-grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+@media (max-width: 640px) {
+  .refonte-modes-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.refonte-mode-card {
+  background-color: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 20px;
+  padding: 2rem;
+  cursor: pointer;
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.refonte-mode-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--cd-coral-soft) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.refonte-mode-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 91, 53, 0.35);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 91, 53, 0.15);
+}
+
+.refonte-mode-card:hover::before {
+  opacity: 1;
+}
+
+.refonte-mode-icon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.refonte-mode-name {
+  font-family: "Clash Display", system-ui, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: var(--cd-cloud);
+  margin: 0 0 0.75rem;
+}
+
+.refonte-mode-desc {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: rgba(244, 240, 232, 0.58);
+  margin: 0;
+}
+
+.refonte-mode-tag {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cd-coral);
+  background: var(--cd-coral-soft);
+  border: 1px solid rgba(255, 91, 53, 0.2);
+  border-radius: 100px;
+  padding: 0.25rem 0.6rem;
+}
+
+/* ─── Scene 4 — Preuve sociale ─── */
+.refonte-social {
+  background-color: var(--cd-ink);
+  padding: 8rem 0;
+}
+
+.refonte-social-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.refonte-social-header {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.refonte-social-title {
+  font-family: "Clash Display", system-ui, sans-serif;
+  font-size: clamp(1.6rem, 3.5vw, 2.8rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--cd-cloud);
+  text-transform: uppercase;
+  margin: 0;
+  line-height: 0.95;
+}
+
+.refonte-social-sub {
+  margin-top: 1rem;
+  color: rgba(244, 240, 232, 0.48);
+  font-size: 0.9rem;
+}
+
+.refonte-track-marquee {
+  display: flex;
+  gap: 1.25rem;
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  padding: 0.5rem 0;
+}
+
+.refonte-track-card {
+  flex-shrink: 0;
+  width: 180px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease;
+  cursor: pointer;
+}
+
+.refonte-track-card:hover {
+  transform: translateY(-6px) scale(1.03);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 91, 53, 0.2);
+}
+
+.refonte-track-cover {
+  aspect-ratio: 1;
+  width: 100%;
+  background: linear-gradient(135deg, var(--cd-static) 0%, rgba(42, 40, 51, 0.5) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.refonte-track-cover-art {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.refonte-track-play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(22, 21, 27, 0.5);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.refonte-track-card:hover .refonte-track-play {
+  opacity: 1;
+}
+
+.refonte-track-play-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--cd-coral);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.refonte-track-meta {
+  padding: 0.875rem;
+}
+
+.refonte-track-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--cd-cloud);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0 0 0.25rem;
+}
+
+.refonte-track-author {
+  font-size: 0.7rem;
+  color: var(--cd-concrete);
+  margin: 0;
+}
+
+/* ─── Scene 5 — Résolution / Pricing ─── */
+.refonte-pricing {
+  background-color: var(--cd-static);
+  padding: 8rem 2rem;
+}
+
+.refonte-pricing-inner {
+  max-width: 860px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.refonte-pricing-title {
+  font-family: "Clash Display", system-ui, sans-serif;
+  font-size: clamp(1.8rem, 4vw, 3.2rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  color: var(--cd-cloud);
+  line-height: 0.92;
+  margin: 0 0 1rem;
+}
+
+.refonte-pricing-sub {
+  color: rgba(244, 240, 232, 0.52);
+  font-size: 1rem;
+  margin-bottom: 3.5rem;
+}
+
+.refonte-plans {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  text-align: left;
+  margin-bottom: 3rem;
+}
+
+@media (max-width: 640px) {
+  .refonte-plans {
+    grid-template-columns: 1fr;
+  }
+}
+
+.refonte-plan {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 1.75rem;
+  position: relative;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.refonte-plan:hover {
+  transform: translateY(-2px);
+}
+
+.refonte-plan--featured {
+  border-color: var(--cd-coral);
+  background: var(--cd-coral-soft);
+}
+
+.refonte-plan--featured::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 21px;
+  background: linear-gradient(135deg, var(--cd-coral), transparent 60%);
+  z-index: -1;
+  opacity: 0.4;
+}
+
+.refonte-plan-label {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cd-coral);
+  margin-bottom: 0.75rem;
+}
+
+.refonte-plan-name {
+  font-family: "Clash Display", system-ui, sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: var(--cd-cloud);
+  margin: 0 0 0.5rem;
+}
+
+.refonte-plan-price {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--cd-cloud);
+  margin: 0 0 0.25rem;
+}
+
+.refonte-plan-price span {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--cd-concrete);
+}
+
+.refonte-plan-features {
+  list-style: none;
+  padding: 0;
+  margin: 1.25rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.refonte-plan-features li {
+  font-size: 0.8rem;
+  color: rgba(244, 240, 232, 0.6);
+  padding-left: 1.25rem;
+  position: relative;
+}
+
+.refonte-plan-features li::before {
+  content: "—";
+  position: absolute;
+  left: 0;
+  color: var(--cd-coral);
+}
+
+.refonte-plan-cta {
+  margin-top: 1.5rem;
+  width: 100%;
+}
+
+/* ─── Footer ─── */
+.refonte-footer {
+  background-color: var(--cd-ink);
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 3rem 2rem;
+}
+
+.refonte-footer-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.refonte-footer-logo {
+  font-family: "Bebas Neue", "Clash Display", system-ui, sans-serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: rgba(244, 240, 232, 0.48);
+  text-decoration: none;
+}
+
+.refonte-footer-copy {
+  font-size: 0.75rem;
+  color: rgba(244, 240, 232, 0.28);
+}
+
+.refonte-footer-links {
+  display: flex;
+  gap: 1.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.refonte-footer-links a {
+  font-size: 0.75rem;
+  color: rgba(244, 240, 232, 0.38);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.refonte-footer-links a:hover {
+  color: var(--cd-cloud);
+}
+
+/* ─── Reduced motion ─── */
+@media (prefers-reduced-motion: reduce) {
+  .refonte-hero-wordmark,
+  .refonte-hero-headline,
+  .refonte-hero-cta-wrap,
+  .refonte-scroll-hint {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+
+  .refonte-mode-card,
+  .refonte-track-card,
+  .refonte-plan {
+    transition: none !important;
+  }
+}
