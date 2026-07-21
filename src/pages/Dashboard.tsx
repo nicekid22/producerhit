@@ -1125,6 +1125,17 @@ export default function Dashboard() {
       } catch {
         void 0;
       }
+      // Sync to Firestore (compteur persistant pour l'utilisateur)
+      if (user?.id) {
+        import("@/lib/firebaseSupabaseClient").then(({ fbDb }) => {
+          const db = fbDb();
+          if (db) {
+            import("firebase/firestore").then(({ doc, updateDoc, increment }) => {
+              updateDoc(doc(db, "profiles", user.id), { loops_used_this_month: increment(1) }).catch(() => {});
+            });
+          }
+        });
+      }
       return next;
     });
     notifyGamificationGeneration(locale, {

@@ -97,6 +97,8 @@ function fbDb(): Firestore | null {
   return _db;
 }
 
+export { fbDb };
+
 function fbAuth(): Auth | null {
   ensureFirebase();
   return _auth;

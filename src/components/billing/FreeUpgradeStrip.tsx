@@ -34,11 +34,11 @@ export function FreeUpgradeStrip({ locale, location, plan, className, ready = tr
   const launch = isLaunchOfferActive();
   const title = launch
     ? isFr
-      ? "Pro à 8 $/mois — droits commerciaux + WAV"
-      : "Pro $8/mo — commercial rights + WAV export"
+      ? "Pro 8$/mo — droits commerciaux + WAV"
+      : "Pro $8/mo — commercial rights + WAV"
     : isFr
-      ? "Passe Pro — 50 gen/mois, WAV & droits commerciaux"
-      : "Go Pro — 50 gens/mo, WAV & commercial rights";
+      ? "Passe Pro — 75 gen/mois, WAV & droits commerciaux"
+      : "Go Pro — 75 gens/mo, WAV & commercial rights";
 
   return (
     <div
@@ -52,7 +52,7 @@ export function FreeUpgradeStrip({ locale, location, plan, className, ready = tr
         <div>
           <p className="text-sm font-semibold text-white">{title}</p>
           <p className="mt-0.5 text-xs text-white/55">
-            {isFr ? "Checkout Stripe en 30 s · annulable" : "Stripe checkout in 30s · cancel anytime"}
+            {isFr ? "Offre débloquée! Annulable à tout moment · Stripe" : "Stripe checkout in 30s · cancel anytime"}
           </p>
         </div>
       </div>
