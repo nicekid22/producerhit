@@ -1,24 +1,29 @@
 /* Launch offer — prix & note discrets, style Apple */
 
 .pk-launch-note {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
   font-size: 11px;
   font-weight: 500;
   line-height: 1.45;
-  color: rgba(255, 255, 255, 0.42);
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .pk-launch-note--compact {
   font-size: 10px;
   line-height: 1.4;
-  color: rgba(255, 255, 255, 0.38);
+  color: rgba(255, 255, 255, 0.48);
 }
 
 .pk-launch-note__sep {
-  color: rgba(255, 255, 255, 0.2);
+  display: none;
+  color: rgba(255, 255, 255, 0.25);
 }
 
 .pk-launch-note__muted {
-  color: rgba(255, 255, 255, 0.32);
+  color: rgba(255, 255, 255, 0.35);
 }
 
 /* Prix carte — aligné sur pk-pricing-tier__price */
