@@ -48,10 +48,10 @@ export const MAX_LEVEL = 25;
 /** Bonus generations granted when reaching this level (level 1 = none). */
 export function getLevelRewardCredits(level: number): number {
   if (level <= 1) return 0;
-  if (level >= 2 && level <= 9) return 2;
-  if (level === 10) return 4;
-  if (level >= 11 && level <= 24) return level % 5 === 0 ? 2 : 1;
-  if (level === MAX_LEVEL) return 3;
+  if (level >= 2 && level <= 9) return 3;
+  if (level === 10) return 5;
+  if (level >= 11 && level <= 24) return level % 5 === 0 ? 4 : 2;
+  if (level === MAX_LEVEL) return 5;
   return 0;
 }
 
@@ -239,7 +239,7 @@ export function recordVisit(): { state: GamificationState; unlocked: Achievement
   else if (state.lastVisitYmd !== today) state.streak = 1;
 
   state.lastVisitYmd = today;
-  const streakBonus = state.streak > 1 ? Math.min(30, state.streak * 5) : 10;
+  const streakBonus = state.streak > 1 ? Math.min(50, state.streak * 8) : 15;
   state.xp += streakBonus;
   const unlocked = unlockAchievements(state);
   saveGamification(state);
@@ -249,7 +249,7 @@ export function recordVisit(): { state: GamificationState; unlocked: Achievement
 export function recordGeneration(): { state: GamificationState; unlocked: AchievementId[]; xpGained: number } {
   const state = loadGamification();
   state.totalGenerations += 1;
-  const xpGained = state.totalGenerations === 1 ? 25 : 12;
+  const xpGained = state.totalGenerations === 1 ? 40 : 20;
   state.xp += xpGained;
   const unlocked = unlockAchievements(state);
   saveGamification(state);
@@ -259,7 +259,7 @@ export function recordGeneration(): { state: GamificationState; unlocked: Achiev
 export function recordMasteringPreview(): { state: GamificationState; unlocked: AchievementId[]; xpGained: number } {
   const state = loadGamification();
   state.masteringPreviews += 1;
-  const xpGained = 20;
+  const xpGained = 30;
   state.xp += xpGained;
   const unlocked = unlockAchievements(state);
   saveGamification(state);

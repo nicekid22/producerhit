@@ -22,11 +22,13 @@ type Phase = "teaser" | "spin" | "stopping" | "won";
 function buildSegment(winCredits: number, locale: AppLocale): ReelItem[] {
   const decoys: ReelItem[] = [
     { id: "d1", label: "+1", sub: "GEN" },
-    { id: "d2", label: "XP", sub: "BOOST" },
-    { id: "d3", label: "+2", sub: "GEN" },
+    { id: "d2", label: "🎁", sub: "MYSTERY" },
+    { id: "d3", label: "+3", sub: "GENS" },
     { id: "d4", label: "🔥", sub: "STREAK" },
-    { id: "d5", label: "+1", sub: "GEN" },
-    { id: "d6", label: "✦", sub: "LUCK" },
+    { id: "d5", label: "+5", sub: "GENS" },
+    { id: "d6", label: "✨", sub: "BONUS" },
+    { id: "d7", label: "XP", sub: "BOOST" },
+    { id: "d8", label: "+2", sub: "GEN" },
   ];
   const win: ReelItem = {
     id: "win",
@@ -34,7 +36,11 @@ function buildSegment(winCredits: number, locale: AppLocale): ReelItem[] {
     sub: locale === "fr" ? "GÉNÉ" : "GENS",
     win: true,
   };
-  return [...decoys.slice(0, 3), win, ...decoys.slice(3)];
+  // Place le win à une position semi-aléatoire pour plus de suspense
+  const insertAt = Math.floor(decoys.length * 0.4 + Math.random() * decoys.length * 0.3);
+  const items = [...decoys];
+  items.splice(insertAt, 0, win);
+  return items;
 }
 
 function tripleStrip(segment: ReelItem[]): ReelItem[] {
@@ -238,8 +244,8 @@ export function LootRevealModal() {
   const showReel = phase !== "teaser";
 
   return createPortal(
-    <div
-      className="pk-growth-modal-backdrop pk-loot-overlay fixed inset-0 z-[300] flex items-center justify-center p-4"
+      <div
+        className="pk-growth-modal-backdrop pk-loot-overlay fixed inset-0 z-[300] flex items-center justify-center bg-black/60 p-4"
       role="dialog"
       aria-modal="true"
       aria-label={title}

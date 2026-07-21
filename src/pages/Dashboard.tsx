@@ -595,8 +595,10 @@ export default function Dashboard() {
     setVoiceCloneUsed(data.voice_clone_used_this_month ?? 0);
     setReferralBonus(data.referral_bonus);
     setPurchasedBonus(data.purchased_bonus ?? 0);
-    setLevelBonus(data.level_bonus);
-    setDailyBonusMonth(data.daily_bonus_month);
+    // Ne réduit jamais les bonus — le serveur (Firestore) peut être à 0
+    // alors que le vrai état est dans Supabase (gamification RPC)
+    setLevelBonus((prev) => Math.max(prev, data.level_bonus));
+    setDailyBonusMonth((prev) => Math.max(prev, data.daily_bonus_month));
     if (user?.id) {
       syncProfileCache(data.plan, data.loops_used_this_month, user.id, {
         referral_bonus: data.referral_bonus,
