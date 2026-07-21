@@ -61,3 +61,5 @@ nul
 README-PIPELINE.md
 reports/
 ace_gen_*.mjs
+.git-rewrite/
+test-output/

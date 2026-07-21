@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { LOOP_AUDIO_BUCKET } from "../_shared/generationJobUtils.ts";
+import { fbGetProfile } from "../_shared/firestoreServer.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -133,14 +134,27 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+    const firebaseApiKey = Deno.env.get("FIREBASE_API_KEY") ?? "";
 
-    const userClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const {
-      data: { user },
-    } = await userClient.auth.getUser();
-    if (!user?.id) return json({ error: "unauthorized" }, 401);
+    let userId: string | null = null;
+    if (firebaseApiKey && token.startsWith("eyJ")) {
+      try {
+        const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${firebaseApiKey}`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken: token }),
+        });
+        if (res.ok) {
+          const j = (await res.json()) as { users?: Array<{ localId?: string }> };
+          userId = j.users?.[0]?.localId ?? null;
+        }
+      } catch { /* fall through */ }
+    }
+    if (!userId && supabaseUrl && anonKey) {
+      const sc = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: authHeader } } });
+      const { data: { user } } = await sc.auth.getUser();
+      userId = user?.id ?? null;
+    }
+    if (!userId) return json({ error: "unauthorized" }, 401);
 
     const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
 
@@ -158,8 +172,8 @@ serve(async (req) => {
     const action = String(body.action ?? "apply");
     const loopId = String(body.loopId ?? "").trim();
 
-    const { data: planRow } = await userClient.from("profiles").select("plan").eq("id", user.id).maybeSingle();
-    const plan = typeof planRow?.plan === "string" ? planRow.plan : "free";
+    const fbProfile = await fbGetProfile(userId!);
+    const plan = fbProfile?.plan ?? "free";
 
     if (!canUseProducerTag(plan)) return json({ error: "plan_required", plan }, 402);
 
@@ -169,7 +183,7 @@ serve(async (req) => {
         .from("loops")
         .select("id, audio_url, stems_url")
         .eq("id", loopId)
-        .eq("user_id", user.id)
+        .eq("user_id", userId!)
         .maybeSingle();
       if (loopErr || !loopRow) return json({ error: "loop_not_found" }, 404);
 
@@ -189,7 +203,7 @@ serve(async (req) => {
         .from("loops")
         .update({ audio_url: restoredUrl, stems_url: nextStems })
         .eq("id", loopId)
-        .eq("user_id", user.id);
+        .eq("user_id", userId!);
       if (updErr) return json({ error: updErr.message }, 500);
 
       return json({ ok: true, audioUrl: restoredUrl, removed: true });
@@ -226,7 +240,7 @@ serve(async (req) => {
       .from("loops")
       .select("id, audio_url, stems_url, bpm, duration_sec, name")
       .eq("id", loopId)
-      .eq("user_id", user.id)
+      .eq("user_id", userId!)
       .maybeSingle();
     if (loopErr || !loopRow) return json({ error: "loop_not_found" }, 404);
 
@@ -237,7 +251,7 @@ serve(async (req) => {
       .from("producer_tags")
       .select("id, name, storage_path, duration_sec, settings_json")
       .eq("id", tagId)
-      .eq("user_id", user.id)
+      .eq("user_id", userId!)
       .maybeSingle();
     if (tagErr || !tagRow) return json({ error: "tag_not_found" }, 404);
 
@@ -332,7 +346,7 @@ serve(async (req) => {
       .from("loops")
       .update({ audio_url: newAudioUrl, stems_url: nextStems })
       .eq("id", loopId)
-      .eq("user_id", user.id);
+      .eq("user_id", userId!);
     if (updErr) return json({ error: updErr.message }, 500);
 
     if (!alreadyCounted) {

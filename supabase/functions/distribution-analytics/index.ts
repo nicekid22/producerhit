@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { getAnalyticsStreams, getLabelGridConfig } from "../_shared/labelgridClient.ts";
+import { fbGetProfile } from "../_shared/firestoreServer.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -21,11 +22,28 @@ serve(async (req) => {
   const authHeader = req.headers.get("Authorization") ?? "";
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-  const userClient = createClient(supabaseUrl, anonKey, {
-    global: { headers: { Authorization: authHeader } },
-  });
-  const { data: authData, error: authError } = await userClient.auth.getUser();
-  if (authError || !authData.user) {
+  const firebaseApiKey = Deno.env.get("FIREBASE_API_KEY") ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.replace("Bearer ", "").trim() : "";
+
+  let userId: string | null = null;
+  if (firebaseApiKey && token.startsWith("eyJ")) {
+    try {
+      const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts/lookup?key=${firebaseApiKey}`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken: token }),
+      });
+      if (res.ok) {
+        const j = (await res.json()) as { users?: Array<{ localId?: string }> };
+        userId = j.users?.[0]?.localId ?? null;
+      }
+    } catch { /* fall through */ }
+  }
+  if (!userId && supabaseUrl && anonKey) {
+    const sc = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: authHeader } } });
+    const { data: authData, error: authError } = await sc.auth.getUser();
+    if (!authError && authData.user) userId = authData.user.id;
+  }
+  if (!userId) {
     return new Response(JSON.stringify({ error: "not_authenticated" }), {
       status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -38,13 +56,8 @@ serve(async (req) => {
     to?: string;
   };
 
-  const { data: profile } = await userClient
-    .from("profiles")
-    .select("plan")
-    .eq("id", authData.user.id)
-    .single();
-
-  const plan = profile?.plan ?? "free";
+  const fbProfile = await fbGetProfile(userId!);
+  const plan = fbProfile?.plan ?? "free";
   if (plan !== "plus" && plan !== "studio") {
     return new Response(JSON.stringify({ error: "plan_not_eligible" }), {
       status: 403,

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { fbGetProfile, fbUpdateProfile, fbGrantCredits } from "../_shared/firestoreServer.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -72,9 +73,9 @@ serve(async (req) => {
     const pricePlusAnnual = Deno.env.get("STRIPE_PRICE_ID_PLUS_ANNUAL") ?? "";
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SERVICE_ROLE_KEY") ?? "";
+    const firebaseApiKey = Deno.env.get("FIREBASE_API_KEY") ?? "";
 
-    if (!stripeKey || !supabaseUrl || !anonKey || !serviceRoleKey) {
+    if (!stripeKey || !supabaseUrl || !anonKey) {
       throw new Error("Missing configuration");
     }
 
@@ -87,16 +88,29 @@ serve(async (req) => {
       });
     }
 
-    const supabase = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: `Bearer ${token}` } } });
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser(token);
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: "Not authenticated" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    let userId: string | null = null;
+    if (firebaseApiKey && token.startsWith("eyJ")) {
+      try {
+        const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${firebaseApiKey}`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken: token }),
+        });
+        if (res.ok) {
+          const j = (await res.json()) as { users?: Array<{ localId?: string }> };
+          userId = j.users?.[0]?.localId ?? null;
+        }
+      } catch { /* fall through */ }
+    }
+    if (!userId) {
+      const supabase = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: `Bearer ${token}` } } });
+      const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+      if (userError || !user) {
+        return new Response(JSON.stringify({ error: "Not authenticated" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      userId = user.id;
     }
 
     const body = (await req.json().catch(() => ({}))) as { sessionId?: unknown };
@@ -117,8 +131,9 @@ serve(async (req) => {
     }
 
     const metadata = (session.metadata ?? {}) as Record<string, unknown>;
-    const sessionUserId = asString(metadata.supabase_user_id) || asString(session.client_reference_id);
-    if (sessionUserId !== user.id) {
+    // Accept both old Supabase sessions and new Firebase sessions
+    const sessionUserId = asString(metadata.firebase_uid) || asString(metadata.supabase_user_id) || asString(session.client_reference_id);
+    if (sessionUserId !== userId!) {
       return new Response(JSON.stringify({ error: "Session does not belong to user" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -133,7 +148,7 @@ serve(async (req) => {
       });
     }
 
-    const admin = createClient(supabaseUrl, serviceRoleKey);
+    const admin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SERVICE_ROLE_KEY") ?? "");
     const mode = asString(session.mode);
     const customerId = asString(session.customer);
 
@@ -147,16 +162,12 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-
-      const { data: granted, error: grantError } = await admin.rpc("grant_purchased_bonus_credits", {
-        p_stripe_event_id: `confirm:${sessionId}`,
-        p_user_id: user.id,
-        p_pack_id: creditPack,
-        p_credits: credits,
+      await fbGrantCredits(userId!, {
+        idempotencyKey: `confirm:${sessionId}`,
+        bonusType: "purchased",
+        credits,
       });
-      if (grantError) throw grantError;
-
-      return new Response(JSON.stringify({ ok: true, product: "credit_pack", granted: Boolean(granted) }), {
+      return new Response(JSON.stringify({ ok: true, product: "credit_pack" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -193,20 +204,16 @@ serve(async (req) => {
       });
     }
 
-    const { data: prevProfile } = await admin.from("profiles").select("plan").eq("id", user.id).maybeSingle();
-    const prevPlan = typeof prevProfile?.plan === "string" ? prevProfile.plan : "free";
+    const prevProfile = await fbGetProfile(userId!);
+    const prevPlan = prevProfile?.plan ?? "free";
 
-    const { error: updateError } = await admin
-      .from("profiles")
-      .update({
-        ...profilePlanPatch(prevPlan, plan),
-        stripe_customer_id: customerId || null,
-        stripe_subscription_id: subscriptionId,
-        stripe_price_id: priceId || null,
-        stripe_current_period_end: periodEndIso,
-      })
-      .eq("id", user.id);
-    if (updateError) throw updateError;
+    await fbUpdateProfile(userId!, {
+      ...profilePlanPatch(prevPlan, plan),
+      stripe_customer_id: customerId || null,
+      stripe_subscription_id: subscriptionId,
+      stripe_price_id: priceId || null,
+      stripe_current_period_end: periodEndIso,
+    });
 
     return new Response(JSON.stringify({ ok: true, plan }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

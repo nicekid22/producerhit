@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { fbGetProfile } from "../_shared/firestoreServer.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -50,18 +51,32 @@ serve(async (req) => {
   try {
     const authHeader = req.headers.get("Authorization") ?? req.headers.get("authorization");
     if (!authHeader?.startsWith("Bearer ")) return json({ error: "unauthorized" }, 401);
+    const token = authHeader.replace("Bearer ", "").trim();
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+    const firebaseApiKey = Deno.env.get("FIREBASE_API_KEY") ?? "";
 
-    const userClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const {
-      data: { user },
-    } = await userClient.auth.getUser();
-    if (!user?.id) return json({ error: "unauthorized" }, 401);
+    let userId: string | null = null;
+    if (firebaseApiKey && token.startsWith("eyJ")) {
+      try {
+        const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${firebaseApiKey}`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken: token }),
+        });
+        if (res.ok) {
+          const j = (await res.json()) as { users?: Array<{ localId?: string }> };
+          userId = j.users?.[0]?.localId ?? null;
+        }
+      } catch { /* fall through */ }
+    }
+    if (!userId && supabaseUrl && anonKey) {
+      const sc = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: authHeader } } });
+      const { data: { user } } = await sc.auth.getUser();
+      userId = user?.id ?? null;
+    }
+    if (!userId) return json({ error: "unauthorized" }, 401);
 
     const body = (await req.json().catch(() => ({}))) as {
       action?: string;
@@ -73,14 +88,18 @@ serve(async (req) => {
     };
     const action = String(body.action ?? "list");
 
-    const { data: planRow } = await userClient.from("profiles").select("plan").eq("id", user.id).maybeSingle();
-    const plan = typeof planRow?.plan === "string" ? planRow.plan : "free";
+    const fbProfile = await fbGetProfile(userId!);
+    const plan = fbProfile?.plan ?? "free";
+
+    const userClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
 
     if (action === "list") {
       const { data, error } = await userClient
         .from("producer_tags")
         .select("id, name, storage_path, duration_sec, settings_json, created_at")
-        .eq("user_id", user.id)
+        .eq("user_id", userId!)
         .order("created_at", { ascending: false });
       if (error) return json({ error: error.message }, 500);
       return json({ tags: data ?? [], plan, maxTags: producerTagMax(plan) });
@@ -95,7 +114,7 @@ serve(async (req) => {
         .from("producer_tags")
         .select("storage_path, settings_json")
         .eq("id", id)
-        .eq("user_id", user.id)
+        .eq("user_id", userId!)
         .maybeSingle();
       if (!row?.storage_path) return json({ error: "not_found" }, 404);
 
@@ -103,7 +122,7 @@ serve(async (req) => {
       const variants = Array.isArray(settings.variants) ? settings.variants : [];
       const paths = [row.storage_path, ...variants.map((v) => (v && typeof v === "object" && typeof (v as Record<string, unknown>).storagePath === "string" ? (v as Record<string, unknown>).storagePath as string : "")).filter(Boolean)];
 
-      await userClient.from("producer_tags").delete().eq("id", id).eq("user_id", user.id);
+      await userClient.from("producer_tags").delete().eq("id", id).eq("user_id", userId!);
       void admin.storage.from(BUCKET).remove(paths);
       return json({ ok: true });
     }
@@ -113,13 +132,13 @@ serve(async (req) => {
 
       const storagePath = String(body.storagePath ?? "").trim();
       const name = String(body.name ?? "Mon tag").trim().slice(0, 80) || "Mon tag";
-      if (!storagePath.startsWith(`${user.id}/`)) return json({ error: "invalid_path" }, 400);
+      if (!storagePath.startsWith(`${userId!}/`)) return json({ error: "invalid_path" }, 400);
 
       const maxTags = producerTagMax(plan);
       const { count } = await userClient
         .from("producer_tags")
         .select("id", { count: "exact", head: true })
-        .eq("user_id", user.id);
+        .eq("user_id", userId!);
       if ((count ?? 0) >= maxTags) {
         return json({ error: "tag_limit_reached", limit: maxTags, plan }, 402);
       }
@@ -156,7 +175,7 @@ serve(async (req) => {
             for (const v of payload.variants ?? []) {
               if (!v.base64) continue;
               const bin = Uint8Array.from(atob(v.base64), (c) => c.charCodeAt(0));
-              const varPath = `${user.id}/variants/${Date.now()}-${v.id}.mp3`;
+              const varPath = `${userId!}/variants/${Date.now()}-${v.id}.mp3`;
               await admin.storage.from(BUCKET).upload(varPath, bin, {
                 contentType: "audio/mpeg",
                 upsert: true,
@@ -174,7 +193,7 @@ serve(async (req) => {
       const { data: inserted, error: insErr } = await userClient
         .from("producer_tags")
         .insert({
-          user_id: user.id,
+          user_id: userId!,
           name,
           storage_path: storagePath,
           duration_sec: durationSec,

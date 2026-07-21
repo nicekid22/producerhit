@@ -1,5 +1,31 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { fbGetProfile, fbUpdateProfile, fbRegisterStripeCustomer } from "../_shared/firestoreServer.ts";
+
+/** Verify a Firebase ID token via Identity Toolkit REST API. */
+async function verifyFirebaseIdToken(
+  token: string,
+  apiKey: string,
+): Promise<{ uid: string; email?: string } | null> {
+  if (!token.startsWith("eyJ")) return null;
+  try {
+    const res = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken: token }),
+      },
+    );
+    if (!res.ok) return null;
+    const json = (await res.json()) as { users?: Array<{ localId?: string; email?: string }> };
+    const u = json.users?.[0];
+    if (!u?.localId) return null;
+    return { uid: u.localId, email: u.email };
+  } catch {
+    return null;
+  }
+}
 
 const ALLOWED_ORIGINS = new Set([
   "https://www.producerhit.com",
@@ -79,7 +105,7 @@ async function upgradeExistingSubscription(
       "items[0][price]": priceId,
       proration_behavior: "create_prorations",
       "metadata[plan]": plan,
-      "metadata[supabase_user_id]": userId,
+      "metadata[firebase_uid]": userId,
       "metadata[price_id]": priceId,
     }),
   });
@@ -94,9 +120,7 @@ async function upgradeExistingSubscription(
   return updateJson as Record<string, unknown>;
 }
 
-async function syncProfilePlan(
-  supabaseUrl: string,
-  serviceRoleKey: string,
+async function syncProfilePlanFB(
   userId: string,
   plan: string,
   customerId: string,
@@ -104,20 +128,17 @@ async function syncProfilePlan(
   priceId: string,
   currentPeriodEnd: number | null,
 ) {
-  if (!serviceRoleKey) throw new Error("Missing service role key");
-  const admin = createClient(supabaseUrl, serviceRoleKey);
   const periodEndIso = currentPeriodEnd ? new Date(currentPeriodEnd * 1000).toISOString() : null;
-  const { error } = await admin
-    .from("profiles")
-    .update({
-      plan,
-      stripe_customer_id: customerId || null,
-      stripe_subscription_id: subscriptionId,
-      stripe_price_id: priceId || null,
-      stripe_current_period_end: periodEndIso,
-    })
-    .eq("id", userId);
-  if (error) throw error;
+  await fbUpdateProfile(userId, {
+    plan,
+    stripe_customer_id: customerId || null,
+    stripe_subscription_id: subscriptionId,
+    stripe_price_id: priceId || null,
+    stripe_current_period_end: periodEndIso,
+  });
+  if (customerId) {
+    await fbRegisterStripeCustomer(userId, customerId);
+  }
 }
 
 function planFromEnvPriceId(
@@ -142,22 +163,13 @@ function subscriptionPriceId(sub: Record<string, unknown>): string {
   return asString(price?.id);
 }
 
-async function clearStaleBilling(
-  supabaseUrl: string,
-  serviceRoleKey: string,
-  userId: string,
-) {
-  if (!serviceRoleKey) return;
-  const admin = createClient(supabaseUrl, serviceRoleKey);
-  await admin
-    .from("profiles")
-    .update({
-      plan: "free",
-      stripe_subscription_id: null,
-      stripe_price_id: null,
-      stripe_current_period_end: null,
-    })
-    .eq("id", userId);
+async function clearStaleBillingFB(userId: string) {
+  await fbUpdateProfile(userId, {
+    plan: "free",
+    stripe_subscription_id: null,
+    stripe_price_id: null,
+    stripe_current_period_end: null,
+  });
 }
 
 function priceIdForPlan(
@@ -284,7 +296,7 @@ function buildCreditPackCheckoutParams(
     client_reference_id: userId,
     "metadata[credit_pack]": product,
     "metadata[credits]": String(credits),
-    "metadata[supabase_user_id]": userId,
+    "metadata[firebase_uid]": userId,
     "metadata[price_id]": priceId,
   });
   if (customerId) params.set("customer", customerId);
@@ -315,10 +327,10 @@ function buildBaseCheckoutParams(
     allow_promotion_codes: "true",
     client_reference_id: userId,
     "metadata[plan]": plan,
-    "metadata[supabase_user_id]": userId,
+    "metadata[firebase_uid]": userId,
     "metadata[price_id]": priceId,
     "subscription_data[metadata][plan]": plan,
-    "subscription_data[metadata][supabase_user_id]": userId,
+    "subscription_data[metadata][firebase_uid]": userId,
     "subscription_data[metadata][price_id]": priceId,
   });
   if (checkoutRecovery) {
@@ -470,7 +482,7 @@ serve(async (req) => {
     const token = authHeader?.startsWith("Bearer ") ? authHeader.replace("Bearer ", "").trim() : "";
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SERVICE_ROLE_KEY") ?? "";
+    const firebaseApiKey = Deno.env.get("FIREBASE_API_KEY") ?? "";
     if (!token || !supabaseUrl || !anonKey) {
       return new Response(JSON.stringify({ error: "Not authenticated" }), {
         status: 401,
@@ -478,17 +490,31 @@ serve(async (req) => {
       });
     }
 
-    const supabase = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: `Bearer ${token}` } } });
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser(token);
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: "Not authenticated" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Try Firebase ID token first, then fallback to Supabase JWT
+    let userId: string | null = null;
+    let userEmail: string | null = null;
+
+    if (firebaseApiKey && token.startsWith("eyJ")) {
+      const fbUser = await verifyFirebaseIdToken(token, firebaseApiKey);
+      if (fbUser) {
+        userId = fbUser.uid;
+        userEmail = fbUser.email ?? null;
+      }
     }
+
+    if (!userId) {
+      const supabase = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: `Bearer ${token}` } } });
+      const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+      if (userError || !user) {
+        return new Response(JSON.stringify({ error: "Not authenticated" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      userId = user.id;
+      userEmail = user.email;
+    }
+
     if (!successUrl.startsWith("http")) {
       return new Response(JSON.stringify({ error: "Missing successUrl" }), {
         status: 400,
@@ -502,12 +528,9 @@ serve(async (req) => {
       });
     }
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("stripe_customer_id, stripe_subscription_id, plan")
-      .eq("id", user.id)
-      .maybeSingle();
-    const customerId = typeof profile?.stripe_customer_id === "string" ? profile.stripe_customer_id : "";
+    // Read profile from Firestore (not Supabase)
+    const fbProfile = await fbGetProfile(userId!);
+    const customerId = fbProfile?.stripe_customer_id ?? "";
 
     if (product === "credit_pack_50") {
       if (!stripeKey || !priceCreditPack50) {
@@ -525,9 +548,9 @@ serve(async (req) => {
         priceCreditPack50,
         product,
         pack.credits,
-        user.id,
+        userId!,
         customerId,
-        user.email ?? "",
+        userEmail ?? "",
         visualTheme,
         cloudAccent,
         checkoutLocale,
@@ -599,8 +622,8 @@ serve(async (req) => {
       throw new Error("Invalid plan: " + plan);
     }
 
-    let subscriptionId = typeof profile?.stripe_subscription_id === "string" ? profile.stripe_subscription_id : "";
-    let currentPlan = typeof profile?.plan === "string" ? profile.plan : "free";
+    let subscriptionId = fbProfile?.stripe_subscription_id ?? "";
+    let currentPlan = fbProfile?.plan ?? "free";
 
     if (subscriptionId) {
       let subActive = false;
@@ -614,7 +637,7 @@ serve(async (req) => {
       }
 
       if (!subActive) {
-        await clearStaleBilling(supabaseUrl, serviceRoleKey, user.id);
+        await clearStaleBillingFB(userId!);
         subscriptionId = "";
         currentPlan = "free";
       } else if (subRecord && !PAID_PLANS.has(currentPlan)) {
@@ -631,10 +654,8 @@ serve(async (req) => {
         if (PAID_PLANS.has(healedPlan)) {
           const healedCustomerId = asString(subRecord.customer) || customerId;
           const currentPeriodEnd = typeof subRecord.current_period_end === "number" ? subRecord.current_period_end : null;
-          await syncProfilePlan(
-            supabaseUrl,
-            serviceRoleKey,
-            user.id,
+          await syncProfilePlanFB(
+            userId!,
             healedPlan,
             healedCustomerId,
             subscriptionId,
@@ -658,13 +679,11 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const updatedSub = await upgradeExistingSubscription(stripeKey, subscriptionId, priceId, plan, user.id);
+      const updatedSub = await upgradeExistingSubscription(stripeKey, subscriptionId, priceId, plan, userId!);
       const updatedCustomerId = asString(updatedSub.customer) || customerId;
       const currentPeriodEnd = typeof updatedSub.current_period_end === "number" ? updatedSub.current_period_end : null;
-      await syncProfilePlan(
-        supabaseUrl,
-        serviceRoleKey,
-        user.id,
+      await syncProfilePlanFB(
+        userId!,
         plan,
         updatedCustomerId,
         subscriptionId,
@@ -679,9 +698,9 @@ serve(async (req) => {
     const baseParams = buildBaseCheckoutParams(
       priceId,
       plan,
-      user.id,
+      userId!,
       customerId,
-      user.email ?? "",
+      userEmail ?? "",
       visualTheme,
       cloudAccent,
       checkoutLocale,

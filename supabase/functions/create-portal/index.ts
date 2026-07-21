@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { fbGetProfile } from "../_shared/firestoreServer.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,21 +23,33 @@ serve(async (req) => {
     const token = authHeader?.startsWith("Bearer ") ? authHeader.replace("Bearer ", "").trim() : "";
     if (!token) return new Response(JSON.stringify({ error: "Not authenticated" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-    const supabase = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: `Bearer ${token}` } } });
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser(token);
-    if (userError || !user) return new Response(JSON.stringify({ error: "Not authenticated" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+    const firebaseApiKey = Deno.env.get("FIREBASE_API_KEY") ?? "";
 
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("stripe_customer_id")
-      .eq("id", user.id)
-      .single();
-    if (profileError) throw profileError;
+    let userId: string | null = null;
+    if (firebaseApiKey && token.startsWith("eyJ")) {
+      try {
+        const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts/lookup?key=${firebaseApiKey}`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken: token }),
+        });
+        if (res.ok) {
+          const j = (await res.json()) as { users?: Array<{ localId?: string }> };
+          userId = j.users?.[0]?.localId ?? null;
+        }
+      } catch { /* fall through */ }
+    }
+    if (!userId && supabaseUrl && anonKey) {
+      const supabase = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: `Bearer ${token}` } } });
+      const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+      if (userError || !user) return new Response(JSON.stringify({ error: "Not authenticated" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      userId = user.id;
+    }
+    if (!userId) return new Response(JSON.stringify({ error: "Not authenticated" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-    const customerId = typeof profile?.stripe_customer_id === "string" ? profile.stripe_customer_id : "";
+    const fbProfile = await fbGetProfile(userId!);
+    const customerId = fbProfile?.stripe_customer_id ?? "";
     if (!customerId) throw new Error("No Stripe customer");
 
     const body = (await req.json().catch(() => ({}))) as { returnUrl?: unknown };

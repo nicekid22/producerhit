@@ -1,5 +1,22 @@
+// stripe-webhook/index.ts
+//
+// Receives Stripe webhook events and syncs billing to Firestore.
+//
+// Auth: Stripe signature (verified as before)
+// Storage: Firestore collections
+//   - profiles/{uid}          — billing profile
+//   - billing_revenue_events/{event_id}  — append-only event log (idempotent)
+//   - stripe_customers/{customer_id}      — customer_id → uid lookup
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  fbGetProfile,
+  fbUpdateProfile,
+  fbGrantCredits,
+  fbLogBillingEvent,
+  fbResolveUidByStripeCustomerId,
+  fbRegisterStripeCustomer,
+} from "../_shared/firestoreServer.ts";
 
 function asString(v: unknown) {
   return typeof v === "string" ? v : "";
@@ -39,7 +56,6 @@ function hostedAudioExpiresAtIso(days = HOSTED_AUDIO_GRACE_DAYS): string {
   return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 }
 
-/** Plus = pas d’expiration ; downgrade depuis Plus = fenêtre 7j globale. */
 function profilePlanPatch(prevPlan: string, nextPlan: string): Record<string, unknown> {
   const patch: Record<string, unknown> = { plan: nextPlan };
   if (nextPlan === "plus") {
@@ -59,129 +75,7 @@ function isLaunchOfferActive(now = Date.now()): boolean {
   return Number.isFinite(end) && now < end;
 }
 
-type LaunchGrantType = "pro_first_month" | "checkout_recovery";
-
-async function grantLaunchBonusCredits(
-  supabase: ReturnType<typeof createClient>,
-  opts: { idempotencyKey: string; userId: string; grantType: LaunchGrantType; credits: number },
-): Promise<void> {
-  const { idempotencyKey, userId, grantType, credits } = opts;
-  if (credits <= 0) return;
-
-  const { error } = await supabase.rpc("grant_launch_bonus_credits", {
-    p_stripe_event_id: idempotencyKey,
-    p_user_id: userId,
-    p_grant_type: grantType,
-    p_credits: credits,
-  });
-  if (error) throw error;
-}
-
-async function grantCreditPackCredits(
-  supabase: ReturnType<typeof createClient>,
-  opts: { idempotencyKey: string; userId: string; packId: string; credits: number },
-): Promise<void> {
-  const { idempotencyKey, userId, packId, credits } = opts;
-  if (credits <= 0) return;
-
-  const { error } = await supabase.rpc("grant_purchased_bonus_credits", {
-    p_stripe_event_id: idempotencyKey,
-    p_user_id: userId,
-    p_pack_id: packId,
-    p_credits: credits,
-  });
-  if (error) throw error;
-}
-
-async function logBillingRevenueEvent(
-  supabase: ReturnType<typeof createClient>,
-  opts: {
-    stripeEventId: string;
-    userId?: string | null;
-    stripeSubscriptionId?: string | null;
-    stripeInvoiceId?: string | null;
-    eventType: string;
-    plan?: string | null;
-    amountCents?: number | null;
-    currency?: string;
-    status?: string | null;
-    metadata?: Record<string, unknown>;
-  },
-): Promise<void> {
-  const {
-    stripeEventId,
-    userId,
-    stripeSubscriptionId,
-    stripeInvoiceId,
-    eventType,
-    plan,
-    amountCents,
-    currency,
-    status,
-    metadata,
-  } = opts;
-  if (!stripeEventId || !eventType) return;
-
-  const { error } = await supabase.from("billing_revenue_events").upsert(
-    {
-      stripe_event_id: stripeEventId,
-      user_id: userId || null,
-      stripe_subscription_id: stripeSubscriptionId || null,
-      stripe_invoice_id: stripeInvoiceId || null,
-      event_type: eventType,
-      plan: plan || null,
-      amount_cents: typeof amountCents === "number" ? amountCents : null,
-      currency: currency || "usd",
-      status: status || null,
-      metadata: metadata ?? {},
-    },
-    { onConflict: "stripe_event_id", ignoreDuplicates: true },
-  );
-  if (error) console.error("billing_revenue_events insert:", error.message);
-}
-
-function priceAmountCents(price: Record<string, unknown> | null): number | null {
-  const unit = price?.unit_amount;
-  return typeof unit === "number" ? unit : null;
-}
-
-async function applyLaunchOfferBonuses(
-  supabase: ReturnType<typeof createClient>,
-  opts: {
-    stripeEventId: string;
-    userId: string;
-    plan: string;
-    prevPlan: string;
-    hadSubscription: boolean;
-    metadata: Record<string, unknown>;
-  },
-): Promise<void> {
-  if (!isLaunchOfferActive()) return;
-
-  const { stripeEventId, userId, plan, prevPlan, hadSubscription, metadata } = opts;
-  const isRecovery = asString(metadata.checkout_recovery) === "true";
-
-  if (isRecovery) {
-    await grantLaunchBonusCredits(supabase, {
-      idempotencyKey: `${stripeEventId}:checkout_recovery`,
-      userId,
-      grantType: "checkout_recovery",
-      credits: LAUNCH_BONUS_RECOVERY,
-    });
-  }
-
-  const isFirstProMonth = plan === "pro" && prevPlan === "free" && !hadSubscription;
-  if (isFirstProMonth) {
-    await grantLaunchBonusCredits(supabase, {
-      idempotencyKey: `${stripeEventId}:pro_first_month`,
-      userId,
-      grantType: "pro_first_month",
-      credits: LAUNCH_BONUS_PRO,
-    });
-  }
-}
-
-async function planFromPriceId(supabase: ReturnType<typeof createClient>, priceId: string) {
+function planFromPriceId(priceId: string): string {
   const pro = Deno.env.get("STRIPE_PRICE_ID_PRO") ?? "";
   const studio = Deno.env.get("STRIPE_PRICE_ID_STUDIO") ?? "";
   const plus = Deno.env.get("STRIPE_PRICE_ID_PLUS") ?? "";
@@ -191,18 +85,12 @@ async function planFromPriceId(supabase: ReturnType<typeof createClient>, priceI
   if (priceId && (priceId === pro || priceId === proAnnual)) return "pro";
   if (priceId && (priceId === studio || priceId === studioAnnual)) return "studio";
   if (priceId && (priceId === plus || priceId === plusAnnual)) return "plus";
-  if (!priceId) return "free";
-
-  const { data } = await supabase.from("billing_stripe_prices").select("plan").eq("stripe_price_id", priceId).maybeSingle();
-  const mapped = typeof data?.plan === "string" ? data.plan : "";
-  if (mapped === "pro" || mapped === "studio" || mapped === "plus") return mapped;
   return "free";
 }
 
-async function resolveUserIdByCustomerId(supabase: ReturnType<typeof createClient>, customerId: string) {
-  if (!customerId) return "";
-  const { data } = await supabase.from("profiles").select("id").eq("stripe_customer_id", customerId).maybeSingle();
-  return typeof data?.id === "string" ? data.id : "";
+function priceAmountCents(price: Record<string, unknown> | null): number | null {
+  const unit = price?.unit_amount;
+  return typeof unit === "number" ? unit : null;
 }
 
 async function fetchSubscription(stripeKey: string, subscriptionId: string) {
@@ -210,22 +98,17 @@ async function fetchSubscription(stripeKey: string, subscriptionId: string) {
     headers: { Authorization: `Bearer ${stripeKey}` },
   });
   const json = await res.json().catch(() => null);
-  if (!res.ok) {
-    const msg = typeof json === "object" && json && typeof (json as { error?: unknown }).error === "object" ? "Stripe error" : "Stripe error";
-    throw new Error(msg);
-  }
+  if (!res.ok) throw new Error("Stripe subscription fetch failed");
   return json as Record<string, unknown>;
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method !== "POST") return new Response("ok");
 
   const stripeKey = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
   const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET") ?? Deno.env.get("STRIPE_ENDPOINT_SECRET") ?? "";
-  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SERVICE_ROLE_KEY") ?? "";
 
-  if (!stripeKey || !webhookSecret || !supabaseUrl || !serviceRoleKey) {
+  if (!stripeKey || !webhookSecret) {
     return new Response("missing env", { status: 500 });
   }
   if (webhookSecret.startsWith("http://") || webhookSecret.startsWith("https://")) {
@@ -268,29 +151,28 @@ serve(async (req) => {
       ? ((event.data as { object: unknown }).object as Record<string, unknown>)
       : null;
 
-  const supabase = createClient(supabaseUrl, serviceRoleKey);
-
   try {
     if (!dataObj) return new Response("ok");
 
+    // ── Checkout session completed ───────────────────────────────────────────
     if (type === "checkout.session.completed") {
       const mode = asString(dataObj.mode);
       const customerId = asString(dataObj.customer);
       const metadata = (dataObj.metadata ?? {}) as Record<string, unknown>;
-      const userId = asString(metadata.supabase_user_id) || asString(dataObj.client_reference_id);
+      const userId = asString(metadata.firebase_uid) || asString(dataObj.client_reference_id);
 
+      // Credit pack purchase (one-time payment)
       if (mode === "payment") {
         const creditPack = asString(metadata.credit_pack);
         const creditsRaw = asString(metadata.credits);
         const credits = Number.parseInt(creditsRaw, 10);
         if (userId && creditPack && Number.isFinite(credits) && credits > 0 && stripeEventId) {
-          await grantCreditPackCredits(supabase, {
+          await fbGrantCredits(userId, {
             idempotencyKey: stripeEventId,
-            userId,
-            packId: creditPack,
+            bonusType: "purchased",
             credits,
           });
-          await logBillingRevenueEvent(supabase, {
+          await fbLogBillingEvent({
             stripeEventId: `${stripeEventId}:credit_pack`,
             userId,
             eventType: "credit_pack_purchased",
@@ -303,8 +185,14 @@ serve(async (req) => {
         return new Response("ok");
       }
 
+      // Subscription checkout
       const subscriptionId = asString(dataObj.subscription);
       if (!userId || !subscriptionId) return new Response("ok");
+
+      // Register customer → uid mapping so future events can find the user by customer_id
+      if (userId && customerId) {
+        await fbRegisterStripeCustomer(userId, customerId);
+      }
 
       const sub = await fetchSubscription(stripeKey, subscriptionId);
       const items = (sub.items as { data?: unknown } | undefined)?.data;
@@ -314,39 +202,42 @@ serve(async (req) => {
       const currentPeriodEnd = typeof sub.current_period_end === "number" ? sub.current_period_end : null;
       const periodEndIso = currentPeriodEnd ? new Date(currentPeriodEnd * 1000).toISOString() : null;
 
-      const plan = await planFromPriceId(supabase, priceId);
-      if (plan === "free" && priceId) {
-        console.error("checkout.session.completed: unknown price id", priceId);
+      const plan = planFromPriceId(priceId);
+
+      const prev = await fbGetProfile(userId);
+      const prevPlan = prev?.plan ?? "free";
+      const hadSubscription = !!prev?.stripe_subscription_id;
+
+      await fbUpdateProfile(userId, {
+        ...profilePlanPatch(prevPlan, plan),
+        stripe_customer_id: customerId || null,
+        stripe_subscription_id: subscriptionId,
+        stripe_price_id: priceId || null,
+        stripe_current_period_end: periodEndIso,
+      });
+
+      // Launch offer bonuses
+      if (isLaunchOfferActive()) {
+        const isRecovery = asString(metadata.checkout_recovery) === "true";
+        if (isRecovery && stripeEventId) {
+          await fbGrantCredits(userId, {
+            idempotencyKey: `${stripeEventId}:checkout_recovery`,
+            bonusType: "launch",
+            credits: LAUNCH_BONUS_RECOVERY,
+          });
+        }
+        const isFirstProMonth = plan === "pro" && prevPlan === "free" && !hadSubscription;
+        if (isFirstProMonth && stripeEventId) {
+          await fbGrantCredits(userId, {
+            idempotencyKey: `${stripeEventId}:pro_first_month`,
+            bonusType: "launch",
+            credits: LAUNCH_BONUS_PRO,
+          });
+        }
       }
-      const { data: prevProfile } = await supabase
-        .from("profiles")
-        .select("plan, stripe_subscription_id")
-        .eq("id", userId)
-        .maybeSingle();
-      const prevPlan = typeof prevProfile?.plan === "string" ? prevProfile.plan : "free";
-      const hadSubscription = !!asString(prevProfile?.stripe_subscription_id);
-      const { error: checkoutUpdateError } = await supabase
-        .from("profiles")
-        .update({
-          ...profilePlanPatch(prevPlan, plan),
-          stripe_customer_id: customerId || null,
-          stripe_subscription_id: subscriptionId,
-          stripe_price_id: priceId || null,
-          stripe_current_period_end: periodEndIso,
-        })
-        .eq("id", userId);
-      if (checkoutUpdateError) throw checkoutUpdateError;
 
       if (stripeEventId) {
-        await applyLaunchOfferBonuses(supabase, {
-          stripeEventId,
-          userId,
-          plan,
-          prevPlan,
-          hadSubscription,
-          metadata,
-        });
-        await logBillingRevenueEvent(supabase, {
+        await fbLogBillingEvent({
           stripeEventId: `${stripeEventId}:subscription_activated`,
           userId,
           stripeSubscriptionId: subscriptionId,
@@ -362,12 +253,19 @@ serve(async (req) => {
       return new Response("ok");
     }
 
+    // ── Subscription updated / deleted ─────────────────────────────────────
     if (type === "customer.subscription.updated" || type === "customer.subscription.deleted") {
       const subscriptionId = asString(dataObj.id);
       const customerId = asString(dataObj.customer);
       const status = asString(dataObj.status);
       const metadata = (dataObj.metadata ?? {}) as Record<string, unknown>;
-      const userId = asString(metadata.supabase_user_id) || (await resolveUserIdByCustomerId(supabase, customerId));
+      const firebaseUid = asString(metadata.firebase_uid);
+
+      // Resolve uid: from metadata first, then from stripe_customers collection
+      let userId = firebaseUid;
+      if (!userId && customerId) {
+        userId = await fbResolveUidByStripeCustomerId(customerId);
+      }
 
       const items = (dataObj.items as { data?: unknown } | undefined)?.data;
       const firstItem = Array.isArray(items) && items[0] && typeof items[0] === "object" ? (items[0] as Record<string, unknown>) : null;
@@ -379,28 +277,21 @@ serve(async (req) => {
       if (!userId) return new Response("ok");
 
       const active = status === "active" || status === "trialing";
-      const plan = active ? await planFromPriceId(supabase, priceId) : "free";
-      if (active && plan === "free" && priceId) {
-        console.error("subscription event: unknown price id", priceId, type);
-      }
+      const plan = active ? planFromPriceId(priceId) : "free";
+      const prev = await fbGetProfile(userId);
+      const prevPlan = prev?.plan ?? "free";
 
-      const { data: prevProfile } = await supabase.from("profiles").select("plan").eq("id", userId).maybeSingle();
-      const prevPlan = typeof prevProfile?.plan === "string" ? prevProfile.plan : "free";
-      const { error: subscriptionUpdateError } = await supabase
-        .from("profiles")
-        .update({
-          ...profilePlanPatch(prevPlan, plan),
-          stripe_customer_id: customerId || null,
-          stripe_subscription_id: active ? subscriptionId : null,
-          stripe_price_id: active ? priceId || null : null,
-          stripe_current_period_end: active ? periodEndIso : null,
-        })
-        .eq("id", userId);
-      if (subscriptionUpdateError) throw subscriptionUpdateError;
+      await fbUpdateProfile(userId, {
+        ...profilePlanPatch(prevPlan, plan),
+        stripe_customer_id: customerId || null,
+        stripe_subscription_id: active ? subscriptionId : null,
+        stripe_price_id: active ? priceId || null : null,
+        stripe_current_period_end: active ? periodEndIso : null,
+      });
 
       if (stripeEventId) {
         const canceled = type === "customer.subscription.deleted" || !active;
-        await logBillingRevenueEvent(supabase, {
+        await fbLogBillingEvent({
           stripeEventId: `${stripeEventId}:${canceled ? "canceled" : "updated"}`,
           userId,
           stripeSubscriptionId: subscriptionId,

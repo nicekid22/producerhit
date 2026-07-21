@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabaseClient";
 import { extractErrorMessage, isBenignProfileSyncError } from "@/lib/errorMessage";
-import { isFirebaseReady } from "@/lib/firebaseSupabaseClient";
+import { isFirebaseReady, getFirebaseApp } from "@/lib/firebaseSupabaseClient";
+import { getAuth } from "firebase/auth";
 type ReconcileResult = {
   ok?: boolean;
   status?: string;
@@ -205,6 +206,39 @@ async function ensureProfileRow(userId: string, email?: string | null): Promise<
   }
 }
 
+/**
+ * For Firebase users: invoke the `ensure-profile` Supabase Edge Function with
+ * the live Firebase ID token. The Edge Function verifies the token via
+ * Identity Toolkit and upserts a row in `public.profiles` with the service
+ * role key (bypasses RLS, supports Firebase 28-char uids after migration
+ * 091_relax_profiles_fk_for_firebase.sql).
+ *
+ * Idempotent — safe to call on every login.
+ */
+let _lastEnsureProfileUid: string | null = null;
+let _lastEnsureProfileAt = 0;
+export async function ensureSupabaseProfileForFirebaseUser(userId: string, email: string | null): Promise<void> {
+  // Throttle: don't call more than once per 2 minutes per user.
+  if (_lastEnsureProfileUid === userId && Date.now() - _lastEnsureProfileAt < 120_000) return;
+
+  const app = getFirebaseApp();
+  if (!app) return;
+  const auth = getAuth(app);
+  const user = auth.currentUser;
+  if (!user || user.uid !== userId) return;
+
+  const idToken = await user.getIdToken().catch(() => null);
+  if (!idToken) return;
+
+  await supabase.functions.invoke("ensure-profile", {
+    headers: { Authorization: `Bearer ${idToken}` },
+    body: { email: email ?? null },
+  });
+
+  _lastEnsureProfileUid = userId;
+  _lastEnsureProfileAt = Date.now();
+}
+
 async function selectProfileRow(userId: string, columns: string): Promise<UserProfileRow | null> {
   const { data, error } = await supabase.from("profiles").select(columns).eq("id", userId).maybeSingle();
   if (error) throw error;
@@ -297,6 +331,18 @@ export async function loadUserProfile(userId: string, email?: string | null): Pr
     }
 
     await resetProfileUsageIfNeeded().catch(() => undefined);
+  }
+
+  // For Firebase Auth users: ask the Supabase Edge Function `ensure-profile` to
+  // upsert a row in public.profiles using the service role key (bypasses RLS).
+  // This is the dual-write that lets existing Stripe / Apple IAP / distribution
+  // Edge Functions keep working unchanged for Firebase users.
+  if (isFirebaseReady()) {
+    try {
+      await ensureSupabaseProfileForFirebaseUser(userId, email ?? null);
+    } catch {
+      // best-effort — Firestore fallback below will still work
+    }
   }
 
   const row = await fetchUserProfile(userId, email);

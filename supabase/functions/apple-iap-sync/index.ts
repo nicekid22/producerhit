@@ -1,5 +1,8 @@
+// apple-iap-sync/index.ts
+//
+// Handles Apple In-App Purchase receipts.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { fbGetProfile, fbUpdateProfile } from "../_shared/firestoreServer.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,36 +16,47 @@ function planFromProductId(productId: string | undefined): "pro" | "studio" | "p
   return "pro";
 }
 
+async function verifyFirebaseIdToken(token: string, apiKey: string) {
+  if (!token.startsWith("eyJ")) return null;
+  try {
+    const res = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`,
+      { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ idToken: token }) },
+    );
+    if (!res.ok) return null;
+    const json = (await res.json()) as { users?: Array<{ localId?: string }> };
+    return json.users?.[0]?.localId ?? null;
+  } catch { return null; }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
     const authHeader = req.headers.get("Authorization") ?? "";
     const token = authHeader.replace("Bearer ", "").trim();
-    if (!token) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (!token) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
+    const firebaseApiKey = Deno.env.get("FIREBASE_API_KEY") ?? "";
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
-    const userClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-    });
-    const {
-      data: { user },
-      error: userError,
-    } = await userClient.auth.getUser(token);
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: "Invalid session" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    let userId: string | null = null;
+
+    // Try Firebase first
+    if (firebaseApiKey && token.startsWith("eyJ")) {
+      userId = await verifyFirebaseIdToken(token, firebaseApiKey);
     }
+
+    // Fallback Supabase
+    if (!userId && supabaseUrl && anonKey) {
+      const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+      const supabase = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: `Bearer ${token}` } } });
+      const { data: { user } } = await supabase.auth.getUser(token);
+      userId = user?.id ?? null;
+    }
+
+    if (!userId) return new Response(JSON.stringify({ error: "Invalid session" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     const body = (await req.json().catch(() => ({}))) as {
       action?: string;
@@ -54,65 +68,42 @@ serve(async (req) => {
 
     const allowDevSync = (Deno.env.get("APPLE_IAP_ALLOW_CLIENT_SYNC") ?? "").trim() === "1";
     if (!allowDevSync && body.action === "purchase") {
-      return new Response(
-        JSON.stringify({
-          error: "Server-side Apple receipt validation required. Enable RevenueCat or APPLE_IAP_ALLOW_CLIENT_SYNC for sandbox.",
-          plan: null,
-        }),
-        { status: 501, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    const admin = createClient(supabaseUrl, serviceKey);
-
-    if (body.action === "restore") {
-      const { data: profile } = await admin.from("profiles").select("plan, billing_source").eq("id", user.id).single();
-      return new Response(
-        JSON.stringify({
-          ok: true,
-          plan: profile?.plan ?? "free",
-          billing_source: profile?.billing_source ?? "none",
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return new Response(JSON.stringify({ error: "Server-side Apple receipt validation required", plan: null }), {
+        status: 501, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const productId = body.productId ?? "com.producerhit.app.pro.monthly";
-    const plan =
+    const plan: "free" | "pro" | "studio" | "plus" =
       body.plan === "plus" || body.plan === "studio" || body.plan === "pro"
         ? body.plan
         : planFromProductId(productId);
 
-    const { error: rpcError } = await admin.rpc("apply_apple_plan_entitlement", {
-      p_user_id: user.id,
-      p_product_id: productId,
-      p_plan: plan,
-      p_original_transaction_id: body.originalTransactionId ?? body.transactionId ?? null,
-    });
-
-    if (rpcError) {
-      console.error("apply_apple_plan_entitlement", rpcError.message);
-      return new Response(JSON.stringify({ error: rpcError.message }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (body.action === "restore") {
+      const profile = await fbGetProfile(userId!);
+      return new Response(JSON.stringify({
+        ok: true,
+        plan: profile?.plan ?? "free",
+        billing_source: profile?.billing_source ?? "none",
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const { data: profile } = await admin.from("profiles").select("plan, billing_source").eq("id", user.id).single();
+    // apply_apple_plan_entitlement — now direct Firestore write
+    await fbUpdateProfile(userId!, {
+      plan,
+      billing_source: "apple",
+      apple_original_transaction_id: body.originalTransactionId ?? body.transactionId ?? null,
+    });
 
-    return new Response(
-      JSON.stringify({
-        ok: true,
-        plan: profile?.plan ?? plan,
-        billing_source: profile?.billing_source ?? "apple",
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+    const profile = await fbGetProfile(userId!);
+
+    return new Response(JSON.stringify({
+      ok: true,
+      plan: profile?.plan ?? plan,
+      billing_source: "apple",
+    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Unknown error";
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(JSON.stringify({ error: message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
