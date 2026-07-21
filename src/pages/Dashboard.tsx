@@ -20,6 +20,7 @@ import { vocalLanguageAutoOption, vocalLanguageDropdownOptions, resolveSongVocal
 import { Slider } from "@/components/ui/Slider";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/EmptyState";
+import { WelcomeOnboarding } from "@/components/dashboard/WelcomeOnboarding";
 import { useGeneratorStore } from "@/stores/generatorStore";
 import { browserAceKeyCount } from "@/lib/aceBrowserKeys";
 import {
@@ -4907,55 +4908,9 @@ export default function Dashboard() {
               ))}
             </div>
           ) : displayedLoops.length === 0 ? (
-            loopsSyncError ? (
-              <div className="rounded-pk bg-gradient-to-br from-[rgba(157,124,255,0.22)] via-transparent to-[rgba(103,195,255,0.08)] p-[1px] shadow-[0_0_0_1px_rgba(157,124,255,0.08),0_0_24px_rgba(157,124,255,0.10)]">
-                  <div className="flex flex-col items-center justify-center rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-10 text-center backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_10px_25px_rgba(0,0,0,0.2),0_20px_48px_rgba(0,0,0,0.25)]">
-                  <div className="mt-2 text-sm font-semibold text-pk-text">
-                    {d.failedLoadCreations}
-                  </div>
-                  <div className="mt-1 text-sm text-pk-muted">
-                    {d.loadCreationsErrorBody}
-                  </div>
-                  <div className="mt-5 flex flex-wrap justify-center gap-2">
-                    <Button
-                      variant="primary"
-                      onClick={() => {
-                        void loadMyLoops();
-                      }}
-                    >
-                      {d.retry}
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      onClick={() => {
-                        window.location.reload();
-                      }}
-                    >
-                      {d.reload}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <EmptyState
-                  title={d.creationsAppearHere}
-                  description={
-                    mobileV2
-                      ? d.emptyCreateMobile
-                      : `${d.emptyCreateConfigurePrefix}${mode === "song" ? d.generateSong : d.generateBeat}${d.emptyCreateConfigureSuffix}`
-                  }
-                  accent
-                />
-                {mobileV2 ? (
-                  <div className="flex justify-center">
-                    <Button variant="primary" onClick={goCreate}>
-                      {d.goToCreate}
-                    </Button>
-                  </div>
-                ) : null}
-              </div>
-            )
+            <div className="space-y-4">
+              <WelcomeOnboarding onGoCreate={goCreate} />
+            </div>
           ) : detailsLoop && !mobileV2 ? (
             <div className="md:grid md:grid-cols-[minmax(0,1fr)_420px] md:gap-5">
               <div className="space-y-5">
