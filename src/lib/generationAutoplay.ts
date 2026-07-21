@@ -287,8 +287,13 @@ export function createGenerationAutoplaySession(options: GenerationAutoplayOptio
         return;
       }
 
-      if (!generationAutoplayBlocked(usePlayerStore.getState().playbackOverride, false)) {
-        refreshAutoplayCompletionOrder(resolvedOrdered, options);
+      // Déjà en lecture — met à jour la queue sans relancer (évite le double autoplay)
+      const player = usePlayerStore.getState();
+      if (player.isPlaying || player.queueSource === WORKSPACE_QUEUE_SOURCE) {
+        const queue = generationQueue(resolvedOrdered, options.workspaceFilter);
+        if (queue.length) {
+          usePlayerStore.getState().mergeQueue(queue, WORKSPACE_QUEUE_SOURCE);
+        }
       }
     },
   };
