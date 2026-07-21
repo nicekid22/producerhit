@@ -1,0 +1,91 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Profiles ────────────────────────────────────────────────────
+    // Owner can read/write their own; public profile data is readable by anyone
+    // (only public fields like username, avatar_id are exposed on cards)
+    match /profiles/{userId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // ── Loops ───────────────────────────────────────────────────────
+    // Public loops readable by anyone; private loops readable by owner
+    match /loops/{loopId} {
+      allow read: if resource.data.is_public == true
+        || (request.auth != null && resource.data.user_id == request.auth.uid);
+      allow create: if request.auth != null && request.resource.data.user_id == request.auth.uid;
+      allow update, delete: if request.auth != null && resource.data.user_id == request.auth.uid;
+    }
+
+    // ── Referrals ──────────────────────────────────────────────────
+    // Readable by referrer or referred
+    match /referrals/{referralId} {
+      allow read: if request.auth != null &&
+        (resource.data.referrer_id == request.auth.uid ||
+         resource.data.referred_id == request.auth.uid);
+    }
+
+    // ── Profile follows ────────────────────────────────────────────
+    match /profile_follows/{followId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null &&
+        (resource.data.follower_id == request.auth.uid ||
+         request.resource.data.follower_id == request.auth.uid);
+    }
+
+    // ── Notifications ──────────────────────────────────────────────
+    // User can read their own notifications
+    match /notifications/{notificationId} {
+      allow read: if request.auth != null && resource.data.user_id == request.auth.uid;
+      allow write: if request.auth != null && request.resource.data.user_id == request.auth.uid;
+    }
+
+    // ── Loop comments (public read, authenticated write) ────────────
+    match /loop_comments/{commentId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && resource.data.user_id == request.auth.uid;
+    }
+
+    // ── Growth events (analytics — write-only from client) ──────────
+    match /growth_events/{eventId} {
+      allow create: if request.auth != null;
+      allow read, update, delete: if false;  // server-side only
+    }
+
+    // ── Billing revenue events (Edge Function only) ────────────────
+    match /billing_revenue_events/{eventId} {
+      allow read, write: if false;
+    }
+
+    // ── Stripe customer mapping (Edge Function only) ────────────────
+    match /stripe_customers/{customerId} {
+      allow read, write: if false;
+    }
+
+    // ── Producer tags ──────────────────────────────────────────────
+    match /producer_tags/{tagId} {
+      allow read: if request.auth != null && resource.data.user_id == request.auth.uid;
+      allow write: if request.auth != null && request.resource.data.user_id == request.auth.uid;
+    }
+
+    // ── Voice profiles ─────────────────────────────────────────────
+    match /voice_profiles/{profileId} {
+      allow read: if request.auth != null && resource.data.user_id == request.auth.uid;
+      allow write: if request.auth != null && request.resource.data.user_id == request.auth.uid;
+    }
+
+    // ── Distribution profiles ──────────────────────────────────────
+    match /distribution_profiles/{profileId} {
+      allow read: if request.auth != null && resource.data.user_id == request.auth.uid;
+      allow write: if request.auth != null && request.resource.data.user_id == request.auth.uid;
+    }
+
+    // ── Deny everything else by default ────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
