@@ -57,3 +57,11 @@ createRoot(document.getElementById("root")!).render(
     </RootErrorBoundary>
   </StrictMode>,
 );
+
+// Fade in root after CSS is fully applied (prevents FOUC)
+requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+    const root = document.getElementById("root");
+    if (root) root.style.opacity = "1";
+  });
+});

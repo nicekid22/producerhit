@@ -197,24 +197,45 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ status: "loading" });
 
     try {
+      // Track whether we already resolved the auth state
+      let authResolved = false;
+      const authTimeout = setTimeout(() => {
+        if (!authResolved) {
+          authResolved = true;
+          set({ status: "ready" });
+        }
+      }, 3_000);
+
       const { data: sub } = fbOnAuthStateChange((event, session) => {
-        if (event === "SIGNED_OUT") {
-          clearAuthState();
+        if (authResolved) {
+          // Subsequent auth state changes (SIGNED_OUT, SIGNED_IN after initial)
+          if (event === "SIGNED_OUT") {
+            clearAuthState();
+            return;
+          }
+          if (!session) return;
+          set({ session: session as unknown as Session, user: session.user as User });
+          scheduleProfileSync(session as unknown as Session);
           return;
         }
-        if (!session) return;
-        set({ session: session as unknown as Session, user: session.user as User });
-        scheduleProfileSync(session as unknown as Session);
+
+        // First callback — Firebase auth has resolved its initial state
+        authResolved = true;
+        clearTimeout(authTimeout);
+
+        if (event === "SIGNED_IN" && session) {
+          set({
+            session: session as unknown as Session,
+            user: session.user as User,
+            status: "ready",
+          });
+          scheduleProfileSync(session as unknown as Session);
+        } else {
+          // No authenticated user — still mark ready so ProtectedRoute can redirect
+          set({ status: "ready" });
+        }
       });
       authUnsub = () => sub.subscription.unsubscribe();
-
-      const { data } = await fbGetSession();
-      if (data.session) {
-        set({ session: data.session as unknown as Session, user: data.session.user as User });
-        scheduleProfileSync(data.session as unknown as Session);
-      }
-
-      set({ status: "ready" });
     } catch {
       // Init failed — allow retry by resetting flag
       authInitDone = false;
