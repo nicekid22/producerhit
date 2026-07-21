@@ -133,14 +133,15 @@ export function isPollinationsCoverUrl(url: string | null | undefined): boolean 
 
 
 
-/** Morceau sans cover Storage (à assigner). */
+/** Morceau qui a besoin d'une cover (aucune URL valide assignée). */
 export function needsLoopCardCover(loop: Loop): boolean {
   if (!USE_POLLINATIONS_CARD_COVERS) return false;
 
   const stored = loop.details?.coverUrl?.trim() ?? "";
   if (!stored) return true;
-  if (isPersistedStorageCoverUrl(stored)) return false;
-  return true;
+  // Si une URL http valide existe déjà (Pollinations OU Storage), pas besoin de backfill
+  if (stored.startsWith("http://") || stored.startsWith("https://")) return false;
+  return false;
 }
 
 /** @deprecated Utiliser needsLoopCardCover */

@@ -2016,21 +2016,33 @@ export default function Dashboard() {
           })();
         }
 
+        // Récupère la cover pré-générée AVANT persistDraft pour l'inclure dans le draft
+        let coverForDraft: string | null = null;
+        try {
+          const prefetched = await consumeCoverPrefetch(generationKey);
+          if (prefetched?.startsWith("http")) coverForDraft = prefetched;
+        } catch {
+          // fallback après persistDraft
+        }
+
+        if (coverForDraft) {
+          draft.details = { ...(draft.details ?? {}), coverUrl: coverForDraft, coverKind: "image" };
+        }
+
         const loop = await persistDraft(draft, audioUrl, value.engine, previewId);
         persistCompleted = true;
 
-        // Applique la cover pré-générée si elle est prête (sinon on relance une fois directement)
-        void consumeCoverPrefetch(generationKey)
-          .then(async (coverUrl) => {
-            const finalUrl = coverUrl?.startsWith("http")
-              ? coverUrl
-              : (await persistPollinationsCardCoverForLoop(loop.id, loop).catch(() => null))?.coverUrl;
-
-            if (finalUrl?.startsWith("http")) {
-              useLoopsStore.getState().applyLoopCoverUrl(loop.id, finalUrl, "image");
+        // Si la cover n'était pas prête avant, on la génère maintenant (fallback)
+        if (!coverForDraft) {
+          try {
+            const result = await persistPollinationsCardCoverForLoop(loop.id, loop).catch(() => null);
+            if (result?.coverUrl?.startsWith("http")) {
+              useLoopsStore.getState().applyLoopCoverUrl(loop.id, result.coverUrl, "image");
             }
-          })
-          .catch(() => undefined);
+          } catch {
+            // cover non critique — la carte utilisera le backfill
+          }
+        }
         if (mode === "song" && voiceCloneConfigRef.current.profileId) {
           const voiceToast = voiceCloneToastMessage(value.meta, locale);
           if (voiceToast?.type === "success") toast.success(voiceToast.message, { id: `voice-clone-${loop.id}` });

@@ -978,75 +978,99 @@ export const LoopCardItem = memo(function LoopCardItem({
               loading="lazy"
             />
           <div className="absolute inset-x-2 bottom-2 z-10 flex items-end justify-between gap-2">
-            {isEditingTitle ? (
-              <div className="flex items-center gap-1">
-                <input
-                  value={draftTitle}
-                  onChange={(e) => setDraftTitle(e.target.value)}
-                  autoFocus
-                  className="w-full min-w-0 rounded-lg border border-white/20 bg-black/70 px-2 py-1 text-xs font-semibold text-white outline-none placeholder:text-white/60 focus:border-white/40"
-                  placeholder={d.titleInputPlaceholder}
-                  onClick={(e) => e.stopPropagation()}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
+            <div className="flex min-w-0 flex-col gap-1">
+              {isEditingTitle ? (
+                <div className="flex items-center gap-1">
+                  <input
+                    value={draftTitle}
+                    onChange={(e) => setDraftTitle(e.target.value)}
+                    autoFocus
+                    className="w-full min-w-0 rounded-lg border border-white/20 bg-black/70 px-2 py-1 text-xs font-semibold text-white outline-none placeholder:text-white/60 focus:border-white/40"
+                    placeholder={d.titleInputPlaceholder}
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (!savingTitle) commitTitle();
+                        return;
+                      }
+                      if (e.key === "Escape") {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setDraftTitle(loop.name);
+                        setIsEditingTitle(false);
+                      }
+                    }}
+                  />
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="px-1.5 py-0.5"
+                    disabled={savingTitle}
+                    onClick={(e) => {
                       e.stopPropagation();
                       if (!savingTitle) commitTitle();
-                      return;
-                    }
-                    if (e.key === "Escape") {
-                      e.preventDefault();
+                    }}
+                    aria-label={lc.validate}
+                    title={lc.validate}
+                  >
+                    {savingTitle ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="px-1.5 py-0.5"
+                    disabled={savingTitle}
+                    onClick={(e) => {
                       e.stopPropagation();
                       setDraftTitle(loop.name);
                       setIsEditingTitle(false);
-                    }
-                  }}
-                />
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="px-1.5 py-0.5"
-                  disabled={savingTitle}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (!savingTitle) commitTitle();
-                  }}
-                  aria-label={lc.validate}
-                  title={lc.validate}
-                >
-                  {savingTitle ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="px-1.5 py-0.5"
-                  disabled={savingTitle}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setDraftTitle(loop.name);
-                    setIsEditingTitle(false);
-                  }}
-                  aria-label={lc.cancel}
-                  title={lc.cancel}
-                >
-                  <X className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                className="rounded-xl bg-black/50 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-md transition-all duration-200 hover:bg-black/65 hover:shadow-[0_4px_12px_rgba(0,0,0,0.2)]"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsEditingTitle(true);
-                }}
-                title={lc.editTitle}
-              >
-                {loop.name}
-              </button>
-            )}
+                    }}
+                    aria-label={lc.cancel}
+                    title={lc.cancel}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-0.5">
+                  <button
+                    type="button"
+                    className="self-start rounded-xl bg-black/50 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-md transition-all duration-200 hover:bg-black/65 hover:shadow-[0_4px_12px_rgba(0,0,0,0.2)]"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsEditingTitle(true);
+                    }}
+                    title={lc.editTitle}
+                  >
+                    {loop.name}
+                  </button>
+                  {/* Badges sur l'image */}
+                  <div className="flex flex-wrap gap-1">
+                    <span className="rounded-md bg-black/50 px-1.5 py-0.5 text-[9px] font-medium text-white/90 backdrop-blur-sm">
+                      {loop.genre}
+                    </span>
+                    {loop.bpm && loop.bpm > 0 ? (
+                      <span className="rounded-md bg-black/50 px-1.5 py-0.5 text-[9px] font-medium text-white/70 backdrop-blur-sm">
+                        {loop.bpm} BPM
+                      </span>
+                    ) : null}
+                    {!songCard && loop.mood ? (
+                      <span className="rounded-md bg-black/50 px-1.5 py-0.5 text-[9px] font-medium text-white/70 backdrop-blur-sm">
+                        {loop.mood}
+                      </span>
+                    ) : null}
+                    {loop.key || loop.scale ? (
+                      <span className="rounded-md bg-black/50 px-1.5 py-0.5 text-[9px] font-medium text-white/70 backdrop-blur-sm">
+                        {loop.key} {loop.scale}
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+              )}
 
-            {/* New Cover CTA (moved from info row) */}
+            </div>
             {showWorkspaceCoverPeek && canRerollCover && !isEditingTitle ? (
               <button
                 type="button"
@@ -1177,7 +1201,6 @@ export const LoopCardItem = memo(function LoopCardItem({
               ) : null}
             </div>
 
-            <Badge className="shrink-0 text-[10px]">{loop.genre}</Badge>
             {songCard && vocalLangLabel ? (
               <Badge variant="muted" className="shrink-0 gap-1 text-[10px]">
                 <Languages className="h-2.5 w-2.5 shrink-0 opacity-80" aria-hidden />
@@ -1201,49 +1224,6 @@ export const LoopCardItem = memo(function LoopCardItem({
                 <Tag className="h-2.5 w-2.5 shrink-0 opacity-80" aria-hidden />
                 {lc.producerTagBadge}
               </Badge>
-            ) : null}
-            {!songCard && loop.mood ? <Badge variant="muted" className="shrink-0 text-[10px]">{loop.mood}</Badge> : null}
-            {loop.bpm && loop.bpm > 0 ? (
-              <Badge variant="muted" className="shrink-0 text-[10px]">{loop.bpm} BPM</Badge>
-            ) : (
-              <Badge variant="muted" className="shrink-0 text-[10px]">Auto BPM</Badge>
-            )}
-            <span className="shrink-0 text-[10px] text-pk-muted">
-              {loop.key || loop.scale ? `${loop.key} ${loop.scale}` : "Auto Key"}
-            </span>
-
-            {showWorkspaceCoverPeek && canRerollCover && !isEditingTitle ? (
-              <button
-                type="button"
-                className={cn(
-                  "ml-auto inline-flex shrink-0 items-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-1.5 py-0.5",
-                  "text-[10px] font-medium tracking-wide text-pk-muted backdrop-blur-sm",
-                  "transition-colors hover:border-white/[0.14] hover:bg-white/[0.06] hover:text-pk-text",
-                  "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-pk-accent/80",
-                  "disabled:pointer-events-none disabled:opacity-50",
-                )}
-                disabled={isRerollingCover}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleRerollCover();
-                }}
-                aria-label={loopCardCoverRerollAria(locale, LOOP_COVER_REROLL_CREDIT_COST)}
-              >
-                {isRerollingCover ? (
-                  <Loader2 className="h-2.5 w-2.5 shrink-0 animate-spin" aria-hidden />
-                ) : (
-                  <RefreshCcw className="h-2.5 w-2.5 shrink-0 opacity-75" aria-hidden />
-                )}
-                <span className="inline-flex items-center gap-1 max-[380px]:hidden">
-                  <span>{lc.newInspo}</span>
-                  <GenerationCreditAmount
-                    amount={LOOP_COVER_REROLL_CREDIT_COST}
-                    showPlus
-                    className="opacity-90"
-                    iconClassName="h-2.5 w-2.5"
-                  />
-                </span>
-              </button>
             ) : null}
           </div>
         </div>

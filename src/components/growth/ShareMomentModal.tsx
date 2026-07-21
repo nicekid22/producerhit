@@ -7,7 +7,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { MusicVisualizerPreview } from "@/components/growth/MusicVisualizerPreview";
 import { floatEmojis } from "@/lib/delight/confetti";
-import { buildShareMomentTitle, buildSocialKitText, buildViralChallengeCaption } from "@/lib/tiktokPack";
+import { buildShareMomentTitle, buildSocialKitText } from "@/lib/tiktokPack";
 import {
   buildPlatformCaption,
   canNativeShareLink,
@@ -271,29 +271,9 @@ export function ShareMomentModal({ open, onClose, loop, locale, plan = "free", o
       hideFooter
     >
       <div className="space-y-4">
-        <div className="rounded-xl border border-amber-400/25 bg-amber-500/10 px-3 py-2.5">
-          <p className="text-[11px] font-semibold text-amber-100/95">
-            {isFr ? "Défi viral" : "Viral challenge"}
-          </p>
-          <p className="mt-0.5 text-[10px] leading-relaxed text-white/55">
-            {isFr
-              ? "« J'ai fait ce beat en ~60 s — fais mieux » — caption prête pour TikTok / Reels."
-              : "“I made this beat in ~60 sec — try to beat it” — ready caption for TikTok / Reels."}
-          </p>
-          <button
-            type="button"
-            onClick={() => {
-              if (!loop) return;
-              setCaption(buildViralChallengeCaption(loop, locale));
-              setShowCaptionEdit(true);
-              trackClientEvent("viral_challenge_caption_apply", { loop_id: loop.id });
-              toast.success(isFr ? "Caption défi appliquée" : "Challenge caption applied");
-            }}
-            className="mt-2 text-[11px] font-semibold text-amber-200 hover:text-white"
-          >
-            {isFr ? "Utiliser cette caption →" : "Use this caption →"}
-          </button>
-        </div>
+        <p className="text-[10px] leading-relaxed text-white/40">
+          {isFr ? "Partage ton beat — lien ou vidéo prête à poster" : "Share your beat — link or ready-to-post video"}
+        </p>
 
         <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/40">
           <div className={cn("relative mx-auto w-full overflow-hidden sm:max-w-[200px]", aspectClass)}>

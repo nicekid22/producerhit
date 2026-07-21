@@ -45,7 +45,7 @@ async function backfillOne(loop: Loop): Promise<void> {
   }
 }
 
-const REPAIR_MAX_PER_SESSION = 4;
+const REPAIR_MAX_PER_SESSION = 12;
 
 /**
  * Répare les covers manquantes après F5 (DB vide) — limité pour ne pas spam Pollinations.
