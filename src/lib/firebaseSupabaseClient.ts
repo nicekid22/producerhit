@@ -1196,9 +1196,12 @@ async function firebaseFunctionsInvoke(name: string, opts?: { body?: unknown; he
 
   if (supabaseUrl && anonKey) {
     try {
-      // Try to get a real Supabase JWT for the Firebase user
-      const supabaseToken = await getSupabaseTokenForFirebaseUser();
-      const authToken = opts?.headers?.Authorization ?? (supabaseToken ? `Bearer ${supabaseToken}` : `Bearer ${anonKey}`);
+      // Send the Firebase ID token as Bearer — the Edge Function verifies it via
+      // Identity Toolkit and uses the service role key to bypass RLS for Firebase users.
+      const auth = fbAuth();
+      const user = auth?.currentUser;
+      const idToken = user ? await user.getIdToken().catch(() => null) : null;
+      const authToken = opts?.headers?.Authorization ?? (idToken ? `Bearer ${idToken}` : `Bearer ${anonKey}`);
 
       const url = `${supabaseUrl.replace(/\/$/, "")}/functions/v1/${name}`;
       const res = await fetch(url, {
@@ -1307,7 +1310,20 @@ type AnyUser = any;
 
 const firebaseAuthCompat = {
   getSession: async (): Promise<{ data: { session: AnySession | null }; error: AnySession | null }> => {
-    return fbGetSession() as unknown as Promise<{ data: { session: AnySession | null }; error: AnySession | null }>;
+    const session = await fbGetSession();
+    // Inject the real Firebase ID token so callers using `session.access_token`
+    // send a JWT the Supabase Edge Function can verify via Identity Toolkit.
+    const auth = fbAuth();
+    const user = auth?.currentUser;
+    if (user && session?.data?.session) {
+      try {
+        const idToken = await user.getIdToken();
+        session.data.session.access_token = idToken;
+      } catch {
+        // keep fallback (UID)
+      }
+    }
+    return session as unknown as Promise<{ data: { session: AnySession | null }; error: AnySession | null }>;
   },
 
   getUser: async (_token?: string): Promise<{ data: { user: AnyUser | null }; error: AnySession | null }> => {

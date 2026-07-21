@@ -300,6 +300,36 @@ export async function loadUserProfile(userId: string, email?: string | null): Pr
   }
 
   const row = await fetchUserProfile(userId, email);
+
+  // Firebase user with no profile in Supabase → create it in Firestore directly
+  if (!row && isFirebaseReady()) {
+    try {
+      const { ensureFirebaseProfile } = await import("@/lib/firebaseFallback");
+      const fbProfile = await ensureFirebaseProfile(userId, email ?? null);
+      if (fbProfile) {
+        return normalizeProfileRow({
+          plan: fbProfile.plan,
+          username: fbProfile.username,
+          loops_used_this_month: fbProfile.loops_used_this_month,
+          referral_bonus: fbProfile.referral_bonus,
+          purchased_bonus: fbProfile.purchased_bonus,
+          referral_code: fbProfile.referral_code,
+          level_bonus: fbProfile.level_bonus,
+          daily_bonus_month: fbProfile.daily_bonus_month,
+          avatar_id: fbProfile.avatar_id,
+          bio: fbProfile.bio,
+          creator_type: fbProfile.creator_type,
+          social: fbProfile.social,
+          voice_to_song_used_this_month: fbProfile.voice_to_song_used_this_month,
+          voice_clone_used_this_month: fbProfile.voice_clone_used_this_month,
+          hosted_audio_expires_at: fbProfile.hosted_audio_expires_at,
+        }) as UserProfileRow;
+      }
+    } catch {
+      // fall through to throw
+    }
+  }
+
   return row;
 }
 

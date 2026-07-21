@@ -46,6 +46,57 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * Verify a Firebase ID token via Google Identity Toolkit REST API.
+ * Falls back to null if not a Firebase token or verification fails.
+ * Returns { uid, email } from the Firebase token claims.
+ */
+async function verifyFirebaseIdToken(token: string): Promise<{ uid: string; email?: string } | null> {
+  const firebaseApiKey = Deno.env.get("FIREBASE_API_KEY");
+  if (!firebaseApiKey) return null;
+
+  // Only try Firebase verification if token looks like a Firebase ID token (starts with eyJ)
+  if (!token.startsWith("eyJ")) return null;
+
+  try {
+    const res = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${firebaseApiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken: token }),
+      },
+    );
+    if (!res.ok) return null;
+    const json = await res.json() as { users?: Array<{ localId: string; email?: string }> };
+    const fbUser = json.users?.[0];
+    if (!fbUser?.localId) return null;
+    return { uid: fbUser.localId, email: fbUser.email };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Get user profile from Supabase using service role key (bypasses RLS).
+ * Used when authenticated via Firebase token.
+ */
+async function getProfileWithServiceKey(supabaseUrl: string, serviceRoleKey: string, userId: string) {
+  const res = await fetch(
+    `${supabaseUrl}/rest/v1/profiles?id=eq.${userId}&select=plan,loops_used_this_month,referral_bonus,level_bonus,daily_bonus_month,purchased_bonus&limit=1`,
+    {
+      headers: {
+        Authorization: `Bearer ${serviceRoleKey}`,
+        apikey: serviceRoleKey,
+        "Content-Type": "application/json",
+      },
+    },
+  );
+  if (!res.ok) return null;
+  const rows = await res.json() as Array<Record<string, unknown>>;
+  return rows[0] ?? null;
+}
+
 /** Chanson avec paroles — ACE peut être lent ; pas de plafond court en async (poll côté client). */
 function aceRequestTimeoutMs(input: { instrumental: boolean; isSong?: boolean; lyrics?: string }): number {
   const off = Deno.env.get("ACE_REQUEST_TIMEOUT_MS");
@@ -406,16 +457,49 @@ async function handleAceRemixMultipart(req: Request, corsHeaders: Record<string,
   }
   const token = authHeader.replace("Bearer ", "").trim();
   const authedSupabase = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: `Bearer ${token}` } } });
-  const {
-    data: { user },
-    error: authError,
-  } = await authedSupabase.auth.getUser(token);
-  if (authError || !user) {
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const serviceSupabase = serviceKey ? createClient(supabaseUrl, serviceKey) : null;
+  const firebaseApiKey = Deno.env.get("FIREBASE_API_KEY") ?? "";
+
+  // Try Supabase auth first
+  const { data: supabaseUser, error: sbError } = await authedSupabase.auth.getUser(token);
+  let userId: string | null = supabaseUser?.user?.id ?? null;
+
+  // Fallback: try Firebase ID token verification (for Firebase Auth users)
+  if (!userId && firebaseApiKey && token.startsWith("eyJ")) {
+    try {
+      const res = await fetch(
+        `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${firebaseApiKey}`,
+        { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ idToken: token }) },
+      );
+      if (res.ok) {
+        const json = await res.json() as { users?: Array<{ localId: string }> };
+        userId = json.users?.[0]?.localId ?? null;
+      }
+    } catch {
+      // Firebase verification failed — continue
+    }
+  }
+
+  if (!userId) {
     return new Response(JSON.stringify({ error: "Authentication required" }), {
       status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+
+  // Fake user object for code that uses user.id
+  const user = { id: userId } as { id: string };
+
+  // Helper to read profile using appropriate key (service key for Firebase users, anon for Supabase users)
+  const readProfile = async (userId: string) => {
+    if (serviceSupabase) {
+      const { data } = await serviceSupabase.from("profiles").select("plan, loops_used_this_month, referral_bonus, level_bonus, daily_bonus_month, purchased_bonus").eq("id", userId).maybeSingle();
+      return data;
+    }
+    const { data } = await authedSupabase.from("profiles").select("plan, loops_used_this_month, referral_bonus, level_bonus, daily_bonus_month, purchased_bonus").eq("id", userId).maybeSingle();
+    return data;
+  };
 
   let useIdempotentUsage = false;
   if (generationKey) {
@@ -441,8 +525,12 @@ async function handleAceRemixMultipart(req: Request, corsHeaders: Record<string,
     }
     useIdempotentUsage = true;
   } else {
-    await authedSupabase.rpc("reset_loops_usage_if_needed");
-    const { data: profile } = await authedSupabase.from("profiles").select("plan, loops_used_this_month, referral_bonus, level_bonus, daily_bonus_month, purchased_bonus").eq("id", user.id).single();
+    if (serviceSupabase) {
+      await serviceSupabase.rpc("reset_loops_usage_if_needed").catch(() => {});
+    } else {
+      await authedSupabase.rpc("reset_loops_usage_if_needed").catch(() => {});
+    }
+    const profile = await readProfile(userId);
     const plan = typeof profile?.plan === "string" ? profile.plan : "free";
     const used = typeof profile?.loops_used_this_month === "number" ? profile.loops_used_this_month : 0;
     const base = LIMITS[plan as keyof typeof LIMITS] ?? LIMITS.free;
@@ -460,7 +548,7 @@ async function handleAceRemixMultipart(req: Request, corsHeaders: Record<string,
     }
   }
 
-  const { data: profilePlan } = await authedSupabase.from("profiles").select("plan").eq("id", user.id).single();
+  const profilePlan = await readProfile(userId);
   const authedPlan = normalizeAuthedPlan(typeof profilePlan?.plan === "string" ? profilePlan.plan : "free");
   const requestedAudioFormat =
     audioFormatRaw === "wav" || audioFormatRaw === "flac" || audioFormatRaw === "mp3" ? audioFormatRaw : "mp3";
@@ -1676,21 +1764,43 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
     if (authHeader?.startsWith("Bearer ")) {
       const token = authHeader.replace("Bearer ", "").trim();
       const url = supabaseUrl;
-      const key = supabaseAnonKey;
-      if (!url || !key) {
+      const anonKey = supabaseAnonKey;
+      const serviceKey = supabaseServiceRoleKey;
+      const firebaseApiKey = (Deno.env.get("FIREBASE_API_KEY") ?? "").trim();
+      if (!url || !anonKey) {
         console.error("Missing SUPABASE_URL or SUPABASE_ANON_KEY");
       } else {
-        const supabase = createClient(url, key, { global: { headers: { Authorization: `Bearer ${token}` } } });
+        const supabase = createClient(url, anonKey, { global: { headers: { Authorization: `Bearer ${token}` } } });
         authedSupabase = supabase;
-        const {
-          data: { user },
-          error: authError,
-        } = await supabase.auth.getUser(token);
 
-        if (authError) {
-          console.error("Auth error:", authError.message);
-        } else if (user && action !== "format" && action !== "mirror_audio") {
-          authedUserId = user.id;
+        // Try Supabase auth first
+        const { data: supabaseUser, error: sbError } = await supabase.auth.getUser(token);
+        let fbUid: string | null = null;
+
+        // Fallback: verify Firebase ID token (for Firebase Auth users)
+        if (!supabaseUser?.user?.id && firebaseApiKey && token.startsWith("eyJ")) {
+          try {
+            const res = await fetch(
+              `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${firebaseApiKey}`,
+              { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ idToken: token }) },
+            );
+            if (res.ok) {
+              const json = await res.json() as { users?: Array<{ localId: string }> };
+              fbUid = json.users?.[0]?.localId ?? null;
+            }
+          } catch {
+            // Firebase verification failed
+          }
+        }
+
+        const effectiveUserId = supabaseUser?.user?.id ?? fbUid;
+
+        if (effectiveUserId && action !== "format" && action !== "mirror_audio") {
+          authedUserId = effectiveUserId;
+          // Use service role key when dealing with Firebase users (bypasses RLS)
+          if (fbUid && serviceKey) {
+            authedSupabase = createClient(url, serviceKey, { auth: { persistSession: false } });
+          }
           if (action !== "bump_usage") {
             if (generationKey) {
               const { data: reserveData, error: reserveError } = await supabase.rpc("check_loops_usage_idempotent", {
