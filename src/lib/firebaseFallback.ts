@@ -9,6 +9,7 @@
  */
 
 import { doc, getDoc, collection, query, where, orderBy, limit, getDocs, setDoc, updateDoc } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 import { getFirebaseDb, isFirebaseConfigured } from "./firebaseClient";
 
 // ---------------------------------------------------------------------------
@@ -172,9 +173,36 @@ export async function ensureFirebaseProfile(
       updated_at: new Date().toISOString(),
     };
     await setDoc(docRef, profile, { merge: true });
+
+    // Ensure Supabase profile row also exists (for usage tracking in Edge Functions)
+    callEnsureProfileEdge().catch(() => {});
+
     return { id: userId, ...profile };
   } catch {
     return null;
+  }
+}
+
+/** Call the ensure-profile Edge Function to create a Supabase profile row. */
+async function callEnsureProfileEdge(): Promise<void> {
+  const auth = getAuth();
+  const user = auth?.currentUser;
+  if (!user) return;
+  try {
+    const token = await user.getIdToken();
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+    if (!supabaseUrl || !anonKey) return;
+    await fetch(`${supabaseUrl.replace(/\/$/, "")}/functions/v1/ensure-profile`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        apikey: anonKey,
+        "Content-Type": "application/json",
+      },
+    });
+  } catch {
+    // Edge function might fail if not deployed yet — non-blocking
   }
 }
 
