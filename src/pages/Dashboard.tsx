@@ -469,7 +469,6 @@ export default function Dashboard() {
   const [masteringUpsellLoop, setMasteringUpsellLoop] = useState<Loop | null>(null);
   const [gamificationRefreshKey, setGamificationRefreshKey] = useState(0);
   const usedCountRef = useRef(usedThisMonth);
-  const sessionGenerationCountRef = useRef(0);
   const [workspaceView, setWorkspaceView] = useState<"tracks" | "master">("tracks");
   const [masterLoopId, setMasterLoopId] = useState<string | null>(null);
   const [entrySource, setEntrySource] = useState<string>("unknown");
@@ -590,7 +589,7 @@ export default function Dashboard() {
     planRef.current = data.plan;
     setPlan(data.plan);
     // Ajoute les générations de cette session à la valeur serveur (Firebase vs Supabase désynchronisé)
-    setUsedThisMonth(data.loops_used_this_month + sessionGenerationCountRef.current);
+    setUsedThisMonth((prev) => Math.max(prev, data.loops_used_this_month));
     setVoiceToSongUsed(data.voice_to_song_used_this_month ?? 0);
     setVoiceCloneUsed(data.voice_clone_used_this_month ?? 0);
     setReferralBonus(data.referral_bonus);
@@ -1121,7 +1120,6 @@ export default function Dashboard() {
     setUsedThisMonth((v) => {
       const next = v + 1;
       usedCountRef.current = next;
-      sessionGenerationCountRef.current += 1;
       try {
         window.localStorage.setItem("producerhit_used_this_month", String(next));
       } catch {
