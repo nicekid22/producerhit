@@ -57,22 +57,17 @@ export function supabaseSessionFromFirebase(
   fbUser: FirebaseUser,
 ): { session: any; user: any } {
   const user = supabaseUserFromFirebase(fbUser);
-  // access_token is a getter that resolves the real Firebase ID token on demand.
-  // Edge Functions verify it via Identity Toolkit and use the service role key
-  // to bypass RLS — so any caller that does `session.access_token` gets a token
-  // the Supabase Edge Function will accept.
+  // access_token starts as the Firebase UID (synchronous fallback).
+  // firebaseAuthCompat.getSession() overwrites it with the real Firebase ID
+  // token (JWT) via simple assignment — this requires a regular property,
+  // NOT a getter, because JS strict-mode throws on setter-less assignments.
   const session: any = {
     refresh_token: fbUser.uid,
     expires_in: 3600 * 24 * 7,
     expires_at: Date.now() + 3600 * 24 * 7 * 1000,
     token_type: "bearer",
     user,
-    // allow callers to read the live Firebase ID token
-    get access_token(): string {
-      // Synchronous path: return the UID as fallback. Callers that need the real
-      // JWT should use getFirebaseIdTokenForEdgeFunction() below.
-      return fbUser.uid;
-    },
+    access_token: fbUser.uid,
   };
   return { session, user };
 }
