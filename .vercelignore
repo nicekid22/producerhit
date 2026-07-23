@@ -1,0 +1,12 @@
+node_modules
+apps
+dist
+.vercel
+.firebase
+.zcode
+.git
+.git-rewrite
+test-output*
+previews
+backup file modification
+*.log

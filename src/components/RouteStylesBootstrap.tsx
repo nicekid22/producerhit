@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import {
-  deferUntilIdle,
   loadCommunityCss,
   loadDashboardCss,
   loadDistributionCss,
@@ -56,26 +55,24 @@ function routeCssKind(pathname: string): RouteCssKind {
   return null;
 }
 
-/** Charge les feuilles CSS non critiques après le first paint (LCP). */
+/** Charge les feuilles CSS — immédiatement (le splash screen masque le temps de chargement). */
 export function RouteStylesBootstrap() {
   const { pathname } = useLocation();
 
   useEffect(() => {
     const kind = routeCssKind(pathname);
-    deferUntilIdle(() => {
-      void loadSharedUiCss();
-      if (kind === "marketing") void loadMarketingCss();
-      if (kind === "dashboard") {
-        void loadDashboardCss();
-        void loadDistributionCss();
-      }
-      if (kind === "library") {
-        void loadLibraryCss();
-        void loadDistributionCss();
-      }
-      if (kind === "community") void loadCommunityCss();
-      if (kind === "distribution") void loadDistributionCss();
-    });
+    void loadSharedUiCss();
+    if (kind === "marketing") void loadMarketingCss();
+    if (kind === "dashboard") {
+      void loadDashboardCss();
+      void loadDistributionCss();
+    }
+    if (kind === "library") {
+      void loadLibraryCss();
+      void loadDistributionCss();
+    }
+    if (kind === "community") void loadCommunityCss();
+    if (kind === "distribution") void loadDistributionCss();
   }, [pathname]);
 
   return null;

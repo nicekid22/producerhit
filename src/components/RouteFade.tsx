@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -23,9 +23,16 @@ function isAppShellPath(pathname: string): boolean {
 export function RouteFade({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
   const appShell = isAppShellPath(pathname);
-  const [visible, setVisible] = useState(appShell);
+  const initialMount = useRef(true);
+  const [visible, setVisible] = useState(true);
 
   useEffect(() => {
+    // Skip fade on initial mount — splash screen already masks loading
+    if (initialMount.current) {
+      initialMount.current = false;
+      if (appShell) setVisible(true);
+      return;
+    }
     if (appShell) {
       setVisible(true);
       return;

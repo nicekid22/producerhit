@@ -1,19 +1,16 @@
 import { useEffect } from "react";
 import {
-  deferUntilIdle,
   loadAppShellCss,
   loadShellDeferredCss,
   preloadVisualThemesIfNeeded,
 } from "@/lib/perf/defer";
 
-/** CSS shell + thèmes après first paint (LCP). */
+/** CSS shell + thèmes — chargés immédiatement (le splash screen masque le temps de chargement). */
 export function ShellPerfBootstrap() {
   useEffect(() => {
-    deferUntilIdle(() => {
-      void loadShellDeferredCss();
-      void loadAppShellCss();
-      preloadVisualThemesIfNeeded();
-    });
+    void loadShellDeferredCss();
+    void loadAppShellCss();
+    preloadVisualThemesIfNeeded();
   }, []);
 
   return null;

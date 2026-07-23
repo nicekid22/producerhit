@@ -501,8 +501,11 @@ async function handleAceRemixMultipart(req: Request, corsHeaders: Record<string,
     return data;
   };
 
+  // For Firebase users, the RPC's auth.uid() is null — bypass it and use
+  // the direct profile read (readProfile helper uses serviceSupabase for them).
+  const isFirebaseUser = !supabaseUser?.user?.id && userId !== null;
   let useIdempotentUsage = false;
-  if (generationKey) {
+  if (generationKey && !isFirebaseUser) {
     const { data: reserveData, error: reserveError } = await authedSupabase.rpc("check_loops_usage_idempotent", { p_key: generationKey });
     if (reserveError) {
       return new Response(JSON.stringify({ error: reserveError.message }), {
@@ -524,6 +527,14 @@ async function handleAceRemixMultipart(req: Request, corsHeaders: Record<string,
       );
     }
     useIdempotentUsage = true;
+  } else if (generationKey && isFirebaseUser) {
+    // Firebase user: use the direct profile read path below (no RPC)
+    // Reset usage if needed via serviceSupabase first
+    if (serviceSupabase) {
+      await serviceSupabase.rpc("reset_loops_usage_if_needed").catch(() => {});
+    } else {
+      await authedSupabase.rpc("reset_loops_usage_if_needed").catch(() => {});
+    }
   } else {
     if (serviceSupabase) {
       await serviceSupabase.rpc("reset_loops_usage_if_needed").catch(() => {});
@@ -1802,7 +1813,12 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
             authedSupabase = createClient(url, serviceKey, { auth: { persistSession: false } });
           }
           if (action !== "bump_usage") {
-            if (generationKey) {
+            // The check_loops_usage_idempotent RPC uses auth.uid() which is null
+            // for Firebase users (Supabase can't decode a Firebase JWT). Skip the
+            // RPC for Firebase users and fall through to the direct profile read
+            // which uses the service role client (bypasses RLS correctly).
+            const isFirebaseUser = Boolean(fbUid);
+            if (generationKey && !isFirebaseUser) {
               const { data: reserveData, error: reserveError } = await supabase.rpc("check_loops_usage_idempotent", {
                 p_key: generationKey,
               });
@@ -1841,7 +1857,7 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
               const { data: profile, error: profileError } = await supabase
                 .from("profiles")
                 .select("plan, loops_used_this_month, referral_bonus, level_bonus, daily_bonus_month, purchased_bonus")
-                .eq("id", user.id)
+                .eq("id", authedUserId)
                 .single();
 
               if (profileError) {

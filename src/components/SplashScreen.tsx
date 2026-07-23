@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { BrandLogo } from "@/components/landing/BrandLogo";
 
 const SPLASH_MIN_MS = 1400;
 const SPLASH_MAX_MS = 2800;
@@ -88,7 +87,38 @@ export function SplashScreen() {
             animation: "pkSplashGlow 1.8s ease-in-out forwards",
           }}
         />
-        <BrandLogo staticMark className="relative text-2xl sm:text-3xl" />
+        {/* Logo icon — audio wave mark */}
+        <svg
+          className="relative"
+          width="56"
+          height="56"
+          viewBox="0 0 32 32"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          <rect width="32" height="32" rx="8" fill="#0a0a0f" />
+          <rect width="32" height="32" rx="8" fill="url(#splash-bg)" opacity="0.9" />
+          <defs>
+            <linearGradient id="splash-bg" x1="4" y1="2" x2="28" y2="30" gradientUnits="userSpaceOnUse">
+              <stop stopColor="#c026d3" stopOpacity="0.2" />
+              <stop offset="1" stopColor="#7c3aed" stopOpacity="0.08" />
+            </linearGradient>
+            <linearGradient id="splash-wave" x1="6" y1="8" x2="26" y2="24" gradientUnits="userSpaceOnUse">
+              <stop stopColor="#d946ef" />
+              <stop offset="0.45" stopColor="#a855f7" />
+              <stop offset="1" stopColor="#818cf8" />
+            </linearGradient>
+          </defs>
+          <g stroke="url(#splash-wave)" strokeWidth="2.1" strokeLinecap="round" transform="translate(4 5.5)">
+            <path d="M2 10v3" />
+            <path d="M6 6v11" />
+            <path d="M10 3v18" />
+            <path d="M14 8v7" />
+            <path d="M18 5v13" />
+            <path d="M22 10v3" />
+          </g>
+        </svg>
       </div>
     </div>
   );
