@@ -18,6 +18,84 @@ function normalizeAuthedPlan(plan: string): keyof typeof LIMITS {
   return "free";
 }
 
+/**
+ * Verify a Firebase ID token via Google Identity Toolkit REST API.
+ * Falls back to null if not a Firebase token or verification fails.
+ */
+async function verifyFirebaseIdToken(token: string): Promise<{ uid: string; email?: string } | null> {
+  const firebaseApiKey = Deno.env.get("FIREBASE_API_KEY");
+  if (!firebaseApiKey) return null;
+  if (!token.startsWith("eyJ")) return null;
+  try {
+    const res = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${firebaseApiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken: token }),
+      },
+    );
+    if (!res.ok) return null;
+    const json = await res.json() as { users?: Array<{ localId: string; email?: string }> };
+    const fbUser = json.users?.[0];
+    if (!fbUser?.localId) return null;
+    return { uid: fbUser.localId, email: fbUser.email };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Read a profile from Supabase using the service role key directly via REST API.
+ * Used when the user is authenticated via Firebase (Supabase can't decode Firebase JWTs).
+ */
+async function getProfileWithServiceKey(supabaseUrl: string, serviceRoleKey: string, userId: string) {
+  const res = await fetch(
+    `${supabaseUrl}/rest/v1/profiles?id=eq.${userId}&select=plan,loops_used_this_month,referral_bonus,level_bonus,daily_bonus_month,purchased_bonus&limit=1`,
+    {
+      headers: {
+        Authorization: `Bearer ${serviceRoleKey}`,
+        apikey: serviceRoleKey,
+        "Content-Type": "application/json",
+      },
+    },
+  );
+  if (!res.ok) return null;
+  const rows = await res.json() as Array<Record<string, unknown>>;
+  return rows[0] ?? null;
+}
+
+function asString(v: unknown) {
+  return typeof v === "string" ? v : "";
+}
+
+function asNumber(v: unknown) {
+  return typeof v === "number" && Number.isFinite(v) ? v : null;
+}
+
+function checkLimit(plan: string, profile: Record<string, unknown> | null): {
+  ok: boolean;
+  plan: string;
+  limit: number;
+  used: number;
+} {
+  const p = typeof plan === "string" ? plan : "free";
+  const normalized = normalizeAuthedPlan(p);
+  const used = typeof profile?.loops_used_this_month === "number" ? profile.loops_used_this_month : 0;
+  const baseLimit = LIMITS[normalized] ?? LIMITS.free;
+  const referralBonus = typeof profile?.referral_bonus === "number" ? profile.referral_bonus : 0;
+  const levelBonus = typeof profile?.level_bonus === "number" ? profile.level_bonus : 0;
+  const dailyBonus = typeof profile?.daily_bonus_month === "number" ? profile.daily_bonus_month : 0;
+  const purchasedBonus = typeof profile?.purchased_bonus === "number" ? profile.purchased_bonus : 0;
+  const limit = baseLimit + Math.max(0, referralBonus) + Math.max(0, levelBonus) + Math.max(0, dailyBonus) + Math.max(0, purchasedBonus);
+  return {
+    ok: used < limit,
+    plan: p,
+    limit,
+    used,
+  };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -49,42 +127,46 @@ serve(async (req) => {
       const token = authHeader.replace("Bearer ", "").trim();
       const url = Deno.env.get("SUPABASE_URL") ?? "";
       const key = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+      const serviceKey = (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "").trim();
+      const firebaseApiKey = (Deno.env.get("FIREBASE_API_KEY") ?? "").trim();
+
       if (!url || !key) {
         console.error("Missing SUPABASE_URL or SUPABASE_ANON_KEY");
       } else {
         const supabase = createClient(url, key, { global: { headers: { Authorization: `Bearer ${token}` } } });
         authedSupabase = supabase;
-        const {
-          data: { user },
-          error: authError,
-        } = await supabase.auth.getUser(token);
 
-        if (authError) {
-          console.error("Auth error:", authError.message);
-        } else if (user) {
-          authedUserId = user.id;
+        // Try Supabase auth first
+        let supabaseUserId: string | null = null;
+        const { data: supabaseUser, error: sbError } = await supabase.auth.getUser(token);
+        if (!sbError && supabaseUser?.user?.id) {
+          supabaseUserId = supabaseUser.user.id;
+        }
+
+        // Fallback: verify Firebase ID token (for Firebase Auth users)
+        let fbUid: string | null = null;
+        if (!supabaseUserId && firebaseApiKey && token.startsWith("eyJ")) {
+          const fbResult = await verifyFirebaseIdToken(token);
+          if (fbResult) fbUid = fbResult.uid;
+        }
+
+        const effectiveUserId = supabaseUserId ?? fbUid;
+        const isFirebaseUser = Boolean(fbUid);
+
+        if (effectiveUserId) {
+          authedUserId = effectiveUserId;
+
+          // For Firebase users, use service key client to bypass RLS
+          if (isFirebaseUser && serviceKey) {
+            authedSupabase = createClient(url, serviceKey, { auth: { persistSession: false } });
+          }
+
+          // Profile + usage check
           if (generationKey) {
-            const { error: resetErr } = await supabase.rpc("reset_loops_usage_if_needed");
-            if (resetErr) console.error("reset_loops_usage_if_needed error:", resetErr.message);
-
-            const { data: profile, error: profileError } = await supabase
-              .from("profiles")
-              .select("plan, loops_used_this_month, referral_bonus, level_bonus, daily_bonus_month, purchased_bonus")
-              .eq("id", user.id)
-              .single();
-
-            if (profileError) {
-              console.error("Profile error:", profileError.message);
-            } else {
-              const plan = (typeof profile?.plan === "string" ? profile.plan : "free") as string;
-              authedPlan = normalizeAuthedPlan(plan);
-              const used = typeof profile?.loops_used_this_month === "number" ? profile.loops_used_this_month : 0;
-              const baseLimit = LIMITS[plan as keyof typeof LIMITS] ?? LIMITS.free;
-              const referralBonus = typeof profile?.referral_bonus === "number" ? profile.referral_bonus : 0;
-              const levelBonus = typeof profile?.level_bonus === "number" ? profile.level_bonus : 0;
-              const dailyBonus = typeof profile?.daily_bonus_month === "number" ? profile.daily_bonus_month : 0;
-              const purchasedBonus = typeof profile?.purchased_bonus === "number" ? profile.purchased_bonus : 0;
-              const limit = baseLimit + Math.max(0, referralBonus) + Math.max(0, levelBonus) + Math.max(0, dailyBonus) + Math.max(0, purchasedBonus);
+            // Try idempotent check first (Supabase users only — Firebase auth.uid() returns null)
+            if (!isFirebaseUser) {
+              const { error: resetErr } = await supabase.rpc("reset_loops_usage_if_needed");
+              if (resetErr) console.error("reset_loops_usage_if_needed error:", resetErr.message);
 
               const { data: existing, error: existingErr } = await supabase
                 .from("generation_usage_keys")
@@ -92,9 +174,56 @@ serve(async (req) => {
                 .eq("key", generationKey)
                 .maybeSingle();
               if (existingErr) console.error("generation_usage_keys lookup error:", existingErr.message);
-              const alreadyCounted = Boolean(existing && (existing as { key?: unknown } | null)?.key);
+              const alreadyCounted = Boolean((existing as { key?: unknown } | null)?.key);
 
-              if (!alreadyCounted && used >= limit) {
+              // Check usage via RPC for Supabase users
+              const { data: reserveData, error: reserveError } = await supabase.rpc("check_loops_usage_idempotent", {
+                p_key: generationKey,
+              });
+              if (reserveError) {
+                console.error("check_loops_usage_idempotent error:", reserveError.message);
+              } else {
+                type UsageReserveRow = { ok?: unknown; plan?: unknown; used?: unknown; limit?: unknown };
+                const row: UsageReserveRow | null = Array.isArray(reserveData)
+                  ? ((reserveData[0] as UsageReserveRow | undefined) ?? null)
+                  : ((reserveData as UsageReserveRow | null) ?? null);
+                const ok = Boolean(row?.ok);
+                const plan = (typeof row?.plan === "string" ? row.plan : "free") as string;
+                const used = typeof row?.used === "number" ? row.used : 0;
+                const limit = typeof row?.limit === "number" ? row.limit : LIMITS.free;
+                authedPlan = normalizeAuthedPlan(plan);
+                if (!ok) {
+                  return new Response(
+                    JSON.stringify({
+                      error: `Monthly limit reached (${limit} beats for ${plan} plan). Upgrade to generate more.`,
+                      limitReached: true,
+                      plan,
+                      limit,
+                    }),
+                    { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+                  );
+                }
+                useIdempotentUsage = true;
+              }
+            } else {
+              // Firebase user: skip RPC (auth.uid() is null), read profile directly
+              // Reset usage if needed via service key
+              await authedSupabase.rpc("reset_loops_usage_if_needed").catch(() => {});
+
+              const profile = await getProfileWithServiceKey(url, serviceKey, fbUid);
+              const { ok, plan, limit } = checkLimit(profile?.plan ?? "free", profile);
+              authedPlan = normalizeAuthedPlan(plan);
+
+              // Check if already counted via generation_key
+              const { data: existing, error: existingErr } = await authedSupabase
+                .from("generation_usage_keys")
+                .select("key")
+                .eq("key", generationKey)
+                .maybeSingle();
+              if (existingErr) console.error("generation_usage_keys lookup error:", existingErr.message);
+              const alreadyCounted = Boolean((existing as { key?: unknown } | null)?.key);
+
+              if (!alreadyCounted && !ok) {
                 return new Response(
                   JSON.stringify({
                     error: `Monthly limit reached (${limit} beats for ${plan} plan). Upgrade to generate more.`,
@@ -107,28 +236,39 @@ serve(async (req) => {
               }
             }
           } else {
-            const { error: resetErr } = await supabase.rpc("reset_loops_usage_if_needed");
-            if (resetErr) console.error("reset_loops_usage_if_needed error:", resetErr.message);
-            const { data: profile, error: profileError } = await supabase
-              .from("profiles")
-              .select("plan, loops_used_this_month, referral_bonus, level_bonus, daily_bonus_month, purchased_bonus")
-              .eq("id", user.id)
-              .single();
+            // No generationKey — direct profile read
+            if (!isFirebaseUser) {
+              const { error: resetErr } = await supabase.rpc("reset_loops_usage_if_needed");
+              if (resetErr) console.error("reset_loops_usage_if_needed error:", resetErr.message);
+              const { data: profile, error: profileError } = await supabase
+                .from("profiles")
+                .select("plan, loops_used_this_month, referral_bonus, level_bonus, daily_bonus_month, purchased_bonus")
+                .eq("id", effectiveUserId)
+                .single();
 
-            if (profileError) {
-              console.error("Profile error:", profileError.message);
+              if (profileError) {
+                console.error("Profile error:", profileError.message);
+              } else {
+                const { ok, plan, limit } = checkLimit(profile?.plan ?? "free", profile);
+                authedPlan = normalizeAuthedPlan(plan);
+                if (!ok) {
+                  return new Response(
+                    JSON.stringify({
+                      error: `Monthly limit reached (${limit} beats for ${plan} plan). Upgrade to generate more.`,
+                      limitReached: true,
+                      plan,
+                      limit,
+                    }),
+                    { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+                  );
+                }
+              }
             } else {
-              const plan = (typeof profile?.plan === "string" ? profile.plan : "free") as string;
+              // Firebase user: read profile via service key REST API
+              const profile = await getProfileWithServiceKey(url, serviceKey, fbUid);
+              const { ok, plan, limit } = checkLimit(profile?.plan ?? "free", profile);
               authedPlan = normalizeAuthedPlan(plan);
-              const used = typeof profile?.loops_used_this_month === "number" ? profile.loops_used_this_month : 0;
-              const baseLimit = LIMITS[plan as keyof typeof LIMITS] ?? LIMITS.free;
-              const referralBonus = typeof profile?.referral_bonus === "number" ? profile.referral_bonus : 0;
-              const levelBonus = typeof profile?.level_bonus === "number" ? profile.level_bonus : 0;
-              const dailyBonus = typeof profile?.daily_bonus_month === "number" ? profile.daily_bonus_month : 0;
-              const purchasedBonus = typeof profile?.purchased_bonus === "number" ? profile.purchased_bonus : 0;
-              const limit = baseLimit + Math.max(0, referralBonus) + Math.max(0, levelBonus) + Math.max(0, dailyBonus) + Math.max(0, purchasedBonus);
-
-              if (used >= limit) {
+              if (!ok) {
                 return new Response(
                   JSON.stringify({
                     error: `Monthly limit reached (${limit} beats for ${plan} plan). Upgrade to generate more.`,
@@ -180,7 +320,11 @@ serve(async (req) => {
       }
     }
 
-    if (generationKey) {
+    if (generationKey && !useIdempotentUsage) {
+      // For Firebase users who skipped the idempotent check (no generationKey path)
+      // or for cases where generationKey exists but idempotent usage wasn't set,
+      // also do the idempotent reserve now (this is a duplicate check for non-Firebase
+      // users who already went through the RPC path — but idempotent is safe to call twice)
       const { data: reserveData, error: reserveError } = await authedSupabase.rpc("check_loops_usage_idempotent", {
         p_key: generationKey,
       });

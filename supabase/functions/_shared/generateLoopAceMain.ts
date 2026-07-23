@@ -15,6 +15,21 @@ import {
   scheduleRunJob,
   updateGenerationJob,
 } from "../_shared/generationJobUtils.ts";
+import {
+  fbGetProfile,
+  fbCheckUsageIdempotent,
+  fbBumpUsage,
+  fbBumpUsageIdempotent,
+  fbGetGenerationJob,
+  fbUpdateGenerationJob,
+  fbInsertGenerationJob,
+  fbGetLoop,
+  fbUpdateLoop,
+  fbFindPublicLoopByAceTaskId,
+  fbGetVoiceProfile,
+  fbUploadToStorage,
+  fbDownloadFromStorage,
+} from "../_shared/firestoreServer.ts";
 import { resolveAceLyricsForMeta, extractLyricsFromAceResponseContent } from "../_shared/aceLyricsApi.ts";
 import {
   buildAceChatCompletionsHttpBody,
@@ -1520,6 +1535,8 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+
+      // Try Supabase first (most jobs), then Firestore (Firebase users' jobs)
       const svc = createServiceSupabase();
       if (!svc) {
         return new Response(JSON.stringify({ error: "Server not configured" }), {
@@ -1527,7 +1544,14 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const job = await loadGenerationJob(svc, jobId);
+
+      // Load job from Supabase, fall back to Firestore
+      let job = await loadGenerationJob(svc, jobId);
+      let jobIsFromFirestore = false;
+      if (!job) {
+        job = await fbGetGenerationJob(jobId);
+        jobIsFromFirestore = true;
+      }
       if (!job) {
         return new Response(JSON.stringify({ error: "Job not found" }), {
           status: 404,
@@ -1585,8 +1609,10 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
       const baseCaption = sampleMode ? effectiveSampleQuery : caption.trim() || sampleQuery.trim();
       const effectivePrompt = (sampleMode ? effectiveSampleQuery : caption).trim();
       if (!effectivePrompt) {
-        await updateGenerationJob(svc, jobId, { status: "failed", error: "Missing caption" });
-        const failed = await loadGenerationJob(svc, jobId);
+        const failUpdate = jobIsFromFirestore
+          ? await fbUpdateGenerationJob(jobId, { status: "failed", error: "Missing caption" })
+          : await updateGenerationJob(svc, jobId, { status: "failed", error: "Missing caption" });
+        const failed = jobIsFromFirestore ? await fbGetGenerationJob(jobId) : await loadGenerationJob(svc, jobId);
         return new Response(JSON.stringify(jobResponsePayload(failed!)), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -1607,8 +1633,10 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
       const seedKey = generationKey || requestId;
       const aceTargets = getAceTargets(seedKey, aceKeyPreferIndex ?? undefined);
       if (!aceTargets.length) {
-        await updateGenerationJob(svc, jobId, { status: "failed", error: "ACE_STEP_API_KEY not set" });
-        const failed = await loadGenerationJob(svc, jobId);
+        const failUpdate = jobIsFromFirestore
+          ? await fbUpdateGenerationJob(jobId, { status: "failed", error: "ACE_STEP_API_KEY not set" })
+          : await updateGenerationJob(svc, jobId, { status: "failed", error: "ACE_STEP_API_KEY not set" });
+        const failed = jobIsFromFirestore ? await fbGetGenerationJob(jobId) : await loadGenerationJob(svc, jobId);
         return new Response(JSON.stringify(jobResponsePayload(failed!)), {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -1632,7 +1660,12 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
       paramObj.shift = quality.shift;
       paramObj.inference_steps = ACE_INFERENCE_STEPS;
 
-      await updateGenerationJob(svc, jobId, { status: "running" });
+      // Update job status via appropriate backend
+      if (jobIsFromFirestore) {
+        await fbUpdateGenerationJob(jobId, { status: "running" });
+      } else {
+        await updateGenerationJob(svc, jobId, { status: "running" });
+      }
 
       if (!job.ace_task_id && aceAsyncTryReleaseTask()) {
         let releaseTaskId: string | null = null;
@@ -1668,13 +1701,18 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
           }
         }
         if (releaseTaskId) {
-          await updateGenerationJob(svc, jobId, {
+          const statusPatch = {
             status: "running",
             ace_task_id: releaseTaskId,
             ace_base_url: releaseBase,
             ace_key_index: releaseKeyIndex,
-          });
-          const updated = await loadGenerationJob(svc, jobId);
+          };
+          if (jobIsFromFirestore) {
+            await fbUpdateGenerationJob(jobId, statusPatch);
+          } else {
+            await updateGenerationJob(svc, jobId, statusPatch);
+          }
+          const updated = jobIsFromFirestore ? await fbGetGenerationJob(jobId) : await loadGenerationJob(svc, jobId);
           return new Response(JSON.stringify(jobResponsePayload(updated!)), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
@@ -1734,33 +1772,65 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
           const msg = lastErr instanceof Error ? lastErr.message : "ACE chat/completions failed";
           throw new Error(msg);
         }
+        const jobUserId = job.user_id;
         if (audioUrl.startsWith("data:")) {
-          const persisted = await persistInlineJobAudioUrl(svc, job.user_id, jobId, audioUrl);
-          audioUrl = persisted.audioUrl;
-          if (persisted.providerDataUrl || audioUrl.startsWith("http")) {
-            meta = {
-              ...(meta ?? {}),
-              ...(persisted.providerDataUrl ? { providerDataUrl: persisted.providerDataUrl } : {}),
-              ...(audioUrl.startsWith("http") ? { httpAudioUrl: audioUrl } : {}),
-              sessionOnly: false,
-            };
+          // Persist inline audio via appropriate storage backend
+          if (jobIsFromFirestore) {
+            const decoded = await decodeDataUrl(audioUrl);
+            if (decoded?.bytes.byteLength) {
+              const ext = decoded.mime.includes("wav") ? "wav" : "mp3";
+              const path = `${jobUserId}/job-${jobId}.${ext}`;
+              const upload = await fbUploadToStorage(LOOP_AUDIO_BUCKET, path, decoded.bytes, decoded.mime);
+              if (upload.url) {
+                audioUrl = upload.url;
+                meta = {
+                  ...(meta ?? {}),
+                  providerDataUrl: audioUrl,
+                  sessionOnly: false,
+                };
+              }
+            }
+          } else {
+            const persisted = await persistInlineJobAudioUrl(svc, jobUserId, jobId, audioUrl);
+            audioUrl = persisted.audioUrl;
+            if (persisted.providerDataUrl || audioUrl.startsWith("http")) {
+              meta = {
+                ...(meta ?? {}),
+                ...(persisted.providerDataUrl ? { providerDataUrl: persisted.providerDataUrl } : {}),
+                ...(audioUrl.startsWith("http") ? { httpAudioUrl: audioUrl } : {}),
+                sessionOnly: false,
+              };
+            }
           }
         }
-        await updateGenerationJob(svc, jobId, {
+        const completionPatch = {
           status: "completed",
           audio_url: audioUrl,
           meta,
-        });
+        };
+        if (jobIsFromFirestore) {
+          await fbUpdateGenerationJob(jobId, completionPatch);
+        } else {
+          await updateGenerationJob(svc, jobId, completionPatch);
+        }
         if (generationKey) {
-          await svc.rpc("bump_loops_usage_idempotent", { p_key: generationKey });
+          if (jobIsFromFirestore) {
+            await fbBumpUsageIdempotent(jobUserId, generationKey);
+          } else {
+            await svc.rpc("bump_loops_usage_idempotent", { p_key: generationKey });
+          }
         }
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Job failed";
-        await updateGenerationJob(svc, jobId, { status: "failed", error: msg.slice(0, 500) });
+        if (jobIsFromFirestore) {
+          await fbUpdateGenerationJob(jobId, { status: "failed", error: msg.slice(0, 500) });
+        } else {
+          await updateGenerationJob(svc, jobId, { status: "failed", error: msg.slice(0, 500) });
+        }
       } finally {
         clearTimeout(timer);
       }
-      const finalJob = await loadGenerationJob(svc, jobId);
+      const finalJob = jobIsFromFirestore ? await fbGetGenerationJob(jobId) : await loadGenerationJob(svc, jobId);
       return new Response(JSON.stringify(jobResponsePayload(finalJob!)), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -1805,6 +1875,8 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
         }
 
         const effectiveUserId = supabaseUser?.user?.id ?? fbUid;
+        // True when the user authenticated via Firebase (Supabase can't decode Firebase JWTs)
+        const isFirebaseUserFlag = Boolean(fbUid);
 
         if (effectiveUserId && action !== "format" && action !== "mirror_audio") {
           authedUserId = effectiveUserId;
@@ -1904,6 +1976,18 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
     }
 
     if (action === "bump_usage") {
+      // Firebase path
+      if (isFirebaseUserFlag) {
+        if (generationKey) {
+          await fbBumpUsageIdempotent(authedUserId, generationKey);
+        } else {
+          await fbBumpUsage(authedUserId);
+        }
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      // Supabase path (unchanged)
       const { error: bumpErr } = generationKey
         ? await authedSupabase.rpc("bump_loops_usage_idempotent", { p_key: generationKey })
         : await authedSupabase.rpc("bump_loops_usage");
@@ -1926,40 +2010,69 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const { data: reserveData, error: reserveError } = await authedSupabase.rpc("check_loops_usage_idempotent", {
-        p_key: generationKey,
-      });
-      if (reserveError) throw new Error(reserveError.message);
-      type UsageReserveRow = { ok?: unknown };
-      const row: UsageReserveRow | null = Array.isArray(reserveData)
-        ? ((reserveData[0] as UsageReserveRow | undefined) ?? null)
-        : ((reserveData as UsageReserveRow | null) ?? null);
-      if (!row?.ok) {
-        return new Response(
-          JSON.stringify({ error: "Monthly limit reached", limitReached: true }),
-          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
+
+      // Check usage via appropriate backend
+      let usageOk = true;
+      if (isFirebaseUserFlag) {
+        const usage = await fbCheckUsageIdempotent(authedUserId, generationKey);
+        if (!usage?.ok) {
+          return new Response(
+            JSON.stringify({ error: "Monthly limit reached", limitReached: true }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+      } else {
+        const { data: reserveData, error: reserveError } = await authedSupabase.rpc("check_loops_usage_idempotent", {
+          p_key: generationKey,
+        });
+        if (reserveError) throw new Error(reserveError.message);
+        type UsageReserveRow = { ok?: unknown };
+        const row: UsageReserveRow | null = Array.isArray(reserveData)
+          ? ((reserveData[0] as UsageReserveRow | undefined) ?? null)
+          : ((reserveData as UsageReserveRow | null) ?? null);
+        if (!row?.ok) {
+          return new Response(
+            JSON.stringify({ error: "Monthly limit reached", limitReached: true }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
       }
+
+      const jobId = crypto.randomUUID();
       const instrumentalJob = body?.instrumental !== false;
       const mode = body?.isSong === true || instrumentalJob === false ? "song" : "beat";
       const payload = { ...(body as Record<string, unknown>) };
-      const { data: inserted, error: insertErr } = await authedSupabase
-        .from("generation_jobs")
-        .insert({
+
+      // Insert job via appropriate backend
+      if (isFirebaseUserFlag) {
+        await fbInsertGenerationJob({
+          id: jobId,
           user_id: authedUserId,
           generation_key: generationKey,
           status: "pending",
           mode,
           payload,
-        })
-        .select("id, status")
-        .single();
-      if (insertErr || !inserted?.id) {
-        throw new Error(insertErr?.message ?? "Failed to create generation job");
+        });
+      } else {
+        const { data: inserted, error: insertErr } = await authedSupabase
+          .from("generation_jobs")
+          .insert({
+            user_id: authedUserId,
+            generation_key: generationKey,
+            status: "pending",
+            mode,
+            payload,
+          })
+          .select("id, status")
+          .single();
+        if (insertErr || !inserted?.id) {
+          throw new Error(insertErr?.message ?? "Failed to create generation job");
+        }
       }
-      scheduleRunJob(inserted.id as string);
+
+      scheduleRunJob(jobId);
       return new Response(
-        JSON.stringify({ jobId: inserted.id, status: inserted.status, generationKey }),
+        JSON.stringify({ jobId, status: "pending", generationKey }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -1972,7 +2085,15 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const job = await loadGenerationJob(authedSupabase, jobId);
+
+      // Load job via appropriate backend
+      let job: { user_id: string; audio_url: string | null; meta: Record<string, unknown> | null; status: string; error: string | null; generation_key: string | null } | null;
+      if (isFirebaseUserFlag) {
+        job = await fbGetGenerationJob(jobId);
+      } else {
+        job = await loadGenerationJob(authedSupabase, jobId);
+      }
+
       if (!job || job.user_id !== authedUserId) {
         return new Response(JSON.stringify({ error: "Job not found" }), {
           status: 404,
@@ -2003,19 +2124,44 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
         return Response.redirect(raw, 302);
       }
 
-      const svc = createServiceSupabase();
-      if (svc) {
-        for (const ext of ["mp3", "wav"] as const) {
-          const path = `${job.user_id}/job-${jobId}.${ext}`;
-          const { data: blob, error: dlErr } = await svc.storage.from(LOOP_AUDIO_BUCKET).download(path);
-          if (!dlErr && blob && blob.size > 0) {
-            return new Response(blob, {
-              headers: {
-                ...corsHeaders,
-                "Content-Type": ext === "wav" ? "audio/wav" : "audio/mpeg",
-                "Cache-Control": "private, max-age=3600",
-              },
-            });
+      // Try Firebase Cloud Storage first for Firebase users, then Supabase Storage
+      if (isFirebaseUserFlag) {
+        const download = await fbDownloadFromStorage(LOOP_AUDIO_BUCKET, `${job.user_id}/job-${jobId}.mp3`);
+        if (download.bytes) {
+          return new Response(download.bytes, {
+            headers: {
+              ...corsHeaders,
+              "Content-Type": download.mime || "audio/mpeg",
+              "Cache-Control": "private, max-age=3600",
+            },
+          });
+        }
+        // Fallback: try wav
+        const downloadWav = await fbDownloadFromStorage(LOOP_AUDIO_BUCKET, `${job.user_id}/job-${jobId}.wav`);
+        if (downloadWav.bytes) {
+          return new Response(downloadWav.bytes, {
+            headers: {
+              ...corsHeaders,
+              "Content-Type": "audio/wav",
+              "Cache-Control": "private, max-age=3600",
+            },
+          });
+        }
+      } else {
+        const svc = createServiceSupabase();
+        if (svc) {
+          for (const ext of ["mp3", "wav"] as const) {
+            const path = `${job.user_id}/job-${jobId}.${ext}`;
+            const { data: blob, error: dlErr } = await svc.storage.from(LOOP_AUDIO_BUCKET).download(path);
+            if (!dlErr && blob && blob.size > 0) {
+              return new Response(blob, {
+                headers: {
+                  ...corsHeaders,
+                  "Content-Type": ext === "wav" ? "audio/wav" : "audio/mpeg",
+                  "Cache-Control": "private, max-age=3600",
+                },
+              });
+            }
           }
         }
       }
@@ -2044,7 +2190,11 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      let job = await loadGenerationJob(authedSupabase, jobId);
+
+      // Load job via appropriate backend
+      let job = isFirebaseUserFlag
+        ? await fbGetGenerationJob(jobId)
+        : await loadGenerationJob(authedSupabase, jobId);
       if (!job || job.user_id !== authedUserId) {
         return new Response(JSON.stringify({ error: "Job not found" }), {
           status: 404,
@@ -2052,10 +2202,10 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
         });
       }
 
-      if (job.status === "running" && job.ace_task_id && job.ace_base_url) {
+      if (job.status === "running" && (job as { ace_task_id?: string }).ace_task_id && (job as { ace_base_url?: string }).ace_base_url) {
         const p = job.payload && typeof job.payload === "object" ? job.payload : {};
-        const aceTargets = getAceTargets(job.generation_key ?? requestId, asNumber(p.aceKeyPreferIndex) ?? undefined);
-        const keyIndex = typeof job.ace_key_index === "number" ? job.ace_key_index : 0;
+        const aceTargets = getAceTargets((job as { generation_key?: string }).generation_key ?? requestId, asNumber(p.aceKeyPreferIndex) ?? undefined);
+        const keyIndex = typeof (job as { ace_key_index?: number }).ace_key_index === "number" ? (job as { ace_key_index: number }).ace_key_index : 0;
         const target = aceTargets.find((t) => t.keyIndex === keyIndex) ?? aceTargets[0];
         if (target) {
           const caption = asString(p.caption);
@@ -2068,9 +2218,9 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
             : caption
           ).trim();
           const poll = await pollAceTaskOnce({
-            baseUrl: job.ace_base_url,
+            baseUrl: (job as { ace_base_url: string }).ace_base_url,
             apiKey: target.apiKey,
-            taskId: job.ace_task_id,
+            taskId: (job as { ace_task_id: string }).ace_task_id,
             effectivePrompt,
             effectiveLyrics,
             audioFormat: "mp3",
@@ -2081,12 +2231,13 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
             seed: asNumber(p.seed),
           });
           if (poll.status === "ready") {
-            const svc = createServiceSupabase();
-            const db = svc ?? authedSupabase;
+            const db = isFirebaseUserFlag ? null : (createServiceSupabase() ?? authedSupabase);
             let finalAudioUrl = poll.audioUrl;
             let pollMeta = poll.meta;
-            if (svc && finalAudioUrl?.startsWith("data:")) {
-              const persisted = await persistInlineJobAudioUrl(svc, job.user_id, jobId, finalAudioUrl);
+
+            // Persist inline audio via appropriate storage backend
+            if (finalAudioUrl?.startsWith("data:") && db) {
+              const persisted = await persistInlineJobAudioUrl(db, job!.user_id, jobId, finalAudioUrl);
               finalAudioUrl = persisted.audioUrl;
               if (persisted.providerDataUrl || finalAudioUrl.startsWith("http")) {
                 pollMeta = {
@@ -2097,18 +2248,37 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
                 };
               }
             }
-            await updateGenerationJob(db, jobId, {
-              status: "completed",
-              audio_url: finalAudioUrl,
-              meta: pollMeta,
-            });
-            if (job.generation_key) {
-              await db.rpc("bump_loops_usage_idempotent", { p_key: job.generation_key });
+            if (isFirebaseUserFlag) {
+              await fbUpdateGenerationJob(jobId, {
+                status: "completed",
+                audio_url: finalAudioUrl,
+                meta: pollMeta,
+              });
+              if ((job as { generation_key?: string }).generation_key) {
+                await fbBumpUsageIdempotent(authedUserId, (job as { generation_key: string }).generation_key);
+              }
+            } else {
+              await updateGenerationJob(db!, jobId, {
+                status: "completed",
+                audio_url: finalAudioUrl,
+                meta: pollMeta,
+              });
+              if ((job as { generation_key?: string }).generation_key) {
+                await db!.rpc("bump_loops_usage_idempotent", { p_key: (job as { generation_key: string }).generation_key });
+              }
             }
-            job = (await loadGenerationJob(authedSupabase, jobId))!;
+            job = isFirebaseUserFlag
+              ? await fbGetGenerationJob(jobId)
+              : await loadGenerationJob(authedSupabase, jobId);
           } else if (poll.status === "failed") {
-            await updateGenerationJob(authedSupabase, jobId, { status: "failed", error: poll.error });
-            job = (await loadGenerationJob(authedSupabase, jobId))!;
+            if (isFirebaseUserFlag) {
+              await fbUpdateGenerationJob(jobId, { status: "failed", error: poll.error });
+            } else {
+              await updateGenerationJob(authedSupabase, jobId, { status: "failed", error: poll.error });
+            }
+            job = isFirebaseUserFlag
+              ? await fbGetGenerationJob(jobId)
+              : await loadGenerationJob(authedSupabase, jobId);
           }
         }
       }
@@ -2117,8 +2287,8 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
         scheduleRunJob(jobId);
       }
 
-      if (job.status === "running" && !job.ace_task_id) {
-        const updatedAt = job.updated_at ? Date.parse(job.updated_at) : 0;
+      if (job.status === "running" && !(job as { ace_task_id?: string }).ace_task_id) {
+        const updatedAt = (job as { updated_at?: string }).updated_at ? Date.parse((job as { updated_at: string }).updated_at) : 0;
         const staleMs = updatedAt > 0 ? Date.now() - updatedAt : Number.POSITIVE_INFINITY;
         if (staleMs > 3 * 60 * 1000) {
           console.warn("poll_job: orphaned running job, re-scheduling", jobId);
@@ -2278,10 +2448,15 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
           const msg = lastErr instanceof Error ? lastErr.message : "Audio not found";
           throw new Error(msg);
         }
-        if (lookupSupabase) {
+        if (lookupSupabase && !isFirebaseUserFlag) {
           const publicLoopId = await findPublicLoopIdByAceTaskId(lookupSupabase, tid);
           if (publicLoopId) {
             await lookupSupabase.from("loops").update({ audio_url: audioUrl }).eq("id", publicLoopId);
+          }
+        } else if (isFirebaseUserFlag) {
+          const publicLoopId = await fbFindPublicLoopByAceTaskId(tid);
+          if (publicLoopId) {
+            await fbUpdateLoop(publicLoopId, { audio_url: audioUrl });
           }
         }
         return new Response(JSON.stringify({ audioUrl }), {
@@ -2334,16 +2509,10 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
       }
       if (authedSupabase && authedUserId) {
         for (const gk of generationKeysList) {
-          const { data: reserveData, error: reserveError } = await authedSupabase.rpc("check_loops_usage_idempotent", {
-            p_key: gk,
-          });
-          if (reserveError) console.error("dual batch reserve error:", reserveError.message);
-          else {
-            type UsageReserveRow = { ok?: unknown; plan?: unknown; used?: unknown; limit?: unknown };
-            const row: UsageReserveRow | null = Array.isArray(reserveData)
-              ? ((reserveData[0] as UsageReserveRow | undefined) ?? null)
-              : ((reserveData as UsageReserveRow | null) ?? null);
-            if (!row?.ok) {
+          if (isFirebaseUserFlag) {
+            // Firebase users: check via Firestore directly
+            const usage = await fbCheckUsageIdempotent(authedUserId, gk);
+            if (!usage?.ok) {
               return new Response(
                 JSON.stringify({
                   error: `Monthly limit reached for dual batch.`,
@@ -2351,6 +2520,27 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
                 }),
                 { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
               );
+            }
+          } else {
+            // Supabase users: use RPC
+            const { data: reserveData, error: reserveError } = await authedSupabase.rpc("check_loops_usage_idempotent", {
+              p_key: gk,
+            });
+            if (reserveError) console.error("dual batch reserve error:", reserveError.message);
+            else {
+              type UsageReserveRow = { ok?: unknown; plan?: unknown; used?: unknown; limit?: unknown };
+              const row: UsageReserveRow | null = Array.isArray(reserveData)
+                ? ((reserveData[0] as UsageReserveRow | undefined) ?? null)
+                : ((reserveData as UsageReserveRow | null) ?? null);
+              if (!row?.ok) {
+                return new Response(
+                  JSON.stringify({
+                    error: `Monthly limit reached for dual batch.`,
+                    limitReached: true,
+                  }),
+                  { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+                );
+              }
             }
           }
         }
@@ -2519,8 +2709,12 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
 
             if (authedSupabase && authedUserId) {
               for (const gk of generationKeysList) {
-                const { error: bumpErr } = await authedSupabase.rpc("bump_loops_usage_idempotent", { p_key: gk });
-                if (bumpErr) console.error("dual batch bump error:", bumpErr.message);
+                if (isFirebaseUserFlag) {
+                  await fbBumpUsageIdempotent(authedUserId, gk);
+                } else {
+                  const { error: bumpErr } = await authedSupabase.rpc("bump_loops_usage_idempotent", { p_key: gk });
+                  if (bumpErr) console.error("dual batch bump error:", bumpErr.message);
+                }
               }
             }
 
@@ -2629,24 +2823,17 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
         let voiceCloneDone = false;
         let voiceProfileNameResolved: string | undefined;
         if (voiceProfileId && authedUserId && authedSupabase) {
-          const { data: cloneQuotaRaw, error: cloneQuotaErr } = await authedSupabase.rpc("check_and_consume_voice_clone");
-          if (!cloneQuotaErr && (cloneQuotaRaw as { ok?: boolean } | null)?.ok) {
-            const svc = createServiceSupabase();
-            const { data: profileRow } = svc
-              ? await svc
-                  .from("voice_profiles")
-                  .select("storage_path, name")
-                  .eq("id", voiceProfileId)
-                  .eq("user_id", authedUserId)
-                  .maybeSingle()
-              : { data: null };
-            voiceProfileNameResolved = typeof profileRow?.name === "string" ? profileRow.name : undefined;
-            if (profileRow?.storage_path && svc) {
-              const { data: refFile, error: refErr } = await svc.storage
-                .from("voice-profiles")
-                .download(profileRow.storage_path);
-              if (!refErr && refFile) {
-                const refBytes = new Uint8Array(await refFile.arrayBuffer());
+          // Check voice clone quota and fetch profile via appropriate backend
+          let cloneQuotaOk = false;
+          if (isFirebaseUserFlag) {
+            // Firebase users: skip RPC quota check (auth.uid() is null), try to use voice clone
+            cloneQuotaOk = true;
+            const voiceProfile = await fbGetVoiceProfile(voiceProfileId, authedUserId);
+            if (voiceProfile?.storage_path) {
+              // Download reference audio from Firebase Storage
+              const download = await fbDownloadFromStorage("voice-profiles", voiceProfile.storage_path);
+              if (download.bytes) {
+                const refBytes = download.bytes;
                 let lastCloneErr: unknown = null;
                 for (const t of aceTargets) {
                   try {
@@ -2654,7 +2841,7 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
                       apiKey: t.apiKey,
                       baseUrl: t.baseUrl,
                       referenceBytes: refBytes,
-                      referenceName: profileRow.storage_path.split("/").pop() || "reference.wav",
+                      referenceName: voiceProfile.storage_path.split("/").pop() || "reference.wav",
                       prompt: effectivePrompt || baseCaption,
                       lyrics: effectiveLyrics,
                       vocalLanguage,
@@ -2670,23 +2857,87 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
                       aceKeyIndex: t.keyIndex,
                       aceKeyCount,
                       voiceProfileId,
-                      voiceProfileName: profileRow.name,
+                      voiceProfileName: voiceProfile.name,
                       voiceCloneStrength,
                     };
                     voiceCloneDone = true;
-                    console.log("Song mode — voice clone OK", { requestId, voiceProfileId });
+                    console.log("Song mode — voice clone OK (Firebase)", { requestId, voiceProfileId });
                     break;
                   } catch (e) {
                     lastCloneErr = e;
                   }
                 }
                 if (!voiceCloneDone && lastCloneErr) {
-                  console.warn("Voice clone failed — fallback chat/completions", lastCloneErr);
+                  console.warn("Voice clone failed — fallback chat/completions (Firebase)", lastCloneErr);
                 }
+              } else {
+                console.warn("Voice clone reference not found in Firebase Storage", voiceProfile.storage_path);
               }
+            } else {
+              console.warn("Voice clone profile not found for Firebase user", voiceProfileId);
             }
           } else {
-            console.warn("Voice clone quota", cloneQuotaRaw, cloneQuotaErr?.message);
+            // Supabase users: use RPC quota check + Supabase storage
+            const { data: cloneQuotaRaw, error: cloneQuotaErr } = await authedSupabase.rpc("check_and_consume_voice_clone");
+            cloneQuotaOk = !cloneQuotaErr && Boolean((cloneQuotaRaw as { ok?: boolean } | null)?.ok);
+            if (cloneQuotaOk) {
+              const svc = createServiceSupabase();
+              const { data: profileRow } = svc
+                ? await svc
+                    .from("voice_profiles")
+                    .select("storage_path, name")
+                    .eq("id", voiceProfileId)
+                    .eq("user_id", authedUserId)
+                    .maybeSingle()
+                : { data: null };
+              voiceProfileNameResolved = typeof profileRow?.name === "string" ? profileRow.name : undefined;
+              if (profileRow?.storage_path && svc) {
+                const { data: refFile, error: refErr } = await svc.storage
+                  .from("voice-profiles")
+                  .download(profileRow.storage_path);
+                if (!refErr && refFile) {
+                  const refBytes = new Uint8Array(await refFile.arrayBuffer());
+                  let lastCloneErr: unknown = null;
+                  for (const t of aceTargets) {
+                    try {
+                      const cloned = await generateViaMusicGenerateReference({
+                        apiKey: t.apiKey,
+                        baseUrl: t.baseUrl,
+                        referenceBytes: refBytes,
+                        referenceName: profileRow.storage_path.split("/").pop() || "reference.wav",
+                        prompt: effectivePrompt || baseCaption,
+                        lyrics: effectiveLyrics,
+                        vocalLanguage,
+                        audioFormat,
+                        duration: requestedDuration ?? null,
+                        bpm: bpm && bpm > 0 ? bpm : null,
+                        timbreStrength: voiceCloneStrength,
+                        signal: controller.signal,
+                      });
+                      audioUrl = cloned.audioUrl;
+                      meta = {
+                        ...(cloned.meta ?? {}),
+                        aceKeyIndex: t.keyIndex,
+                        aceKeyCount,
+                        voiceProfileId,
+                        voiceProfileName: profileRow.name,
+                        voiceCloneStrength,
+                      };
+                      voiceCloneDone = true;
+                      console.log("Song mode — voice clone OK", { requestId, voiceProfileId });
+                      break;
+                    } catch (e) {
+                      lastCloneErr = e;
+                    }
+                  }
+                  if (!voiceCloneDone && lastCloneErr) {
+                    console.warn("Voice clone failed — fallback chat/completions", lastCloneErr);
+                  }
+                }
+              }
+            } else {
+              console.warn("Voice clone quota", cloneQuotaRaw, cloneQuotaErr?.message);
+            }
           }
         }
         if (!voiceCloneDone) {
@@ -2942,11 +3193,19 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
     }
 
     if (authedSupabase && authedUserId && action !== "format") {
-      const { error: bumpErr } =
-        useIdempotentUsage && generationKey
-          ? await authedSupabase.rpc("bump_loops_usage_idempotent", { p_key: generationKey })
-          : await authedSupabase.rpc("bump_loops_usage");
-      if (bumpErr) console.error("bump_loops_usage error:", bumpErr.message);
+      if (isFirebaseUserFlag) {
+        if (useIdempotentUsage && generationKey) {
+          await fbBumpUsageIdempotent(authedUserId, generationKey);
+        } else {
+          await fbBumpUsage(authedUserId);
+        }
+      } else {
+        const { error: bumpErr } =
+          useIdempotentUsage && generationKey
+            ? await authedSupabase.rpc("bump_loops_usage_idempotent", { p_key: generationKey })
+            : await authedSupabase.rpc("bump_loops_usage");
+        if (bumpErr) console.error("bump_loops_usage error:", bumpErr.message);
+      }
     }
 
     return new Response(JSON.stringify({ audioUrl, meta }), {
