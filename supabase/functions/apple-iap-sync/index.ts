@@ -38,22 +38,11 @@ serve(async (req) => {
     if (!token) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     const firebaseApiKey = Deno.env.get("FIREBASE_API_KEY") ?? "";
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 
+    // Verify Firebase ID token
     let userId: string | null = null;
-
-    // Try Firebase first
     if (firebaseApiKey && token.startsWith("eyJ")) {
       userId = await verifyFirebaseIdToken(token, firebaseApiKey);
-    }
-
-    // Fallback Supabase
-    if (!userId && supabaseUrl && anonKey) {
-      const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
-      const supabase = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: `Bearer ${token}` } } });
-      const { data: { user } } = await supabase.auth.getUser(token);
-      userId = user?.id ?? null;
     }
 
     if (!userId) return new Response(JSON.stringify({ error: "Invalid session" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });

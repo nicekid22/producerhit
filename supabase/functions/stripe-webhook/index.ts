@@ -9,7 +9,6 @@
 //   - stripe_customers/{customer_id}      — customer_id → uid lookup
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   fbGetProfile,
   fbUpdateProfile,
@@ -21,27 +20,6 @@ import {
 
 function asString(v: unknown) {
   return typeof v === "string" ? v : "";
-}
-
-/** Met à jour public.profiles dans Supabase en parallèle de Firestore. */
-function supabaseServiceClient(): ReturnType<typeof createClient> | null {
-  const url = Deno.env.get("SUPABASE_URL") ?? "";
-  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SERVICE_ROLE_KEY") ?? "";
-  if (!url || !key) return null;
-  return createClient(url, key, { auth: { persistSession: false } });
-}
-
-async function syncPlanToSupabase(userId: string, plan: string) {
-  const sb = supabaseServiceClient();
-  if (!sb) return;
-  try {
-    await sb.from("profiles").upsert(
-      { id: userId, plan, updated_at: new Date().toISOString() },
-      { onConflict: "id" },
-    );
-  } catch {
-    // best-effort — Firestore est la source de vérité
-  }
 }
 
 function equalBytes(a: Uint8Array, b: Uint8Array) {
@@ -238,9 +216,6 @@ serve(async (req: Request) => {
         stripe_current_period_end: periodEndIso,
       });
 
-      // Sync plan to Supabase public.profiles (dual-write)
-      await syncPlanToSupabase(userId, plan);
-
       // Launch offer bonuses
       if (isLaunchOfferActive()) {
         const isRecovery = asString(metadata.checkout_recovery) === "true";
@@ -313,9 +288,6 @@ serve(async (req: Request) => {
         stripe_price_id: active ? priceId || null : null,
         stripe_current_period_end: active ? periodEndIso : null,
       });
-
-      // Sync plan to Supabase public.profiles (dual-write)
-      await syncPlanToSupabase(userId, plan);
 
       if (stripeEventId) {
         const canceled = type === "customer.subscription.deleted" || !active;

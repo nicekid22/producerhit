@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { fbGetProfile, fbUpdateProfile, fbRegisterStripeCustomer } from "../_shared/firestoreServer.ts";
 
 /** Verify a Firebase ID token via Identity Toolkit REST API. */
@@ -480,17 +479,15 @@ serve(async (req) => {
 
     const authHeader = req.headers.get("Authorization") ?? req.headers.get("authorization");
     const token = authHeader?.startsWith("Bearer ") ? authHeader.replace("Bearer ", "").trim() : "";
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
     const firebaseApiKey = Deno.env.get("FIREBASE_API_KEY") ?? "";
-    if (!token || !supabaseUrl || !anonKey) {
+    if (!token) {
       return new Response(JSON.stringify({ error: "Not authenticated" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Try Firebase ID token first, then fallback to Supabase JWT
+    // Verify Firebase ID token
     let userId: string | null = null;
     let userEmail: string | null = null;
 
@@ -503,16 +500,10 @@ serve(async (req) => {
     }
 
     if (!userId) {
-      const supabase = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: `Bearer ${token}` } } });
-      const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-      if (userError || !user) {
-        return new Response(JSON.stringify({ error: "Not authenticated" }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      userId = user.id;
-      userEmail = user.email;
+      return new Response(JSON.stringify({ error: "Not authenticated" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     if (!successUrl.startsWith("http")) {

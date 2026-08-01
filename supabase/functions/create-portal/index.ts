@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { fbGetProfile } from "../_shared/firestoreServer.ts";
 
 const corsHeaders = {
@@ -15,22 +14,18 @@ serve(async (req) => {
 
   try {
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-    if (!stripeKey || !supabaseUrl || !anonKey) throw new Error("Missing configuration");
+    const firebaseApiKey = Deno.env.get("FIREBASE_API_KEY") ?? "";
+    if (!stripeKey) throw new Error("Missing STRIPE_SECRET_KEY");
 
     const authHeader = req.headers.get("Authorization") ?? req.headers.get("authorization");
     const token = authHeader?.startsWith("Bearer ") ? authHeader.replace("Bearer ", "").trim() : "";
     if (!token) return new Response(JSON.stringify({ error: "Not authenticated" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-    const firebaseApiKey = Deno.env.get("FIREBASE_API_KEY") ?? "";
-
+    // Verify Firebase ID token
     let userId: string | null = null;
     if (firebaseApiKey && token.startsWith("eyJ")) {
       try {
-        const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts/lookup?key=${firebaseApiKey}`, {
+        const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${firebaseApiKey}`, {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ idToken: token }),
         });
@@ -39,12 +34,6 @@ serve(async (req) => {
           userId = j.users?.[0]?.localId ?? null;
         }
       } catch { /* fall through */ }
-    }
-    if (!userId && supabaseUrl && anonKey) {
-      const supabase = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: `Bearer ${token}` } } });
-      const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-      if (userError || !user) return new Response(JSON.stringify({ error: "Not authenticated" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      userId = user.id;
     }
     if (!userId) return new Response(JSON.stringify({ error: "Not authenticated" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 

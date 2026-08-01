@@ -3,17 +3,13 @@ import {
   aceAsyncJobsEnabled,
   aceAsyncTryReleaseTask,
   createAceReleaseTask,
-  createServiceSupabase,
   decodeDataUrl,
   internalJobSecret,
   jobResponsePayload,
-  loadGenerationJob,
   LOOP_AUDIO_BUCKET,
-  persistInlineJobAudioUrl,
   pollAceTaskOnce,
   resolveAceStemsZipUrl,
   scheduleRunJob,
-  updateGenerationJob,
 } from "../_shared/generationJobUtils.ts";
 import {
   fbGetProfile,
@@ -471,17 +467,12 @@ async function handleAceRemixMultipart(req: Request, corsHeaders: Record<string,
     });
   }
   const token = authHeader.replace("Bearer ", "").trim();
-  const authedSupabase = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: `Bearer ${token}` } } });
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const serviceSupabase = serviceKey ? createClient(supabaseUrl, serviceKey) : null;
   const firebaseApiKey = Deno.env.get("FIREBASE_API_KEY") ?? "";
 
-  // Try Supabase auth first
-  const { data: supabaseUser, error: sbError } = await authedSupabase.auth.getUser(token);
-  let userId: string | null = supabaseUser?.user?.id ?? null;
-
-  // Fallback: try Firebase ID token verification (for Firebase Auth users)
-  if (!userId && firebaseApiKey && token.startsWith("eyJ")) {
+  // 1) Try Firebase Identity Toolkit (primary auth path)
+  let userId: string | null = null;
+  if (firebaseApiKey && token.startsWith("eyJ")) {
     try {
       const res = await fetch(
         `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${firebaseApiKey}`,
@@ -492,9 +483,21 @@ async function handleAceRemixMultipart(req: Request, corsHeaders: Record<string,
         userId = json.users?.[0]?.localId ?? null;
       }
     } catch {
-      // Firebase verification failed — continue
+      // Firebase verification failed
     }
   }
+  // 2) Fallback: Supabase auth (legacy users during migration)
+  if (!userId) {
+    try {
+      const authedSupabase = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: `Bearer ${token}` } } });
+      const { data: supabaseUser } = await authedSupabase.auth.getUser(token);
+      userId = supabaseUser?.user?.id ?? null;
+    } catch {
+      // Supabase auth failed
+    }
+  }
+  // Create service-role client for any remaining Supabase operations
+  const authedSupabase = createClient(supabaseUrl, serviceKey || supabaseAnonKey, { auth: { persistSession: false } });
 
   if (!userId) {
     return new Response(JSON.stringify({ error: "Authentication required" }), {
@@ -506,75 +509,45 @@ async function handleAceRemixMultipart(req: Request, corsHeaders: Record<string,
   // Fake user object for code that uses user.id
   const user = { id: userId } as { id: string };
 
-  // Helper to read profile using appropriate key (service key for Firebase users, anon for Supabase users)
-  const readProfile = async (userId: string) => {
-    if (serviceSupabase) {
-      const { data } = await serviceSupabase.from("profiles").select("plan, loops_used_this_month, referral_bonus, level_bonus, daily_bonus_month, purchased_bonus").eq("id", userId).maybeSingle();
-      return data;
-    }
-    const { data } = await authedSupabase.from("profiles").select("plan, loops_used_this_month, referral_bonus, level_bonus, daily_bonus_month, purchased_bonus").eq("id", userId).maybeSingle();
-    return data;
-  };
-
-  // For Firebase users, the RPC's auth.uid() is null — bypass it and use
-  // the direct profile read (readProfile helper uses serviceSupabase for them).
-  const isFirebaseUser = !supabaseUser?.user?.id && userId !== null;
+  // Check usage via Firestore
   let useIdempotentUsage = false;
-  if (generationKey && !isFirebaseUser) {
-    const { data: reserveData, error: reserveError } = await authedSupabase.rpc("check_loops_usage_idempotent", { p_key: generationKey });
-    if (reserveError) {
-      return new Response(JSON.stringify({ error: reserveError.message }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    const row = Array.isArray(reserveData) ? (reserveData[0] as { ok?: boolean; limit?: number; used?: number; plan?: string } | undefined) : null;
-    if (!row?.ok) {
+  if (generationKey) {
+    const usage = await fbCheckCodeAtempotent(userId, generationKey);
+    if (!usage.ok) {
       return new Response(
         JSON.stringify({
-          error: `Monthly limit reached (${row?.limit ?? "?"} beats for ${row?.plan ?? "free"} plan). Upgrade to generate more.`,
+          error: "Monthly limit reached",
           limitReached: true,
-          plan: row?.plan ?? "free",
-          limit: row?.limit,
-          used: row?.used,
+          plan: usage.plan,
+          limit: usage.limit,
+          used: usage.used,
         }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
     useIdempotentUsage = true;
-  } else if (generationKey && isFirebaseUser) {
-    // Firebase user: use the direct profile read path below (no RPC)
-    // Reset usage if needed via serviceSupabase first
-    if (serviceSupabase) {
-      await serviceSupabase.rpc("reset_loops_usage_if_needed").catch(() => {});
-    } else {
-      await authedSupabase.rpc("reset_loops_usage_if_needed").catch(() => {});
-    }
   } else {
-    if (serviceSupabase) {
-      await serviceSupabase.rpc("reset_loops_usage_if_needed").catch(() => {});
-    } else {
-      await authedSupabase.rpc("reset_loops_usage_if_needed").catch(() => {});
-    }
-    const profile = await readProfile(userId);
-    const plan = typeof profile?.plan === "string" ? profile.plan : "free";
-    const used = typeof profile?.loops_used_this_month === "number" ? profile.loops_used_this_month : 0;
-    const base = LIMITS[plan as keyof typeof LIMITS] ?? LIMITS.free;
-    const bonus =
-      Math.max(0, profile?.referral_bonus ?? 0) +
-      Math.max(0, profile?.level_bonus ?? 0) +
-      Math.max(0, profile?.daily_bonus_month ?? 0) +
-      Math.max(0, profile?.purchased_bonus ?? 0);
-    const limit = base + bonus;
-    if (used >= limit) {
-      return new Response(JSON.stringify({ error: `Monthly limit reached (${limit} beats for ${plan} plan).`, limitReached: true, plan, limit, used }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    const profile = await fbGetProfile(userId);
+    if (profile) {
+      const plan = (typeof profile.plan === "string" ? profile.plan : "free") as string;
+      const used = typeof profile.loops_used_this_month === "number" ? profile.loops_used_this_month : 0;
+      const base = LIMITS[plan as keyof typeof LIMITS] ?? LIMITS.free;
+      const bonus =
+        Math.max(0, profile.referral_bonus ?? 0) +
+        Math.max(0, profile.level_bonus ?? 0) +
+        Math.max(0, profile.daily_bonus_month ?? 0) +
+        Math.max(0, profile.purchased_bonus ?? 0);
+      const limit = base + bonus;
+      if (used >= limit) {
+        return new Response(JSON.stringify({ error: `Monthly limit reached (${limit} beats for ${plan} plan).`, limitReached: true, plan, limit, used }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
   }
 
-  const profilePlan = await readProfile(userId);
+  const profilePlan = await fbGetProfile(userId);
   const authedPlan = normalizeAuthedPlan(typeof profilePlan?.plan === "string" ? profilePlan.plan : "free");
   const requestedAudioFormat =
     audioFormatRaw === "wav" || audioFormatRaw === "flac" || audioFormatRaw === "mp3" ? audioFormatRaw : "mp3";
@@ -786,11 +759,11 @@ async function handleAceRemixMultipart(req: Request, corsHeaders: Record<string,
     clearTimeout(timer);
   }
 
-  const { error: bumpErr } =
-    useIdempotentUsage && generationKey
-      ? await authedSupabase.rpc("bump_loops_usage_idempotent", { p_key: generationKey })
-      : await authedSupabase.rpc("bump_loops_usage");
-  if (bumpErr) console.error("bump_loops_usage error:", bumpErr.message);
+  if (useIdempotentUsage && generationKey) {
+    await fbBumpUsageIdempotent(userId, generationKey);
+  } else {
+    await fbBumpUsage(userId);
+  }
 
   return new Response(JSON.stringify({ audioUrl, meta, engine: "ace-step-remix" }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -1463,6 +1436,9 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
     let authedSupabase: ReturnType<typeof createClient> | null = null;
     let authedUserId: string | null = null;
     let authedPlan: "free" | "pro" | "studio" | "plus" = "free";
+    // True when the user authenticated via Firebase (Supabase can't decode Firebase JWTs).
+    // Hoisted to function scope so all action handlers can read it.
+    let isFirebaseUserFlag = false;
     const supabaseUrl = (Deno.env.get("SUPABASE_URL") ?? "").trim();
     const supabaseAnonKey = (Deno.env.get("SUPABASE_ANON_KEY") ?? "").trim();
     const supabaseServiceRoleKey = (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "").trim();
@@ -1536,22 +1512,8 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
         });
       }
 
-      // Try Supabase first (most jobs), then Firestore (Firebase users' jobs)
-      const svc = createServiceSupabase();
-      if (!svc) {
-        return new Response(JSON.stringify({ error: "Server not configured" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      // Load job from Supabase, fall back to Firestore
-      let job = await loadGenerationJob(svc, jobId);
-      let jobIsFromFirestore = false;
-      if (!job) {
-        job = await fbGetGenerationJob(jobId);
-        jobIsFromFirestore = true;
-      }
+      // Load job from Firestore
+      const job = await fbGetGenerationJob(jobId);
       if (!job) {
         return new Response(JSON.stringify({ error: "Job not found" }), {
           status: 404,
@@ -1609,10 +1571,8 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
       const baseCaption = sampleMode ? effectiveSampleQuery : caption.trim() || sampleQuery.trim();
       const effectivePrompt = (sampleMode ? effectiveSampleQuery : caption).trim();
       if (!effectivePrompt) {
-        const failUpdate = jobIsFromFirestore
-          ? await fbUpdateGenerationJob(jobId, { status: "failed", error: "Missing caption" })
-          : await updateGenerationJob(svc, jobId, { status: "failed", error: "Missing caption" });
-        const failed = jobIsFromFirestore ? await fbGetGenerationJob(jobId) : await loadGenerationJob(svc, jobId);
+        await fbUpdateGenerationJob(jobId, { status: "failed", error: "Missing caption" });
+        const failed = await fbGetGenerationJob(jobId);
         return new Response(JSON.stringify(jobResponsePayload(failed!)), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -1633,10 +1593,8 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
       const seedKey = generationKey || requestId;
       const aceTargets = getAceTargets(seedKey, aceKeyPreferIndex ?? undefined);
       if (!aceTargets.length) {
-        const failUpdate = jobIsFromFirestore
-          ? await fbUpdateGenerationJob(jobId, { status: "failed", error: "ACE_STEP_API_KEY not set" })
-          : await updateGenerationJob(svc, jobId, { status: "failed", error: "ACE_STEP_API_KEY not set" });
-        const failed = jobIsFromFirestore ? await fbGetGenerationJob(jobId) : await loadGenerationJob(svc, jobId);
+        await fbUpdateGenerationJob(jobId, { status: "failed", error: "ACE_STEP_API_KEY not set" });
+        const failed = await fbGetGenerationJob(jobId);
         return new Response(JSON.stringify(jobResponsePayload(failed!)), {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -1660,12 +1618,8 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
       paramObj.shift = quality.shift;
       paramObj.inference_steps = ACE_INFERENCE_STEPS;
 
-      // Update job status via appropriate backend
-      if (jobIsFromFirestore) {
-        await fbUpdateGenerationJob(jobId, { status: "running" });
-      } else {
-        await updateGenerationJob(svc, jobId, { status: "running" });
-      }
+      // Update job status in Firestore
+      await fbUpdateGenerationJob(jobId, { status: "running" });
 
       if (!job.ace_task_id && aceAsyncTryReleaseTask()) {
         let releaseTaskId: string | null = null;
@@ -1707,12 +1661,8 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
             ace_base_url: releaseBase,
             ace_key_index: releaseKeyIndex,
           };
-          if (jobIsFromFirestore) {
-            await fbUpdateGenerationJob(jobId, statusPatch);
-          } else {
-            await updateGenerationJob(svc, jobId, statusPatch);
-          }
-          const updated = jobIsFromFirestore ? await fbGetGenerationJob(jobId) : await loadGenerationJob(svc, jobId);
+          await fbUpdateGenerationJob(jobId, statusPatch);
+          const updated = await fbGetGenerationJob(jobId);
           return new Response(JSON.stringify(jobResponsePayload(updated!)), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
@@ -1774,32 +1724,21 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
         }
         const jobUserId = job.user_id;
         if (audioUrl.startsWith("data:")) {
-          // Persist inline audio via appropriate storage backend
-          if (jobIsFromFirestore) {
-            const decoded = await decodeDataUrl(audioUrl);
-            if (decoded?.bytes.byteLength) {
-              const ext = decoded.mime.includes("wav") ? "wav" : "mp3";
-              const path = `${jobUserId}/job-${jobId}.${ext}`;
-              const upload = await fbUploadToStorage(LOOP_AUDIO_BUCKET, path, decoded.bytes, decoded.mime);
-              if (upload.url) {
-                audioUrl = upload.url;
-                meta = {
-                  ...(meta ?? {}),
-                  providerDataUrl: audioUrl,
-                  sessionOnly: false,
-                };
-              }
-            }
-          } else {
-            const persisted = await persistInlineJobAudioUrl(svc, jobUserId, jobId, audioUrl);
-            audioUrl = persisted.audioUrl;
-            if (persisted.providerDataUrl || audioUrl.startsWith("http")) {
+          // Persist inline audio via Firebase Storage
+          const decoded = await decodeDataUrl(audioUrl);
+          if (decoded?.bytes.byteLength) {
+            const ext = decoded.mime.includes("wav") ? "wav" : "mp3";
+            const path = `${jobUserId}/job-${jobId}.${ext}`;
+            const upload = await fbUploadToStorage(LOOP_AUDIO_BUCKET, path, decoded.bytes, decoded.mime);
+            if (upload.url) {
+              audioUrl = upload.url;
               meta = {
                 ...(meta ?? {}),
-                ...(persisted.providerDataUrl ? { providerDataUrl: persisted.providerDataUrl } : {}),
-                ...(audioUrl.startsWith("http") ? { httpAudioUrl: audioUrl } : {}),
+                providerDataUrl: audioUrl,
                 sessionOnly: false,
               };
+            }
+          }
             }
           }
         }
@@ -1808,29 +1747,17 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
           audio_url: audioUrl,
           meta,
         };
-        if (jobIsFromFirestore) {
-          await fbUpdateGenerationJob(jobId, completionPatch);
-        } else {
-          await updateGenerationJob(svc, jobId, completionPatch);
-        }
+        await fbUpdateGenerationJob(jobId, completionPatch);
         if (generationKey) {
-          if (jobIsFromFirestore) {
-            await fbBumpUsageIdempotent(jobUserId, generationKey);
-          } else {
-            await svc.rpc("bump_loops_usage_idempotent", { p_key: generationKey });
-          }
+          await fbBumpUsageIdempotent(jobUserId, generationKey);
         }
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Job failed";
-        if (jobIsFromFirestore) {
-          await fbUpdateGenerationJob(jobId, { status: "failed", error: msg.slice(0, 500) });
-        } else {
-          await updateGenerationJob(svc, jobId, { status: "failed", error: msg.slice(0, 500) });
-        }
+        await fbUpdateGenerationJob(jobId, { status: "failed", error: msg.slice(0, 500) });
       } finally {
         clearTimeout(timer);
       }
-      const finalJob = jobIsFromFirestore ? await fbGetGenerationJob(jobId) : await loadGenerationJob(svc, jobId);
+      const finalJob = await fbGetGenerationJob(jobId);
       return new Response(JSON.stringify(jobResponsePayload(finalJob!)), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -1845,72 +1772,83 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
     if (authHeader?.startsWith("Bearer ")) {
       const token = authHeader.replace("Bearer ", "").trim();
       const url = supabaseUrl;
-      const anonKey = supabaseAnonKey;
       const serviceKey = supabaseServiceRoleKey;
       const firebaseApiKey = (Deno.env.get("FIREBASE_API_KEY") ?? "").trim();
-      if (!url || !anonKey) {
-        console.error("Missing SUPABASE_URL or SUPABASE_ANON_KEY");
-      } else {
-        const supabase = createClient(url, anonKey, { global: { headers: { Authorization: `Bearer ${token}` } } });
-        authedSupabase = supabase;
+      let fbUid: string | null = null;
 
-        // Try Supabase auth first
-        const { data: supabaseUser, error: sbError } = await supabase.auth.getUser(token);
-        let fbUid: string | null = null;
-
-        // Fallback: verify Firebase ID token (for Firebase Auth users)
-        if (!supabaseUser?.user?.id && firebaseApiKey && token.startsWith("eyJ")) {
-          try {
-            const res = await fetch(
-              `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${firebaseApiKey}`,
-              { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ idToken: token }) },
-            );
-            if (res.ok) {
-              const json = await res.json() as { users?: Array<{ localId: string }> };
-              fbUid = json.users?.[0]?.localId ?? null;
-            }
-          } catch {
-            // Firebase verification failed
+      // 1) Try Firebase Identity Toolkit (primary auth path)
+      if (firebaseApiKey && token.startsWith("eyJ")) {
+        try {
+          const res = await fetch(
+            `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${firebaseApiKey}`,
+            { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ idToken: token }) },
+          );
+          if (res.ok) {
+            const json = await res.json() as { users?: Array<{ localId: string }> };
+            fbUid = json.users?.[0]?.localId ?? null;
           }
+        } catch {
+          // Firebase verification failed
         }
+      }
 
-        const effectiveUserId = supabaseUser?.user?.id ?? fbUid;
-        // True when the user authenticated via Firebase (Supabase can't decode Firebase JWTs)
-        const isFirebaseUserFlag = Boolean(fbUid);
+      // 2) Fallback: Supabase auth (for legacy users during migration)
+      let supabaseUserId: string | null = null;
+      if (!fbUid && url && supabaseAnonKey) {
+        try {
+          const supabase = createClient(url, supabaseAnonKey, { global: { headers: { Authorization: `Bearer ${token}` } } });
+          const { data: supabaseUser } = await supabase.auth.getUser(token);
+          supabaseUserId = supabaseUser?.user?.id ?? null;
+        } catch {
+          // Supabase auth failed
+        }
+      }
 
-        if (effectiveUserId && action !== "format" && action !== "mirror_audio") {
-          authedUserId = effectiveUserId;
-          // Use service role key when dealing with Firebase users (bypasses RLS)
-          if (fbUid && serviceKey) {
-            authedSupabase = createClient(url, serviceKey, { auth: { persistSession: false } });
-          }
-          if (action !== "bump_usage") {
-            // The check_loops_usage_idempotent RPC uses auth.uid() which is null
-            // for Firebase users (Supabase can't decode a Firebase JWT). Skip the
-            // RPC for Firebase users and fall through to the direct profile read
-            // which uses the service role client (bypasses RLS correctly).
-            const isFirebaseUser = Boolean(fbUid);
-            if (generationKey && !isFirebaseUser) {
-              const { data: reserveData, error: reserveError } = await supabase.rpc("check_loops_usage_idempotent", {
-                p_key: generationKey,
-              });
-              if (reserveError) {
-                console.error("check_loops_usage_idempotent error:", reserveError.message);
+      const effectiveUserId = fbUid ?? supabaseUserId;
+      isFirebaseUserFlag = Boolean(fbUid);
+
+      if (effectiveUserId && action !== "format" && action !== "mirror_audio") {
+        authedUserId = effectiveUserId;
+        // Create Supabase service-role client for any remaining Supabase operations
+        if (url && serviceKey) {
+          authedSupabase = createClient(url, serviceKey, { auth: { persistSession: false } });
+        }
+        if (action !== "bump_usage") {
+          // Check usage via Firestore. Falls back to Supabase inside
+          // fbCheckCodeAtempotent when Firestore profile is missing.
+          if (generationKey) {
+            const usage = await fbCheckCodeAtempotent(authedUserId, generationKey);
+              authedPlan = normalizeAuthedPlan(usage.plan);
+              if (!usage.ok) {
+                return new Response(
+                  JSON.stringify({
+                    error: "Monthly limit reached",
+                    limitReached: true,
+                    plan: usage.plan,
+                    limit: usage.limit,
+                    used: usage.used,
+                  }),
+                  { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+                );
               }
-              if (!reserveError) {
-                type UsageReserveRow = { ok?: unknown; plan?: unknown; used?: unknown; limit?: unknown };
-                const row: UsageReserveRow | null = Array.isArray(reserveData)
-                  ? ((reserveData[0] as UsageReserveRow | undefined) ?? null)
-                  : ((reserveData as UsageReserveRow | null) ?? null);
-                const ok = Boolean(row?.ok);
-                const plan = (typeof row?.plan === "string" ? row.plan : "free") as string;
-                const used = typeof row?.used === "number" ? row.used : 0;
-                const limit = typeof row?.limit === "number" ? row.limit : LIMITS.free;
+              useIdempotentUsage = true;
+            } else {
+              // No generationKey — read profile directly from Firestore
+              const profile = await fbGetProfile(authedUserId);
+              if (profile) {
+                const plan = (typeof profile.plan === "string" ? profile.plan : "free") as string;
                 authedPlan = normalizeAuthedPlan(plan);
-                if (!ok) {
+                const used = typeof profile.loops_used_this_month === "number" ? profile.loops_used_this_month : 0;
+                const baseLimit = LIMITS[plan as keyof typeof LIMITS] ?? LIMITS.free;
+                const referralBonus = typeof profile.referral_bonus === "number" ? profile.referral_bonus : 0;
+                const levelBonus = typeof profile.level_bonus === "number" ? profile.level_bonus : 0;
+                const dailyBonus = typeof profile.daily_bonus_month === "number" ? profile.daily_bonus_month : 0;
+                const purchasedBonus = typeof profile.purchased_bonus === "number" ? profile.purchased_bonus : 0;
+                const limit = baseLimit + Math.max(0, referralBonus) + Math.max(0, levelBonus) + Math.max(0, dailyBonus) + Math.max(0, purchasedBonus);
+                if (used >= limit) {
                   return new Response(
                     JSON.stringify({
-                      error: `Monthly limit reached (${limit} beats for ${plan} plan). Upgrade to generate more.`,
+                      error: "Monthly limit reached",
                       limitReached: true,
                       plan,
                       limit,
@@ -1919,42 +1857,6 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
                     { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
                   );
                 }
-                useIdempotentUsage = true;
-              }
-            }
-
-            if (!generationKey || !useIdempotentUsage) {
-              const { error: resetErr } = await supabase.rpc("reset_loops_usage_if_needed");
-              if (resetErr) console.error("reset_loops_usage_if_needed error:", resetErr.message);
-              const { data: profile, error: profileError } = await supabase
-                .from("profiles")
-                .select("plan, loops_used_this_month, referral_bonus, level_bonus, daily_bonus_month, purchased_bonus")
-                .eq("id", authedUserId)
-                .single();
-
-              if (profileError) {
-                console.error("Profile error:", profileError.message);
-              } else {
-                const plan = (typeof profile?.plan === "string" ? profile.plan : "free") as string;
-                authedPlan = normalizeAuthedPlan(plan);
-                const used = typeof profile?.loops_used_this_month === "number" ? profile.loops_used_this_month : 0;
-                const baseLimit = LIMITS[plan as keyof typeof LIMITS] ?? LIMITS.free;
-                const referralBonus = typeof profile?.referral_bonus === "number" ? profile.referral_bonus : 0;
-                const levelBonus = typeof profile?.level_bonus === "number" ? profile.level_bonus : 0;
-                const dailyBonus = typeof profile?.daily_bonus_month === "number" ? profile.daily_bonus_month : 0;
-                const purchasedBonus = typeof profile?.purchased_bonus === "number" ? profile.purchased_bonus : 0;
-                const limit = baseLimit + Math.max(0, referralBonus) + Math.max(0, levelBonus) + Math.max(0, dailyBonus) + Math.max(0, purchasedBonus);
-                if (used >= limit) {
-                  return new Response(
-                    JSON.stringify({
-                      error: `Monthly limit reached (${limit} beats for ${plan} plan). Upgrade to generate more.`,
-                      limitReached: true,
-                      plan,
-                      limit,
-                    }),
-                    { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-                  );
-                }
               }
             }
           }
@@ -1962,12 +1864,6 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
       }
     }
 
-    if (action !== "format" && !authedSupabase) {
-      return new Response(JSON.stringify({ error: "Authentication required" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
     if (action !== "format" && !authedUserId) {
       return new Response(JSON.stringify({ error: "Authentication required" }), {
         status: 401,
@@ -1976,22 +1872,12 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
     }
 
     if (action === "bump_usage") {
-      // Firebase path
-      if (isFirebaseUserFlag) {
-        if (generationKey) {
-          await fbBumpUsageIdempotent(authedUserId, generationKey);
-        } else {
-          await fbBumpUsage(authedUserId);
-        }
-        return new Response(JSON.stringify({ success: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      // Bump usage in Firestore
+      if (generationKey) {
+        await fbBumpUsageIdempotent(authedUserId, generationKey);
+      } else {
+        await fbBumpUsage(authedUserId);
       }
-      // Supabase path (unchanged)
-      const { error: bumpErr } = generationKey
-        ? await authedSupabase.rpc("bump_loops_usage_idempotent", { p_key: generationKey })
-        : await authedSupabase.rpc("bump_loops_usage");
-      if (bumpErr) throw new Error(`bump_loops_usage failed: ${bumpErr.message}`);
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -2011,31 +1897,13 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
         });
       }
 
-      // Check usage via appropriate backend
-      let usageOk = true;
-      if (isFirebaseUserFlag) {
-        const usage = await fbCheckUsageIdempotent(authedUserId, generationKey);
-        if (!usage?.ok) {
-          return new Response(
-            JSON.stringify({ error: "Monthly limit reached", limitReached: true }),
-            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-          );
-        }
-      } else {
-        const { data: reserveData, error: reserveError } = await authedSupabase.rpc("check_loops_usage_idempotent", {
-          p_key: generationKey,
-        });
-        if (reserveError) throw new Error(reserveError.message);
-        type UsageReserveRow = { ok?: unknown };
-        const row: UsageReserveRow | null = Array.isArray(reserveData)
-          ? ((reserveData[0] as UsageReserveRow | undefined) ?? null)
-          : ((reserveData as UsageReserveRow | null) ?? null);
-        if (!row?.ok) {
-          return new Response(
-            JSON.stringify({ error: "Monthly limit reached", limitReached: true }),
-            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-          );
-        }
+      // Check usage via Firestore
+      const usage = await fbCheckCodeAtempotent(authedUserId, generationKey);
+      if (!usage?.ok) {
+        return new Response(
+          JSON.stringify({ error: "Monthly limit reached", limitReached: true, plan: usage.plan, limit: usage.limit, used: usage.used }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
       }
 
       const jobId = crypto.randomUUID();
@@ -2043,31 +1911,21 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
       const mode = body?.isSong === true || instrumentalJob === false ? "song" : "beat";
       const payload = { ...(body as Record<string, unknown>) };
 
-      // Insert job via appropriate backend
-      if (isFirebaseUserFlag) {
-        await fbInsertGenerationJob({
-          id: jobId,
-          user_id: authedUserId,
-          generation_key: generationKey,
-          status: "pending",
-          mode,
-          payload,
+      // Insert job in Firestore
+      const inserted = await fbInsertGenerationJob({
+        id: jobId,
+        user_id: authedUserId,
+        generation_key: generationKey,
+        status: "pending",
+        mode,
+        payload,
+      });
+      if (!inserted) {
+        console.error("start_job: fbInsertGenerationJob failed for", jobId);
+        return new Response(JSON.stringify({ error: "Failed to create job in Firestore" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
-      } else {
-        const { data: inserted, error: insertErr } = await authedSupabase
-          .from("generation_jobs")
-          .insert({
-            user_id: authedUserId,
-            generation_key: generationKey,
-            status: "pending",
-            mode,
-            payload,
-          })
-          .select("id, status")
-          .single();
-        if (insertErr || !inserted?.id) {
-          throw new Error(insertErr?.message ?? "Failed to create generation job");
-        }
       }
 
       scheduleRunJob(jobId);
@@ -2086,13 +1944,8 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
         });
       }
 
-      // Load job via appropriate backend
-      let job: { user_id: string; audio_url: string | null; meta: Record<string, unknown> | null; status: string; error: string | null; generation_key: string | null } | null;
-      if (isFirebaseUserFlag) {
-        job = await fbGetGenerationJob(jobId);
-      } else {
-        job = await loadGenerationJob(authedSupabase, jobId);
-      }
+      // Load job from Firestore
+      const job = await fbGetGenerationJob(jobId);
 
       if (!job || job.user_id !== authedUserId) {
         return new Response(JSON.stringify({ error: "Job not found" }), {
@@ -2124,46 +1977,27 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
         return Response.redirect(raw, 302);
       }
 
-      // Try Firebase Cloud Storage first for Firebase users, then Supabase Storage
-      if (isFirebaseUserFlag) {
-        const download = await fbDownloadFromStorage(LOOP_AUDIO_BUCKET, `${job.user_id}/job-${jobId}.mp3`);
-        if (download.bytes) {
-          return new Response(download.bytes, {
-            headers: {
-              ...corsHeaders,
-              "Content-Type": download.mime || "audio/mpeg",
-              "Cache-Control": "private, max-age=3600",
-            },
-          });
-        }
-        // Fallback: try wav
-        const downloadWav = await fbDownloadFromStorage(LOOP_AUDIO_BUCKET, `${job.user_id}/job-${jobId}.wav`);
-        if (downloadWav.bytes) {
-          return new Response(downloadWav.bytes, {
-            headers: {
-              ...corsHeaders,
-              "Content-Type": "audio/wav",
-              "Cache-Control": "private, max-age=3600",
-            },
-          });
-        }
-      } else {
-        const svc = createServiceSupabase();
-        if (svc) {
-          for (const ext of ["mp3", "wav"] as const) {
-            const path = `${job.user_id}/job-${jobId}.${ext}`;
-            const { data: blob, error: dlErr } = await svc.storage.from(LOOP_AUDIO_BUCKET).download(path);
-            if (!dlErr && blob && blob.size > 0) {
-              return new Response(blob, {
-                headers: {
-                  ...corsHeaders,
-                  "Content-Type": ext === "wav" ? "audio/wav" : "audio/mpeg",
-                  "Cache-Control": "private, max-age=3600",
-                },
-              });
-            }
-          }
-        }
+      // Download audio from Firebase Cloud Storage
+      const download = await fbDownloadFromStorage(LOOP_AUDIO_BUCKET, `${job.user_id}/job-${jobId}.mp3`);
+      if (download.bytes) {
+        return new Response(download.bytes, {
+          headers: {
+            ...corsHeaders,
+            "Content-Type": download.mime || "audio/mpeg",
+            "Cache-Control": "private, max-age=3600",
+          },
+        });
+      }
+      // Fallback: try wav
+      const downloadWav = await fbDownloadFromStorage(LOOP_AUDIO_BUCKET, `${job.user_id}/job-${jobId}.wav`);
+      if (downloadWav.bytes) {
+        return new Response(downloadWav.bytes, {
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "audio/wav",
+            "Cache-Control": "private, max-age=3600",
+          },
+        });
       }
 
       const decoded = await decodeDataUrl(raw);
@@ -2191,10 +2025,8 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
         });
       }
 
-      // Load job via appropriate backend
-      let job = isFirebaseUserFlag
-        ? await fbGetGenerationJob(jobId)
-        : await loadGenerationJob(authedSupabase, jobId);
+      // Load job from Firestore
+      let job = await fbGetGenerationJob(jobId);
       if (!job || job.user_id !== authedUserId) {
         return new Response(JSON.stringify({ error: "Job not found" }), {
           status: 404,
@@ -2231,54 +2063,38 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
             seed: asNumber(p.seed),
           });
           if (poll.status === "ready") {
-            const db = isFirebaseUserFlag ? null : (createServiceSupabase() ?? authedSupabase);
             let finalAudioUrl = poll.audioUrl;
             let pollMeta = poll.meta;
 
-            // Persist inline audio via appropriate storage backend
-            if (finalAudioUrl?.startsWith("data:") && db) {
-              const persisted = await persistInlineJobAudioUrl(db, job!.user_id, jobId, finalAudioUrl);
-              finalAudioUrl = persisted.audioUrl;
-              if (persisted.providerDataUrl || finalAudioUrl.startsWith("http")) {
-                pollMeta = {
-                  ...(pollMeta ?? {}),
-                  ...(persisted.providerDataUrl ? { providerDataUrl: persisted.providerDataUrl } : {}),
-                  ...(finalAudioUrl.startsWith("http") ? { httpAudioUrl: finalAudioUrl } : {}),
-                  sessionOnly: false,
-                };
+            // Persist inline audio via Firebase Storage
+            if (finalAudioUrl?.startsWith("data:")) {
+              const decoded = await decodeDataUrl(finalAudioUrl);
+              if (decoded?.bytes.byteLength) {
+                const ext = decoded.mime.includes("wav") ? "wav" : "mp3";
+                const path = `${job!.user_id}/job-${jobId}.${ext}`;
+                const upload = await fbUploadToStorage(LOOP_AUDIO_BUCKET, path, decoded.bytes, decoded.mime);
+                if (upload.url) {
+                  finalAudioUrl = upload.url;
+                  pollMeta = {
+                    ...(pollMeta ?? {}),
+                    providerDataUrl: finalAudioUrl,
+                    sessionOnly: false,
+                  };
+                }
               }
             }
-            if (isFirebaseUserFlag) {
-              await fbUpdateGenerationJob(jobId, {
-                status: "completed",
-                audio_url: finalAudioUrl,
-                meta: pollMeta,
-              });
-              if ((job as { generation_key?: string }).generation_key) {
-                await fbBumpUsageIdempotent(authedUserId, (job as { generation_key: string }).generation_key);
-              }
-            } else {
-              await updateGenerationJob(db!, jobId, {
-                status: "completed",
-                audio_url: finalAudioUrl,
-                meta: pollMeta,
-              });
-              if ((job as { generation_key?: string }).generation_key) {
-                await db!.rpc("bump_loops_usage_idempotent", { p_key: (job as { generation_key: string }).generation_key });
-              }
+            await fbUpdateGenerationJob(jobId, {
+              status: "completed",
+              audio_url: finalAudioUrl,
+              meta: pollMeta,
+            });
+            if ((job as { generation_key?: string }).generation_key) {
+              await fbBumpUsageIdempotent(authedUserId, (job as { generation_key: string }).generation_key);
             }
-            job = isFirebaseUserFlag
-              ? await fbGetGenerationJob(jobId)
-              : await loadGenerationJob(authedSupabase, jobId);
+            job = await fbGetGenerationJob(jobId);
           } else if (poll.status === "failed") {
-            if (isFirebaseUserFlag) {
-              await fbUpdateGenerationJob(jobId, { status: "failed", error: poll.error });
-            } else {
-              await updateGenerationJob(authedSupabase, jobId, { status: "failed", error: poll.error });
-            }
-            job = isFirebaseUserFlag
-              ? await fbGetGenerationJob(jobId)
-              : await loadGenerationJob(authedSupabase, jobId);
+            await fbUpdateGenerationJob(jobId, { status: "failed", error: poll.error });
+            job = await fbGetGenerationJob(jobId);
           }
         }
       }
@@ -2448,16 +2264,9 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
           const msg = lastErr instanceof Error ? lastErr.message : "Audio not found";
           throw new Error(msg);
         }
-        if (lookupSupabase && !isFirebaseUserFlag) {
-          const publicLoopId = await findPublicLoopIdByAceTaskId(lookupSupabase, tid);
-          if (publicLoopId) {
-            await lookupSupabase.from("loops").update({ audio_url: audioUrl }).eq("id", publicLoopId);
-          }
-        } else if (isFirebaseUserFlag) {
-          const publicLoopId = await fbFindPublicLoopByAceTaskId(tid);
-          if (publicLoopId) {
-            await fbUpdateLoop(publicLoopId, { audio_url: audioUrl });
-          }
+        const publicLoopId = await fbFindPublicLoopByAceTaskId(tid);
+        if (publicLoopId) {
+          await fbUpdateLoop(publicLoopId, { audio_url: audioUrl });
         }
         return new Response(JSON.stringify({ audioUrl }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -2507,41 +2316,17 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
           { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
-      if (authedSupabase && authedUserId) {
+      if (authedUserId) {
         for (const gk of generationKeysList) {
-          if (isFirebaseUserFlag) {
-            // Firebase users: check via Firestore directly
-            const usage = await fbCheckUsageIdempotent(authedUserId, gk);
-            if (!usage?.ok) {
-              return new Response(
-                JSON.stringify({
-                  error: `Monthly limit reached for dual batch.`,
-                  limitReached: true,
-                }),
-                { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-              );
-            }
-          } else {
-            // Supabase users: use RPC
-            const { data: reserveData, error: reserveError } = await authedSupabase.rpc("check_loops_usage_idempotent", {
-              p_key: gk,
-            });
-            if (reserveError) console.error("dual batch reserve error:", reserveError.message);
-            else {
-              type UsageReserveRow = { ok?: unknown; plan?: unknown; used?: unknown; limit?: unknown };
-              const row: UsageReserveRow | null = Array.isArray(reserveData)
-                ? ((reserveData[0] as UsageReserveRow | undefined) ?? null)
-                : ((reserveData as UsageReserveRow | null) ?? null);
-              if (!row?.ok) {
-                return new Response(
-                  JSON.stringify({
-                    error: `Monthly limit reached for dual batch.`,
-                    limitReached: true,
-                  }),
-                  { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-                );
-              }
-            }
+          const usage = await fbCheckCodeAtempotent(authedUserId, gk);
+          if (!usage?.ok) {
+            return new Response(
+              JSON.stringify({
+                error: `Monthly limit reached for dual batch.`,
+                limitReached: true,
+              }),
+              { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+            );
           }
         }
       }
@@ -2707,14 +2492,9 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
               },
             }));
 
-            if (authedSupabase && authedUserId) {
+            if (authedUserId) {
               for (const gk of generationKeysList) {
-                if (isFirebaseUserFlag) {
-                  await fbBumpUsageIdempotent(authedUserId, gk);
-                } else {
-                  const { error: bumpErr } = await authedSupabase.rpc("bump_loops_usage_idempotent", { p_key: gk });
-                  if (bumpErr) console.error("dual batch bump error:", bumpErr.message);
-                }
+                await fbBumpUsageIdempotent(authedUserId, gk);
               }
             }
 
@@ -2822,122 +2602,54 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
       if (!instrumental) {
         let voiceCloneDone = false;
         let voiceProfileNameResolved: string | undefined;
-        if (voiceProfileId && authedUserId && authedSupabase) {
-          // Check voice clone quota and fetch profile via appropriate backend
-          let cloneQuotaOk = false;
-          if (isFirebaseUserFlag) {
-            // Firebase users: skip RPC quota check (auth.uid() is null), try to use voice clone
-            cloneQuotaOk = true;
-            const voiceProfile = await fbGetVoiceProfile(voiceProfileId, authedUserId);
-            if (voiceProfile?.storage_path) {
-              // Download reference audio from Firebase Storage
-              const download = await fbDownloadFromStorage("voice-profiles", voiceProfile.storage_path);
-              if (download.bytes) {
-                const refBytes = download.bytes;
-                let lastCloneErr: unknown = null;
-                for (const t of aceTargets) {
-                  try {
-                    const cloned = await generateViaMusicGenerateReference({
-                      apiKey: t.apiKey,
-                      baseUrl: t.baseUrl,
-                      referenceBytes: refBytes,
-                      referenceName: voiceProfile.storage_path.split("/").pop() || "reference.wav",
-                      prompt: effectivePrompt || baseCaption,
-                      lyrics: effectiveLyrics,
-                      vocalLanguage,
-                      audioFormat,
-                      duration: requestedDuration ?? null,
-                      bpm: bpm && bpm > 0 ? bpm : null,
-                      timbreStrength: voiceCloneStrength,
-                      signal: controller.signal,
-                    });
-                    audioUrl = cloned.audioUrl;
-                    meta = {
-                      ...(cloned.meta ?? {}),
-                      aceKeyIndex: t.keyIndex,
-                      aceKeyCount,
-                      voiceProfileId,
-                      voiceProfileName: voiceProfile.name,
-                      voiceCloneStrength,
-                    };
-                    voiceCloneDone = true;
-                    console.log("Song mode — voice clone OK (Firebase)", { requestId, voiceProfileId });
-                    break;
-                  } catch (e) {
-                    lastCloneErr = e;
-                  }
+        if (voiceProfileId && authedUserId) {
+          // Fetch voice profile from Firestore and use Firebase Storage
+          const voiceProfile = await fbGetVoiceProfile(voiceProfileId, authedUserId);
+          if (voiceProfile?.storage_path) {
+            const download = await fbDownloadFromStorage("voice-profiles", voiceProfile.storage_path);
+            if (download.bytes) {
+              const refBytes = download.bytes;
+              let lastCloneErr: unknown = null;
+              for (const t of aceTargets) {
+                try {
+                  const cloned = await generateViaMusicGenerateReference({
+                    apiKey: t.apiKey,
+                    baseUrl: t.baseUrl,
+                    referenceBytes: refBytes,
+                    referenceName: voiceProfile.storage_path.split("/").pop() || "reference.wav",
+                    prompt: effectivePrompt || baseCaption,
+                    lyrics: effectiveLyrics,
+                    vocalLanguage,
+                    audioFormat,
+                    duration: requestedDuration ?? null,
+                    bpm: bpm && bpm > 0 ? bpm : null,
+                    timbreStrength: voiceCloneStrength,
+                    signal: controller.signal,
+                  });
+                  audioUrl = cloned.audioUrl;
+                  meta = {
+                    ...(cloned.meta ?? {}),
+                    aceKeyIndex: t.keyIndex,
+                    aceKeyCount,
+                    voiceProfileId,
+                    voiceProfileName: voiceProfile.name,
+                    voiceCloneStrength,
+                  };
+                  voiceCloneDone = true;
+                  console.log("Song mode — voice clone OK", { requestId, voiceProfileId });
+                  break;
+                } catch (e) {
+                  lastCloneErr = e;
                 }
-                if (!voiceCloneDone && lastCloneErr) {
-                  console.warn("Voice clone failed — fallback chat/completions (Firebase)", lastCloneErr);
-                }
-              } else {
-                console.warn("Voice clone reference not found in Firebase Storage", voiceProfile.storage_path);
+              }
+              if (!voiceCloneDone && lastCloneErr) {
+                console.warn("Voice clone failed — fallback chat/completions", lastCloneErr);
               }
             } else {
-              console.warn("Voice clone profile not found for Firebase user", voiceProfileId);
+              console.warn("Voice clone reference not found in Firebase Storage", voiceProfile.storage_path);
             }
           } else {
-            // Supabase users: use RPC quota check + Supabase storage
-            const { data: cloneQuotaRaw, error: cloneQuotaErr } = await authedSupabase.rpc("check_and_consume_voice_clone");
-            cloneQuotaOk = !cloneQuotaErr && Boolean((cloneQuotaRaw as { ok?: boolean } | null)?.ok);
-            if (cloneQuotaOk) {
-              const svc = createServiceSupabase();
-              const { data: profileRow } = svc
-                ? await svc
-                    .from("voice_profiles")
-                    .select("storage_path, name")
-                    .eq("id", voiceProfileId)
-                    .eq("user_id", authedUserId)
-                    .maybeSingle()
-                : { data: null };
-              voiceProfileNameResolved = typeof profileRow?.name === "string" ? profileRow.name : undefined;
-              if (profileRow?.storage_path && svc) {
-                const { data: refFile, error: refErr } = await svc.storage
-                  .from("voice-profiles")
-                  .download(profileRow.storage_path);
-                if (!refErr && refFile) {
-                  const refBytes = new Uint8Array(await refFile.arrayBuffer());
-                  let lastCloneErr: unknown = null;
-                  for (const t of aceTargets) {
-                    try {
-                      const cloned = await generateViaMusicGenerateReference({
-                        apiKey: t.apiKey,
-                        baseUrl: t.baseUrl,
-                        referenceBytes: refBytes,
-                        referenceName: profileRow.storage_path.split("/").pop() || "reference.wav",
-                        prompt: effectivePrompt || baseCaption,
-                        lyrics: effectiveLyrics,
-                        vocalLanguage,
-                        audioFormat,
-                        duration: requestedDuration ?? null,
-                        bpm: bpm && bpm > 0 ? bpm : null,
-                        timbreStrength: voiceCloneStrength,
-                        signal: controller.signal,
-                      });
-                      audioUrl = cloned.audioUrl;
-                      meta = {
-                        ...(cloned.meta ?? {}),
-                        aceKeyIndex: t.keyIndex,
-                        aceKeyCount,
-                        voiceProfileId,
-                        voiceProfileName: profileRow.name,
-                        voiceCloneStrength,
-                      };
-                      voiceCloneDone = true;
-                      console.log("Song mode — voice clone OK", { requestId, voiceProfileId });
-                      break;
-                    } catch (e) {
-                      lastCloneErr = e;
-                    }
-                  }
-                  if (!voiceCloneDone && lastCloneErr) {
-                    console.warn("Voice clone failed — fallback chat/completions", lastCloneErr);
-                  }
-                }
-              }
-            } else {
-              console.warn("Voice clone quota", cloneQuotaRaw, cloneQuotaErr?.message);
-            }
+            console.warn("Voice clone profile not found", voiceProfileId);
           }
         }
         if (!voiceCloneDone) {
@@ -3192,19 +2904,11 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
       clearTimeout(timer);
     }
 
-    if (authedSupabase && authedUserId && action !== "format") {
-      if (isFirebaseUserFlag) {
-        if (useIdempotentUsage && generationKey) {
-          await fbBumpUsageIdempotent(authedUserId, generationKey);
-        } else {
-          await fbBumpUsage(authedUserId);
-        }
+    if (authedUserId && action !== "format") {
+      if (useIdempotentUsage && generationKey) {
+        await fbBumpUsageIdempotent(authedUserId, generationKey);
       } else {
-        const { error: bumpErr } =
-          useIdempotentUsage && generationKey
-            ? await authedSupabase.rpc("bump_loops_usage_idempotent", { p_key: generationKey })
-            : await authedSupabase.rpc("bump_loops_usage");
-        if (bumpErr) console.error("bump_loops_usage error:", bumpErr.message);
+        await fbBumpUsage(authedUserId);
       }
     }
 

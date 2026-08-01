@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { fbGetProfile, fbUpdateProfile, fbGrantCredits } from "../_shared/firestoreServer.ts";
 
 const corsHeaders = {
@@ -29,7 +28,6 @@ function profilePlanPatch(prevPlan: string, nextPlan: string): Record<string, un
 }
 
 async function planFromPriceId(
-  supabase: ReturnType<typeof createClient>,
   priceId: string,
   pricePro: string,
   priceStudio: string,
@@ -42,10 +40,6 @@ async function planFromPriceId(
   if (priceId && (priceId === priceStudio || priceId === priceStudioAnnual)) return "studio";
   if (priceId && (priceId === pricePlus || priceId === pricePlusAnnual)) return "plus";
   if (!priceId) return "free";
-
-  const { data } = await supabase.from("billing_stripe_prices").select("plan").eq("stripe_price_id", priceId).maybeSingle();
-  const mapped = typeof data?.plan === "string" ? data.plan : "";
-  if (mapped === "pro" || mapped === "studio" || mapped === "plus") return mapped;
   return "free";
 }
 
@@ -71,12 +65,10 @@ serve(async (req) => {
     const priceProAnnual = Deno.env.get("STRIPE_PRICE_ID_PRO_ANNUAL") ?? "";
     const priceStudioAnnual = Deno.env.get("STRIPE_PRICE_ID_STUDIO_ANNUAL") ?? "";
     const pricePlusAnnual = Deno.env.get("STRIPE_PRICE_ID_PLUS_ANNUAL") ?? "";
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
     const firebaseApiKey = Deno.env.get("FIREBASE_API_KEY") ?? "";
 
-    if (!stripeKey || !supabaseUrl || !anonKey) {
-      throw new Error("Missing configuration");
+    if (!stripeKey) {
+      throw new Error("Missing STRIPE_SECRET_KEY");
     }
 
     const authHeader = req.headers.get("Authorization") ?? req.headers.get("authorization");
@@ -88,6 +80,7 @@ serve(async (req) => {
       });
     }
 
+    // Verify Firebase ID token
     let userId: string | null = null;
     if (firebaseApiKey && token.startsWith("eyJ")) {
       try {
@@ -102,15 +95,10 @@ serve(async (req) => {
       } catch { /* fall through */ }
     }
     if (!userId) {
-      const supabase = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: `Bearer ${token}` } } });
-      const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-      if (userError || !user) {
-        return new Response(JSON.stringify({ error: "Not authenticated" }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      userId = user.id;
+      return new Response(JSON.stringify({ error: "Not authenticated" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const body = (await req.json().catch(() => ({}))) as { sessionId?: unknown };
@@ -131,8 +119,7 @@ serve(async (req) => {
     }
 
     const metadata = (session.metadata ?? {}) as Record<string, unknown>;
-    // Accept both old Supabase sessions and new Firebase sessions
-    const sessionUserId = asString(metadata.firebase_uid) || asString(metadata.supabase_user_id) || asString(session.client_reference_id);
+    const sessionUserId = asString(metadata.firebase_uid) || asString(session.client_reference_id);
     if (sessionUserId !== userId!) {
       return new Response(JSON.stringify({ error: "Session does not belong to user" }), {
         status: 403,
@@ -148,7 +135,6 @@ serve(async (req) => {
       });
     }
 
-    const admin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SERVICE_ROLE_KEY") ?? "");
     const mode = asString(session.mode);
     const customerId = asString(session.customer);
 
@@ -188,7 +174,6 @@ serve(async (req) => {
     const periodEndIso = currentPeriodEnd ? new Date(currentPeriodEnd * 1000).toISOString() : null;
 
     const plan = await planFromPriceId(
-      admin,
       priceId,
       pricePro,
       priceStudio,

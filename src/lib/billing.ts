@@ -1,5 +1,4 @@
 import toast from "react-hot-toast";
-import { FunctionsHttpError } from "@supabase/supabase-js";
 import { buildAuthUrl } from "@/lib/authRoutes";
 import { clearCheckoutAbandoned } from "@/lib/checkoutRecovery";
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
@@ -101,10 +100,11 @@ async function readCheckoutPayload(data: unknown, error: unknown): Promise<Check
     }
   }
 
-  // Handle Supabase FunctionsHttpError (legacy)
-  if (error instanceof FunctionsHttpError) {
+  // Handle edge function error responses (may contain JSON payload)
+  if (error && typeof error === "object" && "context" in error) {
     try {
-      return (await error.context.json()) as CheckoutPayload;
+      const ctx = (error as { context: { json: () => Promise<unknown> } }).context;
+      return (await ctx.json()) as CheckoutPayload;
     } catch {
       return {};
     }
@@ -416,11 +416,8 @@ export async function waitForPlanActivation(
   delayMs = 1200,
 ): Promise<string | null> {
   for (let i = 0; i < maxAttempts; i += 1) {
-    try {
-      await supabase.rpc("sync_profile_plan_from_billing");
-    } catch {
-      /* best-effort sync */
-    }
+    // Plan sync is handled server-side by Stripe webhook → Firestore. No-op here.
+    const profile = await refreshProfile().catch(() => null);
     const profile = await refreshProfile().catch(() => null);
     const activePlan = profile?.plan ?? null;
     if (activePlan && activePlan !== "free") {

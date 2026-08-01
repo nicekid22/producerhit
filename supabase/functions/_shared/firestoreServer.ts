@@ -257,6 +257,9 @@ export type FirestoreGenerationJob = {
 
 export async function fbGetGenerationJob(jobId: string): Promise<FirestoreGenerationJob | null> {
   const result = await firestoreFetch("GET", "generation_jobs/" + jobId);
+  if (!result.ok && result.status !== 404) {
+    console.error("fbGetGenerationJob: Firestore error", result.status, result.text?.slice(0, 200));
+  }
   if (!result.ok || result.status === 404) return null;
   if (!result.data || typeof result.data !== "object") return null;
   const d = result.data as { fields?: Record<string, unknown> };
@@ -520,22 +523,34 @@ export async function fbBumpUsageIdempotent(userId: string, generationKey: strin
 }
 
 /**
- * Reset monthly usage if needed (called monthly).
- * In Firestore, this is handled by a Cloud Function or client-side.
- * Here we just check if reset is needed based on loops_reset_at.
+ * Reset monthly usage if needed.
+ * Checks `loops_reset_at` — if the date has passed, resets the usage counter,
+ * daily bonus, and sets the next reset date to the 1st of next month.
  */
 export async function fbResetUsageIfNeeded(userId: string): Promise<void> {
   const profile = await fbGetProfile(userId);
   if (!profile) return;
   const resetAt = typeof profile.loops_reset_at === "string" ? profile.loops_reset_at : null;
-  if (!resetAt) return;
+  if (!resetAt) {
+    // No reset date set — set one for the 1st of next month
+    const now = new Date();
+    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    await fbUpdateProfile(userId, {
+      loops_reset_at: nextMonth.toISOString(),
+    } as Partial<FirestoreProfile>);
+    return;
+  }
   const resetDate = new Date(resetAt);
   if (isNaN(resetDate.getTime())) return;
   if (new Date() >= resetDate) {
-    // Reset usage counter
+    // Calculate next reset date (1st of next month from now)
+    const now = new Date();
+    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    // Reset usage counter, daily bonus, and set next reset date
     await fbUpdateProfile(userId, {
       loops_used_this_month: 0,
-      loops_reset_at: null,
+      daily_bonus_month: 0,
+      loops_reset_at: nextMonth.toISOString(),
     } as Partial<FirestoreProfile>);
   }
 }
