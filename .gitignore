@@ -63,3 +63,4 @@ reports/
 ace_gen_*.mjs
 .git-rewrite/
 test-output/
+firebase-service-account.json
