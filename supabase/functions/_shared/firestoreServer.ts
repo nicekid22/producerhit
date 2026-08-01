@@ -434,10 +434,61 @@ export async function fbCheckUsageIdempotent(userId: string, generationKey: stri
   plan: string;
   used: number;
   limit: number;
-} | null> {
+}> {
   const LIMITS_LOCAL = { free: 10, pro: 75, studio: 250, plus: 1000 };
   const profile = await fbGetProfile(userId);
-  if (!profile) return null;
+
+  if (!profile) {
+    // Profile not found in Firestore yet — fall back to reading from Supabase
+    // using the service role key (bypasses RLS). This handles the case where
+    // the Firestore profile hasn't been created/synced yet.
+    try {
+      const url = Deno.env.get("SUPABASE_URL") ?? "";
+      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+      if (url && serviceKey) {
+        const res = await fetch(url + "/rest/v1/profiles?id=eq." + encodeURIComponent(userId) + "&select=plan,loops_used_this_month,referral_bonus,level_bonus,daily_bonus_month,purchased_bonus", {
+          headers: {
+            Authorization: "Bearer " + serviceKey,
+            apikey: serviceKey,
+            Accept: "application/json",
+          },
+        });
+        if (res.ok) {
+          const rows = (await res.json()) as Array<Record<string, unknown>>;
+          const row = rows?.[0];
+          if (row) {
+            const plan = typeof row.plan === "string" ? row.plan : "free";
+            const normalized = plan === "plus" || plan === "studio" || plan === "pro" ? plan : "free";
+            const used = typeof row.loops_used_this_month === "number" ? row.loops_used_this_month : 0;
+            const baseLimit = LIMITS_LOCAL[normalized] ?? 10;
+            const bonus =
+              Math.max(0, typeof row.referral_bonus === "number" ? row.referral_bonus : 0) +
+              Math.max(0, typeof row.level_bonus === "number" ? row.level_bonus : 0) +
+              Math.max(0, typeof row.daily_bonus_month === "number" ? row.daily_bonus_month : 0) +
+              Math.max(0, typeof row.purchased_bonus === "number" ? row.purchased_bonus : 0);
+            const limit = baseLimit + bonus;
+            const alreadyCounted = await fbGetUsageKey(generationKey);
+            const ok = alreadyCounted || used < limit;
+            // Sync plan back to Firestore so next call is fast
+            await fbUpdateProfile(userId, {
+              plan,
+              loops_used_this_month: used,
+              referral_bonus: typeof row.referral_bonus === "number" ? row.referral_bonus : 0,
+              level_bonus: typeof row.level_bonus === "number" ? row.level_bonus : 0,
+              daily_bonus_month: typeof row.daily_bonus_month === "number" ? row.daily_bonus_month : 0,
+              purchased_bonus: typeof row.purchased_bonus === "number" ? row.purchased_bonus : 0,
+            } as Partial<FirestoreProfile>).catch(() => {});
+            return { ok, plan, used, limit };
+          }
+        }
+      }
+    } catch (e) {
+      console.error("fbCheckCodeAtempotent Supabase fallback failed:", e);
+    }
+    // Last resort: allow generation (better to allow one extra than block a valid user)
+    console.error("fbCheckCodeAtempotent: profile not found in Firestore or Supabase for user:", userId);
+    return { ok: true, plan: "free", used: 0, limit: 10 };
+  }
 
   const plan = typeof profile.plan === "string" ? profile.plan : "free";
   const normalized = plan === "plus" || plan === "studio" || plan === "pro" ? plan : "free";
