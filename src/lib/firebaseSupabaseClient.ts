@@ -1194,7 +1194,7 @@ async function getSupabaseTokenForFirebaseUser(): Promise<string | null> {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function firebaseFunctionsInvoke(name: string, opts?: { body?: unknown; headers?: Record<string, string>; signal?: AbortSignal }): Promise<any> {
+export async function firebaseFunctionsInvoke(name: string, opts?: { body?: unknown; headers?: Record<string, string>; signal?: AbortSignal }): Promise<any> {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
   const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
