@@ -1,4 +1,3 @@
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { resolveAceLyricsApiField, resolveAceLyricsForMeta } from "./aceLyricsApi.ts";
 
 export type GenerationJobStatus = "pending" | "running" | "completed" | "failed";
@@ -29,13 +28,6 @@ export function aceAsyncTryReleaseTask(): boolean {
 
 export function internalJobSecret(): string {
   return (Deno.env.get("ACE_INTERNAL_JOB_SECRET") ?? Deno.env.get("ACE_JOB_SECRET") ?? "").trim();
-}
-
-export function createServiceSupabase(): SupabaseClient | null {
-  const url = (Deno.env.get("SUPABASE_URL") ?? "").trim();
-  const key = (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "").trim();
-  if (!url || !key) return null;
-  return createClient(url, key, { auth: { persistSession: false } });
 }
 
 export function scheduleRunJob(jobId: string): void {
@@ -346,30 +338,6 @@ export async function pollAceTaskOnce(args: {
   return { status: "ready", audioUrl, meta };
 }
 
-export async function loadGenerationJob(
-  client: SupabaseClient,
-  jobId: string,
-): Promise<GenerationJobRow | null> {
-  const { data, error } = await client
-    .from("generation_jobs")
-    .select(
-      "id, user_id, generation_key, status, mode, ace_task_id, ace_base_url, ace_key_index, audio_url, meta, error, payload, updated_at",
-    )
-    .eq("id", jobId)
-    .maybeSingle();
-  if (error || !data) return null;
-  return data as GenerationJobRow;
-}
-
-export async function updateGenerationJob(
-  client: SupabaseClient,
-  jobId: string,
-  patch: Record<string, unknown>,
-): Promise<void> {
-  const { error } = await client.from("generation_jobs").update(patch).eq("id", jobId);
-  if (error) console.error("updateGenerationJob", error.message);
-}
-
 export const LOOP_AUDIO_BUCKET = "loop-audio";
 /** Évite de renvoyer 4+ Mo de base64 dans les réponses JSON poll_job. */
 const INLINE_AUDIO_MAX_JSON_CHARS = 400_000;
@@ -408,34 +376,6 @@ export async function decodeDataUrl(dataUrl: string): Promise<{ bytes: Uint8Arra
   } catch {
     return decodeDataUrlSync(raw);
   }
-}
-
-/** Upload data:audio vers loop-audio pour lecture HTTP immédiate (prod async jobs). */
-export async function persistInlineJobAudioUrl(
-  svc: SupabaseClient,
-  userId: string,
-  jobId: string,
-  audioUrl: string,
-): Promise<{ audioUrl: string; providerDataUrl?: string }> {
-  const raw = audioUrl.trim();
-  if (!raw.startsWith("data:")) return { audioUrl: raw };
-  const decoded = await decodeDataUrl(raw);
-  if (!decoded?.bytes.byteLength) return { audioUrl: raw };
-  const ext = decoded.mime.includes("wav") ? "wav" : "mp3";
-  const path = `${userId}/job-${jobId}.${ext}`;
-  const { error } = await svc.storage.from(LOOP_AUDIO_BUCKET).upload(path, decoded.bytes, {
-    upsert: true,
-    contentType: decoded.mime,
-    cacheControl: "public, max-age=604800",
-  });
-  if (error) {
-    console.warn("persistInlineJobAudioUrl", error.message);
-    return { audioUrl: raw };
-  }
-  const { data } = svc.storage.from(LOOP_AUDIO_BUCKET).getPublicUrl(path);
-  const publicUrl = data?.publicUrl?.trim() || "";
-  if (!publicUrl) return { audioUrl: raw };
-  return { audioUrl: publicUrl, providerDataUrl: raw };
 }
 
 export function jobResponsePayload(job: GenerationJobRow) {

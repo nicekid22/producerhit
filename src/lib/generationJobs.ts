@@ -5,6 +5,7 @@
 
 import { usesDirectAceFromBrowser } from "@/lib/aceBrowserKeys";
 import { supabase, trackClientEvent } from "@/lib/supabaseClient";
+import { getFirebaseIdTokenForEdgeFunction } from "@/lib/firebaseAuth";
 import {
   createGenerationJobsClient,
   INLINE_AUDIO_MAX_CHARS,
@@ -83,14 +84,12 @@ function pollIntervalMs(): number {
 }
 
 async function invokeJobAction<T>(body: Record<string, unknown>): Promise<T> {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session?.access_token) throw new Error("Authentication required");
+  const idToken = await getFirebaseIdTokenForEdgeFunction();
+  if (!idToken) throw new Error("Authentication required - no Firebase ID token");
 
   const { data, error } = await supabase.functions.invoke("generate-loop-ace", {
     body,
-    headers: { Authorization: `Bearer ${session.access_token}` },
+    headers: { Authorization: `Bearer ${idToken}` },
   });
 
   if (error) {
@@ -109,10 +108,7 @@ async function invokeJobAction<T>(body: Record<string, unknown>): Promise<T> {
 
 const jobsClient = createGenerationJobsClient({
   getAccessToken: async () => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    return session?.access_token ?? null;
+    return await getFirebaseIdTokenForEdgeFunction();
   },
   invokeAce: invokeJobAction,
   subscribeJob: (jobId, onUpdate) => {

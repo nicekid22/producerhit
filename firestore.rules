@@ -65,6 +65,16 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // ── Generation jobs (Edge Function only) ───────────────────────
+    match /generation_jobs/{jobId} {
+      allow read, write: if false;
+    }
+
+    // ── Generation usage keys (Edge Function only) ─────────────────
+    match /generation_usage_keys/{keyId} {
+      allow read, write: if false;
+    }
+
     // ── Producer tags ──────────────────────────────────────────────
     match /producer_tags/{tagId} {
       allow read: if request.auth != null && resource.data.user_id == request.auth.uid;

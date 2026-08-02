@@ -418,7 +418,6 @@ export async function waitForPlanActivation(
   for (let i = 0; i < maxAttempts; i += 1) {
     // Plan sync is handled server-side by Stripe webhook → Firestore. No-op here.
     const profile = await refreshProfile().catch(() => null);
-    const profile = await refreshProfile().catch(() => null);
     const activePlan = profile?.plan ?? null;
     if (activePlan && activePlan !== "free") {
       if (!expectedPlan || activePlan === expectedPlan || planRank(activePlan) >= planRank(expectedPlan)) {

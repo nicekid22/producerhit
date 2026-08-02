@@ -1,5 +1,6 @@
 export type {
   AceMeta,
+  AceModelQuality,
   GenerateBeatResult,
   GenerateLoopAceOptions,
   GenerateParams,
@@ -8,7 +9,7 @@ export type {
 } from "./types";
 
 export { computeAceRequestedDurationSec } from "./aceDuration";
-export { resolveAceQualityFlags, ACE_QUALITY_DEFAULTS } from "./aceQuality";
+export { resolveAceQualityFlags, ACE_QUALITY_DEFAULTS, resolveAceModel, DEFAULT_ACE_MODEL_QUALITY } from "./aceQuality";
 export { buildAceCaption } from "./promptAce";
 export { buildAceRequestBody, resolveAceSampleMode, buildAceSampleQuery } from "./aceRequest";
 export {
@@ -80,3 +81,10 @@ export {
   type LoopVariantKind,
 } from "./loopVariant";
 export { registerGenerationCatalogExtensions } from "./extendedRegistry";
+export {
+  ACE_MODEL_QUALITY_LABELS,
+  ACE_MODEL_BY_QUALITY,
+  getAceModelForQuality,
+  getAceModelQualityLabel,
+  getAceModelQualityDescription,
+} from "./types";

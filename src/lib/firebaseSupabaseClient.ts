@@ -55,6 +55,7 @@ import { mirrorEventToAdPixels, shouldMirrorToServer } from "@/lib/adPixels";
 import { sendServerConversion } from "@/lib/conversionApi";
 import { getAttributionProps } from "@/lib/attribution";
 import { getOrCreateSessionId } from "@/lib/sessionId";
+import { REFERRAL_REFEREE_BONUS, REFERRAL_REFERRER_SIGNUP_BONUS } from "@/lib/referralConfig";
 
 // ---------------------------------------------------------------------------
 // Firebase Init
@@ -703,13 +704,14 @@ async function firebaseRpc(name: string, args?: Record<string, unknown>): Promis
           created_at: new Date().toISOString(),
           bonus_claimed: false,
         });
+        // Referrer gets REFERRAL_REFERRER_SIGNUP_BONUS (20), referee gets REFERRAL_REFEREE_BONUS (10)
         await updateDoc(doc(db, "profiles", referrerId), {
-          referral_bonus: increment(1),
+          referral_bonus: increment(REFERRAL_REFERRER_SIGNUP_BONUS),
         });
         await updateDoc(doc(db, "profiles", user.uid), {
-          referral_bonus: increment(1),
+          referral_bonus: increment(REFERRAL_REFEREE_BONUS),
         });
-        return { data: { ok: true, bonus: 1 }, error: null };
+        return { data: { ok: true, bonus: REFERRAL_REFEREE_BONUS }, error: null };
       }
 
       case "get_referral_stats": {

@@ -11,14 +11,44 @@ let _projectId: string | null = null;
 let _accessToken: string | null = null;
 let _tokenExpiry = 0;
 
+/** Decode the FIREBASE_SERVICE_ACCOUNT_JSON env var, handling base64, double-escaping, etc. */
+export function decodeServiceAccountJson(raw: string): Record<string, unknown> | null {
+  if (!raw) return null;
+
+  // 1. Try parsing as-is (plain JSON)
+  try {
+    const creds = JSON.parse(raw);
+    if (creds && creds.client_email && creds.private_key) return creds as Record<string, unknown>;
+  } catch { /* continue */ }
+
+  // 2. Try base64 decode then parse
+  try {
+    const decoded = atob(raw);
+    const creds = JSON.parse(decoded);
+    if (creds && creds.client_email && creds.private_key) return creds as Record<string, unknown>;
+  } catch { /* continue */ }
+
+  // 3. Try unescaping double-escaped JSON (\\n → \n, \\" → ")
+  try {
+    const unescaped = raw.replace(/\\n/g, "\n").replace(/\\"/g, '"');
+    const creds = JSON.parse(unescaped);
+    if (creds && creds.client_email && creds.private_key) return creds as Record<string, unknown>;
+  } catch { /* continue */ }
+
+  console.error("decodeServiceAccountJson: all parse methods failed, raw length:", raw.length, "starts:", raw.slice(0, 20));
+  return null;
+}
+
 async function getAccessToken(): Promise<string | null> {
   if (_accessToken && Date.now() < _tokenExpiry - 60_000) return _accessToken;
-  const json = Deno.env.get("FIREBASE_SERVICE_ACCOUNT_JSON");
-  if (!json) return null;
-  let creds: { client_email?: string; private_key?: string };
-  try { creds = JSON.parse(json); } catch { return null; }
-  const { client_email, private_key } = creds;
-  if (!client_email || !private_key) return null;
+  const saKey = "FIREBASE_SERVICE_ACCOUNT_JSON";
+  const rawJson = Deno.env.get(saKey);
+  if (!rawJson) { console.error("getAccessToken: FIREBASE_SERVICE_ACCOUNT_JSON is empty/missing"); return null; }
+  const creds = decodeServiceAccountJson(rawJson);
+  if (!creds) return null;
+  const client_email = creds.client_email as string;
+  const private_key = creds.private_key as string;
+  if (!client_email || !private_key) { console.error("getAccessToken: missing client_email=" + String(!!client_email) + " private_key=" + String(!!private_key)); return null; }
 
   const now = Math.floor(Date.now() / 1000);
   const expiry = now + 3_600;
@@ -26,13 +56,19 @@ async function getAccessToken(): Promise<string | null> {
   const jwtClaim = btoa(JSON.stringify({ iss: client_email, sub: client_email, aud: "https://oauth2.googleapis.com/token", iat: now, exp: expiry, scope: "https://www.googleapis.com/auth/datastore" })).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
 
   const signingInput = jwtHeader + "." + jwtClaim;
-  const keyData = private_key.replace(/-----BEGIN PRIVATE KEY-----/, "").replace(/-----END PRIVATE KEY-----/, "").replace(/\n/g, "");
+  // Strip PEM headers and ALL forms of newlines (real \n, literal \\n, \r\n)
+  const keyData = private_key
+    .replace(/-----BEGIN PRIVATE KEY-----/g, "")
+    .replace(/-----END PRIVATE KEY-----/g, "")
+    .replace(/\\n/g, "")
+    .replace(/\r?\n/g, "")
+    .trim();
 
   let binaryKey: ArrayBuffer;
   try {
     const raw = Uint8Array.from(atob(keyData), (c) => c.charCodeAt(0));
     binaryKey = raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength);
-  } catch { return null; }
+  } catch (e) { console.error("getAccessToken: base64 decode failed, keyData length:", keyData.length, "starts:", keyData.slice(0, 30), "err:", String(e).slice(0, 200)); return null; }
 
   try {
     const cryptoKey = await crypto.subtle.importKey("pkcs8", binaryKey, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"]);
@@ -44,31 +80,95 @@ async function getAccessToken(): Promise<string | null> {
     const res = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth2:grant-type:jwt-bearer", assertion: signedJwt }),
+      body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion: signedJwt }),
     });
-    const data = await res.json() as { access_token?: string; expires_in?: number };
-    if (!data.access_token) return null;
+    const data = await res.json() as { access_token?: string; expires_in?: number; error?: string; error_description?: string };
+    if (!data.access_token) {
+      console.error("getAccessToken: token exchange HTTP " + res.status + ":", data.error, data.error_description);
+      return null;
+    }
     _accessToken = data.access_token;
     _tokenExpiry = Date.now() + (data.expires_in ?? 3600) * 1000;
     return _accessToken;
-  } catch { return null; }
+  } catch (e) { console.error("getAccessToken: crypto/fetch exception:", String(e).slice(0, 300)); return null; }
 }
 
-function getProjectId(): string | null {
+export function getProjectId(): string | null {
   if (_projectId) return _projectId;
-  const json = Deno.env.get("FIREBASE_SERVICE_ACCOUNT_JSON");
-  if (!json) return null;
+  // Prefer explicit env var (avoids parsing 3KB base64 on every call)
+  const pidKey = "FIREBASE_PROJECT_ID";
+  const envPid = (Deno.env.get(pidKey) ?? "").trim();
+  if (envPid) { _projectId = envPid; return _projectId; }
+  // Fallback: parse from service account JSON
+  const saKey = "FIREBASE_SERVICE_ACCOUNT_JSON";
+  const json = Deno.env.get(saKey);
+  if (!json) { console.error("getProjectId: FIREBASE_SERVICE_ACCOUNT_JSON is empty/missing"); return null; }
+  const creds = decodeServiceAccountJson(json);
+  if (creds) {
+    const pid = creds.project_id;
+    if (pid) { _projectId = String(pid); return _projectId; }
+  }
+  console.error("getProjectId: could not extract project_id, raw length:", json.length);
+  return null;
+}
+
+/** Standalone token exchange — copies the same logic but doesn't rely on module-level getAccessToken() */
+async function inlineGetAccessToken(): Promise<string | null> {
   try {
-    const parsed = JSON.parse(json);
-    _projectId = parsed.project_id ?? null;
-    return _projectId;
-  } catch { return null; }
+    const saKey = "FIREBASE_SERVICE_ACCOUNT_JSON";
+    const rawJson = Deno.env.get(saKey) ?? "";
+    if (!rawJson) return null;
+    // Decode base64
+    let decoded = "";
+    try { decoded = atob(rawJson); } catch { return null; }
+    const creds = JSON.parse(decoded);
+    if (!creds?.client_email || !creds?.private_key) return null;
+    const pk = String(creds.private_key);
+    const ce = String(creds.client_email);
+    const keyData = pk.replace(/-----BEGIN PRIVATE KEY-----/g, "").replace(/-----END PRIVATE KEY-----/g, "").replace(/\\n/g, "").replace(/\r?\n/g, "").trim();
+    const raw = Uint8Array.from(atob(keyData), (c) => c.charCodeAt(0));
+    const binaryKey = raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength);
+    const cryptoKey = await crypto.subtle.importKey("pkcs8", binaryKey, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"]);
+    const now2 = Math.floor(Date.now() / 1000);
+    const hdr = btoa(JSON.stringify({ alg: "RS256", typ: "JWT" })).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+    const claim = btoa(JSON.stringify({ iss: ce, sub: ce, aud: "https://oauth2.googleapis.com/token", iat: now2, exp: now2 + 3600, scope: "https://www.googleapis.com/auth/datastore" })).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+    const sigInput = hdr + "." + claim;
+    const sig = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", cryptoKey, new TextEncoder().encode(sigInput));
+    const sigB64 = btoa(String.fromCharCode(...new Uint8Array(sig))).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+    const jwt = sigInput + "." + sigB64;
+    const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion: jwt }),
+    });
+    const tokenData = await tokenRes.json() as { access_token?: string; error?: string };
+    if (!tokenData.access_token) {
+      console.error("inlineGetAccessToken: token exchange failed:", tokenRes.status, tokenData.error);
+      return null;
+    }
+    // Cache it so subsequent calls reuse
+    _accessToken = tokenData.access_token;
+    _tokenExpiry = Date.now() + 3600 * 1000;
+    return _accessToken;
+  } catch (e) {
+    console.error("inlineGetAccessToken: exception:", String(e).slice(0, 300));
+    return null;
+  }
 }
 
 async function firestoreFetch(method: "GET" | "POST" | "PATCH" | "DELETE", path: string, body?: unknown): Promise<{ ok: boolean; status: number; data?: unknown; text?: string }> {
   const projectId = getProjectId();
-  const token = await getAccessToken();
-  if (!projectId || !token) return { ok: false, status: 401 };
+  let token = await getAccessToken();
+
+  // If getAccessToken() failed (module caching issue), do inline token exchange
+  if (!token) {
+    console.error("firestoreFetch: getAccessToken() returned null, trying inline token exchange");
+    token = await inlineGetAccessToken();
+  }
+
+  if (!projectId || !token) {
+    return { ok: false, status: 401, text: "missing projectId=" + String(!projectId) + " token=" + String(!token) };
+  }
 
   const base = "https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents";
   const url = path.startsWith("http") ? path : base + "/" + path;
@@ -80,8 +180,12 @@ async function firestoreFetch(method: "GET" | "POST" | "PATCH" | "DELETE", path:
     let data: unknown;
     let text = "";
     try { data = await res.json(); } catch { text = await res.text().catch(() => ""); }
+    if (!res.ok) {
+      console.error("firestoreFetch FAILED:", method, path, "status:", res.status, "body:", text || JSON.stringify(data));
+    }
     return { ok: res.ok, status: res.status, data, text };
   } catch (err) {
+    console.error("firestoreFetch EXCEPTION:", method, path, String(err));
     return { ok: false, status: 0, text: String(err) };
   }
 }
@@ -257,13 +361,18 @@ export type FirestoreGenerationJob = {
 
 export async function fbGetGenerationJob(jobId: string): Promise<FirestoreGenerationJob | null> {
   const result = await firestoreFetch("GET", "generation_jobs/" + jobId);
+  console.log("fbGetGenerationJob:", jobId, "ok:", result.ok, "status:", result.status, "text:", result.text?.slice(0, 300));
   if (!result.ok && result.status !== 404) {
     console.error("fbGetGenerationJob: Firestore error", result.status, result.text?.slice(0, 200));
   }
   if (!result.ok || result.status === 404) return null;
   if (!result.data || typeof result.data !== "object") return null;
   const d = result.data as { fields?: Record<string, unknown> };
-  return unwrapFirestoreDoc(d) as unknown as FirestoreGenerationJob | null;
+  // Debug: log the raw Firestore fields
+  console.log("fbGetGenerationJob raw fields:", d?.fields ? Object.keys(d.fields) : "none", "user_id field raw:", JSON.stringify(d?.fields?.user_id).slice(0, 200));
+  const unwrapped = unwrapFirestoreDoc(d) as unknown as FirestoreGenerationJob | null;
+  console.log("fbGetGenerationJob unwrapped user_id:", unwrapped?.user_id);
+  return unwrapped;
 }
 
 export async function fbInsertGenerationJob(data: {
@@ -273,25 +382,38 @@ export async function fbInsertGenerationJob(data: {
   status: string;
   mode: string | null;
   payload: Record<string, unknown>;
-}): Promise<boolean> {
+}): Promise<{ ok: boolean; error?: string }> {
   const now = new Date().toISOString();
+  // Sanitize payload: strip undefined, functions, symbols to prevent serialization errors
+  const sanitizedPayload = JSON.parse(JSON.stringify(data.payload ?? {}, (_key, val) => (typeof val === "function" || typeof val === "symbol" || typeof val === "undefined") ? undefined : val));
   const fields = toFirestoreFields({
     id: data.id,
     user_id: data.user_id,
     generation_key: data.generation_key,
     status: data.status,
     mode: data.mode,
-    payload: data.payload,
+    payload: sanitizedPayload,
     created_at: now,
     updated_at: now,
   });
+  // Debug: log what we're writing
+  console.log("fbInsertGenerationJob writing fields:", Object.keys(fields), "user_id field:", fields.user_id);
   const result = await firestoreFetch("POST", "generation_jobs?documentId=" + data.id, { fields });
-  return result.ok;
+  console.log("fbInsertGenerationJob:", data.id, "ok:", result.ok, "status:", result.status);
+  if (!result.ok) {
+    const errDetail = result.text || JSON.stringify(result.data);
+    console.error("fbInsertGenerationJob FAILED:", result.status, errDetail);
+    return { ok: false, error: errDetail.slice(0, 300) };
+  }
+  return { ok: true };
 }
 
 export async function fbUpdateGenerationJob(jobId: string, patch: Record<string, unknown>): Promise<boolean> {
   const patchFields = toFirestoreFields({ ...patch, updated_at: new Date().toISOString() });
   const result = await firestoreFetch("PATCH", "generation_jobs/" + jobId, { fields: patchFields });
+  if (!result.ok) {
+    console.error("fbUpdateGenerationJob FAILED:", jobId, result.status, result.text || JSON.stringify(result.data));
+  }
   return result.ok;
 }
 
@@ -311,6 +433,9 @@ export async function fbInsertUsageKey(key: string, userId: string): Promise<boo
     created_at: new Date().toISOString(),
   });
   const result = await firestoreFetch("POST", "generation_usage_keys/" + key, { fields });
+  if (!result.ok) {
+    console.error("fbInsertUsageKey FAILED:", key.slice(0, 36), result.status, result.text || JSON.stringify(result.data));
+  }
   return result.ok;
 }
 
@@ -570,7 +695,8 @@ export async function fbUploadToStorage(
   bytes: Uint8Array,
   contentType: string,
 ): Promise<{ url?: string; error?: string }> {
-  const json = Deno.env.get("FIREBASE_SERVICE_ACCOUNT_JSON");
+  const saKey = "FIREBASE_SERVICE_ACCOUNT_JSON";
+  const json = Deno.env.get(saKey);
   if (!json) return { error: "FIREBASE_SERVICE_ACCOUNT_JSON not set" };
 
   try {

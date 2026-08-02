@@ -1125,17 +1125,8 @@ export default function Dashboard() {
       } catch {
         void 0;
       }
-      // Sync to Firestore (compteur persistant pour l'utilisateur)
-      if (user?.id) {
-        import("@/lib/firebaseSupabaseClient").then(({ fbDb }) => {
-          const db = fbDb();
-          if (db) {
-            import("firebase/firestore").then(({ doc, updateDoc, increment }) => {
-              updateDoc(doc(db, "profiles", user.id), { loops_used_this_month: increment(1) }).catch(() => {});
-            });
-          }
-        });
-      }
+      // Note: Server-side fbBumpUsageIdempotent handles the Firestore increment
+      // to avoid double counting. Local counter updated for immediate UI feedback.
       return next;
     });
     notifyGamificationGeneration(locale, {
