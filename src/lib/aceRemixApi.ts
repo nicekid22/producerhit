@@ -65,7 +65,7 @@ function buildRemixFormFields(input: AceRemixInput): {
   form.append("audio_cover_strength", String(coverStrength));
   form.append("audio_format", audioFormat);
   form.append("thinking", "false");
-  form.append("model", "acestep-v15-xl-turbo");
+  form.append("model", "acestep-v15-xl-base");
   if (input.durationSec != null && input.durationSec > 0) {
     form.append("duration", String(clampNumber(input.durationSec, 10, 240)));
   }

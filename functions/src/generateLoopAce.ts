@@ -184,7 +184,7 @@ export async function generateLoopAceHandler(request: { auth?: { uid: string; to
 
   // Build ACE request body from the frontend payload
   const aceBody: AceRequest = {
-    model: String(body.model ?? "acestep-v15-xl-turbo"),
+    model: String(body.model ?? "acestep-v15-xl-base"),
     thinking: body.thinking !== false,
     use_format: body.use_format !== false,
     messages: (body.messages as Array<{ role: string; content: string }>) ?? [],

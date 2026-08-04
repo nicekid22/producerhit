@@ -204,7 +204,7 @@ export async function releaseAceRemixTask(args: {
   form.append("ai_token", args.apiKey);
   form.append("prompt", prompt);
   form.append("lyrics", lyrics || "[Instrumental]");
-  form.append("model_name", "acestep-v15-xl-turbo");
+  form.append("model_name", "acestep-v15-xl-base");
   form.append("app", "studio-web");
   form.append("task_type", taskType);
   form.append("src_audio", input.audioFile, input.audioFile.name || "source.mp3");

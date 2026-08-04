@@ -534,7 +534,8 @@ async function generateLoopAceDirect(
 
   if (!isAceReleaseTaskEnabled()) {
     const out = await generateViaChatCompletions();
-    await bumpAceUsage(options?.generationKey);
+    // Server already bumps usage (fbBumpUsageIdempotent at line 2852 in generateLoopAceMain.ts)
+    // Don't call bumpAceUsage here to avoid double-counting
     return out;
   }
 
@@ -569,7 +570,8 @@ async function generateLoopAceDirect(
   if (!createRes.ok) {
     if (createRes.status === 404) {
       const out = await generateViaChatCompletions();
-      await bumpAceUsage(options?.generationKey);
+      // Server already bumps usage (fbBumpUsageIdempotent at line 2852 in generateLoopAceMain.ts)
+      // Don't call bumpAceUsage here to avoid double-counting
       return { audioUrl: out.audioUrl, meta: out.meta };
     }
     throw new Error(`ACE API release_task failed (${createRes.status}): ${createText}`);
@@ -657,7 +659,8 @@ async function generateLoopAceDirect(
   }
   if (!audioUrl) throw new Error("ACE generation timed out");
 
-  await bumpAceUsage(options?.generationKey);
+  // Server already bumps usage (fbBumpUsageIdempotent at line 2852 in generateLoopAceMain.ts)
+  // Don't call bumpAceUsage here to avoid double-counting
   return { audioUrl, meta };
 }
 
@@ -1086,9 +1089,8 @@ export async function generateLoopAceDualBatch(
       seed: seeds[i],
     }));
 
-    for (const gk of options.generationKeys) {
-      await bumpAceUsage(gk);
-    }
+    // Server already bumps usage (fbBumpUsageIdempotent at line 2440 in generateLoopAceMain.ts)
+    // Don't call bumpAceUsage here to avoid double-counting
 
     return { results, partial: results.length < 2 };
   }
@@ -1277,22 +1279,8 @@ export async function remixLoopAce(input: import("@/lib/aceRemix").AceRemixInput
   if (usesDirectAceFromBrowser()) {
     const baseUrl = normalizeRemixBase((import.meta.env.VITE_ACE_STEP_BASE_URL as string | undefined) ?? "https://api.acemusic.ai");
     const result = await runAceRemix({ baseUrl, apiKey: pickBrowserAceApiKey(), input });
-    try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session?.access_token) {
-        await supabase.functions.invoke("generate-loop-ace", {
-          body: {
-            action: "bump_usage",
-            ...(input.generationKey ? { generationKey: input.generationKey } : {}),
-          },
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        });
-      }
-    } catch {
-      void 0;
-    }
+    // Server already bumps usage (fbBumpUsageIdempotent at line 724 in generateLoopAceMain.ts)
+    // Don't call bumpAceUsage here to avoid double-counting
     return result;
   }
 

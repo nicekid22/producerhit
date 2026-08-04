@@ -24,7 +24,7 @@ export function isAceSongQualityV2Enabled(): boolean {
   return isAceReleaseTaskEnabled();
 }
 
-export const ACE_RELEASE_MODEL = "acestep-v15-xl-turbo" as const;
+export const ACE_RELEASE_MODEL = "acestep-v15-xl-base" as const;
 
 export type AceQualityFlags = {
   thinking: boolean;

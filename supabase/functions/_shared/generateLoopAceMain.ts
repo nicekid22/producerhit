@@ -162,7 +162,7 @@ function aceMelodyCompositionAceFields(): Record<string, unknown> {
   return { lm_negative_prompt: neg, negative_prompt: neg, lm_cfg_scale: 2.8 };
 }
 const ACE_INFERENCE_STEPS = 8;
-const ACE_RELEASE_MODEL = "acestep-v15-xl-turbo";
+const ACE_RELEASE_MODEL = "acestep-v15-xl-base";
 
 function isAceSongQualityV2Enabled(): boolean {
   return Deno.env.get("ACE_SONG_QUALITY_V2") !== "0";
@@ -540,7 +540,7 @@ async function handleAceRemixMultipart(req: Request, corsHeaders: Record<string,
         musicForm.append("audio_cover_strength", String(coverStrength));
         musicForm.append("audio_format", audioFormat);
         musicForm.append("thinking", "false");
-        musicForm.append("model", "acestep-v15-xl-turbo");
+        musicForm.append("model", "acestep-v15-xl-base");
         if (duration && duration > 0) musicForm.append("duration", String(clampNumber(duration, 10, 240)));
         if (bpm && bpm > 0) musicForm.append("bpm", String(clampNumber(Math.round(bpm), 30, 200)));
 
@@ -624,7 +624,7 @@ async function handleAceRemixMultipart(req: Request, corsHeaders: Record<string,
       releaseForm.append("ai_token", apiKey);
       releaseForm.append("prompt", prompt);
       releaseForm.append("lyrics", instrumental ? "[Instrumental]" : effectiveLyrics || "[Instrumental]");
-      releaseForm.append("model_name", "acestep-v15-xl-turbo");
+      releaseForm.append("model_name", "acestep-v15-xl-base");
       releaseForm.append("app", "studio-web");
       releaseForm.append("task_type", taskType);
       releaseForm.append("src_audio", src, src.name || "source.mp3");
@@ -1741,7 +1741,7 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
       const effectiveUserId = fbUid ?? supabaseUserId;
       isFirebaseUserFlag = Boolean(fbUid);
 
-      console.log("AUTH DEBUG: token starts with eyJ:", token.startsWith("eyJ"), "firebaseApiKey:", !!firebaseApiKey, "fbUid:", fbUid, "supabaseUserId:", supabaseUserId, "effectiveUserId:", effectiveUserId);
+      // Debug log removed for performance
 
       if (effectiveUserId && action !== "format" && action !== "mirror_audio") {
         authedUserId = effectiveUserId;
@@ -1795,7 +1795,7 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
         }
       }
 
-    if (action !== "format" && !authedUserId) {
+    if (action !== "format" && action !== "mirror_audio" && !authedUserId) {
       return new Response(JSON.stringify({ error: "Authentication required" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -1843,8 +1843,11 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
       const mode = body?.isSong === true || instrumentalJob === false ? "song" : "beat";
       const payload = { ...(body as Record<string, unknown>) };
 
+      // Debug: log the payload
+      // Debug logs removed for performance
+
       // Insert job in Firestore
-      console.log("start_job: creating job", jobId, "user_id:", authedUserId, "type:", typeof authedUserId, "isNull:", authedUserId === null, "isUndef:", authedUserId === undefined);
+      // Debug log removed for performance
       const inserted = await fbInsertGenerationJob({
         id: jobId,
         user_id: authedUserId!,
@@ -1853,7 +1856,7 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
         mode,
         payload,
       });
-      console.log("start_job: insert result:", inserted);
+      // Debug log removed for performance
       if (!inserted.ok) {
         console.error("start_job: fbInsertGenerationJob failed for", jobId, "user:", authedUserId, "err:", inserted.error);
         return new Response(JSON.stringify({ error: "Failed to create job in Firestore", jobId, detail: inserted.error }), {
@@ -1879,8 +1882,10 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
       }
 
       // Load job from Firestore
+      // Debug log removed for performance
       const job = await fbGetGenerationJob(jobId);
-      console.log("get_job_audio:", jobId, "found:", !!job, "jobUserId:", job?.user_id, "authedUserId:", authedUserId);
+      // Debug log removed for performance
+      // Debug log removed for performance
 
       if (!job || job.user_id !== authedUserId) {
         return new Response(JSON.stringify({ error: "Job not found", debug: { found: !!job, jobUserId: job?.user_id ?? null, authedUserId: authedUserId ?? null } }), {
@@ -1961,8 +1966,10 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
       }
 
       // Load job from Firestore
+      // Debug log removed for performance
       let job = await fbGetGenerationJob(jobId);
-      console.log("poll_job:", jobId, "found:", !!job, "jobUserId:", job?.user_id, "authedUserId:", authedUserId, "match:", job?.user_id === authedUserId);
+      // Debug log removed for performance
+      // Debug log removed for performance
       if (!job || job.user_id !== authedUserId) {
         return new Response(JSON.stringify({ error: "Job not found", debug: { found: !!job, jobUserId: job?.user_id ?? null, authedUserId: authedUserId ?? null } }), {
           status: 404,
