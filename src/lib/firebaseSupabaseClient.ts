@@ -122,6 +122,19 @@ const CLOUD_FUNCTIONS_MIGRATED = new Set([
   "generate-loop-ace",
 ]);
 
+/**
+ * Firebase Cloud Functions are exported in camelCase (e.g. `createCheckout`),
+ * but the rest of the codebase uses kebab-case names (e.g. `create-checkout`).
+ * This map resolves kebab-case → camelCase for httpsCallable().
+ */
+const CLOUD_FUNCTION_NAME_MAP: Record<string, string> = {
+  "create-checkout": "createCheckout",
+  "confirm-checkout": "confirmCheckout",
+  "create-portal": "createPortal",
+  "ensure-profile": "ensureProfile",
+  "generate-loop-ace": "generateLoopAce",
+};
+
 function fbStorageInstance(): FirebaseStorage | null {
   ensureFirebase();
   return _storage;
@@ -1217,7 +1230,8 @@ export async function firebaseFunctionsInvoke(name: string, opts?: { body?: unkn
     try {
       const fns = fbFunctions();
       if (!fns) throw new Error("Firebase Functions not initialized");
-      const callable = httpsCallable(fns, name);
+      const callableName = CLOUD_FUNCTION_NAME_MAP[name] ?? name;
+      const callable = httpsCallable(fns, callableName);
       const result = await callable(opts?.body ?? {});
       return { data: result.data, error: null };
     } catch (err: unknown) {

@@ -1,0 +1,24 @@
+[
+  {
+    "origin": [
+      "https://www.producerhit.com",
+      "https://producerhit.com",
+      "https://producerhit-ai.web.app",
+      "https://producerhit-ai.firebaseapp.com",
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "http://127.0.0.1:5173"
+    ],
+    "method": ["GET", "HEAD", "PUT", "POST", "DELETE"],
+    "responseHeader": [
+      "Content-Type",
+      "Content-Length",
+      "Content-Range",
+      "Accept-Ranges",
+      "X-Goog-Metageneration",
+      "X-Goog-Generation",
+      "ETag"
+    ],
+    "maxAgeSeconds": 3600
+  }
+]
