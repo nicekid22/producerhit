@@ -1,6 +1,5 @@
 import { getAttributionProps } from "@/lib/attribution";
 import { getOrCreateSessionId } from "@/lib/sessionId";
-import { supabase } from "@/lib/supabaseClient";
 
 type ConversionPayload = {
   event_name: string;
@@ -13,27 +12,14 @@ type ConversionPayload = {
 let pending: ConversionPayload[] = [];
 let flushTimer: number | null = null;
 
-async function postConversion(body: ConversionPayload) {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
-  if (!supabaseUrl || !anonKey) return;
-
-  const { data: sessionData } = await supabase.auth.getSession();
-  const token = sessionData.session?.access_token ?? anonKey;
-
-  await fetch(`${supabaseUrl}/functions/v1/track-conversion`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      apikey: anonKey,
-    },
-    body: JSON.stringify({
-      ...body,
-      session_id: getOrCreateSessionId(),
-      attribution: getAttributionProps(),
-    }),
-  }).catch(() => undefined);
+/**
+ * Server-side conversion tracking (Meta CAPI + TikTok Events API).
+ * TODO: migrate to Firebase Cloud Function once track-conversion is ported.
+ * Currently disabled — Supabase Edge Function is down after Firebase migration.
+ * Client-side pixel tracking (mirrorEventToAdPixels) still works.
+ */
+async function postConversion(_body: ConversionPayload) {
+  // No-op until track-conversion is migrated to Firebase Cloud Functions
 }
 
 function scheduleFlush() {
