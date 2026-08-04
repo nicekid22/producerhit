@@ -1,0 +1,52 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ── Loop audio: authenticated users can upload their own loops ──
+    match /loop-audio/{userId}/{fileName} {
+      // Read: anyone (public playback)
+      allow read: if true;
+      // Write: only authenticated users writing to their own folder
+      allow create, update: if request.auth != null
+                            && request.auth.uid == userId
+                            && request.resource.size < 20 * 1024 * 1024  // max 20 MB
+                            && request.resource.contentType.matches('audio/.*');
+      // Delete: only owner
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // ── User avatars ──
+    match /avatars/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.auth.uid == userId
+                   && request.resource.size < 5 * 1024 * 1024;  // max 5 MB
+    }
+
+    // ── Cover art for loops ──
+    match /cover-art/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.auth.uid == userId
+                   && request.resource.size < 5 * 1024 * 1024;
+    }
+
+    // ── Loop covers (Pollinations-generated covers persisted to Storage) ──
+    match /loop-covers/{userId}/{fileName} {
+      allow read: if true;
+      allow create, update: if request.auth != null
+                            && request.auth.uid == userId
+                            && request.resource.size < 5 * 1024 * 1024
+                            && request.resource.contentType.matches('image/.*');
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // ── Stems zip ──
+    match /stems/{userId}/{fileName} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null
+                   && request.auth.uid == userId
+                   && request.resource.size < 50 * 1024 * 1024;  // max 50 MB
+    }
+  }
+}

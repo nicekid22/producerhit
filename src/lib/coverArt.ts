@@ -87,7 +87,7 @@ function isStoredVideoCover(loop: Loop, url: string): boolean {
 
   const lower = url.toLowerCase();
 
-  return lower.includes("/loop-covers/") && lower.endsWith(".mp4");
+  return (lower.includes("/loop-covers/") || lower.includes("loop-covers")) && lower.endsWith(".mp4");
 
 }
 
@@ -101,7 +101,11 @@ export function isPersistedStorageCoverUrl(url: string | null | undefined): bool
 
   if (!u.startsWith("http")) return false;
 
-  return u.includes("/loop-covers/") || (u.includes("supabase.co/storage") && u.includes("loop-covers"));
+  // Supabase Storage legacy
+  if (u.includes("/loop-covers/") || (u.includes("supabase.co/storage") && u.includes("loop-covers"))) return true;
+  // Firebase Storage (URL-encoded path: o/loop-covers%2F...)
+  if ((u.includes("firebasestorage.googleapis.com") || u.includes(".appspot.com")) && u.includes("loop-covers")) return true;
+  return false;
 
 }
 

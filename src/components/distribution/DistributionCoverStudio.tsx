@@ -320,6 +320,11 @@ export function DistributionCoverStudio({
 
 export function isOfficialPollinationsCoverApproved(loop: Loop, coverApproved: boolean): boolean {
   if (!coverApproved) return false;
-  const url = loop.details?.coverUrl?.trim() ?? "";
-  return url.includes("/loop-covers/") || url.includes("pollinations");
+  const url = (loop.details?.coverUrl?.trim() ?? "").toLowerCase();
+  if (!url.startsWith("http")) return false;
+  // Supabase Storage or Firebase Storage (URL-encoded /loop-covers/)
+  if (url.includes("/loop-covers/") || url.includes("loop-covers%2f")) return true;
+  // Legacy Pollinations URL
+  if (url.includes("pollinations")) return true;
+  return false;
 }

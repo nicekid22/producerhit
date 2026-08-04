@@ -1,4 +1,5 @@
 import { getAuth, type Auth } from "firebase/auth";
+import { getFunctions, httpsCallable, type Functions } from "firebase/functions";
 import {
   getFirestore,
   collection,
@@ -76,6 +77,7 @@ let _app: FirebaseApp | null = null;
 let _db: Firestore | null = null;
 let _auth: Auth | null = null;
 let _storage: FirebaseStorage | null = null;
+let _functions: Functions | null = null;
 let _initialized = false;
 
 function ensureFirebase() {
@@ -88,6 +90,7 @@ function ensureFirebase() {
     _db = getFirestore(_app);
     _auth = getAuth(_app);
     _storage = getStorage(_app);
+    _functions = getFunctions(_app);
   } catch {
     // already initialized or invalid config
   }
@@ -104,6 +107,20 @@ function fbAuth(): Auth | null {
   ensureFirebase();
   return _auth;
 }
+
+function fbFunctions(): Functions | null {
+  ensureFirebase();
+  return _functions;
+}
+
+/** Cloud Functions already migrated to Firebase (deployed in functions/) */
+const CLOUD_FUNCTIONS_MIGRATED = new Set([
+  "create-checkout",
+  "confirm-checkout",
+  "create-portal",
+  "ensure-profile",
+  "generate-loop-ace",
+]);
 
 function fbStorageInstance(): FirebaseStorage | null {
   ensureFirebase();
@@ -1195,13 +1212,44 @@ async function getSupabaseTokenForFirebaseUser(): Promise<string | null> {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function firebaseFunctionsInvoke(name: string, opts?: { body?: unknown; headers?: Record<string, string>; signal?: AbortSignal }): Promise<any> {
+  // ── Migrated Cloud Functions → Firebase httpsCallable ──────────
+  if (CLOUD_FUNCTIONS_MIGRATED.has(name)) {
+    try {
+      const fns = fbFunctions();
+      if (!fns) throw new Error("Firebase Functions not initialized");
+      const callable = httpsCallable(fns, name);
+      const result = await callable(opts?.body ?? {});
+      return { data: result.data, error: null };
+    } catch (err: unknown) {
+      // Firebase HttpsError has code, message, details, httpStatus
+      const firebaseErr = err as { code?: string; message?: string; details?: unknown; httpStatus?: number };
+      const code = firebaseErr.code ?? "unknown";
+      const details = firebaseErr.details;
+      const msg = firebaseErr.message ?? String(err);
+      // Build a rich error message that preserves the actual Stripe/backend error
+      let fullMessage = msg;
+      if (details && typeof details === "string" && details !== msg) {
+        fullMessage = `${msg}: ${details}`;
+      } else if (details && typeof details === "object") {
+        try {
+          const detailStr = JSON.stringify(details);
+          if (detailStr !== msg) fullMessage = `${msg}: ${detailStr}`;
+        } catch { /* ignore */ }
+      }
+      const error = new Error(fullMessage) as Error & { code?: string; httpStatus?: number; details?: unknown };
+      error.code = code;
+      error.httpStatus = firebaseErr.httpStatus;
+      error.details = details;
+      return { data: null, error };
+    }
+  }
+
+  // ── Non-migrated functions → Supabase Edge Function HTTP ──────
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
   const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
   if (supabaseUrl && anonKey) {
     try {
-      // Send the Firebase ID token as Bearer — the Edge Function verifies it via
-      // Identity Toolkit and uses the service role key to bypass RLS for Firebase users.
       const auth = fbAuth();
       const user = auth?.currentUser;
       const idToken = user ? await user.getIdToken().catch(() => null) : null;

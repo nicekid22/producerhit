@@ -61,11 +61,13 @@ export function parseCheckoutIntentFromNext(next: string | null | undefined): Pa
 
 export function extractInvokeError(err: unknown): { status?: number; message: string } {
   const e = err as
-    | (Error & { context?: { status?: unknown; body?: unknown } })
-    | { message?: unknown; context?: { status?: unknown; body?: unknown }; status?: unknown }
+    | (Error & { context?: { status?: unknown; body?: unknown }; code?: string; httpStatus?: number; details?: unknown })
+    | { message?: unknown; context?: { status?: unknown; body?: unknown }; status?: unknown; code?: string; httpStatus?: number; details?: unknown }
     | null;
 
+  // Firebase HttpsError format
   const status =
+    (typeof e === "object" && e && typeof e.httpStatus === "number" ? e.httpStatus : undefined) ??
     (typeof e === "object" && e && typeof (e as { status?: unknown }).status === "number" ? (e as { status: number }).status : undefined) ??
     (typeof e === "object" && e && typeof e.context?.status === "number" ? e.context.status : undefined);
 
@@ -76,6 +78,16 @@ export function extractInvokeError(err: unknown): { status?: number; message: st
         ? String((e as { message?: unknown }).message)
         : "Could not start checkout — try again";
 
+  // Firebase: prefer details if it contains more info than the message
+  const details = typeof e === "object" && e ? e.details : undefined;
+  if (details && typeof details === "string" && details !== message) {
+    message = details;
+  } else if (details && typeof details === "object") {
+    const detailStr = JSON.stringify(details);
+    if (detailStr !== message) message = detailStr;
+  }
+
+  // Supabase Edge Function format (legacy)
   const body = typeof e === "object" && e ? e.context?.body : undefined;
   if (typeof body === "string") {
     try {

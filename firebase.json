@@ -1,5 +1,34 @@
 {
   "firestore": {
     "rules": "firestore.rules"
-  }
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log"
+      ],
+      "predeploy": [],
+      "secretAccess": [
+        "STRIPE_SECRET_KEY",
+        "STRIPE_WEBHOOK_SECRET",
+        "STRIPE_PRICE_ID_PRO",
+        "STRIPE_PRICE_ID_STUDIO",
+        "STRIPE_PRICE_ID_PLUS",
+        "STRIPE_PRICE_ID_PRO_ANNUAL",
+        "STRIPE_PRICE_ID_STUDIO_ANNUAL",
+        "STRIPE_PRICE_ID_PLUS_ANNUAL",
+        "STRIPE_PRICE_ID_CREDIT_PACK_50",
+        "SUPABASE_URL",
+        "SUPABASE_ANON_KEY"
+      ]
+    }
+  ]
 }
