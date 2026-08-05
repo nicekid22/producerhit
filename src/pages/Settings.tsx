@@ -2,7 +2,7 @@ import { AppShell } from "@/components/AppShell";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router-dom";
-import { normalizePlan, runCheckoutWithAuth } from "@/lib/billing";
+import { runCheckoutWithAuth } from "@/lib/billing";
 import { CheckoutRecoveryBanner } from "@/components/billing/CheckoutRecoveryBanner";
 import { FreeUpgradeStrip } from "@/components/billing/FreeUpgradeStrip";
 import { useResolvedPlan } from "@/hooks/useResolvedPlan";
@@ -32,15 +32,12 @@ import { Button } from "@/components/ui/Button";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { Modal } from "@/components/ui/Modal";
 import { useLocaleStore } from "@/stores/localeStore";
-import { CreditCard, LogOut, Palette, Shield, Sparkles, Tag, UserRound, Users } from "lucide-react";
-import { ThemeToggleButton } from "@/components/ThemeToggleButton";
-import { CloudThemeSettingsBlock, visualThemeDescription } from "@/components/CloudThemeSettingsBlock";
-import { CLOUD_THEME_ENABLED } from "@/lib/featureFlags";
+import { CreditCard, LogOut, Palette, Shield, Sparkles, UserRound, Users } from "lucide-react";
 import { discordCommunityUrl } from "@/lib/discordConfig";
-import { useVisualThemeStore } from "@/stores/visualThemeStore";
 import { PkIconLoader } from "@/components/ui/PkIconLoader";
 import { hasEmailPassword, hasGoogleAuth, mapAuthError } from "@/lib/authProviders";
 import { SettingsGrowthExtras } from "@/components/settings/SettingsGrowthExtras";
+import { SettingsAppearancePanel } from "@/components/settings/SettingsAppearancePanel";
 import { ReferralStatsPanel } from "@/components/growth/ReferralStatsPanel";
 import { ReferralLeaderboard } from "@/components/growth/ReferralLeaderboard";
 import { ViralShareBar } from "@/components/growth/ViralShareBar";
@@ -67,7 +64,6 @@ export default function Settings() {
   const linkGoogle = useAuthStore((s) => s.linkGoogle);
   const setPassword = useAuthStore((s) => s.setPassword);
   const locale = useLocaleStore((s) => s.locale);
-  const visualTheme = useVisualThemeStore((s) => s.theme);
   const copy = useMemo(() => buildSettingsSection(locale), [locale]);
 
   const [loading, setLoading] = useState(true);
@@ -119,27 +115,23 @@ export default function Settings() {
   const navItems = useMemo(
     () => [
       { id: "pk-settings-profile", label: copy.navProfile },
-      { id: "pk-settings-progression", label: copy.navProgress },
-      { id: "pk-settings-referral", label: copy.navReferral },
       { id: "pk-settings-plan", label: copy.navPlan },
+      { id: "pk-settings-referral", label: copy.navReferral },
       { id: "pk-settings-security", label: copy.navSecurity },
     ],
     [copy],
   );
 
-  const scrollToSection = useCallback((id: string) => {
+  const setActiveTab = useCallback((id: string) => {
     setActiveSection(id);
-    window.setTimeout(() => {
-      document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 80);
   }, []);
 
   useEffect(() => {
     if (loading) return;
     const hash = window.location.hash.replace(/^#/, "").trim();
     if (!hash) return;
-    scrollToSection(hash);
-  }, [loading, scrollToSection]);
+    setActiveTab(hash);
+  }, [loading, setActiveTab]);
 
   useEffect(() => {
     if (authStatus !== "ready" || !user) {
@@ -235,7 +227,7 @@ export default function Settings() {
               publicProfileUrl={publicProfileUrl}
               navItems={navItems}
               activeSection={activeSection}
-              onNav={scrollToSection}
+              onNav={setActiveTab}
               onUpgrade={
                 plan === "free"
                   ? () => void runCheckoutWithAuth({ plan: "pro", location: "settings_hero", locale })
@@ -247,238 +239,233 @@ export default function Settings() {
 
             <SettingsGrowthExtras locale={locale} plan={plan} compact />
 
-            <div className="pk-settings-bento">
-              <div id="pk-settings-profile" className="pk-prism-section-card pk-settings-section">
-            <div className="pk-prism-section-head">
-              <div className="pk-prism-section-head__icon">
-                <UserRound className="h-4 w-4" />
-              </div>
-              <div>
-                <div className="text-lg font-semibold">{copy.navProfile}</div>
-                <div className="text-xs text-pk-muted">{copy.studioIdentity}</div>
-              </div>
-            </div>
-            <div className="mt-5 grid gap-4">
-              <div>
-                <div className="text-xs text-pk-muted">{copy.publicUsername}</div>
-                <input
-                  id="settings-username"
-                  aria-label={copy.publicUsername}
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value.replace(/\s/g, ""))}
-                  disabled={loading || saving}
-                  className="mt-2 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm outline-none focus:border-pk-accent"
-                  placeholder={copy.usernamePlaceholder}
-                />
-                <div className="mt-1 text-[11px] text-pk-muted">
-                  {copy.usernameHint}
-                </div>
-                {publicProfileUrl ? (
-                  <Link to={publicProfileUrl} className="mt-2 inline-block text-xs font-semibold text-pk-accent hover:underline">
-                    {copy.viewPublicProfile}
-                  </Link>
-                ) : null}
-              </div>
-
-              <div className="rounded-pk border border-pk-border/80 bg-pk-input/40 p-4 sm:col-span-2">
-                <div className="text-sm font-semibold">{copy.legalNameTitle}</div>
-                <p className="mt-1 text-[11px] leading-relaxed text-pk-muted">{copy.legalNameHint}</p>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <div className="text-xs text-pk-muted">{copy.firstName}</div>
-                    <input
-                      value={legalFirstName}
-                      onChange={(e) => setLegalFirstName(e.target.value)}
-                      disabled={loading || saving}
-                      className="mt-2 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm outline-none focus:border-pk-accent"
-                      autoComplete="given-name"
-                    />
-                  </div>
-                  <div>
-                    <div className="text-xs text-pk-muted">{copy.lastName}</div>
-                    <input
-                      value={legalLastName}
-                      onChange={(e) => setLegalLastName(e.target.value)}
-                      disabled={loading || saving}
-                      className="mt-2 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm outline-none focus:border-pk-accent"
-                      autoComplete="family-name"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <Dropdown
-                label={copy.creatorType}
-                value={creatorType}
-                onChange={(value) => setCreatorType(value as CreatorType | "")}
-                options={creatorTypeOptions}
-                placeholder={copy.choose}
-                disabled={loading || saving}
-                className="[&_button]:py-2.5"
-              />
-
-              <div>
-                <div className="text-xs text-pk-muted">Bio</div>
-                <textarea
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value.slice(0, 280))}
-                  disabled={loading || saving}
-                  rows={3}
-                  className="mt-2 w-full resize-none rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm outline-none focus:border-pk-accent"
-                  placeholder={copy.bioPlaceholder}
-                />
-                <div className="mt-1 text-[11px] text-pk-muted">{bio.length}/280</div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <div className="text-xs text-pk-muted">Instagram</div>
-                  <input
-                    value={socialIg}
-                    onChange={(e) => setSocialIg(e.target.value)}
-                    disabled={loading || saving}
-                    className="mt-2 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm outline-none focus:border-pk-accent"
-                    placeholder="@handle"
-                  />
-                </div>
-                <div>
-                  <div className="text-xs text-pk-muted">TikTok</div>
-                  <input
-                    value={socialTt}
-                    onChange={(e) => setSocialTt(e.target.value)}
-                    disabled={loading || saving}
-                    className="mt-2 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm outline-none focus:border-pk-accent"
-                    placeholder="@handle"
-                  />
-                </div>
-                <div>
-                  <div className="text-xs text-pk-muted">YouTube</div>
-                  <input
-                    value={socialYt}
-                    onChange={(e) => setSocialYt(e.target.value)}
-                    disabled={loading || saving}
-                    className="mt-2 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm outline-none focus:border-pk-accent"
-                    placeholder="@channel"
-                  />
-                </div>
-                <div>
-                  <div className="text-xs text-pk-muted">X</div>
-                  <input
-                    value={socialX}
-                    onChange={(e) => setSocialX(e.target.value)}
-                    disabled={loading || saving}
-                    className="mt-2 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm outline-none focus:border-pk-accent"
-                    placeholder="@handle"
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <div className="text-xs text-pk-muted">{copy.website}</div>
-                  <input
-                    value={socialWeb}
-                    onChange={(e) => setSocialWeb(e.target.value)}
-                    disabled={loading || saving}
-                    className="mt-2 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm outline-none focus:border-pk-accent"
-                    placeholder="https://…"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <div className="text-xs text-pk-muted">Email</div>
-                <input
-                  value={user?.email ?? ""}
-                  readOnly
-                  className="mt-2 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm text-pk-muted outline-none"
-                />
-              </div>
-            </div>
-            <div className="mt-5">
-              <Button
-                variant="primary"
-                disabled={loading || saving || !user}
-                onClick={async () => {
-                  if (!user) return;
-                  const usernameError = validateUsername(username, locale, true);
-                  if (usernameError) {
-                    toast.error(usernameError);
-                    return;
-                  }
-                  if (legalFirstName.trim() || legalLastName.trim()) {
-                    const firstErr = validateLegalName(legalFirstName, locale);
-                    const lastErr = validateLegalName(legalLastName, locale);
-                    if (firstErr || lastErr) {
-                      toast.error(firstErr ?? lastErr ?? copy.invalidLegalName);
-                      return;
-                    }
-                  }
-                  setSaving(true);
-                  try {
-                    const social: CreatorSocialLinks = {
-                      ig: socialIg,
-                      tt: socialTt,
-                      yt: socialYt,
-                      x: socialX,
-                      web: socialWeb,
-                    };
-                    const result = await saveCreatorProfile({
-                      username: username.trim(),
-                      avatar_id: authProfile?.avatar_id ?? 1,
-                      bio,
-                      creator_type: creatorType,
-                      social,
-                      legal_first_name: legalFirstName.trim(),
-                      legal_last_name: legalLastName.trim(),
-                    });
-                    if (!result.ok) {
-                      toast.error(creatorProfileErrorMessage("error" in result ? result.error : "save_failed", locale));
-                      return;
-                    }
-                    const trimmed = username.trim();
-                    setUsername(trimmed);
-                    toast.success(copy.profileSaved);
-                    void refreshProfile().then((refreshed) => {
-                      if (refreshed?.username) setUsername(refreshed.username);
-                    });
-                  } catch (err) {
-                    const message = err instanceof Error ? err.message : "Save failed";
-                    toast.error(message);
-                  } finally {
-                    setSaving(false);
-                  }
-                }}
-              >
-                {copy.saveProfile}
-              </Button>
-            </div>
-          </div>
-
-              <div className="pk-settings-bento__stack">
-                <div id="pk-settings-appearance" className="pk-prism-section-card pk-settings-section pk-settings-section--compact">
+            {activeSection === "pk-settings-profile" ? (
+              <div className="pk-settings-bento">
+                <div id="pk-settings-profile" className="pk-prism-section-card pk-settings-section">
                   <div className="pk-prism-section-head">
                     <div className="pk-prism-section-head__icon">
-                      <Palette className="h-4 w-4" />
+                      <UserRound className="h-4 w-4" />
                     </div>
                     <div>
-                      <div className="text-base font-semibold">{copy.appearance}</div>
-                      <div className="text-xs text-pk-muted">
-                        {copy.studioTheme}
-                      </div>
+                      <div className="text-lg font-semibold">{copy.navProfile}</div>
+                      <div className="text-xs text-pk-muted">{copy.studioIdentity}</div>
                     </div>
                   </div>
-                  <div className="mt-4 flex flex-col gap-3">
-                    <p className="text-xs leading-relaxed text-pk-muted">
-                      {visualThemeDescription(visualTheme, locale)}
-                    </p>
-                    {CLOUD_THEME_ENABLED ? (
-                      <CloudThemeSettingsBlock />
-                    ) : (
-                      <div className="flex justify-end sm:justify-end">
-                        <ThemeToggleButton variant="segmented" />
+                  <div className="mt-5 grid gap-4">
+                    <div>
+                      <div className="text-xs text-pk-muted">{copy.publicUsername}</div>
+                      <input
+                        id="settings-username"
+                        aria-label={copy.publicUsername}
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value.replace(/\s/g, ""))}
+                        disabled={loading || saving}
+                        className="mt-2 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm outline-none focus:border-pk-accent"
+                        placeholder={copy.usernamePlaceholder}
+                      />
+                      <div className="mt-1 text-[11px] text-pk-muted">
+                        {copy.usernameHint}
                       </div>
-                    )}
+                      {publicProfileUrl ? (
+                        <Link to={publicProfileUrl} className="mt-2 inline-block text-xs font-semibold text-pk-accent hover:underline">
+                          {copy.viewPublicProfile}
+                        </Link>
+                      ) : null}
+                    </div>
+
+                    <div className="rounded-pk border border-pk-border/80 bg-pk-input/40 p-4 sm:col-span-2">
+                      <div className="text-sm font-semibold">{copy.legalNameTitle}</div>
+                      <p className="mt-1 text-[11px] leading-relaxed text-pk-muted">{copy.legalNameHint}</p>
+                      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <div className="text-xs text-pk-muted">{copy.firstName}</div>
+                          <input
+                            value={legalFirstName}
+                            onChange={(e) => setLegalFirstName(e.target.value)}
+                            disabled={loading || saving}
+                            className="mt-2 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm outline-none focus:border-pk-accent"
+                            autoComplete="given-name"
+                          />
+                        </div>
+                        <div>
+                          <div className="text-xs text-pk-muted">{copy.lastName}</div>
+                          <input
+                            value={legalLastName}
+                            onChange={(e) => setLegalLastName(e.target.value)}
+                            disabled={loading || saving}
+                            className="mt-2 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm outline-none focus:border-pk-accent"
+                            autoComplete="family-name"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <Dropdown
+                      label={copy.creatorType}
+                      value={creatorType}
+                      onChange={(value) => setCreatorType(value as CreatorType | "")}
+                      options={creatorTypeOptions}
+                      placeholder={copy.choose}
+                      disabled={loading || saving}
+                      className="[&_button]:py-2.5"
+                    />
+
+                    <div>
+                      <div className="text-xs text-pk-muted">Bio</div>
+                      <textarea
+                        value={bio}
+                        onChange={(e) => setBio(e.target.value.slice(0, 280))}
+                        disabled={loading || saving}
+                        rows={3}
+                        className="mt-2 w-full resize-none rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm outline-none focus:border-pk-accent"
+                        placeholder={copy.bioPlaceholder}
+                      />
+                      <div className="mt-1 text-[11px] text-pk-muted">{bio.length}/280</div>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <div className="text-xs text-pk-muted">Instagram</div>
+                        <input
+                          value={socialIg}
+                          onChange={(e) => setSocialIg(e.target.value)}
+                          disabled={loading || saving}
+                          className="mt-2 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm outline-none focus:border-pk-accent"
+                          placeholder="@handle"
+                        />
+                      </div>
+                      <div>
+                        <div className="text-xs text-pk-muted">TikTok</div>
+                        <input
+                          value={socialTt}
+                          onChange={(e) => setSocialTt(e.target.value)}
+                          disabled={loading || saving}
+                          className="mt-2 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm outline-none focus:border-pk-accent"
+                          placeholder="@handle"
+                        />
+                      </div>
+                      <div>
+                        <div className="text-xs text-pk-muted">YouTube</div>
+                        <input
+                          value={socialYt}
+                          onChange={(e) => setSocialYt(e.target.value)}
+                          disabled={loading || saving}
+                          className="mt-2 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm outline-none focus:border-pk-accent"
+                          placeholder="@channel"
+                        />
+                      </div>
+                      <div>
+                        <div className="text-xs text-pk-muted">X</div>
+                        <input
+                          value={socialX}
+                          onChange={(e) => setSocialX(e.target.value)}
+                          disabled={loading || saving}
+                          className="mt-2 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm outline-none focus:border-pk-accent"
+                          placeholder="@handle"
+                        />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <div className="text-xs text-pk-muted">{copy.website}</div>
+                        <input
+                          value={socialWeb}
+                          onChange={(e) => setSocialWeb(e.target.value)}
+                          disabled={loading || saving}
+                          className="mt-2 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm outline-none focus:border-pk-accent"
+                          placeholder="https://…"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-xs text-pk-muted">Email</div>
+                      <input
+                        value={user?.email ?? ""}
+                        readOnly
+                        className="mt-2 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm text-pk-muted outline-none"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-5">
+                    <Button
+                      variant="primary"
+                      disabled={loading || saving || !user}
+                      onClick={async () => {
+                        if (!user) return;
+                        const usernameError = validateUsername(username, locale, true);
+                        if (usernameError) {
+                          toast.error(usernameError);
+                          return;
+                        }
+                        if (legalFirstName.trim() || legalLastName.trim()) {
+                          const firstErr = validateLegalName(legalFirstName, locale);
+                          const lastErr = validateLegalName(legalLastName, locale);
+                          if (firstErr || lastErr) {
+                            toast.error(firstErr ?? lastErr ?? copy.invalidLegalName);
+                            return;
+                          }
+                        }
+                        setSaving(true);
+                        try {
+                          const social: CreatorSocialLinks = {
+                            ig: socialIg,
+                            tt: socialTt,
+                            yt: socialYt,
+                            x: socialX,
+                            web: socialWeb,
+                          };
+                          const result = await saveCreatorProfile({
+                            username: username.trim(),
+                            avatar_id: authProfile?.avatar_id ?? 1,
+                            bio,
+                            creator_type: creatorType,
+                            social,
+                            legal_first_name: legalFirstName.trim(),
+                            legal_last_name: legalLastName.trim(),
+                          });
+                          if (!result.ok) {
+                            toast.error(creatorProfileErrorMessage("error" in result ? result.error : "save_failed", locale));
+                            return;
+                          }
+                          const trimmed = username.trim();
+                          setUsername(trimmed);
+                          toast.success(copy.profileSaved);
+                          void refreshProfile().then((refreshed) => {
+                            if (refreshed?.username) setUsername(refreshed.username);
+                          });
+                        } catch (err) {
+                          const message = err instanceof Error ? err.message : "Save failed";
+                          toast.error(message);
+                        } finally {
+                          setSaving(false);
+                        }
+                      }}
+                    >
+                      {copy.saveProfile}
+                    </Button>
                   </div>
                 </div>
 
+                <div className="pk-settings-bento__stack">
+                  <div id="pk-settings-appearance" className="pk-prism-section-card pk-settings-section pk-settings-section--compact">
+                    <div className="pk-prism-section-head">
+                      <div className="pk-prism-section-head__icon">
+                        <Palette className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <div className="text-base font-semibold">{copy.appearance}</div>
+                        <div className="text-xs text-pk-muted">
+                          {copy.studioTheme}
+                        </div>
+                      </div>
+                    </div>
+                    <SettingsAppearancePanel />
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {activeSection === "pk-settings-plan" ? (
+              <div className="pk-settings-bento">
                 <div id="pk-settings-plan" className="pk-prism-section-card pk-settings-section pk-settings-section--compact">
                   <CheckoutRecoveryBanner
                     locale={locale}
@@ -559,241 +546,249 @@ export default function Settings() {
                   </div>
                 </div>
               </div>
+            ) : null}
 
-              <div id="pk-settings-referral" className="pk-prism-section-card pk-settings-section pk-settings-bento__full">
-                <div className="pk-prism-section-head">
-                  <div className="pk-prism-section-head__icon">
-                    <Sparkles className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <div className="text-lg font-semibold">{copy.referralProgram}</div>
-                    <div className="text-xs text-pk-muted">
-                      {copy.referralSubtitle(REFERRAL_REFERRER_SIGNUP_BONUS, REFERRAL_REFEREE_START_TOTAL)}
+            {activeSection === "pk-settings-referral" ? (
+              <div className="pk-settings-bento">
+                <div id="pk-settings-referral" className="pk-prism-section-card pk-settings-section pk-settings-bento__full">
+                  <div className="pk-prism-section-head">
+                    <div className="pk-prism-section-head__icon">
+                      <Sparkles className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-lg font-semibold">{copy.referralProgram}</div>
+                      <div className="text-xs text-pk-muted">
+                        {copy.referralSubtitle(REFERRAL_REFERRER_SIGNUP_BONUS, REFERRAL_REFEREE_START_TOTAL)}
+                      </div>
                     </div>
                   </div>
+                  <div className="pk-settings-referral-highlight text-sm leading-relaxed text-white/75">
+                    <p className="font-semibold text-white">{copy.howItWorks}</p>
+                    <ul className="mt-2 space-y-1.5 text-xs sm:text-sm">
+                      <li>{copy.referralStep1(REFERRAL_REFEREE_START_TOTAL)}</li>
+                      <li>{copy.referralStep2(REFERRAL_REFERRER_SIGNUP_BONUS)}</li>
+                    </ul>
+                  </div>
+                  <ReferralStatsPanel locale={locale} className="mt-4" />
+                  <ReferralLeaderboard locale={locale} className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-4" />
+                  {referralBonus > 0 || levelBonus > 0 || dailyBonusMonth > 0 ? (
+                    <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[var(--prism-cyan)]">
+                      {referralBonus > 0 ? (
+                        <span>{copy.referralBonusLabel(referralBonus)}</span>
+                      ) : null}
+                      {levelBonus > 0 ? (
+                        <span>{copy.levelsBonusLabel(levelBonus)}</span>
+                      ) : null}
+                      {dailyBonusMonth > 0 ? (
+                        <span>{copy.dailyBonusLabel(dailyBonusMonth)}</span>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+                    <div>
+                      <div className="text-xs text-pk-muted">{copy.inviteLink}</div>
+                      <input
+                        value={referralLinkLoading ? copy.generating : referralLink}
+                        readOnly
+                        className="mt-2 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm text-pk-muted outline-none"
+                      />
+                    </div>
+                    <Button
+                      variant="secondary"
+                      disabled={!referralLink || referralLinkLoading}
+                      onClick={() => {
+                        void navigator.clipboard.writeText(referralLink).then(() => {
+                          markActivationStepLocal("referral_share");
+                          toast.success(copy.linkCopied);
+                        });
+                      }}
+                    >
+                      {copy.copy}
+                    </Button>
+                  </div>
+                  {referralCode ? (
+                    <div className="mt-2 text-xs text-pk-muted">
+                      {copy.code}: <span className="font-semibold text-white">{referralCode}</span>
+                    </div>
+                  ) : null}
+                  {referralLink ? (
+                    <div className="mt-4">
+                      <div className="mb-2 text-xs text-pk-muted">{copy.share}</div>
+                      <ViralShareBar
+                        url={referralLink}
+                        shareText={copy.referralShareText}
+                        locale={locale}
+                        channel="referral"
+                        onShare={() => markActivationStepLocal("referral_share")}
+                      />
+                    </div>
+                  ) : null}
                 </div>
-                <div className="pk-settings-referral-highlight text-sm leading-relaxed text-white/75">
-                  <p className="font-semibold text-white">{copy.howItWorks}</p>
-                  <ul className="mt-2 space-y-1.5 text-xs sm:text-sm">
-                    <li>{copy.referralStep1(REFERRAL_REFEREE_START_TOTAL)}</li>
-                    <li>{copy.referralStep2(REFERRAL_REFERRER_SIGNUP_BONUS)}</li>
-                  </ul>
-                </div>
-                <ReferralStatsPanel locale={locale} className="mt-4" />
-                <ReferralLeaderboard locale={locale} className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-4" />
-                {referralBonus > 0 || levelBonus > 0 || dailyBonusMonth > 0 ? (
-                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[var(--prism-cyan)]">
-                    {referralBonus > 0 ? (
-                      <span>{copy.referralBonusLabel(referralBonus)}</span>
-                    ) : null}
-                    {levelBonus > 0 ? (
-                      <span>{copy.levelsBonusLabel(levelBonus)}</span>
-                    ) : null}
-                    {dailyBonusMonth > 0 ? (
-                      <span>{copy.dailyBonusLabel(dailyBonusMonth)}</span>
-                    ) : null}
-                  </div>
-                ) : null}
-                <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
-                  <div>
-                    <div className="text-xs text-pk-muted">{copy.inviteLink}</div>
-                    <input
-                      value={referralLinkLoading ? copy.generating : referralLink}
-                      readOnly
-                      className="mt-2 w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2.5 text-sm text-pk-muted outline-none"
-                    />
-                  </div>
-                  <Button
-                    variant="secondary"
-                    disabled={!referralLink || referralLinkLoading}
-                    onClick={() => {
-                      void navigator.clipboard.writeText(referralLink).then(() => {
-                        markActivationStepLocal("referral_share");
-                        toast.success(copy.linkCopied);
-                      });
-                    }}
-                  >
-                    {copy.copy}
-                  </Button>
-                </div>
-                {referralCode ? (
-                  <div className="mt-2 text-xs text-pk-muted">
-                    {copy.code}: <span className="font-semibold text-white">{referralCode}</span>
-                  </div>
-                ) : null}
-                {referralLink ? (
-                  <div className="mt-4">
-                    <div className="mb-2 text-xs text-pk-muted">{copy.share}</div>
-                    <ViralShareBar
-                      url={referralLink}
-                      shareText={copy.referralShareText}
-                      locale={locale}
-                      channel="referral"
-                      onShare={() => markActivationStepLocal("referral_share")}
-                    />
-                  </div>
-                ) : null}
-              </div>
 
-              <div id="pk-settings-discord" className="pk-prism-section-card pk-settings-section">
-                <div className="pk-prism-section-head">
-                  <div className="pk-prism-section-head__icon">
-                    <Users className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <div className="text-lg font-semibold">Discord</div>
-                    <div className="text-xs text-pk-muted">
-                      {copy.discordHint}
+                <div id="pk-settings-discord" className="pk-prism-section-card pk-settings-section">
+                  <div className="pk-prism-section-head">
+                    <div className="pk-prism-section-head__icon">
+                      <Users className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-lg font-semibold">Discord</div>
+                      <div className="text-xs text-pk-muted">
+                        {copy.discordHint}
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <a
-                    href={discordCommunityUrl("settings")}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="pk-prism-btn inline-flex h-9 items-center justify-center rounded-full px-4 text-sm font-semibold"
-                  >
-                    {copy.join}
-                  </a>
-                  <Link to="/community" className="pk-glass-btn inline-flex h-9 items-center justify-center rounded-full px-4 text-sm font-semibold">
-                    {copy.hub}
-                  </Link>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <a
+                      href={discordCommunityUrl("settings")}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="pk-prism-btn inline-flex h-9 items-center justify-center rounded-full px-4 text-sm font-semibold"
+                    >
+                      {copy.join}
+                    </a>
+                    <Link to="/community" className="pk-glass-btn inline-flex h-9 items-center justify-center rounded-full px-4 text-sm font-semibold">
+                      {copy.hub}
+                    </Link>
+                  </div>
                 </div>
               </div>
+            ) : null}
 
-              <div id="pk-settings-security" className="pk-prism-section-card pk-settings-section">
-                <div className="pk-prism-section-head">
-                  <div className="pk-prism-section-head__icon">
-                    <Shield className="h-4 w-4" />
+            {activeSection === "pk-settings-security" ? (
+              <div className="pk-settings-bento">
+                <div id="pk-settings-security" className="pk-prism-section-card pk-settings-section">
+                  <div className="pk-prism-section-head">
+                    <div className="pk-prism-section-head__icon">
+                      <Shield className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-lg font-semibold">{copy.accountSecurity}</div>
+                      <div className="text-xs text-pk-muted">{copy.signInSession}</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-lg font-semibold">{copy.accountSecurity}</div>
-                    <div className="text-xs text-pk-muted">{copy.signInSession}</div>
-                  </div>
-                </div>
 
-                <div className="pk-settings-security-block">
-                  <div className="flex flex-wrap gap-2">
-                    <span
-                      className={[
-                        "rounded-full px-3 py-1 text-[11px] font-semibold",
-                        emailLinked ? "bg-emerald-500/15 text-emerald-200" : "bg-white/5 text-pk-muted",
-                      ].join(" ")}
-                    >
-                      {copy.email} {emailLinked ? "✓" : "—"}
-                    </span>
-                    <span
-                      className={[
-                        "rounded-full px-3 py-1 text-[11px] font-semibold",
-                        googleLinked ? "bg-emerald-500/15 text-emerald-200" : "bg-white/5 text-pk-muted",
-                      ].join(" ")}
-                    >
-                      Google {googleLinked ? "✓" : "—"}
-                    </span>
+                  <div className="pk-settings-security-block">
+                    <div className="flex flex-wrap gap-2">
+                      <span
+                        className={[
+                          "rounded-full px-3 py-1 text-[11px] font-semibold",
+                          emailLinked ? "bg-emerald-500/15 text-emerald-200" : "bg-white/5 text-pk-muted",
+                        ].join(" ")}
+                      >
+                        {copy.email} {emailLinked ? "✓" : "—"}
+                      </span>
+                      <span
+                        className={[
+                          "rounded-full px-3 py-1 text-[11px] font-semibold",
+                          googleLinked ? "bg-emerald-500/15 text-emerald-200" : "bg-white/5 text-pk-muted",
+                        ].join(" ")}
+                      >
+                        Google {googleLinked ? "✓" : "—"}
+                      </span>
+                    </div>
+                    {!googleLinked ? (
+                      <div className="mt-3">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          disabled={linkingGoogle}
+                          onClick={async () => {
+                            setLinkingGoogle(true);
+                            try {
+                              await linkGoogle("/settings");
+                            } catch (err) {
+                              toast.error(mapAuthError(err, locale, "link"));
+                              setLinkingGoogle(false);
+                            }
+                          }}
+                        >
+                          {linkingGoogle ? copy.redirecting : copy.linkGoogle}
+                        </Button>
+                      </div>
+                    ) : null}
+                    {!emailLinked ? (
+                      <div className="mt-3 space-y-3 rounded-pk border border-pk-border/80 bg-white/[0.02] p-3">
+                        <p className="text-xs text-pk-muted">
+                          {copy.setPasswordHint}
+                        </p>
+                        <input
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          minLength={6}
+                          placeholder={copy.passwordPlaceholder}
+                          className="w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2 text-sm outline-none focus:border-pk-accent"
+                        />
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          disabled={savingPassword || newPassword.length < 6}
+                          onClick={async () => {
+                            setSavingPassword(true);
+                            try {
+                              await setPassword(newPassword);
+                              setNewPassword("");
+                              toast.success(copy.passwordSaved);
+                            } catch (err) {
+                              toast.error(mapAuthError(err, locale, "password"));
+                            } finally {
+                              setSavingPassword(false);
+                            }
+                          }}
+                        >
+                          {savingPassword ? copy.saving : copy.setPassword}
+                        </Button>
+                      </div>
+                    ) : null}
                   </div>
-                  {!googleLinked ? (
-                    <div className="mt-3">
+
+                  <div className="pk-settings-security-block">
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         variant="secondary"
                         size="sm"
-                        disabled={linkingGoogle}
+                        disabled={!user?.email}
                         onClick={async () => {
-                          setLinkingGoogle(true);
+                          const email = user?.email;
+                          if (!email) return;
                           try {
-                            await linkGoogle("/settings");
-                          } catch (err) {
-                            toast.error(mapAuthError(err, locale, "link"));
-                            setLinkingGoogle(false);
-                          }
-                        }}
-                      >
-                        {linkingGoogle ? copy.redirecting : copy.linkGoogle}
-                      </Button>
-                    </div>
-                  ) : null}
-                  {!emailLinked ? (
-                    <div className="mt-3 space-y-3 rounded-pk border border-pk-border/80 bg-white/[0.02] p-3">
-                      <p className="text-xs text-pk-muted">
-                        {copy.setPasswordHint}
-                      </p>
-                      <input
-                        type="password"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        minLength={6}
-                        placeholder={copy.passwordPlaceholder}
-                        className="w-full rounded-pk border border-pk-border bg-pk-input px-3 py-2 text-sm outline-none focus:border-pk-accent"
-                      />
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        disabled={savingPassword || newPassword.length < 6}
-                        onClick={async () => {
-                          setSavingPassword(true);
-                          try {
-                            await setPassword(newPassword);
-                            setNewPassword("");
-                            toast.success(copy.passwordSaved);
+                            await resetPassword(email);
+                            toast.success(copy.emailSent);
                           } catch (err) {
                             toast.error(mapAuthError(err, locale, "password"));
-                          } finally {
-                            setSavingPassword(false);
                           }
                         }}
                       >
-                        {savingPassword ? copy.saving : copy.setPassword}
+                        {copy.changePassword}
+                      </Button>
+                      <Button variant="danger" size="sm" onClick={() => setConfirmDelete(true)}>
+                        {copy.deleteAccount}
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={async () => {
+                          try {
+                            await signOut();
+                            toast.success(copy.signedOut);
+                            navigate("/auth", { replace: true });
+                          } catch (err) {
+                            const message = err instanceof Error ? err.message : "Sign out failed";
+                            toast.error(message);
+                          }
+                        }}
+                      >
+                        <LogOut className="h-3.5 w-3.5" />
+                        {copy.signOut}
                       </Button>
                     </div>
-                  ) : null}
-                </div>
-
-                <div className="pk-settings-security-block">
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      disabled={!user?.email}
-                      onClick={async () => {
-                        const email = user?.email;
-                        if (!email) return;
-                        try {
-                          await resetPassword(email);
-                          toast.success(copy.emailSent);
-                        } catch (err) {
-                          toast.error(mapAuthError(err, locale, "password"));
-                        }
-                      }}
-                    >
-                      {copy.changePassword}
-                    </Button>
-                    <Button variant="danger" size="sm" onClick={() => setConfirmDelete(true)}>
-                      {copy.deleteAccount}
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={async () => {
-                        try {
-                          await signOut();
-                          toast.success(copy.signedOut);
-                          navigate("/auth", { replace: true });
-                        } catch (err) {
-                          const message = err instanceof Error ? err.message : "Sign out failed";
-                          toast.error(message);
-                        }
-                      }}
-                    >
-                      <LogOut className="h-3.5 w-3.5" />
-                      {copy.signOut}
-                    </Button>
+                    <p className="mt-2 text-[11px] text-pk-muted">
+                      {copy.deleteManual}
+                    </p>
                   </div>
-                  <p className="mt-2 text-[11px] text-pk-muted">
-                    {copy.deleteManual}
-                  </p>
                 </div>
               </div>
-            </div>
+            ) : null}
           </>
         )}
       </div>

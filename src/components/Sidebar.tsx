@@ -9,10 +9,8 @@ import {
   Loader2,
   LogIn,
   LogOut,
-  Mic,
   Settings,
   Tag,
-  Users,
   type LucideProps,
 } from "lucide-react";
 import { ThemeAndAccentPicker } from "@/components/ThemeAndAccentPicker";
@@ -58,11 +56,6 @@ export function Sidebar() {
       icon: <SidebarIcon icon={Grid3X3} />,
     },
     {
-      to: "/voice-studio",
-      label: m.app.voiceStudio,
-      icon: <SidebarIcon icon={Mic} />,
-    },
-    {
       to: "/tag-studio",
       label: m.app.tagStudio,
       icon: <SidebarIcon icon={Tag} />,
@@ -76,11 +69,6 @@ export function Sidebar() {
           } satisfies Item,
         ]
       : []),
-    {
-      to: "/community",
-      label: m.nav.community,
-      icon: <SidebarIcon icon={Users} />,
-    },
     {
       to: "/settings",
       label: m.app.settings,
@@ -204,8 +192,8 @@ export function Sidebar() {
 
         <div className="pk-sidebar-footer hidden md:flex md:flex-col md:items-center md:border-t md:border-white/[0.06]">
           {user ? <NotificationBell locale={locale} className="pk-sidebar-rail-slot" /> : null}
-          <ThemeAndAccentPicker variant={CLOUD_THEME_ENABLED ? "sidebar-stack" : "nav-icon"} />
-          {!CLOUD_THEME_ENABLED ? <LanguagePicker variant="sidebar" /> : null}
+          <ThemeAndAccentPicker variant="nav-icon" />
+          <LanguagePicker variant="icon" />
           {user ? (
             <button
               type="button"

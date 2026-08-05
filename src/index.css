@@ -2573,7 +2573,6 @@ a.pk-pricing-plan-btn {
     flex-direction: column;
     flex: 1 1 auto;
     min-height: 0;
-    max-height: 100%;
     overflow: hidden;
     padding-bottom: 0;
     margin-bottom: calc(var(--pk-bottom-nav) + env(safe-area-inset-bottom, 0px) + 2px);
@@ -2601,7 +2600,8 @@ a.pk-pricing-plan-btn {
   .pk-mobile-create-scroll {
     min-height: 0;
     padding-bottom: 0.25rem;
-    scroll-padding-bottom: 0.5rem;
+    scroll-padding-bottom: 5rem;
+    scroll-padding-top: 1rem;
   }
 
   .pk-dashboard-mobile-footer {
@@ -2708,11 +2708,6 @@ a.pk-pricing-plan-btn {
   .pk-dashboard-generator .pk-studio-left-scroll {
     min-width: 0;
     max-width: 100%;
-  }
-
-  .pk-dashboard-generator .pk-studio-section,
-  .pk-dashboard-generator .pk-studio-left-scroll > .border-b {
-    overflow-x: clip;
   }
 
   .pk-dashboard-generator .pk-gen-inline-toggle-row {
