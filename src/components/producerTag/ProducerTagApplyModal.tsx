@@ -22,8 +22,10 @@ import {
   FX_PRESETS,
   previewProducerTagMix,
 } from "@/lib/producerTagPreview";
-import { canUseProducerTagFx, canUseExtendedProducerTagPlacement } from "@/lib/planEntitlements";
+import { canUseProducerTag, canUseProducerTagFx, canUseExtendedProducerTagPlacement } from "@/lib/planEntitlements";
 import { supabase } from "@/lib/supabaseClient";
+import { useAuthStore } from "@/stores/authStore";
+import { ProducerTagCreateForm } from "@/components/producerTag/ProducerTagCreateForm";
 
 type Props = {
   open: boolean;
@@ -49,6 +51,7 @@ export function ProducerTagApplyModal({
   onRemoved,
 }: Props) {
   const isFr = locale === "fr";
+  const user = useAuthStore((s) => s.user);
   const [tags, setTags] = useState<ProducerTag[]>([]);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -211,9 +214,31 @@ export function ProducerTagApplyModal({
             <Loader2 className="h-6 w-6 animate-spin text-white/50" />
           </div>
         ) : tags.length === 0 ? (
-          <p className="text-sm text-white/60">
-            {isFr ? "Crée un tag dans Tag Studio d'abord." : "Create a tag in Tag Studio first."}
-          </p>
+          <div className="space-y-3">
+            <p className="text-sm text-white/60">
+              {isFr
+                ? "Crée ton premier tag producteur (3–8 s) puis applique-le sur ce morceau."
+                : "Create your first producer tag (3–8 s) then apply it on this track."}
+            </p>
+            {canUseProducerTag(plan) && user?.id ? (
+              <ProducerTagCreateForm
+                locale={locale}
+                userId={user.id}
+                plan={plan}
+                tagCount={tags.length}
+                onCreated={(tag) => {
+                  setTags((prev) => [tag, ...prev]);
+                  setActiveTagId(tag.id);
+                  writeProducerTagActiveId(tag.id);
+                }}
+                onUpsell={onNeedCredits}
+              />
+            ) : (
+              <p className="text-xs text-white/50">
+                {isFr ? "Disponible avec Pro, Studio ou Plus." : "Available on Pro, Studio, or Plus."}
+              </p>
+            )}
+          </div>
         ) : (
           <>
             <div>

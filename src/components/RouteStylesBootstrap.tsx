@@ -34,7 +34,6 @@ function routeCssKind(pathname: string): RouteCssKind {
   if (
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/voice-studio") ||
-    pathname.startsWith("/tag-studio") ||
     pathname.startsWith("/sample-lab")
   ) {
     return "dashboard";

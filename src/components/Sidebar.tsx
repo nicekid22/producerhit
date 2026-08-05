@@ -10,7 +10,6 @@ import {
   LogIn,
   LogOut,
   Settings,
-  Tag,
   type LucideProps,
 } from "lucide-react";
 import { ThemeAndAccentPicker } from "@/components/ThemeAndAccentPicker";
@@ -54,11 +53,6 @@ export function Sidebar() {
       to: "/library",
       label: m.app.library,
       icon: <SidebarIcon icon={Grid3X3} />,
-    },
-    {
-      to: "/tag-studio",
-      label: m.app.tagStudio,
-      icon: <SidebarIcon icon={Tag} />,
     },
     ...(isSampleLabEnabled()
       ? [

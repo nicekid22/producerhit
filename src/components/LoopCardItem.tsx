@@ -870,6 +870,20 @@ export const LoopCardItem = memo(function LoopCardItem({
             >
               <Globe className="h-4 w-4" />
             </button>
+            {canApplyProducerTag ? (
+              <button
+                type="button"
+                className="pk-library-card__icon-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setTagModalOpen(true);
+                }}
+                title={lc.producerTagApply}
+                aria-label={lc.producerTagApply}
+              >
+                <Tag className="h-3.5 w-3.5" />
+              </button>
+            ) : null}
             <button
               type="button"
               className="pk-library-card__icon-btn"
