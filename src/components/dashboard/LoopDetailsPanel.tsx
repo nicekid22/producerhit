@@ -1,8 +1,8 @@
 import toast from "react-hot-toast";
 import type { AppLocale } from "@/i18n/config";
 import { buildDashboardSection } from "@/i18n/dashboardCatalog";
-import { useMemo, useState } from "react";
-import { Clock, Copy, Gauge, KeyRound, Loader2, Mic2, Music2, Sigma, Tag, type LucideIcon } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Clock, Copy, Gauge, KeyRound, Loader2, Mic2, MoreHorizontal, Music2, Sigma, Tag, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { DistributionDistributeButton } from "@/components/distribution/DistributionWizard";
 import { MasteringModal } from "@/components/mastering/MasteringModal";
@@ -215,6 +215,18 @@ export function LoopDetailsPanel({
   const [tab, setTab] = useState<DetailTab>("info");
   const tagMeta = useMemo(() => readLoopProducerTagMeta(loop.stemsUrl), [loop.stemsUrl]);
   const canTag = canUseProducerTag(plan) && Boolean(loop.audioUrl?.startsWith("http"));
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
+
+  // Ferme le menu "More" quand on clique à l'extérieur (mme pattern que LoopCardItem libraryMenu)
+  useEffect(() => {
+    if (!moreMenuOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (!moreMenuRef.current?.contains(e.target as Node)) setMoreMenuOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [moreMenuOpen]);
 
   const dur = (loop.details?.duration ?? durationSec) as number | null | undefined;
   const durationLabel =
@@ -290,34 +302,64 @@ export function LoopDetailsPanel({
         <DetailStatPill icon={Sigma} label={d.timeSigShort} value={loop.details?.timeSignature || "—"} />
       </div>
 
-      <DistributionDistributeButton
-        loop={loop}
-        profile={profile}
-        className="w-full"
-        prominent
-        onOpenWizard={onOpenDistribution}
-      />
-
-      {canTag ? (
-        <Button
-          variant="secondary"
-          size="sm"
-          className="w-full"
-          onClick={() => onOpenTagStudio?.(loop)}
-        >
-          <Tag className="mr-2 h-4 w-4" />
-          {tagMeta ? d.producerTagReapply : d.producerTagApply}
-        </Button>
-      ) : null}
-
-      <Button
-        variant="secondary"
-        size="sm"
-        className="w-full"
-        onClick={() => onOpenMastering?.(loop)}
-      >
-        {"Mastering"}
-      </Button>
+      <div className="flex items-stretch gap-2">
+        <DistributionDistributeButton
+          loop={loop}
+          profile={profile}
+          className="flex-1"
+          prominent
+          onOpenWizard={onOpenDistribution}
+        />
+        {canTag || onOpenMastering ? (
+          <div className="relative" ref={moreMenuRef}>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="h-full shrink-0 px-3"
+              onClick={() => setMoreMenuOpen((v) => !v)}
+              aria-label={d.moreActions}
+              aria-expanded={moreMenuOpen}
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+            {moreMenuOpen ? (
+              <div
+                role="menu"
+                className="absolute right-0 top-full z-30 mt-2 min-w-[12rem] overflow-visible rounded-xl border border-pk-border bg-pk-panel/95 py-1 shadow-2xl backdrop-blur-md"
+              >
+                {canTag ? (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-semibold text-pk-text transition-colors hover:bg-white/5"
+                    onClick={() => {
+                      setMoreMenuOpen(false);
+                      onOpenTagStudio?.(loop);
+                    }}
+                  >
+                    <Tag className="h-3.5 w-3.5" />
+                    {tagMeta ? d.producerTagReapply : d.producerTagApply}
+                  </button>
+                ) : null}
+                {onOpenMastering ? (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-semibold text-pk-text transition-colors hover:bg-white/5"
+                    onClick={() => {
+                      setMoreMenuOpen(false);
+                      onOpenMastering?.(loop);
+                    }}
+                  >
+                    <Music2 className="h-3.5 w-3.5" />
+                    {"Mastering"}
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
 
       <DetailTabs
         active={tab}

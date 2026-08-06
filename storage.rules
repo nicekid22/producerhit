@@ -32,12 +32,24 @@ service firebase.storage {
     }
 
     // ── Loop covers (Pollinations-generated covers persisted to Storage) ──
-    match /loop-covers/{userId}/{fileName} {
+    // Path: loop-covers/{userId}/covers/{loopId}.ext — use {allPaths=**} to match nested paths
+    match /loop-covers/{userId}/{allPaths=**} {
       allow read: if true;
       allow create, update: if request.auth != null
-                            && request.auth.uid == userId
-                            && request.resource.size < 5 * 1024 * 1024
-                            && request.resource.contentType.matches('image/.*');
+                           && request.auth.uid == userId
+                           && request.resource.size < 5 * 1024 * 1024
+                           && request.resource.contentType.matches('image/.*');
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // ── Producer tags (user-uploaded jingles 3–8 s, applied to loops) ──
+    // Path: producer-tags/{userId}/tags/{file}.{wav,mp3} — written by client upload.
+    match /producer-tags/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow create, update: if request.auth != null
+                           && request.auth.uid == userId
+                           && request.resource.size < 10 * 1024 * 1024
+                           && request.resource.contentType.matches('audio/.*');
       allow delete: if request.auth != null && request.auth.uid == userId;
     }
 
