@@ -6,24 +6,25 @@ import { getFirestore, Firestore } from "firebase-admin/firestore";
 import { getStorage, Storage } from "firebase-admin/storage";
 
 // ---------------------------------------------------------------------------
-// Init — eagerly initialize Firebase Admin on module load
+// Init (lazy — initialized on first call; eager init causes Cloud Functions
+// v2 "User code failed to load" timeouts).
 // ---------------------------------------------------------------------------
-
-const app = admin.getApps().length ? admin.getApps()[0] : admin.initializeApp();
 
 let _db: Firestore | null = null;
 let _storage: Storage | null = null;
 
 function getDb(): Firestore {
   if (!_db) {
-    _db = getFirestore(app);
+    if (!admin.getApps().length) admin.initializeApp();
+    _db = getFirestore();
   }
   return _db;
 }
 
 function getStorageInstance(): Storage {
   if (!_storage) {
-    _storage = getStorage(app);
+    if (!admin.getApps().length) admin.initializeApp();
+    _storage = getStorage();
   }
   return _storage;
 }
