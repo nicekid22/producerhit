@@ -23,6 +23,9 @@ type Props = {
   showVocalStyle?: boolean;
   vocalStyle?: VocalStyleValue;
   onVocalStyleChange?: (v: VocalStyleValue) => void;
+  /** Toggle "Batch ACE officiel" — force batch_size=2 (1 seul appel ACE) quand Versions=2 */
+  batchMode?: boolean;
+  onBatchModeChange?: (enabled: boolean) => void;
 };
 
 export function GeneratorAdvancedOutputControls({
@@ -36,6 +39,8 @@ export function GeneratorAdvancedOutputControls({
   showVocalStyle = false,
   vocalStyle = "Singer",
   onVocalStyleChange,
+  batchMode = false,
+  onBatchModeChange,
 }: Props) {
   const isFr = locale === "fr";
 
@@ -88,6 +93,38 @@ export function GeneratorAdvancedOutputControls({
           )}
         </p>
       </div>
+
+      {canDualGeneration && versions === 2 && onBatchModeChange ? (
+        <div className="min-w-0 max-w-full">
+          <div className="flex min-w-0 items-center justify-between gap-2">
+            <div className="min-w-0 text-xs font-medium text-pk-muted">
+              {isFr ? "Batch officiel ACE" : "Official ACE batch"}
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={batchMode}
+              onClick={() => onBatchModeChange(!batchMode)}
+              className={cn(
+                "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors",
+                batchMode ? "bg-pk-accent/80" : "bg-white/10",
+              )}
+            >
+              <span
+                className={cn(
+                  "inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform",
+                  batchMode ? "translate-x-4" : "translate-x-1",
+                )}
+              />
+            </button>
+          </div>
+          <p className="mt-1.5 text-[10px] leading-snug text-pk-muted/80">
+            {isFr
+              ? "batch_size=2 : 1 seul appel ACE génère les 2 pistes (test officiel)."
+              : "batch_size=2: 1 single ACE call generates both tracks (official test)."}
+          </p>
+        </div>
+      ) : null}
 
       {showVocalStyle && onVocalStyleChange ? (
         <div className="min-w-0 max-w-full">

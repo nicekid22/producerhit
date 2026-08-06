@@ -31,6 +31,7 @@ import {
   dualParallelStaggerMs,
   generationStrategySnapshot,
   dualBatchProdMonitoringEnabled,
+  setBatchToggleOverride,
   type DualGenerationMode,
 } from "@/lib/generationStrategy";
 import { estimateGenerationDurationMs, simulatedGenerationPercent } from "@/lib/generationProgress";
@@ -419,6 +420,12 @@ export default function Dashboard() {
     if (saved === "1") return 1;
     if (saved === "2") return 2;
     return 1;
+  });
+  // Toggle "Batch ACE officiel" — force batch_size=2 via un seul appel ACE direct browser.
+  // Indépendant du système Versions 1/2 (parallel/sequential). Off par défaut.
+  const [batchMode, setBatchMode] = useState<boolean>(() => {
+    const saved = typeof window !== "undefined" ? window.localStorage.getItem("producerhit_batch_mode") : null;
+    return saved === "1";
   });
   const [plan, setPlan] = useState("free");
   const planRef = useRef("free");
@@ -1042,9 +1049,21 @@ export default function Dashboard() {
     window.localStorage.setItem("producerhit_versions", String(versions));
   }, [versions]);
 
+  // Persiste le toggle batch officiel (indépendant du toggle Versions)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("producerhit_batch_mode", batchMode ? "1" : "0");
+  }, [batchMode]);
+
   useEffect(() => {
     if (versions === 2 && (!dualGenerationAllowed || remaining < 2)) setVersions(1);
   }, [dualGenerationAllowed, remaining, versions]);
+
+  // Le batch officiel n'a de sens queVersions=2 + direct browser (clés ACE dans le navigateur)
+  // → reset automatique si on revient à Versions=1
+  useEffect(() => {
+    if (versions !== 2 && batchMode) setBatchMode(false);
+  }, [versions, batchMode]);
 
   const promptPlanUpsell = useCallback(
     (reason: UpsellReason) => {
@@ -1102,19 +1121,22 @@ export default function Dashboard() {
   }, [locale, plan, promptPlanUpsell, refreshProfile, remaining]);
 
   useEffect(() => {
-    if (profileBusy || !user) return;
+    // Don't fire upsell until the fresh profile has loaded from the server
+    // to avoid showing blur backdrop from stale cache data
+    if (profileBusy || !user || !profileReady) return;
     if (remaining > 0) return;
     if (!shouldShowExhaustedCreditsPrompt()) return;
     markExhaustedCreditsPromptShown();
     promptPlanUpsell("credits_exhausted");
-  }, [profileBusy, promptPlanUpsell, remaining, user]);
+  }, [profileBusy, profileReady, promptPlanUpsell, remaining, user]);
 
   useEffect(() => {
-    if (profileBusy || !user) return;
+    // Don't fire upsell until the fresh profile has loaded from the server
+    if (profileBusy || !user || !profileReady) return;
     if (!shouldShowLowCreditsPrompt(plan, remaining)) return;
     markLowCreditsPromptShown();
     promptPlanUpsell("credits_low");
-  }, [plan, profileBusy, promptPlanUpsell, remaining, user]);
+  }, [plan, profileBusy, profileReady, promptPlanUpsell, remaining, user]);
 
   const consumeCredit = useCallback(() => {
     setUsedThisMonth((v) => {
@@ -2342,8 +2364,15 @@ export default function Dashboard() {
       if (effectiveVersions !== 2) {
         await startOne(1, seed1, slotDisplayTitle);
       } else {
+        // Active le mode batch officiel (batch_size=2, 1 seul appel ACE direct browser)
+        // si le toggle est on ET qu'on a des clés ACE dans le navigateur (sinon la
+        // Firebase Function jetterait le 2e audio — non géré côté serveur).
+        const batchEligible = batchMode && browserAceKeyCount() > 0;
+        setBatchToggleOverride(batchEligible);
         const fastMode = dualGenerationEffectiveMode();
         await runDualMode(fastMode);
+        // Réinitialise l'override après le dispatch pour ne pas impacter les générations suivantes
+        setBatchToggleOverride(false);
         if (dualAdaptiveFallbackEnabled() && created.length < 2) {
           const need = slotsNeedingSequentialFallback();
           if (need.length > 0) await runDualFallbackSequential(need, fastMode);
@@ -3892,6 +3921,8 @@ export default function Dashboard() {
                         chipRowClass={chipRowClass}
                         canDualGeneration={dualGenerationAllowed}
                         onDualLocked={handleDualLocked}
+                        batchMode={batchMode}
+                        onBatchModeChange={setBatchMode}
                       />
                       <div>
                         <div className="text-xs text-pk-muted mb-2">{d.length}</div>
@@ -4190,6 +4221,8 @@ export default function Dashboard() {
                         showVocalStyle
                         vocalStyle={songVocalStyle}
                         onVocalStyleChange={setSongVocalStyle}
+                        batchMode={batchMode}
+                        onBatchModeChange={setBatchMode}
                       />
                       <Dropdown
                         label={d.influence}
