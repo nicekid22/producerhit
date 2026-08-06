@@ -44,6 +44,23 @@ export function dualGenerationModeEnvLocked(): boolean {
 
 }
 
+// ── Toggle "Batch ACE officiel" (batch_size=2) ────────────────
+// Indépendant du toggle Versions 1/2 — force dualGenerationEffectiveMode()
+// à retourner "batch" quand activé, sans toucher au système parallèle/séquentiel existant.
+let batchToggleOverride = false;
+
+export function setBatchToggleOverride(enabled: boolean): void {
+
+  batchToggleOverride = enabled;
+
+}
+
+export function batchToggleEnabled(): boolean {
+
+  return batchToggleOverride;
+
+}
+
 
 
 export function dualGenerationMode(): DualGenerationMode {
@@ -99,9 +116,17 @@ export function dualBatchProdMonitoringEnabled(): boolean {
 
 
 
-/** Mode réellement utilisé pour le 1er essai (rapide si adaptatif, sinon env verrouillé). */
+/** Mode réellement utilisé pour le 1er essai (rapide si adaptatif, sinon env verrouillé).
+
+ * Le toggle "Batch ACE officiel" (batch_size=2) prend le pas sur le mode effectif
+
+ * quand il est activé — force un seul appel ACE avec batch_size=2 au lieu de 2 appels parallèles/séquentiels.
+
+ */
 
 export function dualGenerationEffectiveMode(): DualGenerationMode {
+
+  if (batchToggleOverride) return "batch";
 
   if (dualGenerationModeEnvLocked()) return dualGenerationMode();
 
