@@ -423,10 +423,10 @@ export default function Dashboard() {
     return 1;
   });
   // Toggle "Batch ACE officiel" — force batch_size=2 via un seul appel ACE direct browser.
-  // Indépendant du système Versions 1/2 (parallel/sequential). Off par défaut.
+  // Activé par défaut pour tous les plans (peut être désactivé dans Options avancées).
   const [batchMode, setBatchMode] = useState<boolean>(() => {
     const saved = typeof window !== "undefined" ? window.localStorage.getItem("producerhit_batch_mode") : null;
-    return saved === "1";
+    return saved === null ? true : saved === "1";
   });
   const [plan, setPlan] = useState("free");
   const planRef = useRef("free");
@@ -739,17 +739,16 @@ export default function Dashboard() {
     if (authProfile) applyProfile(authProfile);
   }, [applyProfile, authProfile]);
 
-  /** Plan free / Pro : ×1 par défaut. Studio+ : ×2 sauf choix explicite en localStorage. */
+  /** Versions 2 par défaut pour TOUS les plans. Sauvegarde explicite "1" dans localStorage
+   * respectée. Le gate Studio+ a été retiré : un Free peut générer 2 pistes. */
   useEffect(() => {
     if (typeof window === "undefined") return;
     const saved = window.localStorage.getItem("producerhit_versions");
-    if (saved === "1") return;
-    if (saved === "2") {
-      if (!canDualGeneration(plan)) setVersions(1);
+    if (saved === "1") {
+      setVersions(1);
       return;
     }
-    if (canDualGeneration(plan)) setVersions(2);
-    else setVersions(1);
+    setVersions(2);
   }, [plan]);
 
   useEffect(() => {
@@ -2388,6 +2387,116 @@ export default function Dashboard() {
             capacity: isGenerationCapacityError(rawMessage),
             edge: isEdgeWallTimeoutError(rawMessage),
           });
+          // ── Retry auto (batch CORS / rate-limit intermittent ACE) ─────────
+          // On réessaie 1x avec backoff si aucune carte n'a déjà été persistée
+          // (sinon on risquerait de dupliquer les loops) et que l'erreur est
+          // retryable (CORS / fetch failed / 429 / load failed). Cela évite que
+          // le batch officiel tombe en fallback séquentiel sur un simple
+          // glitch réseau ACE qui se résout tout seul.
+          const canRetryBatch =
+            !persistedSlotIdx.has(1) &&
+            !persistedSlotIdx.has(2) &&
+            isActiveSession() &&
+            isRetryableGenerationError(rawMessage);
+          if (canRetryBatch) {
+            const backoffMs = generationRetryDelayMs(rawMessage, 0);
+            console.warn("[batch] retrying once", {
+              raw: rawMessage.slice(0, 120),
+              backoffMs,
+            });
+            trackClientEvent("generate_batch_retry", {
+              plan,
+              mode,
+              versions: 2,
+              raw: rawMessage.slice(0, 120),
+              backoffMs,
+            });
+            // Toast discret + slots repassent en "generating" pour le retry
+            toastLoading(d.batchRetry, { id: "batch-retry", duration: TOAST_DURATIONS.important });
+            for (const idx of [1, 2] as const) {
+              delete slotErrors[idx];
+              setSlot(idx, {
+                status: "generating",
+                visible: true,
+                errorText: undefined,
+                progressPct: 8,
+                previewReady: false,
+                previewLoopId: undefined,
+                savedLoopId: undefined,
+              });
+            }
+            await new Promise((r) => setTimeout(r, backoffMs));
+            toast.dismiss("batch-retry");
+            // Un seul retry — relance runDualBatch une fois en mode batch.
+            try {
+              const retryRows = await generateBeatDualBatch(inputParams, effectiveEngine, {
+                ...withVoiceClone(buildOptions(seed1, 1)),
+                dualSeeds: [seed1, seed2],
+                generationKeys: [
+                  typeof crypto !== "undefined" && "randomUUID" in crypto
+                    ? crypto.randomUUID()
+                    : `gen-${Date.now()}-retry-1`,
+                  typeof crypto !== "undefined" && "randomUUID" in crypto
+                    ? crypto.randomUUID()
+                    : `gen-${Date.now()}-retry-2`,
+                ],
+              });
+              const slotMeta: Array<{ idx: 1 | 2; seed: number; title: string; generationKey: string }> = [
+                { idx: 1, seed: seed1, title: title1, generationKey: generationKey1 },
+                { idx: 2, seed: seed2, title: title2, generationKey: generationKey2 },
+              ];
+              for (let i = 0; i < retryRows.length; i++) {
+                const meta = slotMeta[i];
+                if (!meta) break;
+                setSlot(meta.idx, { progressPct: 100 });
+                await applyBeatFromValue(meta.idx, retryRows[i]?.seed ?? meta.seed, meta.title, retryRows[i]!, meta.generationKey);
+              }
+              if (retryRows.length < 2 && isActiveSession()) {
+                const failedIdx = retryRows.length === 0 ? 1 : 2;
+                const failedTitle = failedIdx === 1 ? title1 : title2;
+                const batchPartialErr = d.batchIncomplete;
+                slotErrors[failedIdx] = batchPartialErr;
+                setSlot(failedIdx, {
+                  status: "error",
+                  title: failedTitle,
+                  visible: true,
+                  errorText: batchPartialErr,
+                });
+              }
+              // Retry a réussi → on sort sans propager l'erreur au fallback.
+              return;
+            } catch (retryErr) {
+              const retryRaw = normalizeGenerationRawError(retryErr instanceof Error ? retryErr.message : String(retryErr));
+              console.error("[batch] retry failed", {
+                raw: retryRaw,
+                firstRaw: rawMessage.slice(0, 120),
+              });
+              trackClientEvent("generate_batch_failed", {
+                plan,
+                mode,
+                versions: 2,
+                raw: retryRaw.slice(0, 240),
+                capacity: isGenerationCapacityError(retryRaw),
+                edge: isEdgeWallTimeoutError(retryRaw),
+                retry: true,
+              });
+              // Pas de re-throw — on veut que le dispatch fasse le fallback séquentiel.
+              // On set les slotErrors (comme le path d'erreur normal) pour que
+              // slotsNeedingSequentialFallback() retourne les slots à retry.
+              const retryErrorText = formatGenerationErrorMessage(retryRaw, locale, { plan });
+              if (plan === "free" && isGenerationCapacityError(retryRaw) && shouldPromptPriorityUpsellAfterCapacityError(plan)) {
+                markPriorityUpsellPrompted(plan);
+                promptPlanUpsell("feature_priority");
+              }
+              for (const idx of [1, 2] as const) {
+                if (!persistedSlotIdx.has(idx)) {
+                  slotErrors[idx] = retryErrorText;
+                  setSlot(idx, { status: "error", errorText: retryErrorText, visible: true, previewLoopId: undefined, savedLoopId: undefined });
+                }
+              }
+              return;
+            }
+          }
           const errorText = formatGenerationErrorMessage(rawMessage, locale, { plan });
           if (plan === "free" && isGenerationCapacityError(rawMessage) && shouldPromptPriorityUpsellAfterCapacityError(plan)) {
             markPriorityUpsellPrompted(plan);

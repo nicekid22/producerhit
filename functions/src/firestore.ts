@@ -6,24 +6,24 @@ import { getFirestore, Firestore } from "firebase-admin/firestore";
 import { getStorage, Storage } from "firebase-admin/storage";
 
 // ---------------------------------------------------------------------------
-// Init (lazy — initialized on first call)
+// Init — eagerly initialize Firebase Admin on module load
 // ---------------------------------------------------------------------------
+
+const app = admin.getApps().length ? admin.getApps()[0] : admin.initializeApp();
 
 let _db: Firestore | null = null;
 let _storage: Storage | null = null;
 
 function getDb(): Firestore {
   if (!_db) {
-    if (!admin.getApps().length) admin.initializeApp();
-    _db = getFirestore();
+    _db = getFirestore(app);
   }
   return _db;
 }
 
 function getStorageInstance(): Storage {
   if (!_storage) {
-    if (!admin.getApps().length) admin.initializeApp();
-    _storage = getStorage();
+    _storage = getStorage(app);
   }
   return _storage;
 }
@@ -340,6 +340,53 @@ export async function fbUploadToStorage(
   } catch (err) {
     return { error: String(err) };
   }
+}
+
+/**
+ * Upload bytes to the default project bucket (Admin SDK `bucket()` with no name).
+ * Firebase Storage uses a single bucket per project with path prefixes like "loop-covers/...".
+ * Returns the public alt=media URL for the uploaded object (gated by storage rules `allow read: if true`).
+ */
+export async function fbUploadToDefaultBucket(
+  path: string,
+  bytes: Uint8Array,
+  contentType: string,
+  opts: { upsert?: boolean } = {},
+): Promise<{ url?: string; error?: string }> {
+  // Metadata edition races ("The metadata for object ... was edited during the operation")
+  // happen when 2 concurrent uploads touch the same object path — typically preview + card
+  // cover for the same loop. Retry once after a short pause to recover transparently.
+  const attempts = opts.upsert ? 3 : 1;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      const bucket = getStorageInstance().bucket();
+      const file = bucket.file(path);
+      // Firebase Storage file.save() fails on conflict — for upsert, attempt to delete first
+      if (opts.upsert) {
+        try {
+          await file.delete({ ignoreNotFound: true });
+        } catch {
+          // ignore — may not exist
+        }
+      }
+      await file.save(Buffer.from(bytes), {
+        contentType,
+        metadata: { cacheControl: "public, max-age=604800" },
+      });
+      await file.makePublic();
+      const url = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(path)}?alt=media`;
+      return { url };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      const isMetadataRace = /metadata .* was edited|precondition/i.test(msg);
+      if (attempt === attempts || !isMetadataRace) {
+        return { error: msg };
+      }
+      // backoff before the next retry attempt
+      await new Promise((r) => setTimeout(r, 350 * attempt));
+    }
+  }
+  return { error: "upload_failed" };
 }
 
 export async function fbDownloadFromStorage(

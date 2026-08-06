@@ -3,6 +3,7 @@
 
 import * as functions from "firebase-functions";
 import { fbGetProfile, fbUpdateProfile, fbRegisterStripeCustomer } from "./firestore";
+import { env } from "./env";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -449,14 +450,14 @@ export async function createCheckoutHandler(request: { auth?: { uid: string; tok
   const billingInterval = billingIntervalRaw === "year" ? "year" : "month";
   const embedded = uiMode === "embedded";
 
-  const stripeKey = process.env.STRIPE_SECRET_KEY;
-  const pricePro = process.env.STRIPE_PRICE_ID_PRO ?? "";
-  const priceStudio = process.env.STRIPE_PRICE_ID_STUDIO ?? "";
-  const pricePlus = process.env.STRIPE_PRICE_ID_PLUS ?? "";
-  const priceProAnnual = process.env.STRIPE_PRICE_ID_PRO_ANNUAL ?? "";
-  const priceStudioAnnual = process.env.STRIPE_PRICE_ID_STUDIO_ANNUAL ?? "";
-  const pricePlusAnnual = process.env.STRIPE_PRICE_ID_PLUS_ANNUAL ?? "";
-  const priceCreditPack50 = process.env.STRIPE_PRICE_ID_CREDIT_PACK_50 ?? "";
+  const stripeKey = env("STRIPE_SECRET_KEY");
+  const pricePro = env("STRIPE_PRICE_ID_PRO");
+  const priceStudio = env("STRIPE_PRICE_ID_STUDIO");
+  const pricePlus = env("STRIPE_PRICE_ID_PLUS");
+  const priceProAnnual = env("STRIPE_PRICE_ID_PRO_ANNUAL");
+  const priceStudioAnnual = env("STRIPE_PRICE_ID_STUDIO_ANNUAL");
+  const pricePlusAnnual = env("STRIPE_PRICE_ID_PLUS_ANNUAL");
+  const priceCreditPack50 = env("STRIPE_PRICE_ID_CREDIT_PACK_50");
 
   if (!successUrl.startsWith("http")) {
     throw new functions.https.HttpsError("invalid-argument", "Missing successUrl");

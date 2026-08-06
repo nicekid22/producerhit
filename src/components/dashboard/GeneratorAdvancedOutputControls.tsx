@@ -82,19 +82,23 @@ export function GeneratorAdvancedOutputControls({
           </div>
         </div>
         <p className="mt-1.5 inline-flex max-w-full flex-wrap items-center gap-1 text-[10px] leading-snug text-pk-muted/80">
-          {canDualGeneration ? (
+          {versions === 2 ? (
             <>
-              <span>{isFr ? "2 pistes en parallèle (" : "2 tracks at once ("}</span>
+              <span>{isFr ? "2 pistes (" : "2 tracks ("}</span>
               <GenerationCreditAmount amount={2} iconClassName="h-2.5 w-2.5" />
               <span>{isFr ? ")." : ")."}</span>
             </>
           ) : (
-            <span>{isFr ? "×2 en parallèle — plan Studio+" : "×2 parallel — Studio plan+"}</span>
+            <>
+              <span>{isFr ? "1 piste (" : "1 track ("}</span>
+              <GenerationCreditAmount amount={1} iconClassName="h-2.5 w-2.5" />
+              <span>{isFr ? ")." : ")."}</span>
+            </>
           )}
         </p>
       </div>
 
-      {canDualGeneration && versions === 2 && onBatchModeChange ? (
+      {versions === 2 && onBatchModeChange ? (
         <div className="min-w-0 max-w-full">
           <div className="flex min-w-0 items-center justify-between gap-2">
             <div className="min-w-0 text-xs font-medium text-pk-muted">
@@ -120,8 +124,8 @@ export function GeneratorAdvancedOutputControls({
           </div>
           <p className="mt-1.5 text-[10px] leading-snug text-pk-muted/80">
             {isFr
-              ? "batch_size=2 : 1 seul appel ACE génère les 2 pistes (test officiel)."
-              : "batch_size=2: 1 single ACE call generates both tracks (official test)."}
+              ? "batch_size=2 : 1 seul appel ACE génère les 2 pistes. Désactivé = 2 appels séparés."
+              : "batch_size=2: 1 single ACE call generates both tracks. Off = 2 separate calls."}
           </p>
         </div>
       ) : null}

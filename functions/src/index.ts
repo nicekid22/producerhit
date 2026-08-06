@@ -1,7 +1,8 @@
-// index.ts — Firebase Cloud Functions entry point
-// Exports all functions for deployment via `firebase deploy --only functions`
+// index.ts — Firebase Cloud Functions v2 entry point
+// Uses firebase-functions/v2/https for explicit CORS support
 
 import { defineSecret } from "firebase-functions/params";
+import { onCall, onRequest } from "firebase-functions/v2/https";
 
 // ── Secrets ────────────────────────────────────────────────────
 const STRIPE_SECRET_KEY = defineSecret("STRIPE_SECRET_KEY");
@@ -33,41 +34,76 @@ import { createPortalHandler } from "./createPortal";
 import { stripeWebhookHandler } from "./stripeWebhook";
 import { ensureProfileHandler } from "./ensureProfile";
 import { generateLoopAceHandler } from "./generateLoopAce";
+import { persistPollinationsCoverHandler } from "./persistPollinationsCover";
 
-import * as functions from "firebase-functions";
+// ── Allowed CORS origins for callable functions ────────────────
+const ALLOWED_ORIGINS = [
+  "https://www.producerhit.com",
+  "https://producerhit.com",
+  "https://producerhit-ai.web.app",
+  "https://producerhit-ai.firebaseapp.com",
+  "http://localhost:5173",
+  "http://localhost:3000",
+];
 
-// ── Export functions with secrets bound ─────────────────────────
-export const createCheckout = functions.https.onCall(
-  { secrets: stripeSecrets },
+// ── Export callable functions with CORS enabled ─────────────────
+export const createCheckout = onCall(
+  {
+    secrets: stripeSecrets,
+    cors: ALLOWED_ORIGINS,
+  },
   createCheckoutHandler,
 );
 
-export const confirmCheckout = functions.https.onCall(
-  { secrets: stripeSecrets },
+export const confirmCheckout = onCall(
+  {
+    secrets: stripeSecrets,
+    cors: ALLOWED_ORIGINS,
+  },
   confirmCheckoutHandler,
 );
 
-export const createPortal = functions.https.onCall(
-  { secrets: [STRIPE_SECRET_KEY] },
+export const createPortal = onCall(
+  {
+    secrets: [STRIPE_SECRET_KEY],
+    cors: ALLOWED_ORIGINS,
+  },
   createPortalHandler,
 );
 
-export const stripeWebhook = functions.https.onRequest(
-  { secrets: [STRIPE_WEBHOOK_SECRET, ...stripeSecrets] },
+export const stripeWebhook = onRequest(
+  {
+    secrets: [STRIPE_WEBHOOK_SECRET, ...stripeSecrets],
+    cors: ALLOWED_ORIGINS,
+  },
   stripeWebhookHandler,
 );
 
-export const ensureProfile = functions.https.onCall(
-  {},
+export const ensureProfile = onCall(
+  {
+    cors: ALLOWED_ORIGINS,
+  },
   ensureProfileHandler,
 );
 
-export const generateLoopAce = functions.https.onCall(
+export const generateLoopAce = onCall(
   {
     secrets: [ACE_API_KEY],
-    timeoutSeconds: 300,     // ACE generation can take up to 3 minutes
-    memory: "512MiB",        // More headroom for large ACE responses
+    timeoutSeconds: 300,
+    memory: "512MiB",
     maxInstances: 5,
+    cors: ALLOWED_ORIGINS,
   },
   generateLoopAceHandler,
+);
+
+// ── Pollinations cover generation (replicates the old persist-pollinations-cover Supabase Edge Function)
+export const persistPollinationsCover = onCall(
+  {
+    timeoutSeconds: 60,
+    memory: "512MiB",
+    maxInstances: 10,
+    cors: ALLOWED_ORIGINS,
+  },
+  persistPollinationsCoverHandler,
 );

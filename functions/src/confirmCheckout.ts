@@ -3,6 +3,7 @@
 
 import * as functions from "firebase-functions";
 import { fbGetProfile, fbUpdateProfile, fbGrantCredits } from "./firestore";
+import { env } from "./env";
 
 function asString(v: unknown): string {
   return typeof v === "string" ? v : "";
@@ -55,13 +56,13 @@ export async function confirmCheckoutHandler(request: { auth?: { uid: string; to
   }
 
   const userId = request.auth.uid;
-  const stripeKey = process.env.STRIPE_SECRET_KEY;
-  const pricePro = process.env.STRIPE_PRICE_ID_PRO ?? "";
-  const priceStudio = process.env.STRIPE_PRICE_ID_STUDIO ?? "";
-  const pricePlus = process.env.STRIPE_PRICE_ID_PLUS ?? "";
-  const priceProAnnual = process.env.STRIPE_PRICE_ID_PRO_ANNUAL ?? "";
-  const priceStudioAnnual = process.env.STRIPE_PRICE_ID_STUDIO_ANNUAL ?? "";
-  const pricePlusAnnual = process.env.STRIPE_PRICE_ID_PLUS_ANNUAL ?? "";
+  const stripeKey = env("STRIPE_SECRET_KEY");
+  const pricePro = env("STRIPE_PRICE_ID_PRO");
+  const priceStudio = env("STRIPE_PRICE_ID_STUDIO");
+  const pricePlus = env("STRIPE_PRICE_ID_PLUS");
+  const priceProAnnual = env("STRIPE_PRICE_ID_PRO_ANNUAL");
+  const priceStudioAnnual = env("STRIPE_PRICE_ID_STUDIO_ANNUAL");
+  const pricePlusAnnual = env("STRIPE_PRICE_ID_PLUS_ANNUAL");
 
   if (!stripeKey) throw new functions.https.HttpsError("failed-precondition", "Missing STRIPE_SECRET_KEY");
 
