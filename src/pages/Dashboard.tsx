@@ -423,10 +423,10 @@ export default function Dashboard() {
     return 1;
   });
   // Toggle "Batch ACE officiel" — force batch_size=2 via un seul appel ACE direct browser.
-  // Indépendant du système Versions 1/2 (parallel/sequential). Off par défaut.
+  // Activé par défaut pour tous les plans (peut être désactivé dans Options avancées).
   const [batchMode, setBatchMode] = useState<boolean>(() => {
     const saved = typeof window !== "undefined" ? window.localStorage.getItem("producerhit_batch_mode") : null;
-    return saved === "1";
+    return saved === null ? true : saved === "1";
   });
   const [plan, setPlan] = useState("free");
   const planRef = useRef("free");
@@ -739,17 +739,16 @@ export default function Dashboard() {
     if (authProfile) applyProfile(authProfile);
   }, [applyProfile, authProfile]);
 
-  /** Plan free / Pro : ×1 par défaut. Studio+ : ×2 sauf choix explicite en localStorage. */
+  /** Versions 2 par défaut pour TOUS les plans. Sauvegarde explicite "1" dans localStorage
+   * respectée. Le gate Studio+ a été retiré : un Free peut générer 2 pistes. */
   useEffect(() => {
     if (typeof window === "undefined") return;
     const saved = window.localStorage.getItem("producerhit_versions");
-    if (saved === "1") return;
-    if (saved === "2") {
-      if (!canDualGeneration(plan)) setVersions(1);
+    if (saved === "1") {
+      setVersions(1);
       return;
     }
-    if (canDualGeneration(plan)) setVersions(2);
-    else setVersions(1);
+    setVersions(2);
   }, [plan]);
 
   useEffect(() => {

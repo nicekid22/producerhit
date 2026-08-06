@@ -49,9 +49,11 @@ export function canUseVoiceToSong(plan: string | null | undefined, usedThisMonth
   return Math.max(0, usedThisMonth) < limit;
 }
 
-/** Génération ×2 en parallèle (double slot v2) — Studio et Plus uniquement. */
+/** Génération ×2 en parallèle (double slot v2) — disponible pour TOUS les plans.
+ * Batch officiel ACE (batch_size=2) est lui aussi disponible pour tous.
+ * Le gate historique Studio+ a été retiré : un Free peut générer 2 pistes. */
 export function canDualGeneration(plan: string | null | undefined): boolean {
-  return PLAN_RANK[normalizePlanId(plan)] >= PLAN_RANK.studio;
+  return true;
 }
 
 export function canExportMastering(plan: string | null | undefined): boolean {
