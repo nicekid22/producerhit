@@ -42,6 +42,7 @@ import {
   generationRetryDelayMs,
   isGenerationCapacityError,
   isRetryableGenerationError,
+  isEdgeWallTimeoutError,
   markPriorityUpsellPrompted,
   shouldTriggerDualSequentialFallback,
   normalizeGenerationRawError,
@@ -2328,6 +2329,24 @@ export default function Dashboard() {
             generationKeys: [generationKey1, generationKey2],
           });
           stopProgressTick();
+          // Diagnostic batch : on log systématiquement (prod inclus) pour comprendre pourquoi
+          // le batch tombe en fallback partiel après quelques succès.
+          if (rows.length < 2) {
+            console.warn("[batch] partial result", {
+              rows: rows.length,
+              seeds: [seed1, seed2],
+              keys: [generationKey1, generationKey2],
+              mode,
+              versions,
+            });
+            trackClientEvent("generate_batch_partial", {
+              plan,
+              mode,
+              versions: 2,
+              rows: rows.length,
+              reason: "audios<2",
+            });
+          }
           const slotMeta: Array<{ idx: 1 | 2; seed: number; title: string; generationKey: string }> = [
             { idx: 1, seed: seed1, title: title1, generationKey: generationKey1 },
             { idx: 2, seed: seed2, title: title2, generationKey: generationKey2 },
@@ -2352,7 +2371,23 @@ export default function Dashboard() {
           }
         } catch (err) {
           stopProgressTick();
+          // Diagnostic batch : on capture l'erreur exacte pour comprendre le rate-limit/timeout ACE.
           const rawMessage = normalizeGenerationRawError(err instanceof Error ? err.message : String(err));
+          console.error("[batch] threw", {
+            raw: rawMessage,
+            stack: err instanceof Error ? err.stack : undefined,
+            seeds: [seed1, seed2],
+            mode,
+            versions,
+          });
+          trackClientEvent("generate_batch_failed", {
+            plan,
+            mode,
+            versions: 2,
+            raw: rawMessage.slice(0, 240),
+            capacity: isGenerationCapacityError(rawMessage),
+            edge: isEdgeWallTimeoutError(rawMessage),
+          });
           const errorText = formatGenerationErrorMessage(rawMessage, locale, { plan });
           if (plan === "free" && isGenerationCapacityError(rawMessage) && shouldPromptPriorityUpsellAfterCapacityError(plan)) {
             markPriorityUpsellPrompted(plan);
