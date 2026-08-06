@@ -3,6 +3,7 @@
 
 import * as functions from "firebase-functions";
 import { fbGetProfile } from "./firestore";
+import { env } from "./env";
 
 export async function createPortalHandler(request: { auth?: { uid: string; token?: Record<string, unknown> }; data: Record<string, unknown> }) {
   if (!request.auth) {
@@ -10,7 +11,7 @@ export async function createPortalHandler(request: { auth?: { uid: string; token
   }
 
   const userId = request.auth.uid;
-  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  const stripeKey = env("STRIPE_SECRET_KEY");
   if (!stripeKey) throw new functions.https.HttpsError("failed-precondition", "Missing STRIPE_SECRET_KEY");
 
   const fbProfile = await fbGetProfile(userId);

@@ -12,6 +12,7 @@ import {
   fbResolveUidByStripeCustomerId,
   fbRegisterStripeCustomer,
 } from "./firestore";
+import { env } from "./env";
 
 function asString(v: unknown): string {
   return typeof v === "string" ? v : "";
@@ -48,9 +49,9 @@ function profilePlanPatch(prevPlan: string, nextPlan: string): Record<string, un
   return patch;
 }
 
-const LAUNCH_OFFER_END_ISO = process.env.LAUNCH_OFFER_END_ISO ?? "2026-07-31T23:59:59Z";
-const LAUNCH_BONUS_PRO = Number.parseInt(process.env.LAUNCH_BONUS_PRO ?? "20", 10);
-const LAUNCH_BONUS_RECOVERY = Number.parseInt(process.env.LAUNCH_BONUS_RECOVERY ?? "5", 10);
+const LAUNCH_OFFER_END_ISO = env("LAUNCH_OFFER_END_ISO") || "2026-07-31T23:59:59Z";
+const LAUNCH_BONUS_PRO = Number.parseInt(env("LAUNCH_BONUS_PRO") || "20", 10);
+const LAUNCH_BONUS_RECOVERY = Number.parseInt(env("LAUNCH_BONUS_RECOVERY") || "5", 10);
 
 function isLaunchOfferActive(now = Date.now()): boolean {
   const end = new Date(LAUNCH_OFFER_END_ISO).getTime();
@@ -58,12 +59,12 @@ function isLaunchOfferActive(now = Date.now()): boolean {
 }
 
 function planFromPriceId(priceId: string): string {
-  const pro = process.env.STRIPE_PRICE_ID_PRO ?? "";
-  const studio = process.env.STRIPE_PRICE_ID_STUDIO ?? "";
-  const plus = process.env.STRIPE_PRICE_ID_PLUS ?? "";
-  const proAnnual = process.env.STRIPE_PRICE_ID_PRO_ANNUAL ?? "";
-  const studioAnnual = process.env.STRIPE_PRICE_ID_STUDIO_ANNUAL ?? "";
-  const plusAnnual = process.env.STRIPE_PRICE_ID_PLUS_ANNUAL ?? "";
+  const pro = env("STRIPE_PRICE_ID_PRO");
+  const studio = env("STRIPE_PRICE_ID_STUDIO");
+  const plus = env("STRIPE_PRICE_ID_PLUS");
+  const proAnnual = env("STRIPE_PRICE_ID_PRO_ANNUAL");
+  const studioAnnual = env("STRIPE_PRICE_ID_STUDIO_ANNUAL");
+  const plusAnnual = env("STRIPE_PRICE_ID_PLUS_ANNUAL");
   if (priceId && (priceId === pro || priceId === proAnnual)) return "pro";
   if (priceId && (priceId === studio || priceId === studioAnnual)) return "studio";
   if (priceId && (priceId === plus || priceId === plusAnnual)) return "plus";
@@ -95,8 +96,8 @@ export async function stripeWebhookHandler(req: any, res: any) {
     return;
   }
 
-  const stripeKey = process.env.STRIPE_SECRET_KEY ?? "";
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET ?? process.env.STRIPE_ENDPOINT_SECRET ?? "";
+  const stripeKey = env("STRIPE_SECRET_KEY");
+  const webhookSecret = env("STRIPE_WEBHOOK_SECRET") || env("STRIPE_ENDPOINT_SECRET");
 
   if (!stripeKey || !webhookSecret) {
     res.status(500).send("missing env");
@@ -125,7 +126,7 @@ export async function stripeWebhookHandler(req: any, res: any) {
     res.status(400).send("bad signature timestamp");
     return;
   }
-  const toleranceSec = Number.parseInt(process.env.STRIPE_WEBHOOK_TOLERANCE_SEC ?? "300", 10);
+  const toleranceSec = Number.parseInt(env("STRIPE_WEBHOOK_TOLERANCE_SEC") || "300", 10);
   const skewSec = Math.abs(Math.floor(Date.now() / 1000) - eventTs);
   if (skewSec > Math.max(60, toleranceSec)) {
     res.status(400).send("timestamp outside tolerance");
