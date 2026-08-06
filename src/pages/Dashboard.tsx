@@ -2370,12 +2370,23 @@ export default function Dashboard() {
         const batchEligible = batchMode && browserAceKeyCount() > 0;
         setBatchToggleOverride(batchEligible);
         const fastMode = dualGenerationEffectiveMode();
-        await runDualMode(fastMode);
-        // Réinitialise l'override après le dispatch pour ne pas impacter les générations suivantes
+        if (import.meta.env.DEV) {
+          console.info("[generate] dual mode", {
+            fastMode,
+            batchToggleRequested: batchMode,
+            batchEligible,
+            browserAceKeyCount: browserAceKeyCount(),
+          });
+        }
+        // RÉINITIALISE l'override AVANT le fallback pour que runDualFallbackSequential
+        // utilise bien le mode séquentiel (sinon fastMode="batch" ferait re-tenter le batch).
         setBatchToggleOverride(false);
+        await runDualMode(fastMode);
         if (dualAdaptiveFallbackEnabled() && created.length < 2) {
           const need = slotsNeedingSequentialFallback();
-          if (need.length > 0) await runDualFallbackSequential(need, fastMode);
+          // Pour le fallback on force "sequential" (plus stable) si le batch a échoué.
+          const fallbackMode: DualGenerationMode = fastMode === "batch" ? "sequential" : fastMode;
+          if (need.length > 0) await runDualFallbackSequential(need, fallbackMode);
         }
       }
 
