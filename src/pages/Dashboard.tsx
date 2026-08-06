@@ -2059,22 +2059,6 @@ export default function Dashboard() {
         const loop = await persistDraft(draft, audioUrl, value.engine, previewId);
         persistCompleted = true;
 
-        // Si la cover n'était pas prête avant, on la génère maintenant (fallback)
-        if (!coverForDraft) {
-          try {
-            const result = await persistPollinationsCardCoverForLoop(loop.id, loop).catch(() => null);
-            if (result?.coverUrl?.startsWith("http")) {
-              useLoopsStore.getState().applyLoopCoverUrl(loop.id, result.coverUrl, "image");
-            }
-          } catch {
-            // cover non critique — la carte utilisera le backfill
-          }
-        }
-        if (mode === "song" && voiceCloneConfigRef.current.profileId) {
-          const voiceToast = voiceCloneToastMessage(value.meta, locale);
-          if (voiceToast?.type === "success") toast.success(voiceToast.message, { id: `voice-clone-${loop.id}` });
-          else if (voiceToast?.type === "warning") toast(voiceToast.message, { icon: "⚠️", id: `voice-clone-${loop.id}` });
-        }
         await migrateAudioCache(previewId, loop.id);
         const player = usePlayerStore.getState();
         if (player.current?.id === previewId || player.queue.some((l) => l.id === previewId)) {
@@ -2085,7 +2069,6 @@ export default function Dashboard() {
         created.push(loop);
         persistedSlotIdx.add(idx);
         finishedInOrder.push(loop);
-        await generationAutoplay.playWhenReady(idx, loop, { persisted: true });
         trackClientEvent("generate_success", {
           loop_id: loop.id,
           mode,
@@ -2102,6 +2085,29 @@ export default function Dashboard() {
           mode,
           source: entrySource,
         });
+        // Autoplay persisted en fire-and-forget pour ne pas bloquer le release de l'UI
+        // (la carte persisted est déjà affichée via hideGenerationSlot ci-dessus).
+        void generationAutoplay.playWhenReady(idx, loop, { persisted: true });
+
+        // Cover fallback + toast voiceClone en fire-and-forget après release de l'UI
+        // (non critiques, l'utilisateur voit déjà sa carte persistée).
+        void (async () => {
+          if (!coverForDraft) {
+            try {
+              const result = await persistPollinationsCardCoverForLoop(loop.id, loop).catch(() => null);
+              if (result?.coverUrl?.startsWith("http")) {
+                useLoopsStore.getState().applyLoopCoverUrl(loop.id, result.coverUrl, "image");
+              }
+            } catch {
+              // cover non critique — la carte utilisera le backfill
+            }
+          }
+          if (mode === "song" && voiceCloneConfigRef.current.profileId) {
+            const voiceToast = voiceCloneToastMessage(value.meta, locale);
+            if (voiceToast?.type === "success") toast.success(voiceToast.message, { id: `voice-clone-${loop.id}` });
+            else if (voiceToast?.type === "warning") toast(voiceToast.message, { icon: "⚠️", id: `voice-clone-${loop.id}` });
+          }
+        })();
       };
 
       const startOne = async (idx: 1 | 2, seed: number, title: string) => {
