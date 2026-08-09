@@ -1,5 +1,4 @@
 import { buildStructuredCoverPrompt } from "./coverPrompt";
-import { enrichLoopCardCoverForFuturRetro } from "./loopCardCoverFuturRetro";
 import { pickCoverSurpriseSuggestion } from "./coverSurpriseLibrary";
 
 const CARD_STYLE_SUFFIX = "no faces, no text, no logo";
@@ -27,10 +26,7 @@ export function buildLoopCardCoverPrompt(
     (typeof loop.seed === "number" && Number.isFinite(loop.seed) ? loop.seed : undefined) ??
     hashLoopSeed(loop.id ?? loop.genre ?? "loop");
 
-  const structured = enrichLoopCardCoverForFuturRetro(
-    pickCoverSurpriseSuggestion(loop, { seed: seedBase, favorGenre: true }),
-    seedBase,
-  );
+  const structured = pickCoverSurpriseSuggestion(loop, { seed: seedBase, favorGenre: true });
   const core = buildStructuredCoverPrompt(
     {
       ...structured,

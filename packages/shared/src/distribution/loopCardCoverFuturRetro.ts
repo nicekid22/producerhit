@@ -4,7 +4,7 @@ import type { StructuredCoverPromptInput } from "./coverPrompt";
  * Rollback instantané : passer à `false` (ou `LOOP_CARD_COVER_AESTHETIC = "classic"`)
  * pour revenir aux covers sans couche futur-rétro.
  */
-export const LOOP_CARD_COVER_FUTUR_RETRO_ENABLED = true;
+export const LOOP_CARD_COVER_FUTUR_RETRO_ENABLED = false;
 
 export type LoopCardCoverAesthetic = "classic" | "futurRetro";
 
