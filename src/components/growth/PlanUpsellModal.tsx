@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/Button";
 import { buildAuthNextUrl, runCheckoutWithAuth, runCreditPackCheckout } from "@/lib/billing";
 import { getCreditPackCtaLabel } from "@/lib/creditPacks";
+import { downloadPersonalBeat } from "@/lib/commercialBeatDownload";
 import { getUpsellCopy, shouldShowPlanUpsell, type UpsellReason } from "@/lib/growthUpsell";
 import { planPriceLabel } from "@/lib/planPricing";
 import { LaunchOfferChips } from "@/components/marketing/LaunchOfferChips";
@@ -18,6 +19,7 @@ import "@/styles/paywall-modal.css";
 
 import type { AppLocale } from "@/i18n/config";
 import { buildPlanUpsellModalCopy } from "@/i18n/planUpsellModalCatalog";
+import type { Loop } from "@/types/loop";
 type Props = {
   open: boolean;
   reason: UpsellReason | null;
@@ -27,6 +29,7 @@ type Props = {
   remaining?: number;
   totalLimit?: number;
   usedThisMonth?: number;
+  loop?: Loop;
   onClose: () => void;
 };
 
@@ -39,6 +42,7 @@ export function PlanUpsellModal({
   remaining,
   totalLimit,
   usedThisMonth,
+  loop,
   onClose,
 }: Props) {
   const user = useAuthStore((s) => s.user);
@@ -72,6 +76,18 @@ export function PlanUpsellModal({
   const trackDismiss = () => {
     trackClientEvent("upgrade_prompt_dismissed", { source, reason, plan });
     onClose();
+  };
+
+  // Pour feature_commercial_download : le bouton "Usage perso uniquement"
+  // déclenche le téléchargement perso (sans droits commerciaux), puis ferme.
+  // Pour les autres reasons : se comporte comme un dismiss classique.
+  const handleSecondary = () => {
+    if (reason === "feature_commercial_download" && loop) {
+      trackClientEvent("personal_download_started", { source, reason, plan });
+      void downloadPersonalBeat(loop, locale).finally(() => onClose());
+      return;
+    }
+    trackDismiss();
   };
 
   const startUpgrade = async (target: PaidPlanId | null) => {
@@ -244,7 +260,7 @@ export function PlanUpsellModal({
               type="button"
               className="pk-paywall__secondary w-full py-2 text-center text-xs font-semibold transition"
               disabled={busy}
-              onClick={trackDismiss}
+              onClick={handleSecondary}
             >
               {copy.secondaryLabel}
             </button>

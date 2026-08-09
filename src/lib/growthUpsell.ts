@@ -1,5 +1,6 @@
 import type { AppLocale } from "@/i18n/config";
 import { buildUpsellCopy } from "@/i18n/growthUpsellCatalog";
+import type { Loop } from "@/types/loop";
 import {
   canDualGeneration,
   canExportWav,
@@ -34,6 +35,11 @@ export type UpsellContext = {
   remaining?: number;
   totalLimit?: number;
   usedThisMonth?: number;
+  /**
+   * Loop cible pour le reason `feature_commercial_download` : permet au bouton
+   * "Usage perso uniquement" de reprendre le téléchargement personnel.
+   */
+  loop?: Loop;
 };
 
 /** Ne pas afficher de modal upgrade incohérent (ex. « Passe Pro » pour un compte Studio). */

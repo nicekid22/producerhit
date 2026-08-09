@@ -56,6 +56,7 @@ export function GrowthUpsellHost() {
         remaining={ctx?.remaining ?? profileRemaining}
         totalLimit={ctx?.totalLimit}
         usedThisMonth={ctx?.usedThisMonth ?? profile?.loops_used_this_month}
+        loop={ctx?.loop}
         onClose={closeUpsell}
       />
     </>

@@ -137,6 +137,31 @@ export type CommercialBeatDownloadOptions = {
   source: string;
 };
 
+/**
+ * Télécharge réellement le fichier audio de la loop (sans gate).
+ * Utilisé par le chemin commercial (Pro+) ET par le bouton "Usage perso uniquement"
+ * après fermeture de la popup d'upgrade pour les Free.
+ */
+async function downloadBeatFile(loop: Loop, locale: AppLocale): Promise<boolean> {
+  try {
+    const blob = await resolveLoopDownloadBlob(loop);
+    const ext = resolveAudioExtension(loop, blob.type || "");
+    const baseName = cleanDownloadFilename(loop.name);
+    await saveBlobDownload(blob, `${baseName}-producerhit.${ext}`);
+    toast.success(buildCommonSection(locale).beatDownloaded);
+    return true;
+  } catch {
+    toast.error(buildCommonSection(locale).downloadFailed);
+    return false;
+  }
+}
+
+/** Téléchargement perso (non-commercial) — pas de gate sur les droits commerciaux. */
+export async function downloadPersonalBeat(loop: Loop, locale: AppLocale): Promise<boolean> {
+  if (!loop.audioUrl) return false;
+  return downloadBeatFile(loop, locale);
+}
+
 export async function downloadCommercialBeat({
   loop,
   plan,
@@ -149,21 +174,12 @@ export async function downloadCommercialBeat({
     useGrowthUpsellStore.getState().openUpsell("feature_commercial_download", {
       source,
       plan: plan ?? "free",
+      loop,
     });
     return false;
   }
 
-  try {
-    const blob = await resolveLoopDownloadBlob(loop);
-    const ext = resolveAudioExtension(loop, blob.type || "");
-    const baseName = cleanDownloadFilename(loop.name);
-    await saveBlobDownload(blob, `${baseName}-producerhit.${ext}`);
-    toast.success(buildCommonSection(locale).beatDownloaded);
-    return true;
-  } catch {
-    toast.error(buildCommonSection(locale).downloadFailed);
-    return false;
-  }
+  return downloadBeatFile(loop, locale);
 }
 
 export function openTrackLicenseModal(loop: Loop, source: string, exportKind: "beat" | "stems" = "beat"): void {
