@@ -31,13 +31,14 @@ import {
   fetchPublicLoops,
   isPlayablePublicLoop,
   resolveAceAudioUrl,
+  subscribePublicLoops,
   type PublicLoopRow,
 } from "@/lib/publicLoops";
 import { LandingPrismScene } from "@/components/landing/LandingPrismScene";
 import { BrandLogo } from "@/components/landing/BrandLogo";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { TestimonialsStrip } from "@/components/landing/TestimonialsStrip";
-import { LandingCommunityRail } from "@/components/landing/LandingCommunityRail";
+import { CommunityTrackCard } from "@/components/community/CommunityTrackCard";
 import { LandingTrafficStrip } from "@/components/landing/LandingTrafficStrip";
 import { DailySpotlightSection } from "@/components/marketing/DailySpotlightSection";
 import { LandingBenefits } from "@/components/landing/LandingBenefits";
@@ -153,6 +154,16 @@ function classifyTrack(genre: string, mood: string, name: string) {
   const looksLikeBeat = ["type beat", "beat", "trap", "drill", "trapsoul", "rnb"].some((k) => hay.includes(k));
   return looksLikeBeat ? { kind: "beat" as const, badge: "Type Beat" as const } : { kind: "song" as const, badge: "Song" as const };
 }
+
+/** Dégradé déterministe (stable, idempotent) — déplacé en module-level pour usage stable dans le subscribe temps réel. */
+function getTrackGradient(id: string): string {
+  const gradients = ["from-violet-900 to-blue-900", "from-fuchsia-900 to-violet-900", "from-indigo-900 to-blue-900", "from-violet-900 to-purple-900", "from-blue-900 to-violet-900", "from-fuchsia-900 to-indigo-900"];
+  const index = id.charCodeAt(0) % gradients.length;
+  return gradients[index] ?? gradients[0];
+}
+
+/** Nombre de loops publiques affichées dans la grille community de la landing (augmenté de 12 à 24 pour la grille 4×6). */
+const TRENDING_LIMIT = 24;
 
 function RevealSection({
   id,
@@ -627,12 +638,6 @@ export default function Landing() {
   const [repairingPublicLinks, setRepairingPublicLinks] = useState(false);
   const [repairFixedCount, setRepairFixedCount] = useState<number | null>(null);
 
-  const getTrackGradient = (id: string) => {
-    const gradients = ["from-violet-900 to-blue-900", "from-fuchsia-900 to-violet-900", "from-indigo-900 to-blue-900", "from-violet-900 to-purple-900", "from-blue-900 to-violet-900", "from-fuchsia-900 to-indigo-900"];
-    const index = id.charCodeAt(0) % gradients.length;
-    return gradients[index] ?? gradients[0];
-  };
-
   const syncSideCardPool = useCallback((incoming: GeneratorSideCard[]) => {
     if (!incoming.length) return;
     sideCardPoolRef.current = mergeSideCardPool(sideCardPoolRef.current, incoming);
@@ -803,7 +808,7 @@ export default function Landing() {
     }
     trackClientEvent("landing_trending_play", { loop_id: track.id });
     void (async () => {
-      const queue = queueTracks ?? trending.slice(0, 12);
+      const queue = queueTracks ?? trending.slice(0, TRENDING_LIMIT);
       const rows = queue.map((t) =>
         landingTrackToPublicRow({
           id: t.id,
@@ -869,7 +874,7 @@ export default function Landing() {
   };
 
   const homeTrendingCards = useMemo(() => {
-    const next = trending.slice(0, 12);
+    const next = trending.slice(0, TRENDING_LIMIT);
     if (next.length !== trending.length) {
       console.debug("[Landing] homeTrendingCards truncate", { trending: trending.length, cards: next.length });
     }
@@ -994,6 +999,9 @@ export default function Landing() {
     let cancelled = false;
     const cacheKey = "producerhit_landing_trending_cache_v9";
     let loadedFromCache = false;
+
+    // Rendu initial synchrone depuis le cache sessionStorage (10 min TTL) — UX scaling
+    // pendant que l'onSnapshot Firestore arrive en temps réel.
     try {
       const raw = window.sessionStorage.getItem(cacheKey);
       if (raw) {
@@ -1014,100 +1022,102 @@ export default function Landing() {
     if (!loadedFromCache) setTrendingLoading(true);
     setTrendingTimedOut(false);
     setTrendingError(null);
+
+    // Slow timer désactivé dès la première snapshot temps réel (logs seulement).
     const slowTimer = window.setTimeout(() => {
       if (!cancelled) setTrendingTimedOut(true);
     }, 6500);
 
-    deferUntilIdle(() => {
-      if (cancelled) return;
-      void (async () => {
-        try {
-          console.debug("[Landing] trending fetch start", { shouldLoadTrending, loadedFromCache, trendingLength: trending.length });
-          const rows = await fetchPublicLoopsDeduped(6500);
-          if (cancelled) return;
-          console.debug("[Landing] trending fetch result", rows.length, rows.slice(0,3));
-          window.clearTimeout(slowTimer);
-          setTrendingTimedOut(false);
-
-          const mapped: PublicTrack[] = rows
-            .filter((r) => typeof r.id === "string")
-            .map((r) => {
-              const name = (r.name ?? "Untitled").trim() || "Untitled";
-              const genre = (r.genre ?? "").trim();
-              const mood = (r.mood ?? "").trim();
-              const bpm = typeof r.bpm === "number" ? r.bpm : null;
-              const { kind, badge } = classifyTrack(genre, mood, name);
-              const tags = [genre, mood, bpm ? `${bpm} BPM` : ""].filter((x) => x.length > 0);
-              const color = getTrackGradient(r.id);
-              const prompt = (r.prompt ?? "").trim() || [name, genre, mood, bpm ? `${bpm} BPM` : ""].filter(Boolean).join(", ");
-              const audioUrlRaw = typeof r.audio_url === "string" ? r.audio_url.trim() : "";
-              const stemsUrlObj = (() => {
-                if (r.stems_url && typeof r.stems_url === "object") return r.stems_url as Record<string, unknown>;
-                if (typeof r.stems_url === "string") {
-                  const raw = r.stems_url.trim();
-                  if (!raw) return null;
-                  try {
-                    const parsed = JSON.parse(raw) as unknown;
-                    return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
-                  } catch {
-                    return null;
-                  }
-                }
-                return null;
-              })();
-              const coverUrl = resolvePublicRowCoverUrl(r);
-              return {
-                id: r.id,
-                name,
-                genre: genre || null,
-                mood: mood || null,
-                bpm,
-                audioUrl: audioUrlRaw.length > 0 ? audioUrlRaw : null,
-                stemsUrl: stemsUrlObj,
-                createdAt: r.created_at ?? null,
-                seed: typeof r.seed === "number" ? r.seed : null,
-                kind,
-                badge,
-                tags,
-                color,
-                prompt,
-                coverUrl,
-                author: r.author ?? null,
-              };
-            });
-
-          const next = mapped.slice(0, 12);
-          console.debug("[Landing] trending mapped", next.length, next.slice(0,3));
-          setTrending(next);
-          setTrendingLoading(false);
+    const mapRow = (r: PublicLoopRow): PublicTrack => {
+      const name = (r.name ?? "Untitled").trim() || "Untitled";
+      const genre = (r.genre ?? "").trim();
+      const mood = (r.mood ?? "").trim();
+      const bpm = typeof r.bpm === "number" ? r.bpm : null;
+      const { kind, badge } = classifyTrack(genre, mood, name);
+      const tags = [genre, mood, bpm ? `${bpm} BPM` : ""].filter((x) => x.length > 0);
+      const color = getTrackGradient(r.id);
+      const prompt = (r.prompt ?? "").trim() || [name, genre, mood, bpm ? `${bpm} BPM` : ""].filter(Boolean).join(", ");
+      const audioUrlRaw = typeof r.audio_url === "string" ? r.audio_url.trim() : "";
+      const stemsUrlObj = (() => {
+        if (r.stems_url && typeof r.stems_url === "object") return r.stems_url as Record<string, unknown>;
+        if (typeof r.stems_url === "string") {
+          const raw = r.stems_url.trim();
+          if (!raw) return null;
           try {
-            window.sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), items: next }));
+            const parsed = JSON.parse(raw) as unknown;
+            return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
           } catch {
-            void 0;
+            return null;
           }
-        } catch (err) {
-          if (!cancelled) {
-            if (!loadedFromCache && !trending.length) {
-              setTrending([]);
-            }
-            const msg =
-              err instanceof Error && err.message === "timeout"
-                ? landingUi.slowLoad
-                : landingUi.communityLoadFailed;
-            setTrendingError(msg);
-            if (err instanceof Error && err.message === "timeout") toast.error(msg);
-          }
-        } finally {
-          if (!cancelled) setTrendingLoading(false);
         }
+        return null;
       })();
-    }, 3200);
+      const coverUrl = resolvePublicRowCoverUrl(r);
+      return {
+        id: r.id,
+        name,
+        genre: genre || null,
+        mood: mood || null,
+        bpm,
+        audioUrl: audioUrlRaw.length > 0 ? audioUrlRaw : null,
+        stemsUrl: stemsUrlObj,
+        createdAt: r.created_at ?? null,
+        seed: typeof r.seed === "number" ? r.seed : null,
+        kind,
+        badge,
+        tags,
+        color,
+        prompt,
+        coverUrl,
+        author: r.author ?? null,
+      };
+    };
+
+    console.debug("[Landing] trending subscribe start", { shouldLoadTrending, loadedFromCache });
+
+    // Subscribe temps réel Firestore : les nouvelles loops publiques apparaissent
+    // immédiatement chez tous les visiteurs, sans reload.
+    const unsubscribe = subscribePublicLoops({
+      limit: TRENDING_LIMIT,
+      onNext: (rows) => {
+        if (cancelled) return;
+        window.clearTimeout(slowTimer);
+        setTrendingTimedOut(false);
+        const mapped = rows
+          .filter((r) => typeof r.id === "string")
+          .map(mapRow)
+          .slice(0, TRENDING_LIMIT);
+        console.debug("[Landing] trending onSnapshot", mapped.length, mapped.slice(0, 3));
+        setTrending(mapped);
+        setTrendingLoading(false);
+        try {
+          window.sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), items: mapped }));
+        } catch {
+          void 0;
+        }
+      },
+      onError: (err) => {
+        if (cancelled) return;
+        console.warn("[Landing] trending subscribe error", err);
+        window.clearTimeout(slowTimer);
+        // N'écrase pas le trending déjà rendu (cache sessionStorage) si l'onSnapshot échoue.
+        if (!loadedFromCache) setTrending([]);
+        setTrendingError(landingUi.communityLoadFailed);
+        setTrendingLoading(false);
+        setTrendingTimedOut(false);
+      },
+    });
 
     return () => {
       cancelled = true;
       window.clearTimeout(slowTimer);
+      try {
+        unsubscribe();
+      } catch {
+        // ignore — unsubscribe déjà nettoyé.
+      }
     };
-  }, [shouldLoadTrending, trendingRefreshKey, locale]);
+  }, [shouldLoadTrending, trendingRefreshKey, locale, landingUi]);
 
   const currentPlan = planReady ? resolvedPlan : normalizePlan(profile?.plan);
   const [launchCheckoutLoading, setLaunchCheckoutLoading] = useState(false);
@@ -1416,7 +1426,7 @@ export default function Landing() {
               isPlaying={isPlaying}
               onPlay={(track) => {
                 const row = trending.find((t) => t.id === track.id);
-                if (row) handlePlay(row, trending.slice(0, 12));
+                if (row) handlePlay(row, trending.slice(0, TRENDING_LIMIT));
               }}
               onCreateSimilar={(track) => {
                 const row = trending.find((t) => t.id === track.id);
@@ -1433,53 +1443,104 @@ export default function Landing() {
         <RevealSection className={`${landingSectionClass()} pk-landing-below-fold${mobileLandingFocus ? " hidden lg:block" : ""}`}>
           <DailySpotlightSection locale={locale} className="mb-8" />
           <LandingTrafficStrip locale={locale} className="mb-6" />
-          <LandingCommunityRail
+          <section
+            id="trending"
+            className="pk-landing-community pk-landing-below-fold"
+            aria-label={copy.communityTitle}
+          >
+            <div className="mb-6">
+              <h2 className="pk-landing-apple-faq__title text-left">{copy.communityTitle}</h2>
+              <p className="mt-2 text-sm text-zinc-400">
+                {mobileLandingFocus ? landingUi.communityLeadMobile : copy.communityLead}
+              </p>
+            </div>
+
+            {trendingLoading && !homeTrendingCards.length ? (
+              <div
+                className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4"
+                aria-busy="true"
+                aria-live="polite"
+              >
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="aspect-square animate-pulse rounded-2xl bg-zinc-900/70 ring-1 ring-white/5"
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
+                {homeTrendingCards.map((t, i) => {
+                  const row: PublicLoopRow = {
+                    ...landingTrackToPublicRow({
+                      id: t.id,
+                      name: t.name,
+                      genre: t.genre,
+                      mood: t.mood,
+                      bpm: t.bpm,
+                      audioUrl: t.audioUrl,
+                      stemsUrl: t.stemsUrl,
+                      prompt: t.prompt,
+                      createdAt: t.createdAt,
+                    }),
+                    cover_url: t.coverUrl ?? null,
+                    author: t.author ?? null,
+                  };
+                  return (
+                    <CommunityTrackCard
+                      key={t.id}
+                      row={row}
                       locale={locale}
-                      title={copy.communityTitle}
-                      lead={mobileLandingFocus ? landingUi.communityLeadMobile : copy.communityLead}
-                      tracks={homeTrendingCards}
-                      loading={trendingLoading || !shouldLoadTrending}
-                      activeTrackId={current?.id ?? null}
+                      isActive={current?.id === t.id}
                       isPlaying={isPlaying}
-                      onPlay={handlePlay}
-                      onRemix={remixFromLandingTrack}
-                      onRefresh={() => setTrendingRefreshKey((k) => k + 1)}
-                      footer={
-                        !trendingLoading && (trendingError || trendingTimedOut || typeof repairFixedCount === "number") ? (
-                          <div className="pk-landing-apple-banner mt-4">
-                            <div className="pk-landing-apple-banner__text">
-                              {typeof repairFixedCount === "number"
-                                ? formatRepairFixedCount(repairFixedCount, locale)
-                                : trendingError
-                                  ? trendingError
-                                  : trendingTimedOut
-                                    ? landingUi.slowLoad
-                                    : ""}
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              <button
-                                type="button"
-                                onClick={() => setTrendingRefreshKey((k) => k + 1)}
-                                className="pk-landing-apple-banner__btn"
-                              >
-                                {common.retry}
-                              </button>
-                              {user ? (
-                                <button
-                                  type="button"
-                                  onClick={() => void repairMyPublicAudioLinks()}
-                                  disabled={repairingPublicLinks}
-                                  className="pk-landing-apple-banner__btn"
-                                >
-                                  {repairingPublicLinks ? landingUi.repairingPublic : landingUi.repairPublic}
-                                </button>
-                              ) : null}
-                            </div>
-                          </div>
-                        ) : null
-                      }
+                      resolving={false}
+                      isNew={t.createdAt ? Date.now() - new Date(t.createdAt).getTime() < 24 * 60 * 60 * 1000 : false}
+                      onPlay={() => handlePlay(t, trending.slice(0, TRENDING_LIMIT))}
+                      onRemix={() => remixFromLandingTrack(t)}
+                      onRate={() => {
+                        // Rating non-disponible depuis la landing (player-only UX).
+                      }}
+                      slotIndex={i}
                     />
-                  </RevealSection>
+                  );
+                })}
+              </div>
+            )}
+
+            {!trendingLoading && (trendingError || trendingTimedOut || typeof repairFixedCount === "number") ? (
+              <div className="pk-landing-apple-banner mt-4">
+                <div className="pk-landing-apple-banner__text">
+                  {typeof repairFixedCount === "number"
+                    ? formatRepairFixedCount(repairFixedCount, locale)
+                    : trendingError
+                      ? trendingError
+                      : trendingTimedOut
+                        ? landingUi.slowLoad
+                        : ""}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setTrendingRefreshKey((k) => k + 1)}
+                    className="pk-landing-apple-banner__btn"
+                  >
+                    {common.retry}
+                  </button>
+                  {user ? (
+                    <button
+                      type="button"
+                      onClick={() => void repairMyPublicAudioLinks()}
+                      disabled={repairingPublicLinks}
+                      className="pk-landing-apple-banner__btn"
+                    >
+                      {repairingPublicLinks ? landingUi.repairingPublic : landingUi.repairPublic}
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+          </section>
+        </RevealSection>
 
         <RevealSection className={`${landingSectionClass()} pk-landing-below-fold`}>
           <MusicMoneyPlaybookSection locale={locale} />

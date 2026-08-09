@@ -13,6 +13,16 @@ import { isLoopAudioPlayableByAge } from "@/lib/loopAudioRetention";
 import { isSupabaseLoopAudioUrl, SUPABASE_LOOP_AUDIO_UPLOAD, uploadPublicLoopAudio } from "@/lib/storageAudio";
 import { fetchLoopStemsAndCover, coverUrlFromStemsRow } from "@/lib/loopStemsSelect";
 import { supabase } from "@/lib/supabaseClient";
+import { fbDb } from "@/lib/firebaseSupabaseClient";
+import {
+  collection,
+  query as fbQuery,
+  where,
+  orderBy,
+  limit as fbLimit,
+  onSnapshot,
+  type Unsubscribe,
+} from "firebase/firestore";
 import { mergeStemsPreservingAceCover } from "@/lib/stemsAceMerge";
 import {
   buildStemsUrlForDb as buildStemsUrlForDbShared,
@@ -241,6 +251,63 @@ export async function fetchPublicLoops(options?: {
     return mergeWithCuratedCommunityLoops(rows, { playableOnly }).slice(0, limit);
   } catch {
     return mergeWithCuratedCommunityLoops([], { playableOnly }).slice(0, limit);
+  }
+}
+
+/**
+ * Subscribe en temps réel aux dernières loops publiques via Firestore `onSnapshot`.
+ * Les nouvelles générations publiques apparaissent immédiatement chez tous les visiteurs,
+ * sans reload. Le toggle privé depuis la carte audio (togglePublicRemote -> updateDoc)
+ * retire la loop du feed en quasi-temps-réel.
+ *
+ * Requiert l'index composite Firestore : is_public (Asc) + created_at (Desc).
+ * Voir firestore.indexes.json + `firebase deploy --only firestore:indexes`.
+ *
+ * @returns fonction unsubscribe (à appeler dans le cleanup d'un useEffect).
+ */
+export function subscribePublicLoops(opts: {
+  limit?: number;
+  onNext: (rows: PublicLoopRow[]) => void;
+  onError?: (err: Error) => void;
+}): Unsubscribe {
+  const lim = opts.limit ?? 48;
+  const db = fbDb();
+  if (!db) {
+    opts.onError?.(new Error("Firebase not configured"));
+    // Retourne un no-op typé Unsubscribe pour pouvoir l'appeler dans le cleanup.
+    const noop = (): void => {};
+    return noop as Unsubscribe;
+  }
+
+  try {
+    const q = fbQuery(
+      collection(db, "loops"),
+      where("is_public", "==", true),
+      orderBy("created_at", "desc"),
+      fbLimit(lim),
+    );
+
+    return onSnapshot(
+      q,
+      async (snap) => {
+        const rows = snap.docs.map((d) =>
+          normalizePublicLoopRow({ id: d.id, ...(d.data() as Record<string, unknown>) } as PublicLoopRow),
+        );
+        try {
+          const withAuthors = await attachAuthorsToPublicLoops(rows);
+          opts.onNext(withAuthors);
+        } catch {
+          // Feed OK sans auteurs (même tolérance que fetchPublicLoops).
+          opts.onNext(rows);
+        }
+      },
+      (err) => opts.onError?.(err instanceof Error ? err : new Error(String(err))),
+    );
+  } catch (err) {
+    // Erreur synchrone (ex: index manquant au build de la query).
+    opts.onError?.(err instanceof Error ? err : new Error(String(err)));
+    const noop = (): void => {};
+    return noop as Unsubscribe;
   }
 }
 
