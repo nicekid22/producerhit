@@ -1,7 +1,7 @@
 import { preloadCoverImage } from "@/lib/coverArt";
 import type { Loop } from "@/types/loop";
 import { useAuthStore } from "@/stores/authStore";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase, getSupabaseTokenForFirebaseUser } from "@/lib/supabaseClient";
 
 export const LOOP_COVER_AI_CREDIT_COST = 1;
 
@@ -43,6 +43,11 @@ export async function generatePollinationsCoverForLoop(params: {
   if (!user?.id || params.loop.userId !== user.id) return { coverUrl: null };
 
   const idempotencyKey = newCoverAiIdempotencyKey(params.loop.id);
+
+  // Exchange Firebase ID token → Supabase JWT (Edge Functions expect Supabase auth)
+  const supabaseToken = await getSupabaseTokenForFirebaseUser();
+  const authHeaders = supabaseToken ? { Authorization: `Bearer ${supabaseToken}` } : undefined;
+
   const MAX_COVER_ATTEMPTS = 3;
   const COVER_RETRY_DELAY_MS = 1500;
 
@@ -56,6 +61,7 @@ export async function generatePollinationsCoverForLoop(params: {
         idempotencyKey,
         purpose: "distribution",
       },
+      ...(authHeaders ? { headers: authHeaders } : {}),
     });
 
     // no_credits → throw immédiatement (pas de retry sur quota)

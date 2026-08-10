@@ -120,6 +120,16 @@ const CLOUD_FUNCTIONS_MIGRATED = new Set([
   "create-portal",
   "ensure-profile",
   "generate-loop-ace",
+  "seller-onboard",
+  "seller-status",
+  "seller-update",
+  "seller-payout",
+  "listing-create",
+  "listing-update",
+  "listing-publish",
+  "listing-delete",
+  "checkout-listing",
+  "download-purchase",
 ]);
 
 /**
@@ -133,6 +143,16 @@ const CLOUD_FUNCTION_NAME_MAP: Record<string, string> = {
   "create-portal": "createPortal",
   "ensure-profile": "ensureProfile",
   "generate-loop-ace": "generateLoopAce",
+  "seller-onboard": "sellerOnboard",
+  "seller-status": "sellerStatus",
+  "seller-update": "sellerUpdate",
+  "seller-payout": "sellerPayout",
+  "listing-create": "listingCreate",
+  "listing-update": "listingUpdate",
+  "listing-publish": "listingPublish",
+  "listing-delete": "listingDelete",
+  "checkout-listing": "checkoutListing",
+  "download-purchase": "downloadPurchase",
 };
 
 function fbStorageInstance(): FirebaseStorage | null {
@@ -1188,7 +1208,7 @@ let _cachedSupabaseTokenExpiry = 0;
  * Get a Supabase JWT by exchanging the current Firebase user's ID token
  * via Supabase's id_token grant. Cached per user UID, with 55min expiry.
  */
-async function getSupabaseTokenForFirebaseUser(): Promise<string | null> {
+export async function getSupabaseTokenForFirebaseUser(): Promise<string | null> {
   const auth = fbAuth();
   const user = auth?.currentUser;
   if (!user) return null;

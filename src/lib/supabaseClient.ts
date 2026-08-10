@@ -10,4 +10,5 @@ export {
   trackClientEvent,
   flushEventQueue,
   flushClientEvents,
+  getSupabaseTokenForFirebaseUser,
 } from "@/lib/firebaseSupabaseClient";

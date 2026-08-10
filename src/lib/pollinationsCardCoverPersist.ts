@@ -4,7 +4,7 @@ import { isFirebaseStorageCoverUrl } from "@/lib/storageImages";
 import type { Loop } from "@/types/loop";
 import { coverImageSeed } from "@/lib/utils";
 import { useAuthStore } from "@/stores/authStore";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase, getSupabaseTokenForFirebaseUser } from "@/lib/supabaseClient";
 import type { CoverKind } from "@/lib/coverMedia";
 
 export type PollinationsCardCoverResult = {
@@ -38,6 +38,10 @@ export async function persistPollinationsCardCoverForLoop(
   const prompt = buildLoopCardCoverPrompt(loop);
   const seed = buildCoverGenerationSeed(prompt, loopId, coverImageSeed(loop as Loop), 0);
 
+  // Exchange Firebase ID token → Supabase JWT (Edge Functions expect Supabase auth)
+  const supabaseToken = await getSupabaseTokenForFirebaseUser();
+  const authHeaders = supabaseToken ? { Authorization: `Bearer ${supabaseToken}` } : undefined;
+
   const MAX_CARD_COVER_ATTEMPTS = 3;
   const CARD_COVER_RETRY_DELAY_MS = 1200;
   let lastError: unknown = null;
@@ -50,6 +54,7 @@ export async function persistPollinationsCardCoverForLoop(
         seed,
         purpose: "card",
       },
+      ...(authHeaders ? { headers: authHeaders } : {}),
     });
 
     if (!error) {
