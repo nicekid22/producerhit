@@ -161,7 +161,14 @@ function aceMelodyCompositionAceFields(): Record<string, unknown> {
   const neg = MELODY_COMPOSITION_LM_NEGATIVE_PROMPT;
   return { lm_negative_prompt: neg, negative_prompt: neg, lm_cfg_scale: 2.8 };
 }
-const ACE_INFERENCE_STEPS = 8;
+/**
+ * ACE-Step v1.5 XL Base — official recommended config.
+ * @see https://huggingface.co/ACE-Step/acestep-v15-xl-base
+ * 50 steps / CFG enabled / guidance_scale 7.0 / shift 3.0
+ * NOTE: 8-step config is for Turbo model only — do NOT use with XL Base.
+ */
+const ACE_INFERENCE_STEPS = 50;
+const ACE_GUIDANCE_SCALE = 7.0;
 const ACE_RELEASE_MODEL = "acestep-v15-xl-base";
 
 function isAceSongQualityV2Enabled(): boolean {
@@ -1059,6 +1066,8 @@ async function generateViaChatCompletionsAce(input: {
           audio_format: input.audioFormat,
           shift: ACE_SHIFT,
           inference_steps: ACE_INFERENCE_STEPS,
+          guidance_scale: ACE_GUIDANCE_SCALE,
+          cfg: true,
           ...(input.seeds?.length
             ? { seed: input.seeds[0], seeds: input.seeds, use_random_seed: false }
             : {}),
@@ -1837,6 +1846,17 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
           { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
+
+      // Reserve + increment usage NOW (before scheduling run_job) so the credit
+      // is guaranteed persisted in Firestore before the audio is returned to the
+      // client. Previously the bump happened inside run_job after completion,
+      // which failed silently on cold-start (profile not yet ensured) or when
+      // run_job raced the client's refreshProfile — leaving Firestore with the
+      // pre-session usage count, so a hard refresh flipped the quota back to
+      // "full". fbBumpUsageIdempotent is safe to call here because the
+      // idempotent generation_usage_key prevents double-counting if run_job's
+      // later bump (kept as a no-op safety net) re-runs.
+      await fbBumpUsageIdempotent(authedUserId, generationKey);
 
       const jobId = crypto.randomUUID();
       const instrumentalJob = body?.instrumental !== false;
@@ -2630,6 +2650,8 @@ export async function handleGenerateLoopAceRequest(req: Request): Promise<Respon
         if (seed && seed > 0) paramObj.seed = seed;
         paramObj.shift = quality.shift;
         paramObj.inference_steps = ACE_INFERENCE_STEPS;
+        paramObj.guidance_scale = ACE_GUIDANCE_SCALE;
+        paramObj.cfg = true;
 
         const createUrl = `${baseUrl}/release_task`;
         const releaseForm = new FormData();

@@ -135,6 +135,7 @@ import { persistPollinationsCardCoverForLoop } from "@/lib/pollinationsCardCover
 import { ACE_REMIX_UNAVAILABLE_COPY, AceRemixUnavailableError } from "@/lib/aceRemix";
 import { buildAceCaption, type GenerateParams } from "@/lib/promptBuilder";
 import { resolveGenerationCaptionContext } from "@/lib/promptEnhancer";
+import { findArtistPresetById } from "@producerhit/shared";
 import { buildCoverPromptSnapshot, cn } from "@/lib/utils";
 import { DashboardStudioBrand } from "@/components/dashboard/DashboardStudioBrand";
 import { DASHBOARD_VOICE_SECTIONS_ENABLED, MOBILE_DASHBOARD_V2 } from "@/lib/featureFlags";
@@ -156,6 +157,7 @@ import {
   type VocalStyleValue,
 } from "@/components/dashboard/GeneratorAdvancedOutputControls";
 import { IdeaPromptSection, DASHBOARD_PROMPT_ROWS } from "@/components/dashboard/IdeaPromptSection";
+import { ArtistPresetPicker } from "@/components/dashboard/ArtistPresetPicker";
 import { resolveRandomPromptLocale } from "@/lib/resolveRandomPromptLocale";
 import { InspirationChipRow } from "@/components/dashboard/InspirationChipRow";
 import { GenerationCreditAmount, GenerationCreditIcon } from "@/components/GenerationCreditIcon";
@@ -1381,21 +1383,32 @@ export default function Dashboard() {
   const effectiveAudioFormat =
     audioFormatTouchedRef.current && plan !== "free" && audioFormat === "wav" ? "wav" : "mp3";
 
-  const effectiveBpm = isSong 
-    ? (songIsCustom && songTempoMode === "manual" ? form.bpm : 0)
-    : (advancedOpen && beatTempoMode === "manual" ? form.bpm : 0);
-    
-  const effectiveKey = isSong
-    ? (songIsCustom && songKeyMode === "manual" ? form.key : "")
-    : (advancedOpen && beatKeyMode === "manual" ? form.key : "");
+  // Resolve artist-inspired preset for BPM/key/scale overrides
+  const activeArtistPresetForMeta = form.artistPresetId ? findArtistPresetById(form.artistPresetId) : undefined;
 
-  const effectiveScale = isSong
-    ? (songIsCustom && songKeyMode === "manual" ? form.scale : "")
-    : (advancedOpen && beatKeyMode === "manual" ? form.scale : "");
+  const effectiveBpm = activeArtistPresetForMeta
+    ? activeArtistPresetForMeta.bpm
+    : isSong
+      ? (songIsCustom && songTempoMode === "manual" ? form.bpm : 0)
+      : (advancedOpen && beatTempoMode === "manual" ? form.bpm : 0);
 
-  const autoMetaEnabled = isSong 
-    ? !songIsCustom || (songTempoMode === "auto" && songKeyMode === "auto")
-    : !advancedOpen || (beatTempoMode === "auto" && beatKeyMode === "auto");
+  const effectiveKey = activeArtistPresetForMeta
+    ? activeArtistPresetForMeta.key
+    : isSong
+      ? (songIsCustom && songKeyMode === "manual" ? form.key : "")
+      : (advancedOpen && beatKeyMode === "manual" ? form.key : "");
+
+  const effectiveScale = activeArtistPresetForMeta
+    ? activeArtistPresetForMeta.scale
+    : isSong
+      ? (songIsCustom && songKeyMode === "manual" ? form.scale : "")
+      : (advancedOpen && beatKeyMode === "manual" ? form.scale : "");
+
+  const autoMetaEnabled = activeArtistPresetForMeta
+    ? false // Artist preset: always use preset BPM/key, don't let LM auto-infer
+    : isSong
+      ? !songIsCustom || (songTempoMode === "auto" && songKeyMode === "auto")
+      : !advancedOpen || (beatTempoMode === "auto" && beatKeyMode === "auto");
 
   const detectedLang = isSong
     ? resolveSongVocalLanguage({
@@ -1484,16 +1497,18 @@ export default function Dashboard() {
       effectiveSongLyrics = "";
       setLyricsMode("ai");
     }
-    const runVocalLanguage = runAsSong
-      ? resolveSongVocalLanguage({
-          mode: songVocalLanguageMode,
-          manualCode: manualVocalLanguage,
-          lyricsMode: effectiveLyricsMode,
-          lyrics: effectiveSongLyrics,
-          songDescription: runSongDescription,
-          uiLocale: locale,
-        })
-      : "en";
+    const runVocalLanguage = activeArtistPresetForMeta
+      ? activeArtistPresetForMeta.vocalLanguage
+      : runAsSong
+        ? resolveSongVocalLanguage({
+            mode: songVocalLanguageMode,
+            manualCode: manualVocalLanguage,
+            lyricsMode: effectiveLyricsMode,
+            lyrics: effectiveSongLyrics,
+            songDescription: runSongDescription,
+            uiLocale: locale,
+          })
+        : "en";
     const sessionId = ++generateSessionRef.current;
     unlockAudioPlaybackFromGesture();
     armGenerationAutoplay();
@@ -1570,9 +1585,12 @@ export default function Dashboard() {
         .replace(/[<>]/g, "")
         .slice(0, 72);
 
-    const randomGenre = shouldPickRandomGenreAtGenerate(runFormGenre, ideaTextForGenre)
-      ? pickRandomGenreValue()
-      : undefined;
+    // When an artist preset is active, skip random genre — preset provides genre + caption + metadata
+    const randomGenre = activeArtistPresetForMeta
+      ? undefined
+      : shouldPickRandomGenreAtGenerate(runFormGenre, ideaTextForGenre)
+        ? pickRandomGenreValue()
+        : undefined;
     if (randomGenre) setLastRandomGenre(randomGenre);
     const { promptGenre, displayGenre } = resolveGenreForGeneration(runFormGenre, ideaTextForGenre, randomGenre);
 
@@ -1700,7 +1718,16 @@ export default function Dashboard() {
         skipPromptBankPipeline: runAsSong ? songBankDiceRef.current : false,
       });
 
-      const genreForAce = captionCtx.bankGenre ?? normalizedGenreForPrompt;
+      // Artist-inspired preset: inject preset caption + metadata
+      const activeArtistPreset = form.artistPresetId ? findArtistPresetById(form.artistPresetId) : undefined;
+      if (activeArtistPreset) {
+        captionCtx.captionOverride = activeArtistPreset.caption;
+        captionCtx.melodyComposition = false;
+      }
+
+      const genreForAce = activeArtistPreset
+        ? activeArtistPreset.genre
+        : captionCtx.bankGenre ?? normalizedGenreForPrompt;
 
       if (runAsSong && captionCtx.lyricsStructure?.trim()) {
         effectiveSongLyrics = captionCtx.lyricsStructure.trim();
@@ -1744,6 +1771,7 @@ export default function Dashboard() {
         const hasManualLyrics = effectiveLyricsMode === "manual" && effectiveSongLyrics.length > 0;
         const aceComposeLyrics = hasManualLyrics ? effectiveSongLyrics : "";
         const songAceDuration =
+          activeArtistPresetForMeta?.duration ??
           manualSongDuration ??
           (aceComposeLyrics ? estimateSongDurationFromLyrics(aceComposeLyrics) : undefined);
         const base = runAsSong
@@ -1754,7 +1782,7 @@ export default function Dashboard() {
               autoMeta: autoMetaEnabled,
               thinking: true,
               duration: songAceDuration,
-              timeSignature: manualSongTimeSignature || undefined,
+              timeSignature: activeArtistPresetForMeta?.timeSignature || manualSongTimeSignature || undefined,
               isSong: true,
               audioFormat: effectiveAudioFormat,
               seed,
@@ -1762,7 +1790,7 @@ export default function Dashboard() {
           : {
               instrumental: beatInstrumental,
               lyrics: "",
-              vocalLanguage: "en",
+              vocalLanguage: activeArtistPresetForMeta?.vocalLanguage || "en",
               isSong: false,
               autoMeta: autoMetaEnabled,
               audioFormat: effectiveAudioFormat,
@@ -1772,18 +1800,24 @@ export default function Dashboard() {
           const base = (captionCtx.captionOverride?.trim() ? { captionOverride: captionCtx.captionOverride, melodyComposition: captionCtx.melodyComposition } : {}) as { captionOverride?: string; melodyComposition?: boolean };
           return base;
         })();
+        // Artist preset vocal style takes priority over user selection
+        const effectiveVocalStyle = activeArtistPresetForMeta
+          ? activeArtistPresetForMeta.vocalStyle
+          : runAsSong && songVocalStyle.trim()
+            ? songVocalStyle.trim()
+            : undefined;
         return aceKeyPreferIndex !== undefined
           ? {
               ...base,
               aceKeyPreferIndex,
               ...captionOpts,
-              ...(runAsSong && songVocalStyle.trim() ? { vocalStyle: songVocalStyle.trim() } : {}),
+              ...(effectiveVocalStyle ? { vocalStyle: effectiveVocalStyle } : {}),
               ...(runAsSong && !isRandomPrompt && userIdea.trim() ? { sampleMode: true, sampleQuery: userIdea } : {}),
             }
           : {
               ...base,
               ...captionOpts,
-              ...(runAsSong && songVocalStyle.trim() ? { vocalStyle: songVocalStyle.trim() } : {}),
+              ...(effectiveVocalStyle ? { vocalStyle: effectiveVocalStyle } : {}),
               ...(runAsSong && !isRandomPrompt && userIdea.trim() ? { sampleMode: true, sampleQuery: userIdea } : {}),
             };
       };
@@ -4213,6 +4247,33 @@ export default function Dashboard() {
                     onGenreChange={(v) => setField("genre", v)}
                     lastRandomGenre={lastRandomGenre}
                   />
+                </GeneratorSection>
+
+                <GeneratorSection
+                  title="Inspiration"
+                  hint="Pick an artist to generate a song in their style"
+                  collapsible={mobileV2}
+                  defaultOpen={mobileV2 ? mobileSectionDefaultOpen : true}
+                >
+                  <ArtistPresetPicker
+                    selectedId={form.artistPresetId}
+                    onSelect={(preset) => {
+                      if (preset) {
+                        setField("artistPresetId", preset.id);
+                        // Auto-fill BPM, key, scale from the preset
+                        setField("bpm", preset.bpm);
+                        setField("key", preset.key);
+                        setField("scale", preset.scale);
+                      } else {
+                        setField("artistPresetId", undefined);
+                      }
+                    }}
+                  />
+                  {activeArtistPresetForMeta && (
+                    <div className="mt-2 rounded-lg bg-purple-500/10 px-3 py-2 text-xs text-purple-300/80">
+                      {activeArtistPresetForMeta.artistName} — {activeArtistPresetForMeta.genre} · {activeArtistPresetForMeta.bpm} BPM · {activeArtistPresetForMeta.key} {activeArtistPresetForMeta.scale}
+                    </div>
+                  )}
                 </GeneratorSection>
 
                 <GeneratorSection

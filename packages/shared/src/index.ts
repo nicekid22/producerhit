@@ -341,3 +341,15 @@ export {
   type ProducerTagRecord,
 } from "./producerTag";
 export { resolveLoopDisplayLyrics, type LoopLyricsSource } from "./lyrics/resolveLoopDisplayLyrics";
+export {
+  ALL_ARTIST_PRESETS,
+  FR_ARTIST_PRESETS,
+  US_ARTIST_PRESETS,
+  findArtistPresetById,
+  findArtistPresetByDisplay,
+  getArtistPresetsByRegion,
+  searchArtistPresets,
+  buildArtistPresetCaption,
+  type ArtistPreset,
+  type ArtistRegion,
+} from "./prompt/artistPresets";

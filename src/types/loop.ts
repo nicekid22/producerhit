@@ -61,5 +61,7 @@ export type GeneratorForm = {
   mood: string;
   reverb: string;
   prompt: string;
+  /** Selected artist-inspired preset id (from packages/shared/src/prompt/artistPresets.ts) */
+  artistPresetId?: string;
 };
 

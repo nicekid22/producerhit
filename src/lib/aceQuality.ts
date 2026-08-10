@@ -1,6 +1,7 @@
 /**
- * ACE-Step quality defaults (aligned with community setups).
+ * ACE-Step v1.5 XL Base quality defaults (aligned with official HF recommendations).
  * Keep in sync with supabase/functions/generate-loop-ace/index.ts
+ * @see https://huggingface.co/ACE-Step/acestep-v15-xl-base
  */
 export const ACE_QUALITY_DEFAULTS = {
   /** 5Hz LM generates audio codes (lm-dit) — major quality boost for text2music */
@@ -9,7 +10,10 @@ export const ACE_QUALITY_DEFAULTS = {
   useFormat: true,
   /** Timestep shift — effective on base models; harmless/no-op on turbo */
   shift: 3,
-  inferenceSteps: 8,
+  /** XL Base official: 50 steps with CFG (NOT 8 — that's Turbo only) */
+  inferenceSteps: 50,
+  /** Classifier-Free Guidance scale — XL Base official recommendation */
+  guidanceScale: 7.0,
 } as const;
 
 /** Legacy ACE release_task + query_result (404 sur api.acemusic.ai depuis 2026).
@@ -47,8 +51,15 @@ export function resolveAceQualityFlags(input: {
   };
 }
 
-export function appendAceQualityToParamObj(paramObj: Record<string, unknown>, shift = ACE_QUALITY_DEFAULTS.shift): Record<string, unknown> {
+export function appendAceQualityToParamObj(
+  paramObj: Record<string, unknown>,
+  shift = ACE_QUALITY_DEFAULTS.shift,
+): Record<string, unknown> {
   if (typeof paramObj.shift !== "number") paramObj.shift = shift;
-  if (typeof paramObj.inference_steps !== "number") paramObj.inference_steps = ACE_QUALITY_DEFAULTS.inferenceSteps;
+  if (typeof paramObj.inference_steps !== "number")
+    paramObj.inference_steps = ACE_QUALITY_DEFAULTS.inferenceSteps;
+  if (typeof paramObj.guidance_scale !== "number")
+    paramObj.guidance_scale = ACE_QUALITY_DEFAULTS.guidanceScale;
+  if (paramObj.cfg !== true) paramObj.cfg = true;
   return paramObj;
 }
