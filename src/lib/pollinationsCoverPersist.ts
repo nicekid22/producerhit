@@ -1,24 +1,38 @@
 import { preloadCoverImage } from "@/lib/coverArt";
-import { persistLoopCover } from "@/lib/loopCoverUrl";
-import { uploadLoopCoverImage } from "@/lib/storageImages";
 import type { Loop } from "@/types/loop";
 import { useAuthStore } from "@/stores/authStore";
+import { supabase } from "@/lib/supabaseClient";
 
 export const LOOP_COVER_AI_CREDIT_COST = 1;
 
-/** Negative prompt pour réduire les visages anime mal finis sur les covers. */
-const FACE_QUALITY_NEGATIVE_PROMPT =
-  "unfinished face, missing eye, asymmetrical eyes, blank eyes, cropped face, deformed face, extra eyes, mutated face, bad anatomy, lowres, blurry, watermark, text, signature, jpeg artifacts";
+/**
+ * Idempotency key unique pour chaque appel de génération distribution.
+ * Format: `{loopId}:{uuid}` — réplique l'ancien `newCoverAiIdempotencyKey` côté Supabase.
+ */
+function newCoverAiIdempotencyKey(loopId: string): string {
+  const suffix =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  return `${loopId}:${suffix}`;
+}
 
-function buildPollinationsUrl(prompt: string, seed: number, width = 1400, height = 1400): string {
-  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${encodeURIComponent(
-    String(seed),
-  )}&nologo=true&model=flux&enhance=true&negative_prompt=${encodeURIComponent(FACE_QUALITY_NEGATIVE_PROMPT)}`;
+/** Détecte un code d'erreur Firebase HttpsError dans la réponse ou l'erreur. */
+function isNoCreditsError(err: unknown, data: unknown): boolean {
+  const code = (err as { code?: string } | null)?.code;
+  if (code === "no_credits") return true;
+  const msg = err instanceof Error ? err.message : String(err ?? "");
+  if (msg.includes("no_credits")) return true;
+  if (data && typeof data === "object" && (data as { code?: string }).code === "no_credits") return true;
+  return false;
 }
 
 /**
- * Génère une cover via Pollinations, la télécharge, et l'upload vers Firebase Storage.
- * Retourne l'URL Firebase Storage permanente (ou l'URL Pollinations en fallback).
+ * Génère une cover distribution via la Cloud Function `persistPollinationsCover`.
+ * Coût: 1 crédit (idempotent via idempotencyKey) — jeté `new Error("no_credits")` si quota dépassé.
+ * La CF s'occupe côté serveur de: check auth + check crédits + download Pollinations + upload
+ * Firebase Storage (loop-covers) + persist stems_url.ace + cover_url sur Firestore + bump usage.
+ * Le client ne fait que preload l'image puis retourne le coverUrl persistant.
  */
 export async function generatePollinationsCoverForLoop(params: {
   loop: Pick<Loop, "id" | "userId" | "stemsUrl">;
@@ -28,17 +42,45 @@ export async function generatePollinationsCoverForLoop(params: {
   const user = useAuthStore.getState().user;
   if (!user?.id || params.loop.userId !== user.id) return { coverUrl: null };
 
-  const pollinationsUrl = buildPollinationsUrl(params.prompt, params.seed ?? 0, 1400, 1400);
-  if (!pollinationsUrl.startsWith("http")) return { coverUrl: null };
+  const idempotencyKey = newCoverAiIdempotencyKey(params.loop.id);
+  const MAX_COVER_ATTEMPTS = 3;
+  const COVER_RETRY_DELAY_MS = 1500;
 
-  // Upload vers Firebase Storage pour persistance permanente
-  let coverUrl = await uploadLoopCoverImage(user.id, params.loop.id, pollinationsUrl);
+  let lastError: unknown = null;
+  for (let attempt = 1; attempt <= MAX_COVER_ATTEMPTS; attempt++) {
+    const { data, error } = await supabase.functions.invoke("persist-pollinations-cover", {
+      body: {
+        loopId: params.loop.id,
+        prompt: params.prompt,
+        seed: params.seed ?? 0,
+        idempotencyKey,
+        purpose: "distribution",
+      },
+    });
 
-  // Fallback: si l'upload échoue, utiliser l'URL Pollinations (ephemeral)
-  if (!coverUrl) coverUrl = pollinationsUrl;
+    // no_credits → throw immédiatement (pas de retry sur quota)
+    if (isNoCreditsError(error, data)) throw new Error("no_credits");
 
-  preloadCoverImage(coverUrl);
-  await persistLoopCover(params.loop.id, user.id, coverUrl, params.loop.stemsUrl ?? null, "image");
-  return { coverUrl };
+    if (!error) {
+      const coverUrl =
+        typeof (data as { coverUrl?: unknown })?.coverUrl === "string"
+          ? ((data as { coverUrl: string }).coverUrl).trim()
+          : "";
+      if (coverUrl.startsWith("http")) {
+        preloadCoverImage(coverUrl);
+        return { coverUrl };
+      }
+    } else {
+      lastError = error;
+      console.warn(`[pollinationsCoverPersist] attempt ${attempt}/${MAX_COVER_ATTEMPTS} error:`, error);
+    }
+
+    // Pollinations down / transient → backoff et retry
+    if (attempt < MAX_COVER_ATTEMPTS) {
+      await new Promise((r) => setTimeout(r, COVER_RETRY_DELAY_MS * attempt));
+    }
+  }
+
+  console.warn("[pollinationsCoverPersist] all attempts failed", lastError);
+  return { coverUrl: null };
 }
-

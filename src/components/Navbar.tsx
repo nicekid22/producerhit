@@ -29,11 +29,11 @@ export function Navbar({ variant }: { variant: "marketing" | "auth" }) {
         variant === "marketing" ? "bg-pk-bg/55" : "bg-pk-bg/80",
       ].join(" ")}
     >
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-3 overflow-hidden">
         <BrandLogo compact />
         {variant === "marketing" ? (
-          <nav className="pk-header-chrome hidden md:flex" aria-label="Main">
-            <div className="pk-header-chrome__links">
+          <nav className="pk-header-chrome hidden md:flex min-w-0" aria-label="Main">
+            <div className="pk-header-chrome__links min-w-0">
               <Link to="/#how" className="pk-header-chrome__link">
                 {m.nav.howItWorks}
               </Link>
@@ -43,21 +43,21 @@ export function Navbar({ variant }: { variant: "marketing" | "auth" }) {
               <Link to="/pricing" className="pk-header-chrome__link">
                 {m.nav.pricing}
               </Link>
-              <Link to="/community" className="pk-header-chrome__link">
+              <Link to="/community" className="pk-header-chrome__link hidden lg:inline-flex">
                 {m.nav.community}
               </Link>
-              <Link to="/trending" className="pk-header-chrome__link">
+              <Link to="/trending" className="pk-header-chrome__link hidden lg:inline-flex">
                 {isFr ? "Trending" : "Trending"}
               </Link>
               <a
                 href={discordCommunityUrl("navbar")}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="pk-header-chrome__link"
+                className="pk-header-chrome__link hidden xl:inline-flex"
               >
                 Discord
               </a>
-              <Link to="/blog" className="pk-header-chrome__link">
+              <Link to="/blog" className="pk-header-chrome__link hidden xl:inline-flex">
                 {m.nav.blog}
               </Link>
             </div>
@@ -67,7 +67,7 @@ export function Navbar({ variant }: { variant: "marketing" | "auth" }) {
                   {showUpgrade ? (
                     <Link
                       to="/pricing?plan=pro&checkout=1"
-                      className="pk-header-chrome__cta pk-header-chrome__cta--ghost hidden sm:inline-flex"
+                      className="pk-header-chrome__cta pk-header-chrome__cta--ghost hidden lg:inline-flex"
                     >
                       {isFr ? "Passer Pro" : "Upgrade Pro"}
                     </Link>
@@ -78,7 +78,7 @@ export function Navbar({ variant }: { variant: "marketing" | "auth" }) {
                 </>
               ) : (
                 <>
-                  <Link to={buildAuthUrl({ mode: "login" })} className="pk-header-chrome__cta pk-header-chrome__cta--ghost">
+                  <Link to={buildAuthUrl({ mode: "login" })} className="pk-header-chrome__cta pk-header-chrome__cta--ghost hidden lg:inline-flex">
                     {m.nav.login}
                   </Link>
                   <Link to={buildAuthUrl()} className="pk-header-chrome__cta pk-landing-header__gen-cta">
